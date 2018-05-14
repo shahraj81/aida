@@ -19,7 +19,6 @@ sub set {
 sub get {
 	my ($self, $field, $arguments) = @_;
 	return $self->{$field} if defined $self->{$field} && not defined $arguments;
-	return $self->{MAP}{$field} if defined $self->{MAP}{$field} && not defined $arguments;
 	my $method = $self->can("get_$field");
 	return $method->($self, $arguments) if $method;
 	return;
@@ -88,6 +87,101 @@ sub dump_structure {
       &dump_structure($structure->{$key}, $key, $indent + 1, $history, $skip);
     }
   }
+}
+
+#####################################################################################
+# Documents
+#####################################################################################
+
+package Documents;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class) = @_;
+  my $self = $class->SUPER::new('Document');
+  $self->{CLASS} = 'Documents';
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# DocumentElements
+#    contains 'DocumentElement' across documents
+#####################################################################################
+
+package DocumentElements;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class) = @_;
+  my $self = $class->SUPER::new('DocumentElement');
+  $self->{CLASS} = 'DocumentElements';
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# TheDocumentElements
+#    has 1+ 'DocumentElement' contained in the Document
+#####################################################################################
+
+package TheDocumentElements;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class) = @_;
+  my $self = $class->SUPER::new('DocumentElement');
+  $self->{CLASS} = 'TheDocumentElements';
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Document
+#####################################################################################
+
+package Document;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $document_id) = @_;
+  my $self = {
+    CLASS => 'Document',
+    DOCUMENTID => $document_id,
+    DOCUMENTELEMENTS => DocumentElements->new(),
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub add_document_element {
+	my ($self, $document_element) = @_;
+	$self->get("DOCUMENTELEMENTS")->add($document_element);
+}
+
+#####################################################################################
+# DocumentElement
+#####################################################################################
+
+package DocumentElement;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class) = @_;
+  my $self = {
+    CLASS => 'DocumentElement',
+    DOCUMENT => undef,
+    DOCUMENTID => undef,
+    DOCUMENTELEMENTID => undef,
+    TYPE => undef,
+  };
+  bless($self, $class);
+  $self;
 }
 
 #####################################################################################
@@ -451,6 +545,7 @@ sub new {
 	my $self = {
 		CLASS => 'Entry',
 		LINENUM => $linenum,
+		LINE => $line,
 		HEADER => $header,
 		ELEMENTS => [],
 		MAP => {},
@@ -459,6 +554,15 @@ sub new {
 	bless($self, $class);
 	$self->add($line, $header);
 	$self;
+}
+
+sub get {
+  my ($self, $field, $arguments) = @_;
+  return $self->{$field} if defined $self->{$field} && not defined $arguments;
+  return $self->{MAP}{$field} if defined $self->{MAP}{$field} && not defined $arguments;
+  my $method = $self->can("get_$field");
+  return $method->($self, $arguments) if $method;
+  return;
 }
 
 sub add {

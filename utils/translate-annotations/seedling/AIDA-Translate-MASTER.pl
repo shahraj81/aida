@@ -2,36 +2,76 @@
 use strict;
 
 use TranslateManagerLib;
-#use Inheritance;
-#
-#my $gc = grandchild->new();
-#$gc->get();
-#
-#exit;
 
-my $filename = "data/LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V2.0/data/T101/T101_ent_mentions.tab";
-my $entity_mentions_fh = FileHandler->new($filename);
+my ($filename, $filehandler, $header, $entries, $i);
 
-# display
-# $entity_mentions_fh->display();
+# Load parent children DOCID mapping
+my $documents = Documents->new();
+my $documentelements = DocumentElements->new();
 
-# get header
-my $header = $entity_mentions_fh->get("HEADER");
+$filename = "data/LDC2018E01_AIDA_Seedling_Corpus_V1/docs/parent_children.tab";
+$filehandler = FileHandler->new($filename);
+$header = $filehandler->get("HEADER");
+$entries = $filehandler->get("ENTRIES");
+$i=0;
+foreach my $entry( $entries->toarray() ){
+  $i++;
+  print "ENTRY # $i:\n", $entry->tostring(), "\n";
+  my $document_id = $entry->get("parent_uid");
+  my ($document_eid) = split(/\./, $entry->get("child_file"));
+  my $detype = $entry->get("dtyp");
+  
+  my $document = $documents->get("BY_KEY", $document_id);
+  $document->set("DOCUMENTID", $document_id);
+  my $documentelement = DocumentElement->new();
+  $documentelement->set("DOCUMENT", $document);
+  $documentelement->set("DOCUMENTID", $document_id);
+  $documentelement->set("DOCUMENTELEMENTID", $document_eid);
+  $documentelement->set("TYPE", $detype);
+  
+  $document->add_document_element($documentelement);
+  $documentelements->add($documentelement, $document_eid);
+}
 
-# get entries
-my $entries = $entity_mentions_fh->get("ENTRIES"); 
+#####################################################################################
+# Print document and document-element mapping in RDF Turtle format
+#####################################################################################
+
+foreach my $document($documents->toarray()) {
+	my $document_id = $document->get("DOCUMENTID");
+	my $node_id = "D_$document_id";
+	print "\n# Document $document_id and it's elements\n";
+	print "aida:$node_id rdf:type aida:document ;\n";
+  print "              rdf:ID \"$document_id\" ;\n";
+  my @document_element_ids = map {"              rdf:has_element aida:D_".$_}
+                              map {$_->get("DOCUMENTELEMENTID")} 
+                               $document->get("DOCUMENTELEMENTS")->toarray();
+                               
+  my $document_elements_rdf = join(" ;\n", @document_element_ids);
+  print "$document_elements_rdf .\n";
+}
+
+#####################################################################################
+# Process T101_ent_mentions.tab
+#####################################################################################
+
+$filename = "data/LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V2.0/data/T101/T101_ent_mentions.tab";
+$filehandler = FileHandler->new($filename);
+$header = $filehandler->get("HEADER");
+$entries = $filehandler->get("ENTRIES"); 
 
 # variable to hold entities
 my $entities = Entities->new();
-
-my $i=0;
+$i=0;
 foreach my $entry( $entries->toarray() ){
 	$i++;
 	print "ENTRY # $i:\n", $entry->tostring(), "\n";
+	my $document_eid = $entry->get("provenance");
+	my $document_id = $documentelements->get("BY_KEY", $document_eid)->get("DOCUMENTID") || undef;
 	my $mention = Mention->new();
 	my $span = Span->new(
 	             $entry->get("provenance"),
-	             undef,
+	             $document_eid,
 	             $entry->get("textoffset_startchar"),
 	             $entry->get("textoffset_endchar"),
 	         );
@@ -49,13 +89,10 @@ foreach my $entry( $entries->toarray() ){
   $entity->set("KBID", $entry->get("kb_id")) unless $entity->set("KBID");
 	$entity->set("TYPE", $entry->get("type")) unless $entity->set("TYPE");
 	$entity->add_mention($mention);
-	
-	#&Super::dump_structure($entity, 'Entity');
-	#getc();
 }
 
 foreach my $entity($entities->toarray()) {
 	&Super::dump_structure($entity, 'Entity');
 	print "Total mentions: ", scalar $entity->get("MENTIONS")->toarray(), "\n";
-	#getc();
+	getc();
 }
