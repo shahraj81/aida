@@ -21,7 +21,7 @@ sub get {
 	return $self->{$field} if defined $self->{$field} && not defined $arguments;
 	my $method = $self->can("get_$field");
 	return $method->($self, $arguments) if $method;
-	return;
+	return "nil";
 }
 
 sub get_BY_INDEX {
