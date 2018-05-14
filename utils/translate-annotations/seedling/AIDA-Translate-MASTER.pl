@@ -30,7 +30,7 @@ foreach my $entry( $entries->toarray() ){
   $documentelement->set("TYPE", $detype);
   
   $document->add_document_element($documentelement);
-  $documentelements->add($documentelement, $document_eid);
+  $documentelements->add($documentelement, $document_eid) unless $document_eid eq "n/a";
 }
 
 # Load parent children DOCID mapping from uid_info_v2.tab
@@ -54,7 +54,7 @@ foreach my $entry( $entries->toarray() ){
   $documentelement->set("DOCUMENTELEMENTID", $document_eid);
   
   $document->add_document_element($documentelement);
-  $documentelements->add($documentelement, $document_eid);
+  $documentelements->add($documentelement, $document_eid) unless $document_eid eq "n/a";
 }
 
 
