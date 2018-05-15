@@ -51,9 +51,9 @@ foreach my $entry( $entries->toarray() ){
   my $documentelement = DocumentElement->new();
   $documentelement->set("DOCUMENT", $document);
   $documentelement->set("DOCUMENTID", $document_id);
-  $documentelement->set("DOCUMENTELEMENTID", $document_eid);
+  $documentelement->set("DOCUMENTELEMENTID", $document_eid) unless $document_eid eq "n/a";
   
-  $document->add_document_element($documentelement);
+  $document->add_document_element($documentelement) unless $document_eid eq "n/a";
   $documentelements->add($documentelement, $document_eid) unless $document_eid eq "n/a";
 }
 
