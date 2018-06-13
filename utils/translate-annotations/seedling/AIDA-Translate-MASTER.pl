@@ -52,6 +52,7 @@ foreach my $entry( $entries->toarray() ){
   $documentelement->set("DOCUMENT", $document);
   $documentelement->set("DOCUMENTID", $document_id);
   $documentelement->set("DOCUMENTELEMENTID", $document_eid) unless $document_eid eq "n/a";
+  $documentelement->set("TYPE", "txt");
   
   $document->add_document_element($documentelement) unless $document_eid eq "n/a";
   $documentelements->add($documentelement, $document_eid) unless $document_eid eq "n/a";
@@ -64,11 +65,11 @@ foreach my $entry( $entries->toarray() ){
 
 foreach my $document($documents->toarray()) {
 	my $document_id = $document->get("DOCUMENTID");
-	my $node_id = "D_$document_id";
-	print "\n# Document $document_id and it's elements\n";
-	print "aida:$node_id rdf:type aida:document ;\n";
+	my $node_id = "$document_id";
+	print "\n# Document $document_id and its elements\n";
+	print "ldc:$node_id rdf:type ldc:document ;\n";
   print "              rdf:ID \"$document_id\" ;\n";
-  my @document_element_ids = map {"              aida:has_element aida:D_".$_}
+  my @document_element_ids = map {"              ldc:has_element ldc:".$_}
                               map {$_->get("DOCUMENTELEMENTID")} 
                                $document->get("DOCUMENTELEMENTS")->toarray();
                                
@@ -80,12 +81,12 @@ foreach my $document_element($documentelements->toarray()) {
   my $document_element_id = $document_element->get("DOCUMENTELEMENTID");
   my $document_element_modality = $document_element->get("TYPE");
   my $document_id = $document_element->get("DOCUMENTID");
-  my $node_id = "D_$document_element_id";
+  my $node_id = "$document_element_id";
   print "\n# Document element $document_id and it's parent\n";
-  print "aida:$node_id rdf:type aida:document_element ;\n";
+  print "ldc:$node_id rdf:type ldc:document_element ;\n";
   print "              rdf:ID \"$document_element_id\" ;\n";
-  print "              aida:is_element_of aida:D_$document_id .\n";                               
-  print "              aida:modality aida:$document_element_modality .\n";
+  print "              ldc:is_element_of ldc:$document_id ;\n";                               
+  print "              ldc:modality ldc:$document_element_modality .\n";
 }
 
 #####################################################################################
@@ -104,11 +105,13 @@ foreach my $entry( $entries->toarray() ){
 	$i++;
 	#print "ENTRY # $i:\n", $entry->tostring(), "\n";
 	my $document_eid = $entry->get("provenance");
-	my $document_id = $documentelements->get("BY_KEY", $document_eid)->get("DOCUMENTID") || undef;
+  my $thedocumentelement = $documentelements->get("BY_KEY", $document_eid);
+  my $thedocumentelementmodality = $thedocumentelement->get("TYPE");
+	my $document_id = $thedocumentelement->get("DOCUMENTID");
 	my $mention = Mention->new();
 	my $span = Span->new(
 	             $entry->get("provenance"),
-	             $document_eid,
+	             $document_id,
 	             $entry->get("textoffset_startchar"),
 	             $entry->get("textoffset_endchar"),
 	         );
@@ -128,8 +131,20 @@ foreach my $entry( $entries->toarray() ){
 	$entity->add_mention($mention);
 }
 
-#foreach my $entity($entities->toarray()) {
-#	&Super::dump_structure($entity, 'Entity');
-#	print "Total mentions: ", scalar $entity->get("MENTIONS")->toarray(), "\n";
-#	getc();
-#}
+#####################################################################################
+# Print entity mentions from T101_ent_mentions.tab in RDF Turtle format
+#####################################################################################
+
+foreach my $entity($entities->toarray()) {
+  #&Super::dump_structure($entity, 'Entity');
+  #print "Total mentions: ", scalar $entity->get("MENTIONS")->toarray(), "\n";
+
+  my $node_id = $entity->get("KBID");
+  my $entity_type = $entity->get("TYPE");
+  
+  print "\n# Entity aida:N_$node_id\n";
+  print "aida:N_$node_id a :Entity ;\n";
+  print "              aida:system <LDC:system1> ;\n";
+
+  getc();
+}

@@ -276,7 +276,7 @@ sub add {
 
 sub toarray {
   my ($self) = @_;
-  @{$self->{STORE}{LIST}};
+  @{$self->{STORE}{LIST} || []};
 }
 
 sub display {
