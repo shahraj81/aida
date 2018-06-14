@@ -338,6 +338,28 @@ sub add_justification {
   $self->get("JUSTIFICATIONS")->add($justification);
 }
 
+sub get_SOURCE_DOCUMENTS {
+	my ($self) = @_;
+	my @source_docs;
+	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+		foreach my $span($justification->get("SPANS")->toarray()) {
+			push(@source_docs, $span->get("DOCUMENTID"));
+		}
+	}
+	@source_docs;
+}
+
+sub get_SOURCE_DOCUMENT_ELEMENTS {
+  my ($self) = @_;
+  my @source_doces;
+  foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+    foreach my $span($justification->get("SPANS")->toarray()) {
+      push(@source_doces, $span->get("DOCUMENTEID"));
+    }
+  }
+  @source_doces;
+}
+
 #####################################################################################
 # Justifications
 #####################################################################################

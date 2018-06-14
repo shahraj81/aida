@@ -63,18 +63,20 @@ foreach my $entry( $entries->toarray() ){
 # Print document and document-element mapping in RDF Turtle format
 #####################################################################################
 
+open(OUTPUT, ">output/document-mapping.ttl");
+
 foreach my $document($documents->toarray()) {
 	my $document_id = $document->get("DOCUMENTID");
 	my $node_id = "$document_id";
-	print "\n# Document $document_id and its elements\n";
-	print "ldc:$node_id rdf:type ldc:document ;\n";
-  print "              rdf:ID \"$document_id\" ;\n";
+	print OUTPUT "\n# Document $document_id and its elements\n";
+	print OUTPUT "ldc:$node_id rdf:type ldc:document ;\n";
+  print OUTPUT "              rdf:ID \"$document_id\" ;\n";
   my @document_element_ids = map {"              ldc:has_element ldc:".$_}
                               map {$_->get("DOCUMENTELEMENTID")} 
                                $document->get("DOCUMENTELEMENTS")->toarray();
                                
   my $document_elements_rdf = join(" ;\n", @document_element_ids);
-  print "$document_elements_rdf .\n";
+  print OUTPUT "$document_elements_rdf .\n";
 }
 
 foreach my $document_element($documentelements->toarray()) {
@@ -82,12 +84,16 @@ foreach my $document_element($documentelements->toarray()) {
   my $document_element_modality = $document_element->get("TYPE");
   my $document_id = $document_element->get("DOCUMENTID");
   my $node_id = "$document_element_id";
-  print "\n# Document element $document_id and its parent\n";
-  print "ldc:$node_id rdf:type ldc:document_element ;\n";
-  print "              rdf:ID \"$document_element_id\" ;\n";
-  print "              ldc:is_element_of ldc:$document_id ;\n";                               
-  print "              ldc:modality ldc:$document_element_modality .\n";
+  print OUTPUT "\n# Document element $document_id and its parent\n";
+  print OUTPUT "ldc:$node_id rdf:type ldc:document_element ;\n";
+  print OUTPUT "              rdf:ID \"$document_element_id\" ;\n";
+  print OUTPUT "              ldc:is_element_of ldc:$document_id ;\n";                               
+  print OUTPUT "              ldc:modality ldc:$document_element_modality .\n";
 }
+
+close(OUTPUT);
+
+open(OUTPUT, ">output/T101.all.ttl");
 
 #####################################################################################
 # Process T101_ent_mentions.tab
@@ -111,7 +117,7 @@ foreach my $entry( $entries->toarray() ){
 	my $mention = Mention->new();
 	my $span = Span->new(
 	             $entry->get("provenance"),
-	             $document_id,
+	             $document_eid,
 	             $entry->get("textoffset_startchar"),
 	             $entry->get("textoffset_endchar"),
 	         );
@@ -136,6 +142,8 @@ foreach my $entry( $entries->toarray() ){
 # Print entity mentions from T101_ent_mentions.tab in RDF Turtle format
 #####################################################################################
 
+
+
 foreach my $entity($entities->toarray()) {
   #&Super::dump_structure($entity, 'Entity');
   #print "Total mentions: ", scalar $entity->get("MENTIONS")->toarray(), "\n";
@@ -143,16 +151,305 @@ foreach my $entity($entities->toarray()) {
   my $node_id = $entity->get("KBID");
   my $entity_type = $entity->get("TYPE");
   
-  print "\n# Entity aida:N_$node_id\n";
-  print "ldc:$node_id a aif:Entity ;\n";
-  print "  aif:system ldc:LDCModelGenerator ;\n";
+  print OUTPUT "ldc:$node_id a aif:Entity ;\n";
+  print OUTPUT "  aif:system ldc:LDCModelGenerator ;\n";
   
   foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
-  	my $justification_type;
-  	$justification_type = "aif:TextJustification" if($justification_type eq "txt");
-  	die "Undefined \$justification_type" unless $justification_type;
-  	print "  aif:justifiedBy [ a                $justification_type ;"
-  }
+  	my $entity_mention_id = $entity_mention->get("MENTIONID");
+  	my $entity_mention_type = $entity_mention->get("TYPE");
+    my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
+  	my $justification_type = $entity_mention->get("MODALITY");
+  	if($justification_type eq "nil") {
+      print "--skipping over $entity_mention_id due to unknown modality\n";
+      next;
+    }
+  	die("Unknown Justification Type: $justification_type") 
+      if !(  
+             $justification_type eq "txt" || 
+             $justification_type eq "vid" ||
+             $justification_type eq "img"
+          );
+    $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+    $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
+    $justification_type = "aif:ImageJustification" if($justification_type eq "img");
+  	
+  	# FIXME: use a lookup table to get the AIDA ontology-based entity type
+  	# my $type = $types{$entity_mention_type};
+  	my $type = $entity_mention_type;
 
-  getc();
+  	die "Undefined \$justification_type" unless $justification_type;
+  	print OUTPUT "\n\n[ a                rdf:Statement ;\n";
+    print OUTPUT "  rdf:object       $type ;\n";
+    print OUTPUT "  rdf:predicate    rdf:type ;\n";
+    print OUTPUT "  rdf:subject      ldc:$node_id ;\n";
+    print OUTPUT "  aif:confidence   [ a                         aif:Confidence ;\n";
+    print OUTPUT "                     aif:confidenceValue       \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    print OUTPUT "                     aif:system                ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                   ] ;\n";
+    print OUTPUT "  aif:justifiedBy  [ a                         $justification_type ;\n";
+    print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
+    print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                                              ] ;\n";
+    print OUTPUT "                     aif:ID                   \"$entity_mention_id\" ;\n";
+    print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
+    
+    if($justification_type eq "aif:TextJustification") {
+    	my $start = $entity_mention->get("START");
+    	my $end = $entity_mention->get("END");
+    	
+      $start = "1.0" if ($start eq "nil");
+      $end = "1.0" if ($end eq "nil");
+    	
+    	print OUTPUT "                     aif:startOffset          \"$start\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    	print OUTPUT "                     aif:endOffsetInclusive   \"$end\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    }
+    
+    print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                  ] ;\n";
+    print OUTPUT "] .\n"; 
+  }
 }
+
+
+
+#####################################################################################
+# Process T101_evt_mentions.tab
+#####################################################################################
+
+$filename = "data/LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V2.0/data/T101/T101_evt_mentions.tab";
+$filehandler = FileHandler->new($filename);
+$header = $filehandler->get("HEADER");
+$entries = $filehandler->get("ENTRIES"); 
+
+# variable to hold entities
+$entities = Entities->new();
+$i=0;
+foreach my $entry( $entries->toarray() ){
+  $i++;
+  #print "ENTRY # $i:\n", $entry->tostring(), "\n";
+  my $document_eid = $entry->get("provenance");
+  my $thedocumentelement = $documentelements->get("BY_KEY", $document_eid);
+  my $thedocumentelementmodality = $thedocumentelement->get("TYPE");
+  my $document_id = $thedocumentelement->get("DOCUMENTID");
+  my $mention = Mention->new();
+  my $span = Span->new(
+               $entry->get("provenance"),
+               $document_eid,
+               $entry->get("textoffset_startchar"),
+               $entry->get("textoffset_endchar"),
+           );
+  my $justification = Justification->new();
+  $justification->add_span($span);
+  $mention->add_justification($justification);
+  $mention->set("MODALITY", $thedocumentelementmodality);
+  $mention->set("MENTIONID", $entry->get("eventmention_id"));
+  $mention->set("TEXT_STRING", $entry->get("text_string"));
+  $mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
+  $mention->set("TREEID", $entry->get("tree_id"));
+  $mention->set("TYPE", $entry->get("type"));
+  
+  my $entity = $entities->get("BY_KEY", $entry->get("kb_id"));
+  
+  $entity->set("KBID", $entry->get("kb_id")) unless $entity->set("KBID");
+  $entity->set("TYPE", $entry->get("type")) unless $entity->set("TYPE");
+  $entity->add_mention($mention);
+}
+
+#####################################################################################
+# Print entity mentions from T101_evt_mentions.tab in RDF Turtle format
+#####################################################################################
+
+
+
+foreach my $entity($entities->toarray()) {
+  #&Super::dump_structure($entity, 'Entity');
+  #print "Total mentions: ", scalar $entity->get("MENTIONS")->toarray(), "\n";
+
+  my $node_id = $entity->get("KBID");
+  my $entity_type = $entity->get("TYPE");
+  
+  print OUTPUT "\n\nldc:$node_id a aif:Event ;\n";
+  print OUTPUT "  aif:system ldc:LDCModelGenerator ;\n";
+  
+  foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
+    my $entity_mention_id = $entity_mention->get("MENTIONID");
+    my $entity_mention_type = $entity_mention->get("TYPE");
+    my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
+    my $justification_type = $entity_mention->get("MODALITY");
+    
+    if($justification_type eq "nil") {
+    	print "--skipping over $entity_mention_id due to unknown modality\n";
+    	next;
+    }
+    
+    die("Unknown Justification Type: $justification_type") 
+      if !(  
+             $justification_type eq "txt" || 
+             $justification_type eq "vid" ||
+             $justification_type eq "img"
+          );
+    $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+    $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
+    $justification_type = "aif:ImageJustification" if($justification_type eq "img");
+    
+    # FIXME: use a lookup table to get the AIDA ontology-based entity type
+    # my $type = $types{$entity_mention_type};
+    my $type = $entity_mention_type;
+
+    die "Undefined \$justification_type" unless $justification_type;
+    print OUTPUT "\n\n[ a                rdf:Statement ;\n";
+    print OUTPUT "  rdf:object       $type ;\n";
+    print OUTPUT "  rdf:predicate    rdf:type ;\n";
+    print OUTPUT "  rdf:subject      ldc:$node_id ;\n";
+    print OUTPUT "  aif:confidence   [ a                         aif:Confidence ;\n";
+    print OUTPUT "                     aif:confidenceValue       \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    print OUTPUT "                     aif:system                ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                   ] ;\n";
+    print OUTPUT "  aif:justifiedBy  [ a                         $justification_type ;\n";
+    print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
+    print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                                              ] ;\n";
+    print OUTPUT "                     aif:ID                   \"$entity_mention_id\" ;\n";
+    print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
+    
+    if($justification_type eq "aif:TextJustification") {
+      my $start = $entity_mention->get("START");
+      my $end = $entity_mention->get("END");
+      
+      $start = "1.0" if ($start eq "nil");
+      $end = "1.0" if ($end eq "nil");
+      
+      print OUTPUT "                     aif:startOffset          \"$start\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+      print OUTPUT "                     aif:endOffsetInclusive   \"$end\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    }
+    
+    print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                  ] ;\n";
+    print OUTPUT "] .\n"; 
+  }
+}
+
+#####################################################################################
+# Process T101_rel_mentions.tab
+#####################################################################################
+
+$filename = "data/LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V2.0/data/T101/T101_rel_mentions.tab";
+$filehandler = FileHandler->new($filename);
+$header = $filehandler->get("HEADER");
+$entries = $filehandler->get("ENTRIES"); 
+
+# variable to hold entities
+$entities = Entities->new();
+$i=0;
+foreach my $entry( $entries->toarray() ){
+  $i++;
+  #print "ENTRY # $i:\n", $entry->tostring(), "\n";
+  my $document_eid = $entry->get("provenance");
+  my $thedocumentelement = $documentelements->get("BY_KEY", $document_eid);
+  my $thedocumentelementmodality = $thedocumentelement->get("TYPE");
+  my $document_id = $thedocumentelement->get("DOCUMENTID");
+  my $mention = Mention->new();
+  my $span = Span->new(
+               $entry->get("provenance"),
+               $document_eid,
+               $entry->get("textoffset_startchar"),
+               $entry->get("textoffset_endchar"),
+           );
+  my $justification = Justification->new();
+  $justification->add_span($span);
+  $mention->add_justification($justification);
+  $mention->set("MODALITY", $thedocumentelementmodality);
+  $mention->set("MENTIONID", $entry->get("relationmention_id"));
+  $mention->set("TEXT_STRING", $entry->get("text_string"));
+  $mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
+  $mention->set("TREEID", $entry->get("tree_id"));
+  $mention->set("TYPE", $entry->get("type"));
+  
+  my $entity = $entities->get("BY_KEY", $entry->get("kb_id"));
+  
+  $entity->set("KBID", $entry->get("kb_id")) unless $entity->set("KBID");
+  $entity->set("TYPE", $entry->get("type")) unless $entity->set("TYPE");
+  $entity->add_mention($mention);
+}
+
+#####################################################################################
+# Print entity mentions from T101_evt_mentions.tab in RDF Turtle format
+#####################################################################################
+
+
+
+foreach my $entity($entities->toarray()) {
+  #&Super::dump_structure($entity, 'Entity');
+  #print "Total mentions: ", scalar $entity->get("MENTIONS")->toarray(), "\n";
+
+  my $node_id = $entity->get("KBID");
+  my $entity_type = $entity->get("TYPE");
+  
+  print OUTPUT "\n\nldc:$node_id a aif:Relation ;\n";
+  print OUTPUT "  aif:system ldc:LDCModelGenerator ;\n";
+  
+  foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
+    my $entity_mention_id = $entity_mention->get("MENTIONID");
+    my $entity_mention_type = $entity_mention->get("TYPE");
+    my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
+    my $justification_type = $entity_mention->get("MODALITY");
+    
+    if($justification_type eq "nil") {
+      print "--skipping over $entity_mention_id due to unknown modality\n";
+      next;
+    }
+    
+    die("Unknown Justification Type: $justification_type") 
+      if !(  
+             $justification_type eq "txt" || 
+             $justification_type eq "vid" ||
+             $justification_type eq "img"
+          );
+    $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+    $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
+    $justification_type = "aif:ImageJustification" if($justification_type eq "img");
+    
+    # FIXME: use a lookup table to get the AIDA ontology-based entity type
+    # my $type = $types{$entity_mention_type};
+    my $type = $entity_mention_type;
+
+    die "Undefined \$justification_type" unless $justification_type;
+    print OUTPUT "\n\n[ a                rdf:Statement ;\n";
+    print OUTPUT "  rdf:object       $type ;\n";
+    print OUTPUT "  rdf:predicate    rdf:type ;\n";
+    print OUTPUT "  rdf:subject      ldc:$node_id ;\n";
+    print OUTPUT "  aif:confidence   [ a                         aif:Confidence ;\n";
+    print OUTPUT "                     aif:confidenceValue       \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    print OUTPUT "                     aif:system                ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                   ] ;\n";
+    print OUTPUT "  aif:justifiedBy  [ a                         $justification_type ;\n";
+    print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
+    print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                                              ] ;\n";
+    print OUTPUT "                     aif:ID                   \"$entity_mention_id\" ;\n";
+    print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
+    
+    if($justification_type eq "aif:TextJustification") {
+      my $start = $entity_mention->get("START");
+      my $end = $entity_mention->get("END");
+      
+      $start = "1.0" if ($start eq "nil");
+      $end = "1.0" if ($end eq "nil");
+      
+      print OUTPUT "                     aif:startOffset          \"$start\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+      print OUTPUT "                     aif:endOffsetInclusive   \"$end\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+    }
+    
+    print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
+    print OUTPUT "                  ] ;\n";
+    print OUTPUT "] .\n"; 
+  }
+}
+
+
+close(OUTPUT);
+
+
