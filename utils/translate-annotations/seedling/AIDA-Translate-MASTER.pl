@@ -82,7 +82,7 @@ foreach my $document_element($documentelements->toarray()) {
   my $document_element_modality = $document_element->get("TYPE");
   my $document_id = $document_element->get("DOCUMENTID");
   my $node_id = "$document_element_id";
-  print "\n# Document element $document_id and it's parent\n";
+  print "\n# Document element $document_id and its parent\n";
   print "ldc:$node_id rdf:type ldc:document_element ;\n";
   print "              rdf:ID \"$document_element_id\" ;\n";
   print "              ldc:is_element_of ldc:$document_id ;\n";                               
@@ -118,6 +118,7 @@ foreach my $entry( $entries->toarray() ){
 	my $justification = Justification->new();
 	$justification->add_span($span);
 	$mention->add_justification($justification);
+	$mention->set("MODALITY", $thedocumentelementmodality);
   $mention->set("MENTIONID", $entry->get("entitymention_id"));
   $mention->set("TEXT_STRING", $entry->get("text_string"));
   $mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
@@ -143,8 +144,15 @@ foreach my $entity($entities->toarray()) {
   my $entity_type = $entity->get("TYPE");
   
   print "\n# Entity aida:N_$node_id\n";
-  print "aida:N_$node_id a :Entity ;\n";
-  print "              aida:system <LDC:system1> ;\n";
+  print "ldc:$node_id a aif:Entity ;\n";
+  print "  aif:system ldc:LDCModelGenerator ;\n";
+  
+  foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
+  	my $justification_type;
+  	$justification_type = "aif:TextJustification" if($justification_type eq "txt");
+  	die "Undefined \$justification_type" unless $justification_type;
+  	print "  aif:justifiedBy [ a                $justification_type ;"
+  }
 
   getc();
 }

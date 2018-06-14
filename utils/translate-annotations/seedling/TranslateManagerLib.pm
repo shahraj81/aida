@@ -327,6 +327,7 @@ sub new {
   	MENTIONID => undef,
   	TREEID => undef,
   	JUSTIFICATIONS => Justifications->new(),
+  	MODALITY => undef,
   };
   bless($self, $class);
   $self;
