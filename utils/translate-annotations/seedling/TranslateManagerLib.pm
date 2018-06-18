@@ -310,6 +310,12 @@ sub new {
   $self;
 }
 
+sub get_MENTION {
+  my ($self, $mention_id) = @_;
+  my ($matching_mention) = grep {$_->{MENTIONID} eq $mention_id} $self->toarray();
+  $matching_mention || "n/a";
+}
+
 #####################################################################################
 # Mention
 #####################################################################################

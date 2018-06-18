@@ -150,6 +150,8 @@ foreach my $entry( $entries->toarray() ){
 	};
 }
 
+my $all_entities = $entities;
+
 #####################################################################################
 # Print entity mentions from T101_ent_mentions.tab in RDF Turtle format
 #####################################################################################
@@ -278,6 +280,8 @@ foreach my $entry( $entries->toarray() ){
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
 	};
 }
+
+my $all_events = $entities;
 
 #####################################################################################
 # Print entity mentions from T101_evt_mentions.tab in RDF Turtle format
@@ -408,6 +412,8 @@ foreach my $entry( $entries->toarray() ){
 	};
 }
 
+my $all_relations = $entities;
+
 #####################################################################################
 # Print entity mentions from T101_rel_mentions.tab in RDF Turtle format
 #####################################################################################
@@ -506,7 +512,31 @@ foreach my $entry( $entries->toarray() ){
   my $mention_kb_id = $mappings{$mention_id}{KBID};
   my $relation_type = $mappings{$mention_id}{TYPE};
   my $arg_kb_id = $mappings{$arg_id}{KBID};
+  my $relation_node = $all_relations->get("BY_KEY", $mention_kb_id);
+  my $relation_mention = $relation_node->get("MENTIONS")->get("MENTION", $mention_id);
   
+  # BEGIN-FIXME: What justifies the argument of a relation?
+  # As of now, its the source document of the relation mention.
+  my ($justification_source) = $relation_mention->get("SOURCE_DOCUMENT_ELEMENTS");
+  my $justification_type = $relation_mention->get("MODALITY");
+  my $text_string = $relation_mention->get("TEXT_STRING");
+    
+  if($justification_type eq "nil") {
+    print "--skipping over $mention_id due to unknown modality\n";
+    next;
+  }
+    
+  die("Unknown Justification Type: $justification_type") 
+    if !(  
+           $justification_type eq "txt" || 
+           $justification_type eq "vid" ||
+           $justification_type eq "img"
+        );
+  $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+  $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
+  $justification_type = "aif:ImageJustification" if($justification_type eq "img");
+  # END-FIXME
+      
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
   print OUTPUT "  rdf:object       $arg_kb_id ;\n";
   print OUTPUT "  rdf:predicate    $relation_type\_$slot_type ;\n";
@@ -515,6 +545,13 @@ foreach my $entry( $entries->toarray() ){
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
   print OUTPUT "                   ] ;\n";
+  print OUTPUT "  aif:justifiedBy  [ a                        $justification_type ;\n";
+  print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
+  print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+  print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
+  print OUTPUT "                                              ] ;\n";
+  print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
+  print OUTPUT "                  ] ;\n";
   print OUTPUT "  aif:system       ldc:LDCModelGenerator ;\n";
   print OUTPUT "] .\n"; 
 
@@ -541,6 +578,31 @@ foreach my $entry( $entries->toarray() ){
   my $mention_kb_id = $mappings{$mention_id}{KBID};
   my $event_type = $mappings{$mention_id}{TYPE};
   my $arg_kb_id = $mappings{$arg_id}{KBID};
+
+  my $event_node = $all_events->get("BY_KEY", $mention_kb_id);
+  my $event_mention = $event_node->get("MENTIONS")->get("MENTION", $mention_id);
+  
+  # BEGIN-FIXME: What justifies the argument of a relation?
+  # As of now, its the source document of the relation mention.
+  my ($justification_source) = $event_mention->get("SOURCE_DOCUMENT_ELEMENTS");
+  my $justification_type = $event_mention->get("MODALITY");
+  my $text_string = $event_mention->get("TEXT_STRING");
+    
+  if($justification_type eq "nil") {
+    print "--skipping over $mention_id due to unknown modality\n";
+    next;
+  }
+    
+  die("Unknown Justification Type: $justification_type") 
+    if !(  
+           $justification_type eq "txt" || 
+           $justification_type eq "vid" ||
+           $justification_type eq "img"
+        );
+  $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+  $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
+  $justification_type = "aif:ImageJustification" if($justification_type eq "img");
+  # END-FIXME
   
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
   print OUTPUT "  rdf:object       $arg_kb_id ;\n";
@@ -550,6 +612,13 @@ foreach my $entry( $entries->toarray() ){
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
   print OUTPUT "                   ] ;\n";
+  print OUTPUT "  aif:justifiedBy  [ a                        $justification_type ;\n";
+  print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
+  print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+  print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
+  print OUTPUT "                                              ] ;\n";
+  print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
+  print OUTPUT "                  ] ;\n";
   print OUTPUT "  aif:system       ldc:LDCModelGenerator ;\n";
   print OUTPUT "] .\n"; 
 
