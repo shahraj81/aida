@@ -60,7 +60,47 @@ foreach my $entry( $entries->toarray() ){
   $documentelements->add($documentelement, $document_eid) unless $document_eid eq "n/a";
 }
 
+# Load role mappings
 
+my (%role_mapping, %event_relation_type_mapping);
+$filename = "data/nist-role-mapping-compact-20180618.txt";
+$filehandler = FileHandler->new($filename);
+$header = $filehandler->get("HEADER");
+$entries = $filehandler->get("ENTRIES");
+$i=0;
+foreach my $entry( $entries->toarray() ){
+  $i++;
+  #print "ENTRY # $i:\n", $entry->tostring(), "\n";
+  my $ldc_type = $entry->get("ldctype");
+  my $ldc_subtype = $entry->get("ldcsubtype");
+  my $ldc_role = $entry->get("ldcrole");
+  my $nist_type = $entry->get("nisttype");
+  my $nist_subtype = $entry->get("nistsubtype");
+  my $nist_role = $entry->get("nistrole");
+  
+  $event_relation_type_mapping{"$ldc_type.$ldc_subtype"} = "$nist_type.$nist_subtype";
+  
+  my $ldc_fqrolename = "$ldc_type.$ldc_subtype\_$ldc_role";
+  my $nist_fqrolename = "$nist_type.$nist_subtype\_$nist_role";
+  $role_mapping{$ldc_fqrolename} = $nist_fqrolename;
+}
+
+# Load type mappings
+
+my (%entity_type_mapping);
+$filename = "data/nist-type-mapping-20180618.txt";
+$filehandler = FileHandler->new($filename);
+$header = $filehandler->get("HEADER");
+$entries = $filehandler->get("ENTRIES");
+$i=0;
+foreach my $entry( $entries->toarray() ){
+  $i++;
+  #print "ENTRY # $i:\n", $entry->tostring(), "\n";
+  my $ldc_type = $entry->get("LDCTypeOutput");
+  my $nist_type = $entry->get("AIDAType");
+  
+  $entity_type_mapping{$ldc_type} = $nist_type;  
+}
 #####################################################################################
 # Print document and document-element mapping in RDF Turtle format
 #####################################################################################
@@ -189,10 +229,11 @@ foreach my $entity($entities->toarray()) {
   	# FIXME: use a lookup table to get the AIDA ontology-based entity type
   	# my $type = $types{$entity_mention_type};
   	my $type = $entity_mention_type;
-
+	my $nist_type = $entity_type_mapping{$type};
+	
   	die "Undefined \$justification_type" unless $justification_type;
   	print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-    print OUTPUT "  rdf:object       $type ;\n";
+    print OUTPUT "  rdf:object       ldcOnt:$nist_type ;\n";
     print OUTPUT "  rdf:predicate    rdf:type ;\n";
     print OUTPUT "  rdf:subject      ldc:$node_id ;\n";
     print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
@@ -319,13 +360,12 @@ foreach my $entity($entities->toarray()) {
     $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
     $justification_type = "aif:ImageJustification" if($justification_type eq "img");
     
-    # FIXME: use a lookup table to get the AIDA ontology-based entity type
-    # my $type = $types{$entity_mention_type};
     my $type = $entity_mention_type;
+    my $nist_type = $event_relation_type_mapping{$type};
 
     die "Undefined \$justification_type" unless $justification_type;
     print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-    print OUTPUT "  rdf:object       $type ;\n";
+    print OUTPUT "  rdf:object       ldcOnt:$nist_type ;\n";
     print OUTPUT "  rdf:predicate    rdf:type ;\n";
     print OUTPUT "  rdf:subject      ldc:$node_id ;\n";
     print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
@@ -452,13 +492,12 @@ foreach my $entity($entities->toarray()) {
     $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
     $justification_type = "aif:ImageJustification" if($justification_type eq "img");
     
-    # FIXME: use a lookup table to get the AIDA ontology-based entity type
-    # my $type = $types{$entity_mention_type};
     my $type = $entity_mention_type;
+    my $nist_type = $event_relation_type_mapping{$type};
 
     die "Undefined \$justification_type" unless $justification_type;
     print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-    print OUTPUT "  rdf:object       $type ;\n";
+    print OUTPUT "  rdf:object       ldcOnt:$nist_type ;\n";
     print OUTPUT "  rdf:predicate    rdf:type ;\n";
     print OUTPUT "  rdf:subject      ldc:$node_id ;\n";
     print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
@@ -536,10 +575,13 @@ foreach my $entry( $entries->toarray() ){
   $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
   $justification_type = "aif:ImageJustification" if($justification_type eq "img");
   # END-FIXME
+  
+  my $ldc_slot_name =  "$relation_type\_$slot_type";
+  my $nist_slot_type = $role_mapping{$ldc_slot_name};
       
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
   print OUTPUT "  rdf:object       $arg_kb_id ;\n";
-  print OUTPUT "  rdf:predicate    $relation_type\_$slot_type ;\n";
+  print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
   print OUTPUT "  rdf:subject      $mention_kb_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
@@ -604,9 +646,12 @@ foreach my $entry( $entries->toarray() ){
   $justification_type = "aif:ImageJustification" if($justification_type eq "img");
   # END-FIXME
   
+  my $ldc_slot_name =  "$event_type\_$slot_type";
+  my $nist_slot_type = $role_mapping{$ldc_slot_name};
+  
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
   print OUTPUT "  rdf:object       $arg_kb_id ;\n";
-  print OUTPUT "  rdf:predicate    $event_type\_$slot_type ;\n";
+  print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
   print OUTPUT "  rdf:subject      $mention_kb_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
