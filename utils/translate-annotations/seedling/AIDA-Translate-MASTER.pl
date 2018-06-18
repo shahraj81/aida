@@ -139,6 +139,17 @@ close(OUTPUT);
 
 open(OUTPUT, ">output/T101.all.ttl");
 
+my $output_header = "
+\@prefix ldcOnt: <http://darpa.mil/ontologies/SeedlingOntology/> .
+\@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+\@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+\@prefix ldc:   <http://darpa.mil/annotations/ldc/> .
+\@prefix aidaCommon: <http://darpa.mil/ontologies/AidaDomainOntologiesCommon#> .
+\@prefix aif:   <http://www.isi.edu/aida/interchangeOntology#> .
+";
+
+print OUTPUT "$output_header\n";
+
 #####################################################################################
 # Process T101_ent_mentions.tab
 #####################################################################################
@@ -206,7 +217,7 @@ foreach my $entity($entities->toarray()) {
   my $entity_type = $entity->get("TYPE");
   
   print OUTPUT "\n\nldc:$node_id a aif:Entity ;\n";
-  print OUTPUT "  aif:system ldc:LDCModelGenerator ;\n";
+  print OUTPUT "  aif:system ldc:LDCModelGenerator .\n";
   
   foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
   	my $entity_mention_id = $entity_mention->get("MENTIONID");
@@ -214,6 +225,7 @@ foreach my $entity($entities->toarray()) {
     my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
   	my $justification_type = $entity_mention->get("MODALITY");
     my $text_string = $entity_mention->get("TEXT_STRING");
+	$text_string =~ s/"/\\"/g;
   	if($justification_type eq "nil") {
       print "--skipping over $entity_mention_id due to unknown modality\n";
       next;
@@ -338,7 +350,7 @@ foreach my $entity($entities->toarray()) {
   my $entity_type = $entity->get("TYPE");
   
   print OUTPUT "\n\nldc:$node_id a aif:Event ;\n";
-  print OUTPUT "  aif:system ldc:LDCModelGenerator ;\n";
+  print OUTPUT "  aif:system ldc:LDCModelGenerator .\n";
   
   foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
     my $entity_mention_id = $entity_mention->get("MENTIONID");
@@ -346,7 +358,7 @@ foreach my $entity($entities->toarray()) {
     my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
     my $justification_type = $entity_mention->get("MODALITY");
     my $text_string = $entity_mention->get("TEXT_STRING");
-    
+    $text_string =~ s/"/\\"/g;
     if($justification_type eq "nil") {
     	print "--skipping over $entity_mention_id due to unknown modality\n";
     	next;
@@ -470,7 +482,7 @@ foreach my $entity($entities->toarray()) {
   my $entity_type = $entity->get("TYPE");
   
   print OUTPUT "\n\nldc:$node_id a aif:Relation ;\n";
-  print OUTPUT "  aif:system ldc:LDCModelGenerator ;\n";
+  print OUTPUT "  aif:system ldc:LDCModelGenerator .\n";
   
   foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
     my $entity_mention_id = $entity_mention->get("MENTIONID");
@@ -478,7 +490,7 @@ foreach my $entity($entities->toarray()) {
     my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
     my $justification_type = $entity_mention->get("MODALITY");
     my $text_string = $entity_mention->get("TEXT_STRING");
-    
+    $text_string =~ s/"/\\"/g;
     if($justification_type eq "nil") {
       print "--skipping over $entity_mention_id due to unknown modality\n";
       next;
@@ -561,7 +573,7 @@ foreach my $entry( $entries->toarray() ){
   my ($justification_source) = $relation_mention->get("SOURCE_DOCUMENT_ELEMENTS");
   my $justification_type = $relation_mention->get("MODALITY");
   my $text_string = $relation_mention->get("TEXT_STRING");
-    
+  $text_string =~ s/"/\\"/g;  
   if($justification_type eq "nil") {
     print "--skipping over $mention_id due to unknown modality\n";
     next;
@@ -582,9 +594,9 @@ foreach my $entry( $entries->toarray() ){
   my $nist_slot_type = $role_mapping{$ldc_slot_name};
       
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-  print OUTPUT "  rdf:object       $arg_kb_id ;\n";
+  print OUTPUT "  rdf:object       ldc:$arg_kb_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
-  print OUTPUT "  rdf:subject      $mention_kb_id ;\n";
+  print OUTPUT "  rdf:subject      ldc:$mention_kb_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
@@ -631,7 +643,7 @@ foreach my $entry( $entries->toarray() ){
   my ($justification_source) = $event_mention->get("SOURCE_DOCUMENT_ELEMENTS");
   my $justification_type = $event_mention->get("MODALITY");
   my $text_string = $event_mention->get("TEXT_STRING");
-    
+  $text_string =~ s/"/\\"/g;  
   if($justification_type eq "nil") {
     print "--skipping over $mention_id due to unknown modality\n";
     next;
@@ -652,9 +664,9 @@ foreach my $entry( $entries->toarray() ){
   my $nist_slot_type = $role_mapping{$ldc_slot_name};
   
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-  print OUTPUT "  rdf:object       $arg_kb_id ;\n";
+  print OUTPUT "  rdf:object       ldc:$arg_kb_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
-  print OUTPUT "  rdf:subject      $mention_kb_id ;\n";
+  print OUTPUT "  rdf:subject      ldc:$mention_kb_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
