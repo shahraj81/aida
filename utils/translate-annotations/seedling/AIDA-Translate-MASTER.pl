@@ -194,12 +194,18 @@ foreach my $entry( $entries->toarray() ){
 	$entity->add_mention($mention);
 	
 	$mappings{$mention->get("MENTIONID")} = {
+		MENTIONID => $mention->get("MENTIONID"),
+    ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE"),
+		SOURCE => $document_id,
 	};
 	$mappings{$mention->get("ENTITYID")} = {
+    MENTIONID => $mention->get("MENTIONID"),
+    ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE"),
+		SOURCE => $document_id,
 	};
 }
 
@@ -327,12 +333,18 @@ foreach my $entry( $entries->toarray() ){
   $entity->add_mention($mention);
   
   $mappings{$mention->get("MENTIONID")} = {
+    MENTIONID => $mention->get("MENTIONID"),
+    ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
+		SOURCE => $document_id,
 	};
   $mappings{$mention->get("EVENTID")} = {
+    MENTIONID => $mention->get("MENTIONID"),
+    ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
+    SOURCE => $document_id,
 	};
 }
 
@@ -457,12 +469,18 @@ foreach my $entry( $entries->toarray() ){
   $entity->add_mention($mention);
   
   $mappings{$mention->get("MENTIONID")} = {
+    MENTIONID => $mention->get("MENTIONID"),
+    ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
+    SOURCE => $document_id,
 	};
   $mappings{$mention->get("RELATIONID")} = {
+    MENTIONID => $mention->get("MENTIONID"),
+    ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
+    SOURCE => $document_id,
 	};
 }
 
@@ -559,23 +577,27 @@ $i=0;
 foreach my $entry( $entries->toarray() ){
   $i++;
   #print "ENTRY # $i:\n", $entry->tostring(), "\n";
-  my $mention_id = $entry->get("relationmention_id");
-  my $slot_type = $entry->get("slot_type");
-  my $arg_id = $entry->get("arg_id");
-  my $mention_kb_id = $mappings{$mention_id}{KBID};
-  my $relation_type = $mappings{$mention_id}{TYPE};
-  my $arg_kb_id = $mappings{$arg_id}{KBID};
-  my $relation_node = $all_relations->get("BY_KEY", $mention_kb_id);
-  my $relation_mention = $relation_node->get("MENTIONS")->get("MENTION", $mention_id);
+  my $relationmention_id = $entry->get("relationmention_id");
+  my $relationmention_doceid = $mappings{$relationmention_id}{SOURCE};
   
-  # BEGIN-FIXME: What justifies the argument of a relation?
-  # As of now, its the source document of the relation mention.
-  my ($justification_source) = $relation_mention->get("SOURCE_DOCUMENT_ELEMENTS");
-  my $justification_type = $relation_mention->get("MODALITY");
-  my $text_string = $relation_mention->get("TEXT_STRING");
-  $text_string =~ s/"/\\"/g;  
+  my $relation_type = $mappings{$relationmention_id}{TYPE}; 
+  my $slot_type = $entry->get("slot_type");
+  my $ldc_slot_name =  "$relation_type\_$slot_type";
+  my $nist_slot_type = $role_mapping{$ldc_slot_name};  
+
+  my $argument_id = $entry->get("arg_id");
+  my $argumentmention_id = $mappings{$argument_id}{MENTIONID};
+  my $argumentmention_doceid = $mappings{$argument_id}{SOURCE};
+  
+  die("DOCEIDs different: $relationmention_doceid, $argumentmention_doceid in ", $entry->tostring(), "\n")
+    if ($relationmention_doceid ne $argumentmention_doceid);
+  
+  my $justification_source = $argumentmention_doceid;
+  
+  my $thedocumentelement = $documentelements->get("BY_KEY", $justification_source);
+  my $justification_type = $thedocumentelement->get("TYPE");
   if($justification_type eq "nil") {
-    print "--skipping over $mention_id due to unknown modality\n";
+    print "--skipping over $relationmention_id due to unknown modality\n";
     next;
   }
     
@@ -590,13 +612,11 @@ foreach my $entry( $entries->toarray() ){
   $justification_type = "aif:ImageJustification" if($justification_type eq "img");
   # END-FIXME
   
-  my $ldc_slot_name =  "$relation_type\_$slot_type";
-  my $nist_slot_type = $role_mapping{$ldc_slot_name};
       
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-  print OUTPUT "  rdf:object       ldc:$arg_kb_id ;\n";
+  print OUTPUT "  rdf:object       $argumentmention_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
-  print OUTPUT "  rdf:subject      ldc:$mention_kb_id ;\n";
+  print OUTPUT "  rdf:subject      $relationmention_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
@@ -628,45 +648,30 @@ $i=0;
 foreach my $entry( $entries->toarray() ){
   $i++;
   #print "ENTRY # $i:\n", $entry->tostring(), "\n";
-  my $mention_id = $entry->get("eventmention_id");
+  my $eventmention_id = $entry->get("eventnmention_id");
+  my $eventmention_doceid = $mappings{$eventmention_id}{SOURCE};
+  
+  my $event_type = $mappings{$eventmention_id}{TYPE}; 
   my $slot_type = $entry->get("slot_type");
-  my $arg_id = $entry->get("arg_id");
-  my $mention_kb_id = $mappings{$mention_id}{KBID};
-  my $event_type = $mappings{$mention_id}{TYPE};
-  my $arg_kb_id = $mappings{$arg_id}{KBID};
-
-  my $event_node = $all_events->get("BY_KEY", $mention_kb_id);
-  my $event_mention = $event_node->get("MENTIONS")->get("MENTION", $mention_id);
-  
-  # BEGIN-FIXME: What justifies the argument of a relation?
-  # As of now, its the source document of the relation mention.
-  my ($justification_source) = $event_mention->get("SOURCE_DOCUMENT_ELEMENTS");
-  my $justification_type = $event_mention->get("MODALITY");
-  my $text_string = $event_mention->get("TEXT_STRING");
-  $text_string =~ s/"/\\"/g;  
-  if($justification_type eq "nil") {
-    print "--skipping over $mention_id due to unknown modality\n";
-    next;
-  }
-    
-  die("Unknown Justification Type: $justification_type") 
-    if !(  
-           $justification_type eq "txt" || 
-           $justification_type eq "vid" ||
-           $justification_type eq "img"
-        );
-  $justification_type = "aif:TextJustification" if($justification_type eq "txt");
-  $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
-  $justification_type = "aif:ImageJustification" if($justification_type eq "img");
-  # END-FIXME
-  
   my $ldc_slot_name =  "$event_type\_$slot_type";
-  my $nist_slot_type = $role_mapping{$ldc_slot_name};
+  my $nist_slot_type = $role_mapping{$ldc_slot_name};  
+
+  my $argument_id = $entry->get("arg_id");
+  my $argumentmention_id = $mappings{$argument_id}{MENTIONID};
+  my $argumentmention_doceid = $mappings{$argument_id}{SOURCE};
+  
+  die("DOCEIDs different: $eventmention_doceid, $argumentmention_doceid in ", $entry->tostring(), "\n")
+    if ($eventmention_doceid ne $argumentmention_doceid);
+  
+  my $justification_source = $argumentmention_doceid;
+  
+  my $thedocumentelement = $documentelements->get("BY_KEY", $justification_source);
+  my $justification_type = $thedocumentelement->get("TYPE");  
   
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-  print OUTPUT "  rdf:object       ldc:$arg_kb_id ;\n";
+  print OUTPUT "  rdf:object       $argumentmention_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
-  print OUTPUT "  rdf:subject      ldc:$mention_kb_id ;\n";
+  print OUTPUT "  rdf:subject      $eventmention_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
