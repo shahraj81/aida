@@ -128,7 +128,7 @@ foreach my $document_element($documentelements->toarray()) {
   my $document_element_modality = $document_element->get("TYPE");
   my $document_id = $document_element->get("DOCUMENTID");
   my $node_id = "$document_element_id";
-  print OUTPUT "\n# Document element $document_id and its parent\n";
+  print OUTPUT "\n# Document element $document_element_id and its parent\n";
   print OUTPUT "ldc:$node_id rdf:type ldc:document_element ;\n";
   print OUTPUT "              rdf:ID \"$document_element_id\" ;\n";
   print OUTPUT "              ldc:is_element_of ldc:$document_id ;\n";                               
@@ -198,14 +198,16 @@ foreach my $entry( $entries->toarray() ){
     ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE"),
-		SOURCE => $document_id,
+		SOURCEDOCID => $document_id,
+		SOURCEDOCEID => $document_eid,
 	};
 	$mappings{$mention->get("ENTITYID")} = {
     MENTIONID => $mention->get("MENTIONID"),
     ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE"),
-		SOURCE => $document_id,
+    SOURCEDOCID => $document_id,
+    SOURCEDOCEID => $document_eid,
 	};
 }
 
@@ -240,9 +242,12 @@ foreach my $entity($entities->toarray()) {
       if !(  
              $justification_type eq "txt" || 
              $justification_type eq "vid" ||
-             $justification_type eq "img"
+             $justification_type eq "img" ||
+             $justification_type eq "psm" ||
+             $justification_type eq "ltf"
           );
-    $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+    $justification_type = "aif:TextJustification" 
+      if($justification_type eq "txt" || $justification_type eq "psm" || $justification_type eq "ltf");
     $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
     $justification_type = "aif:ImageJustification" if($justification_type eq "img");
   	
@@ -265,13 +270,13 @@ foreach my $entity($entities->toarray()) {
     print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
     print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
     print OUTPUT "                                              ] ;\n";
-    print OUTPUT "                     aif:ID                   \"$entity_mention_id\" ;\n";
-    print OUTPUT "                     aif:textString           \"$text_string\" ;\n";
+    print OUTPUT "                     aif:ID                   ldc:$entity_mention_id ;\n";
+#    print OUTPUT "                     aif:textString           \"$text_string\" ;\n";
     print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
     
     if($justification_type eq "aif:TextJustification") {
-    	my $start = $entity_mention->get("START");
-    	my $end = $entity_mention->get("END");
+    	my ($start) = $entity_mention->get("START");
+    	my ($end) = $entity_mention->get("END");
     	
       $start = "1.0" if ($start eq "nil");
       $end = "1.0" if ($end eq "nil");
@@ -337,14 +342,16 @@ foreach my $entry( $entries->toarray() ){
     ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
-		SOURCE => $document_id,
+    SOURCEDOCID => $document_id,
+    SOURCEDOCEID => $document_eid,
 	};
   $mappings{$mention->get("EVENTID")} = {
     MENTIONID => $mention->get("MENTIONID"),
     ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
-    SOURCE => $document_id,
+    SOURCEDOCID => $document_id,
+    SOURCEDOCEID => $document_eid,
 	};
 }
 
@@ -380,9 +387,12 @@ foreach my $entity($entities->toarray()) {
       if !(  
              $justification_type eq "txt" || 
              $justification_type eq "vid" ||
-             $justification_type eq "img"
+             $justification_type eq "img" ||
+             $justification_type eq "psm" ||
+             $justification_type eq "ltf"
           );
-    $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+    $justification_type = "aif:TextJustification" 
+      if($justification_type eq "txt" || $justification_type eq "psm" || $justification_type eq "ltf");
     $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
     $justification_type = "aif:ImageJustification" if($justification_type eq "img");
     
@@ -403,13 +413,13 @@ foreach my $entity($entities->toarray()) {
     print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
     print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
     print OUTPUT "                                              ] ;\n";
-    print OUTPUT "                     aif:ID                   \"$entity_mention_id\" ;\n";
-    print OUTPUT "                     aif:textString           \"$text_string\" ;\n";
+    print OUTPUT "                     aif:ID                   ldc:$entity_mention_id ;\n";
+#    print OUTPUT "                     aif:textString           \"$text_string\" ;\n";
     print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
     
     if($justification_type eq "aif:TextJustification") {
-      my $start = $entity_mention->get("START");
-      my $end = $entity_mention->get("END");
+      my ($start) = $entity_mention->get("START");
+      my ($end) = $entity_mention->get("END");
       
       $start = "1.0" if ($start eq "nil");
       $end = "1.0" if ($end eq "nil");
@@ -473,14 +483,16 @@ foreach my $entry( $entries->toarray() ){
     ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
-    SOURCE => $document_id,
+    SOURCEDOCID => $document_id,
+    SOURCEDOCEID => $document_eid,
 	};
   $mappings{$mention->get("RELATIONID")} = {
     MENTIONID => $mention->get("MENTIONID"),
     ENTITYID => $mention->get("ENTITYID"),
 		KBID => $entity->get("KBID"),
 		TYPE => $mention->get("TYPE").".".$mention->get("SUBTYPE"),
-    SOURCE => $document_id,
+    SOURCEDOCID => $document_id,
+    SOURCEDOCEID => $document_eid,
 	};
 }
 
@@ -489,8 +501,6 @@ my $all_relations = $entities;
 #####################################################################################
 # Print entity mentions from T101_rel_mentions.tab in RDF Turtle format
 #####################################################################################
-
-
 
 foreach my $entity($entities->toarray()) {
   #&Super::dump_structure($entity, 'Entity');
@@ -518,9 +528,12 @@ foreach my $entity($entities->toarray()) {
       if !(  
              $justification_type eq "txt" || 
              $justification_type eq "vid" ||
-             $justification_type eq "img"
+             $justification_type eq "img" ||
+             $justification_type eq "psm" ||
+             $justification_type eq "ltf"
           );
-    $justification_type = "aif:TextJustification" if($justification_type eq "txt");
+    $justification_type = "aif:TextJustification" 
+      if($justification_type eq "txt" || $justification_type eq "psm" || $justification_type eq "ltf");
     $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
     $justification_type = "aif:ImageJustification" if($justification_type eq "img");
     
@@ -541,13 +554,13 @@ foreach my $entity($entities->toarray()) {
     print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
     print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
     print OUTPUT "                                              ] ;\n";
-    print OUTPUT "                     aif:ID                   \"$entity_mention_id\" ;\n";
-    print OUTPUT "                     aif:textString           \"$text_string\" ;\n";
+    print OUTPUT "                     aif:ID                   ldc:$entity_mention_id ;\n";
+#    print OUTPUT "                     aif:textString           \"$text_string\" ;\n";
     print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
     
     if($justification_type eq "aif:TextJustification") {
-      my $start = $entity_mention->get("START");
-      my $end = $entity_mention->get("END");
+      my ($start) = $entity_mention->get("START");
+      my ($end) = $entity_mention->get("END");
       
       $start = "1.0" if ($start eq "nil");
       $end = "1.0" if ($end eq "nil");
@@ -578,7 +591,9 @@ foreach my $entry( $entries->toarray() ){
   $i++;
   #print "ENTRY # $i:\n", $entry->tostring(), "\n";
   my $relationmention_id = $entry->get("relationmention_id");
-  my $relationmention_doceid = $mappings{$relationmention_id}{SOURCE};
+  my $relationmention_doceid = "nil";
+  $relationmention_doceid = $mappings{$relationmention_id}{SOURCEDOCEID}
+     if $mappings{$relationmention_id}{SOURCEDOCEID};
   
   my $relation_type = $mappings{$relationmention_id}{TYPE}; 
   my $slot_type = $entry->get("slot_type");
@@ -587,47 +602,68 @@ foreach my $entry( $entries->toarray() ){
 
   my $argument_id = $entry->get("arg_id");
   my $argumentmention_id = $mappings{$argument_id}{MENTIONID};
-  my $argumentmention_doceid = $mappings{$argument_id}{SOURCE};
+  my $argumentmention_doceid = "nil";
+  $argumentmention_doceid = $mappings{$argument_id}{SOURCEDOCEID} 
+    if $mappings{$argument_id}{SOURCEDOCEID};
   
-  die("DOCEIDs different: $relationmention_doceid, $argumentmention_doceid in ", $entry->tostring(), "\n")
-    if ($relationmention_doceid ne $argumentmention_doceid);
-  
-  my $justification_source = $argumentmention_doceid;
-  
-  my $thedocumentelement = $documentelements->get("BY_KEY", $justification_source);
-  my $justification_type = $thedocumentelement->get("TYPE");
-  if($justification_type eq "nil") {
-    print "--skipping over $relationmention_id due to unknown modality\n";
-    next;
+  next if ($relationmention_doceid eq "nil" || $argumentmention_doceid eq "nil");    
+
+  if($argumentmention_doceid ne $relationmention_doceid) {
+    # Match if the docmentID is the same
+    if($mappings{$relationmention_id}{SOURCEDOCID} ne $mappings{$argument_id}{SOURCEDOCID}) {
+      print "Justification spans across multiple documents:\n", $entry->tostring(), "\n";
+      next;
+    }
   }
-    
-  die("Unknown Justification Type: $justification_type") 
-    if !(  
-           $justification_type eq "txt" || 
-           $justification_type eq "vid" ||
-           $justification_type eq "img"
-        );
-  $justification_type = "aif:TextJustification" if($justification_type eq "txt");
-  $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
-  $justification_type = "aif:ImageJustification" if($justification_type eq "img");
-  # END-FIXME
   
+  my @justification_sources = keys {map {$_=>1} 
+                                ($argumentmention_doceid, $relationmention_doceid)};
+  
+  unless(@justification_sources) {
+  	print "No justification found:\n", $entry->tostring(), "\n";
+  	next;
+  }
       
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-  print OUTPUT "  rdf:object       $argumentmention_id ;\n";
+  print OUTPUT "  rdf:object       ldc:$argumentmention_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
-  print OUTPUT "  rdf:subject      $relationmention_id ;\n";
+  print OUTPUT "  rdf:subject      ldc:$relationmention_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
   print OUTPUT "                   ] ;\n";
-  print OUTPUT "  aif:justifiedBy  [ a                        $justification_type ;\n";
-  print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
-  print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
-  print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
-  print OUTPUT "                                              ] ;\n";
-  print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
-  print OUTPUT "                  ] ;\n";
+  
+  
+  foreach my $justification_source(@justification_sources) {
+	  my $thedocumentelement = $documentelements->get("BY_KEY", $justification_source);
+	  my $justification_type = $thedocumentelement->get("TYPE");
+	  if($justification_type eq "nil") {
+	    print "--skipping over $relationmention_id due to unknown modality\n";
+	    next;
+	  }
+	    
+	  die("Unknown Justification Type: $justification_type\n for: ", $entry->tostring(), "\n") 
+	    if !(  
+	           $justification_type eq "txt" || 
+	           $justification_type eq "vid" ||
+	           $justification_type eq "img" ||
+             $justification_type eq "psm" ||
+             $justification_type eq "ltf"
+          );
+    $justification_type = "aif:TextJustification" 
+      if($justification_type eq "txt" || $justification_type eq "psm" || $justification_type eq "ltf");
+	  $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
+	  $justification_type = "aif:ImageJustification" if($justification_type eq "img");
+	  
+	  print OUTPUT "  aif:justifiedBy  [ a                        $justification_type ;\n";
+	  print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
+	  print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+	  print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
+	  print OUTPUT "                                              ] ;\n";
+	  print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
+	  print OUTPUT "                  ] ;\n";
+  }
+
   print OUTPUT "  aif:system       ldc:LDCModelGenerator ;\n";
   print OUTPUT "] .\n"; 
 
@@ -648,8 +684,10 @@ $i=0;
 foreach my $entry( $entries->toarray() ){
   $i++;
   #print "ENTRY # $i:\n", $entry->tostring(), "\n";
-  my $eventmention_id = $entry->get("eventnmention_id");
-  my $eventmention_doceid = $mappings{$eventmention_id}{SOURCE};
+  my $eventmention_id = $entry->get("eventmention_id");
+  my $eventmention_doceid = "nil";
+  $eventmention_doceid = $mappings{$eventmention_id}{SOURCEDOCEID}
+     if $mappings{$eventmention_id}{SOURCEDOCEID};
   
   my $event_type = $mappings{$eventmention_id}{TYPE}; 
   my $slot_type = $entry->get("slot_type");
@@ -658,31 +696,67 @@ foreach my $entry( $entries->toarray() ){
 
   my $argument_id = $entry->get("arg_id");
   my $argumentmention_id = $mappings{$argument_id}{MENTIONID};
-  my $argumentmention_doceid = $mappings{$argument_id}{SOURCE};
+  my $argumentmention_doceid = "nil";
+  $argumentmention_doceid = $mappings{$argument_id}{SOURCEDOCEID} 
+    if $mappings{$argument_id}{SOURCEDOCEID};
+
+  next if ($eventmention_doceid eq "nil" || $argumentmention_doceid eq "nil");
   
-  die("DOCEIDs different: $eventmention_doceid, $argumentmention_doceid in ", $entry->tostring(), "\n")
-    if ($eventmention_doceid ne $argumentmention_doceid);
+  if($argumentmention_doceid ne $eventmention_doceid) {
+  	# Match if the docmentID is the same
+  	if($mappings{$eventmention_id}{SOURCEDOCID} ne $mappings{$argument_id}{SOURCEDOCID}) {
+  		print "Justification spans across multiple documents:\n", $entry->tostring(), "\n";
+  		next;
+  	}
+  }
   
-  my $justification_source = $argumentmention_doceid;
-  
-  my $thedocumentelement = $documentelements->get("BY_KEY", $justification_source);
-  my $justification_type = $thedocumentelement->get("TYPE");  
+  my @justification_sources = keys {map {$_=>1} 
+                                ($argumentmention_doceid, $eventmention_doceid)};
+                                
+  unless(@justification_sources) {
+    print "No justification found:\n", $entry->tostring(), "\n";
+    next;
+  }
   
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
-  print OUTPUT "  rdf:object       $argumentmention_id ;\n";
+  print OUTPUT "  rdf:object       ldc:$argumentmention_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
-  print OUTPUT "  rdf:subject      $eventmention_id ;\n";
+  print OUTPUT "  rdf:subject      ldc:$eventmention_id ;\n";
   print OUTPUT "  aif:confidence   [ a                        aif:Confidence ;\n";
   print OUTPUT "                     aif:confidenceValue      \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
   print OUTPUT "                     aif:system               ldc:LDCModelGenerator ;\n";
   print OUTPUT "                   ] ;\n";
-  print OUTPUT "  aif:justifiedBy  [ a                        $justification_type ;\n";
-  print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
-  print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
-  print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
-  print OUTPUT "                                              ] ;\n";
-  print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
-  print OUTPUT "                  ] ;\n";
+  
+  foreach my $justification_source(@justification_sources) {
+	  my $thedocumentelement = $documentelements->get("BY_KEY", $justification_source);
+	  my $justification_type = $thedocumentelement->get("TYPE");  
+	  if($justification_type eq "nil") {
+	    print "--skipping over $eventmention_id due to unknown modality\n";
+	    next;
+	  }
+	    
+	  die("Unknown Justification Type: $justification_type\n for: ", $entry->tostring(), "\n") 
+	    if !(  
+	           $justification_type eq "txt" || 
+	           $justification_type eq "vid" ||
+	           $justification_type eq "img" ||
+             $justification_type eq "psm" ||
+             $justification_type eq "ltf"
+          );
+    $justification_type = "aif:TextJustification" 
+      if($justification_type eq "txt" || $justification_type eq "psm" || $justification_type eq "ltf");
+	  $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
+	  $justification_type = "aif:ImageJustification" if($justification_type eq "img");
+	  
+	  print OUTPUT "  aif:justifiedBy  [ a                        $justification_type ;\n";
+	  print OUTPUT "                     aif:confidence           [ a                       aif:Confidence ;\n";
+	  print OUTPUT "                                                aif:confidenceValue    \"1.0\"^^<http://www.w3.org/2001/XMLSchema#double> ;\n";
+	  print OUTPUT "                                                aif:system              ldc:LDCModelGenerator ;\n";
+	  print OUTPUT "                                              ] ;\n";
+	  print OUTPUT "                     aif:source               \"$justification_source\" ;\n";
+	  print OUTPUT "                  ] ;\n";
+  }
+  
   print OUTPUT "  aif:system       ldc:LDCModelGenerator ;\n";
   print OUTPUT "] .\n"; 
 

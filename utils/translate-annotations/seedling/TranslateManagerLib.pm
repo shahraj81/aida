@@ -352,7 +352,32 @@ sub get_SOURCE_DOCUMENTS {
 			push(@source_docs, $span->get("DOCUMENTID"));
 		}
 	}
+	push (@source_docs, "nil") unless scalar @source_docs;
 	@source_docs;
+}
+
+sub get_START {
+	my ($self) = @_;
+	my @starts;
+	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+    foreach my $span($justification->get("SPANS")->toarray()) {
+      push(@starts, $span->get("START"));
+    }
+  }
+  push(@starts, "nil") unless scalar @starts;
+	@starts;
+}
+
+sub get_END {
+  my ($self) = @_;
+  my @ends;
+  foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+    foreach my $span($justification->get("SPANS")->toarray()) {
+      push(@ends, $span->get("END"));
+    }
+  }
+  push(@ends, "nil") unless scalar @ends;
+  @ends;
 }
 
 sub get_SOURCE_DOCUMENT_ELEMENTS {
