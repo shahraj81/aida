@@ -455,6 +455,8 @@ use parent -norequire, 'Super';
 
 sub new {
 	my ($class, $documentid, $documenteid, $start, $end) = @_;
+	$start = "nil" if $start eq "";
+	$end = "nil" if $end eq "";
 	my $self = {
 		CLASS => 'Span',
 		DOCUMENTID => $documentid,
