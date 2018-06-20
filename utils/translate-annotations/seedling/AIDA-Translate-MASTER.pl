@@ -3,6 +3,9 @@ use strict;
 
 use TranslateManagerLib;
 
+my $TOPIC = shift;
+$TOPIC = "T101" unless $TOPIC; 
+
 my $annotations_dir = "data/LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V3.0";
 
 my ($filename, $filehandler, $header, $entries, $i);
@@ -137,7 +140,7 @@ foreach my $document_element($documentelements->toarray()) {
 
 close(OUTPUT);
 
-open(OUTPUT, ">output/T101.all.ttl");
+open(OUTPUT, ">output/$TOPIC.all.ttl");
 
 my $output_header = "
 \@prefix ldcOnt: <http://darpa.mil/ontologies/SeedlingOntology/> .
@@ -154,7 +157,7 @@ print OUTPUT "$output_header\n";
 # Process T101_ent_mentions.tab
 #####################################################################################
 
-$filename = "$annotations_dir/data/T101/T101_ent_mentions.tab";
+$filename = "$annotations_dir/data/$TOPIC/$TOPIC\_ent_mentions.tab";
 $filehandler = FileHandler->new($filename);
 $header = $filehandler->get("HEADER");
 $entries = $filehandler->get("ENTRIES"); 
@@ -297,7 +300,7 @@ foreach my $entity($entities->toarray()) {
 # Process T101_evt_mentions.tab
 #####################################################################################
 
-$filename = "$annotations_dir/data/T101/T101_evt_mentions.tab";
+$filename = "$annotations_dir/data/$TOPIC/$TOPIC\_evt_mentions.tab";
 $filehandler = FileHandler->new($filename);
 $header = $filehandler->get("HEADER");
 $entries = $filehandler->get("ENTRIES"); 
@@ -438,7 +441,7 @@ foreach my $entity($entities->toarray()) {
 # Process T101_rel_mentions.tab
 #####################################################################################
 
-$filename = "$annotations_dir/data/T101/T101_rel_mentions.tab";
+$filename = "$annotations_dir/data/$TOPIC/$TOPIC\_rel_mentions.tab";
 $filehandler = FileHandler->new($filename);
 $header = $filehandler->get("HEADER");
 $entries = $filehandler->get("ENTRIES"); 
@@ -579,7 +582,7 @@ foreach my $entity($entities->toarray()) {
 # Process T101_rel_slots.tab and print in turle-RDF format
 #####################################################################################
 
-$filename = "$annotations_dir/data/T101/T101_rel_slots.tab";
+$filename = "$annotations_dir/data/$TOPIC/$TOPIC\_rel_slots.tab";
 $filehandler = FileHandler->new($filename);
 $header = $filehandler->get("HEADER");
 $entries = $filehandler->get("ENTRIES"); 
@@ -673,7 +676,7 @@ foreach my $entry( $entries->toarray() ){
 # Process T101_evt_slots.tab and print in turle-RDF format
 #####################################################################################
 
-$filename = "$annotations_dir/data/T101/T101_evt_slots.tab";
+$filename = "$annotations_dir/data/$TOPIC/$TOPIC\_evt_slots.tab";
 $filehandler = FileHandler->new($filename);
 $header = $filehandler->get("HEADER");
 $entries = $filehandler->get("ENTRIES"); 
