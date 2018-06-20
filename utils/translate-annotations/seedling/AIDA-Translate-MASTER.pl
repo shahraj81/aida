@@ -233,16 +233,16 @@ foreach my $entity($entities->toarray()) {
   foreach my $entity_mention($entity->get("MENTIONS")->toarray()) {
   	my $entity_mention_id = $entity_mention->get("MENTIONID");
   	my $entity_mention_type = $entity_mention->get("TYPE");
-    my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
+    	my ($justification_source) = $entity_mention->get("SOURCE_DOCUMENT_ELEMENTS");
   	my $justification_type = $entity_mention->get("MODALITY");
-    my $text_string = $entity_mention->get("TEXT_STRING");
+    	my $text_string = $entity_mention->get("TEXT_STRING");
 	$text_string =~ s/"/\\"/g;
   	if($justification_type eq "nil") {
-      print "--skipping over $entity_mention_id due to unknown modality\n";
-      next;
-    }
+     	print "--skipping over $entity_mention_id due to unknown modality\n";
+      	next;
+  }
   	die("Unknown Justification Type: $justification_type") 
-      if !(  
+      	if !(  
              $justification_type eq "txt" || 
              $justification_type eq "vid" ||
              $justification_type eq "img" ||
@@ -254,10 +254,10 @@ foreach my $entity($entities->toarray()) {
     $justification_type = "aif:ShotVideoJustification" if($justification_type eq "vid");
     $justification_type = "aif:ImageJustification" if($justification_type eq "img");
   	
-  	# FIXME: use a lookup table to get the AIDA ontology-based entity type
-  	# my $type = $types{$entity_mention_type};
+	# FIXME: Usage a package for mapping instead of a pure lookup
   	my $type = $entity_mention_type;
 	my $nist_type = $entity_type_mapping{$type};
+	next unless $nist_type;
 	
   	die "Undefined \$justification_type" unless $justification_type;
   	print OUTPUT "\n\n[ a                rdf:Statement ;\n";
@@ -401,6 +401,7 @@ foreach my $entity($entities->toarray()) {
     
     my $type = $entity_mention_type;
     my $nist_type = $event_relation_type_mapping{$type};
+    next unless $nist_type;
 
     die "Undefined \$justification_type" unless $justification_type;
     print OUTPUT "\n\n[ a                rdf:Statement ;\n";
@@ -542,6 +543,7 @@ foreach my $entity($entities->toarray()) {
     
     my $type = $entity_mention_type;
     my $nist_type = $event_relation_type_mapping{$type};
+    next unless $nist_type;
 
     die "Undefined \$justification_type" unless $justification_type;
     print OUTPUT "\n\n[ a                rdf:Statement ;\n";
@@ -627,6 +629,8 @@ foreach my $entry( $entries->toarray() ){
   	next;
   }
       
+  next unless $nist_slot_type;
+
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
   print OUTPUT "  rdf:object       ldc:$argumentmention_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";
@@ -721,6 +725,8 @@ foreach my $entry( $entries->toarray() ){
     next;
   }
   
+  next unless $nist_slot_type;
+
   print OUTPUT "\n\n[ a                rdf:Statement ;\n";
   print OUTPUT "  rdf:object       ldc:$argumentmention_id ;\n";
   print OUTPUT "  rdf:predicate    ldcOnt:$nist_slot_type ;\n";

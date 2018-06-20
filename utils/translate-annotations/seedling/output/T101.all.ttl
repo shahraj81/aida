@@ -15658,26 +15658,6 @@ ldc:E0034 a aif:Entity ;
 ] .
 
 
-[ a                rdf:Statement ;
-  rdf:object       ldcOnt: ;
-  rdf:predicate    rdf:type ;
-  rdf:subject      ldc:E0034 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:justifiedBy  [ a                        aif:ImageJustification ;
-                     aif:confidence           [ a                       aif:Confidence ;
-                                                aif:confidenceValue    "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                                                aif:system              ldc:LDCModelGenerator ;
-                                              ] ;
-                     aif:ID                   ldc:EM785734.000758 ;
-                     aif:source               "HC00050FF" ;
-                     aif:system               ldc:LDCModelGenerator ;
-                  ] ;
-] .
-
-
 ldc:E0081 a aif:Entity ;
   aif:system ldc:LDCModelGenerator .
 
@@ -18696,26 +18676,6 @@ ldc:NIL53.787892 a aif:Entity ;
 
 ldc:NIL1225.788114 a aif:Entity ;
   aif:system ldc:LDCModelGenerator .
-
-
-[ a                rdf:Statement ;
-  rdf:object       ldcOnt: ;
-  rdf:predicate    rdf:type ;
-  rdf:subject      ldc:NIL1225.788114 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:justifiedBy  [ a                        aif:ImageJustification ;
-                     aif:confidence           [ a                       aif:Confidence ;
-                                                aif:confidenceValue    "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                                                aif:system              ldc:LDCModelGenerator ;
-                                              ] ;
-                     aif:ID                   ldc:EM788114.001216 ;
-                     aif:source               "IC0011XWJ" ;
-                     aif:system               ldc:LDCModelGenerator ;
-                  ] ;
-] .
 
 
 ldc:NIL1266.788114 a aif:Entity ;

@@ -2699,26 +2699,6 @@ ldc:E0217 a aif:Entity ;
 
 
 [ a                rdf:Statement ;
-  rdf:object       ldcOnt: ;
-  rdf:predicate    rdf:type ;
-  rdf:subject      ldc:E0217 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:justifiedBy  [ a                        aif:ImageJustification ;
-                     aif:confidence           [ a                       aif:Confidence ;
-                                                aif:confidenceValue    "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                                                aif:system              ldc:LDCModelGenerator ;
-                                              ] ;
-                     aif:ID                   ldc:EM893543.000150 ;
-                     aif:source               "HC000SQEC" ;
-                     aif:system               ldc:LDCModelGenerator ;
-                  ] ;
-] .
-
-
-[ a                rdf:Statement ;
   rdf:object       ldcOnt:Person ;
   rdf:predicate    rdf:type ;
   rdf:subject      ldc:E0217 ;
@@ -11759,28 +11739,6 @@ ldc:E0229 a aif:Event ;
                      aif:source               "HC000T6B3" ;
                      aif:startOffset          "3631"^^<http://www.w3.org/2001/XMLSchema#double> ;
                      aif:endOffsetInclusive   "3634"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                  ] ;
-] .
-
-
-[ a                rdf:Statement ;
-  rdf:object       ldcOnt: ;
-  rdf:predicate    rdf:type ;
-  rdf:subject      ldc:E0229 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:justifiedBy  [ a                        aif:TextJustification ;
-                     aif:confidence           [ a                       aif:Confidence ;
-                                                aif:confidenceValue    "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                                                aif:system              ldc:LDCModelGenerator ;
-                                              ] ;
-                     aif:ID                   ldc:VM781844.000101 ;
-                     aif:source               "HC000Q80J" ;
-                     aif:startOffset          "1020"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:endOffsetInclusive   "1025"^^<http://www.w3.org/2001/XMLSchema#double> ;
                      aif:system               ldc:LDCModelGenerator ;
                   ] ;
 ] .
@@ -27678,44 +27636,6 @@ ldc:NIL104.954889 a aif:Relation ;
 
 
 [ a                rdf:Statement ;
-  rdf:object       ldc:EM781844.000119 ;
-  rdf:predicate    ldcOnt: ;
-  rdf:subject      ldc:VM781844.000101 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:justifiedBy  [ a                        aif:TextJustification ;
-                     aif:confidence           [ a                       aif:Confidence ;
-                                                aif:confidenceValue    "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                                                aif:system              ldc:LDCModelGenerator ;
-                                              ] ;
-                     aif:source               "HC000Q80J" ;
-                  ] ;
-  aif:system       ldc:LDCModelGenerator ;
-] .
-
-
-[ a                rdf:Statement ;
-  rdf:object       ldc:EM781844.000004 ;
-  rdf:predicate    ldcOnt: ;
-  rdf:subject      ldc:VM781844.000101 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:justifiedBy  [ a                        aif:TextJustification ;
-                     aif:confidence           [ a                       aif:Confidence ;
-                                                aif:confidenceValue    "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                                                aif:system              ldc:LDCModelGenerator ;
-                                              ] ;
-                     aif:source               "HC000Q80J" ;
-                  ] ;
-  aif:system       ldc:LDCModelGenerator ;
-] .
-
-
-[ a                rdf:Statement ;
   rdf:object       ldc:EM781844.000066 ;
   rdf:predicate    ldcOnt:Contact.Broadcast_Place ;
   rdf:subject      ldc:VM781844.000145 ;
@@ -30575,18 +30495,6 @@ ldc:NIL104.954889 a aif:Relation ;
   rdf:object       ldc:EM789837.000053 ;
   rdf:predicate    ldcOnt:Contact.Correspondence_Participant ;
   rdf:subject      ldc:VM789837.000137 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:system       ldc:LDCModelGenerator ;
-] .
-
-
-[ a                rdf:Statement ;
-  rdf:object       ldc:EM789837.000066 ;
-  rdf:predicate    ldcOnt: ;
-  rdf:subject      ldc:VM789837.000336 ;
   aif:confidence   [ a                        aif:Confidence ;
                      aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
                      aif:system               ldc:LDCModelGenerator ;
@@ -34069,18 +33977,6 @@ ldc:NIL104.954889 a aif:Relation ;
 
 
 [ a                rdf:Statement ;
-  rdf:object       ldc:EM956366.000078 ;
-  rdf:predicate    ldcOnt: ;
-  rdf:subject      ldc:VM956366.000032 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:system       ldc:LDCModelGenerator ;
-] .
-
-
-[ a                rdf:Statement ;
   rdf:object       ldc:EM956366.000162 ;
   rdf:predicate    ldcOnt:Personnel.EndPosition_Place ;
   rdf:subject      ldc:VM956366.000032 ;
@@ -34362,18 +34258,6 @@ ldc:NIL104.954889 a aif:Relation ;
 [ a                rdf:Statement ;
   rdf:object       ldc:EM956526.000115 ;
   rdf:predicate    ldcOnt:Personnel.EndPosition_Person ;
-  rdf:subject      ldc:VM956526.000128 ;
-  aif:confidence   [ a                        aif:Confidence ;
-                     aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
-                     aif:system               ldc:LDCModelGenerator ;
-                   ] ;
-  aif:system       ldc:LDCModelGenerator ;
-] .
-
-
-[ a                rdf:Statement ;
-  rdf:object       ldc:EM956526.000177 ;
-  rdf:predicate    ldcOnt: ;
   rdf:subject      ldc:VM956526.000128 ;
   aif:confidence   [ a                        aif:Confidence ;
                      aif:confidenceValue      "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
