@@ -47,5 +47,29 @@ Place the following LDC packages in the tils/translate-annotations/seedling/data
 
 (b) LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V3.0
 
-### Execution and output
+### Code execution
+
+In order to translate annotations, run the following:
+
+```Perl
+cd utils/translate-annotations/seedling
+perl AIDA-Translate-MASTER.pl TOPICID
+```
+where TOPICID is optional and would be T101 by default if not provided.
+
+### Output
+
+The script would produce the following files as output:
+
+####(a) data/TOPICID.all.ttl
+
+The file containing LDC's annotation in turtle-RDF format.
+
+####(b) data/document-mapping.ttl
+
+The file containing mapping of documentID to documentElementID.
+
+
+
+
 
