@@ -1,0 +1,21 @@
+Category	LDCType	LDCTypeShort	LDCTypeOutput	AIDAType
+Entity	Person	PER	per	Person
+Entity	Organization	ORG	org	Organization
+Entity	Geopolitical Entity	GPE	gpe	GeopoliticalEntity
+Entity	Location	LOC	loc	Location
+Entity	Facility	FAC	fac	Facility
+Filler	Sides 	SID	sid	Side
+Filler	Numerical Value	VAL	val	Numerical
+Filler	Age	AGE	age	Age
+Filler	Money	MON	mon	Money
+Filler	URL	URL	url	URL
+Filler	Title	TTL	ttl	Title
+Filler	Weapon	WEA	wea	Weapon
+Filler	Vehicle	VEH	veh	Vehicle
+Filler	Commodity	COM	com	Commodity
+Filler	Sentence	SEN	sen	Sentence
+Filler	Crime	CRM	crm	Crime
+Filler	Time	TME	tme	Time
+Filler	Law	LAW	law	Law
+Filler	Ballot	BAL	bal	Ballot
+Filler	Results	RES	res	Results
