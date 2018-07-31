@@ -1,11 +1,11 @@
-Category	LDCType	LDCTypeShort	LDCTypeOutput	AIDAType
+Category	LDCType	LDCTypeShort	LDCTypeOutput	NISType
 Entity	Person	PER	per	Person
 Entity	Organization	ORG	org	Organization
 Entity	Geopolitical Entity	GPE	gpe	GeopoliticalEntity
 Entity	Location	LOC	loc	Location
 Entity	Facility	FAC	fac	Facility
-Filler	Sides 	SID	sid	Side
-Filler	Numerical Value	VAL	val	Numerical
+Filler	Sides 	SID	sid	Sides
+Filler	Numerical Value	VAL	val	NumericalValue
 Filler	Age	AGE	age	Age
 Filler	Money	MON	mon	Money
 Filler	URL	URL	url	URL
