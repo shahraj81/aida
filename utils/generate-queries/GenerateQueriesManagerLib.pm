@@ -332,6 +332,44 @@ sub new {
   $self;
 }
 
+
+#####################################################################################
+# Edges
+#####################################################################################
+
+package Edges;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class) = @_;
+  my $self = $class->SUPER::new('Edge');
+  $self->{CLASS} = 'Edges';
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Edge
+#####################################################################################
+
+package Edge;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class) = @_;
+  my $self = {
+    CLASS => 'Edge',
+    SUBJECT => undef,
+    PREDICATE => undef,
+    OBJECT => undef,
+    ATTRIBUTE => undef,
+  };
+  bless($self, $class);
+  $self;
+}
+
 #####################################################################################
 # Nodes
 #####################################################################################
@@ -867,7 +905,7 @@ sub new {
   my $self = {
   	LDC_NIST_MAPPINGS => LDCNISTMappings->new($parameters),
   	NODES => Nodes->new(),
-#  	EDGES => Edges->new(),
+  	EDGES => Edges->new(),
   	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($parameters),
     PARAMETERS => $parameters,
   };
@@ -891,6 +929,7 @@ sub load_data {
 	my ($self) = @_;
 
 	$self->load_nodes();
+	$self->load_edges();
 }
 
 sub load_nodes {
