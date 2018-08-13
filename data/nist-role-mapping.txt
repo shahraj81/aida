@@ -226,7 +226,6 @@ justice	pardon	dfdn	Justice	Pardon	Defendant
 justice	pardon	crm	Justice	Pardon	Crime
 justice	pardon	plc	Justice	Pardon	Place
 justice	pardon	date	Justice	Pardon	Time
-					
 measurement	count	val	Measurement	Count	Count
 measurement	count	perorggpelocfacvehweacombal	Measurement	Count	Item
 transaction	transfercontrol	gvrtransfercontrol	Transaction	TransferControl	Giver
@@ -271,4 +270,3 @@ existence	damagedestroy	victimdamagedestroy	Existence	DamageDestroy	Victim
 existence	damagedestroy	instrument	Existence	DamageDestroy	Instrument
 existence	damagedestroy	plc	Existence	DamageDestroy	Place
 existence	damagedestroy	date	Existence	DamageDestroy	Time
-

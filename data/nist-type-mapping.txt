@@ -1,4 +1,4 @@
-Category	LDCType	LDCTypeShort	LDCTypeOutput	NISType
+Category	LDCType	LDCTypeShort	LDCTypeOutput	NISTType
 Entity	Person	PER	per	Person
 Entity	Organization	ORG	org	Organization
 Entity	Geopolitical Entity	GPE	gpe	GeopoliticalEntity
