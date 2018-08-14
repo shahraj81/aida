@@ -201,13 +201,27 @@ sub new {
     DOCUMENTELEMENTS => DocumentElements->new(),
   };
   bless($self, $class);
-  $self->read_file();
+  $self->load_data();
   $self;
 }
 
-sub read_file {
+sub load_data {
 	my ($self) = @_;
-	my $filename = $self->get("PARAMETERS")->get("DocumentIDsMappingsFile");
+	
+	# Load document-element to language mapping
+	my %doceid_to_langs_mapping;
+	my $filename = $self->get("PARAMETERS")->get("UIDInfoFile");
+	my $filehandler = FileHandler->new($filename);
+	my $header = $filehandler->get("HEADER");
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $doceid = $entry->get("derived_uid");
+		my $languages = $entry->get("lang_manual");
+		$doceid_to_langs_mapping{$doceid} = $languages;
+	}
+	
+	# Load the DocumentIDsMappingsFile
+	$filename = $self->get("PARAMETERS")->get("DocumentIDsMappingsFile");
 		
 	open(my $infile, "<:utf8", $filename) or die("Could not open file: $filename");
   my $document_uri = "nil";
@@ -243,6 +257,7 @@ sub read_file {
 		my $document_id = $uri_to_id_mapping{$document_uri};
     my $document_eid = $uri_to_id_mapping{$document_element_uri};
 		my $detype = $doceid_to_type_mapping{$document_element_uri};
+		my $delanguage = $doceid_to_langs_mapping{$document_eid};
 		
     my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
     $document->set("DOCUMENTID", $document_id);
@@ -250,6 +265,7 @@ sub read_file {
     $documentelement->set("DOCUMENT", $document);
     $documentelement->set("DOCUMENTID", $document_id);
     $documentelement->set("DOCUMENTELEMENTID", $document_eid);
+    $documentelement->set("LANGUAGES", $delanguage);
     $documentelement->set("TYPE", $detype);
     
     $document->add_document_element($documentelement);
