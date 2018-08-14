@@ -1023,7 +1023,7 @@ sub load_nodes {
 			$mention->add_justification($justification);
 			$mention->set("MODALITY", $thedocumentelementmodality);
 			$mention->set("MENTIONID", $entry->get("nodemention_id"));
-			$mention->set("DOC_NODEID", $entry->get("node_id"));
+			$mention->set("DOC_NODEID", $entry->get("document_level_node_id"));
 			$mention->set("TEXT_STRING", $entry->get("text_string"));
 			$mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
 			$mention->set("TREEID", $entry->get("tree_id"));
