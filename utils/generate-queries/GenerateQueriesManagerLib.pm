@@ -360,8 +360,18 @@ sub new {
   my ($class) = @_;
   my $self = $class->SUPER::new('Edge');
   $self->{CLASS} = 'Edges';
+  $self->{EDGE_LOOKUP} = {};
   bless($self, $class);
   $self;
+}
+
+sub add {
+	my ($self, $value, $key) = @_;
+	
+	$self->SUPER::add($value, $key);
+	push(@{$self->{EDGE_LOOKUP}{SUBJECT}{$value->{SUBJECT}}}, $value); 
+	push(@{$self->{EDGE_LOOKUP}{OBJECT}{$value->{OBJECT}}}, $value); 
+	push(@{$self->{EDGE_LOOKUP}{PREDICATE}{$value->{PREDICATE}}}, $value); 
 }
 
 #####################################################################################
