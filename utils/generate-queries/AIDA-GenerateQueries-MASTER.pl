@@ -8,11 +8,16 @@ $nodes_data_files->add("input/annotations/data/T101/T101_ent_mentions.tab");
 $nodes_data_files->add("input/annotations/data/T101/T101_evt_mentions.tab");
 $nodes_data_files->add("input/annotations/data/T101/T101_rel_mentions.tab");
 
+my $edge_data_files = Container->new("RAW");
+$edge_data_files->add("input/annotations/data/T101/T101_evt_slots.tab");
+$edge_data_files->add("input/annotations/data/T101/T101_rel_slots.tab");
+
 my $parameters = Parameters->new();
 $parameters->set("DocumentIDsMappingsFile", "input/DocumentIDsMappings.ttl");
 $parameters->set("RoleMappingFile","input/nist-role-mapping.txt");
 $parameters->set("TypeMappingFile","input/nist-type-mapping.txt");
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
+$parameters->set("EDGES_DATA_FILES", $edge_data_files);
 
 my $graph = Graph->new($parameters);
 

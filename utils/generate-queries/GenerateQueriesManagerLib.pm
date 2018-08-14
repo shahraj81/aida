@@ -110,6 +110,15 @@ sub new {
   $self;
 }
 
+sub get_LDC_TYPE {
+	my ($self, $type, $subtype) = @_;
+	
+	my $ldc_type = $type;
+	$ldc_type = "$ldc_type.$subtype" if $subtype;
+	
+	$ldc_type;
+}
+
 sub get_NIST_TYPE {
 	my ($self, $type, $subtype) = @_;
 	
@@ -117,6 +126,12 @@ sub get_NIST_TYPE {
 	$key = "$key.$subtype" if $subtype;
 	
 	$self->{TYPE_MAPPINGS}{$key};
+}
+
+sub get_NIST_ROLE {
+	my ($self, $ldc_role) = @_;
+	
+	$self->{ROLE_MAPPINGS}{$ldc_role};
 }
 
 sub load_data {
@@ -358,13 +373,13 @@ package Edge;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class) = @_;
+  my ($class, $subject_node_id, $nist_role, $object_node_id, $attribute) = @_;
   my $self = {
     CLASS => 'Edge',
-    SUBJECT => undef,
-    PREDICATE => undef,
-    OBJECT => undef,
-    ATTRIBUTE => undef,
+    SUBJECT => $subject_node_id,
+    PREDICATE => $nist_role,
+    OBJECT => $object_node_id,
+    ATTRIBUTE => $attribute,
   };
   bless($self, $class);
   $self;
@@ -412,10 +427,18 @@ sub add_mention {
   $self->get("MENTIONS")->add($mention);
 }
 
-sub get_TYPES {
+sub get_LDC_TYPES {
 	my ($self) = @_;
 	
-	my @types = keys {map {$_=>1} map {$_->get("TYPE")} $self->get("MENTIONS")->toarray()};
+	my @types = keys {map {$_=>1} map {$_->get("LDC_TYPE")} $self->get("MENTIONS")->toarray()};
+	
+	@types;
+}
+
+sub get_NIST_TYPES {
+	my ($self) = @_;
+	
+	my @types = keys {map {$_=>1} map {$_->get("NIST_TYPE")} $self->get("MENTIONS")->toarray()};
 	
 	@types;
 }
@@ -907,6 +930,7 @@ sub new {
   	NODES => Nodes->new(),
   	EDGES => Edges->new(),
   	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($parameters),
+  	NODEIDS_LOOKUP => {},
     PARAMETERS => $parameters,
   };
   bless($self, $class);
@@ -944,12 +968,19 @@ sub load_edges {
 		foreach my $entry( $entries->toarray() ){
 			$i++;
 			#print "ENTRY # $i:\n", $entry->tostring(), "\n";
-			my $subject_node_mention_id = $entry->get("nodemention_id");
+			my $subject_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")};
+			my @subject_types = $self->get("NODES")->get("BY_KEY", $subject_node_id)->get("LDC_TYPES");
 			my $slot_type = $entry->get("slot_type");
 			my $attribute = $entry->get("attribute");
-			my $object_document_nodeid = $entry->get("arg_id");
+			my $object_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("arg_id")};
 			
-			
+			foreach my $subject_type(@subject_types) {
+				my $ldc_role = "$subject_type\_$slot_type";
+				my $nist_role = $self->get("LDC_NIST_MAPPINGS")->get("NIST_ROLE", $ldc_role);
+				next unless $nist_role;
+				my $edge = Edge->new($subject_node_id, $nist_role, $object_node_id, $attribute);
+				$self->get("EDGES")->add($edge);
+			}
 		}
 	}
 }
@@ -986,21 +1017,28 @@ sub load_nodes {
 			$mention->set("TEXT_STRING", $entry->get("text_string"));
 			$mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
 			$mention->set("TREEID", $entry->get("tree_id"));
-			$mention->set("TYPE", 
-									$self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE", 
-																													$entry->get("type"), 
-																													$entry->get("subtype")));
+			
+			$mention->set("LDC_TYPE", 
+							$self->get("LDC_NIST_MAPPINGS")->get("LDC_TYPE", 
+								$entry->get("type"), 
+								$entry->get("subtype")));
+			$mention->set("NIST_TYPE", 
+							$self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE", 
+								$entry->get("type"), 
+								$entry->get("subtype")));
 
 			my $node = $self->get("NODES")->get("BY_KEY", $entry->get("kb_id"));
 
 			$node->set("NODEID", $entry->get("kb_id")) unless $node->set("NODEID");
-
+			$node->add_mention($mention);
+			$self->{NODEIDS_LOOKUP}{$entry->get("document_level_node_id")} = $entry->get("kb_id");
+			$self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")} = $entry->get("kb_id");
+			
 # NODE has no type ... its type is taken from its mentions
 #			$node->set("TYPE", $self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE", 
 #																													$entry->get("type"), 
 #																													$entry->get("subtype"))) 
 #									unless $node->set("TYPE");			
-			$node->add_mention($mention);
 		}
 	}
 }
