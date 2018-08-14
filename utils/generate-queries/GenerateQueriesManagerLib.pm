@@ -454,18 +454,14 @@ sub add_mention {
 
 sub get_LDC_TYPES {
 	my ($self) = @_;
-	
-	my @types = keys {map {$_=>1} map {$_->get("LDC_TYPE")} $self->get("MENTIONS")->toarray()};
-	
-	@types;
+	my %hash = map {$_=>1} map {$_->get("LDC_TYPE")} $self->get("MENTIONS")->toarray();
+	keys %hash
 }
 
 sub get_NIST_TYPES {
 	my ($self) = @_;
-	
-	my @types = keys {map {$_=>1} map {$_->get("NIST_TYPE")} $self->get("MENTIONS")->toarray()};
-	
-	@types;
+	my %hash = map {$_=>1} map {$_->get("NIST_TYPE")} $self->get("MENTIONS")->toarray();
+	keys %hash;
 }
 
 sub tostring {
