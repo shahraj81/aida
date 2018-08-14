@@ -104,6 +104,7 @@ sub new {
     PARAMETERS => $parameters,
     ROLE_MAPPINGS => {},
     TYPE_MAPPINGS => {},
+    TYPE_CATEGORY => {},
   };
   bless($self, $class);
   $self->load_data();
@@ -148,6 +149,7 @@ sub load_data {
   foreach my $entry( $entries->toarray() ){
     $i++;
     #print "ENTRY # $i:\n", $entry->tostring(), "\n";
+    my $category = $entry->get("category");
     my $ldc_type = $entry->get("ldctype");
     my $ldc_subtype = $entry->get("ldcsubtype");
     my $ldc_role = $entry->get("ldcrole");
@@ -156,6 +158,7 @@ sub load_data {
     my $nist_role = $entry->get("nistrole");
   
     $self->{TYPE_MAPPINGS}{"$ldc_type.$ldc_subtype"} = "$nist_type.$nist_subtype";
+    $self->{TYPE_CATEGORY}{"$nist_type.$nist_subtype"} = $category;
   
     my $ldc_fqrolename = "$ldc_type.$ldc_subtype\_$ldc_role";
     my $nist_fqrolename = "$nist_type.$nist_subtype\_$nist_role";
@@ -174,8 +177,10 @@ sub load_data {
     #print "ENTRY # $i:\n", $entry->tostring(), "\n";
     my $ldc_type = $entry->get("LDCTypeOutput");
     my $nist_type = $entry->get("NISTType");
+    my $category = $entry->get("Category");
 
     $self->{TYPE_MAPPINGS}{$ldc_type} = $nist_type;  
+    $self->{TYPE_CATEGORY}{$nist_type} = $category;
   }
 }
 
