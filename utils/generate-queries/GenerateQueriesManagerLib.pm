@@ -4,7 +4,7 @@ use warnings;
 use strict;
 
 #####################################################################################
-# Root
+# Super
 #####################################################################################
 
 package Super;
@@ -843,7 +843,7 @@ sub get_nodemention_id {
 	$nodemention_id;
 }
 
-sub get_node_id {
+sub get_document_level_node_id {
 	my ($self) = @_;
 	my $node_id;
 	
@@ -911,11 +911,11 @@ sub new {
   };
   bless($self, $class);
   $self->load_data();
-#  foreach my $node($self->get("NODES")->toarray()) {
-#  	my $node_id = $node->get("NODEID");
-#  	my $node_types = join(",", $node->get("TYPES"));
-#  	print "==>$node_id $node_types\n";
-#  }
+  foreach my $node($self->get("NODES")->toarray()) {
+  	my $node_id = $node->get("NODEID");
+  	my $node_types = join(",", $node->get("TYPES"));
+  	print "==>$node_id $node_types\n";
+  }
   $self;
 }
 
@@ -930,6 +930,28 @@ sub load_data {
 
 	$self->load_nodes();
 	$self->load_edges();
+}
+
+sub load_edges {
+	my ($self) = @_;
+	my ($filehandler, $header, $entries, $i);
+	foreach my $filename($self->get("PARAMETERS")->get("EDGES_DATA_FILES")->toarray()) {
+		$filehandler = FileHandler->new($filename);
+		$header = $filehandler->get("HEADER");
+		$entries = $filehandler->get("ENTRIES");
+		$i=0;
+		
+		foreach my $entry( $entries->toarray() ){
+			$i++;
+			#print "ENTRY # $i:\n", $entry->tostring(), "\n";
+			my $subject_node_mention_id = $entry->get("nodemention_id");
+			my $slot_type = $entry->get("slot_type");
+			my $attribute = $entry->get("attribute");
+			my $object_document_nodeid = $entry->get("arg_id");
+			
+			
+		}
+	}
 }
 
 sub load_nodes {
