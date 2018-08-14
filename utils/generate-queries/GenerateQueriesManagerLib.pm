@@ -369,9 +369,9 @@ sub add {
 	my ($self, $value, $key) = @_;
 	
 	$self->SUPER::add($value, $key);
-	push(@{$self->{EDGE_LOOKUP}{SUBJECT}{$value->{SUBJECT}}}, $value); 
-	push(@{$self->{EDGE_LOOKUP}{OBJECT}{$value->{OBJECT}}}, $value); 
-	push(@{$self->{EDGE_LOOKUP}{PREDICATE}{$value->{PREDICATE}}}, $value); 
+	push(@{$self->{EDGE_LOOKUP}{SUBJECT}{$value->get("SUBJECT_NODEID")}}, $value); 
+	push(@{$self->{EDGE_LOOKUP}{OBJECT}{$value->get("OBJECT_NODEID")}}, $value); 
+	push(@{$self->{EDGE_LOOKUP}{PREDICATE}{$value->get("PREDICATE")}}, $value); 
 }
 
 #####################################################################################
@@ -383,16 +383,26 @@ package Edge;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $subject_node_id, $nist_role, $object_node_id, $attribute) = @_;
+  my ($class, $subject, $nist_role, $object, $attribute) = @_;
   my $self = {
     CLASS => 'Edge',
-    SUBJECT => $subject_node_id,
+    SUBJECT => $subject,
     PREDICATE => $nist_role,
-    OBJECT => $object_node_id,
+    OBJECT => $object,
     ATTRIBUTE => $attribute,
   };
   bless($self, $class);
   $self;
+}
+
+sub get_OBJECT_NODEID {
+	my ($self) = @_;
+	$self->get("OBJECT")->get("NODEID");
+}
+
+sub get_SUBJECT_NODEID {
+	my ($self) = @_;
+	$self->get("SUBJECT")->get("NODEID");
 }
 
 #####################################################################################
@@ -555,8 +565,8 @@ sub new {
   my ($class) = @_;
   my $self = {
     CLASS => 'Mention',
-    # I don't think we need type here, the type should be associated with an entity
-    TYPE => undef, 
+    LDC_TYPE => undef, 
+    NIST_TYPE => undef, 
     MENTIONID => undef,
     TREEID => undef,
     JUSTIFICATIONS => Justifications->new(),
@@ -947,7 +957,7 @@ sub new {
   $self->load_data();
   foreach my $node($self->get("NODES")->toarray()) {
   	my $node_id = $node->get("NODEID");
-  	my $node_types = join(",", $node->get("TYPES"));
+  	my $node_types = join(",", $node->get("NIST_TYPES"));
   	print "==>$node_id $node_types\n";
   }
   $self;
@@ -979,16 +989,18 @@ sub load_edges {
 			$i++;
 			#print "ENTRY # $i:\n", $entry->tostring(), "\n";
 			my $subject_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")};
-			my @subject_types = $self->get("NODES")->get("BY_KEY", $subject_node_id)->get("LDC_TYPES");
+			my $subject = $self->get("NODES")->get("BY_KEY", $subject_node_id);
+			my @subject_types = $subject->get("LDC_TYPES");
 			my $slot_type = $entry->get("slot_type");
 			my $attribute = $entry->get("attribute");
 			my $object_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("arg_id")};
+			my $object = $self->get("NODES")->get("BY_KEY", $object_node_id);
 			
 			foreach my $subject_type(@subject_types) {
 				my $ldc_role = "$subject_type\_$slot_type";
 				my $nist_role = $self->get("LDC_NIST_MAPPINGS")->get("NIST_ROLE", $ldc_role);
 				next unless $nist_role;
-				my $edge = Edge->new($subject_node_id, $nist_role, $object_node_id, $attribute);
+				my $edge = Edge->new($subject, $nist_role, $object, $attribute);
 				$self->get("EDGES")->add($edge);
 			}
 		}
