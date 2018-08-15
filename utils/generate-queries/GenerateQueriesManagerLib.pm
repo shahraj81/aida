@@ -639,6 +639,17 @@ sub get_END {
   @ends;
 }
 
+sub get_SPANS {
+	my ($self) = @_;
+	my $spans = Spans->new();
+	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+		foreach my $span($justification->get("SPANS")->toarray()) {
+			$spans->add($span);
+		}
+	}
+	$spans;
+}
+
 sub get_SOURCE_DOCUMENT_ELEMENTS {
   my ($self) = @_;
   my @source_doces;
@@ -1118,11 +1129,23 @@ sub generate_queries {
 sub generate_zerohop_queries {
 	my ($self) = @_;
 	my $queries = ZeroHopQueries->new($self->get("PARAMETERS"));
-
-	# Generate and load ZeroHopQueries here
-	my $query = ZeroHopQuery->new("Q123");
-	$queries->add($query);
-	
+	my $query_id_prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
+	my $i = 0;
+	foreach my $node($self->get("NODES")->toarray()) {
+		foreach my $mention($node->get("MENTIONS")->toarray()){
+			my $enttype = $mention->get("NIST_TYPE");
+			foreach my $span($mention->get("SPANS")->toarray()) {
+				$i++;
+				my $query_id = "$query_id_prefix\_$i";
+				my $doceid = $span->get("DOCUMENTEID");
+				my $start = $span->get("START");
+				my $end = $span->get("END");
+				my $modality = $self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("TYPE");
+				my $query = ZeroHopQuery->new($query_id, $enttype, $doceid, $modality, $start, $end);
+				$queries->add($query);
+			}
+		}
+	}	
 	$queries->write_to_files();
 }
 
@@ -1178,10 +1201,15 @@ package ZeroHopQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $query_id) = @_;
+  my ($class, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
   my $self = {
     CLASS => 'ZeroHopQuery',
     QUERY_ID => $query_id,
+    ENTTYPE => $enttype,
+    DOCUMENTELEMENTID => $doceid,
+    MODALITY => $modality,
+    START => $start,
+    END => $end,
   };
   bless($self, $class);
   $self;
@@ -1197,7 +1225,13 @@ sub write_to_files {
 sub write_to_xml {
 	my ($self, $program_output) = @_;
 	my $query_id = $self->get("QUERY_ID");
+	my $enttype = $self->get("ENTTYPE");
+	my $doceid = $self->get("DOCUMENTELEMENTID");
+	my $modality = $self->get("MODALITY");
+	my $start = $self->get("START");
+	my $end = $self->get("END");
 	print $program_output "writing zerohop query to xml: $query_id\n";
+	print $program_output "$query_id, $enttype, $doceid, $modality, $start, $end\n";
 }
 
 sub write_to_rq {

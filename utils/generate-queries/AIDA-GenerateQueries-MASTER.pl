@@ -29,6 +29,7 @@ $parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output/T101_zerohop_queries
 $parameters->set("ZEROHOP_QUERIES_RQ_OUTPUT_FILE", "output/T101_zerohop_queries.rq");
 $parameters->set("GRAPH_QUERIES_XML_OUTPUT_FILE", "output/T101_graph_queries.xml");
 $parameters->set("GRAPH_QUERIES_RQ_OUTPUT_FILE", "output/T101_graph_queries.rq");
+$parameters->set("ZEROHOP_QUERIES_PREFIX", "AIDA_ZH_2018");
 
 my $graph = Graph->new($parameters);
 $graph->generate_queries();
