@@ -1108,4 +1108,173 @@ sub load_nodes {
 	}
 }
 
+sub generate_queries {
+	my ($self) = @_;
+	
+	$self->generate_zerohop_queries();
+	$self->generate_graph_queries();
+}
+
+sub generate_zerohop_queries {
+	my ($self) = @_;
+	my $queries = ZeroHopQueries->new($self->get("PARAMETERS"));
+
+	# Generate and load ZeroHopQueries here
+	my $query = ZeroHopQuery->new("Q123");
+	$queries->add($query);
+	
+	$queries->write_to_files();
+}
+
+sub generate_graph_queries {
+	my ($self) = @_;
+	my $queries = GraphQueries->new($self->get("PARAMETERS"));
+	
+	# Generate and load GraphQueries here
+	my $query = GraphQuery->new("Q345");
+	$queries->add($query);
+	
+	$queries->write_to_files();
+}
+
+#####################################################################################
+# ZeroHopQueries
+#####################################################################################
+
+package ZeroHopQueries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $parameters) = @_;
+  my $self = $class->SUPER::new('ZeroHopQuery');
+  $self->{CLASS} = 'ZeroHopQueries';
+  $self->{PARAMETERS} = $parameters;
+  bless($self, $class);
+  $self;
+}
+
+sub write_to_files {
+	my ($self) = @_;
+	my ($program_output_xml, $program_output_rq);
+	my $output_filename_xml = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_XML_OUTPUT_FILE");
+	my $output_filename_rq = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_RQ_OUTPUT_FILE");
+
+	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
+	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	foreach my $query($self->toarray()) {
+		$query->write_to_files($program_output_xml, $program_output_rq);
+	}
+	close($program_output_xml);
+	close($program_output_rq);	
+}
+
+#####################################################################################
+# ZeroHopQuery
+#####################################################################################
+
+package ZeroHopQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $query_id) = @_;
+  my $self = {
+    CLASS => 'ZeroHopQuery',
+    QUERY_ID => $query_id,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub write_to_files {
+	my ($self, $program_output_xml, $program_output_rq) = @_;
+	
+	$self->write_to_xml($program_output_xml);
+	$self->write_to_rq($program_output_rq);
+}
+
+sub write_to_xml {
+	my ($self, $program_output) = @_;
+	my $query_id = $self->get("QUERY_ID");
+	print $program_output "writing zerohop query to xml: $query_id\n";
+}
+
+sub write_to_rq {
+	my ($self, $program_output) = @_;
+	my $query_id = $self->get("QUERY_ID");
+	print $program_output "writing zerohop query to rq: $query_id\n";
+}
+
+
+#####################################################################################
+# GraphQueries
+#####################################################################################
+
+package GraphQueries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $parameters) = @_;
+  my $self = $class->SUPER::new('GraphQuery');
+  $self->{CLASS} = 'GraphQueries';
+  $self->{PARAMETERS} = $parameters;
+  bless($self, $class);
+  $self;
+}
+
+sub write_to_files {
+	my ($self) = @_;
+	my ($program_output_xml, $program_output_rq);
+	my $output_filename_xml = $self->get("PARAMETERS")->get("GRAPH_QUERIES_XML_OUTPUT_FILE");
+	my $output_filename_rq = $self->get("PARAMETERS")->get("GRAPH_QUERIES_RQ_OUTPUT_FILE");
+
+	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
+	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	foreach my $query($self->toarray()) {
+		$query->write_to_files($program_output_xml, $program_output_rq);
+	}
+	close($program_output_xml);
+	close($program_output_rq);	
+}
+
+#####################################################################################
+# GraphQuery
+#####################################################################################
+
+package GraphQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $query_id) = @_;
+  my $self = {
+    CLASS => 'GraphQuery',
+    QUERY_ID => $query_id,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub write_to_files {
+	my ($self, $program_output_xml, $program_output_rq) = @_;
+	
+	$self->write_to_xml($program_output_xml);
+	$self->write_to_rq($program_output_rq);
+}
+
+sub write_to_xml {
+	my ($self, $program_output) = @_;
+	my $query_id = $self->get("QUERY_ID");
+	print $program_output "writing graph query to xml: $query_id\n";
+}
+
+sub write_to_rq {
+	my ($self, $program_output) = @_;
+	my $query_id = $self->get("QUERY_ID");
+	print $program_output "writing graph query to rq: $query_id\n";
+}
+
+
 1;

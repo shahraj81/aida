@@ -25,8 +25,13 @@ $parameters->set("HYPOTHESES_FILE", "input/annotations/data/T101/T101_hypotheses
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
 $parameters->set("EDGES_DATA_FILES", $edge_data_files);
 $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
+$parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output/T101_zerohop_queries.xml");
+$parameters->set("ZEROHOP_QUERIES_RQ_OUTPUT_FILE", "output/T101_zerohop_queries.rq");
+$parameters->set("GRAPH_QUERIES_XML_OUTPUT_FILE", "output/T101_graph_queries.xml");
+$parameters->set("GRAPH_QUERIES_RQ_OUTPUT_FILE", "output/T101_graph_queries.rq");
 
 my $graph = Graph->new($parameters);
+$graph->generate_queries();
 
 #my $DocumentIDsMappings = DocumentIDsMappings->new($parameters);
 
