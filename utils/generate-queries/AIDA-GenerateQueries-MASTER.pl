@@ -3,21 +3,28 @@ use strict;
 
 use GenerateQueriesManagerLib;
 
-my $nodes_data_files = Container->new("RAW");
+my $nodes_data_files = Container->new("String");
 $nodes_data_files->add("input/annotations/data/T101/T101_ent_mentions.tab");
 $nodes_data_files->add("input/annotations/data/T101/T101_evt_mentions.tab");
 $nodes_data_files->add("input/annotations/data/T101/T101_rel_mentions.tab");
 
-my $edge_data_files = Container->new("RAW");
+my $edge_data_files = Container->new("String");
 $edge_data_files->add("input/annotations/data/T101/T101_evt_slots.tab");
 $edge_data_files->add("input/annotations/data/T101/T101_rel_slots.tab");
 
+my $acceptable_relevance = Container->new("String");
+$acceptable_relevance->add("fully-relevant");
+$acceptable_relevance->add("partially-relevant");
+
 my $parameters = Parameters->new();
-$parameters->set("DocumentIDsMappingsFile", "input/DocumentIDsMappings.ttl");
-$parameters->set("RoleMappingFile","input/nist-role-mapping.txt");
-$parameters->set("TypeMappingFile","input/nist-type-mapping.txt");
+$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/DocumentIDsMappings.ttl");
+$parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
+$parameters->set("TYPE_MAPPING_FILE","input/nist-type-mapping.txt");
+$parameters->set("UID_INFO_FILE", "input/uid_info.tab");
+$parameters->set("HYPOTHESES_FILE", "input/annotations/data/T101/T101_hypotheses.tab");
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
 $parameters->set("EDGES_DATA_FILES", $edge_data_files);
+$parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
 
 my $graph = Graph->new($parameters);
 

@@ -140,7 +140,7 @@ sub load_data {
 	my ($filename, $filehandler, $header, $entries, $i);
 	
 	# Load data from role mappings
-	$filename = $self->get("PARAMETERS")->get("RoleMappingFile");
+	$filename = $self->get("PARAMETERS")->get("ROLE_MAPPING_FILE");
 	$filehandler = FileHandler->new($filename);
 	$header = $filehandler->get("HEADER");
   $entries = $filehandler->get("ENTRIES");
@@ -166,7 +166,7 @@ sub load_data {
   }
   
   # Load data from type mappings
-  $filename = $self->get("PARAMETERS")->get("TypeMappingFile");
+  $filename = $self->get("PARAMETERS")->get("TYPE_MAPPING_FILE");
   $filehandler = FileHandler->new($filename);
   $header = $filehandler->get("HEADER");
   $entries = $filehandler->get("ENTRIES");
@@ -210,7 +210,7 @@ sub load_data {
 	
 	# Load document-element to language mapping
 	my %doceid_to_langs_mapping;
-	my $filename = $self->get("PARAMETERS")->get("UIDInfoFile");
+	my $filename = $self->get("PARAMETERS")->get("UID_INFO_FILE");
 	my $filehandler = FileHandler->new($filename);
 	my $header = $filehandler->get("HEADER");
 	my $entries = $filehandler->get("ENTRIES");
@@ -221,7 +221,7 @@ sub load_data {
 	}
 	
 	# Load the DocumentIDsMappingsFile
-	$filename = $self->get("PARAMETERS")->get("DocumentIDsMappingsFile");
+	$filename = $self->get("PARAMETERS")->get("DOCUMENTIDS_MAPPING_FILE");
 		
 	open(my $infile, "<:utf8", $filename) or die("Could not open file: $filename");
   my $document_uri = "nil";
@@ -392,7 +392,12 @@ sub add {
 	$self->SUPER::add($value, $key);
 	push(@{$self->{EDGE_LOOKUP}{SUBJECT}{$value->get("SUBJECT_NODEID")}}, $value); 
 	push(@{$self->{EDGE_LOOKUP}{OBJECT}{$value->get("OBJECT_NODEID")}}, $value); 
-	push(@{$self->{EDGE_LOOKUP}{PREDICATE}{$value->get("PREDICATE")}}, $value); 
+	push(@{$self->{EDGE_LOOKUP}{PREDICATE}{$value->get("PREDICATE")}}, $value);
+	push(@{$self->{EDGE_LOOKUP}
+								{"SUBJECT->OBJECT"}
+								{$value->get("SUBJECT_NODEID")."->".$value->get("OBJECT_NODEID")}
+								{$value->get("PREDICATE")}}, 
+			$value);
 }
 
 #####################################################################################
@@ -892,6 +897,15 @@ sub get_ELEMENT_AT {
   $self->{ELEMENTS}[$at];
 }
 
+sub get_CATEGORY {
+	my ($self) = @_;
+	my $category = "n/a";
+	$category = "ENTITY" if $self->get("entitymention_id");
+	$category = "EVENT" if $self->get("eventmention_id");
+	$category = "RELATION" if $self->get("relationmention_id");	
+	$category;
+}
+
 sub get_nodemention_id {
 	my ($self) = @_;
 	my $nodemention_id;
@@ -899,6 +913,7 @@ sub get_nodemention_id {
 	$nodemention_id = $self->get("entitymention_id") if $self->get("entitymention_id");
 	$nodemention_id = $self->get("eventmention_id") if $self->get("eventmention_id");
 	$nodemention_id = $self->get("relationmention_id") if $self->get("relationmention_id");
+	$nodemention_id = $self->get("relation_event_mention_id") if $self->get("relation_event_mention_id");
 	
 	$nodemention_id;
 }
@@ -1000,17 +1015,16 @@ sub load_edges {
 		$filehandler = FileHandler->new($filename);
 		$header = $filehandler->get("HEADER");
 		$entries = $filehandler->get("ENTRIES");
-		$i=0;
 		
 		foreach my $entry( $entries->toarray() ){
-			$i++;
-			#print "ENTRY # $i:\n", $entry->tostring(), "\n";
 			my $subject_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")};
+			my $object_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("arg_id")};
+			# skip the edge unless you have both ids
+			next unless ($subject_node_id && $object_node_id);
 			my $subject = $self->get("NODES")->get("BY_KEY", $subject_node_id);
 			my @subject_types = $subject->get("LDC_TYPES");
 			my $slot_type = $entry->get("slot_type");
 			my $attribute = $entry->get("attribute");
-			my $object_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("arg_id")};
 			my $object = $self->get("NODES")->get("BY_KEY", $object_node_id);
 			
 			foreach my $subject_type(@subject_types) {
@@ -1027,15 +1041,33 @@ sub load_edges {
 sub load_nodes {
 	my ($self) = @_;
 	my ($filehandler, $header, $entries, $i);
+	
+	# Load hypothesis file for information about relevant nodes
+	my %acceptable_relevance = map {$_=>1} $self->get("PARAMETERS")->get("ACCEPTABLE_RELEVANCE")->toarray();
+	my %nodementionids_relevant_to_hypotheses;
+	my $filename = $self->get("PARAMETERS")->get("HYPOTHESES_FILE");
+	$filehandler = FileHandler->new($filename);
+	$header = $filehandler->get("HEADER");
+	$entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my $nodemention_id = $entry->get("nodemention_id");
+		my $relevance = $entry->get("value");
+		next unless $acceptable_relevance{$relevance};
+		$nodementionids_relevant_to_hypotheses{$nodemention_id} = 1;
+	}
+	
+	# Load nodes relevant to hypothesis
 	foreach my $filename($self->get("PARAMETERS")->get("NODES_DATA_FILES")->toarray()) {
 		$filehandler = FileHandler->new($filename);
 		$header = $filehandler->get("HEADER");
 		$entries = $filehandler->get("ENTRIES"); 
-		$i=0;
 		
 		foreach my $entry( $entries->toarray() ){
-			$i++;
-			#print "ENTRY # $i:\n", $entry->tostring(), "\n";
+			# skip the entry if the mention:
+			#  (1) is a mention of an event or a relation
+			#  (2) is not relevant to a hypotheses
+			next if ($entry->get("CATEGORY") ne "ENTITY" && !$nodementionids_relevant_to_hypotheses{$entry->get("nodemention_id")});
+			
 			my $document_eid = $entry->get("provenance");
 			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
 			my $thedocumentelementmodality = $thedocumentelement->get("TYPE");
@@ -1072,12 +1104,6 @@ sub load_nodes {
 			$node->add_mention($mention);
 			$self->{NODEIDS_LOOKUP}{$entry->get("document_level_node_id")} = $entry->get("kb_id");
 			$self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")} = $entry->get("kb_id");
-			
-# NODE has no type ... its type is taken from its mentions
-#			$node->set("TYPE", $self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE", 
-#																													$entry->get("type"), 
-#																													$entry->get("subtype"))) 
-#									unless $node->set("TYPE");			
 		}
 	}
 }
