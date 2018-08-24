@@ -1310,5 +1310,118 @@ sub write_to_rq {
 	print $program_output "writing graph query to rq: $query_id\n";
 }
 
+#####################################################################################
+# XMLAttributes
+#####################################################################################
+
+package XMLAttributes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $parameters) = @_;
+  my $self = $class->SUPER::new('XMLAttribute');
+  $self->{CLASS} = 'XMLAttributes';
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# XMLAttribute
+#####################################################################################
+
+package XMLAttribute;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $key, $value) = @_;
+  my $self = {
+    CLASS => 'XMLAttribute',
+    KEY => $key,
+    VALUE => $value,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	
+	$self->get("KEY") . " " . $self->get("VALUE");
+}
+
+#####################################################################################
+# XMLElement
+#####################################################################################
+
+package XMLElement;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $indent, $element, $name, $attributes) = @_;
+  my $self = {
+    CLASS => 'XMLElement',
+    INDENT => $indent,
+    NAME => $name,
+    ATTRIBUTES => $attributes,
+    ELEMENT => $element,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_OPENTAG {
+	my ($self) = @_;
+	
+	"<" . $self->get("NAME") . " " . $self->get("ATTRIBUTES")->tostring() . ">";
+}
+
+sub get_CLOSETAG {
+	my ($self) = @_;
+	
+	"<\/" . $self->get("NAME") . ">";
+}
+
+sub tostring {
+	my ($self) = @_;
+	
+	my $retVal = " " x $self->get("INDENT");
+	$retVal .= $self->get("OPENTAG");
+	$retVal .= $self->get("ELEMENT") unless ref $self->get("ELEMENT");
+	$retVal .= "\n".$self->get("ELEMENT")->tostring()."\n" if ref $self->get("ELEMENT");
+	$retVal .= $self->get("CLOSETAG");
+	
+	$retVal;
+}
+
+#####################################################################################
+# XMLElements
+#####################################################################################
+
+package XMLElements;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $parameters) = @_;
+  my $self = $class->SUPER::new('XMLElement');
+  $self->{CLASS} = 'XMLElements';
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	
+	my $retVal = "";
+
+	foreach my $xml_element($self->toarray()) {
+		$retVal .= $xml_element->tostring();
+	}
+	
+	$retVal;
+}
 
 1;
