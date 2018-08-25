@@ -1397,17 +1397,18 @@ sub tostring {
 }
 
 #####################################################################################
-# XMLElements
+# XMLQuery
+# It is a container that contains XML elements
 #####################################################################################
 
-package XMLElements;
+package XMLQuery;
 
 use parent -norequire, 'Container', 'Super';
 
 sub new {
   my ($class, $parameters) = @_;
   my $self = $class->SUPER::new('XMLElement');
-  $self->{CLASS} = 'XMLElements';
+  $self->{CLASS} = 'XMLQuery';
   bless($self, $class);
   $self;
 }
