@@ -1387,7 +1387,7 @@ sub get_OPENTAG {
 	my ($self) = @_;
 	
 	my $attributes = "";
-	$attributes = $self->get("ATTRIBUTES")->tostring() if $self->get("ATTRIBUTES") ne "nil";
+	$attributes = " " . $self->get("ATTRIBUTES")->tostring() if $self->get("ATTRIBUTES") ne "nil";
 	
 	"<" . $self->get("NAME") . $attributes . ">";
 }
