@@ -526,6 +526,11 @@ sub get_BY_KEY {
   $self->{STORE}{TABLE}{$key};
 }
 
+sub get_ALL_KEYS {
+	my ($self) = @_;
+	keys %{$self->{STORE}{TABLE}};
+}
+
 sub add {
   my ($self, $value, $key) = @_;
   push(@{$self->{STORE}{LIST}}, $value);
@@ -1224,14 +1229,40 @@ sub write_to_files {
 
 sub write_to_xml {
 	my ($self, $program_output) = @_;
+	my $indent = 0;
 	my $query_id = $self->get("QUERY_ID");
 	my $enttype = $self->get("ENTTYPE");
 	my $doceid = $self->get("DOCUMENTELEMENTID");
 	my $modality = $self->get("MODALITY");
 	my $start = $self->get("START");
 	my $end = $self->get("END");
-	print $program_output "writing zerohop query to xml: $query_id\n";
-	print $program_output "$query_id, $enttype, $doceid, $modality, $start, $end\n";
+	
+	my $attributes = XMLAttributes->new();
+	$attributes->add("$query_id", "ID");
+	
+	my $xml_node = XMLElement->new($indent+4, "?node", "node", 0);
+	my $xml_enttype = XMLElement->new($indent+4, $enttype, "enttype", 0);
+	my $xml_doceid = XMLElement->new($indent+6, $doceid, "doceid", 0);
+	my $xml_start = XMLElement->new($indent+6, $start, "start", 0);
+	my $xml_end = XMLElement->new($indent+6, $end, "end", 0);
+
+	my $xml_descriptor_container =  XMLElements->new();
+	$xml_descriptor_container->add($xml_doceid);
+	$xml_descriptor_container->add($xml_start);
+	$xml_descriptor_container->add($xml_end);
+
+	my $xml_descriptor = XMLElement->new($indent+4, $xml_descriptor_container, "descriptor", 1);
+
+	my $xml_entrypoint_container = XMLElements->new();
+	$xml_entrypoint_container->add($xml_node);
+	$xml_entrypoint_container->add($xml_enttype);
+	$xml_entrypoint_container->add($xml_descriptor);
+	
+	my $xml_entrypoint = XMLElement->new($indent+2, $xml_entrypoint_container, "entrypoint", 1);
+	
+	my $xml_query = XMLElement->new($indent, $xml_entrypoint, "zerohop_query", 1, $attributes);
+
+	print $program_output $xml_query->tostring(), "\n";
 }
 
 sub write_to_rq {
@@ -1319,36 +1350,17 @@ package XMLAttributes;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
+  my ($class) = @_;
   my $self = $class->SUPER::new('XMLAttribute');
   $self->{CLASS} = 'XMLAttributes';
   bless($self, $class);
   $self;
 }
 
-#####################################################################################
-# XMLAttribute
-#####################################################################################
-
-package XMLAttribute;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $key, $value) = @_;
-  my $self = {
-    CLASS => 'XMLAttribute',
-    KEY => $key,
-    VALUE => $value,
-  };
-  bless($self, $class);
-  $self;
-}
-
 sub tostring {
 	my ($self) = @_;
-	
-	$self->get("KEY") . " " . $self->get("VALUE");
+	my $retVal = " ";
+	join (" ", map {"$_=\"".$self->get('BY_KEY', $_)."\""} ($self->get("ALL_KEYS")));
 }
 
 #####################################################################################
@@ -1360,11 +1372,12 @@ package XMLElement;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $indent, $element, $name, $attributes) = @_;
+  my ($class, $indent, $element, $name, $newline, $attributes) = @_;
   my $self = {
     CLASS => 'XMLElement',
     INDENT => $indent,
     NAME => $name,
+    NEWLINE => $newline,
     ATTRIBUTES => $attributes,
     ELEMENT => $element,
   };
@@ -1375,13 +1388,16 @@ sub new {
 sub get_OPENTAG {
 	my ($self) = @_;
 	
-	"<" . $self->get("NAME") . " " . $self->get("ATTRIBUTES")->tostring() . ">";
+	my $attributes = "";
+	$attributes = $self->get("ATTRIBUTES")->tostring() if $self->get("ATTRIBUTES") ne "nil";
+	
+	"<" . $self->get("NAME") . $attributes . ">";
 }
 
 sub get_CLOSETAG {
 	my ($self) = @_;
 	
-	"<\/" . $self->get("NAME") . ">";
+	"<\/" . $self->get("NAME") . ">\n";
 }
 
 sub tostring {
@@ -1389,26 +1405,27 @@ sub tostring {
 	
 	my $retVal = " " x $self->get("INDENT");
 	$retVal .= $self->get("OPENTAG");
+	$retVal .= "\n" if $self->get("NEWLINE");
+	$retVal .= $self->get("ELEMENT")->tostring() if ref $self->get("ELEMENT");
 	$retVal .= $self->get("ELEMENT") unless ref $self->get("ELEMENT");
-	$retVal .= "\n".$self->get("ELEMENT")->tostring()."\n" if ref $self->get("ELEMENT");
+	$retVal .= " " x $self->get("INDENT") if $self->get("NEWLINE");
 	$retVal .= $self->get("CLOSETAG");
 	
 	$retVal;
 }
 
 #####################################################################################
-# XMLQuery
-# It is a container that contains XML elements
+# XMLElements
 #####################################################################################
 
-package XMLQuery;
+package XMLElements;
 
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
+  my ($class) = @_;
   my $self = $class->SUPER::new('XMLElement');
-  $self->{CLASS} = 'XMLQuery';
+  $self->{CLASS} = 'XMLElements';
   bless($self, $class);
   $self;
 }
@@ -1418,8 +1435,8 @@ sub tostring {
 	
 	my $retVal = "";
 
-	foreach my $xml_element($self->toarray()) {
-		$retVal .= $xml_element->tostring();
+	foreach my $xml_elements($self->toarray()) {
+		$retVal .= $xml_elements->tostring();
 	}
 	
 	$retVal;
