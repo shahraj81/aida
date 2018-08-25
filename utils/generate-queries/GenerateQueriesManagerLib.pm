@@ -1190,9 +1190,11 @@ sub write_to_files {
 
 	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	print $program_output_xml "<zerohop_queries>\n";
 	foreach my $query($self->toarray()) {
 		$query->write_to_files($program_output_xml, $program_output_rq);
 	}
+	print $program_output_xml "<\/zerohop_queries>\n";
 	close($program_output_xml);
 	close($program_output_rq);	
 }
@@ -1261,7 +1263,7 @@ sub write_to_xml {
 	
 	my $xml_query = XMLElement->new($xml_entrypoint, "zerohop_query", 1, $attributes);
 
-	print $program_output $xml_query->tostring(0), "\n";
+	print $program_output $xml_query->tostring(2);
 }
 
 sub write_to_rq {
