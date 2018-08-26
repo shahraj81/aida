@@ -1127,8 +1127,27 @@ sub load_nodes {
 sub generate_queries {
 	my ($self) = @_;
 	
+	$self->generate_class_queries();
 	$self->generate_zerohop_queries();
 	$self->generate_graph_queries();
+}
+
+sub generate_class_queries {
+	my ($self) = @_;
+	my $queries = ClassQueries->new($self->get("PARAMETERS"));
+	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
+	my $i = 0;
+	my %type_category = %{$self->get("LDC_NIST_MAPPINGS")->get("TYPE_CATEGORY")};
+	foreach my $type(keys %type_category) {
+		my $category = $type_category{$type};
+		if($category eq "Filler" or $category eq "Entity") {
+			$i++;
+			my $query_id = "$query_id_prefix\_$i";
+			my $query = ClassQuery->new($query_id, $type);
+			$queries->add($query);
+		}
+	}
+	$queries->write_to_files();
 }
 
 sub generate_zerohop_queries {
@@ -1163,6 +1182,86 @@ sub generate_graph_queries {
 	$queries->add($query);
 	
 	$queries->write_to_files();
+}
+
+#####################################################################################
+# ClassQueries
+#####################################################################################
+
+package ClassQueries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $parameters) = @_;
+  my $self = $class->SUPER::new('ClassQuery');
+  $self->{CLASS} = 'ClassQueries';
+  $self->{PARAMETERS} = $parameters;
+  bless($self, $class);
+  $self;
+}
+
+sub write_to_files {
+	my ($self) = @_;
+	my ($program_output_xml, $program_output_rq);
+	my $output_filename_xml = $self->get("PARAMETERS")->get("CLASS_QUERIES_XML_OUTPUT_FILE");
+	my $output_filename_rq = $self->get("PARAMETERS")->get("CLASS_QUERIES_RQ_OUTPUT_FILE");
+
+	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
+	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	print $program_output_xml "<class_queries>\n";
+	foreach my $query($self->toarray()) {
+		$query->write_to_files($program_output_xml, $program_output_rq);
+	}
+	print $program_output_xml "<\/class_queries>\n";
+	close($program_output_xml);
+	close($program_output_rq);
+}
+
+#####################################################################################
+# ClassQuery
+#####################################################################################
+
+package ClassQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $query_id, $enttype) = @_;
+  my $self = {
+    CLASS => 'ClassQuery',
+    QUERY_ID => $query_id,
+    ENTTYPE => $enttype,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub write_to_files {
+	my ($self, $program_output_xml, $program_output_rq) = @_;
+
+	$self->write_to_xml($program_output_xml);
+	$self->write_to_rq($program_output_rq);
+}
+
+sub write_to_xml {
+	my ($self, $program_output) = @_;
+	my $query_id = $self->get("QUERY_ID");
+	my $enttype = $self->get("ENTTYPE");
+
+	my $attributes = XMLAttributes->new();
+	$attributes->add("$query_id", "ID");
+
+	my $xml_enttype = XMLElement->new($enttype, "enttype", 0);
+	my $xml_query = XMLElement->new($xml_enttype, "class_query", 1, $attributes);
+
+	print $program_output $xml_query->tostring(2);
+}
+
+sub write_to_rq {
+	my ($self, $program_output) = @_;
+	my $query_id = $self->get("QUERY_ID");
+	print $program_output "writing zerohop query to rq: $query_id\n";
 }
 
 #####################################################################################
