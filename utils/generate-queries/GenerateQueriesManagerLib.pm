@@ -1176,10 +1176,22 @@ sub generate_zerohop_queries {
 sub generate_graph_queries {
 	my ($self) = @_;
 	my $queries = GraphQueries->new($self->get("PARAMETERS"));
-	
-	# Generate and load GraphQueries here
-	my $query = GraphQuery->new("Q345");
-	$queries->add($query);
+	my $query_id_prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
+	my $i = 0;
+	foreach my $node($self->get("NODES")->toarray()) {
+		# Get $edge1 and $edge2 such that:
+		#   $node is the subject of $edge1, and
+		#   $node is the object of $edge2.
+		my %edge_lookup = %{$self->get("EDGES")->get("EDGE_LOOKUP")};
+		foreach my $edge1(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
+			foreach my $edge2(@{$edge_lookup{OBJECT}{$node->get("NODEID")} || []}) {
+				$i++;
+				my $query_id = "$query_id_prefix\_$i";
+				my $query = GraphQuery->new($query_id, $edge1, $edge2);
+				$queries->add($query);
+			}
+		}
+	}
 	
 	$queries->write_to_files();
 }
@@ -1250,7 +1262,7 @@ sub write_to_xml {
 	my $enttype = $self->get("ENTTYPE");
 
 	my $attributes = XMLAttributes->new();
-	$attributes->add("$query_id", "ID");
+	$attributes->add("$query_id", "id");
 
 	my $xml_enttype = XMLElement->new($enttype, "enttype", 0);
 	my $xml_query = XMLElement->new($xml_enttype, "class_query", 1, $attributes);
@@ -1336,32 +1348,23 @@ sub write_to_xml {
 	my $modality = $self->get("MODALITY");
 	my $start = $self->get("START");
 	my $end = $self->get("END");
-	
-	my $attributes = XMLAttributes->new();
-	$attributes->add("$query_id", "ID");
-	
+
 	my $xml_node = XMLElement->new("?node", "node", 0);
 	my $xml_enttype = XMLElement->new($enttype, "enttype", 0);
 	my $xml_doceid = XMLElement->new($doceid, "doceid", 0);
 	my $xml_start = XMLElement->new($start, "start", 0);
 	my $xml_end = XMLElement->new($end, "end", 0);
-
-	my $xml_descriptor_container =  XMLElements->new();
-	$xml_descriptor_container->add($xml_doceid);
-	$xml_descriptor_container->add($xml_start);
-	$xml_descriptor_container->add($xml_end);
-
-	my $xml_descriptor = XMLElement->new($xml_descriptor_container, "descriptor", 1);
-
-	my $xml_entrypoint_container = XMLElements->new();
-	$xml_entrypoint_container->add($xml_node);
-	$xml_entrypoint_container->add($xml_enttype);
-	$xml_entrypoint_container->add($xml_descriptor);
-	
-	my $xml_entrypoint = XMLElement->new($xml_entrypoint_container, "entrypoint", 1);
-	
+	my $xml_descriptor = XMLElement->new(
+			XMLContainer->new($xml_doceid, $xml_start, $xml_end),
+			"descriptor",
+			1);
+	my $xml_entrypoint = XMLElement->new(
+			XMLContainer->new($xml_node, $xml_enttype, $xml_descriptor), 
+			"entrypoint",
+			1);
+	my $attributes = XMLAttributes->new();
+	$attributes->add("$query_id", "id");
 	my $xml_query = XMLElement->new($xml_entrypoint, "zerohop_query", 1, $attributes);
-
 	print $program_output $xml_query->tostring(2);
 }
 
@@ -1397,9 +1400,11 @@ sub write_to_files {
 
 	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	print $program_output_xml "<graph_queries>\n";
 	foreach my $query($self->toarray()) {
 		$query->write_to_files($program_output_xml, $program_output_rq);
 	}
+	print $program_output_xml "<\/graph_queries>\n";
 	close($program_output_xml);
 	close($program_output_rq);	
 }
@@ -1413,10 +1418,11 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $query_id) = @_;
+  my ($class, $query_id, @edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
     QUERY_ID => $query_id,
+    EDGES => [@edges],
   };
   bless($self, $class);
   $self;
@@ -1432,7 +1438,32 @@ sub write_to_files {
 sub write_to_xml {
 	my ($self, $program_output) = @_;
 	my $query_id = $self->get("QUERY_ID");
-	print $program_output "writing graph query to xml: $query_id\n";
+	my @edges = @{$self->get("EDGES")};
+	my $query_attributes = XMLAttributes->new();
+	$query_attributes->add("$query_id", "id");
+	my $xml_edges_container = XMLContainer->new();
+	my $edge_id = 0;
+	foreach my $edge(@edges) {
+		$edge_id++;
+		my $subject = $edge->get("SUBJECT")->get("NODEID");
+		my $object = $edge->get("OBJECT")->get("NODEID");
+		my $predicate = $edge->get("PREDICATE");
+		my $xml_subject = XMLElement->new($subject, "subject", 0);
+		my $xml_object = XMLElement->new($object, "object", 0);
+		my $xml_predicate = XMLElement->new($predicate, "predicate", 0);
+		my $edge_predicate = XMLAttributes->new();
+		$edge_predicate->add("$edge_id", "id");
+		my $xml_edge = XMLElement->new(
+							XMLContainer->new($xml_subject, $xml_predicate, $xml_object),
+							"edge",
+							1,
+							$edge_predicate);
+		$xml_edges_container->add($xml_edge);
+	}
+	my $xml_edges = XMLElement->new($xml_edges_container, "edges", 1);
+	my $xml_graph = XMLElement->new($xml_edges, "graph", 1);
+	my $xml_query = XMLElement->new($xml_graph, "graph_query", 1, $query_attributes);
+	print $program_output $xml_query->tostring(2);
 }
 
 sub write_to_rq {
@@ -1514,30 +1545,30 @@ sub tostring {
 }
 
 #####################################################################################
-# XMLElements
+# XMLContainer
 #####################################################################################
 
-package XMLElements;
+package XMLContainer;
 
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('XMLElement');
-  $self->{CLASS} = 'XMLElements';
-  bless($self, $class);
-  $self;
+	my ($class, @xml_elements) = @_;
+	my $self = $class->SUPER::new('XMLElement');
+	$self->{CLASS} = 'XMLContainer';
+	bless($self, $class);
+	foreach my $xml_element(@xml_elements) {
+		$self->add($xml_element);
+	}
+	$self;
 }
 
 sub tostring {
 	my ($self, $indent) = @_;
-	
 	my $retVal = "";
-
 	foreach my $xml_elements($self->toarray()) {
 		$retVal .= $xml_elements->tostring($indent);
 	}
-	
 	$retVal;
 }
 
