@@ -1187,7 +1187,8 @@ sub generate_graph_queries {
 			foreach my $edge2(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
-				my $query = GraphQuery->new($query_id, $edge1, $edge2);
+				my $query = GraphQuery->new($self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
+				$query->add_entrypoint($node);
 				$queries->add($query);
 			}
 		}
@@ -1418,14 +1419,21 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $query_id, @edges) = @_;
+  my ($class, $documentids_mappings, $query_id, @edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
+    DOCUMENTIDS_MAPPINGS => $documentids_mappings,
     QUERY_ID => $query_id,
     EDGES => [@edges],
+    ENTRYPOINTS => [],
   };
   bless($self, $class);
   $self;
+}
+
+sub add_entrypoint {
+	my ($self, $node) = @_;
+	push(@{$self->{ENTRYPOINTS}}, $node);
 }
 
 sub write_to_files {
@@ -1438,15 +1446,15 @@ sub write_to_files {
 sub write_to_xml {
 	my ($self, $program_output) = @_;
 	my $query_id = $self->get("QUERY_ID");
-	my @edges = @{$self->get("EDGES")};
 	my $query_attributes = XMLAttributes->new();
 	$query_attributes->add("$query_id", "id");
+	# process the edges into a graph
 	my $xml_edges_container = XMLContainer->new();
 	my $edge_id = 0;
-	foreach my $edge(@edges) {
+	foreach my $edge(@{$self->get("EDGES")}) {
 		$edge_id++;
-		my $subject = $edge->get("SUBJECT")->get("NODEID");
-		my $object = $edge->get("OBJECT")->get("NODEID");
+		my $subject = &mask($edge->get("SUBJECT")->get("NODEID"));
+		my $object = &mask($edge->get("OBJECT")->get("NODEID"));
 		my $predicate = $edge->get("PREDICATE");
 		my $xml_subject = XMLElement->new($subject, "subject", 0);
 		my $xml_object = XMLElement->new($object, "object", 0);
@@ -1462,7 +1470,34 @@ sub write_to_xml {
 	}
 	my $xml_edges = XMLElement->new($xml_edges_container, "edges", 1);
 	my $xml_graph = XMLElement->new($xml_edges, "graph", 1);
-	my $xml_query = XMLElement->new($xml_graph, "graph_query", 1, $query_attributes);
+	# process the entrypoints
+	my $xml_entrypoints_container = XMLContainer->new();
+	foreach my $node(@{$self->get("ENTRYPOINTS")}) {
+		my $node_id = &mask($node->get("NODEID"));
+		my $xml_node = XMLElement->new($node_id, "node", 0);
+		my $xml_entrypoint_container = XMLContainer->new($xml_node);
+		foreach my $mention($node->get("MENTIONS")->toarray()){
+			my $enttype = $mention->get("NIST_TYPE");
+			my $xml_enttype = XMLElement->new($enttype, "enttype", 0);
+			foreach my $span($mention->get("SPANS")->toarray()) {
+				my $doceid = $span->get("DOCUMENTEID");
+				my $start = $span->get("START");
+				my $end = $span->get("END");
+				my $modality = $self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("TYPE");
+				my $xml_doceid = XMLElement->new($doceid, "doceid", 0);
+				my $xml_start = XMLElement->new($start, "start", 0);
+				my $xml_end = XMLElement->new($end, "end", 0);
+				my $xml_descriptor_container = XMLContainer->new($xml_enttype, $xml_doceid, $xml_start, $xml_end);
+				my $xml_descriptor = XMLElement->new($xml_descriptor_container, "descriptor", 1);
+				$xml_entrypoint_container->add($xml_descriptor);
+			}
+		}
+		my $xml_entrypoint = XMLElement->new($xml_entrypoint_container, "entrypoint", 1);
+		$xml_entrypoints_container->add($xml_entrypoint);
+	}
+	my $xml_entrypoints = XMLElement->new($xml_entrypoints_container, "entrypoints", 1);
+	my $xml_query_container = XMLContainer->new($xml_graph, $xml_entrypoints);
+	my $xml_query = XMLElement->new($xml_query_container, "graph_query", 1, $query_attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
@@ -1470,6 +1505,12 @@ sub write_to_rq {
 	my ($self, $program_output) = @_;
 	my $query_id = $self->get("QUERY_ID");
 	print $program_output "writing graph query to rq: $query_id\n";
+}
+
+sub mask {
+	my ($input) = @_;
+
+	"?$input";
 }
 
 #####################################################################################
@@ -1527,7 +1568,7 @@ sub get_OPENTAG {
 sub get_CLOSETAG {
 	my ($self) = @_;
 	
-	"<\/" . $self->get("NAME") . ">\n";
+	"<\/" . $self->get("NAME") . ">";
 }
 
 sub tostring {
@@ -1537,9 +1578,10 @@ sub tostring {
 	$retVal .= $self->get("OPENTAG");
 	$retVal .= "\n" if $self->get("NEWLINE");
 	$retVal .= $self->get("ELEMENT")->tostring($indent+2) if ref $self->get("ELEMENT");
-	$retVal .= $self->get("ELEMENT") unless ref $self->get("ELEMENT");
+	$retVal .= " " . $self->get("ELEMENT") . " " unless ref $self->get("ELEMENT");
 	$retVal .= " " x $indent if $self->get("NEWLINE");
 	$retVal .= $self->get("CLOSETAG");
+	$retVal .= "\n";
 	
 	$retVal;
 }
