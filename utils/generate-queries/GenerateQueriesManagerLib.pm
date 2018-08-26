@@ -1183,8 +1183,8 @@ sub generate_graph_queries {
 		#   $node is the subject of $edge1, and
 		#   $node is the object of $edge2.
 		my %edge_lookup = %{$self->get("EDGES")->get("EDGE_LOOKUP")};
-		foreach my $edge1(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
-			foreach my $edge2(@{$edge_lookup{OBJECT}{$node->get("NODEID")} || []}) {
+		foreach my $edge1(@{$edge_lookup{OBJECT}{$node->get("NODEID")} || []}) {
+			foreach my $edge2(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
 				my $query = GraphQuery->new($query_id, $edge1, $edge2);
