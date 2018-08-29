@@ -461,8 +461,6 @@ sub new {
     CLASS => 'Node',
     NODEID => undef,
     MENTIONS => Mentions->new(),
-# NODE has no type ... its type is taken from its mentions
-#    TYPE => undef,
   };
   bless($self, $class);
   $self;
