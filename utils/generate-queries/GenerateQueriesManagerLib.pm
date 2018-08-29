@@ -135,6 +135,12 @@ sub get_NIST_ROLE {
 	$self->{ROLE_MAPPINGS}{$ldc_role};
 }
 
+sub get_NIST_TYPE_CATEGORY {
+	my ($self, $nist_type) = @_;
+
+	$self->{TYPE_CATEGORY}{$nist_type};
+}
+
 sub load_data {
 	my ($self) = @_;
 	my ($filename, $filehandler, $header, $entries, $i);
@@ -481,6 +487,19 @@ sub get_NIST_TYPES {
 	my ($self) = @_;
 	my %hash = map {$_=>1} map {$_->get("NIST_TYPE")} $self->get("MENTIONS")->toarray();
 	keys %hash;
+}
+
+sub get_NIST_TYPE_CATEGORIES {
+	my ($self) = @_;
+	my %hash = map {$_=>1} map {$_->get("NIST_TYPE_CATEGORY")} $self->get("MENTIONS")->toarray();
+	keys %hash;
+}
+
+sub has_compatible_types {
+	my ($self) = @_;
+	my @type_categories = $self->get("NIST_TYPE_CATEGORIES");
+	return 0 if @type_categories > 1;
+	return 1;
 }
 
 sub tostring {
@@ -1111,7 +1130,9 @@ sub load_nodes {
 							$self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE", 
 								$entry->get("type"), 
 								$entry->get("subtype")));
-
+			$mention->set("NIST_TYPE_CATEGORY",
+							$self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE_CATEGORY",
+								$mention->get("NIST_TYPE")));
 			my $node = $self->get("NODES")->get("BY_KEY", $entry->get("kb_id"));
 
 			$node->set("NODEID", $entry->get("kb_id")) unless $node->set("NODEID");
@@ -1176,7 +1197,7 @@ sub generate_graph_queries {
 	my $queries = GraphQueries->new($self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
 	my $i = 0;
-	foreach my $node($self->get("NODES")->toarray()) {
+	foreach my $node(grep {$_->has_compatible_types()} $self->get("NODES")->toarray()) {
 		# Get $edge1 and $edge2 such that:
 		#   $node is the subject of $edge1, and
 		#   $node is the object of $edge2.
