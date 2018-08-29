@@ -497,7 +497,7 @@ sub get_NIST_TYPE_CATEGORIES {
 
 sub has_compatible_types {
 	my ($self) = @_;
-	my @type_categories = $self->get("NIST_TYPE_CATEGORIES");
+	my @type_categories = grep {$_ ne "Filler"} $self->get("NIST_TYPE_CATEGORIES");
 	return 0 if @type_categories > 1;
 	return 1;
 }
