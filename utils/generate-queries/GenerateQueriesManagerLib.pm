@@ -1176,7 +1176,7 @@ sub generate_zerohop_queries {
 sub generate_graph_queries {
 	my ($self) = @_;
 	my $queries = GraphQueries->new($self->get("PARAMETERS"));
-	my $query_id_prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
+	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
 	my $i = 0;
 	foreach my $node($self->get("NODES")->toarray()) {
 		# Get $edge1 and $edge2 such that:
