@@ -1021,6 +1021,7 @@ sub new {
   	NODEIDS_LOOKUP => {},
     IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($parameters),
     KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($parameters),
+    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($parameters),
     PARAMETERS => $parameters,
   };
   bless($self, $class);
@@ -1052,7 +1053,7 @@ sub load_images_boundingboxes {
 	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
-		$self->get("IMAGES_BOUNDINGBOXES")->add( ImagesBoundingBox->new($entry->get("doceid"), $entry->get("type"),
+		$self->get("IMAGES_BOUNDINGBOXES")->add( ImageBoundingBox->new($entry->get("doceid"), $entry->get("type"),
 												$entry->get("top_left_x"), $entry->get("top_left_y"),
 												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
 								$entry->get("doceid"));
@@ -1064,7 +1065,7 @@ sub load_keyframes_boundingboxes {
 	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("KEYFRAMES_BOUNDINGBOXES_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
-		$self->get("KEYFRAMES_BOUNDINGBOXES")->add( KeyFramesBoundingBox->new($entry->get("keyframeid"),
+		$self->get("KEYFRAMES_BOUNDINGBOXES")->add( KeyFrameBoundingBox->new($entry->get("keyframeid"),
 												$entry->get("top_left_x"), $entry->get("top_left_y"),
 												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
 								$entry->get("keyframeid"));
@@ -1133,7 +1134,9 @@ sub load_nodes {
 			
 			my $document_eid = $entry->get("provenance");
 			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
-			my $thedocumentelementmodality = $thedocumentelement->get("TYPE");
+			my $thedocumentelement_encodingformat = $thedocumentelement->get("TYPE");
+			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BYKEY", 
+																										$thedocumentelement_encodingformat);
 			my $document_id = $thedocumentelement->get("DOCUMENTID");
 			my $mention = Mention->new();
 			my $span = Span->new(
@@ -1748,6 +1751,34 @@ sub tostring {
 		$retVal .= $xml_elements->tostring($indent);
 	}
 	$retVal;
+}
+
+#####################################################################################
+# EncodingFormatToModalityMappings
+#####################################################################################
+
+package EncodingFormatToModalityMappings;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+	my ($class, $parameters) = @_;
+	my $self = $class->SUPER::new('RAW');
+	$self->{CLASS} = 'EncodingFormatToModalityMappings';
+	bless($self, $class);
+	$self->load_data();
+	$self;
+}
+
+sub load_data {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->tostring()) {
+		my $encoding_format = $entry->get("encoding_format");
+		my $modality = $entry->get("modality");
+		$self->add($modality, $encoding_format);
+	}
 }
 
 1;
