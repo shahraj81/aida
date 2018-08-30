@@ -105,6 +105,7 @@ sub new {
     ROLE_MAPPINGS => {},
     TYPE_MAPPINGS => {},
     TYPE_CATEGORY => {},
+    IS_VALID_ENTRYPOINT => {},
   };
   bless($self, $class);
   $self->load_data();
@@ -139,6 +140,12 @@ sub get_NIST_TYPE_CATEGORY {
 	my ($self, $nist_type) = @_;
 
 	$self->{TYPE_CATEGORY}{$nist_type};
+}
+
+sub is_valid_entrypoint {
+	my ($self, $nist_type) = @_;
+
+	$self->{IS_VALID_ENTRYPOINT}{$nist_type};
 }
 
 sub load_data {
@@ -184,9 +191,11 @@ sub load_data {
     my $ldc_type = $entry->get("LDCTypeOutput");
     my $nist_type = $entry->get("NISTType");
     my $category = $entry->get("Category");
+    my $is_valid_entrypoint = $entry->get("IsValidEntrypoint");
 
     $self->{TYPE_MAPPINGS}{$ldc_type} = $nist_type;  
     $self->{TYPE_CATEGORY}{$nist_type} = $category;
+    $self->{IS_VALID_ENTRYPOINT}{$nist_type} = $is_valid_entrypoint;
   }
 }
 
@@ -1010,6 +1019,8 @@ sub new {
   	EDGES => Edges->new(),
   	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($parameters),
   	NODEIDS_LOOKUP => {},
+    IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($parameters),
+    KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($parameters),
     PARAMETERS => $parameters,
   };
   bless($self, $class);
@@ -1030,8 +1041,34 @@ sub get_DOCUMENTELEMENTS {
 sub load_data {
 	my ($self) = @_;
 
+	$self->load_images_boundingboxes();
+	$self->load_keyframes_boundingboxes();
 	$self->load_nodes();
 	$self->load_edges();
+}
+
+sub load_images_boundingboxes {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		$self->get("IMAGES_BOUNDINGBOXES")->add( ImagesBoundingBox->new($entry->get("doceid"), $entry->get("type"),
+												$entry->get("top_left_x"), $entry->get("top_left_y"),
+												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
+								$entry->get("doceid"));
+	}
+}
+
+sub load_keyframes_boundingboxes {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("KEYFRAMES_BOUNDINGBOXES_FILE"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		$self->get("KEYFRAMES_BOUNDINGBOXES")->add( KeyFramesBoundingBox->new($entry->get("keyframeid"),
+												$entry->get("top_left_x"), $entry->get("top_left_y"),
+												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
+								$entry->get("keyframeid"));
+	}
 }
 
 sub load_edges {
@@ -1207,6 +1244,93 @@ sub generate_graph_queries {
 	}
 	
 	$queries->write_to_files();
+}
+
+#####################################################################################
+# ImagesBoundingBoxes
+#####################################################################################
+
+package ImagesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $parameters) = @_;
+  my $self = $class->SUPER::new('ImageBoundingBox');
+  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{PARAMETERS} = $parameters;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# ImageBoundingBox
+#####################################################################################
+
+package ImageBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $doceid, $type, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
+  my $self = {
+    CLASS => 'ImageBoundingBox',
+    DOCEID => $doceid,
+    TYPE => $type,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_left_x,
+    BOTTOM_LEFT_Y => $bottom_left_y,
+  };
+  bless($self, $class);
+  $self;
+}
+
+
+#####################################################################################
+# KeyFramesBoundingBoxes
+#####################################################################################
+
+package KeyFramesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $parameters) = @_;
+  my $self = $class->SUPER::new('KeyFrameBoundingBox');
+  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{PARAMETERS} = $parameters;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# KeyFramesBoundingBox
+#####################################################################################
+
+package KeyFrameBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $keyframeid, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
+  my $self = {
+    CLASS => 'KeyFrameBoundingBox',
+    KEYFRAMEID => $keyframeid,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_left_x,
+    BOTTOM_LEFT_Y => $bottom_left_y,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_DOCEID {
+	my ($self) = @_;
+
+	my ($doceid) = split("_", $self->get("KEYFRAMEID"));
+	$doceid;
 }
 
 #####################################################################################

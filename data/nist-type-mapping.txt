@@ -1,21 +1,21 @@
-Category	LDCType	LDCTypeShort	LDCTypeOutput	NISTType
-Entity	Person	PER	per	Person
-Entity	Organization	ORG	org	Organization
-Entity	Geopolitical Entity	GPE	gpe	GeopoliticalEntity
-Entity	Location	LOC	loc	Location
-Entity	Facility	FAC	fac	Facility
-Filler	Sides 	SID	sid	Sides
-Filler	Numerical Value	VAL	val	NumericalValue
-Filler	Age	AGE	age	Age
-Filler	Money	MON	mon	Money
-Filler	URL	URL	url	URL
-Filler	Title	TTL	ttl	Title
-Filler	Weapon	WEA	wea	Weapon
-Filler	Vehicle	VEH	veh	Vehicle
-Filler	Commodity	COM	com	Commodity
-Filler	Sentence	SEN	sen	Sentence
-Filler	Crime	CRM	crm	Crime
-Filler	Time	TME	tme	Time
-Filler	Law	LAW	law	Law
-Filler	Ballot	BAL	bal	Ballot
-Filler	Results	RES	res	Results
+Category	LDCType	LDCTypeShort	LDCTypeOutput	NISTType	IsValidEntrypoint
+Entity	Person	PER	per	Person	true
+Entity	Organization	ORG	org	Organization	true
+Entity	Geopolitical Entity	GPE	gpe	GeopoliticalEntity	true
+Entity	Location	LOC	loc	Location	true
+Entity	Facility	FAC	fac	Facility	true
+Filler	Sides 	SID	sid	Sides	false
+Filler	Numerical Value	VAL	val	NumericalValue	false
+Filler	Age	AGE	age	Age	false
+Filler	Money	MON	mon	Money	false
+Filler	URL	URL	url	URL	false
+Filler	Title	TTL	ttl	Title	false
+Filler	Weapon	WEA	wea	Weapon	true
+Filler	Vehicle	VEH	veh	Vehicle	true
+Filler	Commodity	COM	com	Commodity	false
+Filler	Sentence	SEN	sen	Sentence	false
+Filler	Crime	CRM	crm	Crime	false
+Filler	Time	TME	tme	Time	false
+Filler	Law	LAW	law	Law	false
+Filler	Ballot	BAL	bal	Ballot	false
+Filler	Results	RES	res	Results	false

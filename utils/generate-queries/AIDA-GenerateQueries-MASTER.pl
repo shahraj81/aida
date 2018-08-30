@@ -14,7 +14,7 @@ $edge_data_files->add("input/annotations/data/T101/T101_rel_slots.tab");
 
 my $acceptable_relevance = Container->new("String");
 $acceptable_relevance->add("fully-relevant");
-$acceptable_relevance->add("partially-relevant");
+#$acceptable_relevance->add("partially-relevant");
 
 my $parameters = Parameters->new();
 $parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/DocumentIDsMappings.ttl");
@@ -25,6 +25,9 @@ $parameters->set("HYPOTHESES_FILE", "input/annotations/data/T101/T101_hypotheses
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
 $parameters->set("EDGES_DATA_FILES", $edge_data_files);
 $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
+$parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
+$parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
+$parameters->set("GENERATABLE_QUERYTYPES_FILE", "input/generatable_querytypes.tab");
 $parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output/T101_class_queries.xml");
 $parameters->set("CLASS_QUERIES_RQ_OUTPUT_FILE", "output/T101_class_queries.rq");
 $parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output/T101_zerohop_queries.xml");
