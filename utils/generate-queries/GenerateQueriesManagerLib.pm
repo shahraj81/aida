@@ -1017,7 +1017,6 @@ sub new {
   foreach my $node($self->get("NODES")->toarray()) {
   	my $node_id = $node->get("NODEID");
   	my $node_types = join(",", $node->get("NIST_TYPES"));
-  	print "==>$node_id $node_types\n";
   }
   $self;
 }
