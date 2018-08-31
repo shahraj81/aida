@@ -89,6 +89,203 @@ sub dump_structure {
   }
 }
 
+### BEGIN INCLUDE Logger
+
+# The package Logger is taken with permission from James Mayfield's ColdStart library
+
+#####################################################################################
+# Reporting Problems
+#####################################################################################
+
+# The following is the default list of problems that can be checked
+# for. A different list of problems can be specified as an argument to
+# Logger->new(). WARNINGs can be corrected and do not prevent further
+# processing. ERRORs permit further error checking, but processing
+# does not proceed after that. FATAL_ERRORs cause immediate program
+# termination when the error is reported.
+
+my $problem_formats = <<'END_PROBLEM_FORMATS';
+
+# Error Name                    Type           Error Message
+# ----------                    ----           -------------
+
+########## Provenance Errors
+  FAILED_LANG_INFERENCE         WARNING        Unable to infer language from DOCID %s. Using %s by default.
+  MISSING_FILE                  FATAL_ERROR    Could not open %s: %s
+  ILLEGAL_OFFSET                ERROR          %s is not a valid offset
+
+END_PROBLEM_FORMATS
+
+
+#####################################################################################
+# Logger
+#####################################################################################
+
+package Logger;
+
+use Carp;
+
+# Create a new Logger object
+sub new {
+  my ($class, $formats, $error_output) = @_;
+  $formats = $problem_formats unless $formats;
+  my $self = {FORMATS => {}, PROBLEMS => {}, PROBLEM_COUNTS => {}};
+  bless($self, $class);
+  $self->set_error_output($error_output);
+  $self->add_formats($formats);
+  $self;
+}
+
+# Add additional error formats to an existing Logger
+sub add_formats {
+  my ($self, $formats) = @_;
+  # Convert the problem formats list to an appropriate hash
+  chomp $formats;
+  foreach (grep {/\S/} grep {!/^\S*#/} split(/\n/, $formats)) {
+    s/^\s+//;
+    my ($problem, $type, $format) = split(/\s+/, $_, 3);
+    $self->{FORMATS}{$problem} = {TYPE => $type, FORMAT => $format};
+  }
+}
+
+# Get a list of warnings that can be ignored through the -ignore switch
+sub get_warning_names {
+  my ($self) = @_;
+  join(", ", grep {$self->{FORMATS}{$_}{TYPE} eq 'WARNING'} sort keys %{$self->{FORMATS}});
+}
+
+# Do not report warnings of the specified type
+sub ignore_warning {
+  my ($self, $warning) = @_;
+  $self->NIST_die("Unknown warning: $warning") unless $self->{FORMATS}{$warning};
+  $self->NIST_die("$warning is a fatal error; cannot ignore it") unless $self->{FORMATS}{$warning}{TYPE} eq 'WARNING';
+  $self->{IGNORE_WARNINGS}{$warning}++;
+}
+
+# Just use the ignore_warning mechanism to delete errors, but don't enforce the warnings-only edict
+sub delete_error {
+  my ($self, $error) = @_;
+  $self->NIST_die("Unknown error: $error") unless $self->{FORMATS}{$error};
+  $self->{IGNORE_WARNINGS}{$error}++;
+}
+
+# Is a particular error being ignored?
+sub is_ignored {
+  my ($self, $warning) = @_;
+  $self->NIST_die("Unknown error: $warning") unless $self->{FORMATS}{$warning};
+  $self->{IGNORE_WARNINGS}{$warning};
+}
+
+# Remember that a particular problem was encountered, for later reporting
+sub record_problem {
+  my ($self, $problem, @args) = @_;
+  my $source = pop(@args);
+  # Warnings can be suppressed here; errors cannot
+  return if $self->{IGNORE_WARNINGS}{$problem};
+  my $format = $self->{FORMATS}{$problem} ||
+               {TYPE => 'INTERNAL_ERROR',
+		FORMAT => "Unknown problem $problem: %s"};
+  $self->{PROBLEM_COUNTS}{$format->{TYPE}}++;
+  my $type = $format->{TYPE};
+  my $message = "$type: " . sprintf($format->{FORMAT}, @args);
+  # Use Encode to support Unicode.
+  $message = Encode::encode_utf8($message);
+  my $where = (ref $source ? "$source->{FILENAME} line $source->{LINENUM}" : $source);
+  $self->NIST_die("$message\n$where") if $type eq 'FATAL_ERROR' || $type eq 'INTERNAL_ERROR';
+  $self->{PROBLEMS}{$problem}{$message}{$where}++;
+}
+
+# Send error output to a particular file or file handle
+sub set_error_output {
+  my ($self, $output) = @_;
+  if (!$output) {
+    $output = *STDERR{IO};
+  }
+  elsif (!ref $output) {
+    if (lc $output eq 'stdout') {
+      $output = *STDOUT{IO};
+    }
+    elsif (lc $output eq 'stderr') {
+      $output = *STDERR{IO};
+    }
+    else {
+      $self->NIST_die("File $output already exists") if -e $output;
+      open(my $outfile, ">:utf8", $output) or $self->NIST_die("Could not open $output: $!");
+      $output = $outfile;
+      $self->{OPENED_ERROR_OUTPUT} = 'true';
+    }
+  }
+  $self->{ERROR_OUTPUT} = $output
+}
+
+# Retrieve the file handle for error output
+sub get_error_output {
+  my ($self) = @_;
+  $self->{ERROR_OUTPUT};
+}
+
+# Close the error output if it was opened here
+sub close_error_output {
+  my ($self) = @_;
+  close $self->{ERROR_OUTPUT} if $self->{OPENED_ERROR_OUTPUT};
+}
+
+# Report all of the problems that have been aggregated to the selected error output
+sub report_all_problems {
+  my ($self) = @_;
+  my $error_output = $self->{ERROR_OUTPUT};
+  foreach my $problem (sort keys %{$self->{PROBLEMS}}) {
+    foreach my $message (sort keys %{$self->{PROBLEMS}{$problem}}) {
+      my $num_instances = scalar keys %{$self->{PROBLEMS}{$problem}{$message}};
+      print $error_output "$message";
+      my $example = (sort keys %{$self->{PROBLEMS}{$problem}{$message}})[0];
+      if ($example ne 'NO_SOURCE') {
+	print $error_output " ($example";
+	print $error_output " and ", $num_instances - 1, " other place" if $num_instances > 1;
+	print $error_output "s" if $num_instances > 2;
+	print $error_output ")";
+      }
+      print $error_output "\n\n";
+    }
+  }
+  # Return the number of errors and the number of warnings encountered
+  ($self->{PROBLEM_COUNTS}{ERROR} || 0, $self->{PROBLEM_COUNTS}{WARNING} || 0);
+}
+
+sub get_num_errors {
+  my ($self) = @_;
+  $self->{PROBLEM_COUNTS}{ERROR} || 0;
+}
+
+sub get_num_warnings {
+  my ($self) = @_;
+  $self->{PROBLEM_COUNTS}{WARNING} || 0;
+}
+
+sub get_error_type {
+  my ($self, $error_name) = @_;
+  $self->{FORMATS}{$error_name}{TYPE};
+}
+
+# NIST submission scripts demand an error code of 255 on failure
+my $NIST_error_code = 255;
+
+### DO NOT INCLUDE
+# FIXME: Inconsistency: sometimes NIST_die is called directly; other
+# times record_problem is called with a FATAL_ERROR
+### DO INCLUDE
+sub NIST_die {
+  my ($self, @messages) = @_;
+  my $outfile = $self->{ERROR_OUTPUT};
+  print $outfile "================================================================\n";
+  print $outfile Carp::longmess();
+  print $outfile "================================================================\n";
+  print $outfile join("", @messages), " at (", join(":", caller), ")\n";
+  exit $NIST_error_code;
+}
+
+### END INCLUDE Logger
+
 #####################################################################################
 # LDCNISTMappings
 #####################################################################################
@@ -98,7 +295,7 @@ package LDCNISTMappings;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
+  my ($class, $logger, $parameters) = @_;
   my $self = {
     CLASS => "LDCNISTMappings",
     PARAMETERS => $parameters,
@@ -106,6 +303,7 @@ sub new {
     TYPE_MAPPINGS => {},
     TYPE_CATEGORY => {},
     IS_VALID_ENTRYPOINT => {},
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self->load_data();
@@ -154,7 +352,7 @@ sub load_data {
 	
 	# Load data from role mappings
 	$filename = $self->get("PARAMETERS")->get("ROLE_MAPPING_FILE");
-	$filehandler = FileHandler->new($filename);
+	$filehandler = FileHandler->new($self->{LOGGER}, $filename);
 	$header = $filehandler->get("HEADER");
   $entries = $filehandler->get("ENTRIES");
   $i=0;
@@ -180,7 +378,7 @@ sub load_data {
   
   # Load data from type mappings
   $filename = $self->get("PARAMETERS")->get("TYPE_MAPPING_FILE");
-  $filehandler = FileHandler->new($filename);
+  $filehandler = FileHandler->new($self->{LOGGER}, $filename);
   $header = $filehandler->get("HEADER");
   $entries = $filehandler->get("ENTRIES");
   $i=0;
@@ -208,12 +406,13 @@ package DocumentIDsMappings;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
+  my ($class, $logger, $parameters) = @_;
   my $self = {
   	CLASS => "DocumentIDsMappings",
   	PARAMETERS => $parameters,
-  	DOCUMENTS => Documents->new(),
-    DOCUMENTELEMENTS => DocumentElements->new(),
+  	DOCUMENTS => Documents->new($logger),
+    DOCUMENTELEMENTS => DocumentElements->new($logger),
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self->load_data();
@@ -226,7 +425,7 @@ sub load_data {
 	# Load document-element to language mapping
 	my %doceid_to_langs_mapping;
 	my $filename = $self->get("PARAMETERS")->get("UID_INFO_FILE");
-	my $filehandler = FileHandler->new($filename);
+	my $filehandler = FileHandler->new($self->{LOGGER}, $filename);
 	my $header = $filehandler->get("HEADER");
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
@@ -276,7 +475,7 @@ sub load_data {
 		
     my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
     $document->set("DOCUMENTID", $document_id);
-    my $documentelement = DocumentElement->new();
+    my $documentelement = DocumentElement->new($self->{LOGGER});
     $documentelement->set("DOCUMENT", $document);
     $documentelement->set("DOCUMENTID", $document_id);
     $documentelement->set("DOCUMENTELEMENTID", $document_eid);
@@ -297,9 +496,10 @@ package Documents;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('Document');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Document');
   $self->{CLASS} = 'Documents';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -314,9 +514,10 @@ package DocumentElements;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('DocumentElement');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'DocumentElement');
   $self->{CLASS} = 'DocumentElements';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -331,9 +532,10 @@ package TheDocumentElements;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('DocumentElement');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'DocumentElement');
   $self->{CLASS} = 'TheDocumentElements';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -347,11 +549,12 @@ package Document;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $document_id) = @_;
+  my ($class, $logger, $document_id) = @_;
   my $self = {
     CLASS => 'Document',
     DOCUMENTID => $document_id,
-    DOCUMENTELEMENTS => DocumentElements->new(),
+    DOCUMENTELEMENTS => DocumentElements->new($logger),
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -371,13 +574,14 @@ package DocumentElement;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class) = @_;
+  my ($class, $logger) = @_;
   my $self = {
     CLASS => 'DocumentElement',
     DOCUMENT => undef,
     DOCUMENTID => undef,
     DOCUMENTELEMENTID => undef,
     TYPE => undef,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -393,10 +597,11 @@ package Edges;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('Edge');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Edge');
   $self->{CLASS} = 'Edges';
   $self->{EDGE_LOOKUP} = {};
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -424,13 +629,14 @@ package Edge;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $subject, $nist_role, $object, $attribute) = @_;
+  my ($class, $logger, $subject, $nist_role, $object, $attribute) = @_;
   my $self = {
     CLASS => 'Edge',
     SUBJECT => $subject,
     PREDICATE => $nist_role,
     OBJECT => $object,
     ATTRIBUTE => $attribute,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -455,9 +661,10 @@ package Nodes;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('Node');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Node');
   $self->{CLASS} = 'Nodes';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -471,11 +678,12 @@ package Node;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class) = @_;
+  my ($class, $logger) = @_;
   my $self = {
     CLASS => 'Node',
     NODEID => undef,
-    MENTIONS => Mentions->new(),
+    MENTIONS => Mentions->new($logger),
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -520,12 +728,13 @@ package Container;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $element_class) = @_;
+  my ($class, $logger, $element_class) = @_;
   
   my $self = {
     CLASS => 'Container',
     ELEMENT_CLASS => $element_class,
     STORE => {},
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -540,7 +749,7 @@ sub get_BY_KEY {
   my ($self, $key) = @_;
   unless($self->{STORE}{TABLE}{$key}) {
     # Create an instance if not exists
-    my $element = $self->get("ELEMENT_CLASS")->new();
+    my $element = $self->get("ELEMENT_CLASS")->new($self->{LOGGER});
     $self->add($element, $key);
   }
   $self->{STORE}{TABLE}{$key};
@@ -587,9 +796,10 @@ package Mentions;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('Mention');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Mention');
   $self->{CLASS} = 'Mentions';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -609,15 +819,16 @@ package Mention;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class) = @_;
+  my ($class, $logger) = @_;
   my $self = {
     CLASS => 'Mention',
     LDC_TYPE => undef, 
     NIST_TYPE => undef, 
     MENTIONID => undef,
     TREEID => undef,
-    JUSTIFICATIONS => Justifications->new(),
+    JUSTIFICATIONS => Justifications->new($logger),
     MODALITY => undef,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -666,7 +877,7 @@ sub get_END {
 
 sub get_SPANS {
 	my ($self) = @_;
-	my $spans = Spans->new();
+	my $spans = Spans->new($self->{LOGGER});
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		foreach my $span($justification->get("SPANS")->toarray()) {
 			$spans->add($span);
@@ -695,9 +906,10 @@ package Justifications;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('Justification');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Justification');
   $self->{CLASS} = 'Justifications';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -711,10 +923,11 @@ package Justification;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('Spans');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Spans');
   $self->{CLASS} = 'Justification';
-  $self->{SPANS} = Spans->new();
+  $self->{LOGGER} = $logger;
+  $self->{SPANS} = Spans->new($self->{LOGGER});
   bless($self, $class);
   $self;
 }
@@ -733,9 +946,10 @@ package Spans;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('Span');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Span');
   $self->{CLASS} = 'Spans';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -749,7 +963,7 @@ package Span;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $documentid, $documenteid, $start, $end) = @_;
+  my ($class, $logger, $documentid, $documenteid, $start, $end) = @_;
   $start = "nil" if $start eq "";
   $end = "nil" if $end eq "";
   my $self = {
@@ -758,6 +972,7 @@ sub new {
     DOCUMENTEID => $documenteid,
     START => $start,
     END => $end,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -772,12 +987,13 @@ package FileHandler;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $filename) = @_;
+  my ($class, $logger, $filename) = @_;
   my $self = {
     CLASS => 'FileHandler',
     FILENAME => $filename,
     HEADER => undef,
-    ENTRIES => Container->new(),
+    ENTRIES => Container->new($logger),
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self->load($filename);
@@ -789,20 +1005,20 @@ sub load {
 
   my $linenum = 0;
 
-  open(FILE, $filename);
+  open(FILE, $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
   my $line = <FILE>; 
   $line =~ s/\r\n?//g;
   chomp $line;
 
   $linenum++;
 
-  $self->{HEADER} = Header->new($line);
+  $self->{HEADER} = Header->new($self->{LOGGER}, $line);
 
   while($line = <FILE>){
     $line =~ s/\r\n?//g;
     $linenum++;
     chomp $line;
-    my $entry = Entry->new($linenum, $line, $self->{HEADER});
+    my $entry = Entry->new($self->{LOGGER}, $linenum, $line, $self->{HEADER});
     $self->{ENTRIES}->add($entry);  
   }
   close(FILE);
@@ -840,12 +1056,13 @@ package Header;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $line, $field_separator) = @_;
+  my ($class, $logger, $line, $field_separator) = @_;
   $field_separator = "\t" unless $field_separator;
   my $self = {
     CLASS => 'Header',
     ELEMENTS => [],
     FIELD_SEPARATOR => $field_separator,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self->load($line);
@@ -891,7 +1108,7 @@ package Entry;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $linenum, $line, $header, $field_separator) = @_;
+  my ($class, $logger, $linenum, $line, $header, $field_separator) = @_;
   $field_separator = "\t" unless $field_separator;
   my $self = {
     CLASS => 'Entry',
@@ -901,6 +1118,7 @@ sub new {
     ELEMENTS => [],
     MAP => {},
     FIELD_SEPARATOR => $field_separator,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self->add($line, $header);
@@ -995,9 +1213,10 @@ package Parameters;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class) = @_;
+  my ($class, $logger) = @_;
   my $self = {
     CLASS => 'DocumentElement',
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -1012,17 +1231,18 @@ package Graph;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
+  my ($class, $logger, $parameters) = @_;
   my $self = {
-  	LDC_NIST_MAPPINGS => LDCNISTMappings->new($parameters),
-  	NODES => Nodes->new(),
-  	EDGES => Edges->new(),
-  	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($parameters),
+  	LDC_NIST_MAPPINGS => LDCNISTMappings->new($logger, $parameters),
+  	NODES => Nodes->new($logger),
+  	EDGES => Edges->new($logger),
+  	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
   	NODEIDS_LOOKUP => {},
-    IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($parameters),
-    KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($parameters),
-    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($parameters),
+    IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($logger, $parameters),
+    KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($logger, $parameters),
+    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($logger, $parameters),
     PARAMETERS => $parameters,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self->load_data();
@@ -1050,10 +1270,10 @@ sub load_data {
 
 sub load_images_boundingboxes {
 	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"));
+	my $filehandler = FileHandler->new($self->{LOGGER}, $self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"), $self->get("LOGGER"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
-		$self->get("IMAGES_BOUNDINGBOXES")->add( ImageBoundingBox->new($entry->get("doceid"), $entry->get("type"),
+		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->{LOGGER}, $entry->get("doceid"), $entry->get("type"),
 												$entry->get("top_left_x"), $entry->get("top_left_y"),
 												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
 								$entry->get("doceid"));
@@ -1065,7 +1285,7 @@ sub load_keyframes_boundingboxes {
 	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("KEYFRAMES_BOUNDINGBOXES_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
-		$self->get("KEYFRAMES_BOUNDINGBOXES")->add( KeyFrameBoundingBox->new($entry->get("keyframeid"),
+		$self->get("KEYFRAMES_BOUNDINGBOXES")->add(KeyFrameBoundingBox->new($self->{LOGGER}, $entry->get("keyframeid"),
 												$entry->get("top_left_x"), $entry->get("top_left_y"),
 												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
 								$entry->get("keyframeid"));
@@ -1076,7 +1296,7 @@ sub load_edges {
 	my ($self) = @_;
 	my ($filehandler, $header, $entries, $i);
 	foreach my $filename($self->get("PARAMETERS")->get("EDGES_DATA_FILES")->toarray()) {
-		$filehandler = FileHandler->new($filename);
+		$filehandler = FileHandler->new($self->{LOGGER}, $filename);
 		$header = $filehandler->get("HEADER");
 		$entries = $filehandler->get("ENTRIES");
 		
@@ -1095,7 +1315,7 @@ sub load_edges {
 				my $ldc_role = "$subject_type\_$slot_type";
 				my $nist_role = $self->get("LDC_NIST_MAPPINGS")->get("NIST_ROLE", $ldc_role);
 				next unless $nist_role;
-				my $edge = Edge->new($subject, $nist_role, $object, $attribute);
+				my $edge = Edge->new($self->{LOGGER}, $subject, $nist_role, $object, $attribute);
 				$self->get("EDGES")->add($edge);
 			}
 		}
@@ -1110,7 +1330,7 @@ sub load_nodes {
 	my %acceptable_relevance = map {$_=>1} $self->get("PARAMETERS")->get("ACCEPTABLE_RELEVANCE")->toarray();
 	my %nodementionids_relevant_to_hypotheses;
 	my $filename = $self->get("PARAMETERS")->get("HYPOTHESES_FILE");
-	$filehandler = FileHandler->new($filename);
+	$filehandler = FileHandler->new($self->{LOGGER}, $filename);
 	$header = $filehandler->get("HEADER");
 	$entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
@@ -1122,7 +1342,7 @@ sub load_nodes {
 	
 	# Load nodes relevant to hypothesis
 	foreach my $filename($self->get("PARAMETERS")->get("NODES_DATA_FILES")->toarray()) {
-		$filehandler = FileHandler->new($filename);
+		$filehandler = FileHandler->new($self->{LOGGER}, $filename);
 		$header = $filehandler->get("HEADER");
 		$entries = $filehandler->get("ENTRIES"); 
 		
@@ -1138,14 +1358,15 @@ sub load_nodes {
 			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BY_KEY", 
 																										$thedocumentelement_encodingformat);
 			my $document_id = $thedocumentelement->get("DOCUMENTID");
-			my $mention = Mention->new();
+			my $mention = Mention->new($self->{LOGGER});
 			my $span = Span->new(
+								$self->{LOGGER}, 
 								$entry->get("provenance"),
 								$document_eid,
 								$entry->get("textoffset_startchar"),
 								$entry->get("textoffset_endchar"),
 						);
-			my $justification = Justification->new();
+			my $justification = Justification->new($self->{LOGGER});
 			$justification->add_span($span);
 			$mention->add_justification($justification);
 			$mention->set("MODALITY", $thedocumentelementmodality);
@@ -1186,7 +1407,7 @@ sub generate_queries {
 
 sub generate_class_queries {
 	my ($self) = @_;
-	my $queries = ClassQueries->new($self->get("PARAMETERS"));
+	my $queries = ClassQueries->new($self->{LOGGER}, $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
 	my $i = 0;
 	my %type_category = %{$self->get("LDC_NIST_MAPPINGS")->get("TYPE_CATEGORY")};
@@ -1195,7 +1416,7 @@ sub generate_class_queries {
 		if($category eq "Filler" or $category eq "Entity") {
 			$i++;
 			my $query_id = "$query_id_prefix\_$i";
-			my $query = ClassQuery->new($query_id, $type);
+			my $query = ClassQuery->new($self->{LOGGER}, $query_id, $type);
 			$queries->add($query);
 		}
 	}
@@ -1204,7 +1425,7 @@ sub generate_class_queries {
 
 sub generate_zerohop_queries {
 	my ($self) = @_;
-	my $queries = ZeroHopQueries->new($self->get("PARAMETERS"));
+	my $queries = ZeroHopQueries->new($self->{LOGGER}, $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
 	my $i = 0;
 	foreach my $node($self->get("NODES")->toarray()) {
@@ -1217,7 +1438,7 @@ sub generate_zerohop_queries {
 				my $start = $span->get("START");
 				my $end = $span->get("END");
 				my $modality = $mention->get("MODALITY");
-				my $query = ZeroHopQuery->new($query_id, $enttype, $doceid, $modality, $start, $end);
+				my $query = ZeroHopQuery->new($self->{LOGGER}, $query_id, $enttype, $doceid, $modality, $start, $end);
 				$queries->add($query);
 			}
 		}
@@ -1227,7 +1448,7 @@ sub generate_zerohop_queries {
 
 sub generate_graph_queries {
 	my ($self) = @_;
-	my $queries = GraphQueries->new($self->get("PARAMETERS"));
+	my $queries = GraphQueries->new($self->{LOGGER}, $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
 	my $i = 0;
 	foreach my $node(grep {$_->has_compatible_types()} $self->get("NODES")->toarray()) {
@@ -1239,7 +1460,7 @@ sub generate_graph_queries {
 			foreach my $edge2(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
-				my $query = GraphQuery->new($self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
+				my $query = GraphQuery->new($self->{LOGGER}, $self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
 				$query->add_entrypoint($node);
 				$queries->add($query);
 			}
@@ -1258,10 +1479,11 @@ package ImagesBoundingBoxes;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
-  my $self = $class->SUPER::new('ImageBoundingBox');
+  my ($class, $logger, $parameters) = @_;
+  my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
   $self->{CLASS} = 'ImagesBoundingBoxes';
   $self->{PARAMETERS} = $parameters;
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -1275,7 +1497,7 @@ package ImageBoundingBox;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $doceid, $type, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
+  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
   my $self = {
     CLASS => 'ImageBoundingBox',
     DOCEID => $doceid,
@@ -1284,6 +1506,7 @@ sub new {
     TOP_LEFT_Y => $top_left_y,
     BOTTOM_RIGHT_X => $bottom_left_x,
     BOTTOM_LEFT_Y => $bottom_left_y,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -1299,10 +1522,11 @@ package KeyFramesBoundingBoxes;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
-  my $self = $class->SUPER::new('KeyFrameBoundingBox');
+  my ($class, $logger, $parameters) = @_;
+  my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
   $self->{CLASS} = 'KeyFramesBoundingBoxes';
   $self->{PARAMETERS} = $parameters;
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -1316,7 +1540,7 @@ package KeyFrameBoundingBox;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $keyframeid, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
+  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
   my $self = {
     CLASS => 'KeyFrameBoundingBox',
     KEYFRAMEID => $keyframeid,
@@ -1324,6 +1548,7 @@ sub new {
     TOP_LEFT_Y => $top_left_y,
     BOTTOM_RIGHT_X => $bottom_left_x,
     BOTTOM_LEFT_Y => $bottom_left_y,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -1345,10 +1570,11 @@ package ClassQueries;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
-  my $self = $class->SUPER::new('ClassQuery');
+  my ($class, $logger, $parameters) = @_;
+  my $self = $class->SUPER::new($logger, 'ClassQuery');
   $self->{CLASS} = 'ClassQueries';
   $self->{PARAMETERS} = $parameters;
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -1379,11 +1605,12 @@ package ClassQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $query_id, $enttype) = @_;
+  my ($class, $logger, $query_id, $enttype) = @_;
   my $self = {
     CLASS => 'ClassQuery',
     QUERY_ID => $query_id,
     ENTTYPE => $enttype,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -1401,11 +1628,11 @@ sub write_to_xml {
 	my $query_id = $self->get("QUERY_ID");
 	my $enttype = $self->get("ENTTYPE");
 
-	my $attributes = XMLAttributes->new();
+	my $attributes = XMLAttributes->new($self->{LOGGER});
 	$attributes->add("$query_id", "id");
 
-	my $xml_enttype = XMLElement->new($enttype, "enttype", 0);
-	my $xml_query = XMLElement->new($xml_enttype, "class_query", 1, $attributes);
+	my $xml_enttype = XMLElement->new($self->{LOGGER}, $enttype, "enttype", 0);
+	my $xml_query = XMLElement->new($self->{LOGGER}, $xml_enttype, "class_query", 1, $attributes);
 
 	print $program_output $xml_query->tostring(2);
 }
@@ -1425,10 +1652,11 @@ package ZeroHopQueries;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
-  my $self = $class->SUPER::new('ZeroHopQuery');
+  my ($class, $logger, $parameters) = @_;
+  my $self = $class->SUPER::new($logger, 'ZeroHopQuery');
   $self->{CLASS} = 'ZeroHopQueries';
   $self->{PARAMETERS} = $parameters;
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -1459,7 +1687,7 @@ package ZeroHopQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
+  my ($class, $logger, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
   my $self = {
     CLASS => 'ZeroHopQuery',
     QUERY_ID => $query_id,
@@ -1468,6 +1696,7 @@ sub new {
     MODALITY => $modality,
     START => $start,
     END => $end,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -1482,6 +1711,7 @@ sub write_to_files {
 
 sub write_to_xml {
 	my ($self, $program_output) = @_;
+	my $logger = $self->get("LOGGER");
 	my $query_id = $self->get("QUERY_ID");
 	my $enttype = $self->get("ENTTYPE");
 	my $doceid = $self->get("DOCUMENTELEMENTID");
@@ -1489,22 +1719,24 @@ sub write_to_xml {
 	my $start = $self->get("START");
 	my $end = $self->get("END");
 
-	my $xml_node = XMLElement->new("?node", "node", 0);
-	my $xml_enttype = XMLElement->new($enttype, "enttype", 0);
-	my $xml_doceid = XMLElement->new($doceid, "doceid", 0);
-	my $xml_start = XMLElement->new($start, "start", 0);
-	my $xml_end = XMLElement->new($end, "end", 0);
+	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
+	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+	my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
+	my $xml_start = XMLElement->new($logger, $start, "start", 0);
+	my $xml_end = XMLElement->new($logger, $end, "end", 0);
 	my $xml_descriptor = XMLElement->new(
-			XMLContainer->new($xml_doceid, $xml_start, $xml_end),
+			$logger, 
+			XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
 			"descriptor",
 			1);
 	my $xml_entrypoint = XMLElement->new(
-			XMLContainer->new($xml_node, $xml_enttype, $xml_descriptor), 
+			$logger, 
+			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor), 
 			"entrypoint",
 			1);
-	my $attributes = XMLAttributes->new();
+	my $attributes = XMLAttributes->new($logger);
 	$attributes->add("$query_id", "id");
-	my $xml_query = XMLElement->new($xml_entrypoint, "zerohop_query", 1, $attributes);
+	my $xml_query = XMLElement->new($logger, $xml_entrypoint, "zerohop_query", 1, $attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
@@ -1524,10 +1756,11 @@ package GraphQueries;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $parameters) = @_;
-  my $self = $class->SUPER::new('GraphQuery');
+  my ($class, $logger, $parameters) = @_;
+  my $self = $class->SUPER::new($logger, 'GraphQuery');
   $self->{CLASS} = 'GraphQueries';
   $self->{PARAMETERS} = $parameters;
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -1558,13 +1791,14 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $documentids_mappings, $query_id, @edges) = @_;
+  my ($class, $logger, $documentids_mappings, $query_id, @edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
     DOCUMENTIDS_MAPPINGS => $documentids_mappings,
     QUERY_ID => $query_id,
     EDGES => [@edges],
     ENTRYPOINTS => [],
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -1584,59 +1818,61 @@ sub write_to_files {
 
 sub write_to_xml {
 	my ($self, $program_output) = @_;
+	my $logger = $self->get("LOGGER");
 	my $query_id = $self->get("QUERY_ID");
-	my $query_attributes = XMLAttributes->new();
+	my $query_attributes = XMLAttributes->new($logger);
 	$query_attributes->add("$query_id", "id");
 	# process the edges into a graph
-	my $xml_edges_container = XMLContainer->new();
+	my $xml_edges_container = XMLContainer->new($logger);
 	my $edge_id = 0;
 	foreach my $edge(@{$self->get("EDGES")}) {
 		$edge_id++;
 		my $subject = &mask($edge->get("SUBJECT")->get("NODEID"));
 		my $object = &mask($edge->get("OBJECT")->get("NODEID"));
 		my $predicate = $edge->get("PREDICATE");
-		my $xml_subject = XMLElement->new($subject, "subject", 0);
-		my $xml_object = XMLElement->new($object, "object", 0);
-		my $xml_predicate = XMLElement->new($predicate, "predicate", 0);
-		my $edge_predicate = XMLAttributes->new();
+		my $xml_subject = XMLElement->new($logger, $subject, "subject", 0);
+		my $xml_object = XMLElement->new($logger, $object, "object", 0);
+		my $xml_predicate = XMLElement->new($logger, $predicate, "predicate", 0);
+		my $edge_predicate = XMLAttributes->new($logger);
 		$edge_predicate->add("$edge_id", "id");
 		my $xml_edge = XMLElement->new(
-							XMLContainer->new($xml_subject, $xml_predicate, $xml_object),
+							$logger,
+							XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object),
 							"edge",
 							1,
 							$edge_predicate);
 		$xml_edges_container->add($xml_edge);
 	}
-	my $xml_edges = XMLElement->new($xml_edges_container, "edges", 1);
-	my $xml_graph = XMLElement->new($xml_edges, "graph", 1);
+	my $xml_edges = XMLElement->new($logger, $xml_edges_container, "edges", 1);
+	my $xml_graph = XMLElement->new($logger, $xml_edges, "graph", 1);
 	# process the entrypoints
-	my $xml_entrypoints_container = XMLContainer->new();
+	my $xml_entrypoints_container = XMLContainer->new($logger);
 	foreach my $node(@{$self->get("ENTRYPOINTS")}) {
 		my $node_id = &mask($node->get("NODEID"));
-		my $xml_node = XMLElement->new($node_id, "node", 0);
-		my $xml_entrypoint_container = XMLContainer->new($xml_node);
+		my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
+		my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node);
 		foreach my $mention($node->get("MENTIONS")->toarray()){
 			my $enttype = $mention->get("NIST_TYPE");
-			my $xml_enttype = XMLElement->new($enttype, "enttype", 0);
+			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 			foreach my $span($mention->get("SPANS")->toarray()) {
 				my $doceid = $span->get("DOCUMENTEID");
 				my $start = $span->get("START");
 				my $end = $span->get("END");
 				my $modality = $self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("TYPE");
-				my $xml_doceid = XMLElement->new($doceid, "doceid", 0);
-				my $xml_start = XMLElement->new($start, "start", 0);
-				my $xml_end = XMLElement->new($end, "end", 0);
-				my $xml_descriptor_container = XMLContainer->new($xml_enttype, $xml_doceid, $xml_start, $xml_end);
-				my $xml_descriptor = XMLElement->new($xml_descriptor_container, "descriptor", 1);
+				my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
+				my $xml_start = XMLElement->new($logger, $start, "start", 0);
+				my $xml_end = XMLElement->new($logger, $end, "end", 0);
+				my $xml_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_doceid, $xml_start, $xml_end);
+				my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, "descriptor", 1);
 				$xml_entrypoint_container->add($xml_descriptor);
 			}
 		}
-		my $xml_entrypoint = XMLElement->new($xml_entrypoint_container, "entrypoint", 1);
+		my $xml_entrypoint = XMLElement->new($logger, $xml_entrypoint_container, "entrypoint", 1);
 		$xml_entrypoints_container->add($xml_entrypoint);
 	}
-	my $xml_entrypoints = XMLElement->new($xml_entrypoints_container, "entrypoints", 1);
-	my $xml_query_container = XMLContainer->new($xml_graph, $xml_entrypoints);
-	my $xml_query = XMLElement->new($xml_query_container, "graph_query", 1, $query_attributes);
+	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
+	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints);
+	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
@@ -1661,9 +1897,10 @@ package XMLAttributes;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class) = @_;
-  my $self = $class->SUPER::new('XMLAttribute');
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'XMLAttribute');
   $self->{CLASS} = 'XMLAttributes';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -1683,13 +1920,14 @@ package XMLElement;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $element, $name, $newline, $attributes) = @_;
+  my ($class, $logger, $element, $name, $newline, $attributes) = @_;
   my $self = {
     CLASS => 'XMLElement',
     NAME => $name,
     NEWLINE => $newline,
     ATTRIBUTES => $attributes,
     ELEMENT => $element,
+    LOGGER => $logger,
   };
   bless($self, $class);
   $self;
@@ -1734,9 +1972,10 @@ package XMLContainer;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-	my ($class, @xml_elements) = @_;
-	my $self = $class->SUPER::new('XMLElement');
+	my ($class, $logger, @xml_elements) = @_;
+	my $self = $class->SUPER::new($logger, 'XMLElement');
 	$self->{CLASS} = 'XMLContainer';
+	$self->{LOGGER} = $logger;
 	bless($self, $class);
 	foreach my $xml_element(@xml_elements) {
 		$self->add($xml_element);
@@ -1762,10 +2001,11 @@ package EncodingFormatToModalityMappings;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-	my ($class, $parameters) = @_;
-	my $self = $class->SUPER::new('RAW');
+	my ($class, $logger, $parameters) = @_;
+	my $self = $class->SUPER::new($logger, 'RAW');
 	$self->{CLASS} = 'EncodingFormatToModalityMappings';
 	$self->{PARAMETERS} = $parameters;
+	$self->{LOGGER} = $logger;
 	bless($self, $class);
 	$self->load_data();
 	$self;
@@ -1773,7 +2013,7 @@ sub new {
 
 sub load_data {
 	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE"));
+	my $filehandler = FileHandler->new($self->{LOGGER}, $self->get("PARAMETERS")->get("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
 		my $encoding_format = $entry->get("encoding_format");
