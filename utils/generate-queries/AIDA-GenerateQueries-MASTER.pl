@@ -32,7 +32,7 @@ $parameters->set("EDGES_DATA_FILES", $edge_data_files);
 $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
 $parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
 $parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
-$parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab1");
+$parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
 $parameters->set("ERRORLOG_FILE", "output/problems.log");
 $parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output/T101_class_queries.xml");
 $parameters->set("CLASS_QUERIES_RQ_OUTPUT_FILE", "output/T101_class_queries.rq");
