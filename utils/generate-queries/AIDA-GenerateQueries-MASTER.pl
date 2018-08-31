@@ -46,3 +46,5 @@ $parameters->set("GRAPH_QUERIES_PREFIX", "AIDA_GR_2018");
 
 my $graph = Graph->new($logger, $parameters);
 $graph->generate_queries();
+
+$logger->report_all_problems();

@@ -113,9 +113,9 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   MISSING_FILE                  FATAL_ERROR    Could not open %s: %s
-  MISSING_KEY                   FATAL_ERROR    Missing key %s in container of type %s
+  MISSING_RAW_KEY               FATAL_ERROR    Missing key %s in container of type %s
   MISSING_ENCODING_FORMAT       FATAL_ERROR    Missing encoding format for document element %s
-
+  MISSING_DOCUMENT_ELEMENT      WARNING        Missing document element %s
 END_PROBLEM_FORMATS
 
 
@@ -445,8 +445,10 @@ sub load_data {
 	my %uri_to_id_mapping;
 	my %doceid_to_docid_mapping;
 	my %doceid_to_type_mapping;
+	my $linenum = 0;
 	while(my $line = <$infile>) {
 		chomp $line;
+		$linenum++;
 		if($line =~ /^\s*?(.*?)\s+.*?schema:DigitalDocument/i ) {
 		$uri = $1;
 		}
@@ -456,6 +458,8 @@ sub load_data {
 		}
 		if($line =~ /schema:encodingFormat\s+?\"(.*?)\".*?$/i) {
 			my $type = $1;
+			$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $uri, {FILENAME=>$filename, LINENUM=>$linenum})
+				if $type eq "nil";
 			$doceid_to_type_mapping{$uri} = $type;
 		}
 		if($line =~ /schema:isPartOf\s+?(ldc:.*?)\s*?[.;]\s*?$/i) {
@@ -752,7 +756,7 @@ sub get_BY_KEY {
   unless($self->{STORE}{TABLE}{$key}) {
     # Create an instance if not exists
     my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-    $self->get("LOGGER")->record_problem("MISSING_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
+    $self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
     	if $self->get("ELEMENT_CLASS") eq "RAW";
     my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
     $self->add($element, $key);
@@ -763,6 +767,11 @@ sub get_BY_KEY {
 sub get_ALL_KEYS {
 	my ($self) = @_;
 	keys %{$self->{STORE}{TABLE}};
+}
+
+sub exists {
+	my ($self, $key) = @_;
+	exists $self->{STORE}{TABLE}{$key};
 }
 
 sub add {
@@ -1360,6 +1369,10 @@ sub load_nodes {
 			next if ($entry->get("CATEGORY") ne "ENTITY" && !$nodementionids_relevant_to_hypotheses{$entry->get("nodemention_id")});
 			
 			my $document_eid = $entry->get("provenance");
+			unless ($self->get("DOCUMENTELEMENTS")->exists($document_eid)) {
+				$self->get("LOGGER")->record_problem("MISSING_DOCUMENT_ELEMENT", $document_eid, $entry->get("WHERE"));
+				next;
+			}
 			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
 			my $thedocumentelement_encodingformat = $thedocumentelement->get("TYPE");
 			$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $document_eid, $entry->get("WHERE"))
