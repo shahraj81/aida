@@ -438,54 +438,54 @@ sub load_data {
 	
 	# Load the DocumentIDsMappingsFile
 	$filename = $self->get("PARAMETERS")->get("DOCUMENTIDS_MAPPING_FILE");
-		
+
 	open(my $infile, "<:utf8", $filename) or die("Could not open file: $filename");
-  my $document_uri = "nil";
-  my $uri = "nil";
-  my %uri_to_id_mapping;
-  my %doceid_to_docid_mapping;
-  my %doceid_to_type_mapping;
+	my $document_uri = "nil";
+	my $uri = "nil";
+	my %uri_to_id_mapping;
+	my %doceid_to_docid_mapping;
+	my %doceid_to_type_mapping;
 	while(my $line = <$infile>) {
 		chomp $line;
 		if($line =~ /^\s*?(.*?)\s+.*?schema:DigitalDocument/i ) {
-  		$uri = $1;
+		$uri = $1;
 		}
-    if($line =~ /schema:identifier\s+?\"(.*?)\".*?$/i) {
-      my $id = $1;
-      $uri_to_id_mapping{$uri} = $id;
-    }
-    if($line =~ /schema:encodingFormat\s+?\"(.*?)\".*?$/i) {
-      my $type = $1;
-      $doceid_to_type_mapping{$uri} = $type;
-    }
-    if($line =~ /schema:isPartOf\s+?(ldc:.*?)\s*?[.;]\s*?$/i) {
-    	# $uri contains document_element_id
+		if($line =~ /schema:identifier\s+?\"(.*?)\".*?$/i) {
+			my $id = $1;
+			$uri_to_id_mapping{$uri} = $id;
+		}
+		if($line =~ /schema:encodingFormat\s+?\"(.*?)\".*?$/i) {
+			my $type = $1;
+			$doceid_to_type_mapping{$uri} = $type;
+		}
+		if($line =~ /schema:isPartOf\s+?(ldc:.*?)\s*?[.;]\s*?$/i) {
+			# $uri contains document_element_id
 			$document_uri = $1;
 			$doceid_to_docid_mapping{$uri} = $document_uri;
-      $document_uri = "n/a";
-      $uri = "n/a";
+			$document_uri = "n/a";
+			$uri = "n/a";
 		}
 	}
 	close($infile);
-	
+
 	foreach my $document_element_uri(keys %doceid_to_docid_mapping) {
 		my $document_uri = $doceid_to_docid_mapping{$document_element_uri};
 		my $document_id = $uri_to_id_mapping{$document_uri};
-    my $document_eid = $uri_to_id_mapping{$document_element_uri};
+		my $document_eid = $uri_to_id_mapping{$document_element_uri};
 		my $detype = $doceid_to_type_mapping{$document_element_uri};
 		my $delanguage = $doceid_to_langs_mapping{$document_eid};
 		
-    my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
-    $document->set("DOCUMENTID", $document_id);
-    my $documentelement = DocumentElement->new($self->get("LOGGER"));
-    $documentelement->set("DOCUMENT", $document);
-    $documentelement->set("DOCUMENTID", $document_id);
-    $documentelement->set("DOCUMENTELEMENTID", $document_eid);
-    $documentelement->set("LANGUAGES", $delanguage);
-    $documentelement->set("TYPE", $detype);
-    
-    $document->add_document_element($documentelement);
-    $self->get("DOCUMENTELEMENTS")->add($documentelement, $document_eid) unless $document_eid eq "n/a";
+		my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
+		$document->set("DOCUMENTID", $document_id);
+		my $documentelement = DocumentElement->new($self->get("LOGGER"));
+		$documentelement->set("DOCUMENT", $document);
+		$documentelement->set("DOCUMENTID", $document_id);
+		$documentelement->set("DOCUMENTELEMENTID", $document_eid);
+		$documentelement->set("LANGUAGES", $delanguage);
+		$documentelement->set("TYPE", $detype);
+
+		$document->add_document_element($documentelement);
+		$self->get("DOCUMENTELEMENTS")->add($documentelement, $document_eid) unless $document_eid eq "n/a";
 	}
 }
 
