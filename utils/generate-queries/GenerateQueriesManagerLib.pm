@@ -1432,15 +1432,13 @@ sub generate_class_queries {
 	my $queries = ClassQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
 	my $i = 0;
-	my %type_category = %{$self->get("LDC_NIST_MAPPINGS")->get("TYPE_CATEGORY")};
-	foreach my $type(keys %type_category) {
-		my $category = $type_category{$type};
-		if($category eq "Filler" or $category eq "Entity") {
-			$i++;
-			my $query_id = "$query_id_prefix\_$i";
-			my $query = ClassQuery->new($self->get("LOGGER"), $query_id, $type);
-			$queries->add($query);
-		}
+	my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
+	foreach my $type(keys %is_valid_entrypoint) {
+		next unless ($is_valid_entrypoint{$type} eq "true");
+		$i++;
+		my $query_id = "$query_id_prefix\_$i";
+		my $query = ClassQuery->new($self->get("LOGGER"), $query_id, $type);
+		$queries->add($query);
 	}
 	$queries->write_to_files();
 }
