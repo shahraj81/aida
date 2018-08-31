@@ -1738,16 +1738,17 @@ sub write_to_xml {
 	my $modality = $self->get("MODALITY");
 	my $start = $self->get("START");
 	my $end = $self->get("END");
+	my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
 
 	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
 	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 	my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
-	my $xml_start = XMLElement->new($logger, $start, "start", 0);
-	my $xml_end = XMLElement->new($logger, $end, "end", 0);
+	my $xml_start = XMLElement->new($logger, $start, $fn_manager->get("FIELDNAME", "start"), 0);
+	my $xml_end = XMLElement->new($logger, $end, $fn_manager->get("FIELDNAME", "end"), 0);
 	my $xml_descriptor = XMLElement->new(
 			$logger, 
 			XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
-			"descriptor",
+			$fn_manager->get("FIELDNAME", "descriptor"),
 			1);
 	my $xml_entrypoint = XMLElement->new(
 			$logger, 
@@ -1906,6 +1907,41 @@ sub mask {
 	my ($input) = @_;
 
 	"?$input";
+}
+
+#####################################################################################
+# FieldNameManager
+#####################################################################################
+
+package FieldNameManager;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $modality) = @_;
+  my $self = {
+    CLASS => 'FieldNameManager',
+    MODALITY => $modality,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_FIELDNAME {
+	my ($self, $field) = @_;
+	my $retVal = $field;
+	my $modality = $self->get("MODALITY");
+	if($field eq "start") {
+		$retVal = "topleft" if $modality eq "video" or $modality eq "image";
+	}
+	elsif($field eq "end") {
+		$retVal = "bottomright" if $modality eq "video" or $modality eq "image";
+	}
+	elsif($field eq "descriptor") {
+		$retVal = $modality . "_" . $field;
+	}
+	$retVal;
 }
 
 #####################################################################################
