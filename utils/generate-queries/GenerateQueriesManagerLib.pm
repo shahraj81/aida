@@ -1362,7 +1362,8 @@ sub load_nodes {
 			my $document_eid = $entry->get("provenance");
 			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
 			my $thedocumentelement_encodingformat = $thedocumentelement->get("TYPE");
-			$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $document_eid, $entry->get("WHERE"));
+			$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $document_eid, $entry->get("WHERE"))
+				if $thedocumentelement_encodingformat eq "nil";
 			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BY_KEY", 
 																										$thedocumentelement_encodingformat);
 			my $document_id = $thedocumentelement->get("DOCUMENTID");
