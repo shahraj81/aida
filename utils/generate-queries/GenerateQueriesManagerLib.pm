@@ -1135,7 +1135,7 @@ sub load_nodes {
 			my $document_eid = $entry->get("provenance");
 			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
 			my $thedocumentelement_encodingformat = $thedocumentelement->get("TYPE");
-			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BYKEY", 
+			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BY_KEY", 
 																										$thedocumentelement_encodingformat);
 			my $document_id = $thedocumentelement->get("DOCUMENTID");
 			my $mention = Mention->new();
@@ -1216,7 +1216,7 @@ sub generate_zerohop_queries {
 				my $doceid = $span->get("DOCUMENTEID");
 				my $start = $span->get("START");
 				my $end = $span->get("END");
-				my $modality = $self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("TYPE");
+				my $modality = $mention->get("MODALITY");
 				my $query = ZeroHopQuery->new($query_id, $enttype, $doceid, $modality, $start, $end);
 				$queries->add($query);
 			}
@@ -1765,6 +1765,7 @@ sub new {
 	my ($class, $parameters) = @_;
 	my $self = $class->SUPER::new('RAW');
 	$self->{CLASS} = 'EncodingFormatToModalityMappings';
+	$self->{PARAMETERS} = $parameters;
 	bless($self, $class);
 	$self->load_data();
 	$self;
@@ -1774,7 +1775,7 @@ sub load_data {
 	my ($self) = @_;
 	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
-	foreach my $entry($entries->tostring()) {
+	foreach my $entry($entries->toarray()) {
 		my $encoding_format = $entry->get("encoding_format");
 		my $modality = $entry->get("modality");
 		$self->add($modality, $encoding_format);
