@@ -111,10 +111,10 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # Error Name                    Type           Error Message
 # ----------                    ----           -------------
 
-########## Provenance Errors
-  FAILED_LANG_INFERENCE         WARNING        Unable to infer language from DOCID %s. Using %s by default.
+########## General Errors
   MISSING_FILE                  FATAL_ERROR    Could not open %s: %s
-  ILLEGAL_OFFSET                ERROR          %s is not a valid offset
+  MISSING_KEY                   FATAL_ERROR    Missing key %s in container of type %s
+  MISSING_ENCODING_FORMAT       FATAL_ERROR    Missing encoding format for document element %s
 
 END_PROBLEM_FORMATS
 
@@ -211,7 +211,7 @@ sub set_error_output {
       $output = *STDERR{IO};
     }
     else {
-      $self->NIST_die("File $output already exists") if -e $output;
+      # $self->NIST_die("File $output already exists") if -e $output;
       open(my $outfile, ">:utf8", $output) or $self->NIST_die("Could not open $output: $!");
       $output = $outfile;
       $self->{OPENED_ERROR_OUTPUT} = 'true';
@@ -751,7 +751,9 @@ sub get_BY_KEY {
   my ($self, $key) = @_;
   unless($self->{STORE}{TABLE}{$key}) {
     # Create an instance if not exists
-    $self->get("LOGGER")->record_problem("MISSING_KEY", $key, $self->get("ELEMENT_CLASS"));
+    my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+    $self->get("LOGGER")->record_problem("MISSING_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
+    	if $self->get("ELEMENT_CLASS") eq "RAW";
     my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
     $self->add($element, $key);
   }
@@ -1021,7 +1023,8 @@ sub load {
     $line =~ s/\r\n?//g;
     $linenum++;
     chomp $line;
-    my $entry = Entry->new($self->get("LOGGER"), $linenum, $line, $self->{HEADER});
+    my $entry = Entry->new($self->get("LOGGER"), $linenum, $line, $self->{HEADER}, 
+    						{FILENAME => $filename, LINENUM => $linenum});
     $self->{ENTRIES}->add($entry);  
   }
   close(FILE);
@@ -1111,7 +1114,7 @@ package Entry;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $linenum, $line, $header, $field_separator) = @_;
+  my ($class, $logger, $linenum, $line, $header, $where, $field_separator) = @_;
   $field_separator = "\t" unless $field_separator;
   my $self = {
     CLASS => 'Entry',
@@ -1121,6 +1124,7 @@ sub new {
     ELEMENTS => [],
     MAP => {},
     FIELD_SEPARATOR => $field_separator,
+    WHERE => $where,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1358,6 +1362,7 @@ sub load_nodes {
 			my $document_eid = $entry->get("provenance");
 			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
 			my $thedocumentelement_encodingformat = $thedocumentelement->get("TYPE");
+			$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $document_eid, $entry->get("WHERE"));
 			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BY_KEY", 
 																										$thedocumentelement_encodingformat);
 			my $document_id = $thedocumentelement->get("DOCUMENTID");
