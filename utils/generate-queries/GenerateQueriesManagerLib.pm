@@ -354,7 +354,7 @@ sub load_data {
 	
 	# Load data from role mappings
 	$filename = $self->get("PARAMETERS")->get("ROLE_MAPPING_FILE");
-	$filehandler = FileHandler->new($self->{LOGGER}, $filename);
+	$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	$header = $filehandler->get("HEADER");
   $entries = $filehandler->get("ENTRIES");
   $i=0;
@@ -380,7 +380,7 @@ sub load_data {
   
   # Load data from type mappings
   $filename = $self->get("PARAMETERS")->get("TYPE_MAPPING_FILE");
-  $filehandler = FileHandler->new($self->{LOGGER}, $filename);
+  $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
   $header = $filehandler->get("HEADER");
   $entries = $filehandler->get("ENTRIES");
   $i=0;
@@ -427,7 +427,7 @@ sub load_data {
 	# Load document-element to language mapping
 	my %doceid_to_langs_mapping;
 	my $filename = $self->get("PARAMETERS")->get("UID_INFO_FILE");
-	my $filehandler = FileHandler->new($self->{LOGGER}, $filename);
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	my $header = $filehandler->get("HEADER");
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
@@ -477,7 +477,7 @@ sub load_data {
 		
     my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
     $document->set("DOCUMENTID", $document_id);
-    my $documentelement = DocumentElement->new($self->{LOGGER});
+    my $documentelement = DocumentElement->new($self->get("LOGGER"));
     $documentelement->set("DOCUMENT", $document);
     $documentelement->set("DOCUMENTID", $document_id);
     $documentelement->set("DOCUMENTELEMENTID", $document_eid);
@@ -751,7 +751,8 @@ sub get_BY_KEY {
   my ($self, $key) = @_;
   unless($self->{STORE}{TABLE}{$key}) {
     # Create an instance if not exists
-    my $element = $self->get("ELEMENT_CLASS")->new($self->{LOGGER});
+    $self->get("LOGGER")->record_problem("MISSING_KEY", $key, $self->get("ELEMENT_CLASS"));
+    my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
     $self->add($element, $key);
   }
   $self->{STORE}{TABLE}{$key};
@@ -879,7 +880,7 @@ sub get_END {
 
 sub get_SPANS {
 	my ($self) = @_;
-	my $spans = Spans->new($self->{LOGGER});
+	my $spans = Spans->new($self->get("LOGGER"));
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		foreach my $span($justification->get("SPANS")->toarray()) {
 			$spans->add($span);
@@ -929,7 +930,7 @@ sub new {
   my $self = $class->SUPER::new($logger, 'Spans');
   $self->{CLASS} = 'Justification';
   $self->{LOGGER} = $logger;
-  $self->{SPANS} = Spans->new($self->{LOGGER});
+  $self->{SPANS} = Spans->new($self->get("LOGGER"));
   bless($self, $class);
   $self;
 }
@@ -1014,13 +1015,13 @@ sub load {
 
   $linenum++;
 
-  $self->{HEADER} = Header->new($self->{LOGGER}, $line);
+  $self->{HEADER} = Header->new($self->get("LOGGER"), $line);
 
   while($line = <FILE>){
     $line =~ s/\r\n?//g;
     $linenum++;
     chomp $line;
-    my $entry = Entry->new($self->{LOGGER}, $linenum, $line, $self->{HEADER});
+    my $entry = Entry->new($self->get("LOGGER"), $linenum, $line, $self->{HEADER});
     $self->{ENTRIES}->add($entry);  
   }
   close(FILE);
@@ -1272,10 +1273,10 @@ sub load_data {
 
 sub load_images_boundingboxes {
 	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->{LOGGER}, $self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"), $self->get("LOGGER"));
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"), $self->get("LOGGER"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
-		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->{LOGGER}, $entry->get("doceid"), $entry->get("type"),
+		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->get("LOGGER"), $entry->get("doceid"), $entry->get("type"),
 												$entry->get("top_left_x"), $entry->get("top_left_y"),
 												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
 								$entry->get("doceid"));
@@ -1284,10 +1285,10 @@ sub load_images_boundingboxes {
 
 sub load_keyframes_boundingboxes {
 	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->get("PARAMETERS")->get("KEYFRAMES_BOUNDINGBOXES_FILE"));
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("KEYFRAMES_BOUNDINGBOXES_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
-		$self->get("KEYFRAMES_BOUNDINGBOXES")->add(KeyFrameBoundingBox->new($self->{LOGGER}, $entry->get("keyframeid"),
+		$self->get("KEYFRAMES_BOUNDINGBOXES")->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
 												$entry->get("top_left_x"), $entry->get("top_left_y"),
 												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
 								$entry->get("keyframeid"));
@@ -1298,7 +1299,7 @@ sub load_edges {
 	my ($self) = @_;
 	my ($filehandler, $header, $entries, $i);
 	foreach my $filename($self->get("PARAMETERS")->get("EDGES_DATA_FILES")->toarray()) {
-		$filehandler = FileHandler->new($self->{LOGGER}, $filename);
+		$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 		$header = $filehandler->get("HEADER");
 		$entries = $filehandler->get("ENTRIES");
 		
@@ -1317,7 +1318,7 @@ sub load_edges {
 				my $ldc_role = "$subject_type\_$slot_type";
 				my $nist_role = $self->get("LDC_NIST_MAPPINGS")->get("NIST_ROLE", $ldc_role);
 				next unless $nist_role;
-				my $edge = Edge->new($self->{LOGGER}, $subject, $nist_role, $object, $attribute);
+				my $edge = Edge->new($self->get("LOGGER"), $subject, $nist_role, $object, $attribute);
 				$self->get("EDGES")->add($edge);
 			}
 		}
@@ -1332,7 +1333,7 @@ sub load_nodes {
 	my %acceptable_relevance = map {$_=>1} $self->get("PARAMETERS")->get("ACCEPTABLE_RELEVANCE")->toarray();
 	my %nodementionids_relevant_to_hypotheses;
 	my $filename = $self->get("PARAMETERS")->get("HYPOTHESES_FILE");
-	$filehandler = FileHandler->new($self->{LOGGER}, $filename);
+	$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	$header = $filehandler->get("HEADER");
 	$entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
@@ -1344,7 +1345,7 @@ sub load_nodes {
 	
 	# Load nodes relevant to hypothesis
 	foreach my $filename($self->get("PARAMETERS")->get("NODES_DATA_FILES")->toarray()) {
-		$filehandler = FileHandler->new($self->{LOGGER}, $filename);
+		$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 		$header = $filehandler->get("HEADER");
 		$entries = $filehandler->get("ENTRIES"); 
 		
@@ -1360,15 +1361,15 @@ sub load_nodes {
 			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BY_KEY", 
 																										$thedocumentelement_encodingformat);
 			my $document_id = $thedocumentelement->get("DOCUMENTID");
-			my $mention = Mention->new($self->{LOGGER});
+			my $mention = Mention->new($self->get("LOGGER"));
 			my $span = Span->new(
-								$self->{LOGGER}, 
+								$self->get("LOGGER"), 
 								$entry->get("provenance"),
 								$document_eid,
 								$entry->get("textoffset_startchar"),
 								$entry->get("textoffset_endchar"),
 						);
-			my $justification = Justification->new($self->{LOGGER});
+			my $justification = Justification->new($self->get("LOGGER"));
 			$justification->add_span($span);
 			$mention->add_justification($justification);
 			$mention->set("MODALITY", $thedocumentelementmodality);
@@ -1409,7 +1410,7 @@ sub generate_queries {
 
 sub generate_class_queries {
 	my ($self) = @_;
-	my $queries = ClassQueries->new($self->{LOGGER}, $self->get("PARAMETERS"));
+	my $queries = ClassQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
 	my $i = 0;
 	my %type_category = %{$self->get("LDC_NIST_MAPPINGS")->get("TYPE_CATEGORY")};
@@ -1418,7 +1419,7 @@ sub generate_class_queries {
 		if($category eq "Filler" or $category eq "Entity") {
 			$i++;
 			my $query_id = "$query_id_prefix\_$i";
-			my $query = ClassQuery->new($self->{LOGGER}, $query_id, $type);
+			my $query = ClassQuery->new($self->get("LOGGER"), $query_id, $type);
 			$queries->add($query);
 		}
 	}
@@ -1427,7 +1428,7 @@ sub generate_class_queries {
 
 sub generate_zerohop_queries {
 	my ($self) = @_;
-	my $queries = ZeroHopQueries->new($self->{LOGGER}, $self->get("PARAMETERS"));
+	my $queries = ZeroHopQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
 	my $i = 0;
 	foreach my $node($self->get("NODES")->toarray()) {
@@ -1440,7 +1441,7 @@ sub generate_zerohop_queries {
 				my $start = $span->get("START");
 				my $end = $span->get("END");
 				my $modality = $mention->get("MODALITY");
-				my $query = ZeroHopQuery->new($self->{LOGGER}, $query_id, $enttype, $doceid, $modality, $start, $end);
+				my $query = ZeroHopQuery->new($self->get("LOGGER"), $query_id, $enttype, $doceid, $modality, $start, $end);
 				$queries->add($query);
 			}
 		}
@@ -1450,7 +1451,7 @@ sub generate_zerohop_queries {
 
 sub generate_graph_queries {
 	my ($self) = @_;
-	my $queries = GraphQueries->new($self->{LOGGER}, $self->get("PARAMETERS"));
+	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
 	my $i = 0;
 	foreach my $node(grep {$_->has_compatible_types()} $self->get("NODES")->toarray()) {
@@ -1462,7 +1463,7 @@ sub generate_graph_queries {
 			foreach my $edge2(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
-				my $query = GraphQuery->new($self->{LOGGER}, $self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
+				my $query = GraphQuery->new($self->get("LOGGER"), $self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
 				$query->add_entrypoint($node);
 				$queries->add($query);
 			}
@@ -1630,11 +1631,11 @@ sub write_to_xml {
 	my $query_id = $self->get("QUERY_ID");
 	my $enttype = $self->get("ENTTYPE");
 
-	my $attributes = XMLAttributes->new($self->{LOGGER});
+	my $attributes = XMLAttributes->new($self->get("LOGGER"));
 	$attributes->add("$query_id", "id");
 
-	my $xml_enttype = XMLElement->new($self->{LOGGER}, $enttype, "enttype", 0);
-	my $xml_query = XMLElement->new($self->{LOGGER}, $xml_enttype, "class_query", 1, $attributes);
+	my $xml_enttype = XMLElement->new($self->get("LOGGER"), $enttype, "enttype", 0);
+	my $xml_query = XMLElement->new($self->get("LOGGER"), $xml_enttype, "class_query", 1, $attributes);
 
 	print $program_output $xml_query->tostring(2);
 }
@@ -2015,7 +2016,7 @@ sub new {
 
 sub load_data {
 	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->{LOGGER}, $self->get("PARAMETERS")->get("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE"));
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
 		my $encoding_format = $entry->get("encoding_format");
