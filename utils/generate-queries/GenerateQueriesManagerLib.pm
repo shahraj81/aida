@@ -1448,9 +1448,11 @@ sub generate_zerohop_queries {
 	my $queries = ZeroHopQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
 	my $i = 0;
+	my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
 	foreach my $node($self->get("NODES")->toarray()) {
 		foreach my $mention($node->get("MENTIONS")->toarray()){
 			my $enttype = $mention->get("NIST_TYPE");
+			next unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true");
 			foreach my $span($mention->get("SPANS")->toarray()) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
