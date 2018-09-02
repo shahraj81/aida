@@ -1635,6 +1635,7 @@ sub write_to_files {
 
 	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<class_queries>\n";
 	foreach my $query($self->toarray()) {
 		$query->write_to_files($program_output_xml, $program_output_rq);
@@ -1717,6 +1718,7 @@ sub write_to_files {
 
 	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<zerohop_queries>\n";
 	foreach my $query($self->toarray()) {
 		$query->write_to_files($program_output_xml, $program_output_rq);
@@ -1847,6 +1849,7 @@ sub write_to_files {
 
 	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<graph_queries>\n";
 	foreach my $query($self->toarray()) {
 		$query->write_to_files($program_output_xml, $program_output_rq);
@@ -2064,7 +2067,7 @@ sub tostring {
 	$retVal .= $self->get("OPENTAG");
 	$retVal .= "\n" if $self->get("NEWLINE");
 	$retVal .= $self->get("ELEMENT")->tostring($indent+2) if ref $self->get("ELEMENT");
-	$retVal .= " " . $self->get("ELEMENT") . " " unless ref $self->get("ELEMENT");
+	$retVal .= " " . Encode::encode_utf8($self->get("ELEMENT")) . " " unless ref $self->get("ELEMENT");
 	$retVal .= " " x $indent if $self->get("NEWLINE");
 	$retVal .= $self->get("CLOSETAG");
 	$retVal .= "\n";
