@@ -1520,15 +1520,15 @@ package ImageBoundingBox;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
+  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
   my $self = {
     CLASS => 'ImageBoundingBox',
     DOCEID => $doceid,
     TYPE => $type,
     TOP_LEFT_X => $top_left_x,
     TOP_LEFT_Y => $top_left_y,
-    BOTTOM_RIGHT_X => $bottom_left_x,
-    BOTTOM_LEFT_Y => $bottom_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1579,14 +1579,14 @@ package KeyFrameBoundingBox;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_left_x, $bottom_left_y) = @_;
+  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
   my $self = {
     CLASS => 'KeyFrameBoundingBox',
     KEYFRAMEID => $keyframeid,
     TOP_LEFT_X => $top_left_x,
     TOP_LEFT_Y => $top_left_y,
-    BOTTOM_RIGHT_X => $bottom_left_x,
-    BOTTOM_LEFT_Y => $bottom_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
     LOGGER => $logger,
   };
   bless($self, $class);
