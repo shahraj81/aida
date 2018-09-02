@@ -1458,7 +1458,10 @@ sub generate_zerohop_queries {
 				my $start = $span->get("START");
 				my $end = $span->get("END");
 				my $modality = $mention->get("MODALITY");
-				my $query = ZeroHopQuery->new($self->get("LOGGER"), $query_id, $enttype, $doceid, $modality, $start, $end);
+				my $query = ZeroHopQuery->new($self->get("LOGGER"),
+											$self->get("KEYFRAMES_BOUNDINGBOXES"),
+											$self->get("IMAGES_BOUNDINGBOXES"),
+											$query_id, $enttype, $doceid, $modality, $start, $end);
 				$queries->add($query);
 			}
 		}
@@ -1532,6 +1535,15 @@ sub new {
   $self;
 }
 
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
 
 #####################################################################################
 # KeyFramesBoundingBoxes
@@ -1549,6 +1561,13 @@ sub new {
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
+}
+
+sub get_KEYFRAMESIDS {
+	my ($self, $doceid) = @_;
+	my @keyframeids = $self->get("ALL_KEYS");
+	@keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
+	@keyframeids;
 }
 
 #####################################################################################
@@ -1576,9 +1595,18 @@ sub new {
 
 sub get_DOCEID {
 	my ($self) = @_;
-
 	my ($doceid) = split("_", $self->get("KEYFRAMEID"));
 	$doceid;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
 }
 
 #####################################################################################
@@ -1707,9 +1735,11 @@ package ZeroHopQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
+  my ($class, $logger, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
   my $self = {
     CLASS => 'ZeroHopQuery',
+    KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
+    IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     QUERY_ID => $query_id,
     ENTTYPE => $enttype,
     DOCUMENTELEMENTID => $doceid,
@@ -1740,16 +1770,39 @@ sub write_to_xml {
 	my $end = $self->get("END");
 	my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
 
+	my $xml_keyframeid;
+	if($modality eq "video") {
+		# Get a KeyFrameID; It doesn't matter for this version which KeyFrameID it is.
+		# This needs to change for evaluation data once we have annotations at the keyframe level
+		my ($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
+		my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
+		$start = $keyframe_boundingbox->get("START");
+		$end = $keyframe_boundingbox->get("END");
+		$xml_keyframeid = XMLElement->new($logger, $keyframeid, "keyframeid", 0);
+	}
+
+	if($modality eq "image") {
+		my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
+		$start = $image_boundingbox->get("START");
+		$end = $image_boundingbox->get("END");
+	}
+
 	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
 	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 	my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
 	my $xml_start = XMLElement->new($logger, $start, $fn_manager->get("FIELDNAME", "start"), 0);
 	my $xml_end = XMLElement->new($logger, $end, $fn_manager->get("FIELDNAME", "end"), 0);
-	my $xml_descriptor = XMLElement->new(
-			$logger, 
+	my $xml_descriptor;
+	$xml_descriptor = XMLElement->new(
+			$logger,
 			XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
 			$fn_manager->get("FIELDNAME", "descriptor"),
 			1);
+	$xml_descriptor = XMLElement->new(
+			$logger,
+			XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_start, $xml_end),
+			$fn_manager->get("FIELDNAME", "descriptor"),
+			1) if $modality eq "video";
 	my $xml_entrypoint = XMLElement->new(
 			$logger, 
 			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor), 
