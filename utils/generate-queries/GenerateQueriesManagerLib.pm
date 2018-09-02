@@ -1483,7 +1483,10 @@ sub generate_graph_queries {
 			foreach my $edge2(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
-				my $query = GraphQuery->new($self->get("LOGGER"), $self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
+				my $query = GraphQuery->new($self->get("LOGGER"),
+											$self->get("KEYFRAMES_BOUNDINGBOXES"),
+											$self->get("IMAGES_BOUNDINGBOXES"),
+											$self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
 				$query->add_entrypoint($node);
 				$queries->add($query);
 			}
@@ -1771,7 +1774,6 @@ sub write_to_xml {
 	my $start = $self->get("START");
 	my $end = $self->get("END");
 	my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
-
 	my $xml_keyframeid;
 	if($modality eq "video") {
 		# Get a KeyFrameID; It doesn't matter for this version which KeyFrameID it is.
@@ -1782,13 +1784,11 @@ sub write_to_xml {
 		$end = $keyframe_boundingbox->get("END");
 		$xml_keyframeid = XMLElement->new($logger, $keyframeid, "keyframeid", 0);
 	}
-
 	if($modality eq "image") {
 		my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
 		$start = $image_boundingbox->get("START");
 		$end = $image_boundingbox->get("END");
 	}
-
 	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
 	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 	my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
@@ -1868,9 +1868,11 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $documentids_mappings, $query_id, @edges) = @_;
+  my ($class, $logger, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, @edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
+    KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
+    IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     DOCUMENTIDS_MAPPINGS => $documentids_mappings,
     QUERY_ID => $query_id,
     EDGES => [@edges],
@@ -1931,16 +1933,34 @@ sub write_to_xml {
 		foreach my $mention($node->get("MENTIONS")->toarray()){
 			my $enttype = $mention->get("NIST_TYPE");
 			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+			my $modality = $mention->get("MODALITY");
+			my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
 			foreach my $span($mention->get("SPANS")->toarray()) {
 				my $doceid = $span->get("DOCUMENTEID");
 				my $start = $span->get("START");
 				my $end = $span->get("END");
-				my $modality = $self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("TYPE");
+				my $xml_keyframeid;
+				if($modality eq "video") {
+					# Get a KeyFrameID; It doesn't matter for this version which KeyFrameID it is.
+					# This needs to change for evaluation data once we have annotations at the keyframe level
+					my ($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
+					my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
+					$start = $keyframe_boundingbox->get("START");
+					$end = $keyframe_boundingbox->get("END");
+					$xml_keyframeid = XMLElement->new($logger, $keyframeid, "keyframeid", 0);
+				}
+				if($modality eq "image") {
+					my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
+					$start = $image_boundingbox->get("START");
+					$end = $image_boundingbox->get("END");
+				}
 				my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
-				my $xml_start = XMLElement->new($logger, $start, "start", 0);
-				my $xml_end = XMLElement->new($logger, $end, "end", 0);
+				my $xml_start = XMLElement->new($logger, $start, $fn_manager->get("FIELDNAME", "start"), 0);
+				my $xml_end = XMLElement->new($logger, $end, $fn_manager->get("FIELDNAME", "end"), 0);
 				my $xml_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_doceid, $xml_start, $xml_end);
-				my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, "descriptor", 1);
+				$xml_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_doceid, $xml_keyframeid, $xml_start, $xml_end)
+					if $modality eq "video";
+				my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, $fn_manager->get("FIELDNAME", "descriptor"), 1);
 				$xml_entrypoint_container->add($xml_descriptor);
 			}
 		}
