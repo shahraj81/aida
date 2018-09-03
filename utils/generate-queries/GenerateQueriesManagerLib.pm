@@ -1396,6 +1396,7 @@ sub load_nodes {
 			$mention->set("DOC_NODEID", $entry->get("document_level_node_id"));
 			$mention->set("TEXT_STRING", $entry->get("text_string"));
 			$mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
+			$mention->set("TYPE", $entry->get("level"));
 			$mention->set("TREEID", $entry->get("tree_id"));
 			
 			$mention->set("LDC_TYPE", 
@@ -1453,14 +1454,22 @@ sub generate_zerohop_queries {
 		foreach my $mention($node->get("MENTIONS")->toarray()){
 			my $enttype = $mention->get("NIST_TYPE");
 			next unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true");
+			my $modality = $mention->get("MODALITY");
+			if($mention->get("TYPE") eq "nam") {
+				$i++;
+				my $query_id = "$query_id_prefix\_$i";
+				my $text_string = $mention->get("TEXT_STRING");
+				my $query = NameStringZeroHopQuery->new($self->get("LOGGER"),
+											$query_id, $enttype, $text_string);
+				$queries->add($query);
+			}
 			foreach my $span($mention->get("SPANS")->toarray()) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
 				my $doceid = $span->get("DOCUMENTEID");
 				my $start = $span->get("START");
 				my $end = $span->get("END");
-				my $modality = $mention->get("MODALITY");
-				my $query = ZeroHopQuery->new($self->get("LOGGER"),
+				my $query = NonNameStringZeroHopQuery->new($self->get("LOGGER"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
 											$query_id, $enttype, $doceid, $modality, $start, $end);
@@ -1734,17 +1743,75 @@ sub write_to_files {
 }
 
 #####################################################################################
-# ZeroHopQuery
+# NameStringZeroHopQuery
 #####################################################################################
 
-package ZeroHopQuery;
+package NameStringZeroHopQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $query_id, $enttype, $name_string) = @_;
+  my $self = {
+    CLASS => 'NameStringZeroHopQuery',
+    QUERY_ID => $query_id,
+    ENTTYPE => $enttype,
+    NAME_STRING => $name_string,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub write_to_files {
+	my ($self, $program_output_xml, $program_output_rq) = @_;
+
+	$self->write_to_xml($program_output_xml);
+	$self->write_to_rq($program_output_rq);
+}
+
+sub write_to_xml {
+	my ($self, $program_output) = @_;
+	my $logger = $self->get("LOGGER");
+	my $query_id = $self->get("QUERY_ID");
+	my $enttype = $self->get("ENTTYPE");
+	my $name_string = $self->get("NAME_STRING");
+
+	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
+	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+	my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
+	my $xml_descriptor = XMLElement->new(
+			$logger,
+			XMLContainer->new($logger, $xml_namestring),
+			"string_descriptor",
+			1);
+	my $attributes = XMLAttributes->new($logger);
+	$attributes->add("$query_id", "id");
+	my $xml_entrypoint = XMLElement->new($logger,
+			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor),
+			"entrypoint", 1);
+	my $xml_query = XMLElement->new($logger, $xml_entrypoint, "zerohop_query", 1, $attributes);
+	print $program_output $xml_query->tostring(2);
+}
+
+sub write_to_rq {
+	my ($self, $program_output) = @_;
+	my $query_id = $self->get("QUERY_ID");
+	print $program_output "writing zerohop query to rq: $query_id\n";
+}
+
+#####################################################################################
+# NonNameStringZeroHopQuery
+#####################################################################################
+
+package NonNameStringZeroHopQuery;
 
 use parent -norequire, 'Super';
 
 sub new {
   my ($class, $logger, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
   my $self = {
-    CLASS => 'ZeroHopQuery',
+    CLASS => 'NonNameStringZeroHopQuery',
     KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     QUERY_ID => $query_id,
@@ -1761,7 +1828,7 @@ sub new {
 
 sub write_to_files {
 	my ($self, $program_output_xml, $program_output_rq) = @_;
-	
+
 	$self->write_to_xml($program_output_xml);
 	$self->write_to_rq($program_output_rq);
 }
