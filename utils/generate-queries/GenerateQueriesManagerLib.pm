@@ -1042,7 +1042,7 @@ sub load {
 
   my $linenum = 0;
 
-  open(FILE, $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
+  open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
   my $line = <FILE>; 
   $line =~ s/\r\n?//g;
   chomp $line;
