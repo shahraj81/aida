@@ -1729,7 +1729,68 @@ sub write_to_xml {
 sub write_to_rq {
 	my ($self, $program_output) = @_;
 	my $query_id = $self->get("QUERY_ID");
-	print $program_output "writing zerohop query to rq: $query_id\n";
+	my $enttype = $self->get("ENTTYPE");
+
+	my $attributes = XMLAttributes->new($self->get("LOGGER"));
+	$attributes->add("$query_id", "id");
+
+	my $sparql = <<'END_SPARQL_QUERY';
+
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query # QUERYID
+	# Query description: Find all mentions of type ENTTYPE
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:ENTTYPE .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?brx .
+					   ?bb            aida:boundingBoxLowerRightY ?bry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?brx .
+					   ?bb            aida:boundingBoxLowerRightY ?bry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+
+END_SPARQL_QUERY
+
+	$sparql =~ s/QUERYID/$query_id/g;
+	$sparql =~ s/ENTTYPE/$enttype/g;
+
+	my $xml_enttype = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
+	my $xml_query = XMLElement->new($self->get("LOGGER"), $xml_enttype, "class_query", 1, $attributes);
+
+	print $program_output $xml_query->tostring(2);
 }
 
 #####################################################################################
