@@ -108,14 +108,16 @@ sub dump_structure {
 
 my $problem_formats = <<'END_PROBLEM_FORMATS';
 
-# Error Name                    Type           Error Message
-# ----------                    ----           -------------
+# Error Name                              Type           Error Message
+# ----------                              ----           -------------
 
 ########## General Errors
-  MISSING_FILE                  FATAL_ERROR    Could not open %s: %s
-  MISSING_RAW_KEY               FATAL_ERROR    Missing key %s in container of type %s
-  MISSING_ENCODING_FORMAT       FATAL_ERROR    Missing encoding format for document element %s
-  MISSING_DOCUMENT_ELEMENT      WARNING        Missing document element %s
+  MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
+  MISSING_RAW_KEY                         FATAL_ERROR    Missing key %s in container of type %s
+  MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
+  MISSING_DOCUMENT_ELEMENT                WARNING        Missing document element %s
+  UNEXPECTED_RECORD_DEBUG_INFO_CALL       WARNING        unexpected call to record_debug_info()
+  ZEROHOP_QUERY_DEBUG_INFO_01             DEBUG_INFO     Zero-hop query %s corresponds to mention %s of node %s (treeid = %s)
 END_PROBLEM_FORMATS
 
 
@@ -178,6 +180,25 @@ sub is_ignored {
   $self->{IGNORE_WARNINGS}{$warning};
 }
 
+# Remember the debug information
+sub record_debug_information {
+	my ($self, $information, @args) = @_;
+	my $source = pop(@args);
+	my $format = $self->{FORMATS}{$information} ||
+									{TYPE => 'DEBUG_INFO',
+									FORMAT => "General information $information: %s"};
+	my $type = $format->{TYPE};
+	my $message = "$type: " . sprintf($format->{FORMAT}, @args);
+	if ($type ne "DEBUG_INFO") {
+		my ($package, $filename, $line) = caller;
+	$self->record_problem("UNEXPECTED_RECORD_DEBUG_INFO_CALL", {FILENAME=>$filename, LINENUM=>$line});
+	}
+	# Use Encode to support Unicode.
+	$message = Encode::encode_utf8($message);
+	my $where = (ref $source ? "$source->{FILENAME} line $source->{LINENUM}" : $source);
+	$self->{DEBUG_INFO}{$information}{$message}{$where}++;
+}
+
 # Remember that a particular problem was encountered, for later reporting
 sub record_problem {
   my ($self, $problem, @args) = @_;
@@ -232,26 +253,28 @@ sub close_error_output {
   close $self->{ERROR_OUTPUT} if $self->{OPENED_ERROR_OUTPUT};
 }
 
-# Report all of the problems that have been aggregated to the selected error output
-sub report_all_problems {
-  my ($self) = @_;
-  my $error_output = $self->{ERROR_OUTPUT};
-  foreach my $problem (sort keys %{$self->{PROBLEMS}}) {
-    foreach my $message (sort keys %{$self->{PROBLEMS}{$problem}}) {
-      my $num_instances = scalar keys %{$self->{PROBLEMS}{$problem}{$message}};
-      print $error_output "$message";
-      my $example = (sort keys %{$self->{PROBLEMS}{$problem}{$message}})[0];
-      if ($example ne 'NO_SOURCE') {
-	print $error_output " ($example";
-	print $error_output " and ", $num_instances - 1, " other place" if $num_instances > 1;
-	print $error_output "s" if $num_instances > 2;
-	print $error_output ")";
-      }
-      print $error_output "\n\n";
-    }
-  }
-  # Return the number of errors and the number of warnings encountered
-  ($self->{PROBLEM_COUNTS}{ERROR} || 0, $self->{PROBLEM_COUNTS}{WARNING} || 0);
+# Report all of the information that have been aggregated to the selected error output
+sub report_all_information {
+	my ($self) = @_;
+	my $error_output = $self->{ERROR_OUTPUT};
+	foreach my $log_item_category (qw(DEBUG_INFO PROBLEMS)) {
+		foreach my $problem (sort keys %{$self->{$log_item_category}}) {
+			foreach my $message (sort keys %{$self->{$log_item_category}{$problem}}) {
+				my $num_instances = scalar keys %{$self->{$log_item_category}{$problem}{$message}};
+				print $error_output "$message";
+				my $example = (sort keys %{$self->{$log_item_category}{$problem}{$message}})[0];
+				if ($example ne 'NO_SOURCE') {
+					print $error_output " ($example";
+					print $error_output " and ", $num_instances - 1, " other place" if $num_instances > 1;
+					print $error_output "s" if $num_instances > 2;
+					print $error_output ")";
+				}
+				print $error_output "\n\n";
+			}
+		}
+	}
+	# Return the number of errors and the number of warnings encountered
+	($self->{PROBLEM_COUNTS}{ERROR} || 0, $self->{PROBLEM_COUNTS}{WARNING} || 0);
 }
 
 sub get_num_errors {
@@ -1398,6 +1421,7 @@ sub load_nodes {
 			$mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
 			$mention->set("TYPE", $entry->get("level"));
 			$mention->set("TREEID", $entry->get("tree_id"));
+			$mention->set("WHERE", $entry->get("WHERE"));
 			
 			$mention->set("LDC_TYPE", 
 							$self->get("LDC_NIST_MAPPINGS")->get("LDC_TYPE", 
@@ -1459,6 +1483,8 @@ sub generate_zerohop_queries {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
 				my $text_string = $mention->get("TEXT_STRING");
+				$self->get("LOGGER")->record_debug_information("ZEROHOP_QUERY_DEBUG_INFO_01", $query_id, $mention->get("MENTIONID"),
+																$node->get("NODEID"), $mention->get("TREEID"), $mention->get("WHERE"));
 				my $query = NameStringZeroHopQuery->new($self->get("LOGGER"),
 											$query_id, $enttype, $text_string);
 				$queries->add($query);
