@@ -35,11 +35,8 @@ $parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.
 $parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
 $parameters->set("ERRORLOG_FILE", "output/problems.log");
 $parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output/T101_class_queries.xml");
-$parameters->set("CLASS_QUERIES_RQ_OUTPUT_FILE", "output/T101_class_queries.rq");
 $parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output/T101_zerohop_queries.xml");
-$parameters->set("ZEROHOP_QUERIES_RQ_OUTPUT_FILE", "output/T101_zerohop_queries.rq");
 $parameters->set("GRAPH_QUERIES_XML_OUTPUT_FILE", "output/T101_graph_queries.xml");
-$parameters->set("GRAPH_QUERIES_RQ_OUTPUT_FILE", "output/T101_graph_queries.rq");
 $parameters->set("CLASS_QUERIES_PREFIX", "AIDA_CL_2018");
 $parameters->set("ZEROHOP_QUERIES_PREFIX", "AIDA_ZH_2018");
 $parameters->set("GRAPH_QUERIES_PREFIX", "AIDA_GR_2018");

@@ -1465,7 +1465,7 @@ sub generate_class_queries {
 		my $query = ClassQuery->new($self->get("LOGGER"), $query_id, $type);
 		$queries->add($query);
 	}
-	$queries->write_to_files();
+	$queries->write_to_file();
 }
 
 sub generate_zerohop_queries {
@@ -1503,7 +1503,7 @@ sub generate_zerohop_queries {
 			}
 		}
 	}	
-	$queries->write_to_files();
+	$queries->write_to_file();
 }
 
 sub generate_graph_queries {
@@ -1530,7 +1530,7 @@ sub generate_graph_queries {
 		}
 	}
 	
-	$queries->write_to_files();
+	$queries->write_to_file();
 }
 
 #####################################################################################
@@ -1667,22 +1667,17 @@ sub new {
   $self;
 }
 
-sub write_to_files {
+sub write_to_file {
 	my ($self) = @_;
-	my ($program_output_xml, $program_output_rq);
 	my $output_filename_xml = $self->get("PARAMETERS")->get("CLASS_QUERIES_XML_OUTPUT_FILE");
-	my $output_filename_rq = $self->get("PARAMETERS")->get("CLASS_QUERIES_RQ_OUTPUT_FILE");
-
-	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
-	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	open(my $program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<class_queries>\n";
 	foreach my $query($self->toarray()) {
-		$query->write_to_files($program_output_xml, $program_output_rq);
+		$query->write_to_file($program_output_xml);
 	}
 	print $program_output_xml "<\/class_queries>\n";
 	close($program_output_xml);
-	close($program_output_rq);
 }
 
 #####################################################################################
@@ -1705,14 +1700,7 @@ sub new {
   $self;
 }
 
-sub write_to_files {
-	my ($self, $program_output_xml, $program_output_rq) = @_;
-
-	$self->write_to_xml($program_output_xml);
-	$self->write_to_rq($program_output_rq);
-}
-
-sub write_to_xml {
+sub write_to_file {
 	my ($self, $program_output) = @_;
 	my $query_id = $self->get("QUERY_ID");
 	my $enttype = $self->get("ENTTYPE");
@@ -1721,19 +1709,7 @@ sub write_to_xml {
 	$attributes->add("$query_id", "id");
 
 	my $xml_enttype = XMLElement->new($self->get("LOGGER"), $enttype, "enttype", 0);
-	my $xml_query = XMLElement->new($self->get("LOGGER"), $xml_enttype, "class_query", 1, $attributes);
-
-	print $program_output $xml_query->tostring(2);
-}
-
-sub write_to_rq {
-	my ($self, $program_output) = @_;
-	my $query_id = $self->get("QUERY_ID");
-	my $enttype = $self->get("ENTTYPE");
-
-	my $attributes = XMLAttributes->new($self->get("LOGGER"));
-	$attributes->add("$query_id", "id");
-
+	
 	my $sparql = <<'END_SPARQL_QUERY';
 
 	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
@@ -1786,10 +1762,10 @@ END_SPARQL_QUERY
 
 	$sparql =~ s/QUERYID/$query_id/g;
 	$sparql =~ s/ENTTYPE/$enttype/g;
-
-	my $xml_enttype = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
-	my $xml_query = XMLElement->new($self->get("LOGGER"), $xml_enttype, "class_query", 1, $attributes);
-
+	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
+	my $xml_query = XMLElement->new($self->get("LOGGER"),
+			XMLContainer->new($self->get("LOGGER"), $xml_enttype, $xml_sparql),
+			"class_query", 1, $attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
@@ -1811,22 +1787,17 @@ sub new {
   $self;
 }
 
-sub write_to_files {
+sub write_to_file {
 	my ($self) = @_;
-	my ($program_output_xml, $program_output_rq);
 	my $output_filename_xml = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_XML_OUTPUT_FILE");
-	my $output_filename_rq = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_RQ_OUTPUT_FILE");
-
-	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
-	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	open(my $program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<zerohop_queries>\n";
 	foreach my $query($self->toarray()) {
-		$query->write_to_files($program_output_xml, $program_output_rq);
+		$query->write_to_file($program_output_xml);
 	}
 	print $program_output_xml "<\/zerohop_queries>\n";
 	close($program_output_xml);
-	close($program_output_rq);	
 }
 
 #####################################################################################
@@ -1850,14 +1821,7 @@ sub new {
   $self;
 }
 
-sub write_to_files {
-	my ($self, $program_output_xml, $program_output_rq) = @_;
-
-	$self->write_to_xml($program_output_xml);
-	$self->write_to_rq($program_output_rq);
-}
-
-sub write_to_xml {
+sub write_to_file {
 	my ($self, $program_output) = @_;
 	my $logger = $self->get("LOGGER");
 	my $query_id = $self->get("QUERY_ID");
@@ -1879,12 +1843,6 @@ sub write_to_xml {
 			"entrypoint", 1);
 	my $xml_query = XMLElement->new($logger, $xml_entrypoint, "zerohop_query", 1, $attributes);
 	print $program_output $xml_query->tostring(2);
-}
-
-sub write_to_rq {
-	my ($self, $program_output) = @_;
-	my $query_id = $self->get("QUERY_ID");
-	print $program_output "writing zerohop query to rq: $query_id\n";
 }
 
 #####################################################################################
@@ -1913,14 +1871,7 @@ sub new {
   $self;
 }
 
-sub write_to_files {
-	my ($self, $program_output_xml, $program_output_rq) = @_;
-
-	$self->write_to_xml($program_output_xml);
-	$self->write_to_rq($program_output_rq);
-}
-
-sub write_to_xml {
+sub write_to_file {
 	my ($self, $program_output) = @_;
 	my $logger = $self->get("LOGGER");
 	my $query_id = $self->get("QUERY_ID");
@@ -1972,13 +1923,6 @@ sub write_to_xml {
 	print $program_output $xml_query->tostring(2);
 }
 
-sub write_to_rq {
-	my ($self, $program_output) = @_;
-	my $query_id = $self->get("QUERY_ID");
-	print $program_output "writing zerohop query to rq: $query_id\n";
-}
-
-
 #####################################################################################
 # GraphQueries
 #####################################################################################
@@ -1997,22 +1941,17 @@ sub new {
   $self;
 }
 
-sub write_to_files {
+sub write_to_file {
 	my ($self) = @_;
-	my ($program_output_xml, $program_output_rq);
 	my $output_filename_xml = $self->get("PARAMETERS")->get("GRAPH_QUERIES_XML_OUTPUT_FILE");
-	my $output_filename_rq = $self->get("PARAMETERS")->get("GRAPH_QUERIES_RQ_OUTPUT_FILE");
-
-	open($program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
-	open($program_output_rq, ">:utf8", $output_filename_rq) or die("Could not open $output_filename_xml: $!");
+	open(my $program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<graph_queries>\n";
 	foreach my $query($self->toarray()) {
-		$query->write_to_files($program_output_xml, $program_output_rq);
+		$query->write_to_file($program_output_xml);
 	}
 	print $program_output_xml "<\/graph_queries>\n";
 	close($program_output_xml);
-	close($program_output_rq);	
 }
 
 #####################################################################################
@@ -2044,14 +1983,7 @@ sub add_entrypoint {
 	push(@{$self->{ENTRYPOINTS}}, $node);
 }
 
-sub write_to_files {
-	my ($self, $program_output_xml, $program_output_rq) = @_;
-	
-	$self->write_to_xml($program_output_xml);
-	$self->write_to_rq($program_output_rq);
-}
-
-sub write_to_xml {
+sub write_to_file {
 	my ($self, $program_output) = @_;
 	my $logger = $self->get("LOGGER");
 	my $query_id = $self->get("QUERY_ID");
@@ -2127,12 +2059,6 @@ sub write_to_xml {
 	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints);
 	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
 	print $program_output $xml_query->tostring(2);
-}
-
-sub write_to_rq {
-	my ($self, $program_output) = @_;
-	my $query_id = $self->get("QUERY_ID");
-	print $program_output "writing graph query to rq: $query_id\n";
 }
 
 sub mask {
