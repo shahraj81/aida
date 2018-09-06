@@ -1940,11 +1940,11 @@ sub write_to_file {
 	my $start = $self->get("START");
 	my $end = $self->get("END");
 	my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
-	my $xml_keyframeid;
+	my ($keyframeid, $xml_keyframeid);
 	if($modality eq "video") {
 		# Get a KeyFrameID; It doesn't matter for this version which KeyFrameID it is.
 		# This needs to change for evaluation data once we have annotations at the keyframe level
-		my ($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
+		($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
 		my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
 		$start = $keyframe_boundingbox->get("START");
 		$end = $keyframe_boundingbox->get("END");
@@ -1980,14 +1980,16 @@ sub write_to_file {
 	$attributes->add("$query_id", "id");
 
 	my $text_entrypoint_constraints = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                       aida:TextJustification .
-		?justification_ep aida:startOffset        ?epso .
-		?justification_ep aida:endOffsetInclusive ?epeo .
+?justification_ep a                         aida:TextJustification .
+		?justification_ep aida:source               "DOCEID" .
+		?justification_ep aida:startOffset          ?epso .
+		?justification_ep aida:endOffsetInclusive   ?epeo .
 		FILTER ( (?epeo >= START_OFFSET && $epeo <= END_OFFSET) || (?epso >= START_OFFSET && ?epso <= END_OFFSET) ) .
 TEXT_ENTRYPOINT_CONSTRAINTS
 
 	my $image_entrypoint_constraints = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                       aida:ImageJustification .
+?justification_ep a                         aida:ImageJustification .
+		?justification_ep aida:source               "DOCEID" .
 		?justification_ep aida:boundingBox          ?boundingbox_ep .
 		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
 		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
@@ -2000,7 +2002,9 @@ TEXT_ENTRYPOINT_CONSTRAINTS
 IMAGE_ENTRYPOINT_CONSTRAINTS
 
 	my $video_entrypoint_constraints = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                       aida:KeyFrameVideoJustification .
+?justification_ep a                         aida:KeyFrameVideoJustification .
+		?justification_ep aida:source               "DOCEID" .
+		?justification_ep aida:keyFrame             "KEYFRAMEID" .
 		?justification_ep aida:boundingBox          ?boundingbox_ep .
 		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
 		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
@@ -2014,6 +2018,7 @@ VIDEO_ENTRYPOINT_CONSTRAINTS
 
 	my $audio_entrypoint_constrinats = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
 ?justification_ep a                       aida:AudioJustification .
+		?justification_ep aida:source             "DOCEID" .
 		?justification_ep aida:startTimestamp     ?epst .
 		?justification_ep aida:endTimestamp       ?epet .
 		FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
@@ -2046,11 +2051,11 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 		?statement3     aida:confidence      ?cm2_confidence .
 		?cm2_confidence aida:confidenceValue ?cm2cv .
 
-		?statement4       a                       rdf:Statement .
-		?statement4       rdf:object              ldcOnt:ENTTYPE .
-		?statement4       rdf:predicate           rdf:type .
-		?statement4       rdf:subject             ?nid_ep .
-		?statement4       aida:justifiedBy        ?justification_ep .
+		?statement4       a                         rdf:Statement .
+		?statement4       rdf:object                ldcOnt:ENTTYPE .
+		?statement4       rdf:predicate             rdf:type .
+		?statement4       rdf:subject               ?nid_ep .
+		?statement4       aida:justifiedBy          ?justification_ep .
 		ENTRYPOINT_CONSTRAINTS
 
 		OPTIONAL { ?justification a                  aida:TextJustification .
@@ -2105,6 +2110,7 @@ END_SPARQL_QUERY
 		$video_entrypoint_constraints =~ s/UPPER_LEFT_Y/$uly/g;
 		$video_entrypoint_constraints =~ s/LOWER_RIGHT_X/$lrx/g;
 		$video_entrypoint_constraints =~ s/LOWER_RIGHT_Y/$lry/g;
+		$video_entrypoint_constraints =~ s/KEYFRAMEID/$keyframeid/g;
 		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$video_entrypoint_constraints/;
 	}
 	elsif($modality eq "audio") {
@@ -2115,6 +2121,7 @@ END_SPARQL_QUERY
 
 	$sparql =~ s/QUERYID/$query_id/g;
 	$sparql =~ s/ENTTYPE/$enttype/g;
+	$sparql =~ s/DOCEID/$doceid/g;
 	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
 
 	my $xml_query = XMLElement->new($logger,
