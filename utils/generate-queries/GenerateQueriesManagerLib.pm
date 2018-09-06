@@ -1479,16 +1479,17 @@ sub generate_zerohop_queries {
 			my $enttype = $mention->get("NIST_TYPE");
 			next unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true");
 			my $modality = $mention->get("MODALITY");
-			if($mention->get("TYPE") eq "nam") {
-				$i++;
-				my $query_id = "$query_id_prefix\_$i";
-				my $text_string = $mention->get("TEXT_STRING");
-				$self->get("LOGGER")->record_debug_information("ZEROHOP_QUERY_DEBUG_INFO_01", $query_id, $mention->get("MENTIONID"),
-																$node->get("NODEID"), $mention->get("TREEID"), $mention->get("WHERE"));
-				my $query = NameStringZeroHopQuery->new($self->get("LOGGER"),
-											$query_id, $enttype, $text_string);
-				$queries->add($query);
-			}
+#			NAMESTRING zerohop queries are out of scope
+#			if($mention->get("TYPE") eq "nam") {
+#				$i++;
+#				my $query_id = "$query_id_prefix\_$i";
+#				my $text_string = $mention->get("TEXT_STRING");
+#				$self->get("LOGGER")->record_debug_information("ZEROHOP_QUERY_DEBUG_INFO_01", $query_id, $mention->get("MENTIONID"),
+#																$node->get("NODEID"), $mention->get("TREEID"), $mention->get("WHERE"));
+#				my $query = NameStringZeroHopQuery->new($self->get("LOGGER"),
+#											$query_id, $enttype, $text_string);
+#				$queries->add($query);
+#			}
 			foreach my $span($mention->get("SPANS")->toarray()) {
 				$i++;
 				my $query_id = "$query_id_prefix\_$i";
@@ -1804,103 +1805,104 @@ sub write_to_file {
 
 #####################################################################################
 # NameStringZeroHopQuery
+# These are currently out of scope
 #####################################################################################
-
-package NameStringZeroHopQuery;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $query_id, $enttype, $name_string) = @_;
-  my $self = {
-    CLASS => 'NameStringZeroHopQuery',
-    QUERY_ID => $query_id,
-    ENTTYPE => $enttype,
-    NAME_STRING => $name_string,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub write_to_file {
-	my ($self, $program_output) = @_;
-	my $logger = $self->get("LOGGER");
-	my $query_id = $self->get("QUERY_ID");
-	my $enttype = $self->get("ENTTYPE");
-	my $name_string = $self->get("NAME_STRING");
-
-	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
-	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
-	my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
-	my $xml_descriptor = XMLElement->new(
-			$logger,
-			XMLContainer->new($logger, $xml_namestring),
-			"string_descriptor",
-			1);
-	my $attributes = XMLAttributes->new($logger);
-	$attributes->add("$query_id", "id");
-	my $xml_entrypoint = XMLElement->new($logger,
-			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor),
-			"entrypoint", 1);
-
-	my $sparql = <<'END_SPARQL_QUERY';
-
-	<![CDATA[
-	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
-	WHERE {
-			?statement1    a                    rdf:Statement .
-			?statement1    rdf:object           ldcOnt:ENTTYPE .
-			?statement1    rdf:predicate        rdf:type .
-			?statement1    rdf:subject          ?nid .
-			?statement1    aida:justifiedBy     ?justification .
-			?justification aida:source          ?doceid .
-			?justification aida:confidence      ?confidence .
-			?confidence    aida:confidenceValue ?cv .
-			?nid           a                    aida:Entity .
-			?nid           aida:hasName         "NAME_STRING" .
-
-			OPTIONAL { ?justification a                           aida:TextJustification .
-					   ?justification aida:startOffset            ?so .
-					   ?justification aida:endOffsetInclusive     ?eo }
-
-			OPTIONAL { ?justification a                           aida:ImageJustification .
-					   ?justification aida:boundingBox            ?bb  .
-					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?brx .
-					   ?bb            aida:boundingBoxLowerRightY ?bry }
-
-			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
-					   ?justification aida:keyFrame               ?kfid .
-					   ?justification aida:boundingBox            ?bb  .
-					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?brx .
-					   ?bb            aida:boundingBoxLowerRightY ?bry }
-
-			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
-					   ?justification aida:shot                   ?sid }
-
-			OPTIONAL { ?justification a                           aida:AudioJustification .
-					   ?justification aida:startTimestamp         ?st .
-					   ?justification aida:endTimestamp           ?et }
-
-	}
-	]]>
-
-END_SPARQL_QUERY
-
-	$sparql =~ s/QUERYID/$query_id/g;
-	$sparql =~ s/ENTTYPE/$enttype/g;
-	$sparql =~ s/NAME_STRING/$name_string/;
-	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
-
-	my $xml_query = XMLElement->new($logger,
-																	XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
-																	"zerohop_query", 1, $attributes);
-	print $program_output $xml_query->tostring(2);
-}
+#
+#package NameStringZeroHopQuery;
+#
+#use parent -norequire, 'Super';
+#
+#sub new {
+#  my ($class, $logger, $query_id, $enttype, $name_string) = @_;
+#  my $self = {
+#    CLASS => 'NameStringZeroHopQuery',
+#    QUERY_ID => $query_id,
+#    ENTTYPE => $enttype,
+#    NAME_STRING => $name_string,
+#    LOGGER => $logger,
+#  };
+#  bless($self, $class);
+#  $self;
+#}
+#
+#sub write_to_file {
+#	my ($self, $program_output) = @_;
+#	my $logger = $self->get("LOGGER");
+#	my $query_id = $self->get("QUERY_ID");
+#	my $enttype = $self->get("ENTTYPE");
+#	my $name_string = $self->get("NAME_STRING");
+#
+#	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
+#	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+#	my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
+#	my $xml_descriptor = XMLElement->new(
+#			$logger,
+#			XMLContainer->new($logger, $xml_namestring),
+#			"string_descriptor",
+#			1);
+#	my $attributes = XMLAttributes->new($logger);
+#	$attributes->add("$query_id", "id");
+#	my $xml_entrypoint = XMLElement->new($logger,
+#			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor),
+#			"entrypoint", 1);
+#
+#	my $sparql = <<'END_SPARQL_QUERY';
+#
+#	<![CDATA[
+#	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
+#	WHERE {
+#			?statement1    a                    rdf:Statement .
+#			?statement1    rdf:object           ldcOnt:ENTTYPE .
+#			?statement1    rdf:predicate        rdf:type .
+#			?statement1    rdf:subject          ?nid .
+#			?statement1    aida:justifiedBy     ?justification .
+#			?justification aida:source          ?doceid .
+#			?justification aida:confidence      ?confidence .
+#			?confidence    aida:confidenceValue ?cv .
+#			?nid           a                    aida:Entity .
+#			?nid           aida:hasName         "NAME_STRING" .
+#
+#			OPTIONAL { ?justification a                           aida:TextJustification .
+#					   ?justification aida:startOffset            ?so .
+#					   ?justification aida:endOffsetInclusive     ?eo }
+#
+#			OPTIONAL { ?justification a                           aida:ImageJustification .
+#					   ?justification aida:boundingBox            ?bb  .
+#					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+#					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+#					   ?bb            aida:boundingBoxLowerRightX ?brx .
+#					   ?bb            aida:boundingBoxLowerRightY ?bry }
+#
+#			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+#					   ?justification aida:keyFrame               ?kfid .
+#					   ?justification aida:boundingBox            ?bb  .
+#					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+#					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+#					   ?bb            aida:boundingBoxLowerRightX ?brx .
+#					   ?bb            aida:boundingBoxLowerRightY ?bry }
+#
+#			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+#					   ?justification aida:shot                   ?sid }
+#
+#			OPTIONAL { ?justification a                           aida:AudioJustification .
+#					   ?justification aida:startTimestamp         ?st .
+#					   ?justification aida:endTimestamp           ?et }
+#
+#	}
+#	]]>
+#
+#END_SPARQL_QUERY
+#
+#	$sparql =~ s/QUERYID/$query_id/g;
+#	$sparql =~ s/ENTTYPE/$enttype/g;
+#	$sparql =~ s/NAME_STRING/$name_string/;
+#	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
+#
+#	my $xml_query = XMLElement->new($logger,
+#																	XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
+#																	"zerohop_query", 1, $attributes);
+#	print $program_output $xml_query->tostring(2);
+#}
 
 #####################################################################################
 # NonNameStringZeroHopQuery
