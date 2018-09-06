@@ -1981,90 +1981,103 @@ sub write_to_file {
 
 	my $text_entrypoint_constraints = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
 ?justification_ep a                       aida:TextJustification .
-			?justification_ep aida:startOffset        ?epso .
-			?justification_ep aida:endOffsetInclusive ?epeo .
-			FILTER ( (?epeo >= START_OFFSET && $epeo <= END_OFFSET) || (?epso >= START_OFFSET && ?epso <= END_OFFSET) ) .
+		?justification_ep aida:startOffset        ?epso .
+		?justification_ep aida:endOffsetInclusive ?epeo .
+		FILTER ( (?epeo >= START_OFFSET && $epeo <= END_OFFSET) || (?epso >= START_OFFSET && ?epso <= END_OFFSET) ) .
 TEXT_ENTRYPOINT_CONSTRAINTS
 
 	my $image_entrypoint_constraints = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
 ?justification_ep a                       aida:ImageJustification .
-			?justification_ep aida:boundingBox        ?boundingbox_ep .
-			?boundingbox_ep aida:boundingBoxUpperLeftX ?epulx .
-			?boundingbox_ep aida:boundingBoxUpperLeftY ?epuly .
-			?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
-			?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
-			FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
-				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-				(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+		?justification_ep aida:boundingBox          ?boundingbox_ep .
+		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
+		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
+		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
+		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
+		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
 IMAGE_ENTRYPOINT_CONSTRAINTS
 
 	my $video_entrypoint_constraints = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
 ?justification_ep a                       aida:KeyFrameVideoJustification .
-			?justification_ep aida:boundingBox        ?boundingbox_ep .
-			?boundingbox_ep aida:boundingBoxUpperLeftX ?epulx .
-			?boundingbox_ep aida:boundingBoxUpperLeftY ?epuly .
-			?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
-			?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
-			FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
-				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-				(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+		?justification_ep aida:boundingBox          ?boundingbox_ep .
+		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
+		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
+		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
+		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
+		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
 VIDEO_ENTRYPOINT_CONSTRAINTS
 
 	my $audio_entrypoint_constrinats = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
 ?justification_ep a                       aida:AudioJustification .
-        ?justification_ep aida:startTimestamp     ?epst .
-        ?justification_ep aida:endTimestamp       ?epet .
-        FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
+		?justification_ep aida:startTimestamp     ?epst .
+		?justification_ep aida:endTimestamp       ?epet .
+		FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
 AUDIO_ENTRYPOINT_CONSTRAINTS
 
 	my $sparql = <<'END_SPARQL_QUERY';
 
 	<![CDATA[
-	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
+	SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?cv
 	WHERE {
-			?statement1    a                    rdf:Statement .
-			?statement1    rdf:object           ldcOnt:ENTTYPE .
-			?statement1    rdf:predicate        rdf:type .
-			?statement1    rdf:subject          ?nid .
-			?statement1    aida:justifiedBy     ?justification .
-			?justification aida:source          ?doceid .
-			?justification aida:confidence      ?confidence .
-			?confidence    aida:confidenceValue ?cv .
+		?statement1    a                    rdf:Statement .
+		?statement1    rdf:object           ldcOnt:ENTTYPE .
+		?statement1    rdf:predicate        rdf:type .
+		?statement1    rdf:subject          ?nid_ot .
+		?statement1    aida:justifiedBy     ?justification .
+		?justification aida:source          ?doceid .
+		?justification aida:confidence      ?confidence .
+		?confidence    aida:confidenceValue ?cv .
 
-			?statement2       a                       rdf:Statement .
-			?statement2       rdf:object              ldcOnt:ENTTYPE .
-			?statement2       rdf:predicate           rdf:type .
-			?statement2       rdf:subject             ?nid .
-			?statement2       aida:justifiedBy        ?justification_ep .
-			ENTRYPOINT_CONSTRAINTS
+		?cluster        a                    aida:SameAsCluster .
+		?statement2     a                    aida:ClusterMembership .
+		?statement2     aida:cluster         ?cluster .
+		?statement2     aida:clusterMember   ?nid_ep .
+		?statement2     aida:confidence      ?cm1_confidence .
+		?cm1_confidence aida:confidenceValue ?cm1cv .
 
-			OPTIONAL { ?justification a                           aida:TextJustification .
-					   ?justification aida:startOffset            ?so .
-					   ?justification aida:endOffsetInclusive     ?eo }
+		?statement3     a                    aida:ClusterMembership .
+		?statement3     aida:cluster         ?cluster .
+		?statement3     aida:clusterMember   ?nid_ot .
+		?statement3     aida:confidence      ?cm2_confidence .
+		?cm2_confidence aida:confidenceValue ?cm2cv .
 
-			OPTIONAL { ?justification a                           aida:ImageJustification .
-					   ?justification aida:boundingBox            ?bb  .
-					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?brx .
-					   ?bb            aida:boundingBoxLowerRightY ?bry }
+		?statement4       a                       rdf:Statement .
+		?statement4       rdf:object              ldcOnt:ENTTYPE .
+		?statement4       rdf:predicate           rdf:type .
+		?statement4       rdf:subject             ?nid_ep .
+		?statement4       aida:justifiedBy        ?justification_ep .
+		ENTRYPOINT_CONSTRAINTS
 
-			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
-					   ?justification aida:keyFrame               ?kfid .
-					   ?justification aida:boundingBox            ?bb  .
-					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?brx .
-					   ?bb            aida:boundingBoxLowerRightY ?bry }
+		OPTIONAL { ?justification a                  aida:TextJustification .
+			?justification aida:startOffset            ?so .
+			?justification aida:endOffsetInclusive     ?eo }
 
-			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
-					   ?justification aida:shot                   ?sid }
+		OPTIONAL { ?justification a                  aida:ImageJustification .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?brx .
+			?bb            aida:boundingBoxLowerRightY ?bry }
 
-			OPTIONAL { ?justification a                           aida:AudioJustification .
-					   ?justification aida:startTimestamp         ?st .
-					   ?justification aida:endTimestamp           ?et }
+		OPTIONAL { ?justification a                  aida:KeyFrameVideoJustification .
+			?justification aida:keyFrame               ?kfid .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?brx .
+			?bb            aida:boundingBoxLowerRightY ?bry }
+
+		OPTIONAL { ?justification a                  aida:ShotVideoJustification .
+			?justification aida:shot                   ?sid }
+
+		OPTIONAL { ?justification a                  aida:AudioJustification .
+			?justification aida:startTimestamp         ?st .
+			?justification aida:endTimestamp           ?et }
 
 	}
 	]]>
@@ -2088,10 +2101,10 @@ END_SPARQL_QUERY
 	elsif($modality eq "video") {
 		my ($ulx, $uly) = split(",", $start);
 		my ($lrx, $lry) = split(",", $end);
-		$image_entrypoint_constraints =~ s/UPPER_LEFT_X/$ulx/g;
-		$image_entrypoint_constraints =~ s/UPPER_LEFT_Y/$uly/g;
-		$image_entrypoint_constraints =~ s/LOWER_RIGHT_X/$lrx/g;
-		$image_entrypoint_constraints =~ s/LOWER_RIGHT_Y/$lry/g;
+		$video_entrypoint_constraints =~ s/UPPER_LEFT_X/$ulx/g;
+		$video_entrypoint_constraints =~ s/UPPER_LEFT_Y/$uly/g;
+		$video_entrypoint_constraints =~ s/LOWER_RIGHT_X/$lrx/g;
+		$video_entrypoint_constraints =~ s/LOWER_RIGHT_Y/$lry/g;
 		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$video_entrypoint_constraints/;
 	}
 	elsif($modality eq "audio") {
