@@ -1709,9 +1709,10 @@ sub write_to_file {
 	$attributes->add("$query_id", "id");
 
 	my $xml_enttype = XMLElement->new($self->get("LOGGER"), $enttype, "enttype", 0);
-	
+
 	my $sparql = <<'END_SPARQL_QUERY';
 
+	<![CDATA[
 	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
 	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
@@ -1720,7 +1721,7 @@ sub write_to_file {
 	# Query # QUERYID
 	# Query description: Find all mentions of type ENTTYPE
 
-	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
 	WHERE {
 			?statement1    a                    rdf:Statement .
 			?statement1    rdf:object           ldcOnt:ENTTYPE .
@@ -1738,16 +1739,16 @@ sub write_to_file {
 					   ?justification aida:boundingBox            ?bb  .
 					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
 					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?brx .
-					   ?bb            aida:boundingBoxLowerRightY ?bry }
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
 
 			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
 					   ?justification aida:keyFrame               ?kfid .
 					   ?justification aida:boundingBox            ?bb  .
 					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
 					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?brx .
-					   ?bb            aida:boundingBoxLowerRightY ?bry }
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
 
 			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
 					   ?justification aida:shot                   ?sid }
@@ -1757,6 +1758,7 @@ sub write_to_file {
 					   ?justification aida:endTimestamp           ?et }
 
 	}
+	]]>
 
 END_SPARQL_QUERY
 
@@ -1841,7 +1843,62 @@ sub write_to_file {
 	my $xml_entrypoint = XMLElement->new($logger,
 			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor),
 			"entrypoint", 1);
-	my $xml_query = XMLElement->new($logger, $xml_entrypoint, "zerohop_query", 1, $attributes);
+
+	my $sparql = <<'END_SPARQL_QUERY';
+
+	<![CDATA[
+	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:ENTTYPE .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    rdf:subject          ?nid .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+			?nid           a                    aida:Entity .
+			?nid           aida:hasName         "NAME_STRING" .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?brx .
+					   ?bb            aida:boundingBoxLowerRightY ?bry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?brx .
+					   ?bb            aida:boundingBoxLowerRightY ?bry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+END_SPARQL_QUERY
+
+	$sparql =~ s/QUERYID/$query_id/g;
+	$sparql =~ s/ENTTYPE/$enttype/g;
+	$sparql =~ s/NAME_STRING/$name_string/;
+	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
+
+	my $xml_query = XMLElement->new($logger,
+																	XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
+																	"zerohop_query", 1, $attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
@@ -1919,7 +1976,135 @@ sub write_to_file {
 			1);
 	my $attributes = XMLAttributes->new($logger);
 	$attributes->add("$query_id", "id");
-	my $xml_query = XMLElement->new($logger, $xml_entrypoint, "zerohop_query", 1, $attributes);
+
+	my $text_entrypoint_constraints = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                       aida:TextJustification .
+			?justification_ep aida:startOffset        ?epso .
+			?justification_ep aida:endOffsetInclusive ?epeo .
+			FILTER ( (?epeo >= START_OFFSET && $epeo <= END_OFFSET) || (?epso >= START_OFFSET && ?epso <= END_OFFSET) ) .
+TEXT_ENTRYPOINT_CONSTRAINTS
+
+	my $image_entrypoint_constraints = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                       aida:ImageJustification .
+			?justification_ep aida:boundingBox        ?boundingbox_ep .
+			?boundingbox_ep aida:boundingBoxUpperLeftX ?epulx .
+			?boundingbox_ep aida:boundingBoxUpperLeftY ?epuly .
+			?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
+			?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
+			FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
+				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+				(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+IMAGE_ENTRYPOINT_CONSTRAINTS
+
+	my $video_entrypoint_constraints = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                       aida:KeyFrameVideoJustification .
+			?justification_ep aida:boundingBox        ?boundingbox_ep .
+			?boundingbox_ep aida:boundingBoxUpperLeftX ?epulx .
+			?boundingbox_ep aida:boundingBoxUpperLeftY ?epuly .
+			?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
+			?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
+			FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
+				(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+				(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+VIDEO_ENTRYPOINT_CONSTRAINTS
+
+	my $audio_entrypoint_constrinats = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                       aida:AudioJustification .
+        ?justification_ep aida:startTimestamp     ?epst .
+        ?justification_ep aida:endTimestamp       ?epet .
+        FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
+AUDIO_ENTRYPOINT_CONSTRAINTS
+
+	my $sparql = <<'END_SPARQL_QUERY';
+
+	<![CDATA[
+	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:ENTTYPE .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    rdf:subject          ?nid .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			?statement2       a                       rdf:Statement .
+			?statement2       rdf:object              ldcOnt:ENTTYPE .
+			?statement2       rdf:predicate           rdf:type .
+			?statement2       rdf:subject             ?nid .
+			?statement2       aida:justifiedBy        ?justification_ep .
+			ENTRYPOINT_CONSTRAINTS
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?brx .
+					   ?bb            aida:boundingBoxLowerRightY ?bry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?brx .
+					   ?bb            aida:boundingBoxLowerRightY ?bry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+END_SPARQL_QUERY
+
+	if($modality eq "text") {
+		$text_entrypoint_constraints =~ s/START_OFFSET/$start/g;
+		$text_entrypoint_constraints =~ s/END_OFFSET/$end/g;
+		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$text_entrypoint_constraints/;
+	}
+	elsif($modality eq "image") {
+		my ($ulx, $uly) = split(",", $start);
+		my ($lrx, $lry) = split(",", $end);
+		$image_entrypoint_constraints =~ s/UPPER_LEFT_X/$ulx/g;
+		$image_entrypoint_constraints =~ s/UPPER_LEFT_Y/$uly/g;
+		$image_entrypoint_constraints =~ s/LOWER_RIGHT_X/$lrx/g;
+		$image_entrypoint_constraints =~ s/LOWER_RIGHT_Y/$lry/g;
+		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$image_entrypoint_constraints/;
+	}
+	elsif($modality eq "video") {
+		my ($ulx, $uly) = split(",", $start);
+		my ($lrx, $lry) = split(",", $end);
+		$image_entrypoint_constraints =~ s/UPPER_LEFT_X/$ulx/g;
+		$image_entrypoint_constraints =~ s/UPPER_LEFT_Y/$uly/g;
+		$image_entrypoint_constraints =~ s/LOWER_RIGHT_X/$lrx/g;
+		$image_entrypoint_constraints =~ s/LOWER_RIGHT_Y/$lry/g;
+		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$video_entrypoint_constraints/;
+	}
+	elsif($modality eq "audio") {
+		$audio_entrypoint_constrinats =~ s/START_TIME/$start/g;
+		$audio_entrypoint_constrinats =~ s/END_TIME/$end/g;
+		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$audio_entrypoint_constrinats/;
+	}
+
+	$sparql =~ s/QUERYID/$query_id/g;
+	$sparql =~ s/ENTTYPE/$enttype/g;
+	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
+
+	my $xml_query = XMLElement->new($logger,
+																	XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
+																	"zerohop_query", 1, $attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
