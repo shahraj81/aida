@@ -112,6 +112,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # ----------                              ----           -------------
 
 ########## General Errors
+  IGNORING_LINE                           DEBUG_INFO     Ingoring the line due to a problem: %s
   MISSING_DOCUMENT_ELEMENT                WARNING        Missing document element %s
   MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
@@ -804,9 +805,15 @@ sub add {
 		push(@{$self->{STORE}{LIST}}, $key);
 		$self->{STORE}{TABLE}{$key} = $key;
 	}
+	elsif($key) {
+		unless($self->{STORE}{TABLE}{$key}) {
+			push(@{$self->{STORE}{LIST}}, $value);
+			$self->{STORE}{TABLE}{$key} = $value;
+		}
+	}
 	else {
-	push(@{$self->{STORE}{LIST}}, $value);
-		$key = @{$self->{STORE}{LIST}} - 1 unless $key;
+		push(@{$self->{STORE}{LIST}}, $value);
+		$key = @{$self->{STORE}{LIST}} - 1;
 		$self->{STORE}{TABLE}{$key} = $value;
 	}
 }
@@ -1425,6 +1432,7 @@ sub load_nodes {
 			my $document_eid = $entry->get("provenance");
 			unless ($self->get("DOCUMENTELEMENTS")->exists($document_eid)) {
 				$self->get("LOGGER")->record_problem("MISSING_DOCUMENT_ELEMENT", $document_eid, $entry->get("WHERE"));
+				$self->get("LOGGER")->record_problem("IGNORING_LINE", $self->get("LINE"), $entry->get("WHERE"));
 				next;
 			}
 			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
@@ -1543,6 +1551,30 @@ sub generate_graph_queries {
 	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
 	my $i = 0;
+
+	# Edges and node relevant to the hypothesis
+	my $edges = Container->new($self->get("LOGGER"), $self->get("PARAMETERS"));
+	my $nodes = Container->new($self->get("LOGGER"), $self->get("PARAMETERS"));
+	foreach my $edge($self->get("EDGES")->toarray()) {
+		my $subject = $edge->get("SUBJECT");
+		my $object = $edge->get("OBJECT");
+		if($subject->has_compatible_types() && $object->has_compatible_types()) {
+			if($self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($subject->get("NODEID")) &&
+			   $self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($object->get("NODEID"))) {
+			   my $key = $subject->get("PREDICATE") . "(" . $subject->get("SUBJECT") . "," . $subject->get("OBJECT") . ")";
+			   $edges->add($edge, $key);
+			   $nodes->add($subject, $subject->get("NODEID"));
+			   $nodes->add($object, $object->get("NODEID"));
+			}
+		}
+	}
+
+  ## Load cannonical_mentions.tsv and named_WEA_VEH_mentions.lst
+  ## Combine both these files into one file
+  ## Figure out what keyframeid do we use the annonymized one or the real one
+  ## For sparql queries for graph use compound justification for edges
+
+
 	foreach my $node(grep {$_->has_compatible_types()} $self->get("NODES")->toarray()) {
 		# Get $edge1 and $edge2 such that:
 		#   $node is the subject of $edge1, and
@@ -1551,7 +1583,7 @@ sub generate_graph_queries {
 		foreach my $edge1(@{$edge_lookup{OBJECT}{$node->get("NODEID")} || []}) {
 			foreach my $edge2(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
 				$i++;
-				my $query_id = "$query_id_prefix\_$i";
+				my $query_id = "$query_id_prefix\_$i\_0";
 				my $query = GraphQuery->new($self->get("LOGGER"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
