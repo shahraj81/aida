@@ -1280,6 +1280,7 @@ sub new {
     IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($logger, $parameters),
     KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($logger, $parameters),
     ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($logger, $parameters),
+    HYPOTHESIS_RELEVANT_NODEIDS => Container->new($logger, $parameters, "RAW"),
     PARAMETERS => $parameters,
     LOGGER => $logger,
   };
@@ -1305,6 +1306,30 @@ sub load_data {
 	$self->load_keyframes_boundingboxes();
 	$self->load_nodes();
 	$self->load_edges();
+	$self->load_hypothesis_relevant_nodeids();
+}
+
+sub load_hypothesis_relevant_nodeids {
+	my ($self) = @_;
+	# Store the set of nodes relevant to include those nodes that are connected to
+	# relevant relation and event nodes by an edge
+	my %edge_lookup = %{$self->get("EDGES")->get("EDGE_LOOKUP")};
+	foreach my $nodemention_id(keys %{$self->{HYPOTHESIS_RELEVANT_NODEMENTIONIDS}}) {
+		my $relevantnode_id = $self->{NODEIDS_LOOKUP}{$nodemention_id};
+		$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add($relevantnode_id, $relevantnode_id);
+		foreach my $edge(@{$edge_lookup{OBJECT}{$relevantnode_id} || []}) {
+			my $connectednode_id = $edge->get("SUBJECT")->get("NODEID");
+			# Connected node is also relevant
+			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add($connectednode_id, $connectednode_id);
+		}
+		foreach my $edge(@{$edge_lookup{SUBJECT}{$relevantnode_id} || []}) {
+			my $connectednode_id = $edge->get("OBJECT")->get("NODEID");
+			# Connected node is also relevant
+			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add($connectednode_id, $connectednode_id);
+		}
+	}
+	# No more need this temporary hash
+	delete $self->{HYPOTHESIS_RELEVANT_NODEMENTIONIDS};
 }
 
 sub load_images_boundingboxes {
@@ -1367,7 +1392,6 @@ sub load_nodes {
 	
 	# Load hypothesis file for information about relevant nodes
 	my %acceptable_relevance = map {$_=>1} $self->get("PARAMETERS")->get("ACCEPTABLE_RELEVANCE")->toarray();
-	my %nodementionids_relevant_to_hypotheses;
 	my $filename = $self->get("PARAMETERS")->get("HYPOTHESES_FILE");
 	$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	$header = $filehandler->get("HEADER");
@@ -1376,7 +1400,7 @@ sub load_nodes {
 		my $nodemention_id = $entry->get("nodemention_id");
 		my $relevance = $entry->get("value");
 		next unless $acceptable_relevance{$relevance};
-		$nodementionids_relevant_to_hypotheses{$nodemention_id} = 1;
+		$self->{HYPOTHESIS_RELEVANT_NODEMENTIONIDS}{$nodemention_id} = 1;
 	}
 	
 	# Load nodes relevant to hypothesis
@@ -1386,11 +1410,6 @@ sub load_nodes {
 		$entries = $filehandler->get("ENTRIES"); 
 		
 		foreach my $entry( $entries->toarray() ){
-			# skip the entry if the mention:
-			#  (1) is a mention of an event or a relation
-			#  (2) is not relevant to a hypotheses
-			next if ($entry->get("CATEGORY") ne "ENTITY" && !$nodementionids_relevant_to_hypotheses{$entry->get("nodemention_id")});
-			
 			my $document_eid = $entry->get("provenance");
 			unless ($self->get("DOCUMENTELEMENTS")->exists($document_eid)) {
 				$self->get("LOGGER")->record_problem("MISSING_DOCUMENT_ELEMENT", $document_eid, $entry->get("WHERE"));
