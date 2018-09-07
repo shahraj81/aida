@@ -1325,7 +1325,7 @@ sub load_hypothesis_relevant_nodeids {
 		my $relevantnode_id = $self->{NODEIDS_LOOKUP}{$nodemention_id};
 		unless ($relevantnode_id) {
 			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-			$self->get("LOGGER")->record_problem("MISSING_NODEID_FOR_MENTIONID", $relevantnode_id, $where);
+			$self->get("LOGGER")->record_problem("MISSING_NODEID_FOR_MENTIONID", $nodemention_id, $where);
 			next;
 		}
 		$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $relevantnode_id);
