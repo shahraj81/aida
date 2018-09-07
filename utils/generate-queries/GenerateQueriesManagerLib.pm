@@ -112,10 +112,11 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # ----------                              ----           -------------
 
 ########## General Errors
+  MISSING_DOCUMENT_ELEMENT                WARNING        Missing document element %s
+  MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_RAW_KEY                         FATAL_ERROR    Missing key %s in container of type %s
-  MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
-  MISSING_DOCUMENT_ELEMENT                WARNING        Missing document element %s
+  MISSING_NODEID_FOR_MENTIONID            WARNING        Missing node_id for nodemention_id %s 
   UNEXPECTED_RECORD_DEBUG_INFO_CALL       WARNING        unexpected call to record_debug_info()
   ZEROHOP_QUERY_DEBUG_INFO_01             DEBUG_INFO     Zero-hop query %s corresponds to mention %s of node %s (treeid = %s)
 END_PROBLEM_FORMATS
@@ -798,10 +799,16 @@ sub exists {
 }
 
 sub add {
-  my ($self, $value, $key) = @_;
-  push(@{$self->{STORE}{LIST}}, $value);
-  $key = @{$self->{STORE}{LIST}} - 1 unless $key;
-  $self->{STORE}{TABLE}{$key} = $value;
+	my ($self, $value, $key) = @_;
+	if($value eq "KEY") {
+		push(@{$self->{STORE}{LIST}}, $key);
+		$self->{STORE}{TABLE}{$key} = $key;
+	}
+	else {
+	push(@{$self->{STORE}{LIST}}, $value);
+		$key = @{$self->{STORE}{LIST}} - 1 unless $key;
+		$self->{STORE}{TABLE}{$key} = $value;
+	}
 }
 
 sub toarray {
@@ -1316,16 +1323,21 @@ sub load_hypothesis_relevant_nodeids {
 	my %edge_lookup = %{$self->get("EDGES")->get("EDGE_LOOKUP")};
 	foreach my $nodemention_id(keys %{$self->{HYPOTHESIS_RELEVANT_NODEMENTIONIDS}}) {
 		my $relevantnode_id = $self->{NODEIDS_LOOKUP}{$nodemention_id};
-		$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add($relevantnode_id, $relevantnode_id);
+		unless ($relevantnode_id) {
+			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+			$self->get("LOGGER")->record_problem("MISSING_NODEID_FOR_MENTIONID", $relevantnode_id, $where);
+			next;
+		}
+		$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $relevantnode_id);
 		foreach my $edge(@{$edge_lookup{OBJECT}{$relevantnode_id} || []}) {
 			my $connectednode_id = $edge->get("SUBJECT")->get("NODEID");
 			# Connected node is also relevant
-			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add($connectednode_id, $connectednode_id);
+			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $connectednode_id);
 		}
 		foreach my $edge(@{$edge_lookup{SUBJECT}{$relevantnode_id} || []}) {
 			my $connectednode_id = $edge->get("OBJECT")->get("NODEID");
 			# Connected node is also relevant
-			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add($connectednode_id, $connectednode_id);
+			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $connectednode_id);
 		}
 	}
 	# No more need this temporary hash
