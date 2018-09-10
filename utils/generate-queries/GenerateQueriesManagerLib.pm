@@ -1268,9 +1268,49 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'DocumentElement',
+    CLASS => 'Parameters',
     LOGGER => $logger,
   };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# CanonicalMention
+#####################################################################################
+
+package CanonicalMention;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $node_id, $mention_id, $keyframe_id, $topic_id) = @_;
+  my $self = {
+    CLASS => 'CanonicalMention',
+    KEYFRAMEID => $keyframe_id,
+    MENTIONID => $mention_id,
+    NODEID => $node_id,
+    TOPICID => $topic_id,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# CanonicalMentions
+#####################################################################################
+
+package CanonicalMentions;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $parameters) = @_;
+  my $self = $class->SUPER::new($logger, 'CanonicalMention');
+  $self->{CLASS} = 'CanonicalMentions';
+  $self->{PARAMETERS} = $parameters;
+  $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
 }
@@ -1288,6 +1328,7 @@ sub new {
   my $self = {
   	LDC_NIST_MAPPINGS => LDCNISTMappings->new($logger, $parameters),
   	NODES => Nodes->new($logger),
+	CANONICAL_MENTIONS => CanonicalMentions->new($logger, $parameters),
   	EDGES => Edges->new($logger),
   	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
   	NODEIDS_LOOKUP => {},
@@ -1321,6 +1362,21 @@ sub load_data {
 	$self->load_nodes();
 	$self->load_edges();
 	$self->load_hypothesis_relevant_nodeids();
+	$self->load_canonical_mentions();
+}
+
+sub load_canonical_mentions {
+	my ($self) = @_;
+
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("CANONICAL_MENTIONS_FILE"));
+	foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
+		my $node_id = $entry->get("node_id");
+		my $mention_id = $entry->get("mention_id");
+		my $keyframe_id = $entry->get("keyframe_id");
+		my $topic_id = $entry->get("topic_id");
+
+		$self->get("CANONICAL_MENTIONS")->add(CanonicalMention->new($self->get("LOGGER"), $node_id, $mention_id, $keyframe_id, $topic_id));
+	}
 }
 
 sub load_hypothesis_relevant_nodeids {
@@ -1353,7 +1409,7 @@ sub load_hypothesis_relevant_nodeids {
 
 sub load_images_boundingboxes {
 	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"), $self->get("LOGGER"));
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
 		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->get("LOGGER"), $entry->get("doceid"), $entry->get("type"),
