@@ -2388,9 +2388,11 @@ sub write_to_file {
 			my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
 			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 			my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
-			my $xml_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_namestring);
-			my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, "string_descriptor", 0);
-			my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node, $xml_descriptor);
+			my $xml_descriptor_container = XMLContainer->new($logger, $xml_namestring);
+			my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, "string_descriptor", 1);
+			my $xml_typed_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_descriptor);
+			my $xml_typed_descriptor = XMLElement->new($logger, $xml_typed_descriptor_container, "typed_descriptor", 1);
+			my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node, $xml_typed_descriptor);
 			my $xml_entrypoint = XMLElement->new($logger, $xml_entrypoint_container, "entrypoint", 1);
 			$xml_entrypoints_container->add($xml_entrypoint);
 			next;
@@ -2426,11 +2428,13 @@ sub write_to_file {
 				my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
 				my $xml_start = XMLElement->new($logger, $start, $fn_manager->get("FIELDNAME", "start"), 0);
 				my $xml_end = XMLElement->new($logger, $end, $fn_manager->get("FIELDNAME", "end"), 0);
-				my $xml_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_doceid, $xml_start, $xml_end);
-				$xml_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_doceid, $xml_keyframeid, $xml_start, $xml_end)
+				my $xml_descriptor_container = XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end);
+				$xml_descriptor_container = XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_start, $xml_end)
 					if $modality eq "video";
 				my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, $fn_manager->get("FIELDNAME", "descriptor"), 1);
-				$xml_entrypoint_container->add($xml_descriptor);
+				my $xml_typed_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_descriptor);
+				my $xml_typed_descriptor = XMLElement->new($logger, $xml_typed_descriptor_container, "typed_descriptor", 1);
+				$xml_entrypoint_container->add($xml_typed_descriptor);
 			}
 		}
 		my $xml_entrypoint = XMLElement->new($logger, $xml_entrypoint_container, "entrypoint", 1);
