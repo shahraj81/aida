@@ -118,6 +118,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_RAW_KEY                         FATAL_ERROR    Missing key %s in container of type %s
   MISSING_NODEID_FOR_MENTIONID            WARNING        Missing node_id for nodemention_id %s 
+  SKIPPING_NODE                           DEBUG_INFO     Skipping node %s because it is not relevant to topic-level hypothesis
   UNEXPECTED_RECORD_DEBUG_INFO_CALL       WARNING        unexpected call to record_debug_info()
   ZEROHOP_QUERY_DEBUG_INFO_01             DEBUG_INFO     Zero-hop query %s corresponds to mention %s of node %s (treeid = %s)
 END_PROBLEM_FORMATS
@@ -1284,11 +1285,12 @@ package CanonicalMention;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $node_id, $mention_id, $keyframe_id, $topic_id) = @_;
+  my ($class, $logger, $node_id, $mention_id, $keyframe_id, $topic_id, $node) = @_;
   my $self = {
     CLASS => 'CanonicalMention',
     KEYFRAMEID => $keyframe_id,
     MENTIONID => $mention_id,
+    NODE => $node,
     NODEID => $node_id,
     TOPICID => $topic_id,
     LOGGER => $logger,
@@ -1313,6 +1315,16 @@ sub new {
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
+}
+
+sub get_WHERE {
+	my ($self, $field_name, $value) = @_;
+	my @retVal;
+	foreach my $canonical_mention($self->toarray()) {
+		push(@retVal, $canonical_mention)
+			if($canonical_mention->get("field_name") eq $value);
+	}
+	@retVal;
 }
 
 #####################################################################################
@@ -1374,8 +1386,9 @@ sub load_canonical_mentions {
 		my $mention_id = $entry->get("mention_id");
 		my $keyframe_id = $entry->get("keyframe_id");
 		my $topic_id = $entry->get("topic_id");
+		my $node = $self->get("NODES")->get("BY_KEY", $node_id);
 
-		$self->get("CANONICAL_MENTIONS")->add(CanonicalMention->new($self->get("LOGGER"), $node_id, $mention_id, $keyframe_id, $topic_id));
+		$self->get("CANONICAL_MENTIONS")->add(CanonicalMention->new($self->get("LOGGER"), $node_id, $mention_id, $keyframe_id, $topic_id, $node));
 	}
 }
 
@@ -1625,29 +1638,19 @@ sub generate_graph_queries {
 		}
 	}
 
-  ## Load cannonical_mentions.tsv and named_WEA_VEH_mentions.lst
-  ## Combine both these files into one file
-  ## Figure out what keyframeid do we use the annonymized one or the real one
-  ## For sparql queries for graph use compound justification for edges
-
-
-	foreach my $node(grep {$_->has_compatible_types()} $self->get("NODES")->toarray()) {
-		# Get $edge1 and $edge2 such that:
-		#   $node is the subject of $edge1, and
-		#   $node is the object of $edge2.
-		my %edge_lookup = %{$self->get("EDGES")->get("EDGE_LOOKUP")};
-		foreach my $edge1(@{$edge_lookup{OBJECT}{$node->get("NODEID")} || []}) {
-			foreach my $edge2(@{$edge_lookup{SUBJECT}{$node->get("NODEID")} || []}) {
-				$i++;
-				my $query_id = "$query_id_prefix\_$i\_0";
-				my $query = GraphQuery->new($self->get("LOGGER"),
+	# Composite graph query generation
+	foreach my $node($nodes->toarray()) {
+		my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "node_id", $node->get("NODEID"));
+		$i++;
+		my $query_id = "$query_id_prefix\_$i\_0";
+		my $query = GraphQuery->new($self->get("LOGGER"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edge1, $edge2);
-				$query->add_entrypoint($node);
-				$queries->add($query);
-			}
+											$self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edges->toarray());
+		foreach my $canonical_mention(@matching_cannoical_mentions) {
+			$query->add_entrypoint($canonical_mention);
 		}
+		$queries->add($query);
 	}
 	
 	$queries->write_to_file();
@@ -2305,8 +2308,8 @@ sub new {
 }
 
 sub add_entrypoint {
-	my ($self, $node) = @_;
-	push(@{$self->{ENTRYPOINTS}}, $node);
+	my ($self, $canonical_mention) = @_;
+	push(@{$self->{ENTRYPOINTS}}, $canonical_mention);
 }
 
 sub write_to_file {
@@ -2340,11 +2343,15 @@ sub write_to_file {
 	my $xml_graph = XMLElement->new($logger, $xml_edges, "graph", 1);
 	# process the entrypoints
 	my $xml_entrypoints_container = XMLContainer->new($logger);
-	foreach my $node(@{$self->get("ENTRYPOINTS")}) {
-		my $node_id = &mask($node->get("NODEID"));
+	foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
+		my $node_id = &mask($entrypoint->get("NODEID"));
 		my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
 		my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node);
-		foreach my $mention($node->get("MENTIONS")->toarray()){
+		my $ep_mention_id = $entrypoint->get("MENTIONID");
+		my $ep_keyframe_id = $entrypoint->get("KEYFRAMEID");
+		my $ep_node = $entrypoint->get("NODE");
+		foreach my $mention($ep_node->get("MENTIONS")->toarray()){
+			next unless $mention->get("MENTIONID") eq $ep_mention_id;
 			my $enttype = $mention->get("NIST_TYPE");
 			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 			my $modality = $mention->get("MODALITY");
@@ -2355,13 +2362,10 @@ sub write_to_file {
 				my $end = $span->get("END");
 				my $xml_keyframeid;
 				if($modality eq "video") {
-					# Get a KeyFrameID; It doesn't matter for this version which KeyFrameID it is.
-					# This needs to change for evaluation data once we have annotations at the keyframe level
-					my ($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
-					my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
+					my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $ep_keyframe_id);
 					$start = $keyframe_boundingbox->get("START");
 					$end = $keyframe_boundingbox->get("END");
-					$xml_keyframeid = XMLElement->new($logger, $keyframeid, "keyframeid", 0);
+					$xml_keyframeid = XMLElement->new($logger, $ep_keyframe_id, "keyframeid", 0);
 				}
 				if($modality eq "image") {
 					my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
