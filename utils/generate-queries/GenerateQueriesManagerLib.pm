@@ -1641,20 +1641,27 @@ sub generate_graph_queries {
 		}
 	}
 
-	# Composite graph query generation
 	foreach my $node($nodes->toarray()) {
 		my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "NODEID", $node->get("NODEID"));
 		next unless @matching_cannoical_mentions;
 		$i++;
 		my $query_id = "$query_id_prefix\_$i\_0";
-		my $query = GraphQuery->new($self->get("LOGGER"),
+		my $composite_query = GraphQuery->new($self->get("LOGGER"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
 											$self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edges->toarray());
+		my $j = 0;
 		foreach my $canonical_mention(@matching_cannoical_mentions) {
-			$query->add_entrypoint($canonical_mention);
+			$j++;
+			my $single_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
+											$self->get("KEYFRAMES_BOUNDINGBOXES"),
+											$self->get("IMAGES_BOUNDINGBOXES"),
+											$self->get("DOCUMENTIDS_MAPPINGS"), $query_id, $edges->toarray());
+			$composite_query->add_entrypoint($canonical_mention);
+			$single_entrypoint_query->add_entrypoint($canonical_mention);
+			$queries->add($single_entrypoint_query);
 		}
-		$queries->add($query);
+		$queries->add($composite_query);
 	}
 	
 	$queries->write_to_file();
