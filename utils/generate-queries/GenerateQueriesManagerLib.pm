@@ -1496,6 +1496,7 @@ sub load_nodes {
 	$header = $filehandler->get("HEADER");
 	$entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
+		next unless $entry->get("hypothesis_id") eq $self->get("PARAMETERS")->get("HYPOTHESISID");
 		my $nodemention_id = $entry->get("nodemention_id");
 		my $relevance = $entry->get("value");
 		next unless $acceptable_relevance{$relevance};
@@ -2384,8 +2385,9 @@ sub write_to_file {
 			my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
 			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 			my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
-			my $xml_descriptor_container = XMLContainer->new($logger, $xml_namestring);
-			my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor_container);
+			my $xml_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_namestring);
+			my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, "string_descriptor", 0);
+			my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node, $xml_descriptor);
 			my $xml_entrypoint = XMLElement->new($logger, $xml_entrypoint_container, "entrypoint", 1);
 			$xml_entrypoints_container->add($xml_entrypoint);
 			next;
@@ -2432,7 +2434,9 @@ sub write_to_file {
 		$xml_entrypoints_container->add($xml_entrypoint);
 	}
 	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
-	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints);
+	my $sparql = "";
+	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
+	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints, $xml_sparql);
 	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
 	print $program_output $xml_query->tostring(2);
 }

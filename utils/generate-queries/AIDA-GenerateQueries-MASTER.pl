@@ -23,6 +23,7 @@ $acceptable_relevance->add("fully-relevant");
 
 my $parameters = Parameters->new($logger);
 $parameters->set("TOPICID", "T101");
+$parameters->set("HYPOTHESISID", "T101_Q001_H001");
 $parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/DocumentIDsMappings.ttl");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
 $parameters->set("TYPE_MAPPING_FILE","input/nist-type-mapping.txt");
@@ -34,7 +35,8 @@ $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
 $parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
 $parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
 $parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
-$parameters->set("CANONICAL_MENTIONS_FILE", "input/annotations/data/canonical_mentions/T101_canonical_mentions.tsv");
+#$parameters->set("CANONICAL_MENTIONS_FILE", "input/annotations/data/canonical_mentions/T101_canonical_mentions.tsv");
+$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/T101_canonical_mentions.tsv");
 $parameters->set("ERRORLOG_FILE", "output/problems.log");
 $parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output/T101_class_queries.xml");
 $parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output/T101_zerohop_queries.xml");
