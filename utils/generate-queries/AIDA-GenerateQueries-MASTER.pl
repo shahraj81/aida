@@ -24,6 +24,7 @@ $acceptable_relevance->add("fully-relevant");
 my $parameters = Parameters->new($logger);
 $parameters->set("TOPICID", "T101");
 $parameters->set("HYPOTHESISID", "T101_Q001_H001");
+$parameters->set("IGNORE_NIL", "true");
 $parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/DocumentIDsMappings.ttl");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
 $parameters->set("TYPE_MAPPING_FILE","input/nist-type-mapping.txt");

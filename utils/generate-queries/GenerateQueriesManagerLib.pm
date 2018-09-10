@@ -1415,6 +1415,9 @@ sub load_hypothesis_relevant_nodeids {
 			$self->get("LOGGER")->record_problem("MISSING_NODEID_FOR_MENTIONID", $nodemention_id, $where);
 			next;
 		}
+		if($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true") {
+			next if $relevantnode_id =~ /^NIL/;
+		}
 		$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $relevantnode_id);
 		foreach my $edge(@{$edge_lookup{OBJECT}{$relevantnode_id} || []}) {
 			my $connectednode_id = $edge->get("SUBJECT")->get("NODEID");
