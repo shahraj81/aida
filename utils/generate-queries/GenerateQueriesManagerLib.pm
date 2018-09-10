@@ -744,6 +744,16 @@ sub get_NIST_TYPE_CATEGORIES {
 	keys %hash;
 }
 
+sub get_NIST_TYPE {
+	my ($self, $canonical_mention) = @_;
+	$self->get("MENTIONS")->get("BY_KEY", $canonical_mention->get("MENTIONID"))->get("NIST_TYPE");
+}
+
+sub get_TEXT_STRING {
+	my ($self, $canonical_mention) = @_;
+	$self->get("MENTIONS")->get("BY_KEY", $canonical_mention->get("MENTIONID"))->get("TEXT_STRING");
+}
+
 sub has_compatible_types {
 	my ($self) = @_;
 	my @type_categories = grep {$_ ne "Filler"} $self->get("NIST_TYPE_CATEGORIES");
@@ -780,8 +790,8 @@ sub get_BY_INDEX {
 sub get_BY_KEY {
   my ($self, $key) = @_;
   unless($self->{STORE}{TABLE}{$key}) {
-    # Create an instance if not exists
-    my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+		# Create an instance if not exists
+		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
     $self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
     	if $self->get("ELEMENT_CLASS") eq "RAW";
     my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
@@ -1285,7 +1295,7 @@ package CanonicalMention;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $node_id, $mention_id, $keyframe_id, $topic_id, $node) = @_;
+  my ($class, $logger, $type, $node_id, $mention_id, $keyframe_id, $topic_id, $node) = @_;
   my $self = {
     CLASS => 'CanonicalMention',
     KEYFRAMEID => $keyframe_id,
@@ -1293,6 +1303,7 @@ sub new {
     NODE => $node,
     NODEID => $node_id,
     TOPICID => $topic_id,
+    TYPE => $type,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1320,9 +1331,6 @@ sub new {
 sub get_WHERE {
 	my ($self, $field_name, $value) = @_;
 	my @retVal;
-	if($value eq "E0084") {
-		print "4j";
-	}
 	foreach my $canonical_mention($self->toarray()) {
 		push(@retVal, $canonical_mention)
 			if($canonical_mention->get($field_name) eq $value);
@@ -1391,7 +1399,7 @@ sub load_canonical_mentions {
 		my $topic_id = $entry->get("topic_id");
 		my $node = $self->get("NODES")->get("BY_KEY", $node_id);
 
-		$self->get("CANONICAL_MENTIONS")->add(CanonicalMention->new($self->get("LOGGER"), $node_id, $mention_id, $keyframe_id, $topic_id, $node));
+		$self->get("CANONICAL_MENTIONS")->add(CanonicalMention->new($self->get("LOGGER"), "NONSTRING_ENTRYPOINT", $node_id, $mention_id, $keyframe_id, $topic_id, $node));
 	}
 }
 
@@ -1661,6 +1669,19 @@ sub generate_graph_queries {
 			$composite_query->add_entrypoint($canonical_mention);
 			$single_entrypoint_query->add_entrypoint($canonical_mention);
 			$queries->add($single_entrypoint_query);
+			# string entrypoint
+			$j++;
+			my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
+			my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
+											$self->get("KEYFRAMES_BOUNDINGBOXES"),
+											$self->get("IMAGES_BOUNDINGBOXES"),
+											$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges->toarray());
+			my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
+																NODEID => $node->get("NODEID"),
+																NIST_TYPE => $node->get("NIST_TYPE", $canonical_mention), 
+																TEXT_STRING => $node->get("TEXT_STRING", $canonical_mention)};
+			$string_entrypoint_query->add_entrypoint($string_entrypoint);
+			$queries->add($string_entrypoint_query);
 		}
 		$queries->add($composite_query);
 	}
@@ -2356,6 +2377,19 @@ sub write_to_file {
 	# process the entrypoints
 	my $xml_entrypoints_container = XMLContainer->new($logger);
 	foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
+		if($entrypoint->{TYPE} eq "STRING_ENTRYPOINT") {
+			my $node_id = &mask($entrypoint->{"NODEID"});
+			my $enttype = $entrypoint->{"NIST_TYPE"};
+			my $name_string = $entrypoint->{"TEXT_STRING"};
+			my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
+			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+			my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
+			my $xml_descriptor_container = XMLContainer->new($logger, $xml_namestring);
+			my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor_container);
+			my $xml_entrypoint = XMLElement->new($logger, $xml_entrypoint_container, "entrypoint", 1);
+			$xml_entrypoints_container->add($xml_entrypoint);
+			next;
+		}
 		my $node_id = &mask($entrypoint->get("NODEID"));
 		my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
 		my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node);
