@@ -1320,9 +1320,12 @@ sub new {
 sub get_WHERE {
 	my ($self, $field_name, $value) = @_;
 	my @retVal;
+	if($value eq "E0084") {
+		print "4j";
+	}
 	foreach my $canonical_mention($self->toarray()) {
 		push(@retVal, $canonical_mention)
-			if($canonical_mention->get("field_name") eq $value);
+			if($canonical_mention->get($field_name) eq $value);
 	}
 	@retVal;
 }
@@ -1622,15 +1625,15 @@ sub generate_graph_queries {
 	my $i = 0;
 
 	# Edges and node relevant to the hypothesis
-	my $edges = Container->new($self->get("LOGGER"), $self->get("PARAMETERS"));
-	my $nodes = Container->new($self->get("LOGGER"), $self->get("PARAMETERS"));
+	my $edges = Container->new($self->get("LOGGER"), "RAW");
+	my $nodes = Container->new($self->get("LOGGER"), "RAW");
 	foreach my $edge($self->get("EDGES")->toarray()) {
 		my $subject = $edge->get("SUBJECT");
 		my $object = $edge->get("OBJECT");
 		if($subject->has_compatible_types() && $object->has_compatible_types()) {
 			if($self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($subject->get("NODEID")) &&
 			   $self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($object->get("NODEID"))) {
-			   my $key = $subject->get("PREDICATE") . "(" . $subject->get("SUBJECT") . "," . $subject->get("OBJECT") . ")";
+			   my $key = $edge->get("PREDICATE") . "(" . $subject->get("NODEID") . "," . $subject->get("NODEID") . ")";
 			   $edges->add($edge, $key);
 			   $nodes->add($subject, $subject->get("NODEID"));
 			   $nodes->add($object, $object->get("NODEID"));
@@ -1640,7 +1643,8 @@ sub generate_graph_queries {
 
 	# Composite graph query generation
 	foreach my $node($nodes->toarray()) {
-		my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "node_id", $node->get("NODEID"));
+		my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "NODEID", $node->get("NODEID"));
+		next unless @matching_cannoical_mentions;
 		$i++;
 		my $query_id = "$query_id_prefix\_$i\_0";
 		my $query = GraphQuery->new($self->get("LOGGER"),
@@ -2247,8 +2251,8 @@ END_SPARQL_QUERY
 	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
 
 	my $xml_query = XMLElement->new($logger,
-																	XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
-																	"zerohop_query", 1, $attributes);
+						XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
+						"zerohop_query", 1, $attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
