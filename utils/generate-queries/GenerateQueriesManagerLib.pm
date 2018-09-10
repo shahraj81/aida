@@ -721,8 +721,8 @@ sub new {
 }
 
 sub add_mention {
-  my ($self, $mention) = @_;
-  $self->get("MENTIONS")->add($mention);
+  my ($self, $mention, $mention_id) = @_;
+  $self->get("MENTIONS")->add($mention, $mention_id);
 }
 
 sub get_LDC_TYPES {
@@ -1476,7 +1476,7 @@ sub load_nodes {
 			my $node = $self->get("NODES")->get("BY_KEY", $entry->get("kb_id"));
 
 			$node->set("NODEID", $entry->get("kb_id")) unless $node->set("NODEID");
-			$node->add_mention($mention);
+			$node->add_mention($mention, $mention->get("MENTIONID"));
 			$self->{NODEIDS_LOOKUP}{$entry->get("document_level_node_id")} = $entry->get("kb_id");
 			$self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")} = $entry->get("kb_id");
 		}
