@@ -653,6 +653,14 @@ sub add {
 			$value);
 }
 
+sub toarray {
+	my ($self) = @_;
+	sort {$a->get("SUBJECT")->get("NODEID") eq $b->get("SUBJECT")->get("NODEID") ||
+				$a->get("PREDICATE") eq $b->get("PREDICATE") ||
+				$a->get("OBJECT")->get("NODEID") eq $b->get("OBJECT")->get("NODEID")}
+		@{$self->{STORE}{LIST} || []};
+}
+
 #####################################################################################
 # Edge
 #####################################################################################
@@ -700,6 +708,12 @@ sub new {
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
+}
+
+sub toarray {
+	my ($self) = @_;
+	sort {$a->get("NODEID") eq $b->get("NODEID")}
+		@{$self->{STORE}{LIST} || []};
 }
 
 #####################################################################################
@@ -873,6 +887,12 @@ sub get_MENTION {
   $matching_mention || "n/a";
 }
 
+sub toarray {
+	my ($self) = @_;
+	sort {$a->get("MENTIONID") eq $b->get("MENTIONID")}
+		@{$self->{STORE}{LIST} || []};
+}
+
 #####################################################################################
 # Mention
 #####################################################################################
@@ -1015,6 +1035,15 @@ sub new {
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
+}
+
+sub toarray {
+	my ($self) = @_;
+	sort {$a->{DOCUMENTID} cmp $b->{DOCUMENTID} ||
+					$a->{DOCUMENTEID} cmp $b->{DOCUMENTEID} ||
+					$a->{START} <=> $b->{START} ||
+					$a->{END} cmp $b->{END}}
+		@{$self->{STORE}{LIST} || []};
 }
 
 #####################################################################################
@@ -1339,6 +1368,16 @@ sub get_WHERE {
 	@retVal;
 }
 
+sub toarray {
+	my ($self) = @_;
+	sort {$a->{TOPICID} cmp $b->{TOPICID} ||
+					$a->{NODEID} cmp $b->{NODEID} ||
+					$a->{MENTIONID} cmp $b->{MENTIONID} ||
+					$a->{KEYFRAMEID} <=> $b->{KEYFRAMEID} ||
+					$a->{TYPE} cmp $b->{TYPE}}
+		@{$self->{STORE}{LIST} || []};
+}
+
 #####################################################################################
 # Graph
 #####################################################################################
@@ -1587,7 +1626,7 @@ sub generate_class_queries {
 	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
 	my $i = 0;
 	my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
-	foreach my $type(keys %is_valid_entrypoint) {
+	foreach my $type(sort keys %is_valid_entrypoint) {
 		next unless ($is_valid_entrypoint{$type} eq "true");
 		$i++;
 		my $query_id = "$query_id_prefix\_$i";
@@ -1856,6 +1895,12 @@ sub write_to_file {
 	close($program_output_xml);
 }
 
+sub toarray {
+	my ($self) = @_;
+	sort {$a->{QUERY_ID} cmp $b->{QUERY_ID}}
+		@{$self->{STORE}{LIST} || []};
+}
+
 #####################################################################################
 # ClassQuery
 #####################################################################################
@@ -1976,6 +2021,12 @@ sub write_to_file {
 	}
 	print $program_output_xml "<\/zerohop_queries>\n";
 	close($program_output_xml);
+}
+
+sub toarray {
+	my ($self) = @_;
+	sort {$a->{QUERY_ID} cmp $b->{QUERY_ID}}
+		@{$self->{STORE}{LIST} || []};
 }
 
 #####################################################################################
@@ -2334,6 +2385,12 @@ sub write_to_file {
 	}
 	print $program_output_xml "<\/graph_queries>\n";
 	close($program_output_xml);
+}
+
+sub toarray {
+	my ($self) = @_;
+	sort {$a->{QUERY_ID} cmp $b->{QUERY_ID}}
+		@{$self->{STORE}{LIST} || []};
 }
 
 #####################################################################################
