@@ -668,13 +668,14 @@ package Edge;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $subject, $nist_role, $object, $attribute) = @_;
+  my ($class, $logger, $subject, $nist_role, $object, $attribute, $line) = @_;
   my $self = {
     CLASS => 'Edge',
     SUBJECT => $subject,
     PREDICATE => $nist_role,
     OBJECT => $object,
     ATTRIBUTE => $attribute,
+    LINE => $line,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1529,7 +1530,7 @@ sub load_edges {
 				my $ldc_role = "$subject_type\_$slot_type";
 				my $nist_role = $self->get("LDC_NIST_MAPPINGS")->get("NIST_ROLE", $ldc_role);
 				next unless $nist_role;
-				my $edge = Edge->new($self->get("LOGGER"), $subject, $nist_role, $object, $attribute);
+				my $edge = Edge->new($self->get("LOGGER"), $subject, $nist_role, $object, $attribute, $entry->get("LINE"));
 				$self->get("EDGES")->add($edge);
 			}
 		}
@@ -1695,7 +1696,7 @@ sub generate_graph_queries {
 		if($subject->has_compatible_types() && $object->has_compatible_types()) {
 			if($self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($subject->get("NODEID")) &&
 			   $self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($object->get("NODEID"))) {
-			   my $key = $edge->get("PREDICATE") . "(" . $subject->get("NODEID") . "," . $subject->get("NODEID") . ")";
+			   my $key = $edge->get("PREDICATE") . "(" . $subject->get("NODEID") . "," . $object->get("NODEID") . ")";
 			   $edges->add($edge, $key);
 			   $nodes->add($subject, $subject->get("NODEID"));
 			   $nodes->add($object, $object->get("NODEID"));
