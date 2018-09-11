@@ -1652,7 +1652,7 @@ sub generate_graph_queries {
 			}
 		}
 	}
-
+	my %strings_used;
 	foreach my $node($nodes->toarray()) {
 		my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "NODEID", $node->get("NODEID"));
 		next unless @matching_cannoical_mentions;
@@ -1674,18 +1674,25 @@ sub generate_graph_queries {
 			$single_entrypoint_query->add_entrypoint($canonical_mention);
 			$queries->add($single_entrypoint_query);
 			# string entrypoint
-			$j++;
-			my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
-			my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
-											$self->get("KEYFRAMES_BOUNDINGBOXES"),
-											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges->toarray());
-			my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
+			unless($strings_used{$node->get("NODEID")}
+				{$node->get("NIST_TYPE", $canonical_mention)}
+				{$node->get("TEXT_STRING", $canonical_mention)}) {
+					$j++;
+					my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
+					my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
+												$self->get("KEYFRAMES_BOUNDINGBOXES"),
+												$self->get("IMAGES_BOUNDINGBOXES"),
+												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges->toarray());
+					my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
 																NODEID => $node->get("NODEID"),
 																NIST_TYPE => $node->get("NIST_TYPE", $canonical_mention), 
 																TEXT_STRING => $node->get("TEXT_STRING", $canonical_mention)};
-			$string_entrypoint_query->add_entrypoint($string_entrypoint);
-			$queries->add($string_entrypoint_query);
+					$string_entrypoint_query->add_entrypoint($string_entrypoint);
+					$queries->add($string_entrypoint_query);
+					$strings_used{$node->get("NODEID")}
+									{$node->get("NIST_TYPE", $canonical_mention)}
+									{$node->get("TEXT_STRING", $canonical_mention)} = 1;
+				}
 		}
 		$queries->add($composite_query);
 	}
