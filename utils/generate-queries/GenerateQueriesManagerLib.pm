@@ -1630,7 +1630,7 @@ sub generate_class_queries {
 		next unless ($is_valid_entrypoint{$type} eq "true");
 		$i++;
 		my $query_id = "$query_id_prefix\_$i";
-		my $query = ClassQuery->new($self->get("LOGGER"), $query_id, $type);
+		my $query = ClassQuery->new($self->get("LOGGER"), $self->get("PARAMETERS"), $query_id, $type);
 		$queries->add($query);
 	}
 	$queries->write_to_file();
@@ -1665,6 +1665,7 @@ sub generate_zerohop_queries {
 				my $start = $span->get("START");
 				my $end = $span->get("END");
 				my $query = NonNameStringZeroHopQuery->new($self->get("LOGGER"),
+											$self->get("PARAMETERS"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
 											$query_id, $enttype, $doceid, $modality, $start, $end);
@@ -1705,6 +1706,7 @@ sub generate_graph_queries {
 		$i++;
 		my $composite_query_id = "$query_id_prefix\_$i\_0";
 		my $composite_query = GraphQuery->new($self->get("LOGGER"),
+											$self->get("PARAMETERS"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
 											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, $edges->toarray());
@@ -1714,6 +1716,7 @@ sub generate_graph_queries {
 			$j++;
 			my $single_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
 			my $single_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
+											$self->get("PARAMETERS"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
 											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, $edges->toarray());
@@ -1727,6 +1730,7 @@ sub generate_graph_queries {
 					$j++;
 					my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
 					my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
+												$self->get("PARAMETERS"),
 												$self->get("KEYFRAMES_BOUNDINGBOXES"),
 												$self->get("IMAGES_BOUNDINGBOXES"),
 												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges->toarray());
@@ -1898,7 +1902,7 @@ sub write_to_file {
 
 sub toarray {
 	my ($self) = @_;
-	sort {$a->{QUERY_ID} cmp $b->{QUERY_ID}}
+	sort {$a->get("NUMERIC_ID") <=> $b->get("NUMERIC_ID")}
 		@{$self->{STORE}{LIST} || []};
 }
 
@@ -1911,15 +1915,23 @@ package ClassQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $query_id, $enttype) = @_;
+  my ($class, $logger, $parameters, $query_id, $enttype) = @_;
   my $self = {
     CLASS => 'ClassQuery',
+    PARAMETERS => $parameters,
     QUERY_ID => $query_id,
     ENTTYPE => $enttype,
     LOGGER => $logger,
   };
   bless($self, $class);
   $self;
+}
+
+sub get_NUMERIC_ID {
+	my ($self) = @_;
+	my $prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
+	my ($numeric_id) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+)$/;
+	$numeric_id;
 }
 
 sub write_to_file {
@@ -2026,7 +2038,7 @@ sub write_to_file {
 
 sub toarray {
 	my ($self) = @_;
-	sort {$a->{QUERY_ID} cmp $b->{QUERY_ID}}
+	sort {$a->get("NUMERIC_ID") <=> $b->get("NUMERIC_ID")}
 		@{$self->{STORE}{LIST} || []};
 }
 
@@ -2140,9 +2152,10 @@ package NonNameStringZeroHopQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
+  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
   my $self = {
     CLASS => 'NonNameStringZeroHopQuery',
+    PARAMETERS => $parameters,
     KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     QUERY_ID => $query_id,
@@ -2155,6 +2168,13 @@ sub new {
   };
   bless($self, $class);
   $self;
+}
+
+sub get_NUMERIC_ID {
+	my ($self) = @_;
+	my $prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
+	my ($numeric_id) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+)$/;
+	$numeric_id;
 }
 
 sub write_to_file {
@@ -2390,7 +2410,8 @@ sub write_to_file {
 
 sub toarray {
 	my ($self) = @_;
-	sort {$a->{QUERY_ID} cmp $b->{QUERY_ID}}
+	sort {$a->get("NUMERIC_ID", "P1") <=> $b->get("NUMERIC_ID", "P1") ||
+		$a->get("NUMERIC_ID", "P2") <=> $b->get("NUMERIC_ID", "P2")}
 		@{$self->{STORE}{LIST} || []};
 }
 
@@ -2403,9 +2424,10 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, @edges) = @_;
+  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, @edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
+    PARAMETERS => $parameters,
     KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     DOCUMENTIDS_MAPPINGS => $documentids_mappings,
@@ -2416,6 +2438,15 @@ sub new {
   };
   bless($self, $class);
   $self;
+}
+
+sub get_NUMERIC_ID {
+	my ($self, $part_num) = @_;
+	my $prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
+	$prefix .= "_" . $self->get("PARAMETERS")->get("HYPOTHESISID");
+	my ($numeric_id_p1, $numeric_id_p2) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+?)_(\d+?)$/;
+	return $numeric_id_p1 if $part_num eq "P1";
+	return $numeric_id_p2 if $part_num eq "P2";
 }
 
 sub add_entrypoint {
