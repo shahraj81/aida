@@ -1679,6 +1679,7 @@ sub generate_graph_queries {
 	my ($self) = @_;
 	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
+	$query_id_prefix .= "_" . $self->get("PARAMETERS")->get("HYPOTHESISID");
 	my $i = 0;
 
 	# Edges and node relevant to the hypothesis
