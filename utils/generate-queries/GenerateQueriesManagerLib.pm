@@ -1676,7 +1676,7 @@ sub generate_graph_queries {
 			# string entrypoint
 			unless($strings_used{$node->get("NODEID")}
 				{$node->get("NIST_TYPE", $canonical_mention)}
-				{$node->get("TEXT_STRING", $canonical_mention)}) {
+				{$node->get("TEXT_STRING", $canonical_mention)} && $node->get("TEXT_STRING", $canonical_mention) !~ /^\s+$/) {
 					$j++;
 					my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
 					my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
@@ -1688,6 +1688,7 @@ sub generate_graph_queries {
 																NIST_TYPE => $node->get("NIST_TYPE", $canonical_mention), 
 																TEXT_STRING => $node->get("TEXT_STRING", $canonical_mention)};
 					$string_entrypoint_query->add_entrypoint($string_entrypoint);
+					$composite_query->add_entrypoint($string_entrypoint);
 					$queries->add($string_entrypoint_query);
 					$strings_used{$node->get("NODEID")}
 									{$node->get("NIST_TYPE", $canonical_mention)}
