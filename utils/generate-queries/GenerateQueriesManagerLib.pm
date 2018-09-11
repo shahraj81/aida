@@ -1670,6 +1670,7 @@ sub generate_graph_queries {
 											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, $edges->toarray());
 		my $j = 0;
 		foreach my $canonical_mention(@matching_cannoical_mentions) {
+			next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
 			$j++;
 			my $single_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
 			my $single_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
@@ -1691,6 +1692,7 @@ sub generate_graph_queries {
 												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges->toarray());
 					my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
 																NODEID => $node->get("NODEID"),
+																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
 																NIST_TYPE => $node->get("NIST_TYPE", $canonical_mention), 
 																TEXT_STRING => $node->get("TEXT_STRING", $canonical_mention)};
 					$string_entrypoint_query->add_entrypoint($string_entrypoint);
