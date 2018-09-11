@@ -655,9 +655,7 @@ sub add {
 
 sub toarray {
 	my ($self) = @_;
-	sort {$a->get("SUBJECT")->get("NODEID") eq $b->get("SUBJECT")->get("NODEID") ||
-				$a->get("PREDICATE") eq $b->get("PREDICATE") ||
-				$a->get("OBJECT")->get("NODEID") eq $b->get("OBJECT")->get("NODEID")}
+	sort {$a->tostring() cmp $b->tostring()}
 		@{$self->{STORE}{LIST} || []};
 }
 
@@ -693,6 +691,11 @@ sub get_SUBJECT_NODEID {
 	$self->get("SUBJECT")->get("NODEID");
 }
 
+sub tostring {
+	my ($self) = @_;
+	$self->get("SUBJECT_NODEID") . "-" . $self->get("PREDICATE") . "-" . $self->get("OBJECT_NODEID")
+}
+
 #####################################################################################
 # Nodes
 #####################################################################################
@@ -712,7 +715,7 @@ sub new {
 
 sub toarray {
 	my ($self) = @_;
-	sort {$a->get("NODEID") eq $b->get("NODEID")}
+	sort {$a->get("NODEID") cmp $b->get("NODEID")}
 		@{$self->{STORE}{LIST} || []};
 }
 
@@ -889,7 +892,7 @@ sub get_MENTION {
 
 sub toarray {
 	my ($self) = @_;
-	sort {$a->get("MENTIONID") eq $b->get("MENTIONID")}
+	sort {$a->get("MENTIONID") cmp $b->get("MENTIONID")}
 		@{$self->{STORE}{LIST} || []};
 }
 
@@ -1041,7 +1044,7 @@ sub toarray {
 	my ($self) = @_;
 	sort {$a->{DOCUMENTID} cmp $b->{DOCUMENTID} ||
 					$a->{DOCUMENTEID} cmp $b->{DOCUMENTEID} ||
-					$a->{START} <=> $b->{START} ||
+					$a->{START} cmp $b->{START} ||
 					$a->{END} cmp $b->{END}}
 		@{$self->{STORE}{LIST} || []};
 }
@@ -1373,7 +1376,7 @@ sub toarray {
 	sort {$a->{TOPICID} cmp $b->{TOPICID} ||
 					$a->{NODEID} cmp $b->{NODEID} ||
 					$a->{MENTIONID} cmp $b->{MENTIONID} ||
-					$a->{KEYFRAMEID} <=> $b->{KEYFRAMEID} ||
+					$a->{KEYFRAMEID} cmp $b->{KEYFRAMEID} ||
 					$a->{TYPE} cmp $b->{TYPE}}
 		@{$self->{STORE}{LIST} || []};
 }
@@ -1460,17 +1463,17 @@ sub load_hypothesis_relevant_nodeids {
 			$self->get("LOGGER")->record_problem("MISSING_NODEID_FOR_MENTIONID", $nodemention_id, $where);
 			next;
 		}
-		if($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true") {
-			next if $relevantnode_id =~ /^NIL/;
-		}
+		next if ($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true" && $relevantnode_id =~ /^NIL/);
 		$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $relevantnode_id);
 		foreach my $edge(@{$edge_lookup{OBJECT}{$relevantnode_id} || []}) {
 			my $connectednode_id = $edge->get("SUBJECT")->get("NODEID");
+			next if ($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true" && $connectednode_id =~ /^NIL/);
 			# Connected node is also relevant
 			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $connectednode_id);
 		}
 		foreach my $edge(@{$edge_lookup{SUBJECT}{$relevantnode_id} || []}) {
 			my $connectednode_id = $edge->get("OBJECT")->get("NODEID");
+			next if ($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true" && $connectednode_id =~ /^NIL/);
 			# Connected node is also relevant
 			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $connectednode_id);
 		}
@@ -1684,8 +1687,8 @@ sub generate_graph_queries {
 	my $i = 0;
 
 	# Edges and node relevant to the hypothesis
-	my $edges = Container->new($self->get("LOGGER"), "RAW");
-	my $nodes = Container->new($self->get("LOGGER"), "RAW");
+	my $edges = Edges->new($self->get("LOGGER"));
+	my $nodes = Nodes->new($self->get("LOGGER"));
 	foreach my $edge($self->get("EDGES")->toarray()) {
 		my $subject = $edge->get("SUBJECT");
 		my $object = $edge->get("OBJECT");
@@ -1709,7 +1712,7 @@ sub generate_graph_queries {
 											$self->get("PARAMETERS"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, $edges->toarray());
+											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, $edges);
 		my $j = 0;
 		foreach my $canonical_mention(@matching_cannoical_mentions) {
 			next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
@@ -1719,7 +1722,7 @@ sub generate_graph_queries {
 											$self->get("PARAMETERS"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, $edges->toarray());
+											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, $edges);
 			$composite_query->add_entrypoint($canonical_mention);
 			$single_entrypoint_query->add_entrypoint($canonical_mention);
 			$queries->add($single_entrypoint_query);
@@ -1733,7 +1736,7 @@ sub generate_graph_queries {
 												$self->get("PARAMETERS"),
 												$self->get("KEYFRAMES_BOUNDINGBOXES"),
 												$self->get("IMAGES_BOUNDINGBOXES"),
-												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges->toarray());
+												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges);
 					my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
 																NODEID => $node->get("NODEID"),
 																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
@@ -1827,7 +1830,7 @@ sub get_KEYFRAMESIDS {
 	my ($self, $doceid) = @_;
 	my @keyframeids = $self->get("ALL_KEYS");
 	@keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
-	@keyframeids;
+	sort @keyframeids;
 }
 
 #####################################################################################
@@ -2424,7 +2427,7 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, @edges) = @_;
+  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, $edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
     PARAMETERS => $parameters,
@@ -2432,7 +2435,7 @@ sub new {
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     DOCUMENTIDS_MAPPINGS => $documentids_mappings,
     QUERY_ID => $query_id,
-    EDGES => [@edges],
+    EDGES => $edges,
     ENTRYPOINTS => [],
     LOGGER => $logger,
   };
@@ -2463,7 +2466,7 @@ sub write_to_file {
 	# process the edges into a graph
 	my $xml_edges_container = XMLContainer->new($logger);
 	my $edge_id = 0;
-	foreach my $edge(@{$self->get("EDGES")}) {
+	foreach my $edge($self->get("EDGES")->toarray()) {
 		$edge_id++;
 		my $subject = &mask($edge->get("SUBJECT")->get("NODEID"));
 		my $object = &mask($edge->get("OBJECT")->get("NODEID"));
