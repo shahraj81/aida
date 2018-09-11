@@ -113,6 +113,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   IGNORING_LINE                           DEBUG_INFO     Ingoring the line due to a problem: %s
+  INVALID_ENTRYPOINT                      FATAL_ERROR    Entrypoint of invalid type %s found
   MISSING_DOCUMENT_ELEMENT                WARNING        Missing document element %s
   MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
@@ -1351,7 +1352,7 @@ sub new {
   my $self = {
   	LDC_NIST_MAPPINGS => LDCNISTMappings->new($logger, $parameters),
   	NODES => Nodes->new($logger),
-	CANONICAL_MENTIONS => CanonicalMentions->new($logger, $parameters),
+		CANONICAL_MENTIONS => CanonicalMentions->new($logger, $parameters),
   	EDGES => Edges->new($logger),
   	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
   	NODEIDS_LOOKUP => {},
@@ -1398,7 +1399,12 @@ sub load_canonical_mentions {
 		my $keyframe_id = $entry->get("keyframe_id");
 		my $topic_id = $entry->get("topic_id");
 		my $node = $self->get("NODES")->get("BY_KEY", $node_id);
-
+		my $enttype = $self->get("NODES")->get("MENTIONS")->get("BY_KET", $mention_id)->get("NIST_TYPE");
+		my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
+		unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true") {
+			$self->get("LOGGER")->record_problem("INVALID_ENTRYPOINT", $enttype, $entry->get("WHERE"));
+			next;
+		}
 		$self->get("CANONICAL_MENTIONS")->add(CanonicalMention->new($self->get("LOGGER"), "NONSTRING_ENTRYPOINT", $node_id, $mention_id, $keyframe_id, $topic_id, $node));
 	}
 }
@@ -2450,7 +2456,7 @@ sub write_to_file {
 	}
 	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
 	my $sparql = "";
-	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
+	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 0);
 	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints, $xml_sparql);
 	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
 	print $program_output $xml_query->tostring(2);
