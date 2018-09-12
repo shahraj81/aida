@@ -30,6 +30,7 @@ $parameters->set("HYPOTHESES_FILE", "input/annotations/data/T101/T101_hypotheses
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
 $parameters->set("EDGES_DATA_FILES", $edge_data_files);
 $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
+$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/T101_canonical_mentions.tsv");
 $parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
 $parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
 $parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
@@ -60,8 +61,8 @@ foreach my $node($graph->get("NODES")->toarray()) {
 		elsif($modality eq "image") {
 			$keyframe_id = $doceid;
 		}
-		next if (($enttype ne "Weapon" || $enttype eq "Vehicle") && $type ne "nam");
-		print join("\t", ($node_id, $mention_id, $keyframe_id, "T101")), "\n";
+		print join("\t", ($node_id, $mention_id, $keyframe_id, "T101")), "\n"
+			if ($enttype eq "Weapon" || $enttype eq "Vehicle" || $modality eq "video" || $modality eq "image" || $type ne "nam");
 	}
 }
 

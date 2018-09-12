@@ -37,7 +37,7 @@ $parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
 $parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
 $parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
 #$parameters->set("CANONICAL_MENTIONS_FILE", "input/annotations/data/canonical_mentions/T101_canonical_mentions.tsv");
-$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/T101_canonical_mentions.tsv");
+$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/T101_canonical_mentions-v2.0.tsv");
 $parameters->set("ERRORLOG_FILE", "output/problems.log");
 $parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output/T101_class_queries.xml");
 $parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output/T101_zerohop_queries.xml");
