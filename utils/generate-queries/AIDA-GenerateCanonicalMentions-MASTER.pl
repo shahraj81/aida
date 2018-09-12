@@ -45,6 +45,7 @@ $parameters->set("GRAPH_QUERIES_PREFIX", "AIDA_GR_2018");
 my $graph = Graph->new($logger, $parameters);
 my %is_valid_entrypoint = %{$graph->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
 my $keyframeboundingboxes = $graph->get("KEYFRAMES_BOUNDINGBOXES");
+print join("\t", ("node_id", "mention_id", "keyframe_id", "topic_id")), "\n";
 foreach my $node($graph->get("NODES")->toarray()) {
 	my $node_id = $node->get("NODEID");
 	foreach my $mention($node->get("MENTIONS")->toarray()) {
@@ -66,4 +67,8 @@ foreach my $node($graph->get("NODES")->toarray()) {
 	}
 }
 
-$logger->report_all_information();
+my ($num_errors, $num_warnings) = $logger->report_all_information();
+print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
+print "No problems encountered.\n" unless ($num_errors || $num_warnings);
+print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered\n";
+exit 0;

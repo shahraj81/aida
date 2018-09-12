@@ -305,6 +305,7 @@ my $NIST_error_code = 255;
 ### DO INCLUDE
 sub NIST_die {
   my ($self, @messages) = @_;
+  print "Fatal error encountered.\n";
   my $outfile = $self->{ERROR_OUTPUT};
   print $outfile "================================================================\n";
   print $outfile Carp::longmess();

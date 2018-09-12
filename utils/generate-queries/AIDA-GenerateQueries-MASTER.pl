@@ -49,4 +49,8 @@ $parameters->set("GRAPH_QUERIES_PREFIX", "AIDA_GR_2018");
 my $graph = Graph->new($logger, $parameters);
 $graph->generate_queries();
 
-$logger->report_all_information();
+my ($num_errors, $num_warnings) = $logger->report_all_information();
+print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
+print "No problems encountered.\n" unless ($num_errors || $num_warnings);
+print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered\n";
+exit 0;
