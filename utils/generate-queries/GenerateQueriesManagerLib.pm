@@ -1577,8 +1577,8 @@ sub load_nodes {
 			my $document_id = $thedocumentelement->get("DOCUMENTID");
 			my $mention = Mention->new($self->get("LOGGER"));
 			my $span = Span->new(
-								$self->get("LOGGER"), 
-								$entry->get("provenance"),
+								$self->get("LOGGER"),
+								$document_id,
 								$document_eid,
 								$entry->get("textoffset_startchar"),
 								$entry->get("textoffset_endchar"),
