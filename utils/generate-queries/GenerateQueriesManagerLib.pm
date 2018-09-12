@@ -1321,6 +1321,13 @@ sub new {
   $self;
 }
 
+sub get_GRAPH_QUERIES_PREFIX {
+	my ($self) = @_;
+	my $query_id_prefix = $self->get("GRAPH_QUERIES_SUBPREFIX");
+	$query_id_prefix .= "_" . $self->get("HYPOTHESISID");
+	$query_id_prefix;
+}
+
 #####################################################################################
 # CanonicalMention
 #####################################################################################
@@ -1685,7 +1692,6 @@ sub generate_graph_queries {
 	my ($self) = @_;
 	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
-	$query_id_prefix .= "_" . $self->get("PARAMETERS")->get("HYPOTHESISID");
 	my $i = 0;
 
 	# Edges and node relevant to the hypothesis
@@ -2449,7 +2455,6 @@ sub new {
 sub get_NUMERIC_ID {
 	my ($self, $part_num) = @_;
 	my $prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
-	$prefix .= "_" . $self->get("PARAMETERS")->get("HYPOTHESISID");
 	my ($numeric_id_p1, $numeric_id_p2) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+?)_(\d+?)$/;
 	return $numeric_id_p1 if $part_num eq "P1";
 	return $numeric_id_p2 if $part_num eq "P2";
