@@ -1729,6 +1729,7 @@ sub generate_graph_queries {
 			$single_entrypoint_query->add_entrypoint($canonical_mention);
 			$queries->add($single_entrypoint_query);
 			# string entrypoint
+			next if $node->get("TEXT_STRING", $canonical_mention) eq "";
 			unless($strings_used{$node->get("NODEID")}
 				{$node->get("NIST_TYPE", $canonical_mention)}
 				{$node->get("TEXT_STRING", $canonical_mention)} && $node->get("TEXT_STRING", $canonical_mention) !~ /^\s+$/) {
