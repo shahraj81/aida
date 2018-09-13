@@ -2557,17 +2557,185 @@ sub write_to_file {
 		$xml_entrypoints_container->add($xml_entrypoint);
 	}
 	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
-	my $sparql = "";
+	my $sparql = $self-get("SPARQL");
 	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 0);
 	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints, $xml_sparql);
 	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
 	print $program_output $xml_query->tostring(2);
 }
 
+sub get_SPARQL {
+	my ($self) = @_;
+	return "";
+}
+
 sub mask {
 	my ($input) = @_;
 
 	"?$input";
+}
+
+#####################################################################################
+# SPARQL
+#####################################################################################
+
+package SPARQL;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $edges, $entrypoints) = @_;
+	my $self = {
+    CLASS => 'SPARQL',
+    LOGGER => $logger,
+    NODE_VARIABLE_MAPPINGS => Container->new($logger, "RAW"),
+    EDGES => $edges,
+    ENTRYPOINTS => $entrypoints,
+    SELECT_VARIABLES => Container->new($logger, "RAW"),
+    WHERE_CLAUSE => Container->new($logger, "RAW"),
+    WHERE_TEMPLATE => undef,
+    TEXT_ENTRYPOINT_CONSTRAINTS => undef,
+    IMAGE_ENTRYPOINT_CONSTRAINTS => undef,
+    VIDEO_ENTRYPOINT_CONSTRAINTS => undef,
+    AUDIO_ENTRYPOINT_CONSTRAINTS => undef,
+  };
+  bless($self, $class);
+  $self->setup_constants();
+  $self->process_all_edges();
+  $self;
+}
+
+sub setup_constants {
+	my ($self) = @_;
+
+	$self->{TEXT_ENTRYPOINT_CONSTRAINTS} = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                         aida:TextJustification .
+		?justification_ep aida:source               "DOCEID" .
+		?justification_ep aida:startOffset          ?epso .
+		?justification_ep aida:endOffsetInclusive   ?epeo .
+		FILTER ( (?epeo >= START_OFFSET && $epeo <= END_OFFSET) || (?epso >= START_OFFSET && ?epso <= END_OFFSET) ) .
+TEXT_ENTRYPOINT_CONSTRAINTS
+
+	$self->{IMAGE_ENTRYPOINT_CONSTRAINTS} = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                         aida:ImageJustification .
+		?justification_ep aida:source               "DOCEID" .
+		?justification_ep aida:boundingBox          ?boundingbox_ep .
+		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
+		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
+		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
+		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
+		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+IMAGE_ENTRYPOINT_CONSTRAINTS
+
+	$self->{VIDEO_ENTRYPOINT_CONSTRAINTS} = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                         aida:KeyFrameVideoJustification .
+		?justification_ep aida:source               "DOCEID" .
+		?justification_ep aida:keyFrame             "KEYFRAMEID" .
+		?justification_ep aida:boundingBox          ?boundingbox_ep .
+		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
+		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
+		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
+		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
+		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
+			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
+			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+VIDEO_ENTRYPOINT_CONSTRAINTS
+
+	$self->{AUDIO_ENTRYPOINT_CONSTRAINTS} = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
+?justification_ep a                       aida:AudioJustification .
+		?justification_ep aida:source             "DOCEID" .
+		?justification_ep aida:startTimestamp     ?epst .
+		?justification_ep aida:endTimestamp       ?epet .
+		FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
+AUDIO_ENTRYPOINT_CONSTRAINTS
+
+	#SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?cv
+
+	$self->{WHERE_TEMPLATE} = <<'END_SPARQL_WHERE';
+		?statement1    a                    rdf:Statement .
+		?statement1    rdf:object           ldcOnt:ENTTYPE .
+		?statement1    rdf:predicate        rdf:type .
+		?statement1    rdf:subject          ?nid_ot .
+		?statement1    aida:justifiedBy     ?justification .
+		?justification aida:source          ?doceid .
+		?justification aida:confidence      ?confidence .
+		?confidence    aida:confidenceValue ?cv .
+
+		?cluster        a                    aida:SameAsCluster .
+		?statement2     a                    aida:ClusterMembership .
+		?statement2     aida:cluster         ?cluster .
+		?statement2     aida:clusterMember   ?nid_ep .
+		?statement2     aida:confidence      ?cm1_confidence .
+		?cm1_confidence aida:confidenceValue ?cm1cv .
+
+		?statement3     a                    aida:ClusterMembership .
+		?statement3     aida:cluster         ?cluster .
+		?statement3     aida:clusterMember   ?nid_ot .
+		?statement3     aida:confidence      ?cm2_confidence .
+		?cm2_confidence aida:confidenceValue ?cm2cv .
+
+		?statement4       a                         rdf:Statement .
+		?statement4       rdf:object                ldcOnt:ENTTYPE .
+		?statement4       rdf:predicate             rdf:type .
+		?statement4       rdf:subject               ?nid_ep .
+		?statement4       aida:justifiedBy          ?justification_ep .
+		ENTRYPOINT_CONSTRAINTS
+
+		OPTIONAL { ?justification a                  aida:TextJustification .
+			?justification aida:startOffset            ?so .
+			?justification aida:endOffsetInclusive     ?eo }
+
+		OPTIONAL { ?justification a                  aida:ImageJustification .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?brx .
+			?bb            aida:boundingBoxLowerRightY ?bry }
+
+		OPTIONAL { ?justification a                  aida:KeyFrameVideoJustification .
+			?justification aida:keyFrame               ?kfid .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?brx .
+			?bb            aida:boundingBoxLowerRightY ?bry }
+
+		OPTIONAL { ?justification a                  aida:ShotVideoJustification .
+			?justification aida:shot                   ?sid }
+
+		OPTIONAL { ?justification a                  aida:AudioJustification .
+			?justification aida:startTimestamp         ?st .
+			?justification aida:endTimestamp           ?et }
+
+	}
+END_SPARQL_WHERE
+}
+
+sub process_all_edges {
+	my ($self) = @_;
+	foreach my $edge($self->get("EDGES")->toarray()) {
+		$self->process_edge($edge);
+	}
+}
+
+sub process_edge {
+	my ($self, $edge) = @_;
+	$self->process_node($edge->get("SUBJECT")->get("NODE"));
+	$self->process_node($edge->get("OBJECT")->get("NODE"));
+	# process edge here
+}
+
+sub process_node {
+	my ($self) = @_;
+}
+
+sub tostring {
+	my ($self) = @_;
+	"";
 }
 
 #####################################################################################
