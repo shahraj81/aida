@@ -808,16 +808,16 @@ sub get_BY_INDEX {
 }
 
 sub get_BY_KEY {
-  my ($self, $key) = @_;
-  unless($self->{STORE}{TABLE}{$key}) {
-		# Create an instance if not exists
+ 	my ($self, $key) = @_;
+	unless($self->{STORE}{TABLE}{$key}) {
+	# Create an instance if not exists
 		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-    $self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
-    	if $self->get("ELEMENT_CLASS") eq "RAW";
-    my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
-    $self->add($element, $key);
-  }
-  $self->{STORE}{TABLE}{$key};
+		$self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
+			if $self->get("ELEMENT_CLASS") eq "RAW";
+		my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
+		$self->add($element, $key);
+	}
+	$self->{STORE}{TABLE}{$key};
 }
 
 sub get_ALL_KEYS {
@@ -2557,7 +2557,7 @@ sub write_to_file {
 		$xml_entrypoints_container->add($xml_entrypoint);
 	}
 	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
-	my $sparql = $self-get("SPARQL");
+	my $sparql = $self->get("SPARQL");
 	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 0);
 	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints, $xml_sparql);
 	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
@@ -2566,7 +2566,8 @@ sub write_to_file {
 
 sub get_SPARQL {
 	my ($self) = @_;
-	return "";
+	my $sparql = SPARQL->new($self->get("LOGGER"), $self->get("EDGES"), $self->get("ENTRYPOINTS"));
+	$sparql->tostring();
 }
 
 sub mask {
@@ -2588,21 +2589,34 @@ sub new {
 	my $self = {
     CLASS => 'SPARQL',
     LOGGER => $logger,
+    NEXT_VARIABLE_POSTFIX => 10001,
     NODE_VARIABLE_MAPPINGS => Container->new($logger, "RAW"),
     EDGES => $edges,
     ENTRYPOINTS => $entrypoints,
-    SELECT_VARIABLES => Container->new($logger, "RAW"),
-    WHERE_CLAUSE => Container->new($logger, "RAW"),
+    SELECT_VARIABLES_STRING => "",
+    WHERE_CLAUSE_STRING => "",
     WHERE_TEMPLATE => undef,
     TEXT_ENTRYPOINT_CONSTRAINTS => undef,
     IMAGE_ENTRYPOINT_CONSTRAINTS => undef,
     VIDEO_ENTRYPOINT_CONSTRAINTS => undef,
     AUDIO_ENTRYPOINT_CONSTRAINTS => undef,
+    NODE_SELECT_VARIABLES_TEMPLATE => [qw(?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?typecv)],
   };
   bless($self, $class);
   $self->setup_constants();
   $self->process_all_edges();
   $self;
+}
+
+sub get_VARIABLE_POSTFIX {
+	my ($self, $node_id) = @_;
+	my $variable_postfix;
+	unless($self->get("NODE_VARIABLE_MAPPINGS")->exists($node_id)) {
+		$variable_postfix = $self->get("NEXT_VARIABLE_POSTFIX");
+		$self->set("NEXT_VARIABLE_POSTFIX", $variable_postfix+1);
+		$self->get("NODE_VARIABLE_MAPPINGS")->add($variable_postfix, $node_id);
+	}
+	$self->get("NODE_VARIABLE_MAPPINGS")->get("BY_KEY", $node_id);
 }
 
 sub setup_constants {
@@ -2653,7 +2667,7 @@ VIDEO_ENTRYPOINT_CONSTRAINTS
 		FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
 AUDIO_ENTRYPOINT_CONSTRAINTS
 
-	#SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?cv
+	#SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?typecv
 
 	$self->{WHERE_TEMPLATE} = <<'END_SPARQL_WHERE';
 		?statement1    a                    rdf:Statement .
@@ -2663,7 +2677,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 		?statement1    aida:justifiedBy     ?justification .
 		?justification aida:source          ?doceid .
 		?justification aida:confidence      ?confidence .
-		?confidence    aida:confidenceValue ?cv .
+		?confidence    aida:confidenceValue ?typecv .
 
 		?cluster        a                    aida:SameAsCluster .
 		?statement2     a                    aida:ClusterMembership .
@@ -2724,13 +2738,20 @@ sub process_all_edges {
 
 sub process_edge {
 	my ($self, $edge) = @_;
-	$self->process_node($edge->get("SUBJECT")->get("NODE"));
-	$self->process_node($edge->get("OBJECT")->get("NODE"));
+	$self->process_node($edge->get("SUBJECT"));
+	$self->process_node($edge->get("OBJECT"));
 	# process edge here
 }
 
 sub process_node {
-	my ($self) = @_;
+	my ($self, $node) = @_;
+	my $where_clause = $self->get("WHERE_TEMPLATE");
+	my $variable_postfix = $self->get("VARIABLE_POSTFIX", $node->get("NODEID"));
+	foreach my $variable(@{$self->get("NODE_SELECT_VARIABLES_TEMPLATE")}) {
+		my $new_variable = "$variable\_$variable_postfix";
+		$where_clause =~ s/$variable/$variable_postfix/gs;
+	}
+	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
 }
 
 sub tostring {
