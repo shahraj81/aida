@@ -8,16 +8,16 @@ my $error_filename = "output/problems.log";
 $logger->set_error_output($error_filename);
 my $error_output = $logger->get_error_output();
 
-my $postfix = "_original";
+my $postfix = "_loop";
 
 my $nodes_data_files = Container->new("String");
-$nodes_data_files->add("input/annotations/data/T101$postfix/T101_ent_mentions.tab");
-$nodes_data_files->add("input/annotations/data/T101$postfix/T101_evt_mentions.tab");
-$nodes_data_files->add("input/annotations/data/T101$postfix/T101_rel_mentions.tab");
+$nodes_data_files->add("input/annotations-local/data/T101$postfix/T101_ent_mentions.tab");
+$nodes_data_files->add("input/annotations-local/data/T101$postfix/T101_evt_mentions.tab");
+$nodes_data_files->add("input/annotations-local/data/T101$postfix/T101_rel_mentions.tab");
 
 my $edge_data_files = Container->new("String");
-$edge_data_files->add("input/annotations/data/T101$postfix/T101_evt_slots.tab");
-$edge_data_files->add("input/annotations/data/T101$postfix/T101_rel_slots.tab");
+$edge_data_files->add("input/annotations-local/data/T101$postfix/T101_evt_slots.tab");
+$edge_data_files->add("input/annotations-local/data/T101$postfix/T101_rel_slots.tab");
 
 my $acceptable_relevance = Container->new("String");
 $acceptable_relevance->add("fully-relevant");
@@ -28,7 +28,7 @@ $parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/DocumentIDsMappings.ttl");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
 $parameters->set("TYPE_MAPPING_FILE","input/nist-type-mapping.txt");
 $parameters->set("UID_INFO_FILE", "input/uid_info.tab");
-$parameters->set("HYPOTHESES_FILE", "input/annotations/data/T101_small/T101_hypotheses.tab");
+$parameters->set("HYPOTHESES_FILE", "input/annotations-local/data/T101$postfix/T101_hypotheses.tab");
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
 $parameters->set("EDGES_DATA_FILES", $edge_data_files);
 $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
