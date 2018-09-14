@@ -2727,9 +2727,11 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 			[JUSTIFICATION] aida:endTimestamp           [ET] }
 END_SPARQL_WHERE
 
-    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1cv cm2cv typecv)];
+    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv)];
         
-    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1cv cm2cv typecv)];
+    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv
+    											statement1 statement2 statement3 statement4 cluster justification justification_ep bb
+    											confidence type_cv cm1_confidence cm2_confidence)];
 }
 
 sub process_all_edges {
