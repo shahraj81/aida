@@ -752,6 +752,12 @@ sub get_LDC_TYPES {
 	keys %hash
 }
 
+sub get_MENTION {
+  my ($self, $mention_id) = @_;
+  $self->get("MENTIONS")->get("MENTION", $mention_id);
+}
+
+
 sub get_NIST_TYPES {
 	my ($self) = @_;
 	my %hash = map {$_=>1} map {$_->get("NIST_TYPE")} $self->get("MENTIONS")->toarray();
@@ -2668,11 +2674,15 @@ VIDEO_ENTRYPOINT_CONSTRAINTS
 		FILTER ( ([EPET] >= [START_TIME] && $epet <= [END_TIME]) || ([EPST] >= [START_TIME] && [EPST] <= [END_TIME]) ) .
 AUDIO_ENTRYPOINT_CONSTRAINTS
 
+	$self->{STATEMENT1_TYPE_TRIPLE_TEMPLATE} = "[STATEMENT1]    rdf:object           ldcOnt:[ENTTYPE] .";
+	
+	$self->{STATEMENT4_TYPE_TRIPLE_TEMPLATE} = "[STATEMENT4]       rdf:object                ldcOnt:[ENTTYPE] .";
+
 	#SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?typecv
 
 	$self->{WHERE_TEMPLATE} = <<'END_SPARQL_WHERE';
 		[STATEMENT1]    a                    rdf:Statement .
-		[STATEMENT1]    rdf:object           ldcOnt:[ENTTYPE] .
+		[STATEMENT1_TYPE_TRIPLE_TEMPLATE]
 		[STATEMENT1]    rdf:predicate        rdf:type .
 		[STATEMENT1]    rdf:subject          [NID_OT] .
 		[STATEMENT1]    aida:justifiedBy     [JUSTIFICATION] .
@@ -2694,7 +2704,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 		[CM2_CONFIDENCE] aida:confidenceValue [CM2_CV] .
 
 		[STATEMENT4]       a                         rdf:Statement .
-		[STATEMENT4]       rdf:object                ldcOnt:[ENTTYPE] .
+		[STATEMENT4_TYPE_TRIPLE_TEMPLATE]
 		[STATEMENT4]       rdf:predicate             rdf:type .
 		[STATEMENT4]       rdf:subject               [NID_EP] .
 		[STATEMENT4]       aida:justifiedBy          [JUSTIFICATION_EP] .
@@ -2743,23 +2753,70 @@ sub process_all_edges {
 
 sub process_edge {
 	my ($self, $edge) = @_;
-	$self->process_node($edge->get("SUBJECT"));
-	$self->process_node($edge->get("OBJECT"));
-	# process edge here
+	my $subject = $edge->get("SUBJECT");
+	# Get the subject type
+	my $subject_type;
+	foreach my $nist_type($subject->get("NIST_TYPES")) {
+		$subject_type = $nist_type
+			if($edge->get("PREDICATE") =~ /$nist_type/)
+	}
+	$self->process_node($subject, $subject_type); 
+	my $object = $edge->get("OBJECT");
+	# See if you can find a single object type
+	my $object_type;
+	if($object->get("NIST_TYPES") == 1) {
+		# If there is a single type for the object
+		($object_type) = $object->get("NIST_TYPES");
+	}
+	else {
+		# otherwise, see if you obtain this information from the entrypoints
+		foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
+			if($object->get("NODEID") eq $entrypoint->{NODEID}) {
+				$object_type = $object->get("MENTION", $object->get("NODEID"))->get("NIST_TYPE") unless($object_type);
+			}
+		}
+	}
+	$self->process_node($object, $object_type);
+	# Process the edge
 }
 
 sub process_node {
-	my ($self, $node) = @_;
+	my ($self, $node, $type) = @_;
 	my $where_clause = $self->get("WHERE_TEMPLATE");
 	my $variable_postfix = $self->get("VARIABLE_POSTFIX", $node->get("NODEID"));
 	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
 	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
+	my $statement1_type_triple_template = $self->get("STATEMENT1_TYPE_TRIPLE_TEMPLATE");
+	my $statement4_type_triple_template = $self->get("STATEMENT4_TYPE_TRIPLE_TEMPLATE");
 	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$variable_postfix";
 		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
-		$variable = "\\[" . uc $variable . "\\]";
-		$where_clause =~ s/$variable/\?$new_variable/gs;
+		my $old_variable = "\\[" . uc $variable . "\\]";
+		$where_clause =~ s/$old_variable/\?$new_variable/gs;
+		$statement1_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
+		$statement4_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
+	}
+	if($type) {
+		$statement1_type_triple_template =~ s/\[ENTTYPE\]/$type/;
+		$statement4_type_triple_template =~ s/\[ENTTYPE\]/$type/;
+		$where_clause =~ s/\[STATEMENT1_TYPE_TRIPLE_TEMPLATE\]\n/$statement1_type_triple_template\n/g;
+		$where_clause =~ s/\[STATEMENT4_TYPE_TRIPLE_TEMPLATE\]\n/$statement4_type_triple_template\n/g;
+	}
+	else {
+		$where_clause =~ s/\[STATEMENT\d_TYPE_TRIPLE_TEMPLATE\]\n//gs;
+	}
+	my $is_node_an_entrypoint;
+	foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
+		if($node->get("NODEID") eq $entrypoint->{NODEID}) {
+			$is_node_an_entrypoint = 1;
+		}
+	}
+	if($is_node_an_entrypoint) {
+		# replace the [ENTRYPOINT_CONSTRAINTS] with appropriate string
+	}
+	else {
+		$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
 	}
 	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
 }
