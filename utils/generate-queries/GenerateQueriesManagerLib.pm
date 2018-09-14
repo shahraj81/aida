@@ -2593,7 +2593,7 @@ sub new {
     NODE_VARIABLE_MAPPINGS => Container->new($logger, "RAW"),
     EDGES => $edges,
     ENTRYPOINTS => $entrypoints,
-    SELECT_VARIABLES_STRING => "",
+    SELECT_VARIABLES => [],
     WHERE_CLAUSE_STRING => "",
     WHERE_TEMPLATE => undef,
     TEXT_ENTRYPOINT_CONSTRAINTS => undef,
@@ -2750,9 +2750,14 @@ sub process_node {
 	my ($self, $node) = @_;
 	my $where_clause = $self->get("WHERE_TEMPLATE");
 	my $variable_postfix = $self->get("VARIABLE_POSTFIX", $node->get("NODEID"));
+	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
+	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
 	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
+		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$variable_postfix";
-		$where_clause =~ s/\?$variable/\?$new_variable/gs;
+		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
+		$variable = "\\[" . uc $variable . "\\]";
+		$where_clause =~ s/$variable/\?$new_variable/gs;
 	}
 	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
 }
