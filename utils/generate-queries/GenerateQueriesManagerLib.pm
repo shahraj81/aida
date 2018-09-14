@@ -2600,7 +2600,8 @@ sub new {
     IMAGE_ENTRYPOINT_CONSTRAINTS => undef,
     VIDEO_ENTRYPOINT_CONSTRAINTS => undef,
     AUDIO_ENTRYPOINT_CONSTRAINTS => undef,
-    NODE_SELECT_VARIABLES_TEMPLATE => [qw(?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?typecv)],
+    SELECT_NODE_VARIABLES_TEMPLATE => undef,
+    ALL_NODE_VARIABLES_TEMPLATE => undef,
   };
   bless($self, $class);
   $self->setup_constants();
@@ -2623,110 +2624,112 @@ sub setup_constants {
 	my ($self) = @_;
 
 	$self->{TEXT_ENTRYPOINT_CONSTRAINTS} = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                         aida:TextJustification .
-		?justification_ep aida:source               "DOCEID" .
-		?justification_ep aida:startOffset          ?epso .
-		?justification_ep aida:endOffsetInclusive   ?epeo .
-		FILTER ( (?epeo >= START_OFFSET && $epeo <= END_OFFSET) || (?epso >= START_OFFSET && ?epso <= END_OFFSET) ) .
+[JUSTIFICATION_EP] a                         aida:TextJustification .
+		[JUSTIFICATION_EP] aida:source               "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:startOffset          [EPSO] .
+		[JUSTIFICATION_EP] aida:endOffsetInclusive   [EPEO] .
+		FILTER ( ([EPEO] >= [START_OFFSET] && [EPEO] <= [END_OFFSET]) || ([EPSO] >= [START_OFFSET] && [EPSO] <= [END_OFFSET]) ) .
 TEXT_ENTRYPOINT_CONSTRAINTS
 
 	$self->{IMAGE_ENTRYPOINT_CONSTRAINTS} = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                         aida:ImageJustification .
-		?justification_ep aida:source               "DOCEID" .
-		?justification_ep aida:boundingBox          ?boundingbox_ep .
-		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
-		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
-		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
-		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
-		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+[JUSTIFICATION_EP] a                         aida:ImageJustification .
+		[JUSTIFICATION_EP] aida:source               "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:boundingBox          [BB_EP] .
+		[BB_EP] aida:boundingBoxUpperLeftX  [EPULX] .
+		[BB_EP] aida:boundingBoxUpperLeftY  [EPULY] .
+		[BB_EP] aida:boundingBoxLowerRightX [EPLRX] .
+		[BB_EP] aida:boundingBoxLowerRightY [EPLRY] .
+		FILTER (([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
+			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y]) ||
+			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
+			([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y])) .
 IMAGE_ENTRYPOINT_CONSTRAINTS
 
 	$self->{VIDEO_ENTRYPOINT_CONSTRAINTS} = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                         aida:KeyFrameVideoJustification .
-		?justification_ep aida:source               "DOCEID" .
-		?justification_ep aida:keyFrame             "KEYFRAMEID" .
-		?justification_ep aida:boundingBox          ?boundingbox_ep .
-		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
-		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
-		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
-		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
-		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
+[JUSTIFICATION_EP] a                         aida:KeyFrameVideoJustification .
+		[JUSTIFICATION_EP] aida:source               "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:keyFrame             "[KEYFRAMEID]" .
+		[JUSTIFICATION_EP] aida:boundingBox          [BB_EP] .
+		[BB_EP] aida:boundingBoxUpperLeftX  [EPULX] .
+		[BB_EP] aida:boundingBoxUpperLeftY  [EPULY] .
+		[BB_EP] aida:boundingBoxLowerRightX [EPLRX] .
+		[BB_EP] aida:boundingBoxLowerRightY [EPLRY] .
+		FILTER (([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
+			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y]) ||
+			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
+			([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y])) .
 VIDEO_ENTRYPOINT_CONSTRAINTS
 
 	$self->{AUDIO_ENTRYPOINT_CONSTRAINTS} = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                       aida:AudioJustification .
-		?justification_ep aida:source             "DOCEID" .
-		?justification_ep aida:startTimestamp     ?epst .
-		?justification_ep aida:endTimestamp       ?epet .
-		FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
+[JUSTIFICATION_EP] a                       aida:AudioJustification .
+		[JUSTIFICATION_EP] aida:source             "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:startTimestamp     [EPST] .
+		[JUSTIFICATION_EP] aida:endTimestamp       [EPET] .
+		FILTER ( ([EPET] >= [START_TIME] && $epet <= [END_TIME]) || ([EPST] >= [START_TIME] && [EPST] <= [END_TIME]) ) .
 AUDIO_ENTRYPOINT_CONSTRAINTS
 
 	#SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?typecv
 
 	$self->{WHERE_TEMPLATE} = <<'END_SPARQL_WHERE';
-		?statement1    a                    rdf:Statement .
-		?statement1    rdf:object           ldcOnt:ENTTYPE .
-		?statement1    rdf:predicate        rdf:type .
-		?statement1    rdf:subject          ?nid_ot .
-		?statement1    aida:justifiedBy     ?justification .
-		?justification aida:source          ?doceid .
-		?justification aida:confidence      ?confidence .
-		?confidence    aida:confidenceValue ?typecv .
+		[STATEMENT1]    a                    rdf:Statement .
+		[STATEMENT1]    rdf:object           ldcOnt:[ENTTYPE] .
+		[STATEMENT1]    rdf:predicate        rdf:type .
+		[STATEMENT1]    rdf:subject          [NID_OT] .
+		[STATEMENT1]    aida:justifiedBy     [JUSTIFICATION] .
+		[JUSTIFICATION] aida:source          [DOCEID] .
+		[JUSTIFICATION] aida:confidence      [CONFIDENCE] .
+		[CONFIDENCE]    aida:confidenceValue [TYPE_CV] .
 
-		?cluster        a                    aida:SameAsCluster .
-		?statement2     a                    aida:ClusterMembership .
-		?statement2     aida:cluster         ?cluster .
-		?statement2     aida:clusterMember   ?nid_ep .
-		?statement2     aida:confidence      ?cm1_confidence .
-		?cm1_confidence aida:confidenceValue ?cm1cv .
+		[CLUSTER]        a                    aida:SameAsCluster .
+		[STATEMENT2]     a                    aida:ClusterMembership .
+		[STATEMENT2]     aida:cluster         [CLUSTER] .
+		[STATEMENT2]     aida:clusterMember   [NID_EP] .
+		[STATEMENT2]     aida:confidence      [CM1_CONFIDENCE] .
+		[CM1_CONFIDENCE] aida:confidenceValue [CM1_CV] .
 
-		?statement3     a                    aida:ClusterMembership .
-		?statement3     aida:cluster         ?cluster .
-		?statement3     aida:clusterMember   ?nid_ot .
-		?statement3     aida:confidence      ?cm2_confidence .
-		?cm2_confidence aida:confidenceValue ?cm2cv .
+		[STATEMENT3]     a                    aida:ClusterMembership .
+		[STATEMENT3]     aida:cluster         [CLUSTER] .
+		[STATEMENT3]     aida:clusterMember   [NID_OT] .
+		[STATEMENT3]     aida:confidence      [CM2_CONFIDENCE] .
+		[CM2_CONFIDENCE] aida:confidenceValue [CM2_CV] .
 
-		?statement4       a                         rdf:Statement .
-		?statement4       rdf:object                ldcOnt:ENTTYPE .
-		?statement4       rdf:predicate             rdf:type .
-		?statement4       rdf:subject               ?nid_ep .
-		?statement4       aida:justifiedBy          ?justification_ep .
-		ENTRYPOINT_CONSTRAINTS
+		[STATEMENT4]       a                         rdf:Statement .
+		[STATEMENT4]       rdf:object                ldcOnt:[ENTTYPE] .
+		[STATEMENT4]       rdf:predicate             rdf:type .
+		[STATEMENT4]       rdf:subject               [NID_EP] .
+		[STATEMENT4]       aida:justifiedBy          [JUSTIFICATION_EP] .
+		[ENTRYPOINT_CONSTRAINTS]
 
-		OPTIONAL { ?justification a                  aida:TextJustification .
-			?justification aida:startOffset            ?so .
-			?justification aida:endOffsetInclusive     ?eo }
+		OPTIONAL { [JUSTIFICATION] a                  aida:TextJustification .
+			[JUSTIFICATION] aida:startOffset            [SO] .
+			[JUSTIFICATION] aida:endOffsetInclusive     [EO] }
 
-		OPTIONAL { ?justification a                  aida:ImageJustification .
-			?justification aida:boundingBox            ?bb  .
-			?bb            aida:boundingBoxUpperLeftX  ?ulx .
-			?bb            aida:boundingBoxUpperLeftY  ?uly .
-			?bb            aida:boundingBoxLowerRightX ?brx .
-			?bb            aida:boundingBoxLowerRightY ?bry }
+		OPTIONAL { [JUSTIFICATION] a                  aida:ImageJustification .
+			[JUSTIFICATION] aida:boundingBox            [BB]  .
+			[BB]            aida:boundingBoxUpperLeftX  [ULX] .
+			[BB]            aida:boundingBoxUpperLeftY  [ULY] .
+			[BB]            aida:boundingBoxLowerRightX [BRX] .
+			[BB]            aida:boundingBoxLowerRightY [BRY] }
 
-		OPTIONAL { ?justification a                  aida:KeyFrameVideoJustification .
-			?justification aida:keyFrame               ?kfid .
-			?justification aida:boundingBox            ?bb  .
-			?bb            aida:boundingBoxUpperLeftX  ?ulx .
-			?bb            aida:boundingBoxUpperLeftY  ?uly .
-			?bb            aida:boundingBoxLowerRightX ?brx .
-			?bb            aida:boundingBoxLowerRightY ?bry }
+		OPTIONAL { [JUSTIFICATION] a                  aida:KeyFrameVideoJustification .
+			[JUSTIFICATION] aida:keyFrame               [KFID] .
+			[JUSTIFICATION] aida:boundingBox            [BB]  .
+			[BB]            aida:boundingBoxUpperLeftX  [ULX] .
+			[BB]            aida:boundingBoxUpperLeftY  [ULY] .
+			[BB]            aida:boundingBoxLowerRightX [BRX] .
+			[BB]            aida:boundingBoxLowerRightY [BRY] }
 
-		OPTIONAL { ?justification a                  aida:ShotVideoJustification .
-			?justification aida:shot                   ?sid }
+		OPTIONAL { [JUSTIFICATION] a                  aida:ShotVideoJustification .
+			[JUSTIFICATION] aida:shot                   [SID] }
 
-		OPTIONAL { ?justification a                  aida:AudioJustification .
-			?justification aida:startTimestamp         ?st .
-			?justification aida:endTimestamp           ?et }
-
-	}
+		OPTIONAL { [JUSTIFICATION] a                  aida:AudioJustification .
+			[JUSTIFICATION] aida:startTimestamp         [ST] .
+			[JUSTIFICATION] aida:endTimestamp           [ET] }
 END_SPARQL_WHERE
+
+    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1cv cm2cv typecv)];
+        
+    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1cv cm2cv typecv)];
 }
 
 sub process_all_edges {
@@ -2747,9 +2750,9 @@ sub process_node {
 	my ($self, $node) = @_;
 	my $where_clause = $self->get("WHERE_TEMPLATE");
 	my $variable_postfix = $self->get("VARIABLE_POSTFIX", $node->get("NODEID"));
-	foreach my $variable(@{$self->get("NODE_SELECT_VARIABLES_TEMPLATE")}) {
+	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
 		my $new_variable = "$variable\_$variable_postfix";
-		$where_clause =~ s/$variable/$variable_postfix/gs;
+		$where_clause =~ s/\?$variable/\?$new_variable/gs;
 	}
 	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
 }
