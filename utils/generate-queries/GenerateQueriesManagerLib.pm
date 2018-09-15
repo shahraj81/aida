@@ -2572,7 +2572,11 @@ sub write_to_file {
 
 sub get_SPARQL {
 	my ($self) = @_;
-	my $sparql = SPARQL->new($self->get("LOGGER"), $self->get("EDGES"), $self->get("ENTRYPOINTS"));
+	my $sparql = SPARQL->new($self->get("LOGGER"), 
+								$self->get("KEYFRAMES_BOUNDINGBOXES"), 
+								$self->get("IMAGES_BOUNDINGBOXES"), 
+								$self->get("EDGES"), 
+								$self->get("ENTRYPOINTS"));
 	$sparql->tostring();
 }
 
@@ -2591,10 +2595,12 @@ package SPARQL;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $edges, $entrypoints) = @_;
+	my ($class, $logger, $keyframes_boundingboxes, $images_boundingboxes, $edges, $entrypoints) = @_;
 	my $self = {
     CLASS => 'SPARQL',
     LOGGER => $logger,
+    KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
+    IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     NEXT_VARIABLE_POSTFIX => 10001,
     NODE_VARIABLE_MAPPINGS => Container->new($logger, "RAW"),
     EDGES => $edges,
@@ -2631,7 +2637,7 @@ sub setup_constants {
 
 	$self->{TEXT_ENTRYPOINT_CONSTRAINTS} = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
 [JUSTIFICATION_EP] a                         aida:TextJustification .
-		[JUSTIFICATION_EP] aida:source               "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:source               "[EPDOCEID]" .
 		[JUSTIFICATION_EP] aida:startOffset          [EPSO] .
 		[JUSTIFICATION_EP] aida:endOffsetInclusive   [EPEO] .
 		FILTER ( ([EPEO] >= [START_OFFSET] && [EPEO] <= [END_OFFSET]) || ([EPSO] >= [START_OFFSET] && [EPSO] <= [END_OFFSET]) ) .
@@ -2639,7 +2645,7 @@ TEXT_ENTRYPOINT_CONSTRAINTS
 
 	$self->{IMAGE_ENTRYPOINT_CONSTRAINTS} = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
 [JUSTIFICATION_EP] a                         aida:ImageJustification .
-		[JUSTIFICATION_EP] aida:source               "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:source               "[EPDOCEID]" .
 		[JUSTIFICATION_EP] aida:boundingBox          [BB_EP] .
 		[BB_EP] aida:boundingBoxUpperLeftX  [EPULX] .
 		[BB_EP] aida:boundingBoxUpperLeftY  [EPULY] .
@@ -2653,7 +2659,7 @@ IMAGE_ENTRYPOINT_CONSTRAINTS
 
 	$self->{VIDEO_ENTRYPOINT_CONSTRAINTS} = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
 [JUSTIFICATION_EP] a                         aida:KeyFrameVideoJustification .
-		[JUSTIFICATION_EP] aida:source               "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:source               "[EPDOCEID]" .
 		[JUSTIFICATION_EP] aida:keyFrame             "[KEYFRAMEID]" .
 		[JUSTIFICATION_EP] aida:boundingBox          [BB_EP] .
 		[BB_EP] aida:boundingBoxUpperLeftX  [EPULX] .
@@ -2668,7 +2674,7 @@ VIDEO_ENTRYPOINT_CONSTRAINTS
 
 	$self->{AUDIO_ENTRYPOINT_CONSTRAINTS} = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
 [JUSTIFICATION_EP] a                       aida:AudioJustification .
-		[JUSTIFICATION_EP] aida:source             "[DOCEID]" .
+		[JUSTIFICATION_EP] aida:source             "[EPDOCEID]" .
 		[JUSTIFICATION_EP] aida:startTimestamp     [EPST] .
 		[JUSTIFICATION_EP] aida:endTimestamp       [EPET] .
 		FILTER ( ([EPET] >= [START_TIME] && $epet <= [END_TIME]) || ([EPST] >= [START_TIME] && [EPST] <= [END_TIME]) ) .
@@ -2741,7 +2747,8 @@ END_SPARQL_WHERE
         
     $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv
     											statement1 statement2 statement3 statement4 cluster justification justification_ep bb
-    											confidence type_cv cm1_confidence cm2_confidence)];
+    											confidence type_cv cm1_confidence cm2_confidence bb_ep epulx epuly eplrx eplry epst 
+    											epet epso epeo)];
 }
 
 sub process_all_edges {
@@ -2788,6 +2795,10 @@ sub process_node {
 	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
 	my $statement1_type_triple_template = $self->get("STATEMENT1_TYPE_TRIPLE_TEMPLATE");
 	my $statement4_type_triple_template = $self->get("STATEMENT4_TYPE_TRIPLE_TEMPLATE");
+	my $text_entrypoint_constraints = $self->get("TEXT_ENTRYPOINT_CONSTRAINTS");
+	my $image_entrypoint_constraints = $self->get("IMAGE_ENTRYPOINT_CONSTRAINTS");
+	my $video_entrypoint_constraints = $self->get("VIDEO_ENTRYPOINT_CONSTRAINTS");
+	my $audio_entrypoint_constraints = $self->get("AUDIO_ENTRYPOINT_CONSTRAINTS");
 	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$variable_postfix";
@@ -2796,6 +2807,10 @@ sub process_node {
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
 		$statement1_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
 		$statement4_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
+		$text_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
+		$image_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
+		$video_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
+		$audio_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
 	}
 	if($type) {
 		$statement1_type_triple_template =~ s/\[ENTTYPE\]/$type/;
@@ -2804,16 +2819,74 @@ sub process_node {
 		$where_clause =~ s/\[STATEMENT4_TYPE_TRIPLE_TEMPLATE\]\n/$statement4_type_triple_template\n/g;
 	}
 	else {
-		$where_clause =~ s/\[STATEMENT\d_TYPE_TRIPLE_TEMPLATE\]\n//gs;
+		$where_clause =~ s/\n\s+?\[STATEMENT1_TYPE_TRIPLE_TEMPLATE\]\n/\n/gs;
+		$where_clause =~ s/\n\s+?\[STATEMENT4_TYPE_TRIPLE_TEMPLATE\]\n/\n/gs;
 	}
-	my $is_node_an_entrypoint;
+	my $the_entrypoint;
 	foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
 		if($node->get("NODEID") eq $entrypoint->{NODEID}) {
-			$is_node_an_entrypoint = 1;
+			$the_entrypoint = $entrypoint;
 		}
 	}
-	if($is_node_an_entrypoint) {
+	if($the_entrypoint) {
 		# replace the [ENTRYPOINT_CONSTRAINTS] with appropriate string
+		if($the_entrypoint->{TYPE} eq "NONSTRING_ENTRYPOINT") {
+			my $modality = $node->get("MENTION", $the_entrypoint->{MENTIONID})->get("MODALITY");
+			my ($span) = $node->get("MENTION", $the_entrypoint->{MENTIONID})->get("SPANS")->toarray();
+			my ($start, $end) = ($span->get("START"), $span->get("END"));
+			my $doceid = $span->get("DOCUMENTEID");
+			my $keyframeid;
+			if($modality eq "text") {
+				$text_entrypoint_constraints =~ s/\[START_OFFSET\]/$start/gs;
+				$text_entrypoint_constraints =~ s/\[END_OFFSET\]/$end/gs;
+				$text_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
+				$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$text_entrypoint_constraints/;
+			}
+			elsif($modality eq "image") {
+				if($self->get("IMAGES_BOUNDINGBOXES")->exists($doceid)) {
+					my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
+					$start = $image_boundingbox->get("START");
+					$end = $image_boundingbox->get("END");
+					my ($ulx, $uly) = split(",", $start);
+					my ($lrx, $lry) = split(",", $end);
+					$image_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
+					$image_entrypoint_constraints =~ s/\[UPPER_LEFT_X\]/$ulx/gs;
+					$image_entrypoint_constraints =~ s/\[UPPER_LEFT_Y\]/$uly/gs;
+					$image_entrypoint_constraints =~ s/\[LOWER_RIGHT_X\]/$lrx/gs;
+					$image_entrypoint_constraints =~ s/\[LOWER_RIGHT_Y\]/$lry/gs;
+					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$image_entrypoint_constraints/;
+				}
+				else {
+					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
+				}
+			}
+			elsif($modality eq "video") {
+				if($self->get("KEYFRAMES_BOUNDINGBOXES")->exists($doceid)) {
+					($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
+					my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
+					$start = $keyframe_boundingbox->get("START");
+					$end = $keyframe_boundingbox->get("END");
+					my ($ulx, $uly) = split(",", $start);
+					my ($lrx, $lry) = split(",", $end);
+					$video_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
+					$video_entrypoint_constraints =~ s/\[UPPER_LEFT_X\]/$ulx/gs;
+					$video_entrypoint_constraints =~ s/\[UPPER_LEFT_Y\]/$uly/gs;
+					$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_X\]/$lrx/gs;
+					$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_Y\]/$lry/gs;
+					$video_entrypoint_constraints =~ s/\[KEYFRAMEID\]/$keyframeid/gs;
+					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$video_entrypoint_constraints/;
+				}
+				else {
+					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
+				}
+			}
+			elsif($modality eq "audio") {
+				$audio_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
+				$audio_entrypoint_constraints =~ s/\[START_TIME\]/$start/g;
+				$audio_entrypoint_constraints =~ s/\[END_TIME\]/$end/g;
+				$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$audio_entrypoint_constraints/;
+			}
+		}
 	}
 	else {
 		$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
