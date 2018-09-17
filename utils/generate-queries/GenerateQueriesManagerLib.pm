@@ -2681,7 +2681,74 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 
 	#SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?typecv
 
-	$self->{WHERE_TEMPLATE} = <<'END_SPARQL_WHERE';
+	$self->{WHERE_EDGE_TEMPLATE} = <<'END_SPARQL_EDGE_WHERE';
+		[STATEMENT1]      a                    rdf:Statement .
+		[STATEMENT1]      rdf:object           [OBJECT_NODEID] .
+		[STATEMENT1]      rdf:predicate        rdf:[EDGE_TYPE] .
+		[STATEMENT1]      rdf:subject          [SUBJECT_NODEID] .
+		[STATEMENT1]      aida:confidence      [EDGE_CONFIDENCE] .
+		[STATEMENT1]      aida:justifiedBy     [COMPOUND_JUSTIFICATION] .
+		[EDGE_CONFIDENCE] aida:confidenceValue [EDGE_CV] .
+
+    [COMPOUND_JUSTIFICATION] a                           aida:CompoundJustification .
+    [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_1] .
+    OPTIONAL { [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_2] . }
+
+		OPTIONAL { [JUSTIFICATION_1] a                  aida:TextJustification .
+			[JUSTIFICATION_1] aida:startOffset            [SO_1] .
+			[JUSTIFICATION_1] aida:endOffsetInclusive     [EO_1] }
+
+		OPTIONAL { [JUSTIFICATION_1] a                  aida:ImageJustification .
+			[JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
+			[BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
+			[BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
+			[BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
+			[BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
+
+		OPTIONAL { [JUSTIFICATION_1] a                  aida:KeyFrameVideoJustification .
+			[JUSTIFICATION_1] aida:keyFrame               [KFID_1] .
+			[JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
+			[BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
+			[BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
+			[BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
+			[BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
+
+		OPTIONAL { [JUSTIFICATION_1] a                  aida:ShotVideoJustification .
+			[JUSTIFICATION_1] aida:shot                   [SID_1] }
+
+		OPTIONAL { [JUSTIFICATION_1] a                  aida:AudioJustification .
+			[JUSTIFICATION_1] aida:startTimestamp         [ST_1] .
+			[JUSTIFICATION_1] aida:endTimestamp           [ET_1] }
+
+		OPTIONAL { [JUSTIFICATION_2] a                  aida:TextJustification .
+			[JUSTIFICATION_2] aida:startOffset            [SO_2] .
+			[JUSTIFICATION_2] aida:endOffsetInclusive     [EO_2] }
+
+		OPTIONAL { [JUSTIFICATION_2] a                  aida:ImageJustification .
+			[JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
+			[BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
+			[BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
+			[BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
+			[BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
+
+		OPTIONAL { [JUSTIFICATION_2] a                  aida:KeyFrameVideoJustification .
+			[JUSTIFICATION_2] aida:keyFrame               [KFID_2] .
+			[JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
+			[BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
+			[BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
+			[BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
+			[BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
+
+		OPTIONAL { [JUSTIFICATION_2] a                  aida:ShotVideoJustification .
+			[JUSTIFICATION_2] aida:shot                   [SID_2] }
+
+		OPTIONAL { [JUSTIFICATION_2] a                  aida:AudioJustification .
+			[JUSTIFICATION_2] aida:startTimestamp         [ST_2] .
+			[JUSTIFICATION_2] aida:endTimestamp           [ET_2] }
+
+END_SPARQL_EDGE_WHERE
+
+	$self->{WHERE_NODE_TEMPLATE} = <<'END_SPARQL_NODE_WHERE';
 		[STATEMENT1]    a                    rdf:Statement .
 		[STATEMENT1_TYPE_TRIPLE_TEMPLATE]
 		[STATEMENT1]    rdf:predicate        rdf:type .
@@ -2736,7 +2803,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 		OPTIONAL { [JUSTIFICATION] a                  aida:AudioJustification .
 			[JUSTIFICATION] aida:startTimestamp         [ST] .
 			[JUSTIFICATION] aida:endTimestamp           [ET] }
-END_SPARQL_WHERE
+END_SPARQL_NODE_WHERE
 
     $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv)];
         
@@ -2762,7 +2829,7 @@ sub process_edge {
 		$subject_type = $nist_type
 			if($edge->get("PREDICATE") =~ /$nist_type/)
 	}
-	$self->process_node($subject, $subject_type); 
+	my $subject_nodevariable = $self->process_node($subject, $subject_type);
 	my $object = $edge->get("OBJECT");
 	# See if you can find a single object type
 	my $object_type;
@@ -2778,14 +2845,14 @@ sub process_edge {
 			}
 		}
 	}
-	$self->process_node($object, $object_type);
+	my $object_nodevariable = $self->process_node($object, $object_type);
 	# Process the edge
 }
 
 sub process_node {
 	my ($self, $node, $type) = @_;
 	my $group_postfix = $self->get("NEXT_GROUP_POSTFIX");
-	my $where_clause = $self->get("WHERE_TEMPLATE");
+	my $where_clause = $self->get("WHERE_NODE_TEMPLATE");
 	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
 	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
 	my $statement1_type_triple_template = $self->get("STATEMENT1_TYPE_TRIPLE_TEMPLATE");
@@ -2794,9 +2861,11 @@ sub process_node {
 	my $image_entrypoint_constraints = $self->get("IMAGE_ENTRYPOINT_CONSTRAINTS");
 	my $video_entrypoint_constraints = $self->get("VIDEO_ENTRYPOINT_CONSTRAINTS");
 	my $audio_entrypoint_constraints = $self->get("AUDIO_ENTRYPOINT_CONSTRAINTS");
+	my ($retval_nodevariable, $retval_clustervariable);
 	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$group_postfix";
+		$retval_nodevariable = $new_variable if($variable eq "nid_ot");
 		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
@@ -2887,6 +2956,7 @@ sub process_node {
 		$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
 	}
 	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
+	$retval_nodevariable;
 }
 
 sub tostring {
