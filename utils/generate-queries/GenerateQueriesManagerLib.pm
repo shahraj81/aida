@@ -2601,9 +2601,7 @@ sub new {
     LOGGER => $logger,
     KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
-    NEXT_VARIABLE_POSTFIX => 10001,
-    NODE_VARIABLE_MAPPINGS => Container->new($logger, "RAW"),
-    NEXT_STATEMENT_POSTFIX => 1,
+    _NEXT_GROUP_POSTFIX => 10001,
     EDGES => $edges,
     ENTRYPOINTS => $entrypoints,
     SELECT_VARIABLES => [],
@@ -2622,15 +2620,11 @@ sub new {
   $self;
 }
 
-sub get_VARIABLE_POSTFIX {
-	my ($self, $node_id) = @_;
-	my $variable_postfix;
-	unless($self->get("NODE_VARIABLE_MAPPINGS")->exists($node_id)) {
-		$variable_postfix = $self->get("NEXT_VARIABLE_POSTFIX");
-		$self->set("NEXT_VARIABLE_POSTFIX", $variable_postfix+1);
-		$self->get("NODE_VARIABLE_MAPPINGS")->add($variable_postfix, $node_id);
-	}
-	$self->get("NODE_VARIABLE_MAPPINGS")->get("BY_KEY", $node_id);
+sub get_NEXT_GROUP_POSTFIX {
+	my ($self) = @_;
+	my $group_postfix = $self->get("_NEXT_GROUP_POSTFIX");
+	$self->set("_NEXT_VARIABLE_POSTFIX", $group_postfix+1);
+	$group_postfix;
 }
 
 sub setup_constants {
@@ -2790,8 +2784,8 @@ sub process_edge {
 
 sub process_node {
 	my ($self, $node, $type) = @_;
+	my $group_postfix = $self->get("NEXT_GROUP_POSTFIX");
 	my $where_clause = $self->get("WHERE_TEMPLATE");
-	my $variable_postfix = $self->get("VARIABLE_POSTFIX", $node->get("NODEID"));
 	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
 	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
 	my $statement1_type_triple_template = $self->get("STATEMENT1_TYPE_TRIPLE_TEMPLATE");
@@ -2802,11 +2796,7 @@ sub process_node {
 	my $audio_entrypoint_constraints = $self->get("AUDIO_ENTRYPOINT_CONSTRAINTS");
 	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
-		my $new_variable = "$variable\_$variable_postfix";
-		if($variable =~ /statement/) {
-			$new_variable = $new_variable . "_" . $self->get("NEXT_STATEMENT_POSTFIX");
-			$self->set("NEXT_STATEMENT_POSTFIX", $self->get("NEXT_STATEMENT_POSTFIX") + 1);
-		}
+		my $new_variable = "$variable\_$group_postfix";
 		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
