@@ -2863,7 +2863,7 @@ sub process_edge {
 	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$group_postfix";
-		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
+		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " " . $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
 	}
@@ -2887,7 +2887,7 @@ sub process_node {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$group_postfix";
 		$retval_nodevariable = $new_variable if($variable eq "nid_ot");
-		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
+		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " " . $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
 		$statement1_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
@@ -2982,7 +2982,12 @@ sub process_node {
 
 sub tostring {
 	my ($self) = @_;
-	"";
+	my $sparql = "SELECT ";
+	$sparql .= $self->get("SELECT_VARIABLES");
+	$sparql .= "\nWHERE\n";
+	$sparql .= $self->get("WHERE_CLAUSE");
+	$sparql .= "\n";
+	$sparql;
 }
 
 #####################################################################################
