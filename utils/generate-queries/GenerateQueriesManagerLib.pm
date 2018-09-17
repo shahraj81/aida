@@ -2692,7 +2692,9 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 
     [COMPOUND_JUSTIFICATION] a                           aida:CompoundJustification .
     [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_1] .
-    OPTIONAL { [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_2] . }
+    [COMPOUND_JUSTIFICATION] aida:source                 [DOCEID_1] .
+    OPTIONAL { [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_2] . 
+      [COMPOUND_JUSTIFICATION] aida:source                [DOCEID_2] . }
 
 		OPTIONAL { [JUSTIFICATION_1] a                  aida:TextJustification .
 			[JUSTIFICATION_1] aida:startOffset            [SO_1] .
@@ -2805,12 +2807,18 @@ END_SPARQL_EDGE_WHERE
 			[JUSTIFICATION] aida:endTimestamp           [ET] }
 END_SPARQL_NODE_WHERE
 
-    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv)];
-        
+    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv
+													doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 brx_1 bry_1 st_1 et_1
+													doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 brx_2 bry_2 st_2 et_2)];
+
     $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv
-    											statement1 statement2 statement3 statement4 cluster justification justification_ep bb
-    											confidence type_cv cm1_confidence cm2_confidence bb_ep epulx epuly eplrx eplry epst 
-    											epet epso epeo)];
+													statement1 statement2 statement3 statement4 cluster justification justification_ep bb
+													confidence type_cv cm1_confidence cm2_confidence bb_ep epulx epuly eplrx eplry epst
+													epet epso epeo)];
+
+    $self->{"ALL_EDGE_VARIABLES_TEMPLATE"} = [qw(statement1 edge_confidence compound_justification edge_cv
+													justification_1 doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 brx_1 bry_1 st_1 et_1
+													justification_2 doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 brx_2 bry_2 st_2 et_2 )]
 }
 
 sub process_all_edges {
@@ -2846,7 +2854,20 @@ sub process_edge {
 		}
 	}
 	my $object_nodevariable = $self->process_node($object, $object_type);
+	my $edge_type = $edge->get("PREDICATE");
 	# Process the edge
+	my $group_postfix = $self->get("NEXT_GROUP_POSTFIX");
+	my $where_clause = $self->get("WHERE_EDGE_TEMPLATE");
+	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
+	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
+	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
+		my $is_select_variable = $select_node_variables_template{$variable};
+		my $new_variable = "$variable\_$group_postfix";
+		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
+		my $old_variable = "\\[" . uc $variable . "\\]";
+		$where_clause =~ s/$old_variable/\?$new_variable/gs;
+	}
+	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
 }
 
 sub process_node {
