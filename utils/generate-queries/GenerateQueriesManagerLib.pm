@@ -2603,6 +2603,7 @@ sub new {
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     NEXT_VARIABLE_POSTFIX => 10001,
     NODE_VARIABLE_MAPPINGS => Container->new($logger, "RAW"),
+    NEXT_STATEMENT_POSTFIX => 1,
     EDGES => $edges,
     ENTRYPOINTS => $entrypoints,
     SELECT_VARIABLES => [],
@@ -2802,6 +2803,10 @@ sub process_node {
 	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$variable_postfix";
+		if($variable =~ /statement/) {
+			$new_variable = $new_variable . "_" . $self->get("NEXT_STATEMENT_POSTFIX");
+			$self->set("NEXT_STATEMENT_POSTFIX", $self->get("NEXT_STATEMENT_POSTFIX") + 1);
+		}
 		push(@{$self->get("SELECT_VARIABLES")}, $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
