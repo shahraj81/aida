@@ -2563,8 +2563,9 @@ sub write_to_file {
 		$xml_entrypoints_container->add($xml_entrypoint);
 	}
 	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
-	my $sparql = $self->get("SPARQL");
-	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 0);
+	my $sparql = "";
+	$sparql = $self->get("SPARQL") unless $query_id =~ /_0$/;
+	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
 	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints, $xml_sparql);
 	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
 	print $program_output $xml_query->tostring(2);
@@ -2604,7 +2605,7 @@ sub new {
     _NEXT_GROUP_POSTFIX => 10001,
     EDGES => $edges,
     ENTRYPOINTS => $entrypoints,
-    SELECT_VARIABLES => [],
+    SELECT_VARIABLES => "",
     WHERE_CLAUSE_STRING => "",
     WHERE_TEMPLATE => undef,
     TEXT_ENTRYPOINT_CONSTRAINTS => undef,
@@ -2623,12 +2624,19 @@ sub new {
 sub get_NEXT_GROUP_POSTFIX {
 	my ($self) = @_;
 	my $group_postfix = $self->get("_NEXT_GROUP_POSTFIX");
-	$self->set("_NEXT_VARIABLE_POSTFIX", $group_postfix+1);
+	$self->set("_NEXT_GROUP_POSTFIX", $group_postfix+1);
 	$group_postfix;
 }
 
 sub setup_constants {
 	my ($self) = @_;
+
+	$self->{PREFIX} = <<'PREFIX';
+PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+		PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+		PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+		PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+PREFIX
 
 	$self->{TEXT_ENTRYPOINT_CONSTRAINTS} = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
 [JUSTIFICATION_EP] a                         aida:TextJustification .
@@ -2690,63 +2698,64 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 		[STATEMENT1]      aida:justifiedBy     [COMPOUND_JUSTIFICATION] .
 		[EDGE_CONFIDENCE] aida:confidenceValue [EDGE_CV] .
 
-    [COMPOUND_JUSTIFICATION] a                           aida:CompoundJustification .
-    [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_1] .
-    [COMPOUND_JUSTIFICATION] aida:source                 [DOCEID_1] .
-    OPTIONAL { [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_2] . 
-      [COMPOUND_JUSTIFICATION] aida:source                [DOCEID_2] . }
+		[COMPOUND_JUSTIFICATION] a                           aida:CompoundJustification .
+		[COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_1] .
+		[COMPOUND_JUSTIFICATION] aida:source                 [DOCEID_1] .
 
-		OPTIONAL { [JUSTIFICATION_1] a                  aida:TextJustification .
-			[JUSTIFICATION_1] aida:startOffset            [SO_1] .
-			[JUSTIFICATION_1] aida:endOffsetInclusive     [EO_1] }
+		OPTIONAL { [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_2] . 
+			   [COMPOUND_JUSTIFICATION] aida:source                 [DOCEID_2] . }
 
-		OPTIONAL { [JUSTIFICATION_1] a                  aida:ImageJustification .
-			[JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
-			[BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
-			[BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
-			[BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
-			[BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
+		OPTIONAL { [JUSTIFICATION_1] a                           aida:TextJustification .
+			   [JUSTIFICATION_1] aida:startOffset            [SO_1] .
+			   [JUSTIFICATION_1] aida:endOffsetInclusive     [EO_1] }
 
-		OPTIONAL { [JUSTIFICATION_1] a                  aida:KeyFrameVideoJustification .
-			[JUSTIFICATION_1] aida:keyFrame               [KFID_1] .
-			[JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
-			[BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
-			[BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
-			[BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
-			[BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
+		OPTIONAL { [JUSTIFICATION_1] a                           aida:ImageJustification .
+			   [JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
+			   [BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
+			   [BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
+			   [BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
+			   [BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
 
-		OPTIONAL { [JUSTIFICATION_1] a                  aida:ShotVideoJustification .
-			[JUSTIFICATION_1] aida:shot                   [SID_1] }
+		OPTIONAL { [JUSTIFICATION_1] a                           aida:KeyFrameVideoJustification .
+			   [JUSTIFICATION_1] aida:keyFrame               [KFID_1] .
+			   [JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
+			   [BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
+			   [BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
+			   [BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
+			   [BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
 
-		OPTIONAL { [JUSTIFICATION_1] a                  aida:AudioJustification .
-			[JUSTIFICATION_1] aida:startTimestamp         [ST_1] .
-			[JUSTIFICATION_1] aida:endTimestamp           [ET_1] }
+		OPTIONAL { [JUSTIFICATION_1] a                           aida:ShotVideoJustification .
+			   [JUSTIFICATION_1] aida:shot                   [SID_1] }
 
-		OPTIONAL { [JUSTIFICATION_2] a                  aida:TextJustification .
-			[JUSTIFICATION_2] aida:startOffset            [SO_2] .
-			[JUSTIFICATION_2] aida:endOffsetInclusive     [EO_2] }
+		OPTIONAL { [JUSTIFICATION_1] a                           aida:AudioJustification .
+			   [JUSTIFICATION_1] aida:startTimestamp         [ST_1] .
+			   [JUSTIFICATION_1] aida:endTimestamp           [ET_1] }
 
-		OPTIONAL { [JUSTIFICATION_2] a                  aida:ImageJustification .
-			[JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
-			[BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
-			[BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
-			[BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
-			[BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
+		OPTIONAL { [JUSTIFICATION_2] a                           aida:TextJustification .
+			   [JUSTIFICATION_2] aida:startOffset            [SO_2] .
+			   [JUSTIFICATION_2] aida:endOffsetInclusive     [EO_2] }
 
-		OPTIONAL { [JUSTIFICATION_2] a                  aida:KeyFrameVideoJustification .
-			[JUSTIFICATION_2] aida:keyFrame               [KFID_2] .
-			[JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
-			[BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
-			[BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
-			[BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
-			[BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
+		OPTIONAL { [JUSTIFICATION_2] a                           aida:ImageJustification .
+			   [JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
+			   [BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
+			   [BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
+			   [BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
+			   [BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
 
-		OPTIONAL { [JUSTIFICATION_2] a                  aida:ShotVideoJustification .
-			[JUSTIFICATION_2] aida:shot                   [SID_2] }
+		OPTIONAL { [JUSTIFICATION_2] a                           aida:KeyFrameVideoJustification .
+			   [JUSTIFICATION_2] aida:keyFrame               [KFID_2] .
+			   [JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
+			   [BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
+			   [BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
+			   [BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
+			   [BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
 
-		OPTIONAL { [JUSTIFICATION_2] a                  aida:AudioJustification .
-			[JUSTIFICATION_2] aida:startTimestamp         [ST_2] .
-			[JUSTIFICATION_2] aida:endTimestamp           [ET_2] }
+		OPTIONAL { [JUSTIFICATION_2] a                           aida:ShotVideoJustification .
+			   [JUSTIFICATION_2] aida:shot                   [SID_2] }
+
+		OPTIONAL { [JUSTIFICATION_2] a                           aida:AudioJustification .
+			   [JUSTIFICATION_2] aida:startTimestamp         [ST_2] .
+			   [JUSTIFICATION_2] aida:endTimestamp           [ET_2] }
 
 END_SPARQL_EDGE_WHERE
 
@@ -2781,30 +2790,30 @@ END_SPARQL_EDGE_WHERE
 		[ENTRYPOINT_CONSTRAINTS]
 
 		OPTIONAL { [JUSTIFICATION] a                  aida:TextJustification .
-			[JUSTIFICATION] aida:startOffset            [SO] .
-			[JUSTIFICATION] aida:endOffsetInclusive     [EO] }
+			   [JUSTIFICATION] aida:startOffset            [SO] .
+			   [JUSTIFICATION] aida:endOffsetInclusive     [EO] }
 
 		OPTIONAL { [JUSTIFICATION] a                  aida:ImageJustification .
-			[JUSTIFICATION] aida:boundingBox            [BB]  .
-			[BB]            aida:boundingBoxUpperLeftX  [ULX] .
-			[BB]            aida:boundingBoxUpperLeftY  [ULY] .
-			[BB]            aida:boundingBoxLowerRightX [BRX] .
-			[BB]            aida:boundingBoxLowerRightY [BRY] }
+			   [JUSTIFICATION] aida:boundingBox            [BB]  .
+			   [BB]            aida:boundingBoxUpperLeftX  [ULX] .
+			   [BB]            aida:boundingBoxUpperLeftY  [ULY] .
+			   [BB]            aida:boundingBoxLowerRightX [BRX] .
+			   [BB]            aida:boundingBoxLowerRightY [BRY] }
 
 		OPTIONAL { [JUSTIFICATION] a                  aida:KeyFrameVideoJustification .
-			[JUSTIFICATION] aida:keyFrame               [KFID] .
-			[JUSTIFICATION] aida:boundingBox            [BB]  .
-			[BB]            aida:boundingBoxUpperLeftX  [ULX] .
-			[BB]            aida:boundingBoxUpperLeftY  [ULY] .
-			[BB]            aida:boundingBoxLowerRightX [BRX] .
-			[BB]            aida:boundingBoxLowerRightY [BRY] }
+			   [JUSTIFICATION] aida:keyFrame               [KFID] .
+			   [JUSTIFICATION] aida:boundingBox            [BB]  .
+			   [BB]            aida:boundingBoxUpperLeftX  [ULX] .
+			   [BB]            aida:boundingBoxUpperLeftY  [ULY] .
+			   [BB]            aida:boundingBoxLowerRightX [BRX] .
+			   [BB]            aida:boundingBoxLowerRightY [BRY] }
 
 		OPTIONAL { [JUSTIFICATION] a                  aida:ShotVideoJustification .
-			[JUSTIFICATION] aida:shot                   [SID] }
+			   [JUSTIFICATION] aida:shot                   [SID] }
 
 		OPTIONAL { [JUSTIFICATION] a                  aida:AudioJustification .
-			[JUSTIFICATION] aida:startTimestamp         [ST] .
-			[JUSTIFICATION] aida:endTimestamp           [ET] }
+			   [JUSTIFICATION] aida:startTimestamp         [ST] .
+			   [JUSTIFICATION] aida:endTimestamp           [ET] }
 END_SPARQL_NODE_WHERE
 
     $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv
@@ -2817,8 +2826,8 @@ END_SPARQL_NODE_WHERE
 													epet epso epeo)];
 
     $self->{"ALL_EDGE_VARIABLES_TEMPLATE"} = [qw(statement1 edge_confidence compound_justification edge_cv
-													justification_1 doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 brx_1 bry_1 st_1 et_1
-													justification_2 doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 brx_2 bry_2 st_2 et_2 )]
+													justification_1 doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 brx_1 bry_1 st_1 et_1 bb_1
+													justification_2 doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 brx_2 bry_2 st_2 et_2 bb_2)]
 }
 
 sub process_all_edges {
@@ -2848,8 +2857,10 @@ sub process_edge {
 	else {
 		# otherwise, see if you obtain this information from the entrypoints
 		foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
+			next if $entrypoint->{TYPE} eq "STRING_ENTRYPOINT";
 			if($object->get("NODEID") eq $entrypoint->{NODEID}) {
-				$object_type = $object->get("MENTION", $object->get("NODEID"))->get("NIST_TYPE") unless($object_type);
+				$object_type = $object->get("MENTION", $entrypoint->{"MENTIONID"})->get("NIST_TYPE") unless($object_type);
+				last if $object_type;
 			}
 		}
 	}
@@ -2858,16 +2869,19 @@ sub process_edge {
 	# Process the edge
 	my $group_postfix = $self->get("NEXT_GROUP_POSTFIX");
 	my $where_clause = $self->get("WHERE_EDGE_TEMPLATE");
+	$where_clause =~ s/\[SUBJECT_NODEID\]/$subject_nodevariable/g;
+	$where_clause =~ s/\[OBJECT_NODEID\]/$object_nodevariable/g;
+	$where_clause =~ s/\[EDGE_TYPE\]/$edge_type/g;
 	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
 	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
-	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
+	foreach my $variable(@{$self->get("ALL_EDGE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$group_postfix";
 		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " " . $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
 	}
-	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
+	$self->set("WHERE_CLAUSE_STRING", $self->get("WHERE_CLAUSE_STRING") . "\n" . $where_clause);
 }
 
 sub process_node {
@@ -2976,17 +2990,20 @@ sub process_node {
 	else {
 		$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
 	}
-	$self->set("WHERE_CLAUSE", $self->get("WHERE_CLAUSE") . "\n" . $where_clause);
+	$self->set("WHERE_CLAUSE_STRING", $self->get("WHERE_CLAUSE_STRING") . "\n" . $where_clause);
 	$retval_nodevariable;
 }
 
 sub tostring {
 	my ($self) = @_;
-	my $sparql = "SELECT ";
+	my $sparql = "\n           <![CDATA[";
+	$sparql .= "           ", $self->get("PREFIX");
+	$sparql .= "\n           SELECT";
 	$sparql .= $self->get("SELECT_VARIABLES");
-	$sparql .= "\nWHERE\n";
-	$sparql .= $self->get("WHERE_CLAUSE");
-	$sparql .= "\n";
+	$sparql .= "\n           WHERE {";
+	$sparql .= $self->get("WHERE_CLAUSE_STRING");
+	$sparql .= "           }\n";
+	$sparql .= "           ]]>\n";
 	$sparql;
 }
 
@@ -3093,6 +3110,7 @@ sub tostring {
 	$retVal .= "\n" if $self->get("NEWLINE");
 	$retVal .= $self->get("ELEMENT")->tostring($indent+2) if ref $self->get("ELEMENT");
 	$retVal .= " " . Encode::encode_utf8($self->get("ELEMENT")) . " " unless ref $self->get("ELEMENT");
+	$retVal .= "\n" if $self->get("ELEMENT") eq "";
 	$retVal .= " " x $indent if $self->get("NEWLINE");
 	$retVal .= $self->get("CLOSETAG");
 	$retVal .= "\n";
