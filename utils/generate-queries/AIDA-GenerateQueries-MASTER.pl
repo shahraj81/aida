@@ -8,7 +8,7 @@ my $error_filename = "output/problems.log";
 $logger->set_error_output($error_filename);
 my $error_output = $logger->get_error_output();
 
-my $postfix = "_original";
+my $postfix = "_small";
 
 my $nodes_data_files = Container->new("String");
 $nodes_data_files->add("input/annotations-local/data/T101$postfix/T101_ent_mentions.tab");
@@ -24,7 +24,7 @@ $acceptable_relevance->add("fully-relevant");
 
 my $parameters = Parameters->new($logger);
 $parameters->set("TOPICID", "T101");
-$parameters->set("HYPOTHESISID", "T101_Q002_H002");
+$parameters->set("HYPOTHESISID", "T101_Q002_H001");
 $parameters->set("IGNORE_NIL", "true");
 $parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/DocumentIDsMappings.ttl");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
@@ -45,6 +45,7 @@ $parameters->set("GRAPH_QUERIES_XML_OUTPUT_FILE", "output$postfix/T101_graph_que
 $parameters->set("CLASS_QUERIES_PREFIX", "AIDA_CL_2018");
 $parameters->set("ZEROHOP_QUERIES_PREFIX", "AIDA_ZH_2018");
 $parameters->set("GRAPH_QUERIES_SUBPREFIX", "AIDA_GR_2018");
+$parameters->set("EDGE_QUERIES_SUBPREFIX", "AIDA_EG_2018");
 
 my $graph = Graph->new($logger, $parameters);
 $graph->generate_queries();

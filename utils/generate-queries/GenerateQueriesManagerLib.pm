@@ -1334,6 +1334,13 @@ sub get_GRAPH_QUERIES_PREFIX {
 	$query_id_prefix;
 }
 
+sub get_EDGE_QUERIES_PREFIX {
+	my ($self) = @_;
+	my $query_id_prefix = $self->get("EDGE_QUERIES_SUBPREFIX");
+	$query_id_prefix .= "_" . $self->get("HYPOTHESISID");
+	$query_id_prefix;
+}
+
 #####################################################################################
 # CanonicalMention
 #####################################################################################
@@ -1697,9 +1704,15 @@ sub generate_zerohop_queries {
 sub generate_graph_queries {
 	my ($self) = @_;
 	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
+	$self->generate_all_edges_graph_queries($queries);
+	$self->generate_single_edge_graph_queries($queries);
+	$queries->write_to_file();
+}
+
+sub generate_all_edges_graph_queries {
+	my ($self, $queries) = @_;
 	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
 	my $i = 0;
-
 	# Edges and node relevant to the hypothesis
 	my $edges = Edges->new($self->get("LOGGER"));
 	my $nodes = Nodes->new($self->get("LOGGER"));
@@ -1724,9 +1737,10 @@ sub generate_graph_queries {
 		my $composite_query_id = "$query_id_prefix\_$i\_0";
 		my $composite_query = GraphQuery->new($self->get("LOGGER"),
 											$self->get("PARAMETERS"),
+											"ALL_EDGES_GRAPH_QUERY",
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, $edges);
+											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
 		my $j = 0;
 		foreach my $canonical_mention(@matching_cannoical_mentions) {
 			next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
@@ -1734,9 +1748,10 @@ sub generate_graph_queries {
 			my $single_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
 			my $single_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
 											$self->get("PARAMETERS"),
+											"ALL_EDGES_GRAPH_QUERY",
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, $edges);
+											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
 			$composite_query->add_entrypoint($canonical_mention);
 			$single_entrypoint_query->add_entrypoint($canonical_mention);
 			$queries->add($single_entrypoint_query);
@@ -1749,9 +1764,10 @@ sub generate_graph_queries {
 					my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
 					my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
 												$self->get("PARAMETERS"),
+												"ALL_EDGES_GRAPH_QUERY",
 												$self->get("KEYFRAMES_BOUNDINGBOXES"),
 												$self->get("IMAGES_BOUNDINGBOXES"),
-												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, $edges);
+												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
 					my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
 																NODEID => $node->get("NODEID"),
 																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
@@ -1767,8 +1783,78 @@ sub generate_graph_queries {
 		}
 		$queries->add($composite_query);
 	}
-	
-	$queries->write_to_file();
+}
+
+sub generate_single_edge_graph_queries {
+	my ($self, $queries) = @_;
+	my $query_id_prefix = $self->get("PARAMETERS")->get("EDGE_QUERIES_PREFIX");
+	my $i = 0;
+	foreach my $edge($self->get("EDGES")->toarray()) {
+		my $edges = Edges->new($self->get("LOGGER"));
+		$edges->add($edge);
+		my $subject = $edge->get("SUBJECT");
+		my $object = $edge->get("OBJECT");
+		if($subject->has_compatible_types() && $object->has_compatible_types()) {
+			if($self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($subject->get("NODEID")) &&
+				$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($object->get("NODEID"))) {
+				my $key = $edge->get("PREDICATE") . "(" . $subject->get("NODEID") . "," . $object->get("NODEID") . ")";
+				my %strings_used;
+				foreach my $node(($subject, $object)) {
+					my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "NODEID", $node->get("NODEID"));
+					next unless @matching_cannoical_mentions;
+					$i++;
+					my $composite_query_id = "$query_id_prefix\_$i\_0";
+					my $composite_query = GraphQuery->new($self->get("LOGGER"),
+											$self->get("PARAMETERS"),
+											"SINGLE_EDGE_GRAPH_QUERY",
+											$self->get("KEYFRAMES_BOUNDINGBOXES"),
+											$self->get("IMAGES_BOUNDINGBOXES"),
+											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
+					my $j = 0;
+					foreach my $canonical_mention(@matching_cannoical_mentions) {
+						next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
+						$j++;
+						my $single_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
+						my $single_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
+											$self->get("PARAMETERS"),
+											"SINGLE_EDGE_GRAPH_QUERY",
+											$self->get("KEYFRAMES_BOUNDINGBOXES"),
+											$self->get("IMAGES_BOUNDINGBOXES"),
+											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
+						$composite_query->add_entrypoint($canonical_mention);
+						$single_entrypoint_query->add_entrypoint($canonical_mention);
+						$queries->add($single_entrypoint_query);
+						# string entrypoint
+						next if $node->get("TEXT_STRING", $canonical_mention) eq "";
+						unless($strings_used{$node->get("NODEID")}
+									{$node->get("NIST_TYPE", $canonical_mention)}
+									{$node->get("TEXT_STRING", $canonical_mention)} && $node->get("TEXT_STRING", $canonical_mention) !~ /^\s+$/) {
+							$j++;
+							my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
+							my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
+												$self->get("PARAMETERS"),
+												"SINGLE_EDGE_GRAPH_QUERY",
+												$self->get("KEYFRAMES_BOUNDINGBOXES"),
+												$self->get("IMAGES_BOUNDINGBOXES"),
+												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
+							my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
+																NODEID => $node->get("NODEID"),
+																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
+																NIST_TYPE => $node->get("NIST_TYPE", $canonical_mention), 
+																TEXT_STRING => $node->get("TEXT_STRING", $canonical_mention)};
+							$string_entrypoint_query->add_entrypoint($string_entrypoint);
+							$composite_query->add_entrypoint($string_entrypoint);
+							$queries->add($string_entrypoint_query);
+							$strings_used{$node->get("NODEID")}
+											{$node->get("NIST_TYPE", $canonical_mention)}
+											{$node->get("TEXT_STRING", $canonical_mention)} = 1;
+						}
+					}
+					$queries->add($composite_query);
+				}
+			}
+		}
+	}
 }
 
 #####################################################################################
@@ -2442,7 +2528,7 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, $edges) = @_;
+  my ($class, $logger, $parameters, $type, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, $generate_sparql, $edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
     PARAMETERS => $parameters,
@@ -2452,15 +2538,21 @@ sub new {
     QUERY_ID => $query_id,
     EDGES => $edges,
     ENTRYPOINTS => [],
+    GENERATE_SPARQL => undef,
+    TYPE => $type,
     LOGGER => $logger,
   };
   bless($self, $class);
+  $self->set("GENERATE_SPARQL", 1) if($generate_sparql eq "DO_GENERATE_SPARQL");
+  $self->set("GENERATE_SPARQL", 0) if($generate_sparql eq "DONOT_GENERATE_SPARQL");
   $self;
 }
 
 sub get_NUMERIC_ID {
 	my ($self, $part_num) = @_;
-	my $prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
+	my $prefix;
+	$prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX") if $self->get("TYPE") eq "ALL_EDGES_GRAPH_QUERY";
+	$prefix = $self->get("PARAMETERS")->get("EDGE_QUERIES_PREFIX") if $self->get("TYPE") eq "SINGLE_EDGE_GRAPH_QUERY";
 	my ($numeric_id_p1, $numeric_id_p2) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+?)_(\d+?)$/;
 	return $numeric_id_p1 if $part_num eq "P1";
 	return $numeric_id_p2 if $part_num eq "P2";
@@ -2564,7 +2656,7 @@ sub write_to_file {
 	}
 	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
 	my $sparql = "";
-	$sparql = $self->get("SPARQL") unless $query_id =~ /_0$/;
+	$sparql = $self->get("SPARQL") if($self->get("GENERATE_SPARQL"));
 	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
 	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints, $xml_sparql);
 	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
