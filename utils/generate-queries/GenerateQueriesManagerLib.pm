@@ -913,18 +913,6 @@ sub add_justification {
   $self->get("JUSTIFICATIONS")->add($justification);
 }
 
-sub get_SOURCE_DOCUMENTS {
-  my ($self) = @_;
-  my @source_docs;
-  foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
-    foreach my $span($justification->get("SPANS")->toarray()) {
-      push(@source_docs, $span->get("DOCUMENTID"));
-    }
-  }
-  push (@source_docs, "nil") unless scalar @source_docs;
-  @source_docs;
-}
-
 sub get_START {
   my ($self) = @_;
   my @starts;
@@ -1030,8 +1018,7 @@ sub new {
 
 sub toarray {
 	my ($self) = @_;
-	sort {$a->{DOCUMENTID} cmp $b->{DOCUMENTID} ||
-					$a->{DOCUMENTEID} cmp $b->{DOCUMENTEID} ||
+	sort {$a->{DOCUMENTEID} cmp $b->{DOCUMENTEID} ||
 					$a->{START} cmp $b->{START} ||
 					$a->{END} cmp $b->{END}}
 		@{$self->{STORE}{LIST} || []};
@@ -1046,12 +1033,11 @@ package Span;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $documentid, $documenteid, $start, $end) = @_;
+  my ($class, $logger, $documenteid, $start, $end) = @_;
   $start = "nil" if $start eq "";
   $end = "nil" if $end eq "";
   my $self = {
     CLASS => 'Span',
-    DOCUMENTID => $documentid,
     DOCUMENTEID => $documenteid,
     START => $start,
     END => $end,
@@ -1580,11 +1566,9 @@ sub load_nodes {
 				if $thedocumentelement_encodingformat eq "nil";
 			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BY_KEY", 
 																										$thedocumentelement_encodingformat);
-			my $document_id = $thedocumentelement->get("DOCUMENTID");
 			my $mention = Mention->new($self->get("LOGGER"));
 			my $span = Span->new(
 								$self->get("LOGGER"),
-								$document_id,
 								$document_eid,
 								$entry->get("textoffset_startchar"),
 								$entry->get("textoffset_endchar"),
@@ -1725,7 +1709,7 @@ sub generate_all_edges_graph_queries {
 											"ALL_EDGES_GRAPH_QUERY",
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
+											$composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
 		my $j = 0;
 		foreach my $canonical_mention(@matching_cannoical_mentions) {
 			next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
@@ -1736,7 +1720,7 @@ sub generate_all_edges_graph_queries {
 											"ALL_EDGES_GRAPH_QUERY",
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
+											$single_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
 			$composite_query->add_entrypoint($canonical_mention);
 			$single_entrypoint_query->add_entrypoint($canonical_mention);
 			$queries->add($single_entrypoint_query);
@@ -1752,7 +1736,7 @@ sub generate_all_edges_graph_queries {
 												"ALL_EDGES_GRAPH_QUERY",
 												$self->get("KEYFRAMES_BOUNDINGBOXES"),
 												$self->get("IMAGES_BOUNDINGBOXES"),
-												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
+												$string_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
 					my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
 																NODEID => $node->get("NODEID"),
 																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
@@ -1794,7 +1778,7 @@ sub generate_single_edge_graph_queries {
 											"SINGLE_EDGE_GRAPH_QUERY",
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
+											$composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
 					my $j = 0;
 					foreach my $canonical_mention(@matching_cannoical_mentions) {
 						next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
@@ -1805,7 +1789,7 @@ sub generate_single_edge_graph_queries {
 											"SINGLE_EDGE_GRAPH_QUERY",
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$self->get("DOCUMENTIDS_MAPPINGS"), $single_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
+											$single_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
 						$composite_query->add_entrypoint($canonical_mention);
 						$single_entrypoint_query->add_entrypoint($canonical_mention);
 						$queries->add($single_entrypoint_query);
@@ -1821,7 +1805,7 @@ sub generate_single_edge_graph_queries {
 												"SINGLE_EDGE_GRAPH_QUERY",
 												$self->get("KEYFRAMES_BOUNDINGBOXES"),
 												$self->get("IMAGES_BOUNDINGBOXES"),
-												$self->get("DOCUMENTIDS_MAPPINGS"), $string_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
+												$string_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
 							my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
 																NODEID => $node->get("NODEID"),
 																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
@@ -2513,13 +2497,12 @@ package GraphQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $parameters, $type, $keyframes_boundingboxes, $images_boundingboxes, $documentids_mappings, $query_id, $generate_sparql, $edges) = @_;
+  my ($class, $logger, $parameters, $type, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $generate_sparql, $edges) = @_;
   my $self = {
     CLASS => 'GraphQuery',
     PARAMETERS => $parameters,
     KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
-    DOCUMENTIDS_MAPPINGS => $documentids_mappings,
     QUERY_ID => $query_id,
     EDGES => $edges,
     ENTRYPOINTS => [],
