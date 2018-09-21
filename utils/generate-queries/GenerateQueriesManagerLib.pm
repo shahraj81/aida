@@ -1704,7 +1704,7 @@ sub generate_zerohop_queries {
 sub generate_graph_queries {
 	my ($self) = @_;
 	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
-	#$self->generate_all_edges_graph_queries($queries);
+	$self->generate_all_edges_graph_queries($queries);
 	$self->generate_single_edge_graph_queries($queries);
 	$queries->write_to_file();
 }
