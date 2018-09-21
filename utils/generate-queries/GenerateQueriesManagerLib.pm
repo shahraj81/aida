@@ -1416,8 +1416,8 @@ sub get_DOCUMENTELEMENTS {
 sub load_data {
 	my ($self) = @_;
 
-	$self->load_images_boundingboxes();
 	$self->load_keyframes_boundingboxes();
+	$self->load_images_boundingboxes();
 	$self->load_nodes();
 	$self->load_edges();
 	$self->load_hypothesis_relevant_nodeids();
@@ -1481,10 +1481,13 @@ sub load_images_boundingboxes {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
-		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->get("LOGGER"), $entry->get("doceid"), $entry->get("type"),
-												$entry->get("top_left_x"), $entry->get("top_left_y"),
-												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
-								$entry->get("doceid"));
+		my $filename = $entry->get("filename");
+		my $doceid = $filename;
+		$doceid =~ s/\..*?$//;
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->get("LOGGER"), $entry->get("doceid"), undef,
+												0, 0, $bottom_right_x, $bottom_right_y), $doceid);
 	}
 }
 
@@ -1493,9 +1496,11 @@ sub load_keyframes_boundingboxes {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("KEYFRAMES_BOUNDINGBOXES_FILE"));
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry( $entries->toarray() ){
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
 		$self->get("KEYFRAMES_BOUNDINGBOXES")->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
-												$entry->get("top_left_x"), $entry->get("top_left_y"),
-												$entry->get("bottom_right_x"), $entry->get("bottom_right_y")),
+												0, 0,
+												$bottom_right_x, $bottom_right_y),
 								$entry->get("keyframeid"));
 	}
 }
@@ -1639,6 +1644,8 @@ sub generate_zerohop_queries {
 	my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
 	foreach my $node($self->get("NODES")->toarray()) {
 		foreach my $mention($node->get("MENTIONS")->toarray()){
+			my ($canonical_mention) = $self->get("CANONICAL_MENTIONS")->get("WHERE", "MENTIONID", $mention->get("MENTIONID"));
+			next unless $canonical_mention;
 			my $enttype = $mention->get("NIST_TYPE");
 			next unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true");
 			my $modality = $mention->get("MODALITY");
@@ -1659,11 +1666,12 @@ sub generate_zerohop_queries {
 				my $doceid = $span->get("DOCUMENTEID");
 				my $start = $span->get("START");
 				my $end = $span->get("END");
+				my $keyframe_id = $canonical_mention->get("KEYFRAMEID") if $modality eq "video";
 				my $query = NonNameStringZeroHopQuery->new($self->get("LOGGER"),
 											$self->get("PARAMETERS"),
 											$self->get("KEYFRAMES_BOUNDINGBOXES"),
 											$self->get("IMAGES_BOUNDINGBOXES"),
-											$query_id, $enttype, $doceid, $modality, $start, $end);
+											$query_id, $enttype, $modality, $doceid, $keyframe_id, $start, $end);
 				$queries->add($query);
 			}
 		}
@@ -2226,7 +2234,7 @@ package NonNameStringZeroHopQuery;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $enttype, $doceid, $modality, $start, $end) = @_;
+  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $enttype, $modality, $doceid, $keyframe_id, $start, $end) = @_;
   my $self = {
     CLASS => 'NonNameStringZeroHopQuery',
     PARAMETERS => $parameters,
@@ -2235,6 +2243,7 @@ sub new {
     QUERY_ID => $query_id,
     ENTTYPE => $enttype,
     DOCUMENTELEMENTID => $doceid,
+    KEYFRAMEID => $keyframe_id,
     MODALITY => $modality,
     START => $start,
     END => $end,
@@ -2263,9 +2272,7 @@ sub write_to_file {
 	my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
 	my ($keyframeid, $xml_keyframeid);
 	if($modality eq "video") {
-		# Get a KeyFrameID; It doesn't matter for this version which KeyFrameID it is.
-		# This needs to change for evaluation data once we have annotations at the keyframe level
-		($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
+		$keyframeid = $self->get("KEYFRAMEID");
 		my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
 		$start = $keyframe_boundingbox->get("START");
 		$end = $keyframe_boundingbox->get("END");

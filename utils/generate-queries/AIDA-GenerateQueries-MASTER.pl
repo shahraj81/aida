@@ -36,8 +36,8 @@ $parameters->set("HYPOTHESES_FILE", "input/annotations-local/data/$topic_id$post
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
 $parameters->set("EDGES_DATA_FILES", $edge_data_files);
 $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
-$parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
-$parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
+$parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes_LDC2018E62.tab");
+$parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes_LDC2018E62.tab");
 $parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
 $parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/canonical_mentions_$topic_id$postfix/P101_P102_P103_canonical_mentions_fixed_1.tsv");
 #$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/canonical_mentions_$topic_id$postfix/$topic_id\_canonical_mentions.tsv");
