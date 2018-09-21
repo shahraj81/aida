@@ -118,8 +118,11 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_RAW_KEY                         FATAL_ERROR    Missing key %s in container of type %s
-  MISSING_NODEID_FOR_MENTIONID            WARNING        Missing node_id for nodemention_id %s 
+  MISSING_NODEID_FOR_MENTIONID            WARNING        Missing node_id for nodemention_id %s
+  MULTIPLE_PARENTS                        WARNING        Document element %s has multiple parents %s
   SKIPPING_NODE                           DEBUG_INFO     Skipping node %s because it is not relevant to topic-level hypothesis
+  UNDEFINED_DOCUMENT                      WARNING        Undefined document for document element %s
+  UNDEFINED_VARIABLE                      FATAL_ERROR    Undefined variable %s
   UNEXPECTED_RECORD_DEBUG_INFO_CALL       WARNING        unexpected call to record_debug_info()
   ZEROHOP_QUERY_DEBUG_INFO_01             DEBUG_INFO     Zero-hop query %s corresponds to mention %s of node %s (treeid = %s)
 END_PROBLEM_FORMATS
@@ -493,6 +496,9 @@ sub load_data {
 		if($line =~ /schema:isPartOf\s+?(ldc:.*?)\s*?[.;]\s*?$/i) {
 			# $uri contains document_element_id
 			$document_uri = $1;
+			if($document_uri =~ /\,/) {
+				$self->get("LOGGER")->record_problem("MULTIPLE_PARENTS", $uri, $document_uri, {FILENAME=>$filename, LINENUM=>$linenum});
+			}
 			$doceid_to_docid_mapping{$uri} = $document_uri;
 			$document_uri = "n/a";
 			$uri = "n/a";
@@ -508,6 +514,11 @@ sub load_data {
 		my $delanguage = $doceid_to_langs_mapping{$document_eid};
 		
 		my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
+		unless($document){
+			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+			$self->get("LOGGER")->record_problem("UNDEFINED_DOCUMENT", $document_eid);
+			next;
+		}
 		$document->set("DOCUMENTID", $document_id);
 		my $documentelement = DocumentElement->new($self->get("LOGGER"));
 		$documentelement->set("DOCUMENT", $document);
@@ -815,9 +826,13 @@ sub get_BY_INDEX {
 
 sub get_BY_KEY {
  	my ($self, $key) = @_;
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	unless($key) {
+		$self->get("LOGGER")->record_problem("UNDEFINED_VARIABLE", "\$key", $where);
+		return;
+	}
 	unless($self->{STORE}{TABLE}{$key}) {
 	# Create an instance if not exists
-		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
 		$self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
 			if $self->get("ELEMENT_CLASS") eq "RAW";
 		my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));

@@ -8,36 +8,37 @@ my $error_filename = "output/problems.log";
 $logger->set_error_output($error_filename);
 my $error_output = $logger->get_error_output();
 
-my $postfix = "_small";
+my $postfix = "_Q002_H001_1hop_LDC";
+my $topic_id = "P103";
 
 my $nodes_data_files = Container->new("String");
-$nodes_data_files->add("input/annotations-local/data/T101$postfix/T101_ent_mentions.tab");
-$nodes_data_files->add("input/annotations-local/data/T101$postfix/T101_evt_mentions.tab");
-$nodes_data_files->add("input/annotations-local/data/T101$postfix/T101_rel_mentions.tab");
+$nodes_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_ent_mentions.tab");
+$nodes_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_evt_mentions.tab");
+$nodes_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_rel_mentions.tab");
 
 my $edge_data_files = Container->new("String");
-$edge_data_files->add("input/annotations-local/data/T101$postfix/T101_evt_slots.tab");
-$edge_data_files->add("input/annotations-local/data/T101$postfix/T101_rel_slots.tab");
+$edge_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_evt_slots.tab");
+$edge_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_rel_slots.tab");
 
 my $acceptable_relevance = Container->new("String");
 $acceptable_relevance->add("fully-relevant");
 
 my $parameters = Parameters->new($logger);
-$parameters->set("TOPICID", "T101");
-$parameters->set("HYPOTHESISID", "T101_Q002_H001");
+$parameters->set("TOPICID", $topic_id);
+$parameters->set("HYPOTHESISID", "P103_Q002_H001");
 $parameters->set("IGNORE_NIL", "true");
-$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/DocumentIDsMappings.ttl");
+$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/LDC2018E62.parent_children.ttl");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
 $parameters->set("TYPE_MAPPING_FILE","input/nist-type-mapping.txt");
-$parameters->set("UID_INFO_FILE", "input/uid_info.tab");
-$parameters->set("HYPOTHESES_FILE", "input/annotations-local/data/T101$postfix/T101_hypotheses.tab");
+$parameters->set("UID_INFO_FILE", "input/uid_info_LDC2018E62.tab");
+$parameters->set("HYPOTHESES_FILE", "input/annotations-local/data/$topic_id$postfix/$topic_id\_hypotheses.tab");
 $parameters->set("NODES_DATA_FILES", $nodes_data_files);
 $parameters->set("EDGES_DATA_FILES", $edge_data_files);
 $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
 $parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
 $parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
 $parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
-$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/canonical_mentions$postfix/T101_canonical_mentions.tsv");
+$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/canonical_mentions$postfix/$topic_id\_canonical_mentions.tsv");
 $parameters->set("ERRORLOG_FILE", "output$postfix/problems.log");
 $parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output$postfix/T101_class_queries.xml");
 $parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output$postfix/T101_zerohop_queries.xml");
