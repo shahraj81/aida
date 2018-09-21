@@ -512,13 +512,12 @@ sub load_data {
 		my $document_eid = $uri_to_id_mapping{$document_element_uri};
 		my $detype = $doceid_to_type_mapping{$document_element_uri};
 		my $delanguage = $doceid_to_langs_mapping{$document_eid};
-		
-		my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
-		unless($document){
+		unless($document_id){
 			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
 			$self->get("LOGGER")->record_problem("UNDEFINED_DOCUMENT", $document_eid);
 			next;
 		}
+		my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
 		$document->set("DOCUMENTID", $document_id);
 		my $documentelement = DocumentElement->new($self->get("LOGGER"));
 		$documentelement->set("DOCUMENT", $document);
