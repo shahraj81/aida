@@ -120,7 +120,6 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_RAW_KEY                         FATAL_ERROR    Missing key %s in container of type %s
   MISSING_NODEID_FOR_MENTIONID            WARNING        Missing node_id for nodemention_id %s
   SKIPPING_NODE                           DEBUG_INFO     Skipping node %s because it is not relevant to topic-level hypothesis
-  UNDEFINED_DOCUMENT                      WARNING        Undefined document for document element %s
   UNDEFINED_VARIABLE                      FATAL_ERROR    Undefined variable %s
   UNEXPECTED_RECORD_DEBUG_INFO_CALL       WARNING        unexpected call to record_debug_info()
   ZEROHOP_QUERY_DEBUG_INFO_01             DEBUG_INFO     Zero-hop query %s corresponds to mention %s of node %s (treeid = %s)
@@ -462,68 +461,41 @@ sub load_data {
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
 		my $doceid = $entry->get("derived_uid");
-		my $languages = $entry->get("lang_manual");
+		my $languages = $entry->get("lang_id");
 		$doceid_to_langs_mapping{$doceid} = $languages;
 	}
+	$filehandler->cleanup();
 	
 	# Load the DocumentIDsMappingsFile
+	my (%doceid_to_docid_mapping, %doceid_to_type_mapping);
 	$filename = $self->get("PARAMETERS")->get("DOCUMENTIDS_MAPPING_FILE");
-
-	open(my $infile, "<:utf8", $filename) or die("Could not open file: $filename");
-	my $document_uri = "nil";
-	my $uri = "nil";
-	my %uri_to_id_mapping;
-	my %doceid_to_docid_mapping;
-	my %doceid_to_type_mapping;
-	my $linenum = 0;
-	while(my $line = <$infile>) {
-		chomp $line;
-		$linenum++;
-		if($line =~ /^\s*?(.*?)\s+.*?schema:DigitalDocument/i ) {
-		$uri = $1;
-		}
-		if($line =~ /schema:identifier\s+?\"(.*?)\".*?$/i) {
-			my $id = $1;
-			$uri_to_id_mapping{$uri} = $id;
-		}
-		if($line =~ /schema:encodingFormat\s+?\"(.*?)\".*?$/i) {
-			my $type = $1;
-			$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $uri, {FILENAME=>$filename, LINENUM=>$linenum})
-				if $type eq "nil";
-			$doceid_to_type_mapping{$uri} = $type;
-		}
-		if($line =~ /schema:isPartOf\s+?(ldc:.*?)\s*?[.;]\s*?$/i) {
-			# $uri contains document_element_id
-			$document_uri = $1;
-			$doceid_to_docid_mapping{$uri} = $document_uri;
-			$document_uri = "n/a";
-			$uri = "n/a";
-		}
+	$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	$entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $doceid = $entry->get("doceid");
+		my $docid = $entry->get("docid");
+		my $detype = $entry->get("detype");
+		$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $doceid, $entry->get("WHERE"))
+			if $detype eq "nil";
+		$doceid_to_docid_mapping{$doceid}{$docid} = 1;
+		$doceid_to_type_mapping{$doceid} = $detype;
 	}
-	close($infile);
+	$filehandler->cleanup();
 
-	foreach my $document_element_uri(keys %doceid_to_docid_mapping) {
-		my $document_uri = $doceid_to_docid_mapping{$document_element_uri};
-		my $document_id = $uri_to_id_mapping{$document_uri};
-		my $document_eid = $uri_to_id_mapping{$document_element_uri};
-		my $detype = $doceid_to_type_mapping{$document_element_uri};
-		my $delanguage = $doceid_to_langs_mapping{$document_eid};
-		unless($document_id){
-			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-			$self->get("LOGGER")->record_problem("UNDEFINED_DOCUMENT", $document_eid);
-			next;
+	foreach my $document_eid(sort keys %doceid_to_docid_mapping) {
+		next if $document_eid eq "n/a";
+		foreach my $document_id(sort keys %{$doceid_to_docid_mapping{$document_eid}}) {
+			my $delanguage = $doceid_to_langs_mapping{$document_eid};
+			my $detype = $doceid_to_type_mapping{$document_eid};
+			my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
+			$document->set("DOCUMENTID", $document_id);
+			my $documentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
+			$documentelement->get("DOCUMENTS")->add($document, $document_id);
+			$documentelement->set("DOCUMENTELEMENTID", $document_eid);
+			$documentelement->set("LANGUAGES", $delanguage);
+			$documentelement->set("TYPE", $detype);
+			$document->add_document_element($documentelement);
 		}
-		my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
-		$document->set("DOCUMENTID", $document_id);
-		my $documentelement = DocumentElement->new($self->get("LOGGER"));
-		$documentelement->set("DOCUMENT", $document);
-		$documentelement->set("DOCUMENTID", $document_id);
-		$documentelement->set("DOCUMENTELEMENTID", $document_eid);
-		$documentelement->set("LANGUAGES", $delanguage);
-		$documentelement->set("TYPE", $detype);
-
-		$document->add_document_element($documentelement);
-		$self->get("DOCUMENTELEMENTS")->add($documentelement, $document_eid) unless $document_eid eq "n/a";
 	}
 }
 
@@ -602,7 +574,7 @@ sub new {
 
 sub add_document_element {
   my ($self, $document_element) = @_;
-  $self->get("DOCUMENTELEMENTS")->add($document_element);
+  $self->get("DOCUMENTELEMENTS")->add($document_element, $document_element->get("DOCUMENTELEMENTID"));
 }
 
 #####################################################################################
@@ -617,8 +589,7 @@ sub new {
   my ($class, $logger) = @_;
   my $self = {
     CLASS => 'DocumentElement',
-    DOCUMENT => undef,
-    DOCUMENTID => undef,
+    DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTID => undef,
     TYPE => undef,
     LOGGER => $logger,
@@ -626,7 +597,6 @@ sub new {
   bless($self, $class);
   $self;
 }
-
 
 #####################################################################################
 # Edges
@@ -1148,6 +1118,11 @@ sub display_entries {
   my ($self) = @_;
 
   print $self->{ENTRIES}->tostring();
+}
+
+sub cleanup {
+	my ($self) = @_;
+	delete $self->{ENTRIES};
 }
 
 sub display {

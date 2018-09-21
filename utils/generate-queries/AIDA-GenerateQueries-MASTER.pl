@@ -27,7 +27,7 @@ my $parameters = Parameters->new($logger);
 $parameters->set("TOPICID", $topic_id);
 $parameters->set("HYPOTHESISID", "P103_Q002_H001");
 $parameters->set("IGNORE_NIL", "true");
-$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/LDC2018E62.parent_children.ttl");
+$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/LDC2018E62.parent_children.tsv");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
 $parameters->set("TYPE_MAPPING_FILE","input/nist-type-mapping.txt");
 $parameters->set("UID_INFO_FILE", "input/uid_info_LDC2018E62.tab");

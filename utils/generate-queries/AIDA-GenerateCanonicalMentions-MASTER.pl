@@ -25,7 +25,7 @@ $acceptable_relevance->add("fully-relevant");
 #$acceptable_relevance->add("partially-relevant");
 
 my $parameters = Parameters->new($logger);
-$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/LDC2018E62.parent_children.ttl");
+$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/LDC2018E62.parent_children.tsv");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
 $parameters->set("TYPE_MAPPING_FILE","input/nist-type-mapping.txt");
 $parameters->set("UID_INFO_FILE", "input/uid_info_LDC2018E62.tab");
