@@ -3,13 +3,14 @@ use strict;
 
 use GenerateQueriesManagerLib;
 
-my $logger = Logger->new();
-my $error_filename = "output/problems.log";
-$logger->set_error_output($error_filename);
-my $error_output = $logger->get_error_output();
-
 my $postfix = "_Q002_H001_1hop_LDC";
 my $topic_id = "P103";
+my $hypothesis_id = "P103_Q002_H001";
+
+my $logger = Logger->new();
+my $error_filename = "output_$topic_id$postfix/problems.log";
+$logger->set_error_output($error_filename);
+my $error_output = $logger->get_error_output();
 
 my $nodes_data_files = Container->new("String");
 $nodes_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_ent_mentions.tab");
@@ -25,7 +26,7 @@ $acceptable_relevance->add("fully-relevant");
 
 my $parameters = Parameters->new($logger);
 $parameters->set("TOPICID", $topic_id);
-$parameters->set("HYPOTHESISID", "P103_Q002_H001");
+$parameters->set("HYPOTHESISID", $hypothesis_id);
 $parameters->set("IGNORE_NIL", "true");
 $parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/LDC2018E62.parent_children.tsv");
 $parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");
@@ -38,11 +39,11 @@ $parameters->set("ACCEPTABLE_RELEVANCE", $acceptable_relevance);
 $parameters->set("IMAGES_BOUNDINGBOXES_FILE", "input/images_boundingboxes.tab");
 $parameters->set("KEYFRAMES_BOUNDINGBOXES_FILE", "input/keyframes_boundingboxes.tab");
 $parameters->set("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE", "input/encodingformat_modality.tab");
-$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/canonical_mentions$postfix/$topic_id\_canonical_mentions.tsv");
-$parameters->set("ERRORLOG_FILE", "output$postfix/problems.log");
-$parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output$postfix/T101_class_queries.xml");
-$parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output$postfix/T101_zerohop_queries.xml");
-$parameters->set("GRAPH_QUERIES_XML_OUTPUT_FILE", "output$postfix/T101_graph_queries.xml");
+$parameters->set("CANONICAL_MENTIONS_FILE", "input/canonical_mentions/canonical_mentions_$topic_id$postfix/$topic_id\_canonical_mentions.tsv");
+$parameters->set("ERRORLOG_FILE", $error_filename);
+$parameters->set("CLASS_QUERIES_XML_OUTPUT_FILE", "output_$topic_id$postfix/$hypothesis_id\_class_queries.xml");
+$parameters->set("ZEROHOP_QUERIES_XML_OUTPUT_FILE", "output_$topic_id$postfix/$hypothesis_id\_zerohop_queries.xml");
+$parameters->set("GRAPH_QUERIES_XML_OUTPUT_FILE", "output_$topic_id$postfix/$hypothesis_id\_graph_queries.xml");
 $parameters->set("CLASS_QUERIES_PREFIX", "AIDA_CL_2018");
 $parameters->set("ZEROHOP_QUERIES_PREFIX", "AIDA_ZH_2018");
 $parameters->set("GRAPH_QUERIES_SUBPREFIX", "AIDA_GR_2018");

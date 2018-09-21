@@ -63,7 +63,7 @@ foreach my $node($graph->get("NODES")->toarray()) {
 		elsif($modality eq "image") {
 			$keyframe_id = $doceid;
 		}
-		print $program_output join("\t", ($node_id, $mention_id, $keyframe_id, "T101")), "\n"
+		print $program_output join("\t", ($node_id, $mention_id, $keyframe_id, "P103")), "\n"
 			if ($enttype eq "Weapon" || $enttype eq "Vehicle" || $modality eq "video" || $modality eq "image" || $type eq "nam");
 	}
 }
