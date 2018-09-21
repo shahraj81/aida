@@ -1704,7 +1704,7 @@ sub generate_zerohop_queries {
 sub generate_graph_queries {
 	my ($self) = @_;
 	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
-	$self->generate_all_edges_graph_queries($queries);
+	#$self->generate_all_edges_graph_queries($queries);
 	$self->generate_single_edge_graph_queries($queries);
 	$queries->write_to_file();
 }
@@ -2730,6 +2730,10 @@ PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntol
 		PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 PREFIX
 
+	$self->{STRING_ENTRYPOINT_CONSTRAINTS} = <<'STRING_ENTRYPOINT_CONSTRAINTS';
+[NID_EP] aida:hasName               "[NAME_STRING]" .
+STRING_ENTRYPOINT_CONSTRAINTS
+
 	$self->{TEXT_ENTRYPOINT_CONSTRAINTS} = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
 [JUSTIFICATION_EP] a                         aida:TextJustification .
 		[JUSTIFICATION_EP] aida:source               "[EPDOCEID]" .
@@ -2984,6 +2988,7 @@ sub process_node {
 	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
 	my $statement1_type_triple_template = $self->get("STATEMENT1_TYPE_TRIPLE_TEMPLATE");
 	my $statement4_type_triple_template = $self->get("STATEMENT4_TYPE_TRIPLE_TEMPLATE");
+	my $string_entrypoint_constraints = $self->get("STRING_ENTRYPOINT_CONSTRAINTS");
 	my $text_entrypoint_constraints = $self->get("TEXT_ENTRYPOINT_CONSTRAINTS");
 	my $image_entrypoint_constraints = $self->get("IMAGE_ENTRYPOINT_CONSTRAINTS");
 	my $video_entrypoint_constraints = $self->get("VIDEO_ENTRYPOINT_CONSTRAINTS");
@@ -2998,6 +3003,7 @@ sub process_node {
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
 		$statement1_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
 		$statement4_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
+		$string_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
 		$text_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
 		$image_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
 		$video_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
@@ -3021,7 +3027,12 @@ sub process_node {
 	}
 	if($the_entrypoint) {
 		# replace the [ENTRYPOINT_CONSTRAINTS] with appropriate string
-		if($the_entrypoint->{TYPE} eq "NONSTRING_ENTRYPOINT") {
+		if($the_entrypoint->{TYPE} eq "STRING_ENTRYPOINT") {
+			my $text_string = $the_entrypoint->{TEXT_STRING};
+			$string_entrypoint_constraints =~ s/\[NAME_STRING\]/$text_string/g;
+			$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$string_entrypoint_constraints/;
+		}
+		elsif($the_entrypoint->{TYPE} eq "NONSTRING_ENTRYPOINT") {
 			my $modality = $node->get("MENTION", $the_entrypoint->{MENTIONID})->get("MODALITY");
 			my ($span) = $node->get("MENTION", $the_entrypoint->{MENTIONID})->get("SPANS")->toarray();
 			my ($start, $end) = ($span->get("START"), $span->get("END"));
