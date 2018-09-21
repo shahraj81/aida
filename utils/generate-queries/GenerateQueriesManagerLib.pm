@@ -1433,6 +1433,7 @@ sub load_canonical_mentions {
 		my $mention_id = $entry->get("mention_id");
 		my $keyframe_id = $entry->get("keyframe_id");
 		my $topic_id = $entry->get("topic_id");
+		next unless $self->get("NODES")->exists($node_id);
 		my $node = $self->get("NODES")->get("BY_KEY", $node_id);
 		my $enttype = $node->get("MENTIONS")->get("BY_KEY", $mention_id)->get("NIST_TYPE");
 		my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
