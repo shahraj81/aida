@@ -1646,6 +1646,7 @@ sub generate_zerohop_queries {
 		foreach my $mention($node->get("MENTIONS")->toarray()){
 			my ($canonical_mention) = $self->get("CANONICAL_MENTIONS")->get("WHERE", "MENTIONID", $mention->get("MENTIONID"));
 			next unless $canonical_mention;
+			next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
 			my $enttype = $mention->get("NIST_TYPE");
 			next unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true");
 			my $modality = $mention->get("MODALITY");
@@ -3039,24 +3040,19 @@ sub process_node {
 				}
 			}
 			elsif($modality eq "video") {
-				if($self->get("KEYFRAMES_BOUNDINGBOXES")->exists($doceid)) {
-					($keyframeid) = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("KEYFRAMESIDS", $doceid);
-					my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
-					$start = $keyframe_boundingbox->get("START");
-					$end = $keyframe_boundingbox->get("END");
-					my ($ulx, $uly) = split(",", $start);
-					my ($lrx, $lry) = split(",", $end);
-					$video_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
-					$video_entrypoint_constraints =~ s/\[UPPER_LEFT_X\]/$ulx/gs;
-					$video_entrypoint_constraints =~ s/\[UPPER_LEFT_Y\]/$uly/gs;
-					$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_X\]/$lrx/gs;
-					$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_Y\]/$lry/gs;
-					$video_entrypoint_constraints =~ s/\[KEYFRAMEID\]/$keyframeid/gs;
-					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$video_entrypoint_constraints/;
-				}
-				else {
-					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
-				}
+				$keyframeid = $the_entrypoint->get("KEYFRAMEID");
+				my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
+				$start = $keyframe_boundingbox->get("START");
+				$end = $keyframe_boundingbox->get("END");
+				my ($ulx, $uly) = split(",", $start);
+				my ($lrx, $lry) = split(",", $end);
+				$video_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
+				$video_entrypoint_constraints =~ s/\[UPPER_LEFT_X\]/$ulx/gs;
+				$video_entrypoint_constraints =~ s/\[UPPER_LEFT_Y\]/$uly/gs;
+				$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_X\]/$lrx/gs;
+				$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_Y\]/$lry/gs;
+				$video_entrypoint_constraints =~ s/\[KEYFRAMEID\]/$keyframeid/gs;
+				$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$video_entrypoint_constraints/;
 			}
 			elsif($modality eq "audio") {
 				$audio_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
