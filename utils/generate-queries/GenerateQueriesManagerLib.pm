@@ -1486,7 +1486,7 @@ sub load_images_boundingboxes {
 		$doceid =~ s/\..*?$//;
 		my ($bottom_right_x, $bottom_right_y) = (0,0);
 		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
-		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->get("LOGGER"), $entry->get("doceid"), undef,
+		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->get("LOGGER"), $doceid, undef,
 												0, 0, $bottom_right_x, $bottom_right_y), $doceid);
 	}
 }
