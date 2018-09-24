@@ -23,10 +23,6 @@ use ResolveQueriesManagerLib;
 
 my $version = "2018.0.0";
 
-# Filehandles for program and error output
-my $program_output = *STDOUT{IO};
-my $error_output = *STDERR{IO};
-
 ##################################################################################### 
 # Runtime switches and main program
 ##################################################################################### 
@@ -49,3 +45,38 @@ $switches->addParam("intermediate", "required", "Specify a directory to be used 
 $switches->addParam("output", "required", "Specify an output directory.");
 
 $switches->process(@ARGV);
+
+my $logger = Logger->new();
+my $error_filename = $switches->get("error_file");
+$logger->set_error_output($error_filename);
+my $error_output = $logger->get_error_output();
+
+foreach my $path(($switches->get("sparql"), $switches->get("queries_dtd"), $switches->get("queries_xml"), $switches->get("input"))) {
+	$logger->NIST_die("$path does not exist") unless -e $path;
+}
+
+foreach my $path(($switches->get("intermediate"), $switches->get("output"))) {
+	$logger->NIST_die("$path already exists") if -e $path;
+}
+
+my $parameters = Parameters->new($logger);
+$parameters->set("QUERIES_DTD_FILE", $switches->get("queries_dtd"));
+$parameters->set("QUERIES_XML_FILE", $switches->get("queries_xml"));
+$parameters->set("INPUT", $switches->get("input"));
+$parameters->set("INTERMEDIATE_DIR", $switches->get("intermediate"));
+$parameters->set("OUTPUT_DIR", $switches->get("output"));
+$parameters->set("SPARQL_EXECUTABLE", $switches->get("sparql"));
+
+my $queries = Queries->new($logger, $parameters);
+# Load the DTD file followed by the XML file
+$queries->load();
+# Generate RQ files
+$queries->transform();
+# Resolve queries against KB(s)
+$queries->resolve();
+
+my ($num_errors, $num_warnings) = $logger->report_all_information();
+print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
+print "No problems encountered.\n" unless ($num_errors || $num_warnings);
+print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered\n";
+exit 0;

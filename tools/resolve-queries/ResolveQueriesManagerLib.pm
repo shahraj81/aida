@@ -682,6 +682,26 @@ sub get_EDGE_QUERIES_PREFIX {
 	$query_id_prefix;
 }
 
+#####################################################################################
+# Queries
+#####################################################################################
+
+package Queries;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $parameters) = @_;
+	
+	my $self = {
+		CLASS => 'Queries',
+		LOGGER => $logger,
+		PARAMETERS => $parameters,
+	};
+	bless($self, $class);
+	$self;
+}
+
 ### BEGIN INCLUDE Switches
 
 #####################################################################################
