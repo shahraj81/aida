@@ -21,7 +21,7 @@ package Super;
 
 sub set {
   my ($self, $field, $value) = @_;
-  my $method = $self->can("get_$field");
+  my $method = $self->can("set_$field");
   $method->($self, $value) if $method;
   $self->{$field} = $value unless $method;
 }
@@ -42,6 +42,11 @@ sub get_BY_INDEX {
 sub get_BY_KEY {
   my ($self) = @_;
   die "Abstract method 'get_BY_KEY' not defined in derived class '", $self->get("CLASS") ,"'\n";
+}
+
+sub has {
+	my ($self, $key) = @_;
+	$self->{$key};
 }
 
 sub dump_structure {
@@ -120,17 +125,8 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # ----------                              ----           -------------
 
 ########## General Errors
-  IGNORING_LINE                           DEBUG_INFO     Ingoring the line due to a problem: %s
-  INVALID_ENTRYPOINT                      FATAL_ERROR    Entrypoint of invalid type %s found
-  MISSING_DOCUMENT_ELEMENT                WARNING        Missing document element %s
-  MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
-  MISSING_RAW_KEY                         FATAL_ERROR    Missing key %s in container of type %s
-  MISSING_NODEID_FOR_MENTIONID            WARNING        Missing node_id for nodemention_id %s
-  SKIPPING_NODE                           DEBUG_INFO     Skipping node %s because it is not relevant to topic-level hypothesis
-  UNDEFINED_VARIABLE                      FATAL_ERROR    Undefined variable %s
-  UNEXPECTED_RECORD_DEBUG_INFO_CALL       WARNING        unexpected call to record_debug_info()
-  ZEROHOP_QUERY_DEBUG_INFO_01             DEBUG_INFO     Zero-hop query %s corresponds to mention %s of node %s (treeid = %s)
+  UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
 END_PROBLEM_FORMATS
 
 
@@ -696,10 +692,208 @@ sub new {
 	my $self = {
 		CLASS => 'Queries',
 		LOGGER => $logger,
-		PARAMETERS => $parameters,
+		PARAMETERS => $parameters, 
+		DTD => undef,
 	};
 	bless($self, $class);
 	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	
+	$self->load_dtd_file();
+	$self->load_xml_file();
+}
+
+sub load_dtd_file {
+	my ($self) = @_;
+	my $dtd_file = $self->get("PARAMETERS")->get("QUERIES_DTD_FILE");
+	$self->set("DTD", DTD->new($self->get("LOGGER"), $dtd_file));
+}
+
+sub load_xml_file {
+	my ($self) = @_;
+	
+	
+}
+
+#####################################################################################
+# DTD
+#####################################################################################
+
+package DTD;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $filename) = @_;
+	
+	my $self = {
+		CLASS => 'DTD',
+		LOGGER => $logger,
+		FILENAME => $filename,
+		TREE => Tree->new($logger),
+	};
+	bless($self, $class);
+	$self->load();
+	print $self->get("TREE")->tostring(), "\n";
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	
+	my $filename = $self->get("FILENAME");
+	open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
+	my $linenum = 0;
+	while(my $line = <FILE>) {
+		chomp $line;
+		$linenum++;
+		my ($parent, $children) = $line =~ /\<\!ELEMENT (.*?) \((.*?)\)\>/;
+		foreach my $child(split(/,/, $children)) {
+			my $modifier;
+			if($child =~ /\+$/) {
+				$modifier = "+";
+				$child =~ s/\+$//;
+			}
+			$self->get("TREE")->add($parent, $child, $modifier, {FILENAME=>$filename, LINENUM=>$linenum});
+		}
+	}
+	my $root = $self->get("TREE")->get("ROOT");
+	close(FILE);
+}
+
+#####################################################################################
+# Tree
+#####################################################################################
+
+package Tree;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger) = @_;
+	
+	my $self = {
+		CLASS => 'Tree',
+		LOGGER => $logger,
+		ROOT => undef,
+		POTENTIAL_ROOTS => [],
+		NODES => Nodes->new($logger),
+	};
+	bless($self, $class);
+	$self;
+}
+
+sub add {
+	my ($self, $parent_id, $child_id, $modifier, $where) = @_;
+	my $parent_node = $self->get("NODES")->get("BY_KEY", $parent_id);
+	$parent_node->set("NODEID", $parent_id);
+	my $child_node = $self->get("NODES")->get("BY_KEY", $child_id);
+	$child_node->set("NODEID", $child_id);
+	$child_node->set("MODIFIER", $modifier) if $modifier;
+	$parent_node->add("CHILD", $child_node);
+	$child_node->add("PARENT", $parent_node);
+}
+
+sub get_ROOT {
+	my ($self) = @_;
+	
+	foreach my $node($self->get("NODES")->toarray()) {
+		push (@{$self->get("POTENTIAL_ROOTS")}, $node) unless $node->has_parents();
+	}
+	
+	my @potential_roots = @{$self->get("POTENTIAL_ROOTS")};
+	my $potential_roots_ids_string = join(",", map {$_->get("NODEID")} @potential_roots);
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	$self->get("LOGGER")->record_problem("MULTIPLE_POTENTIAL_ROOTS", $potential_roots_ids_string, $where)
+		if scalar @potential_roots > 1;
+	$self->set("ROOT", $potential_roots[0]);
+	$potential_roots[0];
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("ROOT")->tostring();
+}
+
+#####################################################################################
+# Nodes
+#####################################################################################
+
+package Nodes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $parameters) = @_;
+  my $self = $class->SUPER::new($logger, 'Node');
+  $self->{CLASS} = 'Nodes';
+  $self->{PARAMETERS} = $parameters;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Node
+#####################################################################################
+
+package Node;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $node_id) = @_;
+	my $self = {
+		CLASS => 'Node',
+		NODEID => $node_id,
+		MODIFIER => undef,
+		PARENTS => Nodes->new($logger),
+		CHILDREN => Nodes->new($logger),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self;
+}
+
+sub add {
+	my ($self, $field, @arguments) = @_;
+	my $method = $self->can("add_$field");
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	$self->get("LOGGER")->record_problem("UNDEFINED_FUNCTION", "add(\"$field\",...)", "Node", $where)
+		unless $method;
+	$method->($self, @arguments);
+}
+
+sub add_PARENT {
+	my ($self, $parent) = @_;
+	$self->get("PARENTS")->add($parent, $parent->get("NODEID"));
+}
+
+sub add_CHILD {
+	my ($self, $child) = @_;
+	$self->get("CHILDREN")->add($child, $child->get("NODEID"));
+}
+
+sub has_parents {
+	my ($self) = @_;
+	my $retVal = scalar $self->get("PARENTS")->toarray();
+	$retVal;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	my $modifier = "";
+	$modifier = $self->get("MODIFIER") if $self->has("MODIFIER");
+	my $retVal = "";
+	$indent = 0 unless $indent;
+	$retVal = " " x $indent . $self->get("NODEID") . $modifier . "\n";
+	foreach my $child($self->get("CHILDREN")->toarray()) {
+		$retVal .= $child->tostring($indent+2);
+	}
+	$retVal;
 }
 
 ### BEGIN INCLUDE Switches
