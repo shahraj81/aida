@@ -68,12 +68,12 @@ $parameters->set("OUTPUT_DIR", $switches->get("output"));
 $parameters->set("SPARQL_EXECUTABLE", $switches->get("sparql"));
 
 my $queries = Queries->new($logger, $parameters);
-# Load the DTD file followed by the XML file
-$queries->load();
 # Generate RQ files
-$queries->transform();
+$queries->generate_sparql_query_files();
 # Resolve queries against KB(s)
-$queries->resolve();
+$queries->apply_sparql_queries();
+# Convert sparql output to XML
+$queries->convert_output_to_xml();
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);

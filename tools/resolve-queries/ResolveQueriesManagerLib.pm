@@ -693,28 +693,24 @@ sub new {
 		CLASS => 'Queries',
 		LOGGER => $logger,
 		PARAMETERS => $parameters, 
-		DTD => undef,
+		XML_FILEHANDLER => XMLFileHandler->new($logger, $parameters->get("QUERIES_DTD_FILE"), $parameters->get("QUERIES_XML_FILE")),
 	};
 	bless($self, $class);
 	$self;
 }
 
-sub load {
+sub generate_sparql_query_files {
 	my ($self) = @_;
-	
-	$self->load_dtd_file();
-	$self->load_xml_file();
+
 }
 
-sub load_dtd_file {
+sub apply_sparql_queries {
 	my ($self) = @_;
-	my $dtd_file = $self->get("PARAMETERS")->get("QUERIES_DTD_FILE");
-	$self->set("DTD", DTD->new($self->get("LOGGER"), $dtd_file));
+
 }
 
-sub load_xml_file {
+sub convert_output_to_xml {
 	my ($self) = @_;
-	
 	
 }
 
@@ -765,6 +761,11 @@ sub load {
 	}
 	my $root = $self->get("TREE")->get("ROOT");
 	close(FILE);
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("TREE")->get("ROOT")->tostring();
 }
 
 #####################################################################################
@@ -922,6 +923,29 @@ sub tostring {
 	}
 	$retVal;
 }
+
+#####################################################################################
+# XMLFileHandler
+#####################################################################################
+
+package XMLFileHandler;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $dtd_filename, $xml_filename) = @_;
+	my $self = {
+		CLASS => "XMLFileHandler",
+		DTD => DTD->new($logger, $dtd_filename),
+		DTD_FILENAME => $dtd_filename,
+		XML_FILENAME => $xml_filename,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self;
+}
+
+
 
 ### BEGIN INCLUDE Switches
 
