@@ -2,3 +2,4 @@ utils/translate-annotations/seedling/data/LDC2018E01_AIDA_Seedling_Corpus_V1
 utils/translate-annotations/seedling/data/LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V2.0
 utils/translate-annotations/seedling/data/LDC2018E45_AIDA_Scenario_1_Seedling_Annotation_V3.0
 utils/translate-annotations/seedling/data/AIDA_Seedling_Ontology_Info_V5.xlsx
+utils/sparql-output-to-xml/.project
