@@ -2765,7 +2765,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 	$self->{WHERE_EDGE_TEMPLATE} = <<'END_SPARQL_EDGE_WHERE';
 		[STATEMENT1]      a                    rdf:Statement .
 		[STATEMENT1]      rdf:object           [OBJECT_NODEID] .
-		[STATEMENT1]      rdf:predicate        rdf:[EDGE_TYPE] .
+		[STATEMENT1]      rdf:predicate        ldcOnt:[EDGE_TYPE] .
 		[STATEMENT1]      rdf:subject          [SUBJECT_NODEID] .
 		[STATEMENT1]      aida:confidence      [EDGE_CONFIDENCE] .
 		[STATEMENT1]      aida:justifiedBy     [COMPOUND_JUSTIFICATION] .
@@ -2950,7 +2950,7 @@ sub process_edge {
 	foreach my $variable(@{$self->get("ALL_EDGE_VARIABLES_TEMPLATE")}) {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$group_postfix";
-		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " " . $new_variable) if $is_select_variable;
+		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " ?" . $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
 	}
@@ -2975,7 +2975,7 @@ sub process_node {
 		my $is_select_variable = $select_node_variables_template{$variable};
 		my $new_variable = "$variable\_$group_postfix";
 		$retval_nodevariable = $new_variable if($variable eq "nid_ot");
-		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " " . $new_variable) if $is_select_variable;
+		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " ?" . $new_variable) if $is_select_variable;
 		my $old_variable = "\\[" . uc $variable . "\\]";
 		$where_clause =~ s/$old_variable/\?$new_variable/gs;
 		$statement1_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
