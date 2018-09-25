@@ -737,7 +737,6 @@ sub new {
 	};
 	bless($self, $class);
 	$self->load();
-	print $self->get("TREE")->tostring(), "\n";
 	$self;
 }
 
@@ -750,14 +749,18 @@ sub load {
 	while(my $line = <FILE>) {
 		chomp $line;
 		$linenum++;
-		my ($parent, $children) = $line =~ /\<\!ELEMENT (.*?) \((.*?)\)\>/;
-		foreach my $child(split(/,/, $children)) {
-			my $modifier;
-			if($child =~ /\+$/) {
-				$modifier = "+";
-				$child =~ s/\+$//;
+		if(my ($parent, $children) = $line =~ /\<\!ELEMENT (.*?) \((.*?)\)\>/) {
+			foreach my $child(split(/,/, $children)) {
+				my $modifier;
+				if($child =~ /\+$/) {
+					$modifier = "+";
+					$child =~ s/\+$//;
+				}
+				$self->get("TREE")->add("CHILD", $parent, $child, $modifier, {FILENAME=>$filename, LINENUM=>$linenum});
 			}
-			$self->get("TREE")->add($parent, $child, $modifier, {FILENAME=>$filename, LINENUM=>$linenum});
+		}
+		elsif(my ($node_id, $attribute) = $line =~ /\<\!ATTLIST (.*?) (.*?) .*?\>/) {
+			$self->get("TREE")->add("ATTRIBUTE", $node_id, $attribute);
 		}
 	}
 	my $root = $self->get("TREE")->get("ROOT");
@@ -787,6 +790,15 @@ sub new {
 }
 
 sub add {
+	my ($self, $field, @arguments) = @_;
+	my $method = $self->can("add_$field");
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	$self->get("LOGGER")->record_problem("UNDEFINED_FUNCTION", "add(\"$field\",...)", "Node", $where)
+		unless $method;
+	$method->($self, @arguments);
+}
+
+sub add_CHILD {
 	my ($self, $parent_id, $child_id, $modifier, $where) = @_;
 	my $parent_node = $self->get("NODES")->get("BY_KEY", $parent_id);
 	$parent_node->set("NODEID", $parent_id);
@@ -795,6 +807,11 @@ sub add {
 	$child_node->set("MODIFIER", $modifier) if $modifier;
 	$parent_node->add("CHILD", $child_node);
 	$child_node->add("PARENT", $parent_node);
+}
+
+sub add_ATTRIBUTE {
+	my ($self, $node_id, $attribute) = @_;
+	$self->get("NODES")->get("BY_KEY", $node_id)->add("ATTRIBUTE", $attribute);
 }
 
 sub get_ROOT {
@@ -852,6 +869,7 @@ sub new {
 		MODIFIER => undef,
 		PARENTS => Nodes->new($logger),
 		CHILDREN => Nodes->new($logger),
+		ATTRIBUTES => Container->new($logger, "RAW"),
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -877,6 +895,12 @@ sub add_CHILD {
 	$self->get("CHILDREN")->add($child, $child->get("NODEID"));
 }
 
+sub add_ATTRIBUTE {
+	my ($self, $attribute) = @_;
+	my $i = scalar $self->get("ATTRIBUTES")->toarray();
+	$self->get("ATTRIBUTES")->add($attribute, $i+1);
+}
+
 sub has_parents {
 	my ($self) = @_;
 	my $retVal = scalar $self->get("PARENTS")->toarray();
@@ -887,9 +911,12 @@ sub tostring {
 	my ($self, $indent) = @_;
 	my $modifier = "";
 	$modifier = $self->get("MODIFIER") if $self->has("MODIFIER");
+	my $attributes = join(",", $self->get("ATTRIBUTES")->toarray()) 
+		if scalar $self->get("ATTRIBUTES")->toarray();
+	$attributes = " attributes=$attributes" if $attributes;
 	my $retVal = "";
 	$indent = 0 unless $indent;
-	$retVal = " " x $indent . $self->get("NODEID") . $modifier . "\n";
+	$retVal = " " x $indent . $self->get("NODEID") . $modifier . $attributes .  "\n";
 	foreach my $child($self->get("CHILDREN")->toarray()) {
 		$retVal .= $child->tostring($indent+2);
 	}
