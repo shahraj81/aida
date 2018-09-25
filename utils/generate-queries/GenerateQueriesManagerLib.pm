@@ -13,7 +13,7 @@ package Super;
 
 sub set {
   my ($self, $field, $value) = @_;
-  my $method = $self->can("get_$field");
+  my $method = $self->can("set_$field");
   $method->($self, $value) if $method;
   $self->{$field} = $value unless $method;
 }
