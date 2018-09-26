@@ -2557,14 +2557,14 @@ sub write_to_file {
 		my $xml_subject = XMLElement->new($logger, $subject, "subject", 0);
 		my $xml_object = XMLElement->new($logger, $object, "object", 0);
 		my $xml_predicate = XMLElement->new($logger, $predicate, "predicate", 0);
-		my $edge_predicate = XMLAttributes->new($logger);
-		$edge_predicate->add("$edge_id", "id");
+		my $edge_attributes = XMLAttributes->new($logger);
+		$edge_attributes->add("$edge_id", "id");
 		my $xml_edge = XMLElement->new(
 							$logger,
 							XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object),
 							"edge",
 							1,
-							$edge_predicate);
+							$edge_attributes);
 		$xml_edges_container->add($xml_edge);
 	}
 	my $xml_edges = XMLElement->new($logger, $xml_edges_container, "edges", 1);
