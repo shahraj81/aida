@@ -701,6 +701,7 @@ sub new {
 	system("mkdir $intermediate_directory") unless -d $intermediate_directory;
 	system("mkdir $intermediate_directory/split-queries") unless -d "$intermediate_directory/split-queries";
 	system("mkdir $intermediate_directory/sparql-output") unless -d "$intermediate_directory/sparql-output";
+	system("mkdir $intermediate_directory/xml-output") unless -d "$intermediate_directory/xml-output";
 	$self;
 }
 
@@ -752,41 +753,126 @@ sub convert_output_files_to_xml {
 	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
 	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
 	my $output_type = $self->get("XML_FILEHANDLER")->get("DTD")->get("FILENAME");
-	$output_type = s/.*?\///g;
-	$output_type = s/.dtd//;
+	$output_type =~ s/^(.*?\/)+//g;
+	$output_type =~ s/.dtd//;
 	foreach my $query_id($self->get("QUERYIDS")) {
 		foreach my $kb_file(<$kbs_dir/*.ttl>) {
 			my ($document_id) = $kb_file =~ /$kbs_dir\/(.*).ttl/;
 			my $sparql_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.tsv";
-			my $xml_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.xml";
-			$self->convert_output_file_to_xml($sparql_output_file, $xml_output_file, $output_type);
+			my $xml_output_file = "$intermediate_directory/xml-output/$query_id/$document_id.xml";
+			$self->convert_output_file_to_xml($query_id, $sparql_output_file, $xml_output_file, $output_type);
 		}
 	}
 }
 
 sub convert_output_file_to_xml {
-	my ($self, $sparql_output_file, $xml_output_file, $output_type) = @_;
+	my ($self, $query_id, $sparql_output_file, $xml_output_file, $output_type) = @_;
 	if($output_type eq "class_query") {
-		$self->convert_class_query_output_file_to_xml($sparql_output_file, $xml_output_file);
+		$self->convert_class_query_output_file_to_xml($query_id, $sparql_output_file, $xml_output_file);
 	}
 	elsif($output_type eq "zerohop_query") {
-		$self->convert_zerohop_query_output_file_to_xml($sparql_output_file, $xml_output_file);
+		$self->convert_zerohop_query_output_file_to_xml($query_id, $sparql_output_file, $xml_output_file);
 	}
 	elsif($output_type eq "graph_query") {
-		$self->convert_graph_query_output_file_to_xml($sparql_output_file, $xml_output_file);
+		$self->convert_graph_query_output_file_to_xml($query_id, $sparql_output_file, $xml_output_file);
 	}
 }
 
 sub convert_class_query_output_file_to_xml {
-	my ($self, $sparql_output_file, $xml_output_file) = @_;
+	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
+	my $logger = $self->get("LOGGER");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
+	open(my $program_output_xml, ":>utf8", $xml_output_file);
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print $program_output_xml "<classquery_responses>\n";
+	my $xml_justifications_container = XMLContainer->new($logger);
+	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
+		my $doceid = $entry->get("?doceid");
+		my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
+		my $enttype = $entry->get("?enttype");
+		my $xml_enttype = XMLElement->new($logger, $enttype, "doceid", 0);
+		my $cv = $entry->get("?cv");  # confidence value
+		my $xml_confidence = XMLElement->new($logger, $cv, "confidence", 0);
+		my $so = $entry->get("?so");  # start offset - text_justification
+		my $eo = $entry->get("?eo");  # end offset - text_justification
+		my $st = $entry->get("?st");  # start time - audio_justification
+		my $et = $entry->get("?et");  # end time - audio_justification
+		my $kfid = $entry->get("?kfid"); # keyframeid - video_justificatio
+		my $ulx = $entry->get("?ulx"); # upper_left_x - video/image justification
+		my $uly = $entry->get("?uly"); # upper_left_y - video/image justification
+		my $lrx = $entry->get("?lrx"); # lower_right_x - video/image justification
+		my $lry = $entry->get("?lry"); # lower_right_y - video/image justification
+		if($so ne "" && $eo ne "") {
+			# process text_justification
+			# <!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
+			my $xml_start = XMLElement->new($logger, $so, "start", 0);
+			my $xml_end = XMLElement->new($logger, $eo, "end", 0);
+			my $xml_text_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_enttype, $xml_confidence),
+											"text_justification",
+											1);
+			$xml_justifications_container->add($xml_text_justification);
+		}
+		elsif($st ne "" && $et ne "") {
+			# process audio_justification
+			# <!ELEMENT audio_justification (doceid,segmentid,start,end,enttype,confidence)>
+			my $xml_start = XMLElement->new($logger, $st, "start", 0);
+			my $xml_end = XMLElement->new($logger, $et, "end", 0);
+			my $xml_audio_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_enttype, $xml_confidence),
+											"audio_justification",
+											1);
+			$xml_justifications_container->add($xml_audio_justification);
+		}
+		elsif($kfid ne "") {
+			# process video_justification
+			#<!ELEMENT video_justification (doceid,keyframeid,topleft,bottomright,enttype,confidence)>
+			my $xml_keyframeid = XMLElement->new($logger, $kfid, "keyframeid", 0);
+			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
+			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
+			my $xml_video_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_topleft, $xml_bottomright, $xml_enttype, $xml_confidence),
+											"audio_justification",
+											1);
+			$xml_justifications_container->add($xml_video_justification);
+		}
+		elsif($kfid eq "" && $ulx ne "" && $uly ne "" && $lrx ne "" && $lry ne "") {
+			# process image_justification
+			#<!ELEMENT image_justification (doceid,topleft,bottomright,enttype,confidence)>
+			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
+			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
+			my $xml_image_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_topleft, $xml_bottomright, $xml_enttype, $xml_confidence),
+											"image_justification",
+											1);
+			$xml_justifications_container->add($xml_image_justification);
+		}
+	}
+
+	my $class_query_response_container = XMLContainer->new($logger);
+	my $class_query_response_attributes = XMLAttributes->new($logger);
+	$class_query_response_attributes->add("$query_id", "QUERY_ID");
+	my $xml_justifications = XMLElement->new($logger, $xml_justifications_container, "justifications", 1);
+	$class_query_response_container->add($xml_justifications);
+	my $class_query_response = XMLElement->new($logger, $class_query_response_container, "classquery_response", 1, $class_query_response_attributes);
+	print $program_output_xml "<\/classquery_responses>\n";
+	close($program_output_xml);
 }
 
 sub convert_zerohop_query_output_file_to_xml {
-	my ($self, $sparql_output_file, $xml_output_file) = @_;
+	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
+	my $i=0;
+	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
+	}
 }
 
 sub convert_graph_query_output_file_to_xml {
-	my ($self, $sparql_output_file, $xml_output_file) = @_;
+	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
+	my $i=0;
+	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
+	}
 }
 
 sub add {
