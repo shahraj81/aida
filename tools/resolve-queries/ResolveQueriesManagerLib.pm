@@ -693,12 +693,14 @@ sub new {
 		CLASS => 'Queries',
 		LOGGER => $logger,
 		PARAMETERS => $parameters, 
+		_QUERYIDS => {},
 		XML_FILEHANDLER => XMLFileHandler->new($logger, $parameters->get("QUERIES_DTD_FILE"), $parameters->get("QUERIES_XML_FILE")),
 	};
 	bless($self, $class);
 	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
 	system("mkdir $intermediate_directory") unless -d $intermediate_directory;
 	system("mkdir $intermediate_directory/split-queries") unless -d "$intermediate_directory/split-queries";
+	system("mkdir $intermediate_directory/sparql-output") unless -d "$intermediate_directory/sparql-output";
 	$self;
 }
 
@@ -706,6 +708,7 @@ sub generate_sparql_query_files {
 	my ($self) = @_;
 	while(my $query = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
 		my ($query_id) = $query->get("ATTRIBUTES")->toarray();
+		$self->add("QUERY_ID", $query_id);
 		my ($sparql_query_string) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
 		$self->write_sparql_query_to_file($query_id, $sparql_query_string);
 	}
@@ -726,12 +729,46 @@ sub write_sparql_query_to_file {
 
 sub apply_sparql_queries {
 	my ($self) = @_;
-
+	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
+	my $sparql_executable = $self->get("PARAMETERS")->get("SPARQL_EXECUTABLE");
+	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
+	foreach my $query_id($self->get("QUERYIDS")) {
+		my $query_file = "$intermediate_directory/split-queries/$query_id.rq";
+		system("mkdir $intermediate_directory/sparql-output/$query_id")
+			unless -d "$intermediate_directory/sparql-output/$query_id";
+		foreach my $kb_file(<$kbs_dir/*.ttl>) {
+			print "--applying query=$query_file to kb=$kb_file\n";
+			my ($document_id) = $kb_file =~ /$kbs_dir\/(.*).ttl/;
+			my $sparql_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.tsv";
+			my $apply_sparql_command = "$sparql_executable --data=$kb_file --query=$query_file --results=tsv > $sparql_output_file";
+			print "$apply_sparql_command\n\n";
+			system($apply_sparql_command);
+		}
+	}
 }
 
 sub convert_output_to_xml {
 	my ($self) = @_;
 	
+}
+
+sub add {
+	my ($self, $field, @arguments) = @_;
+	my $method = $self->can("add_$field");
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	$self->get("LOGGER")->record_problem("UNDEFINED_FUNCTION", "add(\"$field\",...)", "Node", $where)
+		unless $method;
+	$method->($self, @arguments);
+}
+
+sub add_QUERY_ID {
+	my ($self, $query_id) = @_;
+	$self->{_QUERYIDS}{$query_id} = 1;
+}
+
+sub get_QUERYIDS {
+	my ($self) = @_;
+	sort keys %{$self->{_QUERYIDS}};
 }
 
 #####################################################################################
