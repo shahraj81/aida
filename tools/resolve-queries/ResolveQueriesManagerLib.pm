@@ -701,7 +701,9 @@ sub new {
 
 sub generate_sparql_query_files {
 	my ($self) = @_;
-	my $xml_object = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT");
+	while(my $xml_object = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
+		print $xml_object->tostring(), "\n";
+	}
 }
 
 sub apply_sparql_queries {
@@ -969,23 +971,26 @@ sub get_NEXT_OBJECT {
 	my $search_tag = $search_node->get("NODEID");
 	my $filehandle = $self->get("XML_FILEHANDLE");
 	my $object_string = "";
-	my $found = 0;
+	my $working = 0;
 	my $done = 0;
+	my $found = 0;
 	while(my $line = <$filehandle>){
 		chomp $line;
 		if($line =~ /\<$search_tag.*?>/) {
-			$found = 1;
+			$working = 1;
 			$object_string .= "$line\n";
 		}
 		elsif($line =~ /\<\/$search_tag>/) {
-			$found = 0;
+			$working = 0;
 			$object_string .= "$line\n";
+			$found = 1;
 			last;
 		}
-		elsif($found == 1) {
+		elsif($working == 1) {
 			$object_string .= "$line\n";
 		}
 	}
+	return unless $found;
 	$self->get("STRING_TO_OBJECT", $object_string, $search_node);
 }
 
@@ -1029,7 +1034,7 @@ sub get_STRING_TO_OBJECT {
 				$xml_container->add($xml_element);
 			}
 		}
-		return XMLElement->new($logger, $xml_container, $search_node->get("NODEID"), 0, $xml_attributes);
+		return XMLElement->new($logger, $xml_container, $search_node->get("NODEID"), 1, $xml_attributes);
 	}
 }
 
