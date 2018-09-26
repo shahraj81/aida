@@ -837,7 +837,7 @@ sub convert_class_query_output_file_to_xml {
 			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
 			my $xml_video_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_topleft, $xml_bottomright, $xml_enttype, $xml_confidence),
-											"audio_justification",
+											"video_justification",
 											1);
 			$xml_justifications_container->add($xml_video_justification);
 		}
