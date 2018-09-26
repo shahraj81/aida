@@ -696,6 +696,9 @@ sub new {
 		XML_FILEHANDLER => XMLFileHandler->new($logger, $parameters->get("QUERIES_DTD_FILE"), $parameters->get("QUERIES_XML_FILE")),
 	};
 	bless($self, $class);
+	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
+	system("mkdir $intermediate_directory") unless -d $intermediate_directory;
+	system("mkdir $intermediate_directory/split-queries") unless -d "$intermediate_directory/split-queries";
 	$self;
 }
 
@@ -703,14 +706,22 @@ sub generate_sparql_query_files {
 	my ($self) = @_;
 	while(my $query = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
 		my ($query_id) = $query->get("ATTRIBUTES")->toarray();
-		my ($sparql) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
-		$self->write_sparql_query_to_file($query_id, $sparql);
+		my ($sparql_query_string) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
+		$self->write_sparql_query_to_file($query_id, $sparql_query_string);
 	}
 }
 
 sub write_sparql_query_to_file {
-	my ($self, $query_id, $sparql) = @_;
-	# write sparql query in a rq file here
+	my ($self, $query_id, $sparql_query_string) = @_;
+	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
+	open(my $outputfile, ">:utf8", "$intermediate_directory/split-queries/$query_id.rq");
+	foreach my $line(split(/\n/, $sparql_query_string)) {
+		chomp $line;
+		next if $line eq "";
+		$line =~ s/^\t//;
+		print $outputfile "$line\n";
+	}
+	close($outputfile);
 }
 
 sub apply_sparql_queries {
