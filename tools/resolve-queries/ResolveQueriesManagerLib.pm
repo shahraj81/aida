@@ -701,7 +701,7 @@ sub new {
 
 sub generate_sparql_query_files {
 	my ($self) = @_;
-
+	my $xml_object = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT");
 }
 
 sub apply_sparql_queries {
@@ -759,13 +759,23 @@ sub load {
 			$self->get("TREE")->add("ATTRIBUTE", $node_id, $attribute);
 		}
 	}
-	my $root = $self->get("TREE")->get("ROOT");
+	$self->determine_root();
 	close(FILE);
+}
+
+sub determine_root {
+	my ($self) = @_;
+	$self->get("TREE")->get("ROOT");
+}
+
+sub get_ROOT {
+	my ($self) = @_;
+	$self->get("TREE")->get("ROOT");
 }
 
 sub tostring {
 	my ($self, $indent) = @_;
-	$self->get("TREE")->get("ROOT")->tostring();
+	$self->get("ROOT")->tostring();
 }
 
 #####################################################################################
@@ -939,13 +949,195 @@ sub new {
 		DTD => DTD->new($logger, $dtd_filename),
 		DTD_FILENAME => $dtd_filename,
 		XML_FILENAME => $xml_filename,
+		XML_FILEHANDLE => undef,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
+	$self->setup();
 	$self;
 }
 
+sub setup {
+	my ($self) = @_;
+	open(my $filehandle, "<:utf8", $self->get("XML_FILENAME"));
+	$self->set("XML_FILEHANDLE", $filehandle);
+}
 
+sub get_NEXT_OBJECT {
+	my ($self) = @_;
+	my ($search_node) = $self->get("DTD")->get("ROOT")->get("CHILDREN")->toarray();
+	my $search_tag = $search_node->get("NODEID");
+	my $filehandle = $self->get("XML_FILEHANDLE");
+	my $object_string = "";
+	my $found = 0;
+	my $done = 0;
+	while(my $line = <$filehandle>){
+		chomp $line;
+		if($line =~ /\<$search_tag.*?>/) {
+			$found = 1;
+			$object_string .= "$line\n";
+		}
+		elsif($line =~ /\<\/$search_tag>/) {
+			$found = 0;
+			$object_string .= "$line\n";
+			last;
+		}
+		elsif($found == 1) {
+			$object_string .= "$line\n";
+		}
+	}
+	$self->get("STRING_TO_OBJECT", $object_string, $search_node);
+}
+
+sub get_STRING_TO_OBJECT {
+	my ($self, $object_string, $search_node) = @_;
+	my $logger = $self->get("LOGGER");
+	my $children = $search_node->get("CHILDREN");
+	my $num_of_children = scalar $children->toarray();
+	if($num_of_children == 1) {
+		my ($child_node) = $children->toarray();
+		my $search_tag = $child_node->get("NODEID");
+		if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
+			my ($attributes, $value) = ($1, $2);
+			my $xml_attributes;
+			if($attributes) {
+				$xml_attributes = XMLAttributes->new($logger);
+				while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+					my ($key, $value) = ($1, $2);
+					$xml_attributes->add($value, $key);
+				}
+			}
+			return XMLElement->new($logger, $value, $search_tag, 0, $xml_attributes);
+		}
+	}
+	else {
+		my $xml_container = XMLContainer->new($logger);
+		my $search_tag = $search_node->get("NODEID");
+		my ($attributes) = $object_string =~ /<$search_tag(.*?)>/;
+		my $xml_attributes;
+		if($attributes) {
+			$xml_attributes = XMLAttributes->new($logger);
+			while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+				my ($key, $value) = ($1, $2);
+				$xml_attributes->add($value, $key);
+			}
+		}
+		foreach my $child_node($children->toarray()) {
+			my $search_tag = $child_node->get("NODEID");
+			while($object_string =~ /(<$search_tag.*?>.*?<\/$search_tag>)/gs){
+				my $object_substring = $1;
+				my $xml_element = $self->get("STRING_TO_OBJECT", $object_substring, $child_node);
+				$xml_container->add($xml_element);
+			}
+		}
+		return XMLElement->new($logger, $xml_container, $search_node->get("NODEID"), 0, $xml_attributes);
+	}
+}
+
+#####################################################################################
+# XMLAttributes
+#####################################################################################
+
+package XMLAttributes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'XMLAttribute');
+  $self->{CLASS} = 'XMLAttributes';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $retVal = " ";
+	join (" ", map {"$_=\"".$self->get('BY_KEY', $_)."\""} ($self->get("ALL_KEYS")));
+}
+
+#####################################################################################
+# XMLElement
+#####################################################################################
+
+package XMLElement;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $element, $name, $newline, $attributes) = @_;
+  my $self = {
+    CLASS => 'XMLElement',
+    NAME => $name,
+    NEWLINE => $newline,
+    ATTRIBUTES => $attributes,
+    ELEMENT => $element,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_OPENTAG {
+	my ($self) = @_;
+
+	my $attributes = "";
+	$attributes = " " . $self->get("ATTRIBUTES")->tostring() if $self->get("ATTRIBUTES") ne "nil";
+
+	"<" . $self->get("NAME") . $attributes . ">";
+}
+
+sub get_CLOSETAG {
+	my ($self) = @_;
+
+	"<\/" . $self->get("NAME") . ">";
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+
+	my $retVal = " " x $indent;
+	$retVal .= $self->get("OPENTAG");
+	$retVal .= "\n" if $self->get("NEWLINE");
+	$retVal .= $self->get("ELEMENT")->tostring($indent+2) if ref $self->get("ELEMENT");
+	$retVal .= " " . Encode::encode_utf8($self->get("ELEMENT")) . " " unless ref $self->get("ELEMENT");
+	$retVal .= "\n" if $self->get("ELEMENT") eq "";
+	$retVal .= " " x $indent if $self->get("NEWLINE");
+	$retVal .= $self->get("CLOSETAG");
+	$retVal .= "\n";
+
+	$retVal;
+}
+
+#####################################################################################
+# XMLContainer
+#####################################################################################
+
+package XMLContainer;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+	my ($class, $logger, @xml_elements) = @_;
+	my $self = $class->SUPER::new($logger, 'XMLElement');
+	$self->{CLASS} = 'XMLContainer';
+	$self->{LOGGER} = $logger;
+	bless($self, $class);
+	foreach my $xml_element(@xml_elements) {
+		$self->add($xml_element);
+	}
+	$self;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	my $retVal = "";
+	foreach my $xml_elements($self->toarray()) {
+		$retVal .= $xml_elements->tostring($indent);
+	}
+	$retVal;
+}
 
 ### BEGIN INCLUDE Switches
 
