@@ -709,7 +709,9 @@ sub generate_sparql_query_files {
 	my ($self) = @_;
 	while(my $query = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
 		my ($query_id) = $query->get("ATTRIBUTES")->toarray();
-		$self->add("QUERY_ID", $query_id);
+		# only for class queries
+		my ($enttype) = $query->get("CHILD", "enttype")->get("ELEMENT");
+		$self->add("QUERY_ID", $query_id, $enttype);
 		my ($sparql_query_string) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
 		$self->write_sparql_query_to_file($query_id, $sparql_query_string);
 	}
@@ -756,6 +758,8 @@ sub convert_output_files_to_xml {
 	$output_type =~ s/^(.*?\/)+//g;
 	$output_type =~ s/.dtd//;
 	foreach my $query_id($self->get("QUERYIDS")) {
+		system("mkdir $intermediate_directory/xml-output/$query_id")
+			unless -d "$intermediate_directory/xml-output/$query_id";
 		foreach my $kb_file(<$kbs_dir/*.ttl>) {
 			my ($document_id) = $kb_file =~ /$kbs_dir\/(.*).ttl/;
 			my $sparql_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.tsv";
@@ -782,26 +786,27 @@ sub convert_class_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
 	my $logger = $self->get("LOGGER");
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
-	open(my $program_output_xml, ":>utf8", $xml_output_file);
+	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<classquery_responses>\n";
+	my $enttype = $self->get("ENTTYPE", $query_id);
 	my $xml_justifications_container = XMLContainer->new($logger);
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
-		my $doceid = $entry->get("?doceid");
+		my $doceid = &trim($entry->get("?doceid"));
 		my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
-		my $enttype = $entry->get("?enttype");
-		my $xml_enttype = XMLElement->new($logger, $enttype, "doceid", 0);
-		my $cv = $entry->get("?cv");  # confidence value
+		my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+		my $cv = &trim($entry->get("?cv"));  # confidence value
+		$cv = sprintf("%.4f", &trim($entry->get("?cv")));
 		my $xml_confidence = XMLElement->new($logger, $cv, "confidence", 0);
-		my $so = $entry->get("?so");  # start offset - text_justification
-		my $eo = $entry->get("?eo");  # end offset - text_justification
-		my $st = $entry->get("?st");  # start time - audio_justification
-		my $et = $entry->get("?et");  # end time - audio_justification
-		my $kfid = $entry->get("?kfid"); # keyframeid - video_justificatio
-		my $ulx = $entry->get("?ulx"); # upper_left_x - video/image justification
-		my $uly = $entry->get("?uly"); # upper_left_y - video/image justification
-		my $lrx = $entry->get("?lrx"); # lower_right_x - video/image justification
-		my $lry = $entry->get("?lry"); # lower_right_y - video/image justification
+		my $so = &trim($entry->get("?so"));  # start offset - text_justification
+		my $eo = &trim($entry->get("?eo"));  # end offset - text_justification
+		my $st = &trim($entry->get("?st"));  # start time - audio_justification
+		my $et = &trim($entry->get("?et"));  # end time - audio_justification
+		my $kfid = &trim($entry->get("?kfid")); # keyframeid - video_justificatio
+		my $ulx = &trim($entry->get("?ulx")); # upper_left_x - video/image justification
+		my $uly = &trim($entry->get("?uly")); # upper_left_y - video/image justification
+		my $lrx = &trim($entry->get("?lrx")); # lower_right_x - video/image justification
+		my $lry = &trim($entry->get("?lry")); # lower_right_y - video/image justification
 		if($so ne "" && $eo ne "") {
 			# process text_justification
 			# <!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
@@ -855,6 +860,7 @@ sub convert_class_query_output_file_to_xml {
 	my $xml_justifications = XMLElement->new($logger, $xml_justifications_container, "justifications", 1);
 	$class_query_response_container->add($xml_justifications);
 	my $class_query_response = XMLElement->new($logger, $class_query_response_container, "classquery_response", 1, $class_query_response_attributes);
+	print $program_output_xml $class_query_response->tostring(2);
 	print $program_output_xml "<\/classquery_responses>\n";
 	close($program_output_xml);
 }
@@ -885,13 +891,26 @@ sub add {
 }
 
 sub add_QUERY_ID {
-	my ($self, $query_id) = @_;
-	$self->{_QUERYIDS}{$query_id} = 1;
+	my ($self, $query_id, $enttype) = @_;
+	$enttype = "n/a" unless $enttype;
+	$self->{_QUERYIDS}{$query_id} = $enttype;
 }
 
 sub get_QUERYIDS {
 	my ($self) = @_;
 	sort keys %{$self->{_QUERYIDS}};
+}
+
+sub get_ENTTYPE {
+	my ($self, $query_id) = @_;
+	$self->{_QUERYIDS}{$query_id};
+}
+
+sub trim {
+	my ($str) = @_;
+	my ($trimmed_str) = $str =~ /\"(.*?)\"/;
+	$trimmed_str = $str unless defined $trimmed_str;
+	$trimmed_str;
 }
 
 #####################################################################################
