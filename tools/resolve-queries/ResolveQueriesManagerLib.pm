@@ -701,9 +701,16 @@ sub new {
 
 sub generate_sparql_query_files {
 	my ($self) = @_;
-	while(my $xml_object = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
-		print $xml_object->tostring(), "\n";
+	while(my $query = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
+		my ($query_id) = $query->get("ATTRIBUTES")->toarray();
+		my ($sparql) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
+		$self->write_sparql_query_to_file($query_id, $sparql);
 	}
+}
+
+sub write_sparql_query_to_file {
+	my ($self, $query_id, $sparql) = @_;
+	# write sparql query in a rq file here
 }
 
 sub apply_sparql_queries {
@@ -1098,6 +1105,14 @@ sub get_CLOSETAG {
 	"<\/" . $self->get("NAME") . ">";
 }
 
+sub get_CHILD {
+	my ($self, $childname) = @_;
+
+	return $self if($self->get("NAME") eq $childname);
+	return $self->get("ELEMENT")->get("CHILD", $childname) if ref $self->get("ELEMENT");
+	return unless ref $self->get("ELEMENT");
+}
+
 sub tostring {
 	my ($self, $indent) = @_;
 
@@ -1132,6 +1147,16 @@ sub new {
 		$self->add($xml_element);
 	}
 	$self;
+}
+
+sub get_CHILD {
+	my ($self, $childname) = @_;
+	my $child;
+	foreach my $xml_element($self->toarray()){
+		$child = $xml_element->get("CHILD", $childname);
+		last if $child;
+	}
+	$child;
 }
 
 sub tostring {
