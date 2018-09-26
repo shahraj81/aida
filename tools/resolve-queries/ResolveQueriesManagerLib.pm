@@ -995,8 +995,7 @@ sub get_STRING_TO_OBJECT {
 	my $children = $search_node->get("CHILDREN");
 	my $num_of_children = scalar $children->toarray();
 	if($num_of_children == 1) {
-		my ($child_node) = $children->toarray();
-		my $search_tag = $child_node->get("NODEID");
+		my $search_tag = $search_node->get("NODEID");
 		if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
 			my ($attributes, $value) = ($1, $2);
 			my $xml_attributes;
@@ -1017,7 +1016,7 @@ sub get_STRING_TO_OBJECT {
 		my $xml_attributes;
 		if($attributes) {
 			$xml_attributes = XMLAttributes->new($logger);
-			while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+			while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
 				my ($key, $value) = ($1, $2);
 				$xml_attributes->add($value, $key);
 			}
