@@ -747,9 +747,46 @@ sub apply_sparql_queries {
 	}
 }
 
-sub convert_output_to_xml {
+sub convert_output_files_to_xml {
 	my ($self) = @_;
-	
+	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
+	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
+	my $output_type = $self->get("XML_FILEHANDLER")->get("DTD")->get("FILENAME");
+	$output_type = s/.*?\///g;
+	$output_type = s/.dtd//;
+	foreach my $query_id($self->get("QUERYIDS")) {
+		foreach my $kb_file(<$kbs_dir/*.ttl>) {
+			my ($document_id) = $kb_file =~ /$kbs_dir\/(.*).ttl/;
+			my $sparql_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.tsv";
+			my $xml_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.xml";
+			$self->convert_output_file_to_xml($sparql_output_file, $xml_output_file, $output_type);
+		}
+	}
+}
+
+sub convert_output_file_to_xml {
+	my ($self, $sparql_output_file, $xml_output_file, $output_type) = @_;
+	if($output_type eq "class_query") {
+		$self->convert_class_query_output_file_to_xml($sparql_output_file, $xml_output_file);
+	}
+	elsif($output_type eq "zerohop_query") {
+		$self->convert_zerohop_query_output_file_to_xml($sparql_output_file, $xml_output_file);
+	}
+	elsif($output_type eq "graph_query") {
+		$self->convert_graph_query_output_file_to_xml($sparql_output_file, $xml_output_file);
+	}
+}
+
+sub convert_class_query_output_file_to_xml {
+	my ($self, $sparql_output_file, $xml_output_file) = @_;
+}
+
+sub convert_zerohop_query_output_file_to_xml {
+	my ($self, $sparql_output_file, $xml_output_file) = @_;
+}
+
+sub convert_graph_query_output_file_to_xml {
+	my ($self, $sparql_output_file, $xml_output_file) = @_;
 }
 
 sub add {

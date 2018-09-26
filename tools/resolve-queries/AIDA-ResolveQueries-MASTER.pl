@@ -73,10 +73,12 @@ $queries->generate_sparql_query_files();
 # Resolve queries against KB(s)
 $queries->apply_sparql_queries();
 # Convert sparql output to XML
-$queries->convert_output_to_xml();
+$queries->convert_output_files_to_xml();
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
-print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
-print "No warnings encountered.\n" unless ($num_errors || $num_warnings);
-print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered\n";
+unless($switches->get('error_file') eq "STDERR") {
+	print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
+	print "No warnings encountered.\n" unless ($num_errors || $num_warnings);
+}
+print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
 exit 0;
