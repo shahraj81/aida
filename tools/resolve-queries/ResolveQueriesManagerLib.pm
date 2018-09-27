@@ -1164,7 +1164,6 @@ sub new {
 	my $self = {
 		CLASS => 'Node',
 		NODEID => $node_id,
-		MODIFIER => undef,
 		PARENTS => Nodes->new($logger),
 		CHILDNUM_TYPES_MAPPING => {},
 		CHILDNUM_MODIFIER_MAPPING => {},
@@ -1318,6 +1317,7 @@ sub get_STRING_TO_OBJECT {
 	my $search_tag = $search_node->get("NODEID");
 	my $num_of_children = $search_node->get("NUM_OF_CHILDREN");
 	if($num_of_children == 1) {
+		# There is only one child
 		# Is the child allowed to appear more than once?
 		if($search_node->get("CHILDNUM_MODIFIER", 1) == 1) {
 			my ($child_id) = $search_node->get("CHILDNUM_TYPES", 1); 
@@ -1342,7 +1342,7 @@ sub get_STRING_TO_OBJECT {
 				}
 			}
 			else {
-			# The child appears once but it is a leaf node
+			# The child appears once but it is not a leaf node
 				if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
 					my ($attributes, $new_object_string) = ($1, $2);
 					my $xml_attributes;
@@ -1361,6 +1361,87 @@ sub get_STRING_TO_OBJECT {
 				}
 			}			
 		}
+	}
+	else {
+		# First obtain the attributes and then get the wrapper removed
+		my ($attributes, $new_object_string) = $object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs;
+		$object_string = $new_object_string;
+		$new_object_string = "";
+		# Handle multiple children case
+		my $looking_for_child_num = 1;
+		# $done = 0: we have not found all children yet
+		# $done = 1: found all children, move on
+		my $done = 0;
+		# $found = 0: the start of the tag not found yet
+		# $found = 1: start-tag found but the end-tag is not
+		my $found = 0;
+		my $xml_container = XMLContainer->new($logger);
+		my $new_search_tag;
+		foreach my $line(split(/\n/, $object_string)){
+			chomp $line;
+process_next_child:
+			# Get allowed types for this child
+			my @this_child_allowed_types = $search_node->get("CHILDNUM_TYPES", $looking_for_child_num);
+			my $this_child_modifier = $search_node->get("CHILDNUM_MODIFIER", $looking_for_child_num);
+			# Get next child allowed types (undef)
+			my @next_child_allowed_types = $search_node->get("CHILDNUM_TYPES", $looking_for_child_num+1);
+			if(not $found) {
+				# start not found
+				# see if you find one of the allowed types for this child
+				my $check_next_child = 1;
+				foreach my $this_child_allowed_type(@this_child_allowed_types) {
+					if($line =~ /\<$this_child_allowed_type.*?>/) {
+						$new_search_tag = $this_child_allowed_type;
+						$new_object_string = $line;
+						$found = 1;
+						$check_next_child = 0;
+						# Handle cases like <tag.*?> value <\/tag>
+						if($line =~ /\<\/$new_search_tag\>/) {
+							my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $this_child_allowed_type);
+							my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+							$xml_container->add($xml_child_object);
+							$new_object_string = "";
+							# Found the end; reset $found
+							$found = 0;
+						}
+					}
+				}
+				if($check_next_child) {
+					# allowed types for this child not found
+					# see if what you found is the next child
+					foreach my $next_child_allowed_type(@next_child_allowed_types) {
+						if($line =~ /\<$next_child_allowed_type.*?>/) {
+							$looking_for_child_num++;
+							goto process_next_child;
+						}
+					}
+				}
+			}
+			else {
+				# start of the next child has been found but the end is not, find the end
+				if($line =~ /\<\/$new_search_tag\>/) {
+					# end found
+					my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $new_search_tag);
+					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+					$xml_container->add($xml_child_object);
+					$new_object_string = "";
+					# Found the end; reset $found
+					$found = 0;
+				}
+				else{
+					$new_object_string .= "\n$line";
+				}
+			}
+		}
+		my $xml_attributes;
+		if($attributes) {
+			$xml_attributes = XMLAttributes->new($logger);
+			while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+				my ($key, $value) = ($1, $2);
+				$xml_attributes->add($value, $key);
+			}
+		}
+		return XMLElement->new($logger, $xml_container, $search_tag, 0, $xml_attributes);
 	}
 }
 
