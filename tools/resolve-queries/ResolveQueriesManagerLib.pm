@@ -1026,7 +1026,7 @@ sub load {
 			my $child_num = 0;
 			foreach my $types(split(/,/, $children)) {
 				$child_num++;
-				my $modifier;
+				my $modifier = 1;
 				if($types =~ /\+$/) {
 					$modifier = "+";
 					$types =~ s/\+$//;
@@ -1123,6 +1123,11 @@ sub get_ROOT {
 	$potential_roots[0];
 }
 
+sub get_NODE {
+	my ($self, $node_id) = @_;
+	$self->get("NODES")->get("BY_KEY", $node_id);
+}
+
 sub tostring {
 	my ($self, $indent) = @_;
 	$self->get("ROOT")->tostring();
@@ -1206,6 +1211,12 @@ sub get_CHILDNUM_TYPES {
 	keys %{$self->{CHILDNUM_TYPES_MAPPING}{$child_num}};
 }
 
+sub get_CHILDNUM_MODIFIER {
+	my ($self, $child_num) = @_;
+	$self->{CHILDNUM_MODIFIER_MAPPING};
+}
+
+
 sub set_CHILD_TYPES_MODIFIER {
 	my ($self, $child_num, $child_type_id, $child_modifier) = @_;
 	$self->{CHILDNUM_TYPES_MAPPING}{$child_num}{$child_type_id} = 1;
@@ -1216,6 +1227,11 @@ sub has_parents {
 	my ($self) = @_;
 	my $retVal = scalar $self->get("PARENTS")->toarray();
 	$retVal;
+}
+
+sub is_leaf {
+	my ($self) = @_;
+	scalar @{$self->{CHILDNUM_MODIFIER_MAPPING}} == 0;
 }
 
 sub tostring {
@@ -1295,44 +1311,52 @@ sub get_NEXT_OBJECT {
 sub get_STRING_TO_OBJECT {
 	my ($self, $object_string, $search_node) = @_;
 	my $logger = $self->get("LOGGER");
-	my $children = $search_node->get("CHILDREN");
-	my $num_of_children = scalar $children->toarray();
+	my $search_tag = $search_node->get("NODEID");
+	my $num_of_children = $search_node->get("NUM_OF_CHILDREN");
 	if($num_of_children == 1) {
-		my $search_tag = $search_node->get("NODEID");
-		if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
-			my ($attributes, $value) = ($1, $2);
-			my $xml_attributes;
-			if($attributes) {
-				$xml_attributes = XMLAttributes->new($logger);
-				while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
-					my ($key, $value) = ($1, $2);
-					$xml_attributes->add($value, $key);
+		# Is the child allowed to appear more than once?
+		if($search_node->get("CHILDNUM_MODIFIER", 1) == 1) {
+			my ($child_id) = $search_node->get("CHILDNUM_TYPES", 1); 
+			my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $child_id);
+			if($child_node->is_leaf()){
+				# The child appears once and its a leaf
+				# This serves as the base case for recursion
+				if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
+					my ($attributes, $value) = ($1, $2);
+					my $xml_attributes;
+					if($attributes) {
+						$xml_attributes = XMLAttributes->new($logger);
+						while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+							my ($key, $value) = ($1, $2);
+							$xml_attributes->add($value, $key);
+						}
+					}
+					return XMLElement->new($logger, $value, $search_tag, 0, $xml_attributes);
+				}
+				else{
+					# TODO: did not find the pattern we were expecting; throw an exception here
 				}
 			}
-			return XMLElement->new($logger, $value, $search_tag, 0, $xml_attributes);
+			else {
+			# The child appears once but it is a leaf node
+				if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
+					my ($attributes, $new_object_string) = ($1, $2);
+					my $xml_attributes;
+					if($attributes) {
+						$xml_attributes = XMLAttributes->new($logger);
+						while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+							my ($key, $value) = ($1, $2);
+							$xml_attributes->add($value, $key);
+						}
+					}
+					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+					return XMLElement->new($logger, $xml_child_object, $search_tag, 0, $xml_attributes);
+				}
+				else{
+					# TODO: did not find the pattern we were expecting; throw an exception here
+				}
+			}			
 		}
-	}
-	else {
-		my $xml_container = XMLContainer->new($logger);
-		my $search_tag = $search_node->get("NODEID");
-		my ($attributes) = $object_string =~ /<$search_tag(.*?)>/;
-		my $xml_attributes;
-		if($attributes) {
-			$xml_attributes = XMLAttributes->new($logger);
-			while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
-				my ($key, $value) = ($1, $2);
-				$xml_attributes->add($value, $key);
-			}
-		}
-		foreach my $child_node($children->toarray()) {
-			my $search_tag = $child_node->get("NODEID");
-			while($object_string =~ /(<$search_tag.*?>.*?<\/$search_tag>)/gs){
-				my $object_substring = $1;
-				my $xml_element = $self->get("STRING_TO_OBJECT", $object_substring, $child_node);
-				$xml_container->add($xml_element);
-			}
-		}
-		return XMLElement->new($logger, $xml_container, $search_node->get("NODEID"), 1, $xml_attributes);
 	}
 }
 
