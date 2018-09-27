@@ -20,10 +20,10 @@ my $terminalWidth = 80;
 package Super;
 
 sub set {
-  my ($self, $field, $value) = @_;
+  my ($self, $field, @values) = @_;
   my $method = $self->can("set_$field");
-  $method->($self, $value) if $method;
-  $self->{$field} = $value unless $method;
+  $method->($self, @values) if $method;
+  $self->{$field} = $values[0] unless $method;
 }
 
 sub get {
@@ -1023,13 +1023,20 @@ sub load {
 		chomp $line;
 		$linenum++;
 		if(my ($parent, $children) = $line =~ /\<\!ELEMENT (.*?) \((.*?)\)\>/) {
-			foreach my $child(split(/,/, $children)) {
+			my $child_num = 0;
+			foreach my $types(split(/,/, $children)) {
+				$child_num++;
 				my $modifier;
-				if($child =~ /\+$/) {
+				if($types =~ /\+$/) {
 					$modifier = "+";
-					$child =~ s/\+$//;
+					$types =~ s/\+$//;
 				}
-				$self->get("TREE")->add("CHILD", $parent, $child, $modifier, {FILENAME=>$filename, LINENUM=>$linenum});
+				if($types =~ /^\((.*?)\)$/){
+					$types = $1;
+				}
+				foreach my $type(split(/\|/, $types)) {
+					$self->get("TREE")->add("CHILD", $parent, $child_num, $type, $modifier, {FILENAME=>$filename, LINENUM=>$linenum});
+				}
 			}
 		}
 		elsif(my ($node_id, $attribute) = $line =~ /\<\!ATTLIST (.*?) (.*?) .*?\>/) {
@@ -1088,14 +1095,12 @@ sub add {
 }
 
 sub add_CHILD {
-	my ($self, $parent_id, $child_id, $modifier, $where) = @_;
+	my ($self, $parent_id, $child_num, $child_type_id, $child_modifier, $where) = @_;
 	my $parent_node = $self->get("NODES")->get("BY_KEY", $parent_id);
 	$parent_node->set("NODEID", $parent_id);
-	my $child_node = $self->get("NODES")->get("BY_KEY", $child_id);
-	$child_node->set("NODEID", $child_id);
-	$child_node->set("MODIFIER", $modifier) if $modifier;
-	$parent_node->add("CHILD", $child_node);
-	$child_node->add("PARENT", $parent_node);
+	my $type_node = $self->get("NODES")->get("BY_KEY", $child_type_id);
+	$parent_node->set("CHILD_TYPES_MODIFIER", $child_num, $child_type_id, $child_modifier);	
+	$type_node->add("PARENT", $parent_node);
 }
 
 sub add_ATTRIBUTE {
@@ -1156,8 +1161,10 @@ sub new {
 		NODEID => $node_id,
 		MODIFIER => undef,
 		PARENTS => Nodes->new($logger),
-		CHILDREN => Nodes->new($logger),
+		CHILDNUM_TYPES_MAPPING => {},
+		CHILDNUM_MODIFIER_MAPPING => {},
 		ATTRIBUTES => Container->new($logger, "RAW"),
+		TYPES => Container->new($logger, "RAW"),
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -1178,15 +1185,31 @@ sub add_PARENT {
 	$self->get("PARENTS")->add($parent, $parent->get("NODEID"));
 }
 
-sub add_CHILD {
-	my ($self, $child) = @_;
-	$self->get("CHILDREN")->add($child, $child->get("NODEID"));
-}
+#sub add_CHILD {
+#	my ($self, $child) = @_;
+#	$self->get("CHILDREN")->add($child, $child->get("NODEID"));
+#}
+
+#sub add_TYPE {
+#	my ($self, $type) = @_;
+#	$self->get("TYPES")->add("KEY", $type);
+#}
 
 sub add_ATTRIBUTE {
 	my ($self, $attribute) = @_;
 	my $i = scalar $self->get("ATTRIBUTES")->toarray();
 	$self->get("ATTRIBUTES")->add($attribute, $i+1);
+}
+
+sub get_CHILDNUM_TYPES {
+	my ($self, $child_num) = @_;
+	keys %{$self->{CHILDNUM_TYPES_MAPPING}{$child_num}};
+}
+
+sub set_CHILD_TYPES_MODIFIER {
+	my ($self, $child_num, $child_type_id, $child_modifier) = @_;
+	$self->{CHILDNUM_TYPES_MAPPING}{$child_num}{$child_type_id} = 1;
+	$self->{CHILDNUM_MODIFIER_MAPPING}{$child_num} = $child_modifier;
 }
 
 sub has_parents {
@@ -1242,8 +1265,8 @@ sub setup {
 
 sub get_NEXT_OBJECT {
 	my ($self) = @_;
-	my ($search_node) = $self->get("DTD")->get("ROOT")->get("CHILDREN")->toarray();
-	my $search_tag = $search_node->get("NODEID");
+	my ($search_tag) = $self->get("DTD")->get("ROOT")->get("CHILDNUM_TYPES", 1);
+	my $search_node = $self->get("DTD")->get("TREE")->get("NODES")->get("BY_KEY", $search_tag);
 	my $filehandle = $self->get("XML_FILEHANDLE");
 	my $object_string = "";
 	my $working = 0;
