@@ -1213,7 +1213,7 @@ sub get_CHILDNUM_TYPES {
 
 sub get_CHILDNUM_MODIFIER {
 	my ($self, $child_num) = @_;
-	$self->{CHILDNUM_MODIFIER_MAPPING};
+	$self->{CHILDNUM_MODIFIER_MAPPING}{$child_num};
 }
 
 sub get_NUM_OF_CHILDREN {
