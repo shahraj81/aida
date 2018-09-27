@@ -1216,6 +1216,10 @@ sub get_CHILDNUM_MODIFIER {
 	$self->{CHILDNUM_MODIFIER_MAPPING};
 }
 
+sub get_NUM_OF_CHILDREN {
+	my ($self) = @_;
+	scalar keys %{$self->{CHILDNUM_MODIFIER_MAPPING}};
+}
 
 sub set_CHILD_TYPES_MODIFIER {
 	my ($self, $child_num, $child_type_id, $child_modifier) = @_;
