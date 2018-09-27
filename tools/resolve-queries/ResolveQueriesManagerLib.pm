@@ -885,7 +885,7 @@ sub convert_zerohop_query_output_file_to_xml {
 		my $eo = &trim($entry->get("?eo"));  # end offset - text_justification
 		my $st = &trim($entry->get("?st"));  # start time - audio_justification
 		my $et = &trim($entry->get("?et"));  # end time - audio_justification
-		my $kfid = &trim($entry->get("?kfid")); # keyframeid - video_justificatio
+		my $kfid = &trim($entry->get("?kfid")); # keyframeid - video_justification
 		my $ulx = &trim($entry->get("?ulx")); # upper_left_x - video/image justification
 		my $uly = &trim($entry->get("?uly")); # upper_left_y - video/image justification
 		my $lrx = &trim($entry->get("?lrx")); # lower_right_x - video/image justification
@@ -947,7 +947,7 @@ sub convert_zerohop_query_output_file_to_xml {
 							1,
 							$query_response_attributes);
 	print $program_output_xml $query_response->tostring(2);
-	print $program_output_xml "<\/zeroquery_responses>\n";
+	print $program_output_xml "<\/zerohopquery_responses>\n";
 	close($program_output_xml);}
 
 sub convert_graph_query_output_file_to_xml {
