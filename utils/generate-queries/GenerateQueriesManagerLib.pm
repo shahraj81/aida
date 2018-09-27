@@ -2356,7 +2356,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 	my $sparql = <<'END_SPARQL_QUERY';
 
 	<![CDATA[
-	SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?cv
+	SELECT ?cluster ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?cv
 	WHERE {
 		?statement1    a                    rdf:Statement .
 		?statement1    rdf:object           ldcOnt:ENTTYPE .
