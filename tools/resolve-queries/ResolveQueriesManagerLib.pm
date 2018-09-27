@@ -127,6 +127,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 ########## General Errors
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
+  MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
 END_PROBLEM_FORMATS
 
 
@@ -1005,7 +1006,7 @@ sub new {
 		CLASS => 'DTD',
 		LOGGER => $logger,
 		FILENAME => $filename,
-		TREE => Tree->new($logger),
+		TREE => Tree->new($logger, $filename),
 	};
 	bless($self, $class);
 	$self->load();
@@ -1063,11 +1064,12 @@ package Tree;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger) = @_;
+	my ($class, $logger, $filename) = @_;
 	
 	my $self = {
 		CLASS => 'Tree',
 		LOGGER => $logger,
+		FILENAME => $filename,
 		ROOT => undef,
 		POTENTIAL_ROOTS => [],
 		NODES => Nodes->new($logger),
@@ -1103,15 +1105,14 @@ sub add_ATTRIBUTE {
 
 sub get_ROOT {
 	my ($self) = @_;
-	
+	my $filename = $self->get("FILENAME");
 	foreach my $node($self->get("NODES")->toarray()) {
 		push (@{$self->get("POTENTIAL_ROOTS")}, $node) unless $node->has_parents();
 	}
-	
 	my @potential_roots = @{$self->get("POTENTIAL_ROOTS")};
 	my $potential_roots_ids_string = join(",", map {$_->get("NODEID")} @potential_roots);
 	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-	$self->get("LOGGER")->record_problem("MULTIPLE_POTENTIAL_ROOTS", $potential_roots_ids_string, $where)
+	$self->get("LOGGER")->record_problem("MULTIPLE_POTENTIAL_ROOTS", $potential_roots_ids_string, $filename, $where)
 		if scalar @potential_roots > 1;
 	$self->set("ROOT", $potential_roots[0]);
 	$potential_roots[0];
