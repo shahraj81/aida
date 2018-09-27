@@ -1234,7 +1234,7 @@ sub has_parents {
 
 sub is_leaf {
 	my ($self) = @_;
-	scalar @{$self->{CHILDNUM_MODIFIER_MAPPING}} == 0;
+	scalar keys %{$self->{CHILDNUM_MODIFIER_MAPPING}} == 0;
 }
 
 sub tostring {
@@ -1363,7 +1363,7 @@ sub get_STRING_TO_OBJECT {
 		}
 	}
 	else {
-		# First obtain the attributes and then get the wrapper removed
+		# First obtain the attributes and then unwrap $search_tag
 		my ($attributes, $new_object_string) = $object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs;
 		$object_string = $new_object_string;
 		$new_object_string = "";
@@ -1421,6 +1421,7 @@ process_next_child:
 				# start of the next child has been found but the end is not, find the end
 				if($line =~ /\<\/$new_search_tag\>/) {
 					# end found
+					$new_object_string .= "\n$line";
 					my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $new_search_tag);
 					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
 					$xml_container->add($xml_child_object);
@@ -1436,7 +1437,7 @@ process_next_child:
 		my $xml_attributes;
 		if($attributes) {
 			$xml_attributes = XMLAttributes->new($logger);
-			while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+			while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
 				my ($key, $value) = ($1, $2);
 				$xml_attributes->add($value, $key);
 			}
