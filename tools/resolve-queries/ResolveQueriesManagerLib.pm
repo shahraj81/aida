@@ -867,11 +867,88 @@ sub convert_class_query_output_file_to_xml {
 
 sub convert_zerohop_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
+	my $logger = $self->get("LOGGER");
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
-	my $i=0;
+	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print $program_output_xml "<zerohopquery_responses>\n";
+	my $xml_justifications_container = XMLContainer->new($logger);
+	my $cluster_id;
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
+		$cluster_id = &trim($entry->get("?cluster"));
+		my $doceid = &trim($entry->get("?doceid"));
+		my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
+		my $cv = &trim($entry->get("?cv"));  # confidence value
+		$cv = sprintf("%.4f", &trim($entry->get("?cv")));
+		my $xml_confidence = XMLElement->new($logger, $cv, "confidence", 0);
+		my $so = &trim($entry->get("?so"));  # start offset - text_justification
+		my $eo = &trim($entry->get("?eo"));  # end offset - text_justification
+		my $st = &trim($entry->get("?st"));  # start time - audio_justification
+		my $et = &trim($entry->get("?et"));  # end time - audio_justification
+		my $kfid = &trim($entry->get("?kfid")); # keyframeid - video_justificatio
+		my $ulx = &trim($entry->get("?ulx")); # upper_left_x - video/image justification
+		my $uly = &trim($entry->get("?uly")); # upper_left_y - video/image justification
+		my $lrx = &trim($entry->get("?lrx")); # lower_right_x - video/image justification
+		my $lry = &trim($entry->get("?lry")); # lower_right_y - video/image justification
+		if($so ne "" && $eo ne "") {
+			# process text_justification
+			# <!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
+			my $xml_start = XMLElement->new($logger, $so, "start", 0);
+			my $xml_end = XMLElement->new($logger, $eo, "end", 0);
+			my $xml_text_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_confidence),
+											"text_justification",
+											1);
+			$xml_justifications_container->add($xml_text_justification);
+		}
+		elsif($st ne "" && $et ne "") {
+			# process audio_justification
+			# <!ELEMENT audio_justification (doceid,segmentid,start,end,enttype,confidence)>
+			my $xml_start = XMLElement->new($logger, $st, "start", 0);
+			my $xml_end = XMLElement->new($logger, $et, "end", 0);
+			my $xml_audio_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_confidence),
+											"audio_justification",
+											1);
+			$xml_justifications_container->add($xml_audio_justification);
+		}
+		elsif($kfid ne "") {
+			# process video_justification
+			#<!ELEMENT video_justification (doceid,keyframeid,topleft,bottomright,enttype,confidence)>
+			my $xml_keyframeid = XMLElement->new($logger, $kfid, "keyframeid", 0);
+			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
+			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
+			my $xml_video_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_topleft, $xml_bottomright, $xml_confidence),
+											"video_justification",
+											1);
+			$xml_justifications_container->add($xml_video_justification);
+		}
+		elsif($kfid eq "" && $ulx ne "" && $uly ne "" && $lrx ne "" && $lry ne "") {
+			# process image_justification
+			#<!ELEMENT image_justification (doceid,topleft,bottomright,enttype,confidence)>
+			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
+			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
+			my $xml_image_justification = XMLElement->new( $logger,
+											XMLContainer->new($logger, $xml_doceid, $xml_topleft, $xml_bottomright, $xml_confidence),
+											"image_justification",
+											1);
+			$xml_justifications_container->add($xml_image_justification);
+		}
 	}
-}
+	# TODO: system_nodeid should be changed to cluster_id
+	my $xml_system_nodeid = XMLElement->new($logger, $cluster_id, "system_nodeid", 0);
+	my $query_response_attributes = XMLAttributes->new($logger);
+	$query_response_attributes->add("$query_id", "QUERY_ID");
+	my $xml_justifications = XMLElement->new($logger, $xml_justifications_container, "justifications", 1);
+	my $query_response = XMLElement->new($logger,
+							XMLContainer->new($logger, $xml_system_nodeid, $xml_justifications),
+							"zerohopquery_response",
+							1,
+							$query_response_attributes);
+	print $program_output_xml $query_response->tostring(2);
+	print $program_output_xml "<\/zeroquery_responses>\n";
+	close($program_output_xml);}
 
 sub convert_graph_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
