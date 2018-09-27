@@ -2035,7 +2035,7 @@ sub write_to_file {
 	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
 	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
-	# Query # QUERYID
+	# Query: QUERYID
 	# Query description: Find all mentions of type ENTTYPE
 
 	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
@@ -2356,6 +2356,13 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 	my $sparql = <<'END_SPARQL_QUERY';
 
 	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: QUERYID
+
 	SELECT ?cluster ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?cv
 	WHERE {
 		?statement1    a                    rdf:Statement .
@@ -2643,6 +2650,7 @@ sub write_to_file {
 sub get_SPARQL {
 	my ($self) = @_;
 	my $sparql = SPARQL->new($self->get("LOGGER"), 
+								$self->get("QUERY_ID"),
 								$self->get("KEYFRAMES_BOUNDINGBOXES"), 
 								$self->get("IMAGES_BOUNDINGBOXES"), 
 								$self->get("EDGES"), 
@@ -2665,10 +2673,11 @@ package SPARQL;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $keyframes_boundingboxes, $images_boundingboxes, $edges, $entrypoints) = @_;
+	my ($class, $logger, $query_id, $keyframes_boundingboxes, $images_boundingboxes, $edges, $entrypoints) = @_;
 	my $self = {
     CLASS => 'SPARQL',
     LOGGER => $logger,
+    QUERY_ID => $query_id,
     KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
     IMAGES_BOUNDINGBOXES => $images_boundingboxes,
     _NEXT_GROUP_POSTFIX => 10001,
@@ -2702,9 +2711,12 @@ sub setup_constants {
 
 	$self->{PREFIX} = <<'PREFIX';
 PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
-		PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-		PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
-		PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	Query: QUERYID
+
 PREFIX
 
 	$self->{STRING_ENTRYPOINT_CONSTRAINTS} = <<'STRING_ENTRYPOINT_CONSTRAINTS';
@@ -3071,14 +3083,17 @@ sub process_node {
 
 sub tostring {
 	my ($self) = @_;
-	my $sparql = "\n           <![CDATA[";
-	$sparql .= "           ", $self->get("PREFIX");
-	$sparql .= "\n           SELECT";
+	my $query_id = $self->get("QUERY_ID");
+	my $sparql = "\n\t<![CDATA[\n";
+	$sparql .= "\t". $self->get("PREFIX");
+	$sparql .= "\n\tSELECT";
 	$sparql .= $self->get("SELECT_VARIABLES");
-	$sparql .= "\n           WHERE {";
+	$sparql .= "\n\tWHERE {";
 	$sparql .= $self->get("WHERE_CLAUSE_STRING");
-	$sparql .= "           }\n";
-	$sparql .= "           ]]>\n";
+	$sparql .= "\t}\n";
+	$sparql .= "\t]]>\n";
+	$sparql =~ s/QUERYID/$query_id/;
+
 	$sparql;
 }
 
