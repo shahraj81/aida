@@ -739,6 +739,7 @@ sub apply_sparql_queries {
 	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
 	my $sparql_executable = $self->get("PARAMETERS")->get("SPARQL_EXECUTABLE");
 	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
+	map {$_ =~ s/\/$//} (($intermediate_directory, $kbs_dir));
 	foreach my $query_id($self->get("QUERYIDS")) {
 		my $query_file = "$intermediate_directory/split-queries/$query_id.rq";
 		system("mkdir $intermediate_directory/sparql-output/$query_id")
