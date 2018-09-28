@@ -1059,7 +1059,7 @@ sub get_ROOT {
 
 sub tostring {
 	my ($self, $indent) = @_;
-	$self->get("ROOT")->tostring();
+	$self->get("TREE")->tostring();
 }
 
 #####################################################################################
@@ -1130,7 +1130,11 @@ sub get_NODE {
 
 sub tostring {
 	my ($self, $indent) = @_;
-	$self->get("ROOT")->tostring();
+	my $retVal = "";
+	foreach my $node($self->get("NODES")->toarray()) {
+		$retVal .= $node->tostring();
+	}
+	$retVal;
 }
 
 #####################################################################################
@@ -1238,18 +1242,25 @@ sub is_leaf {
 }
 
 sub tostring {
-	my ($self, $indent) = @_;
-	my $modifier = "";
-	$modifier = $self->get("MODIFIER") if $self->has("MODIFIER");
+	my ($self) = @_;
 	my $attributes = join(",", $self->get("ATTRIBUTES")->toarray()) 
 		if scalar $self->get("ATTRIBUTES")->toarray();
 	$attributes = " attributes=$attributes" if $attributes;
-	my $retVal = "";
-	$indent = 0 unless $indent;
-	$retVal = " " x $indent . $self->get("NODEID") . $modifier . $attributes .  "\n";
-	foreach my $child($self->get("CHILDREN")->toarray()) {
-		$retVal .= $child->tostring($indent+2);
+	my $retVal = $self->get("NODEID") . ": ";
+	foreach my $child_num(sort {$a<=>$b} keys %{$self->{CHILDNUM_TYPES_MAPPING}}) {
+		my $child_modifier = $self->get("CHILDNUM_MODIFIER", $child_num);
+		my @types = $self->get("CHILDNUM_TYPES", $child_num);
+		my $types = join("|", @types);
+		if(scalar @types > 1) {
+			$retVal .= "(" . $types . ")";
+		}
+		else {
+			$retVal .= $types;
+		}
+		$retVal .= "+" if($child_modifier eq "+");
+		$retVal .= " ";
 	}
+	$retVal .= " $attributes\n";
 	$retVal;
 }
 
