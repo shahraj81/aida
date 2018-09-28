@@ -2715,7 +2715,7 @@ PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntol
 	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
 	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
-	Query: QUERYID
+	# Query: QUERYID
 
 PREFIX
 
