@@ -699,10 +699,11 @@ sub new {
 	};
 	bless($self, $class);
 	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
+	my $xmloutput_directory = $self->get("PARAMETERS")->get("OUTPUT_DIR");
 	system("mkdir $intermediate_directory") unless -d $intermediate_directory;
 	system("mkdir $intermediate_directory/split-queries") unless -d "$intermediate_directory/split-queries";
 	system("mkdir $intermediate_directory/sparql-output") unless -d "$intermediate_directory/sparql-output";
-	system("mkdir $intermediate_directory/xml-output") unless -d "$intermediate_directory/xml-output";
+	system("mkdir $xmloutput_directory") unless -d "$xmloutput_directory";
 	$self;
 }
 
@@ -756,17 +757,18 @@ sub apply_sparql_queries {
 sub convert_output_files_to_xml {
 	my ($self) = @_;
 	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
+	my $xmloutput_directory = $self->get("PARAMETERS")->get("OUTPUT_DIR");
 	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
 	my $output_type = $self->get("XML_FILEHANDLER")->get("DTD")->get("FILENAME");
 	$output_type =~ s/^(.*?\/)+//g;
 	$output_type =~ s/.dtd//;
 	foreach my $query_id($self->get("QUERYIDS")) {
-		system("mkdir $intermediate_directory/xml-output/$query_id")
-			unless -d "$intermediate_directory/xml-output/$query_id";
+		system("mkdir $xmloutput_directory/$query_id")
+			unless -d "$xmloutput_directory/$query_id";
 		foreach my $kb_file(<$kbs_dir/*.ttl>) {
 			my ($document_id) = $kb_file =~ /$kbs_dir\/(.*).ttl/;
 			my $sparql_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.tsv";
-			my $xml_output_file = "$intermediate_directory/xml-output/$query_id/$document_id.xml";
+			my $xml_output_file = "$xmloutput_directory/$query_id/$document_id.xml";
 			$self->convert_output_file_to_xml($query_id, $sparql_output_file, $xml_output_file, $output_type);
 		}
 	}
