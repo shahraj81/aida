@@ -715,6 +715,7 @@ sub generate_sparql_query_files {
 			if($query->get("NAME") eq "class_query");
 		$self->add("QUERY_ID", $query_id, $enttype);
 		my ($sparql_query_string) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
+		next unless $sparql_query_string;
 		$self->write_sparql_query_to_file($query_id, $sparql_query_string);
 	}
 }
@@ -1328,50 +1329,48 @@ sub get_STRING_TO_OBJECT {
 	my $logger = $self->get("LOGGER");
 	my $search_tag = $search_node->get("NODEID");
 	my $num_of_children = $search_node->get("NUM_OF_CHILDREN");
-	if($num_of_children == 1) {
-		# There is only one child
-		# Is the child allowed to appear more than once?
-		if($search_node->get("CHILDNUM_MODIFIER", 1) eq "1") {
-			my ($child_id) = $search_node->get("CHILDNUM_TYPES", 1); 
-			my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $child_id);
-			if($child_node->is_leaf()){
-				# The child appears once and its a leaf
-				# This serves as the base case for recursion
-				if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
-					my ($attributes, $value) = ($1, $2);
-					my $xml_attributes;
-					if($attributes) {
-						$xml_attributes = XMLAttributes->new($logger);
-						while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
-							my ($key, $value) = ($1, $2);
-							$xml_attributes->add($value, $key);
-						}
+	if($num_of_children == 1 && $search_node->get("CHILDNUM_MODIFIER", 1) eq "1") {
+		# There is only one child and it appears only once
+		# This is the base case of this recursive function
+		my ($child_id) = $search_node->get("CHILDNUM_TYPES", 1);
+		my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $child_id);
+		if($child_node->is_leaf()){
+			# The child appears once and its a leaf
+			# This serves as the base case for recursion
+			if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
+				my ($attributes, $value) = ($1, $2);
+				my $xml_attributes;
+				if($attributes) {
+					$xml_attributes = XMLAttributes->new($logger);
+					while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+						my ($key, $value) = ($1, $2);
+						$xml_attributes->add($value, $key);
 					}
-					return XMLElement->new($logger, $value, $search_tag, 0, $xml_attributes);
 				}
-				else{
-					# TODO: did not find the pattern we were expecting; throw an exception here
-				}
+				return XMLElement->new($logger, $value, $search_tag, 0, $xml_attributes);
 			}
-			else {
-			# The child appears once but it is not a leaf node
-				if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
-					my ($attributes, $new_object_string) = ($1, $2);
-					my $xml_attributes;
-					if($attributes) {
-						$xml_attributes = XMLAttributes->new($logger);
-						while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
-							my ($key, $value) = ($1, $2);
-							$xml_attributes->add($value, $key);
-						}
+			else{
+				# TODO: did not find the pattern we were expecting; throw an exception here
+			}
+		}
+		else {
+		# The child appears once but it is not a leaf node
+			if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
+				my ($attributes, $new_object_string) = ($1, $2);
+				my $xml_attributes;
+				if($attributes) {
+					$xml_attributes = XMLAttributes->new($logger);
+					while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+						my ($key, $value) = ($1, $2);
+						$xml_attributes->add($value, $key);
 					}
-					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
-					return XMLElement->new($logger, $xml_child_object, $search_tag, 0, $xml_attributes);
 				}
-				else{
-					# TODO: did not find the pattern we were expecting; throw an exception here
-				}
-			}			
+				my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+				return XMLElement->new($logger, $xml_child_object, $search_tag, 0, $xml_attributes);
+			}
+			else{
+				# TODO: did not find the pattern we were expecting; throw an exception here
+			}
 		}
 	}
 	else {
