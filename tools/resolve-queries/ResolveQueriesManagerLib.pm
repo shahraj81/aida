@@ -125,9 +125,10 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # ----------                              ----           -------------
 
 ########## General Errors
+  MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
-  UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
+  UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
 END_PROBLEM_FORMATS
 
 
@@ -504,6 +505,7 @@ sub new {
     CLASS => 'Header',
     ELEMENTS => [],
     FIELD_SEPARATOR => $field_separator,
+    LINE => $line,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -579,8 +581,10 @@ sub get {
 
 sub add {
   my ($self, $line, $header) = @_;
+  $line .= "\tEND";
   my $field_separator = $self->get("FIELD_SEPARATOR");
   @{$self->{ELEMENTS}} = split( /$field_separator/, $line);
+  my $end = pop @{$self->{ELEMENTS}};
   %{$self->{MAP}} = map {$header->get("ELEMENT_AT",$_) => $self->get("ELEMENT_AT",$_)} (0..$header->get("NUM_OF_COLUMNS")-1);
 }
 
@@ -630,14 +634,20 @@ sub tostring {
   my ($self) = @_;
 
   my $num_of_columns_header = $self->get("HEADER")->get("NUM_OF_COLUMNS");
-  my $num_of_columns_entry  = $self->get("NUM_OF_COLUMNS"); 
-
-  die("Mismatching column numbers")
-    if ($num_of_columns_header != $num_of_columns_entry);
+  my $num_of_columns_entry  = $self->get("NUM_OF_COLUMNS");
+  my $header_line = $self->get("HEADER")->get("LINE");
+	my $entry_line = $self->get("LINE");
+  $self->get("LOGGER")->record_problem("MISMATCHING_COLUMNS", 
+  												$num_of_columns_header, 
+  												$num_of_columns_entry,
+  												"\nHEADER: ==>$header_line<==\n",
+  												"\nENTRY: ==>$entry_line<==\n",
+  												$self->get("WHERE"))
+		if ($num_of_columns_header != $num_of_columns_entry);
 
   my $string = "";
 
-  foreach my $i(0..$num_of_columns_entry-1) {
+  foreach my $i(0..$num_of_columns_header-1) {
     $string = $string . $self->get("HEADER")->get("ELEMENT_AT", $i);
     $string = $string . ": "; 
     $string = $string . $self->get("ELEMENT_AT", $i);
@@ -884,8 +894,7 @@ sub convert_zerohop_query_output_file_to_xml {
 		$cluster_id = &trim($entry->get("?cluster"));
 		my $doceid = &trim($entry->get("?doceid"));
 		my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
-		my $cv = &trim($entry->get("?cv"));  # confidence value
-		$cv = sprintf("%.4f", &trim($entry->get("?cv")));
+		my $cv = &get_zerohop_response_confidence($entry); # confidence value
 		my $xml_confidence = XMLElement->new($logger, $cv, "confidence", 0);
 		my $so = &trim($entry->get("?so"));  # start offset - text_justification
 		my $eo = &trim($entry->get("?eo"));  # end offset - text_justification
@@ -961,7 +970,29 @@ sub convert_graph_query_output_file_to_xml {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
 	my $i=0;
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
+		print $entry->tostring(), "\n";
 	}
+}
+
+sub get_zerohop_query_response_confidence {
+	my ($entry) = @_;
+	my $nid_ep = $entry->get("?nid_ep");
+	my $nid_ot = $entry->get("?nid_ot");
+	my $cmcv_ep = $entry->get("?cmcv_ep");
+	my $cmcv_ot = $entry->get("?cmcv_ot");
+	my $cv = $entry->get("?cv");
+	# TODO: This will need to used for M18
+	my $iou = 1;
+	# TODO: Fix this for M18
+	$cv;
+}
+
+sub get_graph_query_response_confidence {
+	my ($entry, $endpoint) = @_;
+	# TODO: This will need to used for M18
+	my $iou = 1;
+	# TODO: Fix this for M18
+	"nil";
 }
 
 sub add {
