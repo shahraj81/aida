@@ -713,9 +713,9 @@ sub generate_sparql_query_files {
 		my $enttype;
 		($enttype) = $query->get("CHILD", "enttype")->get("ELEMENT")
 			if($query->get("NAME") eq "class_query");
-		$self->add("QUERY_ID", $query_id, $enttype);
 		my ($sparql_query_string) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
 		next unless $sparql_query_string;
+		$self->add("QUERY_ID", $query_id, $enttype);
 		$self->write_sparql_query_to_file($query_id, $sparql_query_string);
 	}
 }
