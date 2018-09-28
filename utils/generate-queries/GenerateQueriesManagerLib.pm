@@ -2954,8 +2954,8 @@ sub process_edge {
 	# Process the edge
 	my $group_postfix = $self->get("NEXT_GROUP_POSTFIX");
 	my $where_clause = $self->get("WHERE_EDGE_TEMPLATE");
-	$where_clause =~ s/\[SUBJECT_NODEID\]/$subject_nodevariable/g;
-	$where_clause =~ s/\[OBJECT_NODEID\]/$object_nodevariable/g;
+	$where_clause =~ s/\[SUBJECT_NODEID\]/?$subject_nodevariable/g;
+	$where_clause =~ s/\[OBJECT_NODEID\]/?$object_nodevariable/g;
 	$where_clause =~ s/\[EDGE_TYPE\]/$edge_type/g;
 	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
 	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
