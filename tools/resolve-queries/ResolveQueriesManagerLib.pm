@@ -710,8 +710,9 @@ sub generate_sparql_query_files {
 	my ($self) = @_;
 	while(my $query = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
 		my ($query_id) = $query->get("ATTRIBUTES")->toarray();
-		# only for class queries
-		my ($enttype) = $query->get("CHILD", "enttype")->get("ELEMENT");
+		my $enttype;
+		($enttype) = $query->get("CHILD", "enttype")->get("ELEMENT")
+			if($query->get("NAME") eq "class_query");
 		$self->add("QUERY_ID", $query_id, $enttype);
 		my ($sparql_query_string) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
 		$self->write_sparql_query_to_file($query_id, $sparql_query_string);
