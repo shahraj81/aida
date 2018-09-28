@@ -963,15 +963,148 @@ sub convert_zerohop_query_output_file_to_xml {
 							$query_response_attributes);
 	print $program_output_xml $query_response->tostring(2);
 	print $program_output_xml "<\/zerohopquery_responses>\n";
-	close($program_output_xml);}
+	close($program_output_xml);
+}
 
 sub convert_graph_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
+	my $logger = $self->get("LOGGER");
+
+	open(my $program_output_xml, ">:utf8", $xml_output_file)
+		or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print $program_output_xml "<graphquery_responses>\n";
+
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
+	my $subject_postfix = "10001";
+	my $object_postfix = "10002";
+	my $edge_postfix = "10003";
+	my $edge_justification1_postfix = "1_$edge_postfix";
+	my $edge_justification2_postfix = "2_$edge_postfix";
 	my $i=0;
+	my ($cluster_id, $xml_cluster_id, $enttype, $xml_enttype, $xml_justification_span,
+				$confidence, $xml_confidence, $xml_subject_justification, $xml_object_justification,
+				$xml_edge_justification_span1, $xml_edge_justification_span2, $xml_edge_justification,
+				$xml_justification);
+	my $xml_justifications_container = XMLContainer->new($logger);
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
-		print $entry->tostring(), "\n";
+		# subject_justification
+		$cluster_id = &trim($entry->get("?cluster_$subject_postfix"));
+		$xml_cluster_id = XMLElement->new($logger, $cluster_id, "system_nodeid", 0);
+		$enttype = $self->get("SUBJECT_ENTTYPE", $query_id);
+		$xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+		$xml_justification_span = $self->get("GRAPH_QUERY_SPAN", $entry, $subject_postfix);
+		$confidence = &trim($entry->get("?type_cv_$subject_postfix"));
+		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
+		$xml_subject_justification = XMLElement->new( $logger,
+							XMLContainer->new($logger, $xml_cluster_id, $xml_enttype, $xml_justification_span, $xml_confidence),
+							"subject_justification",
+							1);
+		# object_justification
+		$cluster_id = &trim($entry->get("?cluster_$object_postfix"));
+		$xml_cluster_id = XMLElement->new($logger, $cluster_id, "system_nodeid", 0);
+		$enttype = $self->get("OBJECT_ENTTYPE", $query_id);
+		$xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
+		$xml_justification_span = $self->get("GRAPH_QUERY_SPAN", $entry, $object_postfix);
+		$confidence = &trim($entry->get("?type_cv_$object_postfix"));
+		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
+		$xml_object_justification = XMLElement->new( $logger,
+							XMLContainer->new($logger, $xml_cluster_id, $xml_enttype, $xml_justification_span, $xml_confidence),
+							"object_justification",
+							1);
+		# edge justifications
+		$xml_edge_justification_span1 = $self->get("GRAPH_QUERY_SPAN", $entry, $edge_justification1_postfix);
+		$xml_edge_justification_span2 = $self->get("GRAPH_QUERY_SPAN", $entry, $edge_justification1_postfix);
+		$confidence = &trim($entry->get("?edge_cv_$edge_postfix"));
+		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
+		$xml_edge_justification = XMLElement->new( $logger,
+							XMLContainer->new($logger, $xml_cluster_id, $xml_enttype, $xml_justification_span, $xml_confidence),
+							"edge_justification",
+							1);
+		# justification
+		$xml_justification = XMLElement->new( $logger,
+							XMLContainer->new($logger, $xml_subject_justification, $xml_object_justification, $xml_edge_justification),
+							"justification",
+							1);
+		$xml_justifications_container->add($xml_justification);
 	}
+
+	my $xml_justifications = XMLElement->new($logger, $xml_justifications_container, "justifications", 1);
+	my $xml_edge_attributes = XMLAttributes->new($logger);
+	$xml_edge_attributes->add("1", "id");
+	my $xml_edge = XMLElement->new($logger, $xml_justifications, "edge", 1, $xml_edge_attributes);
+	my $xml_response = XMLElement->new($logger, $xml_edge, "response", 1);
+
+	my $xml_query_attributes = XMLAttributes->new($logger);
+	$xml_query_attributes->add($query_id, "id");
+	my $xml_graphquery_responses = XMLElement->new($logger, $xml_response, "graphquery_responses", 1);
+
+	my $xml_graphqueries_responses = XMLElement->new($logger, $xml_graphquery_responses, "graphqueries_responses", 1);
+
+	print $program_output_xml $xml_graphqueries_responses->tostring(2);
+	print $program_output_xml "<\/graphquery_responses>\n";
+	close($program_output_xml);
+}
+
+sub get_GRAPH_QUERY_SPAN {
+	my ($self, $entry, $postfix) = @_;
+	my $logger = $self->get("LOGGER");
+
+	my $doceid = &trim($entry->get("?doceid_$postfix"));
+	my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
+	my $so = &trim($entry->get("?so_$postfix"));  # start offset - text_justification
+	my $eo = &trim($entry->get("?eo_$postfix"));  # end offset - text_justification
+	my $st = &trim($entry->get("?st_$postfix"));  # start time - audio_justification
+	my $et = &trim($entry->get("?et_$postfix"));  # end time - audio_justification
+	my $kfid = &trim($entry->get("?kfid_$postfix")); # keyframeid - video_justification
+	my $ulx = &trim($entry->get("?ulx_$postfix")); # upper_left_x - video/image justification
+	my $uly = &trim($entry->get("?uly_$postfix")); # upper_left_y - video/image justification
+	my $lrx = &trim($entry->get("?lrx_$postfix")); # lower_right_x - video/image justification
+	my $lry = &trim($entry->get("?lry_$postfix")); # lower_right_y - video/image justification
+
+	my $xml_span;
+	if($so ne "" && $eo ne "") {
+		# process text_span
+		# <!ELEMENT text_span (doceid,start,end)>
+		my $xml_start = XMLElement->new($logger, $so, "start", 0);
+		my $xml_end = XMLElement->new($logger, $eo, "end", 0);
+		my $xml_span = XMLElement->new( $logger,
+							XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
+							"text_span",
+							1);
+	}
+	elsif($st ne "" && $et ne "") {
+		# process audio_span
+		# <!ELEMENT audio_span (doceid,segmentid,start,end)>
+		my $xml_start = XMLElement->new($logger, $st, "start", 0);
+		my $xml_end = XMLElement->new($logger, $et, "end", 0);
+		my $xml_span = XMLElement->new( $logger,
+										XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
+										"audio_span",
+										1);
+	}
+	elsif($kfid ne "") {
+		# process video_span
+		#<!ELEMENT video_span (doceid,keyframeid,topleft,bottomright)>
+		my $xml_keyframeid = XMLElement->new($logger, $kfid, "keyframeid", 0);
+		my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
+		my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
+		my $xml_span = XMLElement->new( $logger,
+										XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_topleft, $xml_bottomright),
+										"video_span",
+										1);
+	}
+	elsif($kfid eq "" && $ulx ne "" && $uly ne "" && $lrx ne "" && $lry ne "") {
+		# process image_span
+		#<!ELEMENT image_span (doceid,topleft,bottomright)>
+		my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
+		my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
+		my $xml_span = XMLElement->new( $logger,
+										XMLContainer->new($logger, $xml_doceid, $xml_topleft, $xml_bottomright),
+										"image_span",
+										1);
+	}
+	$xml_span;
 }
 
 sub get_zerohop_query_response_confidence {
