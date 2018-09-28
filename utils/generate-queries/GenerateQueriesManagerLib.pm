@@ -2785,10 +2785,10 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 
 		[COMPOUND_JUSTIFICATION] a                           aida:CompoundJustification .
 		[COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_1] .
-		[COMPOUND_JUSTIFICATION] aida:source                 [DOCEID_1] .
+		[JUSTIFICATION_1] aida:source                 [DOCEID_1] .
 
 		OPTIONAL { [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_2] . 
-			   [COMPOUND_JUSTIFICATION] aida:source                 [DOCEID_2] . }
+			   [JUSTIFICATION_2] aida:source                 [DOCEID_2] . }
 
 		OPTIONAL { [JUSTIFICATION_1] a                           aida:TextJustification .
 			   [JUSTIFICATION_1] aida:startOffset            [SO_1] .
