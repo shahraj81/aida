@@ -1330,7 +1330,7 @@ sub get_STRING_TO_OBJECT {
 	if($num_of_children == 1) {
 		# There is only one child
 		# Is the child allowed to appear more than once?
-		if($search_node->get("CHILDNUM_MODIFIER", 1) == 1) {
+		if($search_node->get("CHILDNUM_MODIFIER", 1) eq "1") {
 			my ($child_id) = $search_node->get("CHILDNUM_TYPES", 1); 
 			my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $child_id);
 			if($child_node->is_leaf()){
