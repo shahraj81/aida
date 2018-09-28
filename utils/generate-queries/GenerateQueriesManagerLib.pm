@@ -2363,7 +2363,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 
 	# Query: QUERYID
 
-	SELECT ?cluster ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?cv
+	SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cmcv_ep ?cmcv_ot ?cv
 	WHERE {
 		?statement1    a                    rdf:Statement .
 		?statement1    rdf:object           ldcOnt:ENTTYPE .
@@ -2374,18 +2374,18 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 		?justification aida:confidence      ?confidence .
 		?confidence    aida:confidenceValue ?cv .
 
-		?cluster        a                    aida:SameAsCluster .
-		?statement2     a                    aida:ClusterMembership .
-		?statement2     aida:cluster         ?cluster .
-		?statement2     aida:clusterMember   ?nid_ep .
-		?statement2     aida:confidence      ?cm1_confidence .
-		?cm1_confidence aida:confidenceValue ?cm1cv .
+		?cluster          a                    aida:SameAsCluster .
+		?statement2       a                    aida:ClusterMembership .
+		?statement2       aida:cluster         ?cluster .
+		?statement2       aida:clusterMember   ?nid_ep .
+		?statement2       aida:confidence      ?cm_confidence_ep .
+		?cm_confidence_ep aida:confidenceValue ?cmcv_ep .
 
-		?statement3     a                    aida:ClusterMembership .
-		?statement3     aida:cluster         ?cluster .
-		?statement3     aida:clusterMember   ?nid_ot .
-		?statement3     aida:confidence      ?cm2_confidence .
-		?cm2_confidence aida:confidenceValue ?cm2cv .
+		?statement3       a                    aida:ClusterMembership .
+		?statement3       aida:cluster         ?cluster .
+		?statement3       aida:clusterMember   ?nid_ot .
+		?statement3       aida:confidence      ?cm_confidence_ot .
+		?cm_confidence_ot aida:confidenceValue ?cmcv_ot .
 
 		?statement4       a                         rdf:Statement .
 		?statement4       rdf:object                ldcOnt:ENTTYPE .
@@ -2772,7 +2772,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 	
 	$self->{STATEMENT4_TYPE_TRIPLE_TEMPLATE} = "[STATEMENT4]       rdf:object                ldcOnt:[ENTTYPE] .";
 
-	#SELECT ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cm1cv ?cm2cv ?typecv
+	#SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cmcv_ep ?cmcv_ot ?typecv
 
 	$self->{WHERE_EDGE_TEMPLATE} = <<'END_SPARQL_EDGE_WHERE';
 		[STATEMENT1]      a                    rdf:Statement .
@@ -2854,18 +2854,18 @@ END_SPARQL_EDGE_WHERE
 		[JUSTIFICATION] aida:confidence      [CONFIDENCE] .
 		[CONFIDENCE]    aida:confidenceValue [TYPE_CV] .
 
-		[CLUSTER]        a                    aida:SameAsCluster .
-		[STATEMENT2]     a                    aida:ClusterMembership .
-		[STATEMENT2]     aida:cluster         [CLUSTER] .
-		[STATEMENT2]     aida:clusterMember   [NID_EP] .
-		[STATEMENT2]     aida:confidence      [CM1_CONFIDENCE] .
-		[CM1_CONFIDENCE] aida:confidenceValue [CM1_CV] .
+		[CLUSTER]          a                    aida:SameAsCluster .
+		[STATEMENT2]       a                    aida:ClusterMembership .
+		[STATEMENT2]       aida:cluster         [CLUSTER] .
+		[STATEMENT2]       aida:clusterMember   [NID_EP] .
+		[STATEMENT2]       aida:confidence      [CM_CONFIDENCE_EP] .
+		[CM_CONFIDENCE_EP] aida:confidenceValue [CMCV_EP] .
 
-		[STATEMENT3]     a                    aida:ClusterMembership .
-		[STATEMENT3]     aida:cluster         [CLUSTER] .
-		[STATEMENT3]     aida:clusterMember   [NID_OT] .
-		[STATEMENT3]     aida:confidence      [CM2_CONFIDENCE] .
-		[CM2_CONFIDENCE] aida:confidenceValue [CM2_CV] .
+		[STATEMENT3]       a                    aida:ClusterMembership .
+		[STATEMENT3]       aida:cluster         [CLUSTER] .
+		[STATEMENT3]       aida:clusterMember   [NID_OT] .
+		[STATEMENT3]       aida:confidence      [CM_CONFIDENCE_OT] .
+		[CM_CONFIDENCE_OT] aida:confidenceValue [CMCV_OT] .
 
 		[STATEMENT4]       a                         rdf:Statement .
 		[STATEMENT4_TYPE_TRIPLE_TEMPLATE]
@@ -2901,13 +2901,13 @@ END_SPARQL_EDGE_WHERE
 			   [JUSTIFICATION] aida:endTimestamp           [ET] }
 END_SPARQL_NODE_WHERE
 
-    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv
+    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cmcv_ep cmcv_ot type_cv
 													doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 brx_1 bry_1 st_1 et_1
 													doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 brx_2 bry_2 st_2 et_2)];
 
-    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cm1_cv cm2_cv type_cv
+    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cmcv_ep cmcv_ot type_cv
 													statement1 statement2 statement3 statement4 cluster justification justification_ep bb
-													confidence type_cv cm1_confidence cm2_confidence bb_ep epulx epuly eplrx eplry epst
+													confidence type_cv cm_confidence_ep cm_confidence_ot bb_ep epulx epuly eplrx eplry epst
 													epet epso epeo)];
 
     $self->{"ALL_EDGE_VARIABLES_TEMPLATE"} = [qw(statement1 edge_confidence compound_justification edge_cv
