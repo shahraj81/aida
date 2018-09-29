@@ -1143,7 +1143,7 @@ sub add {
 }
 
 sub add_QUERY_ID {
-	my ($self, $query_id, $enttype, $enttype, $subject_enttype, $object_enttype) = @_;
+	my ($self, $query_id, $enttype, $subject_enttype, $object_enttype) = @_;
 	$enttype = "n/a" unless $enttype;
 	$self->{_QUERYIDS}{$query_id} = {
 			ENTTYPE=>$enttype,
