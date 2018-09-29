@@ -1130,6 +1130,8 @@ sub get_zerohop_query_response_confidence {
 	$cv;
 }
 
+# TODO: This function is not currently being used
+# It is envisioned to be used for M18 and so it will be finished later
 sub get_graph_query_response_confidence {
 	my ($entry, $endpoint) = @_;
 	# TODO: This will need to used for M18
@@ -1179,6 +1181,7 @@ sub get_OBJECT_ENTTYPE {
 
 sub trim {
 	my ($str) = @_;
+	return "" unless ($str);
 	my ($trimmed_str) = $str =~ /\"(.*?)\"/;
 	$trimmed_str = $str unless defined $trimmed_str;
 	$trimmed_str;
