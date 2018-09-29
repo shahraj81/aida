@@ -1073,7 +1073,7 @@ sub get_GRAPH_QUERY_SPAN {
 		# <!ELEMENT text_span (doceid,start,end)>
 		my $xml_start = XMLElement->new($logger, $so, "start", 0);
 		my $xml_end = XMLElement->new($logger, $eo, "end", 0);
-		my $xml_span = XMLElement->new( $logger,
+		$xml_span = XMLElement->new( $logger,
 							XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
 							"text_span",
 							1);
@@ -1083,7 +1083,7 @@ sub get_GRAPH_QUERY_SPAN {
 		# <!ELEMENT audio_span (doceid,segmentid,start,end)>
 		my $xml_start = XMLElement->new($logger, $st, "start", 0);
 		my $xml_end = XMLElement->new($logger, $et, "end", 0);
-		my $xml_span = XMLElement->new( $logger,
+		$xml_span = XMLElement->new( $logger,
 										XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
 										"audio_span",
 										1);
@@ -1094,7 +1094,7 @@ sub get_GRAPH_QUERY_SPAN {
 		my $xml_keyframeid = XMLElement->new($logger, $kfid, "keyframeid", 0);
 		my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
 		my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
-		my $xml_span = XMLElement->new( $logger,
+		$xml_span = XMLElement->new( $logger,
 										XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_topleft, $xml_bottomright),
 										"video_span",
 										1);
@@ -1104,7 +1104,7 @@ sub get_GRAPH_QUERY_SPAN {
 		#<!ELEMENT image_span (doceid,topleft,bottomright)>
 		my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
 		my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
-		my $xml_span = XMLElement->new( $logger,
+		$xml_span = XMLElement->new( $logger,
 										XMLContainer->new($logger, $xml_doceid, $xml_topleft, $xml_bottomright),
 										"image_span",
 										1);
