@@ -1019,7 +1019,7 @@ sub convert_graph_query_output_file_to_xml {
 							1);
 		# edge justifications
 		$xml_edge_justification_span1 = $self->get("GRAPH_QUERY_SPAN", $entry, $edge_justification1_postfix);
-		$xml_edge_justification_span2 = $self->get("GRAPH_QUERY_SPAN", $entry, $edge_justification1_postfix);
+		$xml_edge_justification_span2 = $self->get("GRAPH_QUERY_SPAN", $entry, $edge_justification2_postfix);
 		$confidence = &trim($entry->get("?edge_cv_$edge_postfix"));
 		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
 		$xml_edge_justification = XMLElement->new( $logger,
