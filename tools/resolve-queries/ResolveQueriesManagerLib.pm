@@ -908,8 +908,8 @@ sub convert_zerohop_query_output_file_to_xml {
 		my $kfid = &trim($entry->get("?kfid")); # keyframeid - video_justification
 		my $ulx = &trim($entry->get("?ulx")); # upper_left_x - video/image justification
 		my $uly = &trim($entry->get("?uly")); # upper_left_y - video/image justification
-		my $lrx = &trim($entry->get("?lrx")); # lower_right_x - video/image justification
-		my $lry = &trim($entry->get("?lry")); # lower_right_y - video/image justification
+		my $lrx = &trim($entry->get("?brx")); # lower_right_x - video/image justification
+		my $lry = &trim($entry->get("?bry")); # lower_right_y - video/image justification
 		if($so ne "" && $eo ne "") {
 			# process text_justification
 			# <!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
@@ -1069,8 +1069,8 @@ sub get_GRAPH_QUERY_SPAN {
 	my $kfid = &trim($entry->get("?kfid_$postfix")); # keyframeid - video_justification
 	my $ulx = &trim($entry->get("?ulx_$postfix")); # upper_left_x - video/image justification
 	my $uly = &trim($entry->get("?uly_$postfix")); # upper_left_y - video/image justification
-	my $lrx = &trim($entry->get("?lrx_$postfix")); # lower_right_x - video/image justification
-	my $lry = &trim($entry->get("?lry_$postfix")); # lower_right_y - video/image justification
+	my $lrx = &trim($entry->get("?brx_$postfix")); # lower_right_x - video/image justification
+	my $lry = &trim($entry->get("?bry_$postfix")); # lower_right_y - video/image justification
 
 	my $xml_span;
 	if($so ne "" && $eo ne "") {
