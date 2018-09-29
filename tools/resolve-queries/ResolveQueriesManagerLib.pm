@@ -721,12 +721,17 @@ sub generate_sparql_query_files {
 	my ($self) = @_;
 	while(my $query = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
 		my ($query_id) = $query->get("ATTRIBUTES")->toarray();
-		my $enttype;
+		my ($enttype, $subject_enttype, $object_enttype);
 		($enttype) = $query->get("CHILD", "enttype")->get("ELEMENT")
 			if($query->get("NAME") eq "class_query");
+		if($query->get("NAME") eq "graph_query") {
+			my ($predicate) = $query->get("CHILD", "predicate")->get("ELEMENT");
+			($subject_enttype) = split("_", $predicate);
+			($object_enttype) = $query->get("CHILD", "enttype")->get("ELEMENT");
+		}
 		my ($sparql_query_string) = $query->get("CHILD", "sparql")->get("ELEMENT") =~ /\<\!\[CDATA\[(.*?)\]\]\>/gs;
 		next unless $sparql_query_string;
-		$self->add("QUERY_ID", $query_id, $enttype);
+		$self->add("QUERY_ID", $query_id, $enttype, $subject_enttype, $object_enttype);
 		$self->write_sparql_query_to_file($query_id, $sparql_query_string);
 	}
 }
@@ -1138,9 +1143,13 @@ sub add {
 }
 
 sub add_QUERY_ID {
-	my ($self, $query_id, $enttype) = @_;
+	my ($self, $query_id, $enttype, $enttype, $subject_enttype, $object_enttype) = @_;
 	$enttype = "n/a" unless $enttype;
-	$self->{_QUERYIDS}{$query_id} = $enttype;
+	$self->{_QUERYIDS}{$query_id} = {
+			ENTTYPE=>$enttype,
+			SUBJECT_ENTTYPE => $subject_enttype,
+			OBJECT_ENTTYPE => $object_enttype,
+		};
 }
 
 sub get_QUERYIDS {
@@ -1150,7 +1159,17 @@ sub get_QUERYIDS {
 
 sub get_ENTTYPE {
 	my ($self, $query_id) = @_;
-	$self->{_QUERYIDS}{$query_id};
+	$self->{_QUERYIDS}{$query_id}{ENTTYPE};
+}
+
+sub get_SUBJECT_ENTTYPE {
+	my ($self, $query_id) = @_;
+	$self->{_QUERYIDS}{$query_id}{SUBJECT_ENTTYPE};
+}
+
+sub get_OBJECT_ENTTYPE {
+	my ($self, $query_id) = @_;
+	$self->{_QUERYIDS}{$query_id}{OBJECT_ENTTYPE};
 }
 
 sub trim {
