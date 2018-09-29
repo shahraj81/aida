@@ -1113,15 +1113,8 @@ sub convert_zerohop_query_output_file_to_xml {
 sub convert_graph_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
 	my $logger = $self->get("LOGGER");
-
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
 	return unless scalar $filehandler->get("ENTRIES")->toarray();
-
-	open(my $program_output_xml, ">:utf8", $xml_output_file)
-		or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
-	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<graphqueries_responses>\n";
-
 	my $subject_postfix = "10001";
 	my $object_postfix = "10002";
 	my $edge_postfix = "10003";
@@ -1189,6 +1182,11 @@ sub convert_graph_query_output_file_to_xml {
 	my $xml_query_attributes = XMLAttributes->new($logger);
 	$xml_query_attributes->add($query_id, "id");
 	my $xml_graphquery_responses = XMLElement->new($logger, $xml_response, "graphquery_responses", 1, $xml_query_attributes);
+
+	open(my $program_output_xml, ">:utf8", $xml_output_file)
+		or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print $program_output_xml "<graphqueries_responses>\n";
 	print $program_output_xml $xml_graphquery_responses->tostring(2);
 	print $program_output_xml "<\/graphqueries_responses>\n";
 	close($program_output_xml);
