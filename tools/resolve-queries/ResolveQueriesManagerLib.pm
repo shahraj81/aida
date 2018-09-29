@@ -807,6 +807,7 @@ sub convert_class_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
 	my $logger = $self->get("LOGGER");
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
+	return unless scalar $filehandler->get("ENTRIES")->toarray();
 	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<classquery_responses>\n";
@@ -890,6 +891,7 @@ sub convert_zerohop_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
 	my $logger = $self->get("LOGGER");
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
+	return unless scalar $filehandler->get("ENTRIES")->toarray();
 	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<zerohopquery_responses>\n";
@@ -908,8 +910,8 @@ sub convert_zerohop_query_output_file_to_xml {
 		my $kfid = &trim($entry->get("?kfid")); # keyframeid - video_justification
 		my $ulx = &trim($entry->get("?ulx")); # upper_left_x - video/image justification
 		my $uly = &trim($entry->get("?uly")); # upper_left_y - video/image justification
-		my $lrx = &trim($entry->get("?brx")); # lower_right_x - video/image justification
-		my $lry = &trim($entry->get("?bry")); # lower_right_y - video/image justification
+		my $lrx = &trim($entry->get("?lrx")); # lower_right_x - video/image justification
+		my $lry = &trim($entry->get("?lry")); # lower_right_y - video/image justification
 		if($so ne "" && $eo ne "") {
 			# process text_justification
 			# <!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
@@ -975,12 +977,14 @@ sub convert_graph_query_output_file_to_xml {
 	my ($self, $query_id, $sparql_output_file, $xml_output_file) = @_;
 	my $logger = $self->get("LOGGER");
 
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
+	return unless scalar $filehandler->get("ENTRIES")->toarray();
+
 	open(my $program_output_xml, ">:utf8", $xml_output_file)
 		or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	print $program_output_xml "<graphqueries_responses>\n";
 
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
 	my $subject_postfix = "10001";
 	my $object_postfix = "10002";
 	my $edge_postfix = "10003";
@@ -999,7 +1003,7 @@ sub convert_graph_query_output_file_to_xml {
 		$enttype = $self->get("SUBJECT_ENTTYPE", $query_id);
 		$xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 		$xml_justification_span = $self->get("GRAPH_QUERY_SPAN", $entry, $subject_postfix);
-		$confidence = &trim($entry->get("?type_cv_$subject_postfix"));
+		$confidence = sprintf("%0.4f", &trim($entry->get("?type_cv_$subject_postfix")));
 		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
 		$xml_subject_justification = XMLElement->new( $logger,
 							XMLContainer->new($logger, $xml_cluster_id, $xml_enttype, $xml_justification_span, $xml_confidence),
@@ -1011,7 +1015,7 @@ sub convert_graph_query_output_file_to_xml {
 		$enttype = $self->get("OBJECT_ENTTYPE", $query_id);
 		$xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
 		$xml_justification_span = $self->get("GRAPH_QUERY_SPAN", $entry, $object_postfix);
-		$confidence = &trim($entry->get("?type_cv_$object_postfix"));
+		$confidence = sprintf("%0.4f", &trim($entry->get("?type_cv_$object_postfix")));
 		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
 		$xml_object_justification = XMLElement->new( $logger,
 							XMLContainer->new($logger, $xml_cluster_id, $xml_enttype, $xml_justification_span, $xml_confidence),
@@ -1020,7 +1024,7 @@ sub convert_graph_query_output_file_to_xml {
 		# edge justifications
 		$xml_edge_justification_span1 = $self->get("GRAPH_QUERY_SPAN", $entry, $edge_justification1_postfix);
 		$xml_edge_justification_span2 = $self->get("GRAPH_QUERY_SPAN", $entry, $edge_justification2_postfix);
-		$confidence = &trim($entry->get("?edge_cv_$edge_postfix"));
+		$confidence = sprintf("%0.4f", &trim($entry->get("?edge_cv_$edge_postfix")));
 		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
 		$xml_edge_justification = XMLElement->new( $logger,
 							XMLContainer->new($logger, $xml_edge_justification_span1, $xml_confidence),
@@ -1066,8 +1070,8 @@ sub get_GRAPH_QUERY_SPAN {
 	my $kfid = &trim($entry->get("?kfid_$postfix")); # keyframeid - video_justification
 	my $ulx = &trim($entry->get("?ulx_$postfix")); # upper_left_x - video/image justification
 	my $uly = &trim($entry->get("?uly_$postfix")); # upper_left_y - video/image justification
-	my $lrx = &trim($entry->get("?brx_$postfix")); # lower_right_x - video/image justification
-	my $lry = &trim($entry->get("?bry_$postfix")); # lower_right_y - video/image justification
+	my $lrx = &trim($entry->get("?lrx_$postfix")); # lower_right_x - video/image justification
+	my $lry = &trim($entry->get("?lry_$postfix")); # lower_right_y - video/image justification
 
 	my $xml_span;
 	if($so ne "" && $eo ne "") {
