@@ -1124,7 +1124,7 @@ sub convert_graph_query_output_file_to_xml {
 	my ($cluster_id, $xml_cluster_id, $enttype, $xml_enttype, $xml_justification_span,
 				$confidence, $xml_confidence, $xml_subject_justification, $xml_object_justification,
 				$xml_edge_justification_span1, $xml_edge_justification_span2, $xml_edge_justification,
-				$xml_justification);
+				$xml_justification, $generate_xml);
 	my $xml_justifications_container = XMLContainer->new($logger);
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
 		# subject_justification
@@ -1166,11 +1166,18 @@ sub convert_graph_query_output_file_to_xml {
 							1)
 					if $xml_edge_justification_span2;
 		# justification
-		$xml_justification = XMLElement->new( $logger,
+		my @docids = $self->get("DOCIDS", $entry);
+		$generate_xml = 1 if(scalar @docids);
+		foreach my $docid(@docids) {
+			my $justification_attributes = XMLAttributes->new($logger);
+			$justification_attributes->add($docid, "docid");
+			$xml_justification = XMLElement->new( $logger,
 							XMLContainer->new($logger, $xml_subject_justification, $xml_object_justification, $xml_edge_justification),
 							"justification",
-							1);
-		$xml_justifications_container->add($xml_justification);
+							1,
+							$justification_attributes);
+			$xml_justifications_container->add($xml_justification);
+		}
 	}
 
 	my $xml_justifications = XMLElement->new($logger, $xml_justifications_container, "justifications", 1);
@@ -1183,13 +1190,15 @@ sub convert_graph_query_output_file_to_xml {
 	$xml_query_attributes->add($query_id, "id");
 	my $xml_graphquery_responses = XMLElement->new($logger, $xml_response, "graphquery_responses", 1, $xml_query_attributes);
 
-	open(my $program_output_xml, ">:utf8", $xml_output_file)
-		or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
-	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<graphqueries_responses>\n";
-	print $program_output_xml $xml_graphquery_responses->tostring(2);
-	print $program_output_xml "<\/graphqueries_responses>\n";
-	close($program_output_xml);
+	if($generate_xml) {
+		open(my $program_output_xml, ">:utf8", $xml_output_file)
+			or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
+		print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+		print $program_output_xml "<graphqueries_responses>\n";
+		print $program_output_xml $xml_graphquery_responses->tostring(2);
+		print $program_output_xml "<\/graphqueries_responses>\n";
+		close($program_output_xml);
+	}
 }
 
 sub get_GRAPH_QUERY_SPAN {
