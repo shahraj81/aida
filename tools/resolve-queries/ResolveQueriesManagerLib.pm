@@ -690,6 +690,142 @@ sub get_EDGE_QUERIES_PREFIX {
 }
 
 #####################################################################################
+# DocumentIDsMappings
+#####################################################################################
+
+package DocumentIDsMappings;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $parameters) = @_;
+  my $self = {
+		CLASS => "DocumentIDsMappings",
+		PARAMETERS => $parameters,
+		DOCUMENTS => Documents->new($logger),
+    DOCUMENTELEMENTS => DocumentElements->new($logger),
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load_data();
+  $self;
+}
+
+sub load_data {
+	my ($self) = @_;
+	# Load the DocumentIDsMappingsFile
+	my (%doceid_to_docid_mapping, %doceid_to_type_mapping);
+	my $filename = $self->get("PARAMETERS")->get("DOCUMENTIDS_MAPPING_FILE");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $doceid = $entry->get("doceid");
+		my $docid = $entry->get("docid");
+		my $detype = $entry->get("detype");
+		$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $doceid, $entry->get("WHERE"))
+			if $detype eq "nil";
+		$doceid_to_docid_mapping{$doceid}{$docid} = 1;
+		$doceid_to_type_mapping{$doceid} = $detype;
+	}
+	$filehandler->cleanup();
+
+	foreach my $document_eid(sort keys %doceid_to_docid_mapping) {
+		next if $document_eid eq "n/a";
+		foreach my $document_id(sort keys %{$doceid_to_docid_mapping{$document_eid}}) {
+			my $detype = $doceid_to_type_mapping{$document_eid};
+			my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
+			$document->set("DOCUMENTID", $document_id);
+			my $documentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
+			$documentelement->get("DOCUMENTS")->add($document, $document_id);
+			$documentelement->set("DOCUMENTELEMENTID", $document_eid);
+			$documentelement->set("TYPE", $detype);
+			$document->add_document_element($documentelement);
+		}
+	}
+}
+
+#####################################################################################
+# Documents
+#####################################################################################
+
+package Documents;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Document');
+  $self->{CLASS} = 'Documents';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# DocumentElements
+#    contains 'DocumentElement' across documents
+#####################################################################################
+
+package DocumentElements;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'DocumentElement');
+  $self->{CLASS} = 'DocumentElements';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Document
+#####################################################################################
+
+package Document;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $document_id) = @_;
+  my $self = {
+    CLASS => 'Document',
+    DOCUMENTID => $document_id,
+    DOCUMENTELEMENTS => DocumentElements->new($logger),
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub add_document_element {
+  my ($self, $document_element) = @_;
+  $self->get("DOCUMENTELEMENTS")->add($document_element, $document_element->get("DOCUMENTELEMENTID"));
+}
+
+#####################################################################################
+# DocumentElement
+#####################################################################################
+
+package DocumentElement;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'DocumentElement',
+    DOCUMENTS => Documents->new($logger),
+    DOCUMENTELEMENTID => undef,
+    TYPE => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
 # Queries
 #####################################################################################
 
@@ -703,7 +839,8 @@ sub new {
 	my $self = {
 		CLASS => 'Queries',
 		LOGGER => $logger,
-		PARAMETERS => $parameters, 
+		PARAMETERS => $parameters,
+		DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
 		_QUERYIDS => {},
 		XML_FILEHANDLER => XMLFileHandler->new($logger, $parameters->get("QUERIES_DTD_FILE"), $parameters->get("QUERIES_XML_FILE")),
 	};

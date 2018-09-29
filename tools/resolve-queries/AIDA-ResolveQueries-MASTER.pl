@@ -38,6 +38,7 @@ $switches->put('error_file', "STDERR");
 $switches->addVarSwitch('sparql', "Specify path to SPARQL executable");
 $switches->put('sparql', "sparql");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
+$switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
 $switches->addParam("queries_xml", "required", "XML file containing queries");
 $switches->addParam("input", "required", "File containing the KB (for TA2 system) or directory containing KBs (for TA1 system).");
@@ -60,6 +61,7 @@ foreach my $path(($switches->get("intermediate"), $switches->get("output"))) {
 }
 
 my $parameters = Parameters->new($logger);
+$parameters->set("DOCUMENTIDS_MAPPING_FILE", $switches->get("docid_mappings"));
 $parameters->set("QUERIES_DTD_FILE", $switches->get("queries_dtd"));
 $parameters->set("QUERIES_XML_FILE", $switches->get("queries_xml"));
 $parameters->set("INPUT", $switches->get("input"));
