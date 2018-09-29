@@ -1023,9 +1023,14 @@ sub convert_graph_query_output_file_to_xml {
 		$confidence = &trim($entry->get("?edge_cv_$edge_postfix"));
 		$xml_confidence = XMLElement->new($logger, $confidence, "confidence", 0);
 		$xml_edge_justification = XMLElement->new( $logger,
-							XMLContainer->new($logger, $xml_cluster_id, $xml_enttype, $xml_justification_span, $xml_confidence),
+							XMLContainer->new($logger, $xml_edge_justification_span1, $xml_confidence),
 							"edge_justification",
 							1);
+		$xml_edge_justification = XMLElement->new( $logger,
+							XMLContainer->new($logger, $xml_edge_justification_span1, $xml_edge_justification_span2, $xml_confidence),
+							"edge_justification",
+							1)
+					if $xml_edge_justification_span2;
 		# justification
 		$xml_justification = XMLElement->new( $logger,
 							XMLContainer->new($logger, $xml_subject_justification, $xml_object_justification, $xml_edge_justification),
