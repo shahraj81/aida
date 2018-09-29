@@ -978,7 +978,7 @@ sub convert_graph_query_output_file_to_xml {
 	open(my $program_output_xml, ">:utf8", $xml_output_file)
 		or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
 	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<graphquery_responses>\n";
+	print $program_output_xml "<graphqueries_responses>\n";
 
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
 	my $subject_postfix = "10001";
@@ -1047,12 +1047,9 @@ sub convert_graph_query_output_file_to_xml {
 
 	my $xml_query_attributes = XMLAttributes->new($logger);
 	$xml_query_attributes->add($query_id, "id");
-	my $xml_graphquery_responses = XMLElement->new($logger, $xml_response, "graphquery_responses", 1);
-
-	my $xml_graphqueries_responses = XMLElement->new($logger, $xml_graphquery_responses, "graphqueries_responses", 1);
-
-	print $program_output_xml $xml_graphqueries_responses->tostring(2);
-	print $program_output_xml "<\/graphquery_responses>\n";
+	my $xml_graphquery_responses = XMLElement->new($logger, $xml_response, "graphquery_responses", 1, $xml_query_attributes);
+	print $program_output_xml $xml_graphquery_responses->tostring(2);
+	print $program_output_xml "<\/graphqueries_responses>\n";
 	close($program_output_xml);
 }
 
@@ -1182,6 +1179,8 @@ sub get_OBJECT_ENTTYPE {
 sub trim {
 	my ($str) = @_;
 	return "" unless ($str);
+	$str =~ s/</&lt;/g;
+	$str =~ s/>/&gt;/g;
 	my ($trimmed_str) = $str =~ /\"(.*?)\"/;
 	$trimmed_str = $str unless defined $trimmed_str;
 	$trimmed_str;

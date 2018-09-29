@@ -2171,7 +2171,7 @@ sub toarray {
 #	my $sparql = <<'END_SPARQL_QUERY';
 #
 #	<![CDATA[
-#	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cv
+#	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
 #	WHERE {
 #			?statement1    a                    rdf:Statement .
 #			?statement1    rdf:object           ldcOnt:ENTTYPE .
@@ -2192,16 +2192,16 @@ sub toarray {
 #					   ?justification aida:boundingBox            ?bb  .
 #					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
 #					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-#					   ?bb            aida:boundingBoxLowerRightX ?brx .
-#					   ?bb            aida:boundingBoxLowerRightY ?bry }
+#					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+#					   ?bb            aida:boundingBoxLowerRightY ?lry }
 #
 #			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
 #					   ?justification aida:keyFrame               ?kfid .
 #					   ?justification aida:boundingBox            ?bb  .
 #					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
 #					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-#					   ?bb            aida:boundingBoxLowerRightX ?brx .
-#					   ?bb            aida:boundingBoxLowerRightY ?bry }
+#					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+#					   ?bb            aida:boundingBoxLowerRightY ?lry }
 #
 #			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
 #					   ?justification aida:shot                   ?sid }
@@ -2363,7 +2363,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 
 	# Query: QUERYID
 
-	SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cmcv_ep ?cmcv_ot ?cv
+	SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cmcv_ep ?cmcv_ot ?cv
 	WHERE {
 		?statement1    a                    rdf:Statement .
 		?statement1    rdf:object           ldcOnt:ENTTYPE .
@@ -2402,16 +2402,16 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 			?justification aida:boundingBox            ?bb  .
 			?bb            aida:boundingBoxUpperLeftX  ?ulx .
 			?bb            aida:boundingBoxUpperLeftY  ?uly .
-			?bb            aida:boundingBoxLowerRightX ?brx .
-			?bb            aida:boundingBoxLowerRightY ?bry }
+			?bb            aida:boundingBoxLowerRightX ?lrx .
+			?bb            aida:boundingBoxLowerRightY ?lry }
 
 		OPTIONAL { ?justification a                  aida:KeyFrameVideoJustification .
 			?justification aida:keyFrame               ?kfid .
 			?justification aida:boundingBox            ?bb  .
 			?bb            aida:boundingBoxUpperLeftX  ?ulx .
 			?bb            aida:boundingBoxUpperLeftY  ?uly .
-			?bb            aida:boundingBoxLowerRightX ?brx .
-			?bb            aida:boundingBoxLowerRightY ?bry }
+			?bb            aida:boundingBoxLowerRightX ?lrx .
+			?bb            aida:boundingBoxLowerRightY ?lry }
 
 		OPTIONAL { ?justification a                  aida:ShotVideoJustification .
 			?justification aida:shot                   ?sid }
@@ -2772,7 +2772,7 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 	
 	$self->{STATEMENT4_TYPE_TRIPLE_TEMPLATE} = "[STATEMENT4]       rdf:object                ldcOnt:[ENTTYPE] .";
 
-	#SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?brx ?bry ?st ?et ?cmcv_ep ?cmcv_ot ?typecv
+	#SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cmcv_ep ?cmcv_ot ?typecv
 
 	$self->{WHERE_EDGE_TEMPLATE} = <<'END_SPARQL_EDGE_WHERE';
 		[STATEMENT1]      a                    rdf:Statement .
@@ -2798,16 +2798,16 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 			   [JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
 			   [BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
 			   [BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
-			   [BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
-			   [BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
+			   [BB_1]            aida:boundingBoxLowerRightX [LRX_1] .
+			   [BB_1]            aida:boundingBoxLowerRightY [LRY_1] }
 
 		OPTIONAL { [JUSTIFICATION_1] a                           aida:KeyFrameVideoJustification .
 			   [JUSTIFICATION_1] aida:keyFrame               [KFID_1] .
 			   [JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
 			   [BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
 			   [BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
-			   [BB_1]            aida:boundingBoxLowerRightX [BRX_1] .
-			   [BB_1]            aida:boundingBoxLowerRightY [BRY_1] }
+			   [BB_1]            aida:boundingBoxLowerRightX [LRX_1] .
+			   [BB_1]            aida:boundingBoxLowerRightY [LRY_1] }
 
 		OPTIONAL { [JUSTIFICATION_1] a                           aida:ShotVideoJustification .
 			   [JUSTIFICATION_1] aida:shot                   [SID_1] }
@@ -2824,16 +2824,16 @@ AUDIO_ENTRYPOINT_CONSTRAINTS
 			   [JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
 			   [BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
 			   [BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
-			   [BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
-			   [BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
+			   [BB_2]            aida:boundingBoxLowerRightX [LRX_2] .
+			   [BB_2]            aida:boundingBoxLowerRightY [LRY_2] }
 
 		OPTIONAL { [JUSTIFICATION_2] a                           aida:KeyFrameVideoJustification .
 			   [JUSTIFICATION_2] aida:keyFrame               [KFID_2] .
 			   [JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
 			   [BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
 			   [BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
-			   [BB_2]            aida:boundingBoxLowerRightX [BRX_2] .
-			   [BB_2]            aida:boundingBoxLowerRightY [BRY_2] }
+			   [BB_2]            aida:boundingBoxLowerRightX [LRX_2] .
+			   [BB_2]            aida:boundingBoxLowerRightY [LRY_2] }
 
 		OPTIONAL { [JUSTIFICATION_2] a                           aida:ShotVideoJustification .
 			   [JUSTIFICATION_2] aida:shot                   [SID_2] }
@@ -2882,16 +2882,16 @@ END_SPARQL_EDGE_WHERE
 			   [JUSTIFICATION] aida:boundingBox            [BB]  .
 			   [BB]            aida:boundingBoxUpperLeftX  [ULX] .
 			   [BB]            aida:boundingBoxUpperLeftY  [ULY] .
-			   [BB]            aida:boundingBoxLowerRightX [BRX] .
-			   [BB]            aida:boundingBoxLowerRightY [BRY] }
+			   [BB]            aida:boundingBoxLowerRightX [LRX] .
+			   [BB]            aida:boundingBoxLowerRightY [LRY] }
 
 		OPTIONAL { [JUSTIFICATION] a                  aida:KeyFrameVideoJustification .
 			   [JUSTIFICATION] aida:keyFrame               [KFID] .
 			   [JUSTIFICATION] aida:boundingBox            [BB]  .
 			   [BB]            aida:boundingBoxUpperLeftX  [ULX] .
 			   [BB]            aida:boundingBoxUpperLeftY  [ULY] .
-			   [BB]            aida:boundingBoxLowerRightX [BRX] .
-			   [BB]            aida:boundingBoxLowerRightY [BRY] }
+			   [BB]            aida:boundingBoxLowerRightX [LRX] .
+			   [BB]            aida:boundingBoxLowerRightY [LRY] }
 
 		OPTIONAL { [JUSTIFICATION] a                  aida:ShotVideoJustification .
 			   [JUSTIFICATION] aida:shot                   [SID] }
@@ -2901,18 +2901,19 @@ END_SPARQL_EDGE_WHERE
 			   [JUSTIFICATION] aida:endTimestamp           [ET] }
 END_SPARQL_NODE_WHERE
 
-    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cmcv_ep cmcv_ot type_cv
-													doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 brx_1 bry_1 st_1 et_1
-													doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 brx_2 bry_2 st_2 et_2)];
+    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly lrx lry st et cmcv_ep cmcv_ot type_cv
+													doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 lrx_1 lry_1 st_1 et_1
+													doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 lrx_2 lry_2 st_2 et_2
+													edge_cv)];
 
-    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly brx bry st et cmcv_ep cmcv_ot type_cv
+    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly lrx lry st et cmcv_ep cmcv_ot type_cv
 													statement1 statement2 statement3 statement4 cluster justification justification_ep bb
 													confidence type_cv cm_confidence_ep cm_confidence_ot bb_ep epulx epuly eplrx eplry epst
 													epet epso epeo)];
 
     $self->{"ALL_EDGE_VARIABLES_TEMPLATE"} = [qw(statement1 edge_confidence compound_justification edge_cv
-													justification_1 doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 brx_1 bry_1 st_1 et_1 bb_1
-													justification_2 doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 brx_2 bry_2 st_2 et_2 bb_2)]
+													justification_1 doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 lrx_1 lry_1 st_1 et_1 bb_1
+													justification_2 doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 lrx_2 lry_2 st_2 et_2 bb_2)]
 }
 
 sub process_all_edges {
