@@ -1201,6 +1201,32 @@ sub convert_graph_query_output_file_to_xml {
 	}
 }
 
+sub get_DOCIDS {
+	my ($self, $entry) = @_;
+	my @doceid_vars = grep {$_ =~ /\?doceid/} keys %{$entry->{MAP}};
+	my @doceids = map {&trim($entry->get($_))} @doceid_vars;
+	my @all_docids;
+	my %doceid_docids;
+	foreach my $doceid(@doceids) {
+		my $document_element =
+			$self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+		my @docids = map {$_->get("DOCUMENTID")} $document_element->get("DOCUMENTS")->toarray();
+		map {$doceid_docids{$doceid}{$_}=1} @docids;
+		push(@all_docids, @docids);
+	}
+	my @selected_docids;
+	foreach my $docid(@all_docids) {
+		my $total = 0;
+		my $total_found = 0;
+		foreach my $doceid(@doceids) {
+			$total++;
+			$total_found++ if $doceid_docids{$doceid}{$docid};
+		}
+		push(@selected_docids, $docid);
+	}
+	@selected_docids;
+}
+
 sub get_GRAPH_QUERY_SPAN {
 	my ($self, $entry, $postfix) = @_;
 	my $logger = $self->get("LOGGER");
