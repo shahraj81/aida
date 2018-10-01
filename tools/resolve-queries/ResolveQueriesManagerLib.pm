@@ -1878,7 +1878,7 @@ sub get_CHILD {
 
 sub tostring {
 	my ($self, $indent) = @_;
-
+	$indent = 0 unless $indent;
 	my $retVal = " " x $indent;
 	$retVal .= $self->get("OPENTAG");
 	$retVal .= "\n" if $self->get("NEWLINE");
@@ -1888,7 +1888,6 @@ sub tostring {
 	$retVal .= " " x $indent if $self->get("NEWLINE");
 	$retVal .= $self->get("CLOSETAG");
 	$retVal .= "\n";
-
 	$retVal;
 }
 
