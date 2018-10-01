@@ -10,9 +10,9 @@ use ResolveQueriesManagerLib;
 
 ### DO INCLUDE
 ##################################################################################### 
-# This program validates applies AIDA queries to KBs in order to generate
-# submissions. It takes as input the evaluation queries, a directory containing
-# KBs split across TTL files in case of a TA1 submission, and a output directory. 
+# This program applies AIDA queries to KBs in order to generate submissions.
+# It takes as input the evaluation queries, a directory containing KBs
+# split across TTL files in case of a TA1 submission, and a output directory. 
 # In case of a TA2 systems, the submission is in the form of a single TTL file. 
 #
 # Author: Shahzad Rajput
@@ -52,7 +52,7 @@ my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
 my $error_output = $logger->get_error_output();
 
-foreach my $path(($switches->get("sparql"), $switches->get("queries_dtd"), $switches->get("queries_xml"), $switches->get("input"))) {
+foreach my $path(($switches->get("sparql"), $switches->get("docid_mappings"), $switches->get("queries_dtd"), $switches->get("queries_xml"), $switches->get("input"))) {
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
 
