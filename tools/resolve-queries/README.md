@@ -35,6 +35,8 @@ In order to run the above script(s), the following files are required:
 
 ## How to use these script(s)
 
+The usage of the script(s) can be seen by running with option -h or without any argument. For record, the usage of these scripts is given below:
+
 ### Usage of AIDA-ResolveQueries-MASTER.pl
 
 ~~~
@@ -61,3 +63,17 @@ parameters are:
                     (Required).
   output          Specify an output directory. (Required).
 ~~~
+
+### Applying SPARQL queries
+
+In order to apply SPARQL queries to a knowledge base, you may run the following command:
+
+~~~
+perl AIDA-ResolveQueries-MASTER.pl -error_file rq.errlog -sparql /path/to/sparql_executable docids_mappings.tsv queries.dtd queries.xml kbs/ intermediate/ output/
+~~~
+
+### Some notes
+
+- Teams are recommended to validate output produced by the above script(s) against the DTD provided by NIST.
+- The file specified in place of `docid_mappings` is a tsv file that is originally from LDC but is modified by NIST. This file will be provided along with the queries.
+- The above script(s) assume that the intermediate data directory and the output directory does not exist.
