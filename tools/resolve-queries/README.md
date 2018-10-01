@@ -84,10 +84,6 @@ This tool comes with example data, including both example input and expected out
 
 Note that the runs on all: class queries, zerohop queries and graph queries, and therefore produces the corresponding output in the respective subdirectories.
 
-#### Input and output
-
-In
-
 #### Execution of the code on example data
 
 In order to run the code on example data, you may run the following command:
