@@ -245,7 +245,7 @@ sub set_error_output {
       $output = *STDERR{IO};
     }
     else {
-      # $self->NIST_die("File $output already exists") if -e $output;
+      $self->NIST_die("File $output already exists") if -e $output;
       open(my $outfile, ">:utf8", $output) or $self->NIST_die("Could not open $output: $!");
       $output = $outfile;
       $self->{OPENED_ERROR_OUTPUT} = 'true';
