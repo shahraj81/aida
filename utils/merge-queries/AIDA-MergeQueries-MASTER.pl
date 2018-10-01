@@ -73,7 +73,7 @@ $outermost_tag = "zerohop_queries" if $output_type eq "zerohop_query";
 $outermost_tag = "graph_queries" if $output_type eq "graph_query";
 open(my $program_output_map, ">:utf8", $map_output_file)
 	or $logger->record_problem('MISSING_FILE', $map_output_file, $!);
-print $program_output_map "new_query_id\told_query_id\t$file\n";
+print $program_output_map "new_query_id\told_query_id\tfile\n";
 open(my $program_output_xml, ">:utf8", $xml_output_file) 
 	or $logger->record_problem('MISSING_FILE', $xml_output_file, $!);
 print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
