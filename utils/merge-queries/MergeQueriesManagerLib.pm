@@ -130,6 +130,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
+  UNKNOWN_OUTPUT_TYPE                     FATAL_ERROR    Unknown output type %s
 END_PROBLEM_FORMATS
 
 
