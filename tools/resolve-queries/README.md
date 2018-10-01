@@ -25,6 +25,8 @@ You would also need to install the following Perl modules in order to run the ab
 
 Please refer to http://www.cpan.org/modules/INSTALL.html for a guide on how to install a Perl module. 
 
+In order to run SPARQL queries you may need to install Apache Jena. Please refer to https://jena.apache.org for downloading Apache Jena. 
+
 ## Support files required for running the script(s)
 
 In order to run the above script(s), the following files are required:
@@ -78,3 +80,4 @@ perl AIDA-ResolveQueries-MASTER.pl -error_file rq.errlog -sparql /path/to/sparql
 - The file specified in place of `docid_mappings` is a tsv file that is originally from LDC but is modified by NIST. This file will be provided along with the queries.
 - The above script(s) assume that the intermediate data directory and the output directory does not exist.
 - The file specified in place of `queries_dtd` must not have any comments in it. Again, this file will be provided along with the queries file.
+- In the next few days, NIST is going to work with NCC in order to provide the teams with a docker to make it easy for them to run this tool without having to install dependencies individually.
