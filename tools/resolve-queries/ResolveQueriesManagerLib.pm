@@ -1029,16 +1029,14 @@ sub convert_zerohop_query_output_file_to_xml {
 	my $logger = $self->get("LOGGER");
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
 	return unless scalar $filehandler->get("ENTRIES")->toarray();
-	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
-	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<zerohopquery_responses>\n";
 	my $xml_justifications_container = XMLContainer->new($logger);
 	my $cluster_id;
+	my %hash_string_from_justification;
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
 		$cluster_id = &trim($entry->get("?cluster"));
 		my $doceid = &trim($entry->get("?doceid"));
 		my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
-		my $cv = &get_zerohop_response_confidence($entry); # confidence value
+		my $cv = sprintf("%0.4f", &trim($entry->get("?cv"))); # confidence value
 		my $xml_confidence = XMLElement->new($logger, $cv, "confidence", 0);
 		my $so = &trim($entry->get("?so"));  # start offset - text_justification
 		my $eo = &trim($entry->get("?eo"));  # end offset - text_justification
@@ -1049,27 +1047,26 @@ sub convert_zerohop_query_output_file_to_xml {
 		my $uly = &trim($entry->get("?uly")); # upper_left_y - video/image justification
 		my $lrx = &trim($entry->get("?lrx")); # lower_right_x - video/image justification
 		my $lry = &trim($entry->get("?lry")); # lower_right_y - video/image justification
+		my $xml_justification;
 		if($so ne "" && $eo ne "") {
 			# process text_justification
 			# <!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
 			my $xml_start = XMLElement->new($logger, $so, "start", 0);
 			my $xml_end = XMLElement->new($logger, $eo, "end", 0);
-			my $xml_text_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_confidence),
 											"text_justification",
 											1);
-			$xml_justifications_container->add($xml_text_justification);
 		}
 		elsif($st ne "" && $et ne "") {
 			# process audio_justification
 			# <!ELEMENT audio_justification (doceid,segmentid,start,end,enttype,confidence)>
 			my $xml_start = XMLElement->new($logger, $st, "start", 0);
 			my $xml_end = XMLElement->new($logger, $et, "end", 0);
-			my $xml_audio_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_confidence),
 											"audio_justification",
 											1);
-			$xml_justifications_container->add($xml_audio_justification);
 		}
 		elsif($kfid ne "") {
 			# process video_justification
@@ -1077,23 +1074,25 @@ sub convert_zerohop_query_output_file_to_xml {
 			my $xml_keyframeid = XMLElement->new($logger, $kfid, "keyframeid", 0);
 			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
 			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
-			my $xml_video_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_topleft, $xml_bottomright, $xml_confidence),
 											"video_justification",
 											1);
-			$xml_justifications_container->add($xml_video_justification);
 		}
 		elsif($kfid eq "" && $ulx ne "" && $uly ne "" && $lrx ne "" && $lry ne "") {
 			# process image_justification
 			#<!ELEMENT image_justification (doceid,topleft,bottomright,enttype,confidence)>
 			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
 			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
-			my $xml_image_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_topleft, $xml_bottomright, $xml_confidence),
 											"image_justification",
 											1);
-			$xml_justifications_container->add($xml_image_justification);
 		}
+		my $uuid = &main::generate_uuid_from_string($xml_justification->tostring());
+		next if $hash_string_from_justification{$uuid};
+		$hash_string_from_justification{$uuid} = 1;
+		$xml_justifications_container->add($xml_justification);
 	}
 	# TODO: system_nodeid should be changed to cluster_id
 	my $xml_system_nodeid = XMLElement->new($logger, $cluster_id, "system_nodeid", 0);
@@ -1105,6 +1104,9 @@ sub convert_zerohop_query_output_file_to_xml {
 							"zerohopquery_response",
 							1,
 							$query_response_attributes);
+	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print $program_output_xml "<zerohopquery_responses>\n";
 	print $program_output_xml $query_response->tostring(2);
 	print $program_output_xml "<\/zerohopquery_responses>\n";
 	close($program_output_xml);
@@ -1291,29 +1293,6 @@ sub get_GRAPH_QUERY_SPAN {
 										1);
 	}
 	$xml_span;
-}
-
-sub get_zerohop_query_response_confidence {
-	my ($entry) = @_;
-	my $nid_ep = $entry->get("?nid_ep");
-	my $nid_ot = $entry->get("?nid_ot");
-	my $cmcv_ep = $entry->get("?cmcv_ep");
-	my $cmcv_ot = $entry->get("?cmcv_ot");
-	my $cv = $entry->get("?cv");
-	# TODO: This will need to used for M18
-	my $iou = 1;
-	# TODO: Fix this for M18
-	$cv;
-}
-
-# TODO: This function is not currently being used
-# It is envisioned to be used for M18 and so it will be finished later
-sub get_graph_query_response_confidence {
-	my ($entry, $endpoint) = @_;
-	# TODO: This will need to used for M18
-	my $iou = 1;
-	# TODO: Fix this for M18
-	"nil";
 }
 
 sub add {
