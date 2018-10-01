@@ -78,15 +78,19 @@ foreach my $query_xml_file(@{$switches->get("files")}){
 	while(my $query = $xml_filehandler->get("NEXT_OBJECT")) {
 		my $query_string = $query->tostring(2);
 		my $query_string_for_uuid = $query_string;
-		my ($query_id) = $query_string_for_uuid =~ /query id=\".*?\"/;
+		my ($query_id) = $query_string_for_uuid =~ /query id=\"(.*?)\"/;
 		$query_string_for_uuid =~ s/query id=\".*?\"/query id=\"QUERYID\"/;
 		$query_string_for_uuid =~ s/\n\s*?\# Query: AIDA.*?\s*\n/\n\n\t\# Query: QUERYID\n\n/;
 		my $uuid = &main::generate_uuid_from_string($query_string_for_uuid);
 		if ($query_uuids{$uuid}) {
-			$logger->record_debug_information("DUPLICATE_QUERY", $query_id, $query_uuids{$uuid}, {FILENAME=>$query_xml_file, LINENUM=>"N/A"});
+			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+			$logger->record_debug_information("DUPLICATE_QUERY", 
+					$query_id, $query_xml_file, 
+					$query_uuids{$uuid}{QUERYID}, $query_uuids{$uuid}{FILENAME},
+					$where);
 			next;
 		}
-		$query_uuids{$uuid} = $query_id;
+		$query_uuids{$uuid} = {QUERYID => $query_id, FILENAME => $query_xml_file};
 		print $program_output_xml $query_string;
 	}
 }
