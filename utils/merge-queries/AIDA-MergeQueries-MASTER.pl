@@ -82,7 +82,6 @@ my $query_num = 0;
 foreach my $query_xml_file(@{$switches->get("files")}){
 	my $xml_filehandler = XMLFileHandler->new($logger, $query_dtd_file, $query_xml_file);
 	while(my $query = $xml_filehandler->get("NEXT_OBJECT")) {
-		$query_num++;
 		my $query_string = $query->tostring(2);
 		my ($query_id) = $query_string =~ /query id=\"(.*?)\"/;
 		$query_string =~ s/query id=\".*?\"/query id=\"QUERYID\"/;
@@ -107,6 +106,7 @@ foreach my $query_xml_file(@{$switches->get("files")}){
 			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
 			$logger->record_problem("UNKNOWN_OUTPUT_TYPE", $output_type, $where);
 		}
+		$query_num++;
 		my $new_query_id = "$query_id_prefix\_$query_num";
 		$query_string =~ s/QUERYID/$new_query_id/g;
 		$query_uuids{$uuid} = {QUERYID => $query_id, FILENAME => $query_xml_file};
