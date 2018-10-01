@@ -1032,7 +1032,7 @@ sub convert_zerohop_query_output_file_to_xml {
 	my $logger = $self->get("LOGGER");
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
 	return unless scalar $filehandler->get("ENTRIES")->toarray();
-	my $xml_justifications_container = XMLContainer->new($logger);
+	my @xml_justifications;
 	my $cluster_id;
 	my %hash_string_from_justification;
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
@@ -1095,15 +1095,14 @@ sub convert_zerohop_query_output_file_to_xml {
 		my $uuid = &main::generate_uuid_from_string($xml_justification->tostring());
 		next if $hash_string_from_justification{$uuid};
 		$hash_string_from_justification{$uuid} = 1;
-		$xml_justifications_container->add($xml_justification);
+		push(@xml_justifications, $xml_justification);
 	}
 	# TODO: system_nodeid should be changed to cluster_id
 	my $xml_system_nodeid = XMLElement->new($logger, $cluster_id, "system_nodeid", 0);
 	my $query_response_attributes = XMLAttributes->new($logger);
 	$query_response_attributes->add("$query_id", "QUERY_ID");
-	my $xml_justifications = XMLElement->new($logger, $xml_justifications_container, "justifications", 1);
 	my $query_response = XMLElement->new($logger,
-							XMLContainer->new($logger, $xml_system_nodeid, $xml_justifications),
+							XMLContainer->new($logger, $xml_system_nodeid, @xml_justifications),
 							"zerohopquery_response",
 							1,
 							$query_response_attributes);
