@@ -77,3 +77,4 @@ perl AIDA-ResolveQueries-MASTER.pl -error_file rq.errlog -sparql /path/to/sparql
 - Teams are recommended to validate output produced by the above script(s) against the DTD provided by NIST.
 - The file specified in place of `docid_mappings` is a tsv file that is originally from LDC but is modified by NIST. This file will be provided along with the queries.
 - The above script(s) assume that the intermediate data directory and the output directory does not exist.
+- The file specified in place of `queries_dtd` must not have any comments in it. Again, this file will be provided along with the queries file.
