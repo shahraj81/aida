@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classquery_responses>
+  <classquery_response QUERY_ID="AIDA_CL_2018_6">
+    <justifications>
+      <video_justification>
+        <doceid> IC0011SLG </doceid>
+        <keyframeid> IC0011SLG_71 </keyframeid>
+        <topleft> 0,0 </topleft>
+        <bottomright> 0,0 </bottomright>
+        <enttype> Vehicle </enttype>
+        <confidence> 1.0000 </confidence>
+      </video_justification>
+    </justifications>
+  </classquery_response>
+</classquery_responses>

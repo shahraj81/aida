@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class_queries>
+  <class_query id="AIDA_CL_2018_1">
+    <enttype> Facility </enttype>
+    <sparql>
+ 
+	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_CL_2018_1
+	# Query description: Find all mentions of type Facility
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:Facility .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+     </sparql>
+  </class_query>
+  <class_query id="AIDA_CL_2018_2">
+    <enttype> GeopoliticalEntity </enttype>
+    <sparql>
+ 
+	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_CL_2018_2
+	# Query description: Find all mentions of type GeopoliticalEntity
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:GeopoliticalEntity .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+     </sparql>
+  </class_query>
+  <class_query id="AIDA_CL_2018_3">
+    <enttype> Location </enttype>
+    <sparql>
+ 
+	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_CL_2018_3
+	# Query description: Find all mentions of type Location
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:Location .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+     </sparql>
+  </class_query>
+  <class_query id="AIDA_CL_2018_4">
+    <enttype> Organization </enttype>
+    <sparql>
+ 
+	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_CL_2018_4
+	# Query description: Find all mentions of type Organization
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:Organization .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+     </sparql>
+  </class_query>
+  <class_query id="AIDA_CL_2018_5">
+    <enttype> Person </enttype>
+    <sparql>
+ 
+	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_CL_2018_5
+	# Query description: Find all mentions of type Person
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:Person .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+     </sparql>
+  </class_query>
+  <class_query id="AIDA_CL_2018_6">
+    <enttype> Vehicle </enttype>
+    <sparql>
+ 
+	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_CL_2018_6
+	# Query description: Find all mentions of type Vehicle
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:Vehicle .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+     </sparql>
+  </class_query>
+  <class_query id="AIDA_CL_2018_7">
+    <enttype> Weapon </enttype>
+    <sparql>
+ 
+	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_CL_2018_7
+	# Query description: Find all mentions of type Weapon
+
+	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	WHERE {
+			?statement1    a                    rdf:Statement .
+			?statement1    rdf:object           ldcOnt:Weapon .
+			?statement1    rdf:predicate        rdf:type .
+			?statement1    aida:justifiedBy     ?justification .
+			?justification aida:source          ?doceid .
+			?justification aida:confidence      ?confidence .
+			?confidence    aida:confidenceValue ?cv .
+
+			OPTIONAL { ?justification a                           aida:TextJustification .
+					   ?justification aida:startOffset            ?so .
+					   ?justification aida:endOffsetInclusive     ?eo }
+
+			OPTIONAL { ?justification a                           aida:ImageJustification .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
+					   ?justification aida:keyFrame               ?kfid .
+					   ?justification aida:boundingBox            ?bb  .
+					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
+					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
+					   ?bb            aida:boundingBoxLowerRightX ?lrx .
+					   ?bb            aida:boundingBoxLowerRightY ?lry }
+
+			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
+					   ?justification aida:shot                   ?sid }
+
+			OPTIONAL { ?justification a                           aida:AudioJustification .
+					   ?justification aida:startTimestamp         ?st .
+					   ?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+
+     </sparql>
+  </class_query>
+</class_queries>

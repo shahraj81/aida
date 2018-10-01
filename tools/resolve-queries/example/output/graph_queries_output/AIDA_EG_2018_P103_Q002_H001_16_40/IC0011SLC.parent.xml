@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphqueries_responses>
+  <graphquery_responses id="AIDA_EG_2018_P103_Q002_H001_16_40">
+    <response>
+      <edge id="1">
+        <justifications>
+          <justification docid="IC0011SLC">
+            <subject_justification>
+              <system_nodeid> &lt;https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/LdcAnnotations#cluster-NIL435.779961&gt; </system_nodeid>
+              <enttype> Conflict.Attack </enttype>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <confidence> 1.0000 </confidence>
+            </subject_justification>
+            <object_justification>
+              <system_nodeid> &lt;https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/LdcAnnotations#cluster-E0084&gt; </system_nodeid>
+              <enttype> Weapon </enttype>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <confidence> 1.0000 </confidence>
+            </object_justification>
+            <edge_justification>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <confidence> 1.0000 </confidence>
+            </edge_justification>
+          </justification>
+          <justification docid="IC0011SLC">
+            <subject_justification>
+              <system_nodeid> &lt;https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/LdcAnnotations#cluster-NIL1250.779961&gt; </system_nodeid>
+              <enttype> Conflict.Attack </enttype>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <confidence> 1.0000 </confidence>
+            </subject_justification>
+            <object_justification>
+              <system_nodeid> &lt;https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/LdcAnnotations#cluster-NIL1246.779961&gt; </system_nodeid>
+              <enttype> Weapon </enttype>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <confidence> 1.0000 </confidence>
+            </object_justification>
+            <edge_justification>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <video_span>
+                <doceid> IC0011SLG </doceid>
+                <keyframeid> IC0011SLG_71 </keyframeid>
+                <topleft> 0,0 </topleft>
+                <bottomright> 0,0 </bottomright>
+              </video_span>
+              <confidence> 1.0000 </confidence>
+            </edge_justification>
+          </justification>
+        </justifications>
+      </edge>
+    </response>
+  </graphquery_responses>
+</graphqueries_responses>
