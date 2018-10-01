@@ -1168,6 +1168,7 @@ sub convert_graph_query_output_file_to_xml {
 		# justification
 		my @docids = $self->get("DOCIDS", $entry);
 		$generate_xml = 1 if(scalar @docids);
+		my %hash_string_from_justification;
 		foreach my $docid(@docids) {
 			my $justification_attributes = XMLAttributes->new($logger);
 			$justification_attributes->add($docid, "docid");
@@ -1176,6 +1177,9 @@ sub convert_graph_query_output_file_to_xml {
 							"justification",
 							1,
 							$justification_attributes);
+			my $uuid = &main::generate_uuid_from_string($xml_justification->tostring());
+			next if $hash_string_from_justification{$uuid};
+			$hash_string_from_justification{$uuid} = 1;
 			$xml_justifications_container->add($xml_justification);
 		}
 	}
@@ -1214,8 +1218,9 @@ sub get_DOCIDS {
 		map {$doceid_docids{$doceid}{$_}=1} @docids;
 		push(@all_docids, @docids);
 	}
+	my %all_docids = map {$_=>1} @all_docids;
 	my @selected_docids;
-	foreach my $docid(@all_docids) {
+	foreach my $docid(keys %all_docids) {
 		my $total = 0;
 		my $total_found = 0;
 		foreach my $doceid(@doceids) {
@@ -1946,6 +1951,302 @@ sub tostring {
 	}
 	$retVal;
 }
+
+### BEGIN INCLUDE Utils
+package main;
+use JSON;
+
+#####################################################################################
+# UUIDs from UUID::Tiny
+#####################################################################################
+
+# The following UUID code is taken from UUID::Tiny, available on
+# cpan.org. I have stripped out much of the functionality in that
+# module, keeping only what's needed here. If there is a better way to
+# deliver a cpan module within a single script, I'd love to know about
+# it. I believe that this use conforms with the perl terms.
+
+####################################
+# From the UUID::Tiny documentation:
+####################################
+
+=head1 ACKNOWLEDGEMENTS
+
+Kudos to ITO Nobuaki E<lt>banb@cpan.orgE<gt> for his UUID::Generator::PurePerl
+module! My work is based on his code, and without it I would've been lost with
+all those incomprehensible RFC texts and C codes ...
+
+Thanks to Jesse Vincent (C<< <jesse at bestpractical.com> >>) for his feedback, tips and refactoring!
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2009, 2010, 2013 Christian Augustin, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+ITO Nobuaki has very graciously given me permission to take over copyright for
+the portions of code that are copied from or resemble his work (see
+rt.cpan.org #53642 L<https://rt.cpan.org/Public/Bug/Display.html?id=53642>).
+
+=cut
+
+use Digest::MD5;
+
+our $IS_UUID_STRING = qr/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/is;
+our $IS_UUID_HEX    = qr/^[0-9a-f]{32}$/is;
+our $IS_UUID_Base64 = qr/^[+\/0-9A-Za-z]{22}(?:==)?$/s;
+
+my $MD5_CALCULATOR = Digest::MD5->new();
+
+use constant UUID_NIL => "\x00" x 16;
+use constant UUID_V1 => 1; use constant UUID_TIME   => 1;
+use constant UUID_V3 => 3; use constant UUID_MD5    => 3;
+use constant UUID_V4 => 4; use constant UUID_RANDOM => 4;
+use constant UUID_V5 => 5; use constant UUID_SHA1   => 5;
+
+sub _create_v3_uuid {
+    my $ns_uuid = shift;
+    my $name    = shift;
+    my $uuid    = '';
+
+    # Create digest in UUID ...
+    $MD5_CALCULATOR->reset();
+    $MD5_CALCULATOR->add($ns_uuid);
+
+    if ( ref($name) =~ m/^(?:GLOB|IO::)/ ) {
+        $MD5_CALCULATOR->addfile($name);
+    }
+    elsif ( ref $name ) {
+        Logger->new()->NIST_die('::create_uuid(): Name for v3 UUID'
+            . ' has to be SCALAR, GLOB or IO object, not '
+            . ref($name) .'!')
+            ;
+    }
+    elsif ( defined $name ) {
+    	# Use Encode to support Unicode.
+        $MD5_CALCULATOR->add(Encode::encode_utf8($name));
+    }
+    else {
+        Logger->new()->NIST_die('::create_uuid(): Name for v3 UUID is not defined!');
+    }
+
+    # Use only first 16 Bytes ...
+    $uuid = substr( $MD5_CALCULATOR->digest(), 0, 16 );
+
+    return _set_uuid_version( $uuid, 0x30 );
+}
+
+sub _set_uuid_version {
+    my $uuid = shift;
+    my $version = shift;
+    substr $uuid, 6, 1, chr( ord( substr( $uuid, 6, 1 ) ) & 0x0f | $version );
+
+    return $uuid;
+}
+
+sub create_uuid {
+    use bytes;
+    my ($v, $arg2, $arg3) = (shift || UUID_V1, shift, shift);
+    my $uuid    = UUID_NIL;
+    my $ns_uuid = string_to_uuid(defined $arg3 ? $arg2 : UUID_NIL);
+    my $name    = defined $arg3 ? $arg3 : $arg2;
+
+    ### Portions redacted from UUID::Tiny
+    if ($v == UUID_V3 ) {
+        $uuid = _create_v3_uuid($ns_uuid, $name);
+    }
+    else {
+        Logger->new()->NIST_die("::create_uuid(): Invalid UUID version '$v'!");
+    }
+
+    # Set variant 2 in UUID ...
+    substr $uuid, 8, 1, chr(ord(substr $uuid, 8, 1) & 0x3f | 0x80);
+
+    return $uuid;
+}
+
+sub string_to_uuid {
+    my $uuid = shift;
+
+    use bytes;
+    return $uuid if length $uuid == 16;
+    return decode_base64($uuid) if ($uuid =~ m/$IS_UUID_Base64/);
+    my $str = $uuid;
+    $uuid =~ s/^(?:urn:)?(?:uuid:)?//io;
+    $uuid =~ tr/-//d;
+    return pack 'H*', $uuid if $uuid =~ m/$IS_UUID_HEX/;
+    Logger->new()->NIST_die("::string_to_uuid(): '$str' is no UUID string!");
+}
+
+sub uuid_to_string {
+    my $uuid = shift;
+    use bytes;
+    return $uuid
+        if $uuid =~ m/$IS_UUID_STRING/;
+    Logger->new()->NIST_die("::uuid_to_string(): Invalid UUID!")
+        unless length $uuid == 16;
+    return  join '-',
+            map { unpack 'H*', $_ }
+            map { substr $uuid, 0, $_, '' }
+            ( 4, 2, 2, 2, 6 );
+}
+
+sub create_UUID_as_string {
+    return uuid_to_string(create_uuid(@_));
+}
+
+#####################################################################################
+# This is the end of the code taken from UUID::Tiny
+#####################################################################################
+
+my $json = JSON->new->allow_nonref->utf8;
+
+sub generate_uuid_from_values {
+  my ($queryid, $value, $provenance_string, $length) = @_;
+  my $encoded_string = $json->encode("$queryid:$value:$provenance_string");
+  $encoded_string =~ s/^"//;
+  $encoded_string =~ s/"$//;
+  &generate_uuid_from_string($encoded_string, $length);
+}
+
+sub generate_uuid_from_string {
+  my ($string, $length) = @_;
+  my $long_uuid = create_UUID_as_string(UUID_V3, $string);
+  return substr($long_uuid, -$length, $length) if $length;
+  $long_uuid;
+}
+### DO NOT INCLUDE
+# sub uuid_generate {
+#   my ($queryid, $value, $provenance_string) = @_;
+#   my $encoded_string = $json->encode("$queryid:$value:$provenance_string");
+#   $encoded_string =~ s/^"//;
+#   $encoded_string =~ s/"$//;
+# ### DO NOT INCLUDE
+# # NOTE: this is the 2014 code, which special cased a query that had a funky character. I expect the patch is not backward compatible.  
+# # # FIXME
+# # my $glop = $value;
+# # $glop =~ s/’/'/g;
+# # #  create_UUID_as_string(UUID_V3, "$queryid:$value:$provenance_string");
+# #  create_UUID_as_string(UUID_V3, "$queryid:$glop:$provenance_string");
+# ### DO INCLUDE
+#   # We're shortening the uuid for 2015
+#   my $long_uuid = create_UUID_as_string(UUID_V3, $encoded_string);
+#   substr($long_uuid, -12, 12);
+# }
+
+# sub short_uuid_generate {
+#   my ($string) = @_;
+#   my $encoded_string = $json->encode($string);
+#   $encoded_string =~ s/^"//;
+#   $encoded_string =~ s/"$//;
+# ### DO NOT INCLUDE
+# print STDERR "Original string = <<$string>>\n Encoded string = <<$encoded_string>>\n" unless $string eq $encoded_string;
+# ### DO INCLUDE
+#   my $long_uuid = create_UUID_as_string(UUID_V3, $encoded_string);
+#   substr($long_uuid, -10, 10);
+# }
+### DO INCLUDE
+
+sub min {
+  my ($result, @values) = @_;
+  foreach (@values) {
+    $result = $_ if $_ < $result;
+  }
+  $result;
+}
+
+sub max {
+  my ($result, @values) = @_;
+  foreach (@values) {
+    $result = $_ if $_ > $result;
+  }
+  $result;
+}
+
+sub remove_quotes {
+  my ($string) = @_;
+  if($string =~ /^"(.*)"$/) {
+    return $1;
+  }
+  return $string;
+}
+
+# Pull DOCUMENTATION strings out of a table and format for the help screen
+sub build_documentation {
+  my ($structure, $sort_key) = @_;
+  if (ref $structure eq 'HASH') {
+    my $max_len = &max(map {length} keys %{$structure});
+    "  " . join("\n  ", map {$_ . ": " . (' ' x ($max_len - length($_))) . $structure->{$_}{DESCRIPTION}}
+		sort keys %{$structure}) . "\n";
+  }
+  elsif (ref $structure eq 'ARRAY') {
+    $sort_key = 'TYPE' unless defined $sort_key;
+    my $max_len = &max(map {length($_->{$sort_key})}  @{$structure});
+    "  " . join("\n  ", map {$_->{$sort_key} . ": " . (' ' x ($max_len - length($_->{$sort_key}))) . $_->{DESCRIPTION}}
+		sort {$a->{$sort_key} cmp $b->{$sort_key}} @{$structure}) . "\n";
+  }
+  else {
+    "Internal error: Better call Saul.\n";
+  }
+}
+
+sub dump_structure {
+  my ($structure, $label, $indent, $history, $skip) = @_;
+  if (ref $indent) {
+    $skip = $indent;
+    undef $indent;
+  }
+  my $outfile = *STDERR;
+  $indent = 0 unless defined $indent;
+  $history = {} unless defined $history;
+
+  # Handle recursive structures
+  if ($history->{$structure}) {
+    print $outfile "  " x $indent, "$label: CIRCULAR\n";
+    return;
+  }
+
+  my $type = ref $structure;
+  unless ($type) {
+    $structure = 'undef' unless defined $structure;
+    print $outfile "  " x $indent, "$label: $structure\n";
+    return;
+  }
+  if ($type eq 'ARRAY') {
+    $history->{$structure}++;
+    print $outfile "  " x $indent, "$label:\n";
+    for (my $i = 0; $i < @{$structure}; $i++) {
+      &dump_structure($structure->[$i], $i, $indent + 1, $history, $skip);
+    }
+  }
+  elsif ($type eq 'CODE') {
+    print $outfile "  " x $indent, "$label: CODE\n";
+  }
+  elsif ($type eq 'IO::File') {
+    print $outfile "  " x $indent, "$label: IO::File\n";
+  }
+  else {
+    $history->{$structure}++;
+    print $outfile "  " x $indent, "$label:\n";
+    my %done;
+  outer:
+    # You can add field names prior to the sort to order the fields in a desired way
+    foreach my $key (sort keys %{$structure}) {
+      if ($skip) {
+	foreach my $skipname (@{$skip}) {
+	  next outer if $key eq $skipname;
+	}
+      }
+      next if $done{$key}++;
+      # Skip undefs
+      next unless defined $structure->{$key};
+      &dump_structure($structure->{$key}, $key, $indent + 1, $history, $skip);
+    }
+  }
+}
+
+### END INCLUDE Utils
 
 ### BEGIN INCLUDE Switches
 
