@@ -6,4 +6,4 @@ Tools and utilities for supporting AIDA evaluations.
 |---|---|
 | utils/translate-annotations/seedling | Utility to translate LDC's seedling annotation to turtle-RDF format |
 
-Refer to README file that are part of these tools and utilities for more details.
+Refer to tool/utility specific README file for more details.
