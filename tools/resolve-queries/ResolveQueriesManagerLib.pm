@@ -892,7 +892,7 @@ sub apply_sparql_queries {
 	my $sparql_executable = $self->get("PARAMETERS")->get("SPARQL_EXECUTABLE");
 	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
 	map {$_ =~ s/\/$//} (($intermediate_directory, $kbs_dir));
-	foreach my $query_id($self->get("QUERYIDS")) {
+	foreach my $query_id(sort custom_compare $self->get("QUERYIDS")) {
 		my $query_file = "$intermediate_directory/split-queries/$query_id.rq";
 		system("mkdir $intermediate_directory/sparql-output/$query_id")
 			unless -d "$intermediate_directory/sparql-output/$query_id";
@@ -1344,6 +1344,16 @@ sub trim {
 	my ($trimmed_str) = $str =~ /\"(.*?)\"/;
 	$trimmed_str = $str unless defined $trimmed_str;
 	$trimmed_str;
+}
+
+sub custom_compare {
+	my (@a_list) = split("_", $a);
+	my $a2 = pop @a_list;
+	my $a1 = pop @a_list;
+	my (@b_list) = split("_", $b);
+	my $b2 = pop @b_list;
+	my $b1 = pop @b_list;
+	$a1 <=> $b1 || $a2 <=> $b2;
 }
 
 #####################################################################################
