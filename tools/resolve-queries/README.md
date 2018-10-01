@@ -27,6 +27,12 @@ Please refer to http://www.cpan.org/modules/INSTALL.html for a guide on how to i
 
 ## Support files required for running the script(s)
 
+In order to run the above script(s), the following files are required:
+
+	1. docid_mappings: File containing DocumentID to DocumentElementID mappings. This file will be made available.
+	2. queries_dtd: DTD file corresponding to the XML file containing queries. This file will be made available.
+	3. queries_xml: XML file containing queries. The query file(s) will made available.
+
 ## How to use these script(s)
 
 ### Usage of AIDA-ResolveQueries-MASTER.pl
