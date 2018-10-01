@@ -74,6 +74,29 @@ In order to apply SPARQL queries to a knowledge base, you may run the following 
 perl AIDA-ResolveQueries-MASTER.pl -error_file rq.errlog -sparql /path/to/sparql_executable docids_mappings.tsv queries.dtd queries.xml kbs/ intermediate/ output/
 ~~~
 
+### Using the tool on example data
+
+This tool comes with example data, including both example input and expected output, to demonstrate the usage. Example data can be found in the example directory with input, output and intermediate data directories:
+
+	- input: aida/tools/resolve-queries/example/input
+	- intermediate: aida/tools/resolve-queries/example/intermediate
+	- output: aida/tools/resolve-queries/example/output
+
+Note that the runs on all: class queries, zerohop queries and graph queries, and therefore produces the corresponding output in the respective subdirectories.
+
+#### Input and output
+
+In
+
+#### Execution of the code on example data
+
+In order to run the code on example data, you may run the following command:
+
+~~~
+make clean
+make all
+~~~
+
 ### Some notes
 
 - Teams are recommended to validate output produced by the above script(s) against the DTD provided by NIST.
