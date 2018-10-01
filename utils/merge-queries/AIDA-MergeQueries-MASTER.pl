@@ -96,15 +96,12 @@ foreach my $query_xml_file(@{$switches->get("files")}){
 			next;
 		}
 		my $query_id_prefix;
-		if($output_type eq "class_query" || $output_type eq "zerohop_query") {
+		if($output_type eq "zerohop_query") {
 			($query_id_prefix) = $query_id =~ /^(.*?)_(\d+)$/;
-		}
-		elsif($output_type eq "graph_query") {
-			($query_id_prefix) = $query_id =~ /^(.*?)_(\d+)_(\d+)$/;
 		}
 		else {
 			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-			$logger->record_problem("UNKNOWN_OUTPUT_TYPE", $output_type, $where);
+			$logger->record_problem("UNEXPECTED_OUTPUT_TYPE", $output_type, $where);
 		}
 		$query_num++;
 		my $new_query_id = "$query_id_prefix\_$query_num";
