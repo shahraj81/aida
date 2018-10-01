@@ -945,11 +945,9 @@ sub convert_class_query_output_file_to_xml {
 	my $logger = $self->get("LOGGER");
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $sparql_output_file);
 	return unless scalar $filehandler->get("ENTRIES")->toarray();
-	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
-	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<classquery_responses>\n";
 	my $enttype = $self->get("ENTTYPE", $query_id);
 	my $xml_justifications_container = XMLContainer->new($logger);
+	my %hash_string_from_justification;
 	foreach my $entry( $filehandler->get("ENTRIES")->toarray() ){
 		my $doceid = &trim($entry->get("?doceid"));
 		my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
@@ -966,27 +964,26 @@ sub convert_class_query_output_file_to_xml {
 		my $uly = &trim($entry->get("?uly")); # upper_left_y - video/image justification
 		my $lrx = &trim($entry->get("?lrx")); # lower_right_x - video/image justification
 		my $lry = &trim($entry->get("?lry")); # lower_right_y - video/image justification
+		my $xml_justification;
 		if($so ne "" && $eo ne "") {
 			# process text_justification
 			# <!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
 			my $xml_start = XMLElement->new($logger, $so, "start", 0);
 			my $xml_end = XMLElement->new($logger, $eo, "end", 0);
-			my $xml_text_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_enttype, $xml_confidence),
 											"text_justification",
 											1);
-			$xml_justifications_container->add($xml_text_justification);
 		}
 		elsif($st ne "" && $et ne "") {
 			# process audio_justification
 			# <!ELEMENT audio_justification (doceid,segmentid,start,end,enttype,confidence)>
 			my $xml_start = XMLElement->new($logger, $st, "start", 0);
 			my $xml_end = XMLElement->new($logger, $et, "end", 0);
-			my $xml_audio_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end, $xml_enttype, $xml_confidence),
 											"audio_justification",
 											1);
-			$xml_justifications_container->add($xml_audio_justification);
 		}
 		elsif($kfid ne "") {
 			# process video_justification
@@ -994,23 +991,25 @@ sub convert_class_query_output_file_to_xml {
 			my $xml_keyframeid = XMLElement->new($logger, $kfid, "keyframeid", 0);
 			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
 			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
-			my $xml_video_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_topleft, $xml_bottomright, $xml_enttype, $xml_confidence),
 											"video_justification",
 											1);
-			$xml_justifications_container->add($xml_video_justification);
 		}
 		elsif($kfid eq "" && $ulx ne "" && $uly ne "" && $lrx ne "" && $lry ne "") {
 			# process image_justification
 			#<!ELEMENT image_justification (doceid,topleft,bottomright,enttype,confidence)>
 			my $xml_topleft = XMLElement->new($logger, "$ulx,$uly", "topleft", 0);
 			my $xml_bottomright = XMLElement->new($logger, "$lrx,$lry", "bottomright", 0);
-			my $xml_image_justification = XMLElement->new( $logger,
+			$xml_justification = XMLElement->new( $logger,
 											XMLContainer->new($logger, $xml_doceid, $xml_topleft, $xml_bottomright, $xml_enttype, $xml_confidence),
 											"image_justification",
 											1);
-			$xml_justifications_container->add($xml_image_justification);
 		}
+		my $uuid = &main::generate_uuid_from_string($xml_justification->tostring());
+		next if $hash_string_from_justification{$uuid};
+		$hash_string_from_justification{$uuid} = 1;
+		$xml_justifications_container->add($xml_justification);
 	}
 
 	my $class_query_response_container = XMLContainer->new($logger);
@@ -1019,6 +1018,10 @@ sub convert_class_query_output_file_to_xml {
 	my $xml_justifications = XMLElement->new($logger, $xml_justifications_container, "justifications", 1);
 	$class_query_response_container->add($xml_justifications);
 	my $class_query_response = XMLElement->new($logger, $class_query_response_container, "classquery_response", 1, $class_query_response_attributes);
+
+	open(my $program_output_xml, ">:utf8", $xml_output_file) or $self->get("LOGGER")->record_problem('MISSING_FILE', $xml_output_file, $!);
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print $program_output_xml "<classquery_responses>\n";
 	print $program_output_xml $class_query_response->tostring(2);
 	print $program_output_xml "<\/classquery_responses>\n";
 	close($program_output_xml);
