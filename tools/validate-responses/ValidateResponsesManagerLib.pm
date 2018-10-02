@@ -1282,6 +1282,74 @@ sub tostring {
 	$retVal;
 }
 
+#####################################################################################
+# QuerySet
+#####################################################################################
+
+package QuerySet;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $dtd_filename, $xml_filename) = @_;
+  my $self = {
+    CLASS => 'QuerySet',
+    DTD_FILENAME => $dtd_filename,
+    XML_FILENAME => $xml_filename,
+	QUERIES => Container->new($logger, "Query"),
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $dtd_filename = $self->get("DTD_FILENAME");
+	my $xml_filename = $self->get("XML_FILENAME");
+	my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
+	while(my $xml_query_object = $xml_filehandler->get("NEXT_OBJECT")) {
+		my $query = Query->new($logger, $xml_query_object);
+		$self->get("QUERIES")->add($query, $query->get("QUERYID"));
+	}
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	my $retVal = "";
+	foreach my $query($self->get("QUERIES")->toarray()) {
+		$retVal .= $query->tostring($indent);
+	}
+	$retVal;
+}
+
+
+#####################################################################################
+# Query
+#####################################################################################
+
+package Query;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'Query',
+    XML_OBJECT => $xml_object,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
 ### BEGIN INCLUDE Utils
 package main;
 use JSON;
