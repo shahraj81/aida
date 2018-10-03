@@ -1425,7 +1425,7 @@ sub load {
 	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
 		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
 	$self->set("QUERYID", $query_id);
-	$self->set("ENTRYPOINT", $self->parse_object($self->get("XML_OBJECT")->get("CHILD", "entrypoint")));
+	$self->set("ENTRYPOINT", $self->parse_object($self->get("XML_OBJECT")->get("CHILD", "entrypoint")->get("ELEMENT")));
 	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
 }
 
@@ -1463,18 +1463,18 @@ sub parse_object {
 			}
 		}
 		elsif($xml_object->get("CLASS") eq "XMLContainer") {
-			$retVal = Container->new($logger, "SuperObject");
+			$retVal = SuperObject->new($logger);
 			foreach my $xml_element($xml_object->toarray()){
 				my $key = uc($xml_element->get("NAME"));
 				my $value = $self->parse_object($xml_element);
 				if($key =~ /.*?_DESCRIPTOR/) {
-					my $doceid = $value->get($key)->get("BY_KEY", "DOCEID");
-					my $start = $value->get($key)->get("BY_KEY", "START");
-					my $end = $value->get($key)->get("BY_KEY", "END");
-					$key = "DESCRIPTOR";
+					my $doceid = $value->get($key)->get("DOCEID");
+					my $start = $value->get($key)->get("START");
+					my $end = $value->get($key)->get("END");
 					$value = Descriptor->new($logger, $key, $doceid, $start, $end);
+					$key = "DESCRIPTOR";
 				}
-				$retVal->add($value, $key);
+				$retVal->set($key, $value);
 			}
 		}
 	}
