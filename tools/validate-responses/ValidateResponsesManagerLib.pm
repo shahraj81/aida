@@ -44,6 +44,12 @@ sub get_BY_KEY {
   die "Abstract method 'get_BY_KEY' not defined in derived class '", $self->get("CLASS") ,"'\n";
 }
 
+sub increment {
+	my ($self, $field, $increment_by) = @_;
+	$increment_by = 1 unless $increment_by;
+	$self->set($field, $self->get($field) + $increment_by);
+}
+
 sub has {
 	my ($self, $key) = @_;
 	$self->{$key};
@@ -149,6 +155,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
+  UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
 END_PROBLEM_FORMATS
 
 
@@ -998,6 +1005,8 @@ sub new {
 		DTD_FILENAME => $dtd_filename,
 		XML_FILENAME => $xml_filename,
 		XML_FILEHANDLE => undef,
+		LINENUM => -1,
+		OBJECT_WHERE => undef,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -1021,8 +1030,10 @@ sub get_NEXT_OBJECT {
 	my $done = 0;
 	my $found = 0;
 	while(my $line = <$filehandle>){
+		$self->increment("LINENUM", 1);
 		chomp $line;
 		if($line =~ /\<$search_tag.*?>/) {
+			$self->set("OBJECT_WHERE", {FILENAME=>$self->get("XML_FILENAME"), LINENUM=>$self->get("LINENUM")});
 			$working = 1;
 			$object_string .= "$line\n";
 		}
@@ -1068,7 +1079,7 @@ sub get_STRING_TO_OBJECT {
 					$value = "\t$value\n";
 					$new_line = 1;
 				}
-				return XMLElement->new($logger, $value, $search_tag, $new_line, $xml_attributes);
+				return XMLElement->new($logger, $value, $search_tag, $new_line, $xml_attributes, $self->get("OBJECT_WHERE"));
 			}
 			else{
 				# TODO: did not find the pattern we were expecting; throw an exception here
@@ -1087,7 +1098,7 @@ sub get_STRING_TO_OBJECT {
 					}
 				}
 				my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
-				return XMLElement->new($logger, $xml_child_object, $search_tag, 1, $xml_attributes);
+				return XMLElement->new($logger, $xml_child_object, $search_tag, 1, $xml_attributes, $self->get("OBJECT_WHERE"));
 			}
 			else{
 				# TODO: did not find the pattern we were expecting; throw an exception here
@@ -1174,7 +1185,7 @@ process_next_child:
 				$xml_attributes->add($value, $key);
 			}
 		}
-		return XMLElement->new($logger, $xml_container, $search_tag, 1, $xml_attributes);
+		return XMLElement->new($logger, $xml_container, $search_tag, 1, $xml_attributes, $self->get("OBJECT_WHERE"));
 	}
 }
 
@@ -1211,13 +1222,14 @@ package XMLElement;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $element, $name, $newline, $attributes) = @_;
+  my ($class, $logger, $element, $name, $newline, $attributes, $where) = @_;
   my $self = {
     CLASS => 'XMLElement',
     NAME => $name,
     NEWLINE => $newline,
     ATTRIBUTES => $attributes,
     ELEMENT => $element,
+    WHERE => $where,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1310,17 +1322,17 @@ package QuerySet;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $dtd_filename, $xml_filename) = @_;
-  my $self = {
-    CLASS => 'QuerySet',
-    DTD_FILENAME => $dtd_filename,
-    XML_FILENAME => $xml_filename,
-	QUERIES => Container->new($logger, "Query"),
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self->load();
-  $self;
+	my ($class, $logger, $dtd_filename, $xml_filename) = @_;
+	my $self = {
+		CLASS => 'QuerySet',
+		DTD_FILENAME => $dtd_filename,
+		XML_FILENAME => $xml_filename,
+		QUERIES => Container->new($logger, "Query"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
 }
 
 sub load {
@@ -1328,9 +1340,15 @@ sub load {
 	my $logger = $self->get("LOGGER");
 	my $dtd_filename = $self->get("DTD_FILENAME");
 	my $xml_filename = $self->get("XML_FILENAME");
+	my $query_type = $dtd_filename;
+	$query_type =~ s/^(.*?\/)+//g;
+	$query_type =~ s/.dtd//;
 	my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
 	while(my $xml_query_object = $xml_filehandler->get("NEXT_OBJECT")) {
-		my $query = Query->new($logger, $xml_query_object);
+		my $query;
+		$query = ClassQuery->new($logger, $xml_query_object) if($query_type eq "class_query");
+		$query = ZeroHopQuery->new($logger, $xml_query_object) if($query_type eq "zerohop_query");
+		$query = GraphQuery->new($logger, $xml_query_object) if($query_type eq "graph_query");
 		$self->get("QUERIES")->add($query, $query->get("QUERYID"));
 	}
 }
@@ -1346,10 +1364,10 @@ sub tostring {
 
 
 #####################################################################################
-# Query
+# ClassQuery
 #####################################################################################
 
-package Query;
+package ClassQuery;
 
 use parent -norequire, 'Super';
 
@@ -1368,7 +1386,9 @@ sub new {
 sub load {
 	my ($self) = @_;
 	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
-	my $query_type = $self->get("XML_OBJECT")->get("NAME");
+	my $query_type = "class_query";
+	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
+		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
 	$self->set("QUERYID", $query_id);
 	$self->set("QUERYTYPE", $query_type);
 	$self->set("QUERY", $self->parse_object($self->get("XML_OBJECT")->get("ELEMENT")));
