@@ -1513,7 +1513,21 @@ sub load {
 	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
 		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
 	$self->set("QUERYID", $query_id);
-	my $graph = $self->get("XML_OBJECT")->get("CHILD", "graph");
+	
+	my $edges_xml_object = $self->get("XML_OBJECT")->get("CHILD", "edges");
+	my $edges = Container->new($self->get("LOGGER"), "SuperObject");
+	foreach my $edge_object($edges_xml_object->get("ELEMENT")->toarray()){
+		my $parsed_object = $self->parse_object($edge_object);
+		my $edge_num = $parsed_object->get("id");
+		my $subject = $parsed_object->get("EDGE")->get("SUBJECT");
+		my $predicate = $parsed_object->get("EDGE")->get("PREDICATE");
+		my $object = $parsed_object->get("EDGE")->get("OBJECT");
+		my $where = $self->get("XML_OBJECT")->get("WHERE");
+		my $edge = Edge->new($self->get("LOGGER"), $edge_num, $subject, $predicate, $object, $where);
+		$edges->add($edge, $edge_num);
+	}
+	$self->set("EDGES", $edges);
+
 	my $entrypoints_xml_object = $self->get("XML_OBJECT")->get("CHILD", "entrypoints");
 	my $entrypoints = Container->new($self->get("LOGGER"), "SuperObject");
 	my $i = 0;
@@ -1552,9 +1566,9 @@ sub parse_object {
 			my $value = $self->parse_object($xml_object->get("ELEMENT"));
 			$retVal = SuperObject->new($logger);
 			$retVal->set($key, $value);
-			if($self->get("ATTRIBUTES") ne "nil") {
-				foreach my $attribute_key($self->get("ATTRIBUTES")->get("ALL_KEYS")) {
-					my $attribute_value = $self->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+			if($xml_object->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
 					$retVal->set($attribute_key, $attribute_value);
 				}
 			}
@@ -1586,6 +1600,29 @@ sub parse_object {
 sub tostring {
 	my ($self, $indent) = @_;
 	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# Edge
+#####################################################################################
+
+package Edge;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $edge_num, $subject_id, $predicate, $object_id, $where) = @_;
+  my $self = {
+    CLASS => 'Edge',
+    EDGENUM => $edge_num,
+    SUBJECT => $subject_id,
+    PREDICATE => $predicate,
+    OBJECT => $object_id,
+    WHERE => $where,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
 }
 
 #####################################################################################
