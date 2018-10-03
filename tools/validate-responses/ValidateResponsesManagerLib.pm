@@ -1487,17 +1487,144 @@ sub tostring {
 }
 
 #####################################################################################
-# Descriptor
+# GraphQuery
 #####################################################################################
 
-package Descriptor;
+package GraphQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'GraphQuery',
+    XML_OBJECT => $xml_object,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
+	my $query_type = "graph_query";
+	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
+		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
+	$self->set("QUERYID", $query_id);
+	my $graph = $self->get("XML_OBJECT")->get("CHILD", "graph");
+	my $entrypoints_xml_object = $self->get("XML_OBJECT")->get("CHILD", "entrypoints");
+	my $entrypoints = Container->new($self->get("LOGGER"), "SuperObject");
+	my $i = 0;
+	foreach my $entrypoint($entrypoints_xml_object->get("ELEMENT")->toarray()){
+		$i++;
+		my $parsed_object = $self->parse_object($entrypoint);
+		$entrypoints->add($parsed_object->get("ENTRYPOINT"), $i);
+	}
+	$self->set("ENTRYPOINTS", $entrypoints);
+	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($self->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($self->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $self->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = SuperObject->new($logger);
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+					my $doceid = $value->get($key)->get("DOCEID");
+					my $start = $value->get($key)->get("START");
+					my $end = $value->get($key)->get("END");
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $start, $end);
+					$key = "DESCRIPTOR";
+				}
+				elsif($key eq "STRING_DESCRIPTOR") {
+					$value = StringDescriptor->new($logger, $value->get($key));
+					$key = "DESCRIPTOR";
+				}
+				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+				$retVal->set($key, $value);
+			}
+		}
+	}
+	$retVal;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# StringDescriptor
+#####################################################################################
+
+package StringDescriptor;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $name_string) = @_;
+  my $self = {
+    CLASS => 'StringDescriptor',
+    TYPE => "STRING_DESCRIPTOR",
+    NAMESTRING => $name_string,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	$self->get("NAMESTRING");
+}
+
+#####################################################################################
+# NonStringDescriptor
+#####################################################################################
+
+package NonStringDescriptor;
 
 use parent -norequire, 'Super';
 
 sub new {
   my ($class, $logger, $type, $doceid, $start, $end) = @_;
   my $self = {
-    CLASS => 'Descriptor',
+    CLASS => 'NonStringDescriptor',
     TYPE => $type,
     DOCEID => $doceid,
     START => $start,
