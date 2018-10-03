@@ -1362,7 +1362,6 @@ sub tostring {
 	$retVal;
 }
 
-
 #####################################################################################
 # ClassQuery
 #####################################################################################
@@ -1374,7 +1373,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
-    CLASS => 'Query',
+    CLASS => 'ClassQuery',
     XML_OBJECT => $xml_object,
     LOGGER => $logger,
   };
@@ -1397,6 +1396,124 @@ sub load {
 sub tostring {
 	my ($self, $indent) = @_;
 	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# ZeroHopQuery
+#####################################################################################
+
+package ZeroHopQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'ZeroHopQuery',
+    XML_OBJECT => $xml_object,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
+	my $query_type = "zerohop_query";
+	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
+		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
+	$self->set("QUERYID", $query_id);
+	$self->set("ENTRYPOINT", $self->parse_object($self->get("XML_OBJECT")->get("CHILD", "entrypoint")));
+	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($self->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($self->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $self->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = Container->new($logger, "SuperObject");
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/) {
+					my $doceid = $value->get($key)->get("BY_KEY", "DOCEID");
+					my $start = $value->get($key)->get("BY_KEY", "START");
+					my $end = $value->get($key)->get("BY_KEY", "END");
+					$key = "DESCRIPTOR";
+					$value = Descriptor->new($logger, $key, $doceid, $start, $end);
+				}
+				$retVal->add($value, $key);
+			}
+		}
+	}
+	$retVal;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# Descriptor
+#####################################################################################
+
+package Descriptor;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $type, $doceid, $start, $end) = @_;
+  my $self = {
+    CLASS => 'Descriptor',
+    TYPE => $type,
+    DOCEID => $doceid,
+    START => $start,
+    END => $end,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $doceid = $self->get("DOCEID");
+	my $start = $self->get("START");
+	my $end = $self->get("END");
+	"$doceid:$start-$end";
 }
 
 ### BEGIN INCLUDE Utils
