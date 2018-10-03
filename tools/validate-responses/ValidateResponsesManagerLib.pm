@@ -1391,52 +1391,7 @@ sub load {
 		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
 	$self->set("QUERYID", $query_id);
 	$self->set("QUERYTYPE", $query_type);
-	$self->set("QUERY", $self->parse_object($self->get("XML_OBJECT")->get("ELEMENT")));
-}
-
-sub parse_object {
-	my ($self, $xml_object) = @_;
-	my $logger = $self->get("LOGGER");
-	my $retVal;
-	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
-		# base-case of recursive function
-		my $key = uc($xml_object->get("NAME"));
-		my $value = $xml_object->get("ELEMENT");
-		if($xml_object->get("ATTRIBUTES") ne "nil") {
-			$retVal = SuperObject->new($logger);
-			$retVal->set($key, $value);
-			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
-				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
-				$retVal->set($attribute_key, $attribute_value);
-			}
-		}
-		else {
-			$retVal = $value;
-		}
-	}
-	else {
-		if($xml_object->get("CLASS") eq "XMLElement") {
-			my $key = uc($xml_object->get("NAME"));
-			my $value = $self->parse_object($xml_object->get("ELEMENT"));
-			$retVal = SuperObject->new($logger);
-			$retVal->set($key, $value);
-			if($self->get("ATTRIBUTES")) {
-				foreach my $attribute_key($self->get("ATTRIBUTES")->get("ALL_KEYS")) {
-					my $attribute_value = $self->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
-					$retVal->set($attribute_key, $attribute_value);
-				}
-			}
-		}
-		elsif($xml_object->get("CLASS") eq "XMLContainer") {
-			$retVal = Container->new($logger, "SuperObject");
-			foreach my $xml_element($xml_object->toarray()){
-				my $key = uc($xml_element->get("NAME"));
-				my $value = $self->parse_object($xml_element);
-				$retVal->add($value, $key);
-			}
-		}
-	}
-	$retVal;
+	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
 }
 
 sub tostring {
