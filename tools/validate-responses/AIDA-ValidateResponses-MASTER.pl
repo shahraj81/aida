@@ -29,7 +29,7 @@ my $version = "2018.0.0";
 ##################################################################################### 
 
 # Handle run-time switches
-my $switches = SwitchProcessor->new($0, "Merge query files into a single one.",
+my $switches = SwitchProcessor->new($0, "Validate XML response file",
 				    						"");
 $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
@@ -62,7 +62,7 @@ foreach my $path(($switches->get("output"))) {
 	$logger->NIST_die("$path already exists") if -e $path;
 }
 
-my $queries = Queries->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
+my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
 
 # Validation code to go here
 	
