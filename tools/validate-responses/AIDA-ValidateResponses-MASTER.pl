@@ -24,6 +24,10 @@ use ValidateResponsesManagerLib;
 
 my $version = "2018.0.0";
 
+# Filehandles for program and error output
+my $program_output = *STDOUT{IO};
+my $error_output = *STDERR{IO};
+
 ##################################################################################### 
 # Runtime switches and main program
 ##################################################################################### 
@@ -48,7 +52,7 @@ $switches->process(@ARGV);
 my $logger = Logger->new();
 my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
-my $error_output = $logger->get_error_output();
+$error_output = $logger->get_error_output();
 
 foreach my $path(($switches->get("docid_mappings"), 
 					$switches->get("queries_dtd"),
@@ -62,11 +66,28 @@ foreach my $path(($switches->get("output"))) {
 	$logger->NIST_die("$path already exists") if -e $path;
 }
 
-my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
+my $output_filename = $switches->get("output");
+if ($output_filename eq 'none') {
+  undef $program_output;
+}
+elsif (lc $output_filename eq 'stdout') {
+  $program_output = *STDOUT{IO};
+}
+elsif (lc $output_filename eq 'stderr') {
+  $program_output = *STDERR{IO};
+}
+else {
+  open($program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
+}
 
-# Validation code to go here
+my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
+my $validated_responses = ResponseSet->new($logger, $queries, $switches->get("responses_dtd"), $switches->get("responses_xml"));
 	
 my ($num_errors, $num_warnings) = $logger->report_all_information();
+unless($num_errors) {
+	print $program_output $validated_responses->tostring()
+		if defined $program_output;
+}
 unless($switches->get('error_file') eq "STDERR") {
 	print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
 	print "No warnings encountered.\n" unless ($num_errors || $num_warnings);

@@ -1032,12 +1032,12 @@ sub get_NEXT_OBJECT {
 	while(my $line = <$filehandle>){
 		$self->increment("LINENUM", 1);
 		chomp $line;
-		if($line =~ /\<$search_tag.*?>/) {
+		if($line =~ /(<$search_tag>|<$search_tag .*?=.*?>)/) {
 			$self->set("OBJECT_WHERE", {FILENAME=>$self->get("XML_FILENAME"), LINENUM=>$self->get("LINENUM")});
 			$working = 1;
 			$object_string .= "$line\n";
 		}
-		elsif($line =~ /\<\/$search_tag>/) {
+		elsif($line =~ /<\/$search_tag>/) {
 			$working = 0;
 			$object_string .= "$line\n";
 			$found = 1;
@@ -1064,8 +1064,9 @@ sub get_STRING_TO_OBJECT {
 		if($child_node->is_leaf()){
 			# The child appears once and its a leaf
 			# This serves as the base case for recursion
-			if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
+			if($object_string =~ /(<$search_tag>|<$search_tag .*?=.*?>)\s*(.*?)\s*<\/$search_tag>/gs){
 				my ($attributes, $value) = ($1, $2);
+				($attributes) = $attributes =~ /<$search_tag(.*?)>/;
 				my $xml_attributes;
 				if($attributes) {
 					$xml_attributes = XMLAttributes->new($logger);
@@ -1087,8 +1088,9 @@ sub get_STRING_TO_OBJECT {
 		}
 		else {
 		# The child appears once but it is not a leaf node
-			if($object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs){
+			if($object_string =~ /(<$search_tag>|<$search_tag .*?=.*?>)\s*(.*?)\s*<\/$search_tag>/gs){
 				my ($attributes, $new_object_string) = ($1, $2);
+				($attributes) = $attributes =~ /<$search_tag(.*?)>/;
 				my $xml_attributes;
 				if($attributes) {
 					$xml_attributes = XMLAttributes->new($logger);
@@ -1107,7 +1109,8 @@ sub get_STRING_TO_OBJECT {
 	}
 	else {
 		# First obtain the attributes and then unwrap $search_tag
-		my ($attributes, $new_object_string) = $object_string =~ /<$search_tag(.*?)>\s*(.*?)\s*<\/$search_tag>/gs;
+		my ($attributes, $new_object_string) = $object_string =~ /(<$search_tag>|<$search_tag .*?=.*?>)\s*(.*?)\s*<\/$search_tag>/gs;
+		($attributes) = $attributes =~ /<$search_tag(.*?)>/;
 		$object_string = $new_object_string;
 		$new_object_string = "";
 		# Handle multiple children case
@@ -1314,6 +1317,162 @@ sub tostring {
 }
 
 #####################################################################################
+# ResponseSet
+#####################################################################################
+
+package ResponseSet;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $queries, $dtd_filename, $xml_filename) = @_;
+	my $self = {
+		CLASS => 'ResponseSet',
+		QUERIES => $queries,
+		DTD_FILENAME => $dtd_filename,
+		XML_FILENAME => $xml_filename,
+		RESPONSES => Container->new($logger, "Response"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $dtd_filename = $self->get("DTD_FILENAME");
+	my $xml_filename = $self->get("XML_FILENAME");
+	my $query_type = $self->get("QUERIES")->get("QUERYTYPE");
+	my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
+	my $i = 0;
+	while(my $xml_response_object = $xml_filehandler->get("NEXT_OBJECT")) {
+		$i++;
+		my $response;
+		$response = ClassResponse->new($logger, $xml_response_object) if($query_type eq "class_query");
+		$response = ZeroHopResponse->new($logger, $xml_response_object) if($query_type eq "zerohop_query");
+		$response = GraphResponse->new($logger, $xml_response_object) if($query_type eq "graph_query");
+		$self->get("RESPONSES")->add($response, $i);
+	}
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	my $retVal = "";
+	foreach my $response($self->get("RESPONSES")->toarray()) {
+		$retVal .= $response->tostring($indent);
+	}
+	$retVal;
+}
+
+#####################################################################################
+# ClassResponse
+#####################################################################################
+
+package ClassResponse;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'ClassResponse',
+    XML_OBJECT => $xml_object,
+    QUERYID => undef,
+    JUSTIFICATIONS => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "QUERY_ID");
+	$self->set("QUERYID", $query_id);
+	my $justifications = Container->new($logger, "Justification");
+	my $i = 0;
+	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("CHILD", "justifications")->get("ELEMENT")->toarray()){
+		$i++;
+		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
+		my $start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+		my $end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		my $enttype = $justification_xml_object->get("CHILD", "enttype")->get("ELEMENT");
+		my $confidence = $justification_xml_object->get("CHILD", "confidence")->get("ELEMENT");
+		my $justification_type = uc $justification_xml_object->get("NAME");
+		my $where = $justification_xml_object->get("WHERE");
+		my $justification = Justification->new($logger, $justification_type, $doceid, $start, $end, $enttype, $confidence, $where);
+		$justifications->add($justification, $i);
+	}
+	$self->set("JUSTIFICATIONS", $justifications);
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($xml_object->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = SuperObject->new($logger);
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+					my $doceid = $value->get($key)->get("DOCEID");
+					my $start = $value->get($key)->get("START");
+					my $end = $value->get($key)->get("END");
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $start, $end);
+					$key = "DESCRIPTOR";
+				}
+				elsif($key eq "STRING_DESCRIPTOR") {
+					$value = StringDescriptor->new($logger, $value->get($key));
+					$key = "DESCRIPTOR";
+				}
+				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+				$retVal->set($key, $value);
+			}
+		}
+	}
+	$retVal;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
 # QuerySet
 #####################################################################################
 
@@ -1343,6 +1502,7 @@ sub load {
 	my $query_type = $dtd_filename;
 	$query_type =~ s/^(.*?\/)+//g;
 	$query_type =~ s/.dtd//;
+	$self->set("QUERYTYPE", $query_type);
 	my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
 	while(my $xml_query_object = $xml_filehandler->get("NEXT_OBJECT")) {
 		my $query;
@@ -1374,6 +1534,10 @@ sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
     CLASS => 'ClassQuery',
+    QUERYID => undef,
+    QUERYTYPE => undef,
+    ENTTYPE => undef,
+    SPARQL => undef,
     XML_OBJECT => $xml_object,
     LOGGER => $logger,
   };
@@ -1390,6 +1554,7 @@ sub load {
 		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
 	$self->set("QUERYID", $query_id);
 	$self->set("QUERYTYPE", $query_type);
+	$self->set("ENTTYPE", $self->get("XML_OBJECT")->get("CHILD", "enttype")->get("ELEMENT"));
 	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
 }
 
@@ -1619,6 +1784,30 @@ sub new {
     PREDICATE => $predicate,
     OBJECT => $object_id,
     WHERE => $where,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Justification
+#####################################################################################
+
+package Justification;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $justification_type, $doceid, $start, $end, $enttype, $confidence, $where) = @_;
+  my $self = {
+    CLASS => 'Justification',
+    TYPE => $justification_type,
+    DOCEID => $doceid,
+    START => $start,
+    END => $end,
+    ENTTYPE => $enttype,
+    CONFIDENCE => $confidence,
     LOGGER => $logger,
   };
   bless($self, $class);
