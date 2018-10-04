@@ -1539,15 +1539,15 @@ sub load {
 	$self->set("SYSTEM_NODEID", $system_nodeid);
 	my $justifications = Container->new($logger, "Justification");
 	my $i = 0;
-	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("CHILD", "justifications")->get("ELEMENT")->toarray()){
+	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("ELEMENT")->toarray()){
+		next if $justification_xml_object->get("NAME") eq "system_nodeid";
 		$i++;
 		my $justification;
 		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
 		my $justification_type = uc $justification_xml_object->get("NAME");
 		my $where = $justification_xml_object->get("WHERE");
-		my $enttype = $justification_xml_object->get("CHILD", "enttype")->get("ELEMENT");
 		my $confidence = $justification_xml_object->get("CHILD", "confidence")->get("ELEMENT");
-		my ($keyframeid, $start, $end);
+		my ($keyframeid, $start, $end, $enttype);
 		if($justification_xml_object->get("NAME") eq "text_justification") {
 			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
 			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
