@@ -1070,7 +1070,7 @@ sub get_STRING_TO_OBJECT {
 				my $xml_attributes;
 				if($attributes) {
 					$xml_attributes = XMLAttributes->new($logger);
-					while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+					while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
 						my ($key, $value) = ($1, $2);
 						$xml_attributes->add($value, $key);
 					}
@@ -1094,7 +1094,7 @@ sub get_STRING_TO_OBJECT {
 				my $xml_attributes;
 				if($attributes) {
 					$xml_attributes = XMLAttributes->new($logger);
-					while($attributes =~ /\s*(.*?)\s*=\s*(.*?)/g){
+					while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
 						my ($key, $value) = ($1, $2);
 						$xml_attributes->add($value, $key);
 					}
@@ -1645,6 +1645,148 @@ sub parse_object {
 		}
 	}
 	$retVal;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# GraphResponse
+#####################################################################################
+
+package GraphResponse;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'GraphResponse',
+    XML_OBJECT => $xml_object,
+    QUERYID => undef,
+    EDGES => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
+	$self->set("QUERYID", $query_id);
+	my $edges = Container->new($logger);
+	foreach my $edge_xml_object($self->get("XML_OBJECT")->get("CHILD", "response")->get("ELEMENT")->toarray()){
+		my $edge_num = $edge_xml_object->get("ATTRIBUTES")->get("BY_KEY", "id");
+		my $justifications = Container->new($logger);
+		my $justification_num = 0;
+		foreach my $justification_xml_object($edge_xml_object->get("ELEMENT")->get("ELEMENT")->toarray()) {
+			$justification_num++;
+			my $justification = SuperObject->new($logger);
+			my $docid = $justification_xml_object->get("ATTRIBUTES")->get("BY_KEY", "docid");
+			my $subjectjustification_xml_object = $justification_xml_object->get("CHILD", "subject_justification")->get("ELEMENT");
+			my $subject_justification = $self->get("NODE_JUSTIFICATION", $subjectjustification_xml_object);
+			my $objectjustification_xml_object = $justification_xml_object->get("CHILD", "object_justification")->get("ELEMENT");
+			my $object_justification = $self->get("NODE_JUSTIFICATION", $objectjustification_xml_object);
+			my $edgejustification_xml_object = $justification_xml_object->get("CHILD", "edge_justification")->get("ELEMENT");
+			my $edge_justification = $self->get("EDGE_JUSTIFICATION", $edgejustification_xml_object);
+			$justification->set("DOCID", $docid);
+			$justification->set("SUBJECT_JUSTIFICATION", $subject_justification);
+			$justification->set("OBJECT_JUSTIFICATION", $object_justification);
+			$justification->set("EDGE_JUSTIFICATION", $edge_justification);
+			$justifications->add($justification, $justification_num);
+		}
+		$edges->add($justifications, $edge_num);
+	}
+	$self->set("EDGES", $edges);
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($xml_object->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = SuperObject->new($logger);
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+					my $doceid = $value->get($key)->get("DOCEID");
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						# TODO: throw exception
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
+					$key = "DESCRIPTOR";
+				}
+				elsif($key eq "STRING_DESCRIPTOR") {
+					$value = StringDescriptor->new($logger, $value->get($key));
+					$key = "DESCRIPTOR";
+				}
+				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+				$retVal->set($key, $value);
+			}
+		}
+	}
+	$retVal;
+}
+
+sub get_NODE_JUSTIFICATION {
+	my ($self, $xml_object) = @_;
+}
+
+sub get_EDGE_JUSTIFICATION {
+	my ($self, $xml_object) = @_;
 }
 
 sub tostring {
