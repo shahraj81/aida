@@ -1783,10 +1783,80 @@ sub parse_object {
 
 sub get_NODE_JUSTIFICATION {
 	my ($self, $xml_object) = @_;
+	my $system_nodeid = $xml_object->get("CHILD", "system_nodeid")->get("ELEMENT");
+	my $enttype = $xml_object->get("CHILD", "enttype")->get("ELEMENT");
+	my $doceid = $xml_object->get("CHILD", "doceid")->get("ELEMENT");
+	my $confidence = $xml_object->get("CHILD", "confidence")->get("ELEMENT");
+	my ($keyframeid, $start, $end);
+	my @span_xml_objects = grep {$_->get("NAME") =~ /^.*?span$/} $xml_object->toarray();
+	# TODO: throw an error if there are more than one spans
+	my $span_xml_object = $span_xml_objects[0];
+	if($span_xml_object->get("NAME") eq "text_span") {
+		$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+	}
+	elsif($span_xml_object->get("NAME") eq "video_span") {
+		$keyframeid = $span_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+		$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+	}
+	elsif($span_xml_object->get("NAME") eq "image_span") {
+		$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+	}
+	elsif($span_xml_object->get("NAME") eq "audio_span") {
+		$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+	}
+	my $where = $span_xml_object->get("WHERE");
+	my $justification_type = uc $span_xml_object->get("NAME");
+	$justification_type =~ s/SPAN/JUSTIFICATION/;
+	my $span = Justification->new($self->get("LOGGER"), $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $where);
+	my $node_justification = SuperObject->new($self->get("LOGGER"));
+	$node_justification->set("SYSTEM_NODEID", $system_nodeid);
+	$node_justification->set("ENTTYPE", $enttype);
+	$node_justification->set("SPAN", $span);
+	$node_justification->set("CONFIDENCE", $confidence);
+	$node_justification;
 }
 
 sub get_EDGE_JUSTIFICATION {
 	my ($self, $xml_object) = @_;
+	my $confidence = $xml_object->get("CHILD", "confidence")->get("ELEMENT");
+	my ($keyframeid, $start, $end);
+	my $spans = Container->new($self->get("LOGGER"));
+	my @span_xml_objects = grep {$_->get("NAME") =~ /^.*?span$/} $xml_object->toarray();
+	# TODO: throw an error/warning if there are more than two spans
+	my $span_num = 0;
+	foreach my $span_xml_object(@span_xml_objects) {
+		$span_num++;
+		my $doceid = $span_xml_object->get("CHILD", "doceid")->get("ELEMENT");
+		my ($start, $end, $keyframeid, $enttype);
+		if($span_xml_object->get("NAME") eq "text_span") {
+			$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		elsif($span_xml_object->get("NAME") eq "video_span") {
+			$keyframeid = $span_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+			$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($span_xml_object->get("NAME") eq "image_span") {
+			$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($span_xml_object->get("NAME") eq "audio_span") {
+			$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		my $where = $span_xml_object->get("WHERE");
+		my $span = Justification->new($self->get("LOGGER"), uc $span_xml_object->get("NAME"), $doceid, $keyframeid, $start, $end, $enttype, $confidence, $where);
+		$spans->add($span, $span_num);
+	}
+	my $edge_justification = SuperObject->new($self->get("LOGGER"));
+	$edge_justification->set("CONFIDENCE", $confidence);
+	$edge_justification->set("SPANS", $spans);
+	$edge_justification;
 }
 
 sub tostring {
