@@ -1490,6 +1490,131 @@ sub tostring {
 }
 
 #####################################################################################
+# ZeroHopResponse
+#####################################################################################
+
+package ZeroHopResponse;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'ZeroHopResponse',
+    XML_OBJECT => $xml_object,
+    QUERYID => undef,
+    JUSTIFICATIONS => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "QUERY_ID");
+	$self->set("QUERYID", $query_id);
+	my $system_nodeid = $self->get("XML_OBJECT")->get("CHILD", "system_nodeid")->get("ELEMENT");
+	$self->set("SYSTEM_NODEID", $system_nodeid);
+	my $justifications = Container->new($logger, "Justification");
+	my $i = 0;
+	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("CHILD", "justifications")->get("ELEMENT")->toarray()){
+		$i++;
+		my $justification;
+		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
+		my $justification_type = uc $justification_xml_object->get("NAME");
+		my $where = $justification_xml_object->get("WHERE");
+		my $enttype = $justification_xml_object->get("CHILD", "enttype")->get("ELEMENT");
+		my $confidence = $justification_xml_object->get("CHILD", "confidence")->get("ELEMENT");
+		my ($keyframeid, $start, $end);
+		if($justification_xml_object->get("NAME") eq "text_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "video_justification") {
+			$keyframeid = $justification_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "image_justification") {
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "audio_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		$justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $where);
+		$justifications->add($justification, $i);
+	}
+	$self->set("JUSTIFICATIONS", $justifications);
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($xml_object->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = SuperObject->new($logger);
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+					my $doceid = $value->get($key)->get("DOCEID");
+					my $start = $value->get($key)->get("START");
+					my $end = $value->get($key)->get("END");
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $start, $end);
+					$key = "DESCRIPTOR";
+				}
+				elsif($key eq "STRING_DESCRIPTOR") {
+					$value = StringDescriptor->new($logger, $value->get($key));
+					$key = "DESCRIPTOR";
+				}
+				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+				$retVal->set($key, $value);
+			}
+		}
+	}
+	$retVal;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
 # QuerySet
 #####################################################################################
 
