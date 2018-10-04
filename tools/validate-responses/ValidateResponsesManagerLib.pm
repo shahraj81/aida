@@ -1467,9 +1467,28 @@ sub parse_object {
 				my $value = $self->parse_object($xml_element);
 				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
 					my $doceid = $value->get($key)->get("DOCEID");
-					my $start = $value->get($key)->get("START");
-					my $end = $value->get($key)->get("END");
-					$value = NonStringDescriptor->new($logger, $key, $doceid, $start, $end);
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						# TODO: throw exception
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
 					$key = "DESCRIPTOR";
 				}
 				elsif($key eq "STRING_DESCRIPTOR") {
@@ -1592,9 +1611,28 @@ sub parse_object {
 				my $value = $self->parse_object($xml_element);
 				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
 					my $doceid = $value->get($key)->get("DOCEID");
-					my $start = $value->get($key)->get("START");
-					my $end = $value->get($key)->get("END");
-					$value = NonStringDescriptor->new($logger, $key, $doceid, $start, $end);
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						# TODO: throw exception
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
 					$key = "DESCRIPTOR";
 				}
 				elsif($key eq "STRING_DESCRIPTOR") {
@@ -1776,9 +1814,28 @@ sub parse_object {
 				my $value = $self->parse_object($xml_element);
 				if($key =~ /.*?_DESCRIPTOR/) {
 					my $doceid = $value->get($key)->get("DOCEID");
-					my $start = $value->get($key)->get("START");
-					my $end = $value->get($key)->get("END");
-					$value = Descriptor->new($logger, $key, $doceid, $start, $end);
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						# TODO: throw exception
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
 					$key = "DESCRIPTOR";
 				}
 				$retVal->set($key, $value);
@@ -1887,9 +1944,28 @@ sub parse_object {
 				my $value = $self->parse_object($xml_element);
 				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
 					my $doceid = $value->get($key)->get("DOCEID");
-					my $start = $value->get($key)->get("START");
-					my $end = $value->get($key)->get("END");
-					$value = NonStringDescriptor->new($logger, $key, $doceid, $start, $end);
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						# TODO: throw exception
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
 					$key = "DESCRIPTOR";
 				}
 				elsif($key eq "STRING_DESCRIPTOR") {
@@ -1991,11 +2067,12 @@ package NonStringDescriptor;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $type, $doceid, $start, $end) = @_;
+  my ($class, $logger, $type, $doceid, $keyframeid, $start, $end) = @_;
   my $self = {
     CLASS => 'NonStringDescriptor',
     TYPE => $type,
     DOCEID => $doceid,
+    KEYFRAMEID => $keyframeid,
     START => $start,
     END => $end,
     LOGGER => $logger,
