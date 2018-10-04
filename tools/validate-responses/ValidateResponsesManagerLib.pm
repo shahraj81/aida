@@ -1397,14 +1397,31 @@ sub load {
 	my $i = 0;
 	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("CHILD", "justifications")->get("ELEMENT")->toarray()){
 		$i++;
+		my $justification;
 		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
-		my $start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
-		my $end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
-		my $enttype = $justification_xml_object->get("CHILD", "enttype")->get("ELEMENT");
-		my $confidence = $justification_xml_object->get("CHILD", "confidence")->get("ELEMENT");
 		my $justification_type = uc $justification_xml_object->get("NAME");
 		my $where = $justification_xml_object->get("WHERE");
-		my $justification = Justification->new($logger, $justification_type, $doceid, $start, $end, $enttype, $confidence, $where);
+		my $enttype = $justification_xml_object->get("CHILD", "enttype")->get("ELEMENT");
+		my $confidence = $justification_xml_object->get("CHILD", "confidence")->get("ELEMENT");
+		my ($keyframeid, $start, $end);
+		if($justification_xml_object->get("NAME") eq "text_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "video_justification") {
+			$keyframeid = $justification_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "image_justification") {
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "audio_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		$justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $where);
 		$justifications->add($justification, $i);
 	}
 	$self->set("JUSTIFICATIONS", $justifications);
@@ -1799,11 +1816,12 @@ package Justification;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $justification_type, $doceid, $start, $end, $enttype, $confidence, $where) = @_;
+  my ($class, $logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $where) = @_;
   my $self = {
     CLASS => 'Justification',
     TYPE => $justification_type,
     DOCEID => $doceid,
+    KEYFRAMEID => $keyframeid,
     START => $start,
     END => $end,
     ENTTYPE => $enttype,
