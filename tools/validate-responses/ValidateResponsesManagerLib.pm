@@ -2349,8 +2349,8 @@ sub is_valid {
 	my ($doceid, $keyframeid, $start, $end, $type)
 				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END TYPE);
 	if($type eq "TEXT_JUSTIFICATION" || $type eq "AUDIO_JUSTIFICATION") {
-		if($start =~ /^\d+$/) {
-			if ($start < 0 || $start =~ /\,/) {
+		if($start =~ /^-?\d+$/) {
+			if ($start < 0) {
 				$logger->record_problem("INVALID_START", $start, $type, $where);
 				$is_valid = 0;
 			}
@@ -2359,8 +2359,8 @@ sub is_valid {
 			$logger->record_problem("NONNUMERIC_START", $start, $where);
 			$is_valid = 0;
 		}
-		if($end =~ /^\d+$/) {
-			if ($end < 0 || $end =~ /\,/) {
+		if($end =~ /^-?\d+$/) {
+			if ($end < 0) {
 				$logger->record_problem("INVALID_END", $end, $type, $where);
 				$is_valid = 0;
 			}
