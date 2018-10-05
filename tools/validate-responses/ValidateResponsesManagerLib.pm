@@ -1534,6 +1534,7 @@ sub parse_object {
 ##  (1). Is the queryid valid?
 ##  (2). Is the enttype matching?
 ##  (3). Depending on the scope see if the justifications come from the right set of documents
+##  (4). The response is not valid if none of the justifications is valid
 sub is_valid {
 	my ($self, $queries, $docid_mappings, $scope) = @_;
 	my $query_id = $self->get("QUERYID");
@@ -1551,10 +1552,14 @@ sub is_valid {
 	}
 	my $i = 0;
 	my %docids;
+	my $num_valid_justifications = 0;
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		$i++;
 		# Validate the justification span and confidence
-		unless ($justification->is_valid($docid_mappings, $scope)) {
+		if ($justification->is_valid($docid_mappings, $scope)) {
+			$num_valid_justifications++;
+		}
+		else {
 			# Simply ignore the $justification
 			# No need to ignore the entire object
 			$justification->get("XML_OBJECT")->set("IGNORE", 1);
@@ -1592,6 +1597,7 @@ sub is_valid {
 			}
 		}
 	}
+	$is_valid = 0 unless $num_valid_justifications;
 	$is_valid;
 }
 
