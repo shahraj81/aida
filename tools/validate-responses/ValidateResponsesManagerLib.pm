@@ -2076,7 +2076,9 @@ sub get_EDGE_JUSTIFICATION {
 			$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
 		}
 		my $where = $span_xml_object->get("WHERE");
-		my $span = Justification->new($self->get("LOGGER"), uc $span_xml_object->get("NAME"), $doceid, $keyframeid, $start, $end, $enttype, $confidence, $xml_object, $where);
+		my $justification_type = uc $span_xml_object->get("NAME");
+		$justification_type =~ s/SPAN/JUSTIFICATION/;
+		my $span = Justification->new($self->get("LOGGER"), $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $xml_object, $where);
 		$spans->add($span, $span_num);
 	}
 	my $edge_justification = SuperObject->new($self->get("LOGGER"));
