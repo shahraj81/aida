@@ -151,6 +151,10 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 ########## General Errors
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
+  INVALID_END                             WARNING        Invalid end %s in response justification of type %s
+  INVALID_JUSTIFICATION_TYPE              WARNING        Invalid justification type %s
+  INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
+  INVALID_START                           WARNING        Invalid start %s in %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_JUSTIFYING_DOCS                WARNING        Multiple justifying documents: %s (expected only one)
