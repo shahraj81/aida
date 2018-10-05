@@ -154,8 +154,10 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
+  UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
+  UNKNOWN_QUERYID                         ERROR          Unknown query %s in response
 END_PROBLEM_FORMATS
 
 
@@ -1424,7 +1426,7 @@ sub load {
 			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
 			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
 		}
-		$justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $where);
+		$justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $justification_xml_object, $where);
 		$justifications->add($justification, $i);
 	}
 	$self->set("JUSTIFICATIONS", $justifications);
@@ -1506,11 +1508,29 @@ sub parse_object {
 	$retVal;
 }
 
+# Determine if the response is valid:
+##  (1). Is the queryid valid?
+##  (2). Is the enttype matching?
 sub is_valid {
 	my ($self, $queries, $docid_mappings) = @_;
 	my $query_id = $self->get("QUERYID");
-	my $query = $queries->get("BY_KEY", $query_id);
-	print "4j";
+	my $query = $queries->get("QUERY", $query_id);
+	my $query_enttype = $query->get("ENTTYPE");
+	my $is_valid = 1;
+	my $where = $self->get("XML_OBJECT")->get("WHERE");
+	unless($query) {
+		# Is the queryid valid?
+		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
+		$is_valid = 0;
+		return;
+	}
+	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+		if($justification->get("ENTTYPE") ne $query_enttype) {
+			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
+			$is_valid = 0;
+		}
+	}
+	$is_valid;
 }
 
 sub tostring {
@@ -1915,6 +1935,15 @@ sub load {
 	}
 }
 
+sub get_QUERY {
+	my ($self, $query_id) = @_;
+	my $query;
+	if($self->get("QUERIES")->exists($query_id)) {
+		$query = $self->get("QUERIES")->get("BY_KEY", $query_id);
+	}
+	$query;
+}
+
 sub tostring {
 	my ($self, $indent) = @_;
 	my $retVal = "";
@@ -2239,7 +2268,8 @@ package Justification;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $where) = @_;
+  my ($class, $logger, $justification_type, $doceid, $keyframeid, $start, $end, 
+  		$enttype, $confidence, $xml_object, $where) = @_;
   my $self = {
     CLASS => 'Justification',
     TYPE => $justification_type,
@@ -2249,6 +2279,7 @@ sub new {
     END => $end,
     ENTTYPE => $enttype,
     CONFIDENCE => $confidence,
+    XML_OBJECT => $xml_object,
     LOGGER => $logger,
   };
   bless($self, $class);
