@@ -250,13 +250,14 @@ sub record_problem {
   my $format = $self->{FORMATS}{$problem} ||
                {TYPE => 'INTERNAL_ERROR',
 		FORMAT => "Unknown problem $problem: %s"};
-  $self->{PROBLEM_COUNTS}{$format->{TYPE}}++;
   my $type = $format->{TYPE};
   my $message = "$type: " . sprintf($format->{FORMAT}, @args);
   # Use Encode to support Unicode.
   $message = Encode::encode_utf8($message);
   my $where = (ref $source ? "$source->{FILENAME} line $source->{LINENUM}" : $source);
   $self->NIST_die("$message\n$where") if $type eq 'FATAL_ERROR' || $type eq 'INTERNAL_ERROR';
+  $self->{PROBLEM_COUNTS}{$format->{TYPE}}++
+		unless $self->{PROBLEMS}{$problem}{$message}{$where};
   $self->{PROBLEMS}{$problem}{$message}{$where}++;
 }
 
@@ -311,7 +312,7 @@ sub report_all_information {
 					print $error_output "s" if $num_instances > 2;
 					print $error_output ")";
 				}
-				print $error_output "\n\n";
+				print $error_output "\n";
 			}
 		}
 	}
