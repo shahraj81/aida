@@ -1984,10 +1984,10 @@ sub is_valid {
 				$is_valid = 0;
 			}
 			$is_valid = 0
-				unless $self->get("SUBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+				unless $justification->get("SUBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
 			$is_valid = 0
-				unless $self->get("OBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
-			my @edge_justification_spans = $self->get("EDGE_JUSTIFICATION")->get("SPANS")->toarray();
+				unless $justification->get("OBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+			my @edge_justification_spans = $justification->get("EDGE_JUSTIFICATION")->get("SPANS")->toarray();
 			my $num_edge_justification_spans = scalar @edge_justification_spans;
 			my $num_valid_edge_justification_spans = 0;
 			if($num_edge_justification_spans > $max_edge_justifications) {
