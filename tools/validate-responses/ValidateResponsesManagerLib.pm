@@ -1384,7 +1384,7 @@ sub tostring {
 	$retVal .= "<zerohopquery_responses>\n" if($output_type eq "zerohop_response");
 	$retVal .= "<graphqueries_responses>\n" if($output_type eq "graph_response");
 	foreach my $response($self->get("RESPONSES")->toarray()) {
-		$retVal .= $response->get("XML_OBJECT")->tostring($indent);
+		$retVal .= $response->tostring($indent);
 	}
 	$retVal .= "<\/classquery_responses>\n" if($output_type eq "class_response");
 	$retVal .= "<\/zerohopquery_responses>\n" if($output_type eq "zerohop_response");
