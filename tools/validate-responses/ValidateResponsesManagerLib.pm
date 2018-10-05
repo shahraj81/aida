@@ -2389,10 +2389,10 @@ sub is_valid {
 			}
 			# TODO: lookup keyframeid in the boundingbox file
 		}
-		else {
-			$logger->record_problem("INVALID_JUSTIFICATION_TYPE", $type, $where);
-			$is_valid = 0;
-		}
+	}
+	else {
+		$logger->record_problem("INVALID_JUSTIFICATION_TYPE", $type, $where);
+		$is_valid = 0;
 	}
 	$is_valid;
 }
