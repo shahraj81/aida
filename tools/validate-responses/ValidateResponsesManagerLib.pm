@@ -1328,7 +1328,7 @@ package ResponseSet;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $queries, $docid_mappings, $dtd_filename, $xml_filename) = @_;
+	my ($class, $logger, $queries, $docid_mappings, $dtd_filename, $xml_filename, $scope) = @_;
 	my $self = {
 		CLASS => 'ResponseSet',
 		QUERIES => $queries,
@@ -1336,6 +1336,7 @@ sub new {
 		XML_FILENAME => $xml_filename,
 		DOCID_MAPPINGS => $docid_mappings, 
 		RESPONSES => Container->new($logger, "Response"),
+		SCOPE => $scope,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -1358,7 +1359,7 @@ sub load {
 		$response = ZeroHopResponse->new($logger, $xml_response_object) if($query_type eq "zerohop_query");
 		$response = GraphResponse->new($logger, $xml_response_object) if($query_type eq "graph_query");
 		$self->get("RESPONSES")->add($response, $i)
-			if $response->is_valid($self->get("QUERIES"), $self->get("DOCID_MAPPINGS"));
+			if $response->is_valid($self->get("QUERIES"), $self->get("DOCID_MAPPINGS"), $self->get("SCOPE"));
 	}
 }
 
@@ -1512,7 +1513,7 @@ sub parse_object {
 ##  (1). Is the queryid valid?
 ##  (2). Is the enttype matching?
 sub is_valid {
-	my ($self, $queries, $docid_mappings) = @_;
+	my ($self, $queries, $docid_mappings, $scope) = @_;
 	my $query_id = $self->get("QUERYID");
 	my $query = $queries->get("QUERY", $query_id);
 	my $query_enttype = $query->get("ENTTYPE");

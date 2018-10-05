@@ -100,7 +100,7 @@ $logger->NIST_die("Unexpected choice $scope for -scope")
 
 my $docid_mappings = DocumentIDsMappings->new($logger, $switches->get("docid_mappings"));
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
-my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $switches->get("responses_dtd"), $switches->get("responses_xml"));
+my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $switches->get("responses_dtd"), $switches->get("responses_xml"), $scope);
 	
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
