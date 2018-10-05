@@ -150,6 +150,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
+  EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
@@ -166,6 +167,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
   UNKNOWN_DOCUMENT_ELEMENT                ERROR          Unknown DocumentElement %s in response
+  UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s 
   UNKNOWN_QUERYID                         ERROR          Unknown query %s in response
 END_PROBLEM_FORMATS
 
@@ -1966,7 +1968,7 @@ sub is_valid {
 			$query_edge_predicate = $query_edge->get("PREDICATE");
 		}
 		else{
-			$self->get("LOGGER")->record_problem("UNKNOWN_EDGEID", $query_id, $where);
+			$self->get("LOGGER")->record_problem("UNKNOWN_EDGEID", $edge_num, $query_id, $where);
 			$is_valid = 0;
 		}
 		foreach my $justification($response_edge->get("JUSTIFICATIONS")->toarray()) {
@@ -1988,7 +1990,7 @@ sub is_valid {
 			my $num_edge_justification_spans = scalar @edge_justification_spans;
 			my $num_valid_edge_justification_spans = 0;
 			if($num_edge_justification_spans > $max_edge_justifications) {
-				$self->get("LOGGER")->record_problem("EXTRA_EDGE_JUSTIFICATIONS", $max_edge_justifications, $where);
+				$self->get("LOGGER")->record_problem("EXTRA_EDGE_JUSTIFICATIONS", $max_edge_justifications, $num_edge_justification_spans, $where);
 			}
 			foreach my $edge_justification_span(@edge_justification_spans) {
 				if($edge_justification_span->is_valid($docid_mappings, $scope)) {
