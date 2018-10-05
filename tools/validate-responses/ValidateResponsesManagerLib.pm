@@ -1512,6 +1512,7 @@ sub parse_object {
 # Determine if the response is valid:
 ##  (1). Is the queryid valid?
 ##  (2). Is the enttype matching?
+##  (3). Depending on the scope see if the justifications come from the right set of documents
 sub is_valid {
 	my ($self, $queries, $docid_mappings, $scope) = @_;
 	my $query_id = $self->get("QUERYID");
@@ -1523,12 +1524,40 @@ sub is_valid {
 		# Is the queryid valid?
 		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
 		$is_valid = 0;
-		return;
 	}
+	my $i = 0;
+	my %docids;
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+		$i++;
+		if($scope ne "anywhere") {
+			# DOCID should be known to us
+			my $doceid = $justification->get("DOCEID");
+			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+				my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+				my @docids = $docelement->get("DOCUMENTS")->toarray();
+				foreach my $docid(@docids) {
+					$docids{$docid}++;
+				}
+			}
+			else {
+				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
+				$is_valid = 0;
+			}
+		}
 		if($justification->get("ENTTYPE") ne $query_enttype) {
 			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
 			$is_valid = 0;
+		}
+		if($scope eq "withindoc") {
+			my @justifiying_docs;
+			foreach my $docid(keys %docids) {
+				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
+			}
+			if(scalar @justifiying_docs > 1) {
+				$is_valid = 0;
+				my $justifying_docs_string = join(",", @justifiying_docs);
+				$self->get("LOGGER")->record_problem("MULTIPLE_JUSTIFYING_DOCS", $justifying_docs_string, $where);
+			}
 		}
 	}
 	$is_valid;
