@@ -1841,6 +1841,7 @@ sub load {
 	$self->set("QUERYID", $query_id);
 	my $edges = Container->new($logger);
 	foreach my $edge_xml_object($self->get("XML_OBJECT")->get("CHILD", "response")->get("ELEMENT")->toarray()){
+		my $edge = SuperObject->new($logger);
 		my $edge_num = $edge_xml_object->get("ATTRIBUTES")->get("BY_KEY", "id");
 		my $justifications = Container->new($logger);
 		my $justification_num = 0;
@@ -1860,7 +1861,9 @@ sub load {
 			$justification->set("EDGE_JUSTIFICATION", $edge_justification);
 			$justifications->add($justification, $justification_num);
 		}
-		$edges->add($justifications, $edge_num);
+		$edge->set("EDGE_NUM", $edge_num);
+		$edge->set("JUSTIFICATIONS", $justifications);
+		$edges->add($edge, $edge_num);
 	}
 	$self->set("EDGES", $edges);
 }
@@ -1939,6 +1942,59 @@ sub parse_object {
 		}
 	}
 	$retVal;
+}
+
+sub is_valid {
+	my ($self, $queries, $docid_mappings, $scope) = @_;
+	my $query_id = $self->get("QUERYID");
+	my $query = $queries->get("QUERY", $query_id);
+	my $is_valid = 1;
+	my $where = $self->get("XML_OBJECT")->get("WHERE");
+	my $max_edge_justifications = 2;
+	unless($query) {
+		# Is the queryid valid?
+		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
+		$is_valid = 0;
+	}
+	# Check validity of edges
+	foreach my $response_edge($self->get("EDGES")->toarray()) {
+		my $edge_num = $response_edge->get("EDGE_NUM");
+		# Check if edge_num mataches one in query
+		my $query_edge;
+		if($query->get("EDGES")->exists($edge_num)) {
+			$query_edge = $query->get("EDGES")->get("BY_KEY", $edge_num);
+		}
+		else{
+			$self->get("LOGGER")->record_problem("UNKNOWN_EDGEID", $query_id, $where);
+			$is_valid = 0;
+		}
+		foreach my $justification($response_edge->get("JUSTIFICATIONS")->toarray()) {
+			my $docid = $justification->get("DOCID");
+			unless($docid_mappings->get("DOCUMENTS")->exists($docid)) {
+				$self->get("LOGGER")->record_problem("UNKNOWN_DOCID", $query_id, $where);
+			}
+			$is_valid = 0
+				unless $self->get("SUBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+			$is_valid = 0
+				unless $self->get("OBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+			my @edge_justification_spans = $self->get("EDGE_JUSTIFICATION")->get("SPANS")->toarray();
+			my $num_edge_justification_spans = scalar @edge_justification_spans;
+			my $num_valid_edge_justification_spans = 0;
+			if($num_edge_justification_spans > $max_edge_justifications) {
+				$self->get("LOGGER")->record_problem("EXTRA_EDGE_JUSTIFICATIONS", $max_edge_justifications, $where);
+			}
+			foreach my $edge_justification_span(@edge_justification_spans) {
+				if($edge_justification_span->is_valid($docid_mappings, $scope)) {
+					$num_valid_edge_justification_spans++;
+					$edge_justification_span->get("XML_OBJECT")->set("IGNORE", 1)
+						if($num_valid_edge_justification_spans);
+				}
+				else{
+					$edge_justification_span->get("XML_OBJECT")->set("IGNORE", 1);
+				}
+			}
+		}
+	}
 }
 
 sub get_NODE_JUSTIFICATION {
