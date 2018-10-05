@@ -104,12 +104,12 @@ my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $
 	
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
-	print $program_output $validated_responses->tostring()
+	print $program_output $validated_responses->tostring(2)
 		if defined $program_output;
 }
 unless($switches->get('error_file') eq "STDERR") {
-	print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
-	print "No warnings encountered.\n" unless ($num_errors || $num_warnings);
+	print STDERR "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
+	print STDERR "No warnings encountered.\n" unless ($num_errors || $num_warnings);
 }
 print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
 exit 0;

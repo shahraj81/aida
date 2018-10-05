@@ -150,23 +150,23 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
-  INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
-  INVALID_END                             WARNING        Invalid end %s in response justification of type %s
-  INVALID_JUSTIFICATION_TYPE              WARNING        Invalid justification type %s
-  INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
-  INVALID_START                           WARNING        Invalid start %s in %s
+  INVALID_CONFIDENCE                      ERROR          Invalid confidence %s in response
+  INVALID_END                             ERROR          Invalid end %s in response justification of type %s
+  INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
+  INVALID_KEYFRAMEID                      ERROR          Invalid keyframeid %s 
+  INVALID_START                           ERROR          Invalid start %s in %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
-  MULTIPLE_JUSTIFYING_DOCS                WARNING        Multiple justifying documents: %s (expected only one)
+  MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
-  NONNUMERIC_END                          WARNING        End %s is not numeric
-  NONNUMERIC_START                        WARNING        Start %s is not numeric
+  NONNUMERIC_END                          ERROR          End %s is not numeric
+  NONNUMERIC_START                        ERROR          Start %s is not numeric
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
-  UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
-  UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
-  UNKNOWN_QUERYID                         WARNING        Unknown query %s in response
+  UNKNOWN_DOCUMENT_ELEMENT                ERROR          Unknown DocumentElement %s in response
+  UNKNOWN_QUERYID                         ERROR          Unknown query %s in response
 END_PROBLEM_FORMATS
 
 
@@ -1375,10 +1375,20 @@ sub load {
 
 sub tostring {
 	my ($self, $indent) = @_;
-	my $retVal = "";
+	return "" unless $self->get("RESPONSES")->toarray(); 
+	my $output_type = $self->get("DTD_FILENAME");
+	$output_type =~ s/^(.*?\/)+//g;
+	$output_type =~ s/.dtd//;
+	my $retVal = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	$retVal .= "<classquery_responses>\n" if($output_type eq "class_response");
+	$retVal .= "<zerohopquery_responses>\n" if($output_type eq "zerohop_response");
+	$retVal .= "<graphqueries_responses>\n" if($output_type eq "graph_response");
 	foreach my $response($self->get("RESPONSES")->toarray()) {
-		$retVal .= $response->tostring($indent);
+		$retVal .= $response->get("XML_OBJECT")->tostring($indent);
 	}
+	$retVal .= "<\/classquery_responses>\n" if($output_type eq "class_response");
+	$retVal .= "<\/zerohopquery_responses>\n" if($output_type eq "zerohop_response");
+	$retVal .= "<\/graphqueries_responses>\n" if($output_type eq "graph_response");
 	$retVal;
 }
 
