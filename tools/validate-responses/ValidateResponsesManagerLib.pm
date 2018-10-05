@@ -1536,11 +1536,14 @@ sub is_valid {
 	my %docids;
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		$i++;
-		# Check if confidence is valid
-		if($justification->get("CONFIDENCE") < 0 || $justification->get("CONFIDENCE") > 1) {
-			$self->get("LOGGER")->record_problem("INVALID_CONFIDENCE", $justification->get("CONFIDENCE"), $where);
+		# Validate the justification span and confidence
+		$is_valid = 0 unless $justification->is_valid($docid_mappings, $scope);
+		# Check if the enttype matches to that of the query
+		if($query && $justification->get("ENTTYPE") ne $query_enttype) {
+			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
 			$is_valid = 0;
 		}
+		# Valiate documents used
 		if($scope ne "anywhere") {
 			# DOCID should be known to us
 			my $doceid = $justification->get("DOCEID");
@@ -1555,10 +1558,6 @@ sub is_valid {
 				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
 				$is_valid = 0;
 			}
-		}
-		if($query && $justification->get("ENTTYPE") ne $query_enttype) {
-			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
-			$is_valid = 0;
 		}
 		if($scope eq "withindoc") {
 			my @justifiying_docs;
@@ -2322,10 +2321,62 @@ sub new {
     ENTTYPE => $enttype,
     CONFIDENCE => $confidence,
     XML_OBJECT => $xml_object,
+    WHERE => $where,
     LOGGER => $logger,
   };
   bless($self, $class);
   $self;
+}
+
+sub is_valid {
+	my ($self, $docid_mappings, $scope) = @_;
+	my $logger = $self->get("LOGGER");
+	my $where = $self->get("WHERE");
+	my $is_valid = 1;
+	# Check if confidence is valid
+	if(defined $self->get("CONFIDENCE")) {
+		if($self->get("CONFIDENCE") < 0 || $self->get("CONFIDENCE") > 1) {
+			$logger->record_problem("INVALID_CONFIDENCE", $self->get("CONFIDENCE"), $where);
+			$is_valid = 0;
+		}
+	}
+	my ($doceid, $keyframeid, $start, $end, $type)
+				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END TYPE);
+	if($type eq "TEXT_JUSTIFICATION" || $type eq "AUDIO_JUSTIFICATION") {
+		if ($start < 0 || $start =~ /\,/) {
+			$logger->record_problem("INVALID_START", $start, $type, $where);
+			$is_valid = 0;
+		}
+		if ($end < 0 || $end =~ /\,/) {
+			$logger->record_problem("INVALID_END", $end, $type, $where);
+			$is_valid = 0;
+		}
+	}
+	elsif($type eq "VIDEO_JUSTIFICATION" || $type eq "IMAGE_JUSTIFICATION") {
+		unless ($start =~ /^\d+\,\d+$/) {
+			$logger->record_problem("INVALID_START", $start, $type, $where);
+			$is_valid = 0;
+		}
+		unless ($end =~ /^\d+\,\d+$/) {
+			$logger->record_problem("INVALID_END", $end, $type, $where);
+			$is_valid = 0;
+		}
+		if($type eq "VIDEO_JUSTIFICATION") {
+			# For a video justification:
+			#  (1) DOCEID should be the prefix of KEYFRAMEID
+			#  (2) KEYFRAMEID should not end in an extension, e.g. .jpg
+			if($keyframeid !~ /^$doceid\_\d+$/ || $keyframeid =~ /\..*?$/){
+				$logger->record_problem("INVALID_KEYFRAMEID", $keyframeid, $where);
+				$is_valid = 0;
+			}
+			# TODO: lookup keyframeid in the boundingbox file
+		}
+		else {
+			$logger->record_problem("INVALID_JUSTIFICATION_TYPE", $type, $where);
+			$is_valid = 0;
+		}
+	}
+	$is_valid;
 }
 
 #####################################################################################
