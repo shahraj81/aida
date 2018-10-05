@@ -1502,7 +1502,7 @@ sub parse_object {
 						$end = $value->get($key)->get("END");
 					}
 					else{
-						# TODO: throw exception
+						$logger->record_problem("INVALID_JUSTIFICATION_TYPE", $key, $xml_object->get("WHERE"));
 					}
 					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
 					$key = "DESCRIPTOR";
