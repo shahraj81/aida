@@ -159,6 +159,8 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_JUSTIFYING_DOCS                WARNING        Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
+  NONNUMERIC_END                          WARNING        End %s is not numeric
+  NONNUMERIC_START                        WARNING        Start %s is not numeric
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
@@ -2347,12 +2349,24 @@ sub is_valid {
 	my ($doceid, $keyframeid, $start, $end, $type)
 				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END TYPE);
 	if($type eq "TEXT_JUSTIFICATION" || $type eq "AUDIO_JUSTIFICATION") {
-		if ($start < 0 || $start =~ /\,/) {
-			$logger->record_problem("INVALID_START", $start, $type, $where);
+		if($start =~ /^\d+$/) {
+			if ($start < 0 || $start =~ /\,/) {
+				$logger->record_problem("INVALID_START", $start, $type, $where);
+				$is_valid = 0;
+			}
+		}
+		else{
+			$logger->record_problem("NONNUMERIC_START", $start, $where);
 			$is_valid = 0;
 		}
-		if ($end < 0 || $end =~ /\,/) {
-			$logger->record_problem("INVALID_END", $end, $type, $where);
+		if($end =~ /^\d+$/) {
+			if ($end < 0 || $end =~ /\,/) {
+				$logger->record_problem("INVALID_END", $end, $type, $where);
+				$is_valid = 0;
+			}
+		}
+		else{
+			$logger->record_problem("NONNUMERIC_END", $end, $where);
 			$is_valid = 0;
 		}
 	}
