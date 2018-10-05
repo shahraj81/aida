@@ -152,12 +152,14 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it 
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
+  MULTIPLE_JUSTIFYING_DOCS                WARNING        Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
-  UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s (expected %s)
+  UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
-  UNKNOWN_QUERYID                         ERROR          Unknown query %s in response
+  UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
+  UNKNOWN_QUERYID                         WARNING        Unknown query %s in response
 END_PROBLEM_FORMATS
 
 
