@@ -150,19 +150,19 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
-  INVALID_CONFIDENCE                      ERROR          Invalid confidence %s in response
-  INVALID_END                             ERROR          Invalid end %s in response justification of type %s
+  INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
+  INVALID_END                             WARNING        Invalid end %s in response justification of type %s
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
-  INVALID_KEYFRAMEID                      ERROR          Invalid keyframeid %s 
-  INVALID_START                           ERROR          Invalid start %s in %s
+  INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
+  INVALID_START                           WARNING        Invalid start %s in %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
-  NONNUMERIC_END                          ERROR          End %s is not numeric
-  NONNUMERIC_START                        ERROR          Start %s is not numeric
+  NONNUMERIC_END                          WARNING        End %s is not numeric
+  NONNUMERIC_START                        WARNING        Start %s is not numeric
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
-  UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
   UNKNOWN_DOCUMENT_ELEMENT                ERROR          Unknown DocumentElement %s in response
@@ -1277,6 +1277,7 @@ sub get_CHILD {
 
 sub tostring {
 	my ($self, $indent) = @_;
+	return "" if $self->get("IGNORE") eq "1";
 	$indent = 0 unless $indent;
 	my $retVal = " " x $indent;
 	$retVal .= $self->get("OPENTAG");
@@ -1553,7 +1554,11 @@ sub is_valid {
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		$i++;
 		# Validate the justification span and confidence
-		$is_valid = 0 unless $justification->is_valid($docid_mappings, $scope);
+		unless ($justification->is_valid($docid_mappings, $scope)) {
+			# Simply ignore the $justification
+			# No need to ignore the entire object
+			$justification->get("XML_OBJECT")->set("IGNORE", 1);
+		}
 		# Check if the enttype matches to that of the query
 		if($query && $justification->get("ENTTYPE") ne $query_enttype) {
 			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
