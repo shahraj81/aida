@@ -149,13 +149,14 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # ----------                              ----           -------------
 
 ########## General Errors
-  DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it 
+  DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
+  INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_JUSTIFYING_DOCS                WARNING        Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
-  UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s (expected %s)
+  UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
   UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
@@ -1520,10 +1521,13 @@ sub is_valid {
 	my ($self, $queries, $docid_mappings, $scope) = @_;
 	my $query_id = $self->get("QUERYID");
 	my $query = $queries->get("QUERY", $query_id);
-	my $query_enttype = $query->get("ENTTYPE");
 	my $is_valid = 1;
 	my $where = $self->get("XML_OBJECT")->get("WHERE");
-	unless($query) {
+	my $query_enttype = "unavailable";
+	if($query) {
+		$query_enttype = $query->get("ENTTYPE");
+	}
+	else {
 		# Is the queryid valid?
 		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
 		$is_valid = 0;
@@ -1532,6 +1536,11 @@ sub is_valid {
 	my %docids;
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		$i++;
+		# Check if confidence is valid
+		if($justification->get("CONFIDENCE") < 0 || $justification->get("CONFIDENCE") > 1) {
+			$self->get("LOGGER")->record_problem("INVALID_CONFIDENCE", $justification->get("CONFIDENCE"), $where);
+			$is_valid = 0;
+		}
 		if($scope ne "anywhere") {
 			# DOCID should be known to us
 			my $doceid = $justification->get("DOCEID");
@@ -1547,7 +1556,7 @@ sub is_valid {
 				$is_valid = 0;
 			}
 		}
-		if($justification->get("ENTTYPE") ne $query_enttype) {
+		if($query && $justification->get("ENTTYPE") ne $query_enttype) {
 			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
 			$is_valid = 0;
 		}
