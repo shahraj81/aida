@@ -166,9 +166,10 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
-  UNKNOWN_DOCUMENT_ELEMENT                ERROR          Unknown DocumentElement %s in response
+  UNKNOWN_DOCUMENT                        WARNING        Unknown Document %s in response
+  UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
   UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s 
-  UNKNOWN_QUERYID                         ERROR          Unknown query %s in response
+  UNKNOWN_QUERYID                         WARNING        Unknown query %s in response
 END_PROBLEM_FORMATS
 
 
@@ -1978,8 +1979,8 @@ sub is_valid {
 				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $where);
 				$is_valid = 0;
 			}
-			unless($docid_mappings->get("DOCUMENTS")->exists($docid)) {
-				$self->get("LOGGER")->record_problem("UNKNOWN_DOCID", $query_id, $where);
+			if($scope ne "anywhere" && !$docid_mappings->get("DOCUMENTS")->exists($docid)) {
+				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT", $docid, $where);
 				$is_valid = 0;
 			}
 			$is_valid = 0
