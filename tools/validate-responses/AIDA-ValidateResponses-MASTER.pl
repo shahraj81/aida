@@ -80,8 +80,9 @@ else {
   open($program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
 }
 
+my $docid_mappings = DocumentIDsMappings->new($logger, $switches->get("docid_mappings"));
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
-my $validated_responses = ResponseSet->new($logger, $queries, $switches->get("responses_dtd"), $switches->get("responses_xml"));
+my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $switches->get("responses_dtd"), $switches->get("responses_xml"));
 	
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
