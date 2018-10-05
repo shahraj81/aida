@@ -1960,9 +1960,10 @@ sub is_valid {
 	foreach my $response_edge($self->get("EDGES")->toarray()) {
 		my $edge_num = $response_edge->get("EDGE_NUM");
 		# Check if edge_num mataches one in query
-		my $query_edge;
-		if($query->get("EDGES")->exists($edge_num)) {
+		my ($query_edge, $query_edge_predicate);
+		if($query && $query->get("EDGES")->exists($edge_num)) {
 			$query_edge = $query->get("EDGES")->get("BY_KEY", $edge_num);
+			$query_edge_predicate = $query_edge->get("PREDICATE");
 		}
 		else{
 			$self->get("LOGGER")->record_problem("UNKNOWN_EDGEID", $query_id, $where);
@@ -1970,8 +1971,14 @@ sub is_valid {
 		}
 		foreach my $justification($response_edge->get("JUSTIFICATIONS")->toarray()) {
 			my $docid = $justification->get("DOCID");
+			my $subject_enttype = $justification->get("SUBJECT_JUSTIFICATION")->get("ENTTYPE");
+			if($query_edge_predicate && $query_edge_predicate !~ /^$subject_enttype\_/) {
+				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $where);
+				$is_valid = 0;
+			}
 			unless($docid_mappings->get("DOCUMENTS")->exists($docid)) {
 				$self->get("LOGGER")->record_problem("UNKNOWN_DOCID", $query_id, $where);
+				$is_valid = 0;
 			}
 			$is_valid = 0
 				unless $self->get("SUBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
