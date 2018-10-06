@@ -150,6 +150,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
+  DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
@@ -1962,6 +1963,7 @@ sub is_valid {
 	}
 	# Check validity of edges
 	my $num_valid_response_edges = 0;
+	my @valid_edges;
 	foreach my $response_edge($self->get("EDGES")->toarray()) {
 		my $edge_num = $response_edge->get("EDGE_NUM");
 		my $is_valid_response_edge = 1;
@@ -2016,8 +2018,50 @@ sub is_valid {
 			$response_edge->get("XML_OBJECT")->set("IGNORE", 1);
 			$is_valid_response_edge = 0;
 		}
-		$num_valid_response_edges++ if $is_valid_response_edge; 
+		if ($is_valid_response_edge) {
+			$num_valid_response_edges++;
+			push(@valid_edges, $edge_num);
+		}
 	}
+	# Check if the valid edges are all connected
+	my %edges;
+	my %nodes;
+	foreach my $edge_num(@valid_edges) {
+		if($query && $query->get("EDGES")->exists($edge_num)) {
+			my $query_edge = $query->get("EDGES")->get("BY_KEY", $edge_num);
+			$edges{$edge_num}{$query_edge->get("SUBJECT")} = 1;
+			$edges{$edge_num}{$query_edge->get("OBJECT")} = 1;
+			$nodes{$query_edge->get("SUBJECT")}{$edge_num} = 1;
+			$nodes{$query_edge->get("OBJECT")}{$edge_num} = 1;
+		}
+	}
+	my ($a_nodeid) = (keys %nodes); # arbitrady node
+	my %reachable_nodes = ($a_nodeid => 1);
+	my $flag = 1; # keep going flag
+	while($flag){
+		my @new_nodes;
+		foreach my $node_id(keys %reachable_nodes) {
+			foreach my $edge_num(keys %{$nodes{$node_id}}) {
+				foreach my $other_nodeid(keys %{$edges{$edge_num}}) {
+					push(@new_nodes, $other_nodeid)
+							unless $reachable_nodes{$other_nodeid};
+				}
+			}
+		}
+		if(@new_nodes){
+			foreach my $new_nodeid(@new_nodes) {
+				$reachable_nodes{$new_nodeid} = 1;
+			}
+		}
+		else{
+			$flag = 0;
+		}
+	}
+	my $num_all_valid_nodes = scalar keys %nodes;
+	my $num_reachable_nodes = scalar keys %reachable_nodes;
+	$self->get("LOGGER")->record_problem("DISCONNECTED_VALID_GRAPH", $where)
+		if($num_reachable_nodes != $num_all_valid_nodes);
+
 	$self->get("XML_OBJECT")->set("IGNORE", 1) unless $num_valid_response_edges;
 }
 
