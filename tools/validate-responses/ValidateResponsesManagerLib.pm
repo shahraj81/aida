@@ -149,6 +149,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # ----------                              ----           -------------
 
 ########## General Errors
+  ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
@@ -1982,6 +1983,8 @@ sub is_valid {
 		foreach my $justification($response_edge->get("JUSTIFICATIONS")->toarray()) {
 			my $is_justification_valid = 1;
 			my $docid = $justification->get("DOCID");
+			$is_justification_valid = 0
+				unless($self->check_within_doc_spans($docid_mappings, $docid, $justification, $scope, $where));
 			my $subject_enttype = $justification->get("SUBJECT_JUSTIFICATION")->get("ENTTYPE");
 			if($query_edge_predicate && $query_edge_predicate !~ /^$subject_enttype\_/) {
 				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $where);
@@ -2143,6 +2146,32 @@ sub get_EDGE_JUSTIFICATION {
 	$edge_justification->set("CONFIDENCE", $confidence);
 	$edge_justification->set("SPANS", $spans);
 	$edge_justification;
+}
+
+sub check_within_doc_spans {
+	my ($self, $docid_mappings, $docid, $justification, $scope, $where) = @_;
+	my $is_valid = 1;
+	my @spans = (
+								$justification->get("SUBJECT_JUSTIFICATION")->get("SPAN"),
+								$justification->get("OBJECT_JUSTIFICATION")->get("SPAN"),
+								$justification->get("EDGE_JUSTIFICATION")->get("SPANS")->toarray(),
+							);
+	my %doceids = map {$_->get("DOCEID")=>1} @spans;
+	foreach my $doceid(keys %doceids) {
+		if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+			my %docids =
+				map {$_->get("DOCUMENTID")=>1}
+				$docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("DOCUMENTS")->toarray();
+			unless($docids{$docid}) {
+				$self->get("LOGGER")->record_problem("ACROSS_DOCUMENT_JUSTIFICATION", $docid, $where);
+				$is_valid = 0;
+			}
+		}
+		elsif($scope ne "anywhere"){
+			$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
+		}
+	}
+	$is_valid;
 }
 
 sub tostring {
