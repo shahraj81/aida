@@ -1869,6 +1869,7 @@ sub load {
 		}
 		$edge->set("EDGE_NUM", $edge_num);
 		$edge->set("JUSTIFICATIONS", $justifications);
+		$edge->set("XML_OBJECT", $edge_xml_object);
 		$edges->add($edge, $edge_num);
 	}
 	$self->set("EDGES", $edges);
@@ -2038,26 +2039,29 @@ sub is_valid {
 			$nodes{$query_edge->get("OBJECT")}{$edge_num} = 1;
 		}
 	}
-	my ($a_nodeid) = (keys %nodes); # arbitrady node
-	my %reachable_nodes = ($a_nodeid => 1);
-	my $flag = 1; # keep going flag
-	while($flag){
-		my @new_nodes;
-		foreach my $node_id(keys %reachable_nodes) {
-			foreach my $edge_num(keys %{$nodes{$node_id}}) {
-				foreach my $other_nodeid(keys %{$edges{$edge_num}}) {
-					push(@new_nodes, $other_nodeid)
-							unless $reachable_nodes{$other_nodeid};
+	my %reachable_nodes;
+	if(scalar keys %nodes) {
+		my ($a_nodeid) = (keys %nodes); # arbitrady node
+		%reachable_nodes = ($a_nodeid => 1);
+		my $flag = 1; # keep going flag
+		while($flag){
+			my @new_nodes;
+			foreach my $node_id(keys %reachable_nodes) {
+				foreach my $edge_num(keys %{$nodes{$node_id}}) {
+					foreach my $other_nodeid(keys %{$edges{$edge_num}}) {
+						push(@new_nodes, $other_nodeid)
+								unless $reachable_nodes{$other_nodeid};
+					}
 				}
 			}
-		}
-		if(@new_nodes){
-			foreach my $new_nodeid(@new_nodes) {
-				$reachable_nodes{$new_nodeid} = 1;
+			if(@new_nodes){
+				foreach my $new_nodeid(@new_nodes) {
+					$reachable_nodes{$new_nodeid} = 1;
+				}
 			}
-		}
-		else{
-			$flag = 0;
+			else{
+				$flag = 0;
+			}
 		}
 	}
 	my $num_all_valid_nodes = scalar keys %nodes;
@@ -2066,6 +2070,7 @@ sub is_valid {
 		if($num_reachable_nodes != $num_all_valid_nodes);
 
 	$self->get("XML_OBJECT")->set("IGNORE", 1) unless $num_valid_response_edges;
+	$num_valid_response_edges;
 }
 
 sub get_NODE_JUSTIFICATION {
