@@ -89,7 +89,7 @@ perl AIDA-ValidateResponses-MASTER.pl -scope withincorpus -error_file validate_r
 ### Some notes
 
 - Teams are required to validate the `responses.xml` file required as input by the above script against the DTD provided by NIST.
-- The file specified in place of `docid_mappings` is a tsv file that is originally from LDC but is modified by NIST. This file will be provided along with the query files.
+- The file specified in place of `docid_mappings` is a tsv file that is originally from LDC but is modified by NIST. This file will be provided along with the query files. This file is available as LDC2018E62.parent_children.tsv from https://portal.nextcentury.com/owncloud/index.php/s/9VPG8OyYB8QTuPw.
 - The above script(s) assume that the output file and error log file do not exist.
 - The file specified in place of `queries_dtd` or `responses_dtd` must not have any comments in it. Again, this file will be provided along with the queries file. Six DTD files will be provided, which should not be renamed nor the content be changed without approval.
 
