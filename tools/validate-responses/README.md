@@ -30,7 +30,7 @@ Please refer to http://www.cpan.org/modules/INSTALL.html for a guide on how to i
 
 In order to run the above script(s), the following files are required:
 
-	1. docid_mappings: File containing DocumentID to DocumentElementID mappings. This file will be made available.
+	1. docid_mappings: File containing DocumentID to DocumentElementID mappings. This file will be made available. NOTE: This file is available as LDC2018E62.parent_children.tsv from https://portal.nextcentury.com/owncloud/index.php/s/9VPG8OyYB8QTuPw.
 	2. queries_dtd: DTD file corresponding to the XML file containing queries. This file will be made available.
 	3. queries_xml: XML file containing queries. The query file(s) will made available.
 	4. responses_dtd: DTD file corresponding to the XML file containing responses. This file will be made available.
