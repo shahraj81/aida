@@ -10,7 +10,7 @@ This document describes:
 
 ## Introduction
 
-This tool supports application of SPARQL queries to a knowledge base in AIF format in order to produce output in the simplified xml response format.
+This tool supports application of SPARQL queries to a knowledge base in AIF format (*.ttl) in order to produce output in the simplified xml response format.
 
 ## Scripts and packages
 
@@ -103,4 +103,5 @@ make all
 	2. graph_query.dtd
 	3. zerohop_query.dtd
 These files should not be renamed nor the content be changed without approval.
+- The input knowledge base in AIF format should be in a file with extension ttl.
 - In the next few days, NIST is going to work with NCC in order to provide the teams with a docker to make it easy for them to run this tool without having to install dependencies individually.
