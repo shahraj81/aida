@@ -109,14 +109,9 @@ my @file_keys = qw(CLASS_QUERIES_DTD ZEROHOP_QUERIES_DTD GRAPH_QUERIES_DTD
 										CLASS_RESPONSES_XML ZEROHOP_RESPONSES_XML GRAPH_RESPONSES_XML
 										MAPPINGS_FILE);
 
-foreach my $file_key(@file_keys) {
-	my $path = $parameters->get($file_key);
-	$logger->NIST_die("$path does not exist ($file_key)") unless -e $path;
+foreach my $path(map {$parameters->get($_)} @file_keys) {
+	$logger->NIST_die("$path does not exist") unless -e $path;
 }
-
-#foreach my $path(map {$parameters->get($_)} @file_keys) {
-#	$logger->NIST_die("$path does not exist") unless -e $path;
-#}
 
 my $output_filename = $parameters->get("OUTPUT_FILE");
 $logger->NIST_die("$output_filename already exists") if -e $output_filename;
@@ -134,13 +129,10 @@ else {
   open($program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
 }
 
-my $scope = $parameters->get("SCOPE");
-$logger->NIST_die("Unexpected choice $scope for -scope")
-	unless $scope{$scope};
-
 my $docid_mappings_file = $parameters->get("MAPPINGS_FILE");
 my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 my $pooled_responses = Container->new($logger);
+my $id = 0;
 foreach my $selected_type($types_container->toarray()) {
 	my $queries_dtd_file = $parameters->get($type{$selected_type}{QUERIES_DTD_PARAMETER});
 	my $queries_xml_file = $parameters->get($type{$selected_type}{QUERIES_XML_PARAMETER});
@@ -151,23 +143,40 @@ foreach my $selected_type($types_container->toarray()) {
 
 	my $responses_dtd_file = $parameters->get($type{$selected_type}{RESPONSES_DTD_PARAMETER});
 	my $responses_xml_dir = $parameters->get($type{$selected_type}{RESPONSES_XML_PARAMETER});
-	my @response_xml_files = <$responses_xml_dir/*>;
+	my @response_xml_files = <$responses_xml_dir/*/*_responses.xml>;
 
 	foreach my $response_xml_file(@response_xml_files) {
+		$response_xml_file =~ /(.*?\/)+?(.*?\..*?_responses.xml)$/;
+		my ($path, $filename) = ($1, $2);
+		my ($source_docid) = $filename =~ /^(.*?)\..*?_responses.xml$/;
+		$source_docid = undef if $source_docid eq "TA2";
+		my $scope = "withindoc";
+		$scope = "withincorpus" unless $source_docid;
 		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $response_xml_file, $scope);
 		next if $logger->get_num_problems();
 		if($query_type eq "class_query" || $query_type eq "zerohop_query") {
 			foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
+				my $query_id = $response->get("QUERYID");
 				foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
-					my $value = $justification->tostring();
-					my $key = &main::generate_uuid_from_string($value);
-					if($pooled_responses->exists($key)) {
-						my $where = $justification->get("WHERE");
-						$logger->record_problem("KEY_EXISTS_IN_POOLED_RESPONSE", $value, $where);
-					}
-					else {
-						# TODO: add additional columns for assessment
-						$pooled_responses->add($value, $key);
+					my $enttype = $queries->get("QUERY", $query_id)->get("ENTTYPE");
+					my $mention_span = $justification->tostring();
+					my $mention_modality = $justification->get("MODALITY");
+					my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
+					@docids = grep {$_ eq $source_docid} @docids if $source_docid;
+					$logger->record_problem("DOCID_NOT_FOUND", $source_docid, $justification->get("WHERE"))
+						unless scalar @docids;
+					foreach my $docid(@docids) {
+						my $value = join("\t", ($query_id, $enttype, $mention_modality, $docid, $mention_span, "NIL", "NIL"));
+						my $key = &main::generate_uuid_from_string($value);
+						if($pooled_responses->exists($key)) {
+							my $where = $justification->get("WHERE");
+							$logger->record_debug_information("KEY_EXISTS_IN_POOLED_RESPONSE", $value, $where);
+						}
+						else {
+							$id++;
+							my $assessment_line = join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, "NIL", "NIL"));
+							$pooled_responses->add($value, $assessment_line);
+						}
 					}
 				}
 			}
@@ -183,6 +192,7 @@ foreach my $selected_type($types_container->toarray()) {
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
+	# TODO: print header
 	foreach my $pooled_response($pooled_responses->toarray()) {
 		print $program_output "$pooled_response\n"
 			if defined $program_output;

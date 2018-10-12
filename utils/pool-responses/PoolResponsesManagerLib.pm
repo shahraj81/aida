@@ -2675,11 +2675,39 @@ sub is_valid {
 	$is_valid;
 }
 
+sub get_DOCIDS {
+	my ($self, $docid_mappings, $scope) = @_;
+	my $where = $self->get("WHERE");
+	my @docids;
+	my $doceid = $self->get("DOCEID");
+	if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+		my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+		@docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
+	}
+	else {
+		$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where)
+			if($scope ne "anywhere");
+	}
+	@docids;
+}
+
+sub get_MODALITY {
+	my ($self) = @_;
+	($self->get("TYPE") =~ /^(.*?)_/)[0];
+}
+
 sub tostring {
 	my ($self) = @_;
-	my ($doceid, $keyframeid, $start, $end)
+	my ($filename, $keyframeid, $start, $end)
 				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END);
-	"$doceid-$keyframeid-$start-$end";
+	if($self->get("MODALITY") eq "TEXT" or $self->get("MODALITY") eq "AUDIO") {
+		$start = "$start,0";
+		$end = "$end,0";
+	}
+	$start = "($start)";
+	$end = "($end)";
+	$filename = $keyframeid if($self->get("MODALITY") eq "VIDEO");
+	"$filename-$start-$end";
 }
 
 #####################################################################################

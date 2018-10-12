@@ -1,6 +1,3 @@
-# SCOPE
-SCOPE				=>	anywhere
-
 # MAPPINGS FILE
 MAPPINGS_FILE			=>	input/LDC2018E62.parent_children.tsv
 
