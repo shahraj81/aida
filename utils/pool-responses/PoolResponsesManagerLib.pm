@@ -739,9 +739,9 @@ sub load {
 		$line =~ s/\s+//g;
 		next if $line =~ /^\#/;
 		next if $line =~ /^$/;
-		if($line =~ /^(.*?)=>(.*?)/){
+		if($line =~ /^(.*?)\=\>(.*?)$/){
 			my ($key, $value) = ($1, $2);
-			if($self->get("$key") ne "nil") {
+			if($self->get("$key") eq "nil") {
 				$self->set($key, $value);
 			}
 			else {
