@@ -19,10 +19,10 @@ CLASS_RESPONSES_DTD		=>	input/responses_dtd/class_response.dtd
 ZEROHOP_RESPONSES_DTD		=>	input/responses_dtd/zerohop_response.dtd
 GRAPH_RESPONSES_DTD		=>	input/responses_dtd/graph_response.dtd
 
-# RESPONSES XML FILES
-CLASS_RESPONSES_XML		=>	input/responses_xml/class_responses.xml
-ZEROHOP_RESPONSES_XML		=>	input/responses_xml/zerohop_responses.xml
-GRAPH_RESPONSES_XML		=>	input/responses_xml/graph_responses.xml
+# RESPONSES XML DIRECTORIES
+CLASS_RESPONSES_XML		=>	input/responses_xml/class_responses/
+ZEROHOP_RESPONSES_XML		=>	input/responses_xml/zerohop_responses/
+GRAPH_RESPONSES_XML		=>	input/responses_xml/graph_responses/
 
 # OUTPUT FILE
 OUTPUT_FILE			=>	output/pooled_output.tab

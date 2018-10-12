@@ -109,9 +109,14 @@ my @file_keys = qw(CLASS_QUERIES_DTD ZEROHOP_QUERIES_DTD GRAPH_QUERIES_DTD
 										CLASS_RESPONSES_XML ZEROHOP_RESPONSES_XML GRAPH_RESPONSES_XML
 										MAPPINGS_FILE);
 
-foreach my $path(map {$parameters->get($_)} @file_keys) {
-	$logger->NIST_die("$path does not exist") unless -e $path;
+foreach my $file_key(@file_keys) {
+	my $path = $parameters->get($file_key);
+	$logger->NIST_die("$path does not exist ($file_key)") unless -e $path;
 }
+
+#foreach my $path(map {$parameters->get($_)} @file_keys) {
+#	$logger->NIST_die("$path does not exist") unless -e $path;
+#}
 
 my $output_filename = $parameters->get("OUTPUT_FILE");
 $logger->NIST_die("$output_filename already exists") if -e $output_filename;
@@ -151,7 +156,7 @@ foreach my $selected_type($types_container->toarray()) {
 	foreach my $response_xml_file(@response_xml_files) {
 		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $response_xml_file, $scope);
 		next if $logger->get_num_problems();
-		if($query_type eq "class_query") {
+		if($query_type eq "class_query" || $query_type eq "zerohop_query") {
 			foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
 				foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
 					my $value = $justification->tostring();
@@ -161,13 +166,11 @@ foreach my $selected_type($types_container->toarray()) {
 						$logger->record_problem("KEY_EXISTS_IN_POOLED_RESPONSE", $value, $where);
 					}
 					else {
-						$pooled_responses->add($key, $value);
+						# TODO: add additional columns for assessment
+						$pooled_responses->add($value, $key);
 					}
 				}
 			}
-		}
-		elsif($query_type eq "zerohop_query") {
-			
 		}
 		elsif($query_type eq "graph_query") {
 			
