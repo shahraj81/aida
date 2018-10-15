@@ -146,9 +146,9 @@ foreach my $selected_type($types_container->toarray()) {
 	my @response_xml_files = <$responses_xml_dir/*/*_responses.xml>;
 
 	foreach my $response_xml_file(@response_xml_files) {
-		$response_xml_file =~ /(.*?\/)+?(.*?\..*?_responses.xml)$/;
+		$response_xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
 		my ($path, $filename) = ($1, $2);
-		my ($source_docid) = $filename =~ /^(.*?)\..*?_responses.xml$/;
+		my ($source_docid) = $filename =~ /^(.*?)\..*?_responses.xml/;
 		$source_docid = undef if $source_docid eq "TA2";
 		my $scope = "withindoc";
 		$scope = "withincorpus" unless $source_docid;
@@ -157,25 +157,25 @@ foreach my $selected_type($types_container->toarray()) {
 		if($query_type eq "class_query" || $query_type eq "zerohop_query") {
 			foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
 				my $query_id = $response->get("QUERYID");
+				my $enttype = $queries->get("QUERY", $query_id)->get("ENTTYPE");
 				foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
-					my $enttype = $queries->get("QUERY", $query_id)->get("ENTTYPE");
 					my $mention_span = $justification->tostring();
 					my $mention_modality = $justification->get("MODALITY");
 					my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
 					@docids = grep {$_ eq $source_docid} @docids if $source_docid;
-					$logger->record_problem("DOCID_NOT_FOUND", $source_docid, $justification->get("WHERE"))
+					$logger->record_problem("ACROSS_DOCUMENT_JUSTIFICATION", $source_docid, $justification->get("WHERE"))
 						unless scalar @docids;
 					foreach my $docid(@docids) {
 						my $value = join("\t", ($query_id, $enttype, $mention_modality, $docid, $mention_span, "NIL", "NIL"));
 						my $key = &main::generate_uuid_from_string($value);
 						if($pooled_responses->exists($key)) {
 							my $where = $justification->get("WHERE");
-							$logger->record_debug_information("KEY_EXISTS_IN_POOLED_RESPONSE", $value, $where);
+							$logger->record_debug_information("DUPLICATE_IN_POOLED_RESPONSE", "\n$value\n", $where);
 						}
 						else {
 							$id++;
 							my $assessment_line = join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, "NIL", "NIL"));
-							$pooled_responses->add($value, $assessment_line);
+							$pooled_responses->add($assessment_line, $key);
 						}
 					}
 				}
