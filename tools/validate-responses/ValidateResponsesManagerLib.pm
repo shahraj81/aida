@@ -160,12 +160,14 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   INVALID_START                           WARNING        Invalid start %s in %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
+  MISSING_MODALITY                        ERROR          Modality corresponding to encoding format %s not found
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_JUSTIFICATION_MODALITY       WARNING        Unexpected justification modality provided %s from document element %s of modality %s
   UNEXPECTED_JUSTIFICATION_SOURCE         WARNING        Justification(s) came from unexpected document(s) %s (expected to be from %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
@@ -2736,6 +2738,15 @@ sub is_valid {
 	}
 	my ($doceid, $keyframeid, $start, $end, $type)
 				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END TYPE);
+	my ($justification_modality) = $type =~ /^(.*?)_JUSTIFICATION$/;
+	if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+		my $document_element = 
+			$docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+		my $de_type = $document_element->get("TYPE");
+		my $de_modality = $document_element->get("MODALITY");
+		$logger->record_problem("UNEXPECTED_JUSTIFICATION_MODALITY", $justification_modality, $doceid, $de_modality, $where)
+			unless $de_modality eq $justification_modality;
+	}
 	if($type eq "TEXT_JUSTIFICATION" || $type eq "AUDIO_JUSTIFICATION") {
 		if($start =~ /^-?\d+$/) {
 			if ($start < 0) {
@@ -2856,6 +2867,7 @@ sub new {
 		FILENAME => $filename,
 		DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTS => DocumentElements->new($logger),
+    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($logger),
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -2885,12 +2897,14 @@ sub load_data {
 		next if $document_eid eq "n/a";
 		foreach my $document_id(sort keys %{$doceid_to_docid_mapping{$document_eid}}) {
 			my $detype = $doceid_to_type_mapping{$document_eid};
+			my $modality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("MODALITY_FROM_ENCODING_FORMAT", $detype);
 			my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
 			$document->set("DOCUMENTID", $document_id);
 			my $documentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
 			$documentelement->get("DOCUMENTS")->add($document, $document_id);
 			$documentelement->set("DOCUMENTELEMENTID", $document_eid);
 			$documentelement->set("TYPE", $detype);
+			$documentelement->set("MODALITY", $modality);
 			$document->add_document_element($documentelement);
 		}
 	}
@@ -2975,6 +2989,64 @@ sub new {
   };
   bless($self, $class);
   $self;
+}
+
+#####################################################################################
+# EncodingFormatToModalityMappings
+#####################################################################################
+
+package EncodingFormatToModalityMappings;
+
+use parent -norequire, 'Super';
+
+my $encoding_format_to_modality_mapping = <<'END_ENCODING_MODALITY_MAPPING';
+
+# Encoding Format      Modality
+# ---------------      --------
+gif                    image
+jpg                    image
+ltf                    text
+mp3                    audio
+mp4                    video
+pdf                    pdf
+png                    image
+psm                    text
+svg                    image
+bmp                    image
+vid                    video
+img                    image
+
+END_ENCODING_MODALITY_MAPPING
+
+sub new {
+	my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'EncodingFormatToModalityMappings',
+    LOGGER => $logger,
+  };
+	bless($self, $class);
+	$self->load_data();
+	$self;
+}
+
+sub load_data {
+	my ($self) = @_;
+	chomp $encoding_format_to_modality_mapping;
+  foreach (grep {/\S/} grep {!/^\S*#/} split(/\n/, $encoding_format_to_modality_mapping)) {
+    s/^\s+//;
+    my ($encoding_format, $modality) = split(/\s+/, $_, 2);
+    $self->set($encoding_format, uc($modality));
+  }
+}
+
+sub get_MODALITY_FROM_ENCODING_FORMAT {
+	my ($self, $encoding_format) = @_;
+	my $modality = $self->get($encoding_format);
+	if($modality eq "nil") {
+		$self->get("LOGGER")->record_problem("MISSING_MODALITY", $encoding_format, 
+						{FILENAME => $self->get("FILENAME"), LINENUM => "n/a"});
+	}
+	$modality;
 }
 
 ### BEGIN INCLUDE Utils
