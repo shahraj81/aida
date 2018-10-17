@@ -62,11 +62,10 @@ foreach my $path(($switches->get("docid_mappings"),
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
 
-foreach my $path(($switches->get("output"))) {
-	$logger->NIST_die("$path already exists") if -e $path;
-}
-
 my $output_filename = $switches->get("output");
+$logger->NIST_die("$output_filename already exists")
+	if(-e $output_filename);
+
 if ($output_filename eq 'none') {
   undef $program_output;
 }
