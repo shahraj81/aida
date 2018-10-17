@@ -1632,15 +1632,15 @@ sub is_valid {
 			}
 		}
 		if($scope eq "withindoc") {
-			my @justifiying_docs;
-			foreach my $docid(keys %docids) {
-				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
-			}
-			if(scalar @justifiying_docs > 1) {
-				$is_valid = 0;
-				my $justifying_docs_string = join(",", @justifiying_docs);
-				$self->get("LOGGER")->record_problem("MULTIPLE_JUSTIFYING_DOCS", $justifying_docs_string, $where);
-			}
+#			my @justifiying_docs;
+#			foreach my $docid(keys %docids) {
+#				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
+#			}
+#			if(scalar @justifiying_docs > 1) {
+#				$is_valid = 0;
+#				my $justifying_docs_string = join(",", @justifiying_docs);
+#				$self->get("LOGGER")->record_problem("MULTIPLE_JUSTIFYING_DOCS", $justifying_docs_string, $where);
+#			}
 		}
 	}
 	$is_valid = 0 unless $num_valid_justifications;
@@ -2708,7 +2708,7 @@ sub tostring {
 	$start = "($start)";
 	$end = "($end)";
 	$filename = $keyframeid if($self->get("MODALITY") eq "VIDEO");
-	"$filename-$start-$end";
+	"$filename:$start-$end";
 }
 
 #####################################################################################

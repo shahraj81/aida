@@ -132,7 +132,6 @@ else {
 my $docid_mappings_file = $parameters->get("MAPPINGS_FILE");
 my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 my $pooled_responses = Container->new($logger);
-my $id = 0;
 foreach my $selected_type($types_container->toarray()) {
 	my $queries_dtd_file = $parameters->get($type{$selected_type}{QUERIES_DTD_PARAMETER});
 	my $queries_xml_file = $parameters->get($type{$selected_type}{QUERIES_XML_PARAMETER});
@@ -166,16 +165,14 @@ foreach my $selected_type($types_container->toarray()) {
 					$logger->record_problem("ACROSS_DOCUMENT_JUSTIFICATION", $source_docid, $justification->get("WHERE"))
 						unless scalar @docids;
 					foreach my $docid(@docids) {
-						my $value = join("\t", ($query_id, $enttype, $mention_modality, $docid, $mention_span, "NIL", "NIL"));
+						my $value = join("\t", ($query_id, $enttype, "<ID>", $mention_modality, $docid, $mention_span, "NIL", "NIL"));
 						my $key = &main::generate_uuid_from_string($value);
 						if($pooled_responses->exists($key)) {
 							my $where = $justification->get("WHERE");
 							$logger->record_debug_information("DUPLICATE_IN_POOLED_RESPONSE", "\n$value\n", $where);
 						}
 						else {
-							$id++;
-							my $assessment_line = join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, "NIL", "NIL"));
-							$pooled_responses->add($assessment_line, $key);
+							$pooled_responses->add($value, $key);
 						}
 					}
 				}
@@ -193,7 +190,10 @@ foreach my $selected_type($types_container->toarray()) {
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
 	# TODO: print header
-	foreach my $pooled_response($pooled_responses->toarray()) {
+	my $i = 0;
+	foreach my $pooled_response(sort $pooled_responses->toarray()) {
+		$i++;
+		$pooled_response =~ s/<ID>/$i/;
 		print $program_output "$pooled_response\n"
 			if defined $program_output;
 	}
