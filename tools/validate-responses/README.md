@@ -1,6 +1,6 @@
 # Validate Responses
 
-Last updated: 10/5/2018
+Last updated: 10/17/2018
 
 This document describes:
 
@@ -8,6 +8,7 @@ This document describes:
 	2. Support files required for running the validator,
 	3. How to use these script(s),
 	4. Some additional notes
+	5. Revision history
 	
 ## Introduction
 
@@ -17,7 +18,7 @@ This tool validates the responses submitted for AIDA M9 evaluation.
 
 The following scripts and packages are provided for running the validator:
 
-	1. AIDA-ValidateResponse-MASTER.pl (v2018.0.0)
+	1. AIDA-ValidateResponse-MASTER.pl (v2018.0.2)
 	2. ValidateResponsesManagerLib.pm
 	
 You would also need to install the following Perl modules in order to run the above script(s):
@@ -30,7 +31,7 @@ Please refer to http://www.cpan.org/modules/INSTALL.html for a guide on how to i
 
 In order to run the above script(s), the following files are required:
 
-	1. docid_mappings: File containing DocumentID to DocumentElementID mappings. This file will be made available.
+	1. docid_mappings: File containing DocumentID to DocumentElementID mappings. This file will be made available as `LDC2018E62.parent_children.tsv`.
 	2. queries_dtd: DTD file corresponding to the XML file containing queries. This file will be made available.
 	3. queries_xml: XML file containing queries. The query file(s) will made available.
 	4. responses_dtd: DTD file corresponding to the XML file containing responses. This file will be made available.
@@ -51,8 +52,6 @@ Legal switches are:
   -error_file <value>  Specify a file to which error output should be redirected
                          (Default = STDERR).
   -help                Show help
-  -scope <value>       Specify the scope at which validation is to be performed.
-                         (Default = anywhere).
   -version             Print version number and exit
 parameters are:
   docid_mappings  DocumentID to DocumentElementID mappings (Required).
@@ -63,11 +62,6 @@ parameters are:
                     (Required).
   responses_xml   XML file containing responses (Required).
   output          Validated responses file (Required).
-
--scope is one of the following:
-  anywhere:     Justifications may come from anywhere.
-  withincorpus: All justifications in a response file should come from a corpus document
-  withindoc:    All justifications in a response file should come from a single corpus document
 ~~~
 
 ### Running the validator on TA1 response file
@@ -75,7 +69,7 @@ parameters are:
 In order to validate a TA1 response file, you may run the following command:
 
 ~~~
-perl AIDA-ValidateResponses-MASTER.pl -scope withindoc -error_file validate_responses.errlog docid_mappings.tsv queries.dtd queries.xml responses.dtd responses.xml valid_responses.xml
+perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog docid_mappings.tsv queries.dtd queries.xml responses.dtd responses.xml valid_responses.xml
 ~~~
 
 ### Running the validator on TA2 response file
@@ -83,8 +77,21 @@ perl AIDA-ValidateResponses-MASTER.pl -scope withindoc -error_file validate_resp
 In order to validate a TA2 response file, you may run the following command:
 
 ~~~
-perl AIDA-ValidateResponses-MASTER.pl -scope withincorpus -error_file validate_responses.errlog docid_mappings.tsv queries.dtd queries.xml responses.dtd responses.xml valid_responses.xml
+perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog docid_mappings.tsv queries.dtd queries.xml responses.dtd responses.xml valid_responses.xml
 ~~~
+
+### Revision history
+
+#### v2018.0.2:
+- Scope does not need to be specified explicitly therefore switch -scope has been removed; the scope is internally inferred from the filename of the response file being validated. If the filename is TA2.[class|zerohop|graph]_responses.xml `withincorpus` scope is used and if the filename is DOCID.[class|zerohop|graph]_responses.xml `withindoc` scope is internally used.
+- Validator gave error when in a class query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).
+- Validator has been expanded to check if the justification type (TEXT, IMAGE, VIDEO) matches document element type (bmp, ltf, mp4, etc.).
+
+#### v2018.0.1:
+- The validator crashed without proper error message when an unexpected edgeid was provided. (Thank you Ryan for reporting the problem).
+
+#### v2018.0.0:
+- Original version
 
 ### Some notes
 

@@ -22,22 +22,11 @@ use ValidateResponsesManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2018.0.0";
+my $version = "2018.0.2";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};
 my $error_output = *STDERR{IO};
-
-our %scope = (
-  withindoc => {
-    DESCRIPTION => "All justifications in a response file should come from a single corpus document",
-  },
-  withincorpus => {
-    DESCRIPTION => "All justifications in a response file should come from a corpus document",
-  },
-  anywhere => {
-    DESCRIPTION => "Justifications may come from anywhere.",
-  });
 
 ##################################################################################### 
 # Runtime switches and main program
@@ -45,14 +34,11 @@ our %scope = (
 
 # Handle run-time switches
 my $switches = SwitchProcessor->new($0, "Validate XML response file",
-										"-scope is one of the following:\n" . &main::build_documentation(\%scope) .
 				    						"");
 $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
-$switches->addVarSwitch('scope', "Specify the scope at which validation is to be performed.");
-$switches->put('scope', "anywhere");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
@@ -76,11 +62,10 @@ foreach my $path(($switches->get("docid_mappings"),
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
 
-foreach my $path(($switches->get("output"))) {
-	$logger->NIST_die("$path already exists") if -e $path;
-}
-
 my $output_filename = $switches->get("output");
+$logger->NIST_die("$output_filename already exists")
+	if(-e $output_filename);
+
 if ($output_filename eq 'none') {
   undef $program_output;
 }
@@ -94,13 +79,9 @@ else {
   open($program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
 }
 
-my $scope = $switches->get("scope");
-$logger->NIST_die("Unexpected choice $scope for -scope")
-	unless $scope{$scope};
-
 my $docid_mappings = DocumentIDsMappings->new($logger, $switches->get("docid_mappings"));
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
-my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $switches->get("responses_dtd"), $switches->get("responses_xml"), $scope);
+my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $switches->get("responses_dtd"), $switches->get("responses_xml"));
 	
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
