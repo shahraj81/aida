@@ -1653,7 +1653,7 @@ sub get_SCOPE {
 		$scope = "withindoc"
 			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
 	}
-	$self->get("LOGGER")->NIST_die("Unexpected value for scope: $scope")
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
 		if $scope eq "anywhere";
 	$scope;
 }
@@ -1905,7 +1905,7 @@ sub get_SCOPE {
 		$scope = "withindoc"
 			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
 	}
-	$self->get("LOGGER")->NIST_die("Unexpected value for scope: $scope")
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
 		if $scope eq "anywhere";
 	$scope;
 }
@@ -2214,7 +2214,7 @@ sub get_SCOPE {
 		$scope = "withindoc"
 			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
 	}
-	$self->get("LOGGER")->NIST_die("Unexpected value for scope: $scope")
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
 		if $scope eq "anywhere";
 	$scope;
 }
