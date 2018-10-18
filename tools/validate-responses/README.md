@@ -83,7 +83,7 @@ perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog doci
 ### Revision history
 
 #### v2018.0.2:
-- Scope does not need to be specified explicitly therefore switch -scope has been removed; the scope is internally inferred from the filename of the response file being validated. If the filename is TA2.[class|zerohop|graph]_responses.xml `withincorpus` scope is used and if the filename is DOCID.[class|zerohop|graph]_responses.xml `withindoc` scope is internally used. Please note that DOCID is the ID corresponding to the (parent or root) document (and that it is not the ID of the document element aka child document.
+- Scope does not need to be specified explicitly therefore switch -scope has been removed; the scope is internally inferred from the filename of the response file being validated. If the filename is TA2.[class|zerohop|graph]_responses.xml `withincorpus` scope is used and if the filename is DOCID.[class|zerohop|graph]_responses.xml `withindoc` scope is internally used. Please note that DOCID is the ID corresponding to the (parent or root) document (and that it is not the ID of the document element aka child document).
 - Validator gave error when in a class query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).
 - Validator has been expanded to check if the justification type (TEXT, IMAGE, VIDEO) matches document element type (bmp, ltf, mp4, etc.).
 
