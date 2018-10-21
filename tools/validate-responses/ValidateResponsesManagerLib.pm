@@ -171,6 +171,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_JUSTIFICATION_SOURCE         WARNING        Justification(s) came from unexpected document(s) %s (expected to be from %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
+  UNEXPECTED_SUBJECT_ENTTYPE              WARNING        Unexpected subject type %s (expected %s) in response to query %s and edge %s
   UNKNOWN_DOCUMENT                        WARNING        Unknown Document %s in response
   UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
   UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s 
@@ -2091,7 +2092,8 @@ sub is_valid {
 				unless($self->check_within_doc_spans($docid_mappings, $docid, $justification, $scope, $where));
 			my $subject_enttype = $justification->get("SUBJECT_JUSTIFICATION")->get("ENTTYPE");
 			if($query_edge_predicate && $query_edge_predicate !~ /^$subject_enttype\_/) {
-				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $where);
+				my ($query_edge_enttype, $predicate) = split(/_/, $query_edge_predicate);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $query_edge_enttype, $query_id, $edge_num, $where);
 				$is_justification_valid = 0;
 			}
 			if($scope ne "anywhere" && !$docid_mappings->get("DOCUMENTS")->exists($docid)) {
