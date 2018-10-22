@@ -161,7 +161,6 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_MODALITY                        ERROR          Modality corresponding to encoding format %s not found
-  MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
@@ -1843,7 +1842,7 @@ sub is_valid {
 			my $doceid = $justification->get("DOCEID");
 			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
 				my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
-				my @docids = $docelement->get("DOCUMENTS")->toarray();
+				my @docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
 				foreach my $docid(@docids) {
 					$docids{$docid}++;
 				}
@@ -1854,14 +1853,15 @@ sub is_valid {
 			}
 		}
 		if($scope eq "withindoc") {
+			my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
 			my @justifiying_docs;
 			foreach my $docid(keys %docids) {
 				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
 			}
-			if(scalar @justifiying_docs > 1) {
+			unless(scalar grep {$_ eq $response_docid} @justifiying_docs) {
 				$is_valid = 0;
 				my $justifying_docs_string = join(",", @justifiying_docs);
-				$self->get("LOGGER")->record_problem("MULTIPLE_JUSTIFYING_DOCS", $justifying_docs_string, $where);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_JUSTIFICATION_SOURCE", $justifying_docs_string, $response_docid, $where);
 			}
 		}
 	}
