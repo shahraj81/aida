@@ -1,6 +1,6 @@
 # Validate Responses
 
-Last updated: 10/17/2018
+Last updated: 10/21/2018
 
 This document describes:
 
@@ -86,6 +86,7 @@ perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog doci
 - Scope does not need to be specified explicitly therefore switch -scope has been removed; In the new version, scope is internally inferred from the filename of the response file being validated. If the filename is TA2.[class|zerohop|graph]_responses.xml `withincorpus` scope is used and if the filename is DOCID.[class|zerohop|graph]_responses.xml `withindoc` scope is internally used. Please note that `DOCID` is the ID corresponding to the (parent or root) `document` (and that it is not the ID of the `document element` aka `child document`).
 - Validator generated false alarm when in a class query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).
 - Validator has been expanded to check if the justification type (TEXT, IMAGE, VIDEO) matches document element type (bmp, ltf, mp4, etc.).
+- Changes an error message for error code “UNEXPECTED_SUBJECT_ENTTYPE” to make it more helpful.
 
 #### v2018.0.1:
 - The validator crashed without proper error message when an unexpected edgeid was provided. (Thank you Ryan for reporting the problem).
