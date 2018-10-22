@@ -28,6 +28,9 @@ my $version = "2018.0.3";
 my $program_output = *STDOUT{IO};
 my $error_output = *STDERR{IO};
 
+# Validation code
+my $validation_retval = 0;
+
 ##################################################################################### 
 # Runtime switches and main program
 ##################################################################################### 
@@ -82,8 +85,8 @@ else {
 my $docid_mappings = DocumentIDsMappings->new($logger, $switches->get("docid_mappings"));
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
 my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $switches->get("responses_dtd"), $switches->get("responses_xml"));
-	
 my ($num_errors, $num_warnings) = $logger->report_all_information();
+$validation_retval = $Logger::NIST_error_code if($num_errors+$num_warnings);
 unless($num_errors) {
 	print $program_output $validated_responses->tostring(2)
 		if defined $program_output;
@@ -93,4 +96,4 @@ unless($switches->get('error_file') eq "STDERR") {
 	print STDERR "No warnings encountered.\n" unless ($num_errors || $num_warnings);
 }
 print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
-exit 0;
+exit $validation_retval;
