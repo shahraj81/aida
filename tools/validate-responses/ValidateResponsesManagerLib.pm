@@ -186,6 +186,9 @@ package Logger;
 
 use Carp;
 
+# NIST submission scripts demand an error code of 255 on failure
+our $NIST_error_code = 255;
+
 # Create a new Logger object
 sub new {
   my ($class, $formats, $error_output) = @_;
@@ -349,9 +352,6 @@ sub get_error_type {
   my ($self, $error_name) = @_;
   $self->{FORMATS}{$error_name}{TYPE};
 }
-
-# NIST submission scripts demand an error code of 255 on failure
-my $NIST_error_code = 255;
 
 ### DO NOT INCLUDE
 # FIXME: Inconsistency: sometimes NIST_die is called directly; other
