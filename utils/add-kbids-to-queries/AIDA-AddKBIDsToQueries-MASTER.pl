@@ -147,9 +147,8 @@ my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->g
 foreach my $query($queries->get("QUERIES")->toarray()) {
 	my $mention = $query->get("ENTRYPOINT")->get("DESCRIPTOR")->tostring();
 	my @kb_ids = keys %{$mentions{$mention}};
-	die "Multiple kbids for mention: $mention" if @kb_ids > 1;
-	die "No kbid for mention: $mention" unless @kb_ids;
-	my $kb_id = $kb_ids[0];
+	$query->set("IGNORE", 1) unless(@kb_ids == 1);
+	my $kb_id = "?". ($kb_ids[0] || "node");
 	$query->get("ENTRYPOINT")->set("NODE", $kb_id);
 	my $node_xml_object = $query->get("XML_OBJECT")->get("CHILD", "node");
 	$node_xml_object->set("ELEMENT", $kb_id);

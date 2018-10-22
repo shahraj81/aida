@@ -2345,6 +2345,7 @@ sub new {
 		DTD_FILENAME => $dtd_filename,
 		XML_FILENAME => $xml_filename,
 		QUERIES => Container->new($logger, "Query"),
+		QUERYTYPE => undef,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -2382,10 +2383,15 @@ sub get_QUERY {
 
 sub tostring {
 	my ($self, $indent) = @_;
-	my $retVal = "";
+	my $retVal = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	my $query_type = $self->get("QUERYTYPE");
+	$query_type =~ s/query/queries/;
+	$retVal .= "<$query_type>\n";
 	foreach my $query($self->get("QUERIES")->toarray()) {
+		next if $query->get("IGNORE") eq "1";
 		$retVal .= $query->tostring($indent);
 	}
+	$retVal .= "<\/$query_type>\n";
 	$retVal;
 }
 
