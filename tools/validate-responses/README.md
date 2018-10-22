@@ -1,6 +1,6 @@
 # Validate Responses
 
-Last updated: 10/17/2018
+Last updated: 10/22/2018
 
 This document describes:
 
@@ -82,10 +82,15 @@ perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog doci
 
 ### Revision history
 
+#### v2018.0.3:
+- Validator generated false alarm when in a zerohop query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).
+- Changes an error message for error code “UNEXPECTED_SUBJECT_ENTTYPE” to make it more helpful. (This update was also applied as a hotfix to the v2018.0.2 release branch).
+
 #### v2018.0.2:
-- Scope does not need to be specified explicitly therefore switch -scope has been removed; the scope is internally inferred from the filename of the response file being validated. If the filename is TA2.[class|zerohop|graph]_responses.xml `withincorpus` scope is used and if the filename is DOCID.[class|zerohop|graph]_responses.xml `withindoc` scope is internally used.
-- Validator gave error when in a class query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).
+- Scope does not need to be specified explicitly therefore switch -scope has been removed; In the new version, scope is internally inferred from the filename of the response file being validated. If the filename is TA2.[class|zerohop|graph]_responses.xml `withincorpus` scope is used and if the filename is DOCID.[class|zerohop|graph]_responses.xml `withindoc` scope is internally used. Please note that `DOCID` is the ID corresponding to the (parent or root) `document` (and that it is not the ID of the `document element` aka `child document`).
+- Validator generated false alarm when in a class query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).
 - Validator has been expanded to check if the justification type (TEXT, IMAGE, VIDEO) matches document element type (bmp, ltf, mp4, etc.).
+- Changes an error message for error code “UNEXPECTED_SUBJECT_ENTTYPE” to make it more helpful.
 
 #### v2018.0.1:
 - The validator crashed without proper error message when an unexpected edgeid was provided. (Thank you Ryan for reporting the problem).
@@ -98,8 +103,10 @@ perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog doci
 - Teams are required to validate the `responses.xml` file required as input by the above script against the DTD provided by NIST.
 - The file specified in place of `docid_mappings` is a tsv file that is originally from LDC but is modified by NIST. This file will be provided along with the query files.
 - The above script(s) assume that the output file and error log file do not exist.
-- The file specified in place of `queries_dtd` or `responses_dtd` must not have any comments in it. Again, this file will be provided along with the queries file. Six DTD files will be provided, which should not be renamed nor the content be changed without approval.
+- The file specified in place of `queries_dtd` or `responses_dtd` must not have any comments in it. Again, this file will be provided along with the queries file. Six DTD files will be provided, which should not be renamed nor the content be changed without approval:
 
 	1/2. class_[query|response].dtd
+
 	3/4. zerohop_[query|response].dtd
+
 	5/6. graph_[query|response].dtd

@@ -161,6 +161,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_MODALITY                        ERROR          Modality corresponding to encoding format %s not found
+  MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
@@ -170,7 +171,6 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_JUSTIFICATION_SOURCE         WARNING        Justification(s) came from unexpected document(s) %s (expected to be from %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
-  UNEXPECTED_SUBJECT_ENTTYPE              WARNING        Unexpected subject type %s (expected %s) in response to query %s and edge %s
   UNKNOWN_DOCUMENT                        WARNING        Unknown Document %s in response
   UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
   UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s 
@@ -1842,7 +1842,7 @@ sub is_valid {
 			my $doceid = $justification->get("DOCEID");
 			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
 				my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
-				my @docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
+				my @docids = $docelement->get("DOCUMENTS")->toarray();
 				foreach my $docid(@docids) {
 					$docids{$docid}++;
 				}
@@ -1853,15 +1853,14 @@ sub is_valid {
 			}
 		}
 		if($scope eq "withindoc") {
-			my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
 			my @justifiying_docs;
 			foreach my $docid(keys %docids) {
 				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
 			}
-			unless(scalar grep {$_ eq $response_docid} @justifiying_docs) {
+			if(scalar @justifiying_docs > 1) {
 				$is_valid = 0;
 				my $justifying_docs_string = join(",", @justifiying_docs);
-				$self->get("LOGGER")->record_problem("UNEXPECTED_JUSTIFICATION_SOURCE", $justifying_docs_string, $response_docid, $where);
+				$self->get("LOGGER")->record_problem("MULTIPLE_JUSTIFYING_DOCS", $justifying_docs_string, $where);
 			}
 		}
 	}
@@ -2092,8 +2091,7 @@ sub is_valid {
 				unless($self->check_within_doc_spans($docid_mappings, $docid, $justification, $scope, $where));
 			my $subject_enttype = $justification->get("SUBJECT_JUSTIFICATION")->get("ENTTYPE");
 			if($query_edge_predicate && $query_edge_predicate !~ /^$subject_enttype\_/) {
-				my ($query_edge_enttype, $predicate) = split(/_/, $query_edge_predicate);
-				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $query_edge_enttype, $query_id, $edge_num, $where);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $where);
 				$is_justification_valid = 0;
 			}
 			if($scope ne "anywhere" && !$docid_mappings->get("DOCUMENTS")->exists($docid)) {
@@ -2850,7 +2848,11 @@ sub tostring {
 	my $doceid = $self->get("DOCEID");
 	my $start = $self->get("START");
 	my $end = $self->get("END");
-	"$doceid:$start-$end";
+	if($self->get("TYPE") eq "TEXT_DESCRIPTOR") {
+		$start = "$start,0";
+		$end = "$end,0";
+	}
+	"$doceid:($start)-($end)";
 }
 
 #####################################################################################
@@ -3048,6 +3050,153 @@ sub get_MODALITY_FROM_ENCODING_FORMAT {
 						{FILENAME => $self->get("FILENAME"), LINENUM => "n/a"});
 	}
 	$modality;
+}
+
+#####################################################################################
+# ImagesBoundingBoxes
+#####################################################################################
+
+package ImagesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
+  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my $filename = $entry->get("filename");
+		my $doceid = $filename;
+		$doceid =~ s/\..*?$//;
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(ImageBoundingBox->new($self->get("LOGGER"), $doceid, undef,
+												0, 0, $bottom_right_x, $bottom_right_y), $doceid);
+	}
+}
+
+#####################################################################################
+# ImageBoundingBox
+#####################################################################################
+
+package ImageBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'ImageBoundingBox',
+    DOCEID => $doceid,
+    TYPE => $type,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+#####################################################################################
+# KeyFramesBoundingBoxes
+#####################################################################################
+
+package KeyFramesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
+  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
+												0, 0,
+												$bottom_right_x, $bottom_right_y),
+								$entry->get("keyframeid"));
+	}
+}
+
+sub get_KEYFRAMESIDS {
+	my ($self, $doceid) = @_;
+	my @keyframeids = $self->get("ALL_KEYS");
+	@keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
+	sort @keyframeids;
+}
+
+#####################################################################################
+# KeyFramesBoundingBox
+#####################################################################################
+
+package KeyFrameBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'KeyFrameBoundingBox',
+    KEYFRAMEID => $keyframeid,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_DOCEID {
+	my ($self) = @_;
+	my ($doceid) = split("_", $self->get("KEYFRAMEID"));
+	$doceid;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
 }
 
 ### BEGIN INCLUDE Utils
