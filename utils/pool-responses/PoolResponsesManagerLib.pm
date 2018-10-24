@@ -930,10 +930,9 @@ package Nodes;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $logger, $parameters) = @_;
+  my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'Node');
   $self->{CLASS} = 'Nodes';
-  $self->{PARAMETERS} = $parameters;
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -2371,6 +2370,75 @@ sub tostring {
 }
 
 #####################################################################################
+# Pool
+#####################################################################################
+
+package Pool;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Kit');
+  $self->{CLASS} = 'Pool';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Kit
+#####################################################################################
+
+package Kit;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'KitEntry');
+  $self->{CLASS} = 'Pool';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# KitEntry
+#####################################################################################
+
+package KitEntry;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'KitEntry',
+    TYPE => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $type = $self->get("TYPE");
+	
+	my $method = $self->can("tostring_$type");
+  return $method->($self) if $method;
+  return "nil";
+}
+
+sub tostring_zerohop_query {
+	my ($self) = @_;
+	my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
+		= map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
+	join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
+}
+
+#####################################################################################
 # ResponsesPool
 #####################################################################################
 
@@ -2379,12 +2447,14 @@ package ResponsesPool;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
+	my ($class, $logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
 	my $self = {
 		CLASS => 'ResponsesPool',
-		COREDOCS => $coredocs,
-		DOCID_MAPPINGS => $docid_mappings, 		
+		CORE_DOCS => $core_docs,
+		DOCID_MAPPINGS => $docid_mappings,
+		K => $k,
 		LDC_QUERIES => $ldc_queries,
+		MAX_KIT_SIZE => $max_kit_size,
 		QUERIES => $queries,
 		QUERYTYPE => $queries->get("QUERYTYPE"),
 		RESPONSES_DTD_FILENAME => $responses_dtd_file,
@@ -2400,17 +2470,19 @@ sub new {
 sub load {
 	my ($self) = @_;
 	my $logger = $self->get("LOGGER");
-	my $coredocs = $self->get("COREDOCS");
+	my $core_docs = $self->get("CORE_DOCS");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $max_kit_size = $self->get("MAX_KIT_SIZE");
 	my $queries = $self->get("QUERIES");
 	my $ldc_queries = $self->get("LDC_QUERIES");
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
 	my $query_type = $self->get("QUERYTYPE");
 	my $responses_pool;
-	$responses_pool = ClassResponsesPool->new($logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "class_query");
-	$responses_pool = ZeroHopResponsesPool->new($logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "zerohop_query");
-	$responses_pool = GraphResponsesPool->new($logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "graph_query");
+	$responses_pool = ClassResponsesPool->new($logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "class_query");
+	$responses_pool = ZeroHopResponsesPool->new($logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "zerohop_query");
+	$responses_pool = GraphResponsesPool->new($logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "graph_query");
 	$self->set("RESPONSES_POOL", $responses_pool);
 }
 
@@ -2427,13 +2499,17 @@ package ZeroHopResponsesPool;
 
 use parent -norequire, 'Super';
 
+use POSIX;
+
 sub new {
-	my ($class, $logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
+	my ($class, $logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
 	my $self = {
 		CLASS => 'ZeroHopResponsesPool',
-		COREDOCS => $coredocs,
+		CORE_DOCS => $core_docs,
 		DOCID_MAPPINGS => $docid_mappings, 		
+		K => $k,
 		LDC_QUERIES => $ldc_queries,
+		MAX_KIT_SIZE => $max_kit_size,
 		QUERIES => $queries,
 		QUERYTYPE => $queries->get("QUERYTYPE"),
 		RESPONSES_DTD_FILENAME => $responses_dtd_file,
@@ -2449,14 +2525,16 @@ sub new {
 sub load {
 	my ($self) = @_;
 	my $logger = $self->get("LOGGER");
-	my $coredocs = $self->get("COREDOCS");
+	my $core_docs = $self->get("CORE_DOCS");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $max_kit_size = $self->get("MAX_KIT_SIZE");
 	my $queries = $self->get("QUERIES");
 	my $ldc_queries = $self->get("LDC_QUERIES");
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
 	my $query_type = $self->get("QUERYTYPE");
-	my $entire_pool = Container->new($logger);
+	my $entire_pool = Pool->new($logger);
 	
 	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
 	my $entries = $filehandler->get("ENTRIES");
@@ -2468,26 +2546,44 @@ sub load {
 			my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
 				if $ldc_queries->get("QUERY", $query_id);
 			next unless $kb_id;
-			my $kbid_pooled_responses = $entire_pool->get("BY_KEY", $kb_id);
-			my $enttype = $queries->get("QUERY", $query_id)->get("ENTTYPE");
+			$kb_id =~ s/^\?//;
+			my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
+			my $enttype = $queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("ENTTYPE");
 			my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
 			my $scope = $response->get("SCOPE");
-			foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
+			my %kit_entries_by_docids;
+			foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
 				my $mention_span = $justification->tostring();
 				my $mention_modality = $justification->get("MODALITY");
 				my $confidence = $justification->get("CONFIDENCE");
 				my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
 				@docids = grep {$_ eq $source_docid} @docids if $source_docid;
 				foreach my $docid(@docids) {
-					my $value = join("\t", ($query_id, $enttype, "<ID>", $mention_modality, $docid, $mention_span, "NIL", "NIL"));
-					my $key = &main::generate_uuid_from_string($value);
-					if($kbid_pooled_responses->exists($key)) {
-						my $where = $justification->get("WHERE");
-						$logger->record_debug_information("DUPLICATE_IN_POOLED_RESPONSE", "\n$value\n", $where);
-					}
-					else {
-						$kbid_pooled_responses->add($value, $key);
-					}
+					my $kit_entry = KitEntry->new($logger);
+					$kit_entry->set("TYPE", $query_type);
+					$kit_entry->set("KB_ID", $kb_id);
+					$kit_entry->set("ENTTYPE", $enttype);
+					$kit_entry->set("ID", "<ID>");
+					$kit_entry->set("MENTION_MODALITY", $mention_modality);
+					$kit_entry->set("DOCID", $docid);
+					$kit_entry->set("MENTION_SPAN", $mention_span);
+					$kit_entry->set("LABEL_1", "NIL");
+					$kit_entry->set("LABEL_2", "NIL");
+					$kit_entry->set("CONFIDENCE", $confidence);
+					my $key = &main::generate_uuid_from_string($kit_entry->tostring());
+					$kit_entries_by_docids{$docid}{$key} = $kit_entry;
+				}
+			}
+			foreach my $docid (keys %kit_entries_by_docids) {
+				next unless $core_docs->get("BY_KEY", $docid);
+				my $i = 0;
+				foreach my $key(sort {$kit_entries_by_docids{$docid}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid}{$a}->get("CONFIDENCE")} 
+										keys %{$kit_entries_by_docids{$docid}}) {
+					$i++;
+					last if $i > $k;
+					my $kit_entry = $kit_entries_by_docids{$docid}{$key};
+					my $value = $kit_entry->tostring();
+					$kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
 				}
 			}
 		}
@@ -2497,7 +2593,28 @@ sub load {
 
 sub write_output {
 	my ($self, $output_dir) = @_;
-	
+	my $pool = $self->get("RESPONSES_POOL");
+	system("mkdir $output_dir");
+	foreach my $kb_id($pool->get("ALL_KEYS")) {
+		my $kit = $pool->get("BY_KEY", $kb_id);
+		my $max_kit_size = $self->get("MAX_KIT_SIZE");
+		my $total_entries = scalar($kit->toarray());
+		my $total_kits = ceil($total_entries/$max_kit_size);
+		my @kit_entries = $kit->toarray();
+		my $linenum = 0;
+		for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
+			my $prefix = $self->get("OUTPUT_FILENAME_PREFIX");
+			my $output_filename = "$output_dir/kit_$kb_id\_$kit_num\_$total_kits\.tab";
+			open(my $program_output, ">:utf8", $output_filename) or $self->get("LOGGER")->NIST_die("Could not open $output_filename: $!");
+			for(my $i=($kit_num-1)*$max_kit_size; $i<$kit_num*$max_kit_size && $i<$total_entries; $i++) {
+				$linenum++;
+				my $output_line = $kit_entries[$i];
+				$output_line =~ s/<ID>/$linenum/;
+				print $program_output "$output_line\n";
+			}
+			close($program_output);
+		}
+	}
 }
 
 #####################################################################################
@@ -3209,7 +3326,7 @@ sub load {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
-		my $docid = $entry->get("rootid");
+		my $docid = $entry->get("root_id");
 		$self->add("KEY", $docid);
 	}
 	$filehandler->cleanup();

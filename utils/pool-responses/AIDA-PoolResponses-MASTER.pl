@@ -110,24 +110,12 @@ foreach my $path(($switches->get("coredocs"),
 my $output_dir = $switches->get("output");
 $logger->NIST_die("$output_dir already exists")
 	if(-e $output_dir);
-
-#if ($output_filename eq 'none') {
-#  undef $program_output;
-#}
-#elsif (lc $output_filename eq 'stdout') {
-#  $program_output = *STDOUT{IO};
-#}
-#elsif (lc $output_filename eq 'stderr') {
-#  $program_output = *STDERR{IO};
-#}
-#else {
-#  open($program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
-#}
-
+	
 # Container to store pooled responses
 my $pooled_responses;
 
-my $maxkitsize = $switches->get("maxkitsize");
+my $k = $switches->get("k");
+my $max_kit_size = $switches->get("maxkitsize");
 my $coredocs_file = $switches->get("coredocs");
 my $docid_mappings_file = $switches->get("docid_mappings");
 my $queries_dtd_file = $switches->get("queries_dtd");
@@ -143,19 +131,11 @@ my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 my $queries = QuerySet->new($logger, $queries_dtd_file, $queries_xml_file);
 my $ldc_queries = QuerySet->new($logger, $queries_dtd_file, $ldc_queries_xml_file);
 
-$pooled_responses = ResponsesPool->new($logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile);
-$pooled_responses->write_output($output_dir);
+$pooled_responses = ResponsesPool->new($logger, $k, $max_kit_size, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
-	# TODO: print header
-	my $i = 0;
-	foreach my $pooled_response(sort $pooled_responses->toarray()) {
-		$i++;
-		$pooled_response =~ s/<ID>/$i/;
-		print $program_output "$pooled_response\n"
-			if defined $program_output;
-	}
+	$pooled_responses->write_output($output_dir);
 }
 
 unless($switches->get('error_file') eq "STDERR") {
