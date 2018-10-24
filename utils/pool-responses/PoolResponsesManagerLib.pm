@@ -2540,6 +2540,7 @@ sub load {
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
 		my $responses_xml_file = $entry->get("filename");
+		print "--processing $responses_xml_file\n";
 		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
 		foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
 			my $query_id = $response->get("QUERYID");

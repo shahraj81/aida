@@ -107,6 +107,13 @@ foreach my $path(($switches->get("coredocs"),
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
 
+my $filehandler = FileHandler->new($logger, $switches->get("responses_xml"));
+my $entries = $filehandler->get("ENTRIES");
+foreach my $entry($entries->toarray()) {
+	my $path = $entry->get("filename");
+	$logger->NIST_die("$path does not exist") unless -e $path;
+}
+
 my $output_dir = $switches->get("output");
 $logger->NIST_die("$output_dir already exists")
 	if(-e $output_dir);
