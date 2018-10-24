@@ -77,15 +77,16 @@ $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addVarSwitch('maxkitsize', "How large can the kit be? This value is provided by LDC.");
 $switches->put('maxkitsize', "200");
-$switches->addVarSwitch("ldc_queries_xml", "XML query file sent to LDC? Required for zerohop queries, optional otherwise");
-$switches->put('ldc_queries_xml', "none");
+$switches->addVarSwitch("ldc_queries", "XML query file sent to LDC? Required for zerohop queries, optional otherwise");
+$switches->put('ldc_queries', "none");
+$switches->addVarSwitch("k", "Top k responses to be pooled from within each document");
+$switches->put('k', "10");
 $switches->addParam("coredocs", "required", "List of core documents to be included in the pool");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
 $switches->addParam("queries_xml", "required", "XML file containing queries");
 $switches->addParam("responses_dtd", "required", "DTD file corresponding to the XML file containing response");
 $switches->addParam("responses_xml", "required", "File containing path to XML response files being pooled");
-$switches->addParam("k", "required", "Top k responses to be pooled");
 $switches->addParam("output", "required", "Output directory");
 
 $switches->process(@ARGV);
@@ -99,7 +100,7 @@ foreach my $path(($switches->get("coredocs"),
 					$switches->get("docid_mappings"),
 					$switches->get("queries_dtd"),
 					$switches->get("queries_xml"),
-					$switches->get("ldc_queries_xml"),
+					$switches->get("ldc_queries"),
 					$switches->get("responses_dtd"),
 					$switches->get("responses_xml"))) {
 	next if $path eq "none";
@@ -131,7 +132,7 @@ my $coredocs_file = $switches->get("coredocs");
 my $docid_mappings_file = $switches->get("docid_mappings");
 my $queries_dtd_file = $switches->get("queries_dtd");
 my $queries_xml_file = $switches->get("queries_xml");
-my $ldc_queries_xml_file = $switches->get("ldc_queries_xml");
+my $ldc_queries_xml_file = $switches->get("ldc_queries");
 my $responses_dtd_file = $switches->get("responses_dtd");
 my $responses_xml_pathfile = $switches->get("responses_xml");
 my $query_type = $queries_dtd_file;
@@ -144,61 +145,6 @@ my $ldc_queries = QuerySet->new($logger, $queries_dtd_file, $ldc_queries_xml_fil
 
 $pooled_responses = ResponsesPool->new($logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile);
 $pooled_responses->write_output($output_dir);
-
-
-#
-#foreach my $selected_type($types_container->toarray()) {
-#	
-#
-#	
-#	
-#
-#	$parameters->get($type{$selected_type}{RESPONSES_DTD_PARAMETER});
-#	my $responses_xml_dir = $parameters->get($type{$selected_type}{RESPONSES_XML_PARAMETER});
-#	my @response_xml_files = <$responses_xml_dir/*/*_responses.xml>;
-#
-#	foreach my $response_xml_file(@response_xml_files) {
-#		$response_xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
-#		my ($path, $filename) = ($1, $2);
-#		my ($source_docid) = $filename =~ /^(.*?)\..*?_responses.xml/;
-#		$source_docid = undef if $source_docid eq "TA2";
-#		my $scope = "withindoc";
-#		$scope = "withincorpus" unless $source_docid;
-#		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $response_xml_file, $scope);
-#		next if $logger->get_num_problems();
-#		if($query_type eq "class_query" || $query_type eq "zerohop_query") {
-#			foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
-#				my $query_id = $response->get("QUERYID");
-#				my $enttype = $queries->get("QUERY", $query_id)->get("ENTTYPE");
-#				foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
-#					my $mention_span = $justification->tostring();
-#					my $mention_modality = $justification->get("MODALITY");
-#					my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
-#					@docids = grep {$_ eq $source_docid} @docids if $source_docid;
-#					$logger->record_problem("ACROSS_DOCUMENT_JUSTIFICATION", $source_docid, $justification->get("WHERE"))
-#						unless scalar @docids;
-#					foreach my $docid(@docids) {
-#						my $value = join("\t", ($query_id, $enttype, "<ID>", $mention_modality, $docid, $mention_span, "NIL", "NIL"));
-#						my $key = &main::generate_uuid_from_string($value);
-#						if($pooled_responses->exists($key)) {
-#							my $where = $justification->get("WHERE");
-#							$logger->record_debug_information("DUPLICATE_IN_POOLED_RESPONSE", "\n$value\n", $where);
-#						}
-#						else {
-#							$pooled_responses->add($value, $key);
-#						}
-#					}
-#				}
-#			}
-#		}
-#		elsif($query_type eq "graph_query") {
-#			
-#		}
-#		else {
-#			# TODO: unknown query tyoe - throw an exception
-#		}
-#	}
-#}
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {

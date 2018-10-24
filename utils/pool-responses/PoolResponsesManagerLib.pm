@@ -2386,7 +2386,7 @@ sub new {
 		DOCID_MAPPINGS => $docid_mappings, 		
 		LDC_QUERIES => $ldc_queries,
 		QUERIES => $queries,
-		QUERY_TYPE => $queries->get("QUERY_TYPE"),
+		QUERYTYPE => $queries->get("QUERYTYPE"),
 		RESPONSES_DTD_FILENAME => $responses_dtd_file,
 		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
 		RESPONSES_POOL => undef,
@@ -2406,7 +2406,7 @@ sub load {
 	my $ldc_queries = $self->get("LDC_QUERIES");
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
-	my $query_type = $self->get("QUERY_TYPE");
+	my $query_type = $self->get("QUERYTYPE");
 	my $responses_pool;
 	$responses_pool = ClassResponsesPool->new($logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "class_query");
 	$responses_pool = ZeroHopResponsesPool->new($logger, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "zerohop_query");
@@ -2435,7 +2435,7 @@ sub new {
 		DOCID_MAPPINGS => $docid_mappings, 		
 		LDC_QUERIES => $ldc_queries,
 		QUERIES => $queries,
-		QUERY_TYPE => $queries->get("QUERY_TYPE"),
+		QUERYTYPE => $queries->get("QUERYTYPE"),
 		RESPONSES_DTD_FILENAME => $responses_dtd_file,
 		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
 		RESPONSES_POOL => undef,
@@ -2455,8 +2455,8 @@ sub load {
 	my $ldc_queries = $self->get("LDC_QUERIES");
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
-	my $query_type = $self->get("QUERY_TYPE");
-	my $responses_pool = Container->new($logger);
+	my $query_type = $self->get("QUERYTYPE");
+	my $entire_pool = Container->new($logger);
 	
 	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
 	my $entries = $filehandler->get("ENTRIES");
@@ -2465,20 +2465,34 @@ sub load {
 		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
 		foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
 			my $query_id = $response->get("QUERYID");
+			my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
+				if $ldc_queries->get("QUERY", $query_id);
+			next unless $kb_id;
+			my $kbid_pooled_responses = $entire_pool->get("BY_KEY", $kb_id);
 			my $enttype = $queries->get("QUERY", $query_id)->get("ENTTYPE");
 			my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
 			my $scope = $response->get("SCOPE");
 			foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
 				my $mention_span = $justification->tostring();
 				my $mention_modality = $justification->get("MODALITY");
+				my $confidence = $justification->get("CONFIDENCE");
 				my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
 				@docids = grep {$_ eq $source_docid} @docids if $source_docid;
-				
+				foreach my $docid(@docids) {
+					my $value = join("\t", ($query_id, $enttype, "<ID>", $mention_modality, $docid, $mention_span, "NIL", "NIL"));
+					my $key = &main::generate_uuid_from_string($value);
+					if($kbid_pooled_responses->exists($key)) {
+						my $where = $justification->get("WHERE");
+						$logger->record_debug_information("DUPLICATE_IN_POOLED_RESPONSE", "\n$value\n", $where);
+					}
+					else {
+						$kbid_pooled_responses->add($value, $key);
+					}
+				}
 			}
 		}
 	}
-	
-	$self->set("RESPONSES_POOL", $responses_pool);
+	$self->set("RESPONSES_POOL", $entire_pool);
 }
 
 sub write_output {
@@ -3195,7 +3209,7 @@ sub load {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
-		my $docid = $entry->get("DOCID");
+		my $docid = $entry->get("rootid");
 		$self->add("KEY", $docid);
 	}
 	$filehandler->cleanup();
