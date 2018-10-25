@@ -28,6 +28,14 @@ my $version = "2018.0.0";
 my $program_output = *STDOUT{IO};
 my $error_output = *STDERR{IO};
 
+# Subroutines
+
+sub get_docid {
+	my ($line) = @_;
+	my @elements = split(/\t/, $line);
+	$elements[4];
+}
+
 ##################################################################################### 
 # Runtime switches and main program
 ##################################################################################### 
@@ -44,7 +52,9 @@ $switches->put('prefix', "kits");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addVarSwitch('m', "How large can the kit be? This value is provided by LDC.");
 $switches->put('m', "200");
+$switches->addParam("uid_info", "required", "uid_info.tab file from LDC");
 $switches->addParam("pool", "required", "File containing pool");
+$switches->addParam("kit_language_map", "required", "Output file containing kit to language mapping");
 $switches->addParam("output", "required", "Kits output directory");
 
 $switches->process(@ARGV);
@@ -62,19 +72,35 @@ $logger->NIST_die("$output_dir already exists")
 		if(-e $output_dir);
 system("mkdir $output_dir");
 
+my $kit_language_map_filename = $switches->get("kit_language_map");
+$logger->NIST_die("$kit_language_map_filename already exists")
+	if(-e $kit_language_map_filename);
+open(my $kit_language_map_output, ">:utf8", $kit_language_map_filename)
+	or $logger->NIST_die("Could not open $kit_language_map_filename: $!");
+
+my %docid_to_languages;
+my $uid_info_filename = $switches->get("uid_info");
+$logger->NIST_die("$uid_info_filename does not exist") unless -e $uid_info_filename;
+my $filehandler = FileHandler->new($logger, $uid_info_filename);
+foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
+	my $docid = $entry->get("uid");
+	my $languages = $entry->get("lang_id");
+	$docid_to_languages{$docid}{$languages} = 1;
+}
+
 my $max_kit_size = $switches->get("m");
 my $prefix = $switches->get("prefix");
 
 my $pool = Pool->new($logger, $pool_filename);
 
-
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
+	my %languages_in_kit;
 	foreach my $kb_id($pool->get("ALL_KEYS")) {
  		my $kit = $pool->get("BY_KEY", $kb_id);
  		my $total_entries = scalar($kit->toarray());
  		my $total_kits = ceil($total_entries/$max_kit_size);
- 		my @kit_entries = $kit->toarray();
+		my @kit_entries = sort {get_docid($a) eq get_docid($b)} $kit->toarray();
  		my $linenum = 0;
  		for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
  			my $output_filename = "$output_dir/kit_$kb_id\_$kit_num\_$total_kits\.tab";
@@ -84,10 +110,24 @@ unless($num_errors+$num_warnings) {
  				my $output_line = $kit_entries[$i];
  				$output_line =~ s/<ID>/$linenum/;
  				print $program_output "$output_line\n";
+				# collect the languages in this kit partition
+				my @entries = split(/\t/, $output_line);
+				my $docid = $entries[4];
+				foreach my $languages_in_doc(keys %{$docid_to_languages{$docid}}) {
+					foreach my $language_in_doc(split(/,/, $languages_in_doc)) {
+						$languages_in_kit{$kb_id}{$language_in_doc} = 1;
+					}
+				}
  			}
  			close($program_output);
  		}
 	}
+	foreach my $kb_id(keys %languages_in_kit) {
+		my @languages = sort keys %{$languages_in_kit{$kb_id}};
+		my $languages = join(",", @languages);
+		print $kit_language_map_output "$kb_id\t$languages\n";
+	}
+	close($kit_language_map_output);
 }
 
 unless($switches->get('error_file') eq "STDERR") {
