@@ -2462,14 +2462,13 @@ package ResponsesPool;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
 	my $self = {
 		CLASS => 'ResponsesPool',
 		CORE_DOCS => $core_docs,
 		DOCID_MAPPINGS => $docid_mappings,
 		K => $k,
 		LDC_QUERIES => $ldc_queries,
-		MAX_KIT_SIZE => $max_kit_size,
 		QUERIES => $queries,
 		QUERYTYPE => $queries->get("QUERYTYPE"),
 		RESPONSES_DTD_FILENAME => $responses_dtd_file,
@@ -2488,16 +2487,15 @@ sub load {
 	my $core_docs = $self->get("CORE_DOCS");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
 	my $k = $self->get("K");
-	my $max_kit_size = $self->get("MAX_KIT_SIZE");
 	my $queries = $self->get("QUERIES");
 	my $ldc_queries = $self->get("LDC_QUERIES");
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
 	my $query_type = $self->get("QUERYTYPE");
 	my $responses_pool;
-	$responses_pool = ClassResponsesPool->new($logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "class_query");
-	$responses_pool = ZeroHopResponsesPool->new($logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "zerohop_query");
-	$responses_pool = GraphResponsesPool->new($logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "graph_query");
+	$responses_pool = ClassResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "class_query");
+	$responses_pool = ZeroHopResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "zerohop_query");
+	$responses_pool = GraphResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "graph_query");
 	$self->set("RESPONSES_POOL", $responses_pool);
 }
 
@@ -2517,7 +2515,7 @@ use parent -norequire, 'Super';
 use POSIX;
 
 sub new {
-	my ($class, $logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
 	my $self = {
 		CLASS => 'ZeroHopResponsesPool',
 		CORE_DOCS => $core_docs,
@@ -2525,7 +2523,6 @@ sub new {
 		ENTIRE_POOL => $entire_pool,
 		K => $k,
 		LDC_QUERIES => $ldc_queries,
-		MAX_KIT_SIZE => $max_kit_size,
 		QUERIES => $queries,
 		QUERYTYPE => $queries->get("QUERYTYPE"),
 		RESPONSES_DTD_FILENAME => $responses_dtd_file,
@@ -2544,7 +2541,6 @@ sub load {
 	my $core_docs = $self->get("CORE_DOCS");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
 	my $k = $self->get("K");
-	my $max_kit_size = $self->get("MAX_KIT_SIZE");
 	my $queries = $self->get("QUERIES");
 	my $ldc_queries = $self->get("LDC_QUERIES");
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");

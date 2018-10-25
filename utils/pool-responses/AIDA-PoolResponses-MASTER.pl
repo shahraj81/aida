@@ -76,8 +76,6 @@ $switches->addVarSwitch('error_file', "Specify a file to which error output shou
 $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addConstantSwitch("increment", "true", "If output file exists, do you wish to use it to build the pool incrementally?");
-$switches->addVarSwitch('maxkitsize', "How large can the kit be? This value is provided by LDC.");
-$switches->put('maxkitsize', "200");
 $switches->addVarSwitch("ldc_queries", "XML query file sent to LDC? Required for zerohop queries, optional otherwise");
 $switches->put('ldc_queries', "none");
 $switches->addVarSwitch("k", "Top k responses to be pooled from within each document");
@@ -136,7 +134,6 @@ open($program_output, ">:utf8", $output_filename)
 my $pooled_responses;
 
 my $k = $switches->get("k");
-my $max_kit_size = $switches->get("maxkitsize");
 my $coredocs_file = $switches->get("coredocs");
 my $docid_mappings_file = $switches->get("docid_mappings");
 my $queries_dtd_file = $switches->get("queries_dtd");
@@ -152,7 +149,7 @@ my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 my $queries = QuerySet->new($logger, $queries_dtd_file, $queries_xml_file);
 my $ldc_queries = QuerySet->new($logger, $queries_dtd_file, $ldc_queries_xml_file);
 
-$pooled_responses = ResponsesPool->new($logger, $k, $max_kit_size, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $existing_pool);
+$pooled_responses = ResponsesPool->new($logger, $k, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $existing_pool);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
