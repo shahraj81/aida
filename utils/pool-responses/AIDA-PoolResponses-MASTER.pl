@@ -75,6 +75,7 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
+$switches->addConstantSwitch("-increment", "true", "If output file exists, do you wish to use it to build the pool incrementally?");
 $switches->addVarSwitch('maxkitsize', "How large can the kit be? This value is provided by LDC.");
 $switches->put('maxkitsize', "200");
 $switches->addVarSwitch("ldc_queries", "XML query file sent to LDC? Required for zerohop queries, optional otherwise");
@@ -115,21 +116,21 @@ foreach my $entry($entries->toarray()) {
 }
 
 my $output_filename = $switches->get("output");
-$logger->NIST_die("$output_filename already exists")
-	if(-e $output_filename);
-
-if ($output_filename eq 'none') {
-  undef $program_output;
-}
-elsif (lc $output_filename eq 'stdout') {
-  $program_output = *STDOUT{IO};
-}
-elsif (lc $output_filename eq 'stderr') {
-  $program_output = *STDERR{IO};
+my $incremental_build = $switches->get("increment");
+my $existing_pool;
+unless($incremental_build) {
+	$logger->NIST_die("$output_filename already exists")
+		if(-e $output_filename);
 }
 else {
-  open($program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
+	if(-e $output_filename) {
+		$existing_pool = Pool->new($logger, $output_filename);
+		system("rm $output_filename");
+	}
 }
+
+open($program_output, ">:utf8", $output_filename)
+	or $logger->NIST_die("Could not open $output_filename: $!");
 	
 # Container to store pooled responses
 my $pooled_responses;
@@ -151,7 +152,7 @@ my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 my $queries = QuerySet->new($logger, $queries_dtd_file, $queries_xml_file);
 my $ldc_queries = QuerySet->new($logger, $queries_dtd_file, $ldc_queries_xml_file);
 
-$pooled_responses = ResponsesPool->new($logger, $k, $max_kit_size, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile);
+$pooled_responses = ResponsesPool->new($logger, $k, $max_kit_size, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $existing_pool);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {

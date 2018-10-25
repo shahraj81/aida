@@ -2378,12 +2378,27 @@ package Pool;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $logger) = @_;
+  my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'Kit');
   $self->{CLASS} = 'Pool';
   $self->{LOGGER} = $logger;
   bless($self, $class);
+  $self->load($filename) if $filename;
   $self;
+}
+
+sub load {
+	my ($self, $filename) = @_;
+	my $logger = $self->get("LOGGER");
+	my $filehandler = FileHandler->new($logger, $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $kb_id = $entry->get("KBID");
+		my $kbid_kit = $self->get("BY_KEY", $kb_id);
+		my $value = $entry->get("LINE");
+		my $key = &main::generate_uuid_from_string($value);
+		$kbid_kit->add($value, $key) unless $self->exists($key);
+	}
 }
 
 #####################################################################################
@@ -2502,11 +2517,12 @@ use parent -norequire, 'Super';
 use POSIX;
 
 sub new {
-	my ($class, $logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
+	my ($class, $logger, $k, $max_kit_size, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
 	my $self = {
 		CLASS => 'ZeroHopResponsesPool',
 		CORE_DOCS => $core_docs,
-		DOCID_MAPPINGS => $docid_mappings, 		
+		DOCID_MAPPINGS => $docid_mappings,
+		ENTIRE_POOL => $entire_pool,
 		K => $k,
 		LDC_QUERIES => $ldc_queries,
 		MAX_KIT_SIZE => $max_kit_size,
@@ -2534,7 +2550,7 @@ sub load {
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
 	my $query_type = $self->get("QUERYTYPE");
-	my $entire_pool = Pool->new($logger);
+	my $entire_pool = $self->get("ENTIRE_POOL") or Pool->new($logger);
 	
 	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
 	my $entries = $filehandler->get("ENTRIES");
