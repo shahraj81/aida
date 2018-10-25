@@ -2611,6 +2611,8 @@ sub load {
 sub write_output {
 	my ($self, $program_output) = @_;
 	my $pool = $self->get("RESPONSES_POOL");
+	my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+	print "$header\n";
 	foreach my $kb_id($pool->get("ALL_KEYS")) {
 		my $kit = $pool->get("BY_KEY", $kb_id);
 		foreach my $output_line($kit->toarray()) {
