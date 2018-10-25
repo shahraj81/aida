@@ -28,47 +28,12 @@ my $version = "2018.0.0";
 my $program_output = *STDOUT{IO};
 my $error_output = *STDERR{IO};
 
-our %scope = (
-  withindoc => {
-    DESCRIPTION => "All justifications in a response file should come from a single corpus document",
-  },
-  withincorpus => {
-    DESCRIPTION => "All justifications in a response file should come from a corpus document",
-  },
-  anywhere => {
-    DESCRIPTION => "Justifications may come from anywhere.",
-  });
-
-our %type = (
-  class => {
-  	QUERIES_DTD_PARAMETER => "CLASS_QUERIES_DTD",
-  	RESPONSES_DTD_PARAMETER => "CLASS_RESPONSES_DTD",
-  	QUERIES_XML_PARAMETER => "CLASS_QUERIES_XML",
-  	RESPONSES_XML_PARAMETER => "CLASS_RESPONSES_XML",
-    DESCRIPTION => "Class query and response",
-  },
-  zerohop => {
-  	QUERIES_DTD_PARAMETER => "ZEROHOP_QUERIES_DTD",
-  	RESPONSES_DTD_PARAMETER => "ZEROHOP_RESPONSES_DTD",
-  	QUERIES_XML_PARAMETER => "ZEROHOP_QUERIES_XML",
-  	RESPONSES_XML_PARAMETER => "ZEROHOP_RESPONSES_XML",
-    DESCRIPTION => "Zerohop query and response",
-  },
-  graph => {
-  	QUERIES_DTD_PARAMETER => "GRAPH_QUERIES_DTD",
-  	RESPONSES_DTD_PARAMETER => "GRAPH_RESPONSES_DTD",
-  	QUERIES_XML_PARAMETER => "GRAPH_QUERIES_XML",
-  	RESPONSES_XML_PARAMETER => "GRAPH_RESPONSES_XML",
-    DESCRIPTION => "Graph query and response",
-  });
-
 ##################################################################################### 
 # Runtime switches and main program
 ##################################################################################### 
 
 # Handle run-time switches
 my $switches = SwitchProcessor->new($0, "Pool XML response files",
-												"-types is a colon-separated list drawn from:\n" . &main::build_documentation(\%type) .
 				    						"");
 $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
