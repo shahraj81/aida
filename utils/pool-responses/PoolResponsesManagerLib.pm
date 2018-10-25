@@ -2462,13 +2462,14 @@ package ResponsesPool;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) = @_;
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) = @_;
 	my $self = {
 		CLASS => 'ResponsesPool',
 		CORE_DOCS => $core_docs,
 		DOCID_MAPPINGS => $docid_mappings,
 		K => $k,
 		LDC_QUERIES => $ldc_queries,
+		PREVIOUS_POOL => $previous_pool,
 		QUERIES => $queries,
 		QUERYTYPE => $queries->get("QUERYTYPE"),
 		RESPONSES_DTD_FILENAME => $responses_dtd_file,
@@ -2492,10 +2493,11 @@ sub load {
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
 	my $query_type = $self->get("QUERYTYPE");
+	my $previous_pool = $self->get("PREVIOUS_POOL");
 	my $responses_pool;
-	$responses_pool = ClassResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "class_query");
-	$responses_pool = ZeroHopResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "zerohop_query");
-	$responses_pool = GraphResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile) if($query_type eq "graph_query");
+	$responses_pool = ClassResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "class_query");
+	$responses_pool = ZeroHopResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "zerohop_query");
+	$responses_pool = GraphResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "graph_query");
 	$self->set("RESPONSES_POOL", $responses_pool);
 }
 
