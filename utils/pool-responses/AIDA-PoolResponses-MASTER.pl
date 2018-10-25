@@ -75,7 +75,7 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
-$switches->addConstantSwitch("-increment", "true", "If output file exists, do you wish to use it to build the pool incrementally?");
+$switches->addConstantSwitch("increment", "true", "If output file exists, do you wish to use it to build the pool incrementally?");
 $switches->addVarSwitch('maxkitsize', "How large can the kit be? This value is provided by LDC.");
 $switches->put('maxkitsize', "200");
 $switches->addVarSwitch("ldc_queries", "XML query file sent to LDC? Required for zerohop queries, optional otherwise");

@@ -2550,13 +2550,14 @@ sub load {
 	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
 	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
 	my $query_type = $self->get("QUERYTYPE");
-	my $entire_pool = $self->get("ENTIRE_POOL") or Pool->new($logger);
+	my $entire_pool = $self->get("ENTIRE_POOL");
+	$entire_pool = Pool->new($logger) if $entire_pool eq "nil";
 	
 	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
 		my $responses_xml_file = $entry->get("filename");
-		print "--processing $responses_xml_file\n";
+		print STDERR "--processing $responses_xml_file\n";
 		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
 		foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
 			my $query_id = $response->get("QUERYID");
