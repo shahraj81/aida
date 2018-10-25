@@ -2487,8 +2487,8 @@ sub load {
 }
 
 sub write_output {
-	my ($self, $output_dir) = @_;
-	$self->get("RESPONSES_POOL")->write_output($output_dir);
+	my ($self, $program_output) = @_;
+	$self->get("RESPONSES_POOL")->write_output($program_output);
 }
 
 #####################################################################################
@@ -2593,27 +2593,12 @@ sub load {
 }
 
 sub write_output {
-	my ($self, $output_dir) = @_;
+	my ($self, $program_output) = @_;
 	my $pool = $self->get("RESPONSES_POOL");
-	system("mkdir $output_dir");
 	foreach my $kb_id($pool->get("ALL_KEYS")) {
 		my $kit = $pool->get("BY_KEY", $kb_id);
-		my $max_kit_size = $self->get("MAX_KIT_SIZE");
-		my $total_entries = scalar($kit->toarray());
-		my $total_kits = ceil($total_entries/$max_kit_size);
-		my @kit_entries = $kit->toarray();
-		my $linenum = 0;
-		for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
-			my $prefix = $self->get("OUTPUT_FILENAME_PREFIX");
-			my $output_filename = "$output_dir/kit_$kb_id\_$kit_num\_$total_kits\.tab";
-			open(my $program_output, ">:utf8", $output_filename) or $self->get("LOGGER")->NIST_die("Could not open $output_filename: $!");
-			for(my $i=($kit_num-1)*$max_kit_size; $i<$kit_num*$max_kit_size && $i<$total_entries; $i++) {
-				$linenum++;
-				my $output_line = $kit_entries[$i];
-				$output_line =~ s/<ID>/$linenum/;
-				print $program_output "$output_line\n";
-			}
-			close($program_output);
+		foreach my $output_line($kit->toarray()) {
+			print $program_output "$output_line\n";
 		}
 	}
 }

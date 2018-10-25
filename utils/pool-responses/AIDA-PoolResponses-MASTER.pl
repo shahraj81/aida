@@ -87,7 +87,7 @@ $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XM
 $switches->addParam("queries_xml", "required", "XML file containing queries");
 $switches->addParam("responses_dtd", "required", "DTD file corresponding to the XML file containing response");
 $switches->addParam("responses_xml", "required", "File containing path to XML response files being pooled");
-$switches->addParam("output", "required", "Output directory");
+$switches->addParam("output", "required", "Output file");
 
 $switches->process(@ARGV);
 
@@ -114,9 +114,22 @@ foreach my $entry($entries->toarray()) {
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
 
-my $output_dir = $switches->get("output");
-$logger->NIST_die("$output_dir already exists")
-	if(-e $output_dir);
+my $output_filename = $switches->get("output");
+$logger->NIST_die("$output_filename already exists")
+	if(-e $output_filename);
+
+if ($output_filename eq 'none') {
+  undef $program_output;
+}
+elsif (lc $output_filename eq 'stdout') {
+  $program_output = *STDOUT{IO};
+}
+elsif (lc $output_filename eq 'stderr') {
+  $program_output = *STDERR{IO};
+}
+else {
+  open($program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
+}
 	
 # Container to store pooled responses
 my $pooled_responses;
@@ -142,7 +155,7 @@ $pooled_responses = ResponsesPool->new($logger, $k, $max_kit_size, $coredocs, $d
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
-	$pooled_responses->write_output($output_dir);
+	$pooled_responses->write_output($program_output);
 }
 
 unless($switches->get('error_file') eq "STDERR") {
