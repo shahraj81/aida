@@ -2514,8 +2514,6 @@ package ZeroHopResponsesPool;
 
 use parent -norequire, 'Super';
 
-use POSIX;
-
 sub new {
 	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
 	my $self = {
