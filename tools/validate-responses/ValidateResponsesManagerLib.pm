@@ -161,6 +161,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_MODALITY                        ERROR          Modality corresponding to encoding format %s not found
+  MISSING_XML_ELEMENT                     FATAL_ERROR    Missing %s
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
@@ -1280,7 +1281,10 @@ sub get_CHILD {
 
 	return $self if($self->get("NAME") eq $childname);
 	return $self->get("ELEMENT")->get("CHILD", $childname) if ref $self->get("ELEMENT");
-	return unless ref $self->get("ELEMENT");
+	unless (ref $self->get("ELEMENT")) {
+		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+		$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", $childname, $where);
+	}
 }
 
 sub tostring {
@@ -1325,6 +1329,10 @@ sub get_CHILD {
 	foreach my $xml_element($self->toarray()){
 		$child = $xml_element->get("CHILD", $childname);
 		last if $child;
+	}
+	unless($child) {
+		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+		$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", $childname, $where);
 	}
 	$child;
 }
