@@ -1281,10 +1281,7 @@ sub get_CHILD {
 
 	return $self if($self->get("NAME") eq $childname);
 	return $self->get("ELEMENT")->get("CHILD", $childname) if ref $self->get("ELEMENT");
-	unless (ref $self->get("ELEMENT")) {
-		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-		$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", $childname, $where);
-	}
+	return unless ref $self->get("ELEMENT");
 }
 
 sub tostring {
@@ -1329,10 +1326,6 @@ sub get_CHILD {
 	foreach my $xml_element($self->toarray()){
 		$child = $xml_element->get("CHILD", $childname);
 		last if $child;
-	}
-	unless($child) {
-		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-		$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", $childname, $where);
 	}
 	$child;
 }
@@ -1701,6 +1694,10 @@ sub load {
 	my $logger = $self->get("LOGGER");
 	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "QUERY_ID");
 	$self->set("QUERYID", $query_id);
+	unless($self->get("XML_OBJECT")->get("CHILD", "system_nodeid")) {
+		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+		$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", "system_nodeid", $where);
+	}
 	my $system_nodeid = $self->get("XML_OBJECT")->get("CHILD", "system_nodeid")->get("ELEMENT");
 	$self->set("SYSTEM_NODEID", $system_nodeid);
 	my $justifications = Container->new($logger, "Justification");
