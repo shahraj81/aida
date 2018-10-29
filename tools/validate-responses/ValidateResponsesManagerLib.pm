@@ -161,7 +161,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_MODALITY                        ERROR          Modality corresponding to encoding format %s not found
-  MISSING_XML_ELEMENT                     FATAL_ERROR    Missing %s
+  MISSING_XML_ELEMENT                     FATAL_ERROR    Missing %s in %s
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
@@ -1696,7 +1696,7 @@ sub load {
 	$self->set("QUERYID", $query_id);
 	unless($self->get("XML_OBJECT")->get("CHILD", "system_nodeid")) {
 		my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-		$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", "system_nodeid", $where);
+		$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", "system_nodeid", $self->get("XML_OBJECT")->tostring(), $where);
 	}
 	my $system_nodeid = $self->get("XML_OBJECT")->get("CHILD", "system_nodeid")->get("ELEMENT");
 	$self->set("SYSTEM_NODEID", $system_nodeid);
@@ -1705,6 +1705,11 @@ sub load {
 	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("ELEMENT")->toarray()){
 		next if $justification_xml_object->get("NAME") eq "system_nodeid";
 		$i++;
+		unless($justification_xml_object->get("CHILD", "doceid")) {
+			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+			my $xml_string = $justification_xml_object->tostring();
+			$self->get("LOGGER")->record_problem("MISSING_XML_ELEMENT", "doceid", $xml_string, $where);
+		}
 		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
 		my $justification_type = uc $justification_xml_object->get("NAME");
 		my $where = $justification_xml_object->get("WHERE");
@@ -2750,8 +2755,10 @@ sub is_valid {
 			$docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
 		my $de_type = $document_element->get("TYPE");
 		my $de_modality = $document_element->get("MODALITY");
-		$logger->record_problem("UNEXPECTED_JUSTIFICATION_MODALITY", $justification_modality, $doceid, $de_modality, $where)
-			unless $de_modality eq $justification_modality;
+		unless ($de_modality eq $justification_modality) {
+			$is_valid = 0;
+			$logger->record_problem("UNEXPECTED_JUSTIFICATION_MODALITY", $justification_modality, $doceid, $de_modality, $where);			
+		}
 	}
 	if($type eq "TEXT_JUSTIFICATION" || $type eq "AUDIO_JUSTIFICATION") {
 		if($start =~ /^-?\d+$/) {
