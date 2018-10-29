@@ -2715,6 +2715,8 @@ package Justification;
 
 use parent -norequire, 'Super';
 
+use Scalar::Util qw(looks_like_number);
+
 sub new {
   my ($class, $logger, $justification_type, $doceid, $keyframeid, $start, $end, 
   		$enttype, $confidence, $xml_object, $where) = @_;
@@ -2742,7 +2744,13 @@ sub is_valid {
 	my $is_valid = 1;
 	# Check if confidence is valid
 	if(defined $self->get("CONFIDENCE")) {
-		if($self->get("CONFIDENCE") < 0 || $self->get("CONFIDENCE") > 1) {
+		if(looks_like_number($self->get("CONFIDENCE"))) {
+			if($self->get("CONFIDENCE") < 0 || $self->get("CONFIDENCE") > 1) {
+				$logger->record_problem("INVALID_CONFIDENCE", $self->get("CONFIDENCE"), $where);
+				$is_valid = 0;
+			}
+		}
+		else{
 			$logger->record_problem("INVALID_CONFIDENCE", $self->get("CONFIDENCE"), $where);
 			$is_valid = 0;
 		}
