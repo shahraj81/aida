@@ -73,7 +73,7 @@ $switches->put('prefix', "kits");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addVarSwitch('m', "How large can the kit be? This value is provided by LDC.");
 $switches->put('m', "200");
-$switches->addParam("uid_info", "required", "uid_info.tab file from LDC");
+$switches->addParam("doc_lang_topic", "required", "doc_lang_topic.tab file from LDC");
 $switches->addParam("pool", "required", "File containing pool");
 $switches->addParam("kit_language_map", "required", "Output file containing kit to language mapping");
 $switches->addParam("output", "required", "Kits output directory");
@@ -100,13 +100,13 @@ open(my $kit_language_map_output, ">:utf8", $kit_language_map_filename)
 	or $logger->NIST_die("Could not open $kit_language_map_filename: $!");
 
 my %docid_to_languages;
-my $uid_info_filename = $switches->get("uid_info");
-$logger->NIST_die("$uid_info_filename does not exist") unless -e $uid_info_filename;
-my $filehandler = FileHandler->new($logger, $uid_info_filename);
+my $doc_lang_topic_filename = $switches->get("doc_lang_topic");
+$logger->NIST_die("$doc_lang_topic_filename does not exist") unless -e $doc_lang_topic_filename;
+my $filehandler = FileHandler->new($logger, $doc_lang_topic_filename);
 foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
-	my $docid = $entry->get("uid");
-	my $languages = $entry->get("lang_id");
-	$docid_to_languages{$docid}{$languages} = 1;
+	my $docid = $entry->get("root_id");
+	my $language = $entry->get("language");
+	$docid_to_languages{$docid}{$language} = 1;
 }
 
 my $max_kit_size = $switches->get("m");
