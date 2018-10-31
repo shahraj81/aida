@@ -136,17 +136,17 @@ unless($num_errors+$num_warnings) {
 				my $docid = $entries[4];
 				foreach my $languages_in_doc(keys %{$docid_to_languages{$docid}}) {
 					foreach my $language_in_doc(split(/,/, $languages_in_doc)) {
-						$languages_in_kit{$kb_id}{$language_in_doc} = 1;
+						$languages_in_kit{$output_filename}{$language_in_doc} = 1;
 					}
 				}
  			}
  			close($program_output);
  		}
 	}
-	foreach my $kb_id(keys %languages_in_kit) {
-		my @languages = sort keys %{$languages_in_kit{$kb_id}};
+	foreach my $output_filename(keys %languages_in_kit) {
+		my @languages = sort keys %{$languages_in_kit{$output_filename}};
 		my $languages = join(",", @languages);
-		print $kit_language_map_output "$kb_id\t$languages\n";
+		print $kit_language_map_output "$output_filename\t$languages\n";
 	}
 	close($kit_language_map_output);
 }
