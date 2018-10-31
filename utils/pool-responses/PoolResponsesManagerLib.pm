@@ -2563,6 +2563,8 @@ sub load {
 			$kb_id =~ s/^\?//;
 			my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
 			my $enttype = $queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("ENTTYPE");
+			# Making the enttype NIL as desired by LDC
+			$enttype = "NIL";
 			my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
 			my $scope = $response->get("SCOPE");
 			my %kit_entries_by_docids;
