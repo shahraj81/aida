@@ -2573,6 +2573,7 @@ sub load {
 				my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
 				@docids = grep {$_ eq $source_docid} @docids if $source_docid;
 				foreach my $docid(@docids) {
+					next unless $core_docs->exists($docid);
 					my $kit_entry = KitEntry->new($logger);
 					$kit_entry->set("TYPE", $query_type);
 					$kit_entry->set("KB_ID", $kb_id);
@@ -2585,17 +2586,16 @@ sub load {
 					$kit_entry->set("LABEL_2", "NIL");
 					$kit_entry->set("CONFIDENCE", $confidence);
 					my $key = &main::generate_uuid_from_string($kit_entry->tostring());
-					$kit_entries_by_docids{$docid}{$key} = $kit_entry;
+					$kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
 				}
 			}
-			foreach my $docid (keys %kit_entries_by_docids) {
-				next unless $core_docs->get("BY_KEY", $docid);
+			foreach my $docid_modality (keys %kit_entries_by_docids) {
 				my $i = 0;
-				foreach my $key(sort {$kit_entries_by_docids{$docid}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid}{$a}->get("CONFIDENCE")} 
-										keys %{$kit_entries_by_docids{$docid}}) {
+				foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
+										keys %{$kit_entries_by_docids{$docid_modality}}) {
 					$i++;
 					last if $i > $k;
-					my $kit_entry = $kit_entries_by_docids{$docid}{$key};
+					my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
 					my $value = $kit_entry->tostring();
 					$kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
 				}
