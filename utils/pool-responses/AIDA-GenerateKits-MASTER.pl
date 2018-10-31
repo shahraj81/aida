@@ -30,10 +30,31 @@ my $error_output = *STDERR{IO};
 
 # Subroutines
 
-sub get_docid {
-	my ($line) = @_;
-	my @elements = split(/\t/, $line);
-	$elements[4];
+sub custom_sort {  
+  my @a_elements = split(/\t/, $a);
+  my @b_elements = split(/\t/, $b);
+  my $a_docid = $a_elements[4];
+  my $b_docid = $b_elements[4];
+  my ($a_doceid, $a_shot_num, $a_x1, $a_y1, $a_x2, $a_y2) = get_span_fields($a_elements[5]);
+  my ($b_doceid, $b_shot_num, $b_x1, $b_y1, $b_x2, $b_y2) = get_span_fields($b_elements[5]);
+  ($a_docid cmp $b_docid ||
+  $a_doceid cmp $b_doceid ||
+  $a_shot_num <=> $b_shot_num ||
+  $a_x1 <=> $b_x1 ||
+  $a_y1 <=> $b_y1 ||
+  $a_x1 <=> $b_x1 ||
+  $a_y1 <=> $b_y1);
+}
+
+sub get_span_fields {
+	my ($span) = @_;
+	$span =~ /^(.*?)\:\((\d+)\,(\d+)\)\-\((\d+)\,(\d+)\)$/;
+	my ($doceid, $x1, $y1, $x2, $y2) = ($1, $2, $3, $4, $5);
+	my $shot_num = 0;
+	if($doceid =~ /^(.*?)\_(\d+)$/) {
+		($doceid, $shot_num) = ($1, $2);
+	}
+	($doceid, $shot_num, $x1, $y1, $x2, $y2)
 }
 
 ##################################################################################### 
@@ -100,7 +121,7 @@ unless($num_errors+$num_warnings) {
  		my $kit = $pool->get("BY_KEY", $kb_id);
  		my $total_entries = scalar($kit->toarray());
  		my $total_kits = ceil($total_entries/$max_kit_size);
-		my @kit_entries = sort {get_docid($a) eq get_docid($b)} $kit->toarray();
+		my @kit_entries = sort custom_sort $kit->toarray();
  		my $linenum = 0;
  		for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
  			my $output_filename = "$output_dir/kit_$kb_id\_$kit_num\_$total_kits\.tab";
