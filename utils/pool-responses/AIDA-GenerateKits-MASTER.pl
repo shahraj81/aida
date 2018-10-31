@@ -42,8 +42,8 @@ sub custom_sort {
   $a_shot_num <=> $b_shot_num ||
   $a_x1 <=> $b_x1 ||
   $a_y1 <=> $b_y1 ||
-  $a_x1 <=> $b_x1 ||
-  $a_y1 <=> $b_y1);
+  $a_x2 <=> $b_x2 ||
+  $a_y2 <=> $b_y2);
 }
 
 sub get_span_fields {
