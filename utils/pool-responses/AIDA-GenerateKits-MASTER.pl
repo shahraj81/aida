@@ -124,7 +124,7 @@ unless($num_errors+$num_warnings) {
 		my @kit_entries = sort custom_sort $kit->toarray();
  		my $linenum = 0;
  		for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
- 			my $output_filename = "$output_dir/kit_$kb_id\_$kit_num\_$total_kits\.tab";
+ 			my $output_filename = "$output_dir/$prefix\_$kb_id\_$kit_num\_$total_kits\.tab";
  			open(my $program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
  			for(my $i=($kit_num-1)*$max_kit_size; $i<$kit_num*$max_kit_size && $i<$total_entries; $i++) {
  				$linenum++;
