@@ -475,7 +475,7 @@ package FileHandler;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $filename) = @_;
+  my ($class, $logger, $filename, $header) = @_;
   my $self = {
     CLASS => 'FileHandler',
     FILENAME => $filename,
@@ -489,14 +489,21 @@ sub new {
 }
 
 sub load {
-  my ($self, $filename) = @_;
+  my ($self, $filename, $header) = @_;
 
+	my $line;
   my $linenum = 0;
 
   open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
-  my $line = <FILE>; 
-  $line =~ s/\r\n?//g;
-  chomp $line;
+
+  unless($header) {
+		$line = <FILE>;
+		$line =~ s/\r\n?//g;
+		chomp $line;
+  }
+  else {
+		$line = $header;
+  }
 
   $linenum++;
 
@@ -3333,6 +3340,213 @@ sub load {
 		$self->add("KEY", $docid);
 	}
 	$filehandler->cleanup();
+}
+
+#####################################################################################
+# SentenceBoundaries
+#####################################################################################
+
+package SentenceBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'Segments');
+  $self->{CLASS} = 'SentenceBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my ($doceid, $segment_id, $start_char, $end_char) =
+			map {$entries->get($_)} qw(doceid segment_id start_char end_char);
+		my $segments = $self->get("BY_KEY", $doceid);
+		my $sentence_boundary = $segments->get("BY_KEY", $segment_id);
+		$sentence_boundary->set("START_CHAR", $start_char);
+		$sentence_boundary->set("END_CHAR", $end_char);
+	}
+}
+
+#####################################################################################
+# Segments
+#####################################################################################
+
+package Segments;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'SentenceBoundary');
+  $self->{CLASS} = 'Segments';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# SentenceBoundary
+#####################################################################################
+
+package SentenceBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'SentenceBoundary',
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Assessments
+#####################################################################################
+
+package Assessments;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $kits_dir, $sentence_boundaries, $type) = @_;
+  my $self = {
+    CLASS => 'Assessments',
+    KITS_DIRECTORY => $kits_dir,
+    SENTENCE_BOUNDARIES => $sentence_boundaries,
+    ASSESSMENTS => undef,
+    TYPE => $type,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $type = $self->get("TYPE");
+	my $method = $self->can("load_$type");
+  return $method->($self) if $method;
+}
+
+sub load_zerohop {
+	my ($self) = @_;
+	my ($kits_dir, $sentence_boundaries, $logger) =
+		map {$self->get($_)} qw(KITS_DIRECTORY SENTENCE_BOUNDARIES LOGGER);
+	my $zerohop_assessments = ZeroHopAssessments->new($logger, $kits_dir, $sentence_boundaries);
+	$self->set("ASSESSMENTS", $zerohop_assessments);
+}
+
+sub toarray {
+	my ($self) = @_;
+	$self->get("ASSESSMENTS")->toarray();
+}
+
+sub tostring {
+	my ($self) = @_;
+	$self->get("ASSESSMENTS")->tostring();
+}
+
+#####################################################################################
+# ZeroHopAssessments
+#####################################################################################
+
+package ZeroHopAssessments;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'ZeroHopAssessments',
+    ASSESSMENTS => {},
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self->get_equivalence_classes();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $kits_dir = $self->get("KITS_DIRECTORY");
+	foreach my $filename(<$kits_dir>) {
+		my $header = "NODEID\tCLASS\tID\tMODALITY\tDOCID\tMENTION_SPAN\tC1\tC2";
+		my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
+		my $entries = $filehandler->get("ENTRIES");
+		foreach my $entry($entries->toarray()) {
+			my ($nodeid, $class, $id, $modality, $docid, $mention_span, $line)
+				= map {$entry->get($_)} qw(NODEID CLASS ID MODALITY DOCID MENTION_SPAN LINE);
+			my ($doceid) = $mention_span =~ /^(.*?):/;
+			$entry->set("DOCEID", $doceid);
+			$self->{ASSESSMENTS}{$nodeid}{$id} = $entry;
+		}
+	}
+}
+
+sub get_equivalence_classes {
+	my ($self) = @_;
+	my %next_equivalence_class;
+	foreach my $nodeid(keys %{$self->{ASSESSMENTS}}) {
+		unless ($next_equivalence_class{$nodeid}) {
+			$next_equivalence_class{$nodeid} = 1;
+		}
+		my @entries = values %{$self->{ASSESSMENTS}{$nodeid}};
+		for(my $i=0;  $i<=$#entries; $i++ ) {
+			next if $entries[$i]->get("FQECID");
+			my $fqecid = $nodeid . ":" . $next_equivalence_class{$nodeid};
+			$entries[$i]->set("FQECID", $fqecid);
+			$next_equivalence_class{$nodeid}++;
+			my $span1 = $entries[$i]->get("MENTION_SPAN");
+			for(my $j=$i+1; $j<=$#entries; $j++) {
+				my $span2 = $entries[$j]->get("MENTION_SPAN");
+				if(&check_overlap($span1, $span2)) {
+					$entries[$j]->set("FQECID", $fqecid);
+				}
+			}
+		}
+	}
+}
+
+sub check_overlap {
+	my ($span1, $span2) = @_;
+	my $retval = 0;
+	my ($de1, $sx1, $sy1, $ex1, $ey1) = $span1 =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+	my ($de2, $sx2, $sy2, $ex2, $ey2) = $span2 =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+	if($de1 eq $de2) {
+		$retval = 1 if($sx2 >= $sx1 && $sx2 <= $ex1 && $sy2 >= $sy1 && $sy2 <= $ey1);
+		$retval = 1 if($ex2 >= $sx1 && $ex2 <= $ex1 && $ey2 >= $sy1 && $ey2 <= $ey1);
+		$retval = 1 if($sx2 >= $sx1 && $sx2 <= $ex1 && $ey2 >= $sy1 && $ey2 <= $ey1);
+		$retval = 1 if($ex2 >= $sx1 && $ex2 <= $ex1 && $sy2 >= $sy1 && $sy2 <= $ey1);
+	}
+	$retval = 0;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $retval = "";
+	foreach my $nodeid(sort keys %{$self->{ASSESSMENTS}}) {
+		foreach my $id(sort {$a<=>$b} keys %{$self->{ASSESSMENTS}{$nodeid}}) {
+			my $line = $self->{ASSESSMENTS}{$nodeid}{$id}->get("LINE");
+			my $fqecid = $self->{ASSESSMENTS}{$nodeid}{$id}->get("FQECID");
+			$retval .= "$line\t$fqecid\n";
+		}
+	}
+	$retval;
 }
 
 ### BEGIN INCLUDE Utils
