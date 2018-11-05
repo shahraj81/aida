@@ -39,6 +39,7 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
+$switches->addParam("type", "required", "legal choices: class, zerohop, graph");
 $switches->addParam("boundaries", "required", "File containing sentence boundaries");
 $switches->addParam("kits", "required", "Assessed kits directory");
 $switches->addParam("output", "required", "the output QREL file");
@@ -61,9 +62,14 @@ $logger->NIST_die("$output_filename already exists")
 		if(-e $output_filename);
 open($program_output, ">:utf8", $output_filename)
 	or $logger->NIST_die("Could not open $output_filename: $!");
+	
+my %legal_types = map {$_=>1} qw(class zerohop graph);
+my $type = $switches->get("type");
+$logger->NIST_die("$type is not a legal value for type") 
+	unless($legal_types{$type});
 
 my $sentence_boundaries = SentenceBoundaries->new($logger, $boundaries_filename);
-my $assessments = Assessments->new($logger, $kits_dir, $sentence_boundaries);
+my $assessments = Assessments->new($logger, $kits_dir, $sentence_boundaries, $type);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {

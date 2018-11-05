@@ -484,7 +484,7 @@ sub new {
     LOGGER => $logger,
   };
   bless($self, $class);
-  $self->load($filename);
+  $self->load($filename, $header);
   $self;
 }
 
@@ -3469,10 +3469,12 @@ package ZeroHopAssessments;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger) = @_;
+  my ($class, $logger, $kits_dir, $sentence_boundaries) = @_;
   my $self = {
     CLASS => 'ZeroHopAssessments',
-    ASSESSMENTS => {},
+    KITS_DIRECTORY => $kits_dir,
+    SENTENCE_BOUNDARIES => $sentence_boundaries,
+    ASSESSMENTS => undef,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -3484,7 +3486,7 @@ sub new {
 sub load {
 	my ($self) = @_;
 	my $kits_dir = $self->get("KITS_DIRECTORY");
-	foreach my $filename(<$kits_dir>) {
+	foreach my $filename(<$kits_dir/*.tab>) {
 		my $header = "NODEID\tCLASS\tID\tMODALITY\tDOCID\tMENTION_SPAN\tC1\tC2";
 		my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
 		my $entries = $filehandler->get("ENTRIES");
@@ -3505,7 +3507,7 @@ sub get_equivalence_classes {
 		unless ($next_equivalence_class{$nodeid}) {
 			$next_equivalence_class{$nodeid} = 1;
 		}
-		my @entries = values %{$self->{ASSESSMENTS}{$nodeid}};
+		my @entries = sort {$a->get("ID") <=> $b->get("ID")} values %{$self->{ASSESSMENTS}{$nodeid}};
 		for(my $i=0;  $i<=$#entries; $i++ ) {
 			next if $entries[$i]->get("FQECID");
 			my $fqecid = $nodeid . ":" . $next_equivalence_class{$nodeid};
@@ -3533,12 +3535,12 @@ sub check_overlap {
 		$retval = 1 if($sx2 >= $sx1 && $sx2 <= $ex1 && $ey2 >= $sy1 && $ey2 <= $ey1);
 		$retval = 1 if($ex2 >= $sx1 && $ex2 <= $ex1 && $sy2 >= $sy1 && $sy2 <= $ey1);
 	}
-	$retval = 0;
+	$retval;
 }
 
 sub tostring {
 	my ($self) = @_;
-	my $retval = "";
+	my $retval = "NODEID\tCLASS\tID\tMODALITY\tDOCID\tMENTION_SPAN\tASSESSMENT\tTYPE\tFQECID\n";
 	foreach my $nodeid(sort keys %{$self->{ASSESSMENTS}}) {
 		foreach my $id(sort {$a<=>$b} keys %{$self->{ASSESSMENTS}{$nodeid}}) {
 			my $line = $self->{ASSESSMENTS}{$nodeid}{$id}->get("LINE");
