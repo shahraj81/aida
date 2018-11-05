@@ -3439,7 +3439,15 @@ sub score_responses {
 	my ($self) = @_;
 	my ($responses, $qrel, $queries_to_score, $ldc_queries, $logger)
 		= map {$self->get($_)} qw(RESPONSES QREL QUERIES_TO_SCORE LDC_QUERIES LOGGER);
-	my $scores;
+	my $scores = ScoresPrinter->new($logger);
+	my (%correct, %incorrect, %ignored, %ground_truth, %submitted);
+	foreach my $key($qrel->get("ALL_KEYS")) {
+		my ($node_id, $doceid, $start_and_end) = split(":", $key);
+		my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
+		my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
+		$ground_truth{"ALL"}{$fqec} = 1;
+		$ground_truth{$node_id}{$fqec} = 1 if $assessment eq "Correct";
+	}
 	foreach my $response($responses->get("RESPONSES")->toarray()) {
 		my $query_id = $response->get("QUERYID");
 		my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
@@ -3452,14 +3460,119 @@ sub score_responses {
 				my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
 				my $line = "$node_id $query_id $mention_span $assessment $fqec";
 				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, {FILENAME => __FILE__, LINENUM => __LINE__});
+				$submitted{ALL}{$fqec}{$mention_span}++;
+				$correct{ALL}{$fqec}{$mention_span}++ if $assessment eq "Correct";
+				$incorrect{ALL}{$fqec}{$mention_span}++ if $assessment eq "Wrong";
+				$submitted{$query_id}{$fqec}{$mention_span}++;
+				$correct{$query_id}{$fqec}{$mention_span}++ if $assessment eq "Correct";
+				$incorrect{$query_id}{$fqec}{$mention_span}++ if $assessment eq "Wrong";
 			}
+			$ignored{ALL}{$mention_span}++;
+			$ignored{$query_id}{$mention_span}++;
 		}
 	}
+	foreach my $query_id(@$queries_to_score) {
+		my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
+		$node_id =~ s/^\?//;
+		my $num_submitted = keys %{$submitted{$query_id}};
+		my $num_correct = keys %{$correct{$query_id}};
+		my $num_incorrect = keys %{$incorrect{$query_id}};
+		my $num_ignored = keys %{$ignored{$query_id}};
+		my $num_ground_truth = keys %{$ground_truth{$node_id}};
+		my $score = Score->new($logger, $query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
+		$scores->add($score, $query_id);
+	}
+
+	# ALL-Micro
+	my $num_submitted = keys %{$submitted{"ALL"}};
+	my $num_correct = keys %{$correct{"ALL"}};
+	my $num_incorrect = keys %{$incorrect{"ALL"}};
+	my $num_ignored = keys %{$ignored{"ALL"}};
+	my $num_ground_truth = keys %{$ground_truth{"ALL"}};
+	my $score = Score->new($logger, "ALL-Micro", $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
+	$scores->add($score, "ALL-Micro");
+
 	$self->set("SCORES", $scores);
 }
 
 sub tostring {
 	my ($self) = @_;
+	$self->get("SCORES")->tostring();
+}
+
+#####################################################################################
+# ScoresPrinter
+#####################################################################################
+
+package ScoresPrinter;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Score');
+  $self->{CLASS} = 'ScoresPrinter';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $retval = "";
+	foreach my $score($self->toarray()) {
+		my ($query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth, $precision, $recall, $f1)
+			= map {$score->get($_)}
+				qw(QUERYID NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_IGNORED NUM_GROUND_TRUTH PRECISION RECALL F1);
+	  $retval .= "$query_id , $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth, $precision, $recall, $f1\n";
+	}
+	$retval;
+}
+
+#####################################################################################
+# Score
+#####################################################################################
+
+package Score;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
+  my $self = {
+		CLASS => 'Scores',
+		QUERYID => $query_id,
+		NUM_SUBMITTED => $num_submitted,
+		NUM_CORRECT => $num_correct,
+		NUM_INCORRECT => $num_incorrect,
+		NUM_IGNORED => $num_ignored,
+		NUM_GROUND_TRUTH => $num_ground_truth,
+		LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_NUM_COUNTED {
+	my ($self) = @_;
+	$self->get("NUM_CORRECT") + $self->get("NUM_INCORRECT");
+}
+
+sub get_PRECISION {
+	my ($self) = @_;
+	$self->get("NUM_COUNTED") ? $self->get("NUM_CORRECT")/($self->get("NUM_COUNTED")) : 0;
+}
+
+sub get_RECALL {
+	my ($self) = @_;
+	$self->get("NUM_GROUND_TRUTH") ? $self->get("NUM_CORRECT")/($self->get("NUM_GROUND_TRUTH")) : 0;
+}
+
+sub get_F1 {
+	my ($self) = @_;
+	my $precision = $self->get("PRECISION");
+	my $recall = $self->get("RECALL");
+	($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
 }
 
 ### BEGIN INCLUDE Utils
