@@ -122,7 +122,7 @@ my $scorer = ScoresManager->new($logger, $ldc_queries, $responses, $assessments,
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
-	print $program_output $scorer->tostring(), "\n";
+	print $program_output $scorer->print_lines($program_output);
 }
 
 unless($switches->get('error_file') eq "STDERR") {

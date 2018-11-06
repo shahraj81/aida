@@ -3407,9 +3407,9 @@ sub score_responses {
 	$self->set("SCORES", $scores);
 }
 
-sub tostring {
-	my ($self) = @_;
-	$self->get("SCORES")->tostring();
+sub print_lines {
+	my ($self, $program_output) = @_;
+	$self->get("SCORES")->print_lines($program_output);
 }
 
 #####################################################################################
@@ -3460,14 +3460,10 @@ sub score_responses {
 				my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
 				my $line = "$node_id $query_id $mention_span $assessment $fqec";
 				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, {FILENAME => __FILE__, LINENUM => __LINE__});
-				$submitted{ALL}{$fqec}{$mention_span}++;
-				$correct{ALL}{$fqec}{$mention_span}++ if $assessment eq "Correct";
-				$incorrect{ALL}{$fqec}{$mention_span}++ if $assessment eq "Wrong";
 				$submitted{$query_id}{$fqec}{$mention_span}++;
 				$correct{$query_id}{$fqec}{$mention_span}++ if $assessment eq "Correct";
 				$incorrect{$query_id}{$fqec}{$mention_span}++ if $assessment eq "Wrong";
 			}
-			$ignored{ALL}{$mention_span}++;
 			$ignored{$query_id}{$mention_span}++;
 		}
 	}
@@ -3482,22 +3478,12 @@ sub score_responses {
 		my $score = Score->new($logger, $query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
 		$scores->add($score, $query_id);
 	}
-
-	# ALL-Micro
-	my $num_submitted = keys %{$submitted{"ALL"}};
-	my $num_correct = keys %{$correct{"ALL"}};
-	my $num_incorrect = keys %{$incorrect{"ALL"}};
-	my $num_ignored = keys %{$ignored{"ALL"}};
-	my $num_ground_truth = keys %{$ground_truth{"ALL"}};
-	my $score = Score->new($logger, "ALL-Micro", $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
-	$scores->add($score, "ALL-Micro");
-
 	$self->set("SCORES", $scores);
 }
 
-sub tostring {
-	my ($self) = @_;
-	$self->get("SCORES")->tostring();
+sub print_lines {
+	my ($self, $program_output) = @_;
+	$self->get("SCORES")->print_lines($program_output);
 }
 
 #####################################################################################
@@ -3508,25 +3494,94 @@ package ScoresPrinter;
 
 use parent -norequire, 'Container', 'Super';
 
+my @fields_to_print = (
+#  {NAME => 'LDC_QUERY_ID',     HEADER => 'LDC_QID',  FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'EC',               HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',            HEADER => 'Run ID',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_CORRECT',      HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT',    HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED',      HEADER => 'Ign',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'PRECISION',        HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL',           HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'F1',               HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+);
+
 sub new {
-  my ($class, $logger) = @_;
+  my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
   $self->{CLASS} = 'ScoresPrinter';
+  $self->{PROGRAM_OUTPUT} = $program_output;
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @fields_to_print};
   $self->{LOGGER} = $logger;
+  $self->{LINES} = [];
+  @{$self->{FIELDS_TO_PRINT}} = @fields_to_print;
   bless($self, $class);
   $self;
 }
 
-sub tostring {
+sub get_MICRO_AVERAGE {
 	my ($self) = @_;
-	my $retval = "";
+	my $logger = $self->get("LOGGER");
+	my ($total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
 	foreach my $score($self->toarray()) {
-		my ($query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth, $precision, $recall, $f1)
-			= map {$score->get($_)}
-				qw(QUERYID NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_IGNORED NUM_GROUND_TRUTH PRECISION RECALL F1);
-	  $retval .= "$query_id , $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth, $precision, $recall, $f1\n";
+		my ($num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth)
+			= map {$score->get($_)} qw(NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_IGNORED NUM_GROUND_TRUTH);
+		$total_num_submitted += $num_submitted;
+		$total_num_correct += $num_correct;
+		$total_num_incorrect += $num_incorrect;
+		$total_num_ignored += $num_ignored;
+		$total_num_ground_truth += $num_ground_truth;
 	}
-	$retval;
+	Score->new($logger, "ALL_Micro", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
+}
+
+sub print_line {
+  my ($self, $line) = @_;
+  my $program_output = $self->get("PROGRAM_OUTPUT");
+  my $separator = "";
+  foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+    my $value = (defined $line ? $line->{$field->{NAME}} : $field->{HEADER});
+    print $program_output $separator;
+    my $numspaces = defined $self->{SEPARATOR} ? 0 : $self->{WIDTHS}{$field->{NAME}} - length($value);
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'R' && !defined $self->{SEPARATOR};
+    print $program_output $value;
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'L' && !defined $self->{SEPARATOR};
+    $separator = defined $self->{SEPARATOR} ? $self->{SEPARATOR} : ' ';
+  }
+  print $program_output "\n";
+}
+  
+sub print_headers {
+  my ($self) = @_;
+  $self->print_line();
+}
+
+sub prepare_lines {
+	my ($self) = @_;
+	my @scores = $self->toarray();
+	push(@scores, $self->get("MICRO_AVERAGE"));
+	foreach my $score ($self->toarray()) {
+		my %elements_to_print;
+		foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+			my $value = $score->get($field->{NAME});
+			my $text = sprintf($field->{FORMAT}, $value);
+			$elements_to_print{$field->{NAME}} = $text;
+			$self->{WIDTHS}{$field->{NAME}} = length($text) if length($text) > $self->{WIDTHS}{$field->{NAME}};
+		}
+		push(@{$self->{LINES}}, \%elements_to_print);
+	}
+}
+
+sub print_lines {
+  my ($self, $program_output) = @_;
+  $self->set("PROGRAM_OUTPUT", $program_output);
+  $self->prepare_lines();
+  $self->print_headers();
+  foreach my $line (@{$self->{LINES}}) {
+    $self->print_line($line);
+  }
 }
 
 #####################################################################################
@@ -3538,10 +3593,10 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $ec, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
   my $self = {
 		CLASS => 'Scores',
-		QUERYID => $query_id,
+		EC => $ec,
 		NUM_SUBMITTED => $num_submitted,
 		NUM_CORRECT => $num_correct,
 		NUM_INCORRECT => $num_incorrect,
