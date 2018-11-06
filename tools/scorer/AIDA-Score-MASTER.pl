@@ -36,6 +36,8 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addVarSwitch('queries', "File containing query IDs to be scored");
+$switches->addVarSwitch('runid', "Run ID of the system being scored");
+$switches->put('runid', "system");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("coredocs", "required", "List of core documents to be included in the pool");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
@@ -88,6 +90,7 @@ my $ldc_queries_xml_file = $switches->get("ldc_queries");
 my $responses_dtd_file = $switches->get("responses_dtd");
 my $responses_xml_pathfile = $switches->get("responses_xml");
 my $qrel_filename = $switches->get("qrel");
+my $runid = $switches->get("runid");
 my $query_type = $queries_dtd_file;
 $query_type =~ s/^(.*?\/)+//g; $query_type =~ s/.dtd//;
 
@@ -118,7 +121,7 @@ else {
 
 my $responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, @responses_xml_filenames);
 my $assessments = QREL->new($logger, $qrel_filename, $query_type);
-my $scorer = ScoresManager->new($logger, $ldc_queries, $responses, $assessments, $query_type, @queries_to_score);
+my $scorer = ScoresManager->new($logger, $runid, $ldc_queries, $responses, $assessments, $query_type, @queries_to_score);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {

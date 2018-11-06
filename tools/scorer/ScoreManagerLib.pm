@@ -3381,7 +3381,7 @@ package ScoresManager;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
+  my ($class, $logger, $runid, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
   my $self = {
   	CLASS => 'ScoresManager',
   	LDC_QUERIES => $ldc_queries,
@@ -3389,6 +3389,7 @@ sub new {
   	QREL => $qrel,
   	QUERY_TYPE => $query_type,
   	QUERIES_TO_SCORE => [@queries_to_score],
+		RUNID => $runid,
   	LOGGER => $logger,
   };
   bless($self, $class);
@@ -3398,12 +3399,12 @@ sub new {
 
 sub score_responses {
 	my ($self) = @_;
-	my ($responses, $qrel, $query_type, $queries_to_score, $ldc_queries, $logger)
-		= map {$self->get($_)} qw(RESPONSES QREL QUERY_TYPE QUERIES_TO_SCORE LDC_QUERIES LOGGER);
+	my ($responses, $qrel, $query_type, $queries_to_score, $ldc_queries, $runid, $logger)
+		= map {$self->get($_)} qw(RESPONSES QREL QUERY_TYPE QUERIES_TO_SCORE LDC_QUERIES RUNID LOGGER);
 	my $scores;
-	$scores = ClassScores->new($logger, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "class_query");
-	$scores = ZeroHopScores->new($logger, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "zerohop_query");
-	$scores = GraphScores->new($logger, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "graph_query");
+	$scores = ClassScores->new($logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "class_query");
+	$scores = ZeroHopScores->new($logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "zerohop_query");
+	$scores = GraphScores->new($logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "graph_query");
 	$self->set("SCORES", $scores);
 }
 
@@ -3421,13 +3422,14 @@ package ZeroHopScores;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
+  my ($class, $logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
   my $self = {
   	CLASS => 'ZeroHopScores',
   	LDC_QUERIES => $ldc_queries,
   	RESPONSES => $responses,
   	QREL => $qrel,
   	QUERIES_TO_SCORE => $queries_to_score,
+		RUNID => $runid,
   	LOGGER => $logger,
   };
   bless($self, $class);
@@ -3437,8 +3439,8 @@ sub new {
 
 sub score_responses {
 	my ($self) = @_;
-	my ($responses, $qrel, $queries_to_score, $ldc_queries, $logger)
-		= map {$self->get($_)} qw(RESPONSES QREL QUERIES_TO_SCORE LDC_QUERIES LOGGER);
+	my ($runid, $responses, $qrel, $queries_to_score, $ldc_queries, $logger)
+		= map {$self->get($_)} qw(RUNID RESPONSES QREL QUERIES_TO_SCORE LDC_QUERIES LOGGER);
 	my $scores = ScoresPrinter->new($logger);
 	my (%correct, %incorrect, %ignored, %ground_truth, %submitted);
 	foreach my $key($qrel->get("ALL_KEYS")) {
@@ -3455,16 +3457,18 @@ sub score_responses {
 		foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
 			my $mention_span = $justification->tostring();
 			my $key = "$node_id:$mention_span";
+			$submitted{$query_id}{$mention_span}++;
 			if($qrel->exists($key)) {
 				my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
 				my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
 				my $line = "$node_id $query_id $mention_span $assessment $fqec";
 				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, {FILENAME => __FILE__, LINENUM => __LINE__});
-				$submitted{$query_id}{$fqec}{$mention_span}++;
 				$correct{$query_id}{$fqec}{$mention_span}++ if $assessment eq "Correct";
 				$incorrect{$query_id}{$fqec}{$mention_span}++ if $assessment eq "Wrong";
 			}
-			$ignored{$query_id}{$mention_span}++;
+			else {
+				$ignored{$query_id}{$mention_span}++;
+			}
 		}
 	}
 	foreach my $query_id(@$queries_to_score) {
@@ -3475,7 +3479,7 @@ sub score_responses {
 		my $num_incorrect = keys %{$incorrect{$query_id}};
 		my $num_ignored = keys %{$ignored{$query_id}};
 		my $num_ground_truth = keys %{$ground_truth{$node_id}};
-		my $score = Score->new($logger, $query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
+		my $score = Score->new($logger, $runid, $query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
 		$scores->add($score, $query_id);
 	}
 	$self->set("SCORES", $scores);
@@ -3593,7 +3597,7 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $ec, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $runid, $ec, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
   my $self = {
 		CLASS => 'Scores',
 		EC => $ec,
@@ -3602,6 +3606,7 @@ sub new {
 		NUM_INCORRECT => $num_incorrect,
 		NUM_IGNORED => $num_ignored,
 		NUM_GROUND_TRUTH => $num_ground_truth,
+		RUNID => $runid,
 		LOGGER => $logger,
   };
   bless($self, $class);
