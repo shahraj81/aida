@@ -3479,7 +3479,7 @@ sub score_responses {
 		my $num_incorrect = keys %{$incorrect{$query_id}};
 		my $num_ignored = keys %{$ignored{$query_id}};
 		my $num_ground_truth = keys %{$ground_truth{$node_id}};
-		my $score = Score->new($logger, $runid, $query_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
+		my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
 		$scores->add($score, $query_id);
 	}
 	$self->set("SCORES", $scores);
@@ -3499,8 +3499,8 @@ package ScoresPrinter;
 use parent -norequire, 'Container', 'Super';
 
 my @fields_to_print = (
-#  {NAME => 'LDC_QUERY_ID',     HEADER => 'LDC_QID',  FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'EC',               HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NODEID',           HEADER => 'NODE',     FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',            HEADER => 'Run ID',   FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%s',     JUSTIFY => 'L'},
@@ -3528,17 +3528,18 @@ sub new {
 sub get_MICRO_AVERAGE {
 	my ($self) = @_;
 	my $logger = $self->get("LOGGER");
-	my ($total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
+	my ($runid, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
 	foreach my $score($self->toarray()) {
 		my ($num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth)
 			= map {$score->get($_)} qw(NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_IGNORED NUM_GROUND_TRUTH);
+		$runid = $score->get("RUNID") unless $runid;
 		$total_num_submitted += $num_submitted;
 		$total_num_correct += $num_correct;
 		$total_num_incorrect += $num_incorrect;
 		$total_num_ignored += $num_ignored;
 		$total_num_ground_truth += $num_ground_truth;
 	}
-	Score->new($logger, "ALL_Micro", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
+	Score->new($logger, $runid, "ALL-Micro", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
 }
 
 sub print_line {
@@ -3566,7 +3567,7 @@ sub prepare_lines {
 	my ($self) = @_;
 	my @scores = $self->toarray();
 	push(@scores, $self->get("MICRO_AVERAGE"));
-	foreach my $score ($self->toarray()) {
+	foreach my $score (@scores) {
 		my %elements_to_print;
 		foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
 			my $value = $score->get($field->{NAME});
@@ -3597,10 +3598,11 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $ec, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $runid, $ec, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
   my $self = {
 		CLASS => 'Scores',
 		EC => $ec,
+		NODEID => $node_id,
 		NUM_SUBMITTED => $num_submitted,
 		NUM_CORRECT => $num_correct,
 		NUM_INCORRECT => $num_incorrect,
