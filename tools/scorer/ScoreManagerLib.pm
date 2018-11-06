@@ -3162,6 +3162,11 @@ sub new {
   $self;
 }
 
+sub get_MODALITY {
+	my ($self) = @_;
+	($self->get("TYPE") =~ /^(.*?)_/)[0];
+}
+
 sub tostring {
 	my ($self) = @_;
 	my $doceid = $self->get("DOCEID");
@@ -3473,13 +3478,14 @@ sub score_responses {
 	}
 	foreach my $query_id(@$queries_to_score) {
 		my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
+		my $modality = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("DESCRIPTOR")->get("MODALITY");
 		$node_id =~ s/^\?//;
 		my $num_submitted = keys %{$submitted{$query_id}};
 		my $num_correct = keys %{$correct{$query_id}};
 		my $num_incorrect = keys %{$incorrect{$query_id}};
 		my $num_ignored = keys %{$ignored{$query_id}};
 		my $num_ground_truth = keys %{$ground_truth{$node_id}};
-		my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
+		my $score = Score->new($logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth);
 		$scores->add($score, $query_id);
 	}
 	$self->set("SCORES", $scores);
@@ -3500,13 +3506,14 @@ use parent -norequire, 'Container', 'Super';
 
 my @fields_to_print = (
   {NAME => 'EC',               HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'NODEID',           HEADER => 'NODE',     FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'RUNID',            HEADER => 'Run ID',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NODEID',           HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'MODALITY',         HEADER => 'Mode',     FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',            HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_CORRECT',      HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_INCORRECT',    HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_IGNORED',      HEADER => 'Ign',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED',      HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'PRECISION',        HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
   {NAME => 'RECALL',           HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
   {NAME => 'F1',               HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
@@ -3539,7 +3546,7 @@ sub get_MICRO_AVERAGE {
 		$total_num_ignored += $num_ignored;
 		$total_num_ground_truth += $num_ground_truth;
 	}
-	Score->new($logger, $runid, "ALL-Micro", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
+	Score->new($logger, $runid, "ALL-Micro", "", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_ignored, $total_num_ground_truth);
 }
 
 sub print_line {
@@ -3598,10 +3605,11 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $ec, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $runid, $ec, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_ignored, $num_ground_truth) = @_;
   my $self = {
 		CLASS => 'Scores',
 		EC => $ec,
+		MODALITY => $modality,
 		NODEID => $node_id,
 		NUM_SUBMITTED => $num_submitted,
 		NUM_CORRECT => $num_correct,
