@@ -117,8 +117,6 @@ else {
 	}
 }
 
-#@queries_to_score = ("AIDA_ZH_2018_186");
-
 my $responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, @responses_xml_filenames);
 my $assessments = QREL->new($logger, $qrel_filename, $query_type);
 my $scorer = ScoresManager->new($logger, $runid, $ldc_queries, $responses, $assessments, $query_type, @queries_to_score);
