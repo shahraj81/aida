@@ -3471,16 +3471,18 @@ sub score_responses {
 				my $line = "$node_id $query_id $mention_span $assessment $fqec";
 				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, {FILENAME => __FILE__, LINENUM => __LINE__});
 				if($assessment eq "Correct") {
+					push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
 					if(exists $category_store{CORRECT_FOUND}{$node_id}{$fqec}) {
 						push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $mention_span);
 						push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
 					}
 					else {
 						$category_store{CORRECT_FOUND}{$node_id}{$fqec} = 1;
-						push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
+						push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
 					}
 				}
 				elsif($assessment eq "Wrong") {
+					push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $mention_span);
 					push(@{$categorized_submissions{$query_id}{"WRONG"}}, $mention_span);
 				}
 			}
@@ -3496,12 +3498,14 @@ sub score_responses {
 		$node_id =~ s/^\?//;
 		my $num_submitted = @{$categorized_submissions{$query_id}{"SUBMITTED"} || []};
 		my $num_correct = @{$categorized_submissions{$query_id}{"CORRECT"} || []};
-		my $num_incorrect = @{$categorized_submissions{$query_id}{"WRONG"} || []};
+		my $num_incorrect = @{$categorized_submissions{$query_id}{"INCORRECT"} || []};
+		my $num_right = @{$categorized_submissions{$query_id}{"RIGHT"} || []};
+		my $num_wrong = @{$categorized_submissions{$query_id}{"WRONG"} || []};
 		my $num_redundant = @{$categorized_submissions{$query_id}{"REDUNDANT"} || []};
 		my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
 		my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOT_IN_POOL"} || []};
 		my $num_ground_truth = keys %{$category_store{GROUND_TRUTH}{$node_id} || []};
-		my $score = Score->new($logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
+		my $score = Score->new($logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
 		$scores->add($score, $query_id);
 	}
 	$self->set("SCORES", $scores);
@@ -3526,11 +3530,14 @@ my @fields_to_print = (
   {NAME => 'MODALITY',         HEADER => 'Mode',     FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',            HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%4d',     JUSTIFY => 'R'},
+  {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
   {NAME => 'NUM_NOT_IN_POOL',  HEADER => 'NtAssd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_CORRECT',      HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_REDUNDANT',    HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_INCORRECT',    HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT',    HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED',      HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT',        HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG',        HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_IGNORED',      HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'PRECISION',        HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
   {NAME => 'RECALL',           HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
@@ -3553,20 +3560,22 @@ sub new {
 sub get_MICRO_AVERAGE {
 	my ($self) = @_;
 	my $logger = $self->get("LOGGER");
-	my ($runid, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+	my ($runid, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
 	foreach my $score($self->toarray()) {
-		my ($num_submitted, $num_correct, $num_incorrect, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth)
-			= map {$score->get($_)} qw(NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH);
+		my ($num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth)
+			= map {$score->get($_)} qw(NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH);
 		$runid = $score->get("RUNID") unless $runid;
 		$total_num_submitted += $num_submitted;
 		$total_num_correct += $num_correct;
 		$total_num_incorrect += $num_incorrect;
+		$total_num_right += $num_right;
+		$total_num_wrong += $num_wrong;
 		$total_num_redundant += $num_redundant;
 		$total_num_not_in_pool += $num_not_in_pool;
 		$total_num_ignored += $num_ignored;
 		$total_num_ground_truth += $num_ground_truth;
 	}
-	Score->new($logger, $runid, "ALL-Micro", "", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+	Score->new($logger, $runid, "ALL-Micro", "", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
 }
 
 sub print_line {
@@ -3625,7 +3634,7 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
   my $self = {
 		CLASS => 'Scores',
 		EC => $query_id,
@@ -3637,7 +3646,9 @@ sub new {
 		NUM_INCORRECT => $num_incorrect,
 		NUM_NOT_IN_POOL => $num_not_in_pool,
 		NUM_REDUNDANT => $num_redundant,
+		NUM_RIGHT => $num_right,
 		NUM_SUBMITTED => $num_submitted,
+		NUM_WRONG => $num_wrong,
 		RUNID => $runid,
 		LOGGER => $logger,
   };
@@ -3647,17 +3658,17 @@ sub new {
 
 sub get_NUM_COUNTED {
 	my ($self) = @_;
-	$self->get("NUM_CORRECT") + $self->get("NUM_INCORRECT");
+	$self->get("NUM_RIGHT") + $self->get("NUM_WRONG");
 }
 
 sub get_PRECISION {
 	my ($self) = @_;
-	$self->get("NUM_COUNTED") ? $self->get("NUM_CORRECT")/($self->get("NUM_COUNTED")) : 0;
+	$self->get("NUM_COUNTED") ? $self->get("NUM_RIGHT")/($self->get("NUM_COUNTED")) : 0;
 }
 
 sub get_RECALL {
 	my ($self) = @_;
-	$self->get("NUM_GROUND_TRUTH") ? $self->get("NUM_CORRECT")/($self->get("NUM_GROUND_TRUTH")) : 0;
+	$self->get("NUM_GROUND_TRUTH") ? $self->get("NUM_RIGHT")/($self->get("NUM_GROUND_TRUTH")) : 0;
 }
 
 sub get_F1 {
