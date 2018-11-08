@@ -147,18 +147,21 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 # Error Name                              Type           Error Message
 # ----------                              ----           -------------
-
 ########## General Errors
   ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
+  BOUNDINGBOX_OFF_BOUNDARY                WARNING        Bounding box in mention span %s is out of boundary %s (corrected to %s)
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
+  IGNORED                                 WARNING        Ignoring %s
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
   INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
   INVALID_START                           WARNING        Invalid start %s in %s
+  KEYFRAMEID_CORRECTED                    WARNING        KeyframeID %s is not in MasterShotBoundary file (corrected to %s)
+  MENTION_OFF_BOUNDARY                    WARNING        Mention span %s is not within document boundary %s (corrected to %s)
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
@@ -3343,6 +3346,255 @@ sub load {
 }
 
 #####################################################################################
+# ImagesBoundingBoxes
+#####################################################################################
+
+package ImagesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
+  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my $filename = $entry->get("filename");
+		my $doceid = $filename;
+		$doceid =~ s/\..*?$//;
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(ImageBoundingBox->new($self->get("LOGGER"), $doceid, undef,
+												0, 0, $bottom_right_x, $bottom_right_y), $doceid);
+	}
+}
+
+#####################################################################################
+# ImageBoundingBox
+#####################################################################################
+
+package ImageBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'ImageBoundingBox',
+    DOCEID => $doceid,
+    TYPE => $type,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	my ($min_x, $min_y, $max_x, $max_y) 
+		= map {$self->get($_)} 
+			qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+	my $is_valid = 1;		
+	$is_valid = 0
+		if($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+			|| $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+	$is_valid;
+}
+
+#####################################################################################
+# KeyFramesBoundingBoxes
+#####################################################################################
+
+package KeyFramesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
+  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
+												0, 0,
+												$bottom_right_x, $bottom_right_y),
+								$entry->get("keyframeid"));
+	}
+}
+
+sub get_KEYFRAMESIDS {
+	my ($self, $doceid) = @_;
+	my @keyframeids = $self->get("ALL_KEYS");
+	@keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
+	sort @keyframeids;
+}
+
+#####################################################################################
+# KeyFramesBoundingBox
+#####################################################################################
+
+package KeyFrameBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'KeyFrameBoundingBox',
+    KEYFRAMEID => $keyframeid,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_DOCEID {
+	my ($self) = @_;
+	my ($doceid) = split("_", $self->get("KEYFRAMEID"));
+	$doceid;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	my ($min_x, $min_y, $max_x, $max_y) 
+		= map {$self->get($_)} 
+			qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+	my $is_valid = 1;		
+	$is_valid = 0
+		if($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+			|| $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+	$is_valid;
+}
+
+#####################################################################################
+# TextDocumentBoundaries
+#####################################################################################
+
+package TextDocumentBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'TextDocumentBoundary');
+  $self->{CLASS} = 'TextDocumentBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my ($doceid, $segment_id, $start_char, $end_char) =
+			map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+		my $text_document_boundary;
+		unless($self->exists($doceid)) {
+			$text_document_boundary = $self->get("BY_KEY", $doceid);
+			$text_document_boundary->set("DOCEID", $doceid);
+			$text_document_boundary->set("START_CHAR", $start_char);
+			$text_document_boundary->set("END_CHAR", $end_char);
+		}
+		else{
+			$text_document_boundary = $self->get("BY_KEY", $doceid);
+		}
+		my ($tb_start_char, $tb_end_char)
+			= map {$text_document_boundary->get($_)}
+				qw(START_CHAR END_CHAR);
+		$text_document_boundary->set("START_CHAR", $start_char)
+			if($start_char < $tb_start_char);
+		$text_document_boundary->set("END_CHAR", $end_char)
+			if($end_char > $tb_end_char);
+	}
+}
+
+sub get_BOUNDARY {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	my $text_document_boundary;
+	$text_document_boundary = $self->get("BY_KEY", $id) 
+		if($self->exists($id));
+	$text_document_boundary;
+}
+
+#####################################################################################
+# TextDocumentBoundary
+#####################################################################################
+
+package TextDocumentBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $start_char, $end_char) = @_;
+  my $self = {
+    CLASS => 'TextDocumentBoundary',
+    START_CHAR => $start_char,
+    END_CHAR => $end_char,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
 # SentenceBoundaries
 #####################################################################################
 
@@ -3368,12 +3620,26 @@ sub load {
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
 		my ($doceid, $segment_id, $start_char, $end_char) =
-			map {$entries->get($_)} qw(doceid segment_id start_char end_char);
+			map {$entry->get($_)} qw(doceid segment_id start_char end_char);
 		my $segments = $self->get("BY_KEY", $doceid);
-		my $sentence_boundary = $segments->get("BY_KEY", $segment_id);
+		my $sentence_boundary = $segments->get("BY_KEY", "$doceid:$segment_id");
+		$sentence_boundary->set("SEGMENT_ID", $segment_id);
 		$sentence_boundary->set("START_CHAR", $start_char);
 		$sentence_boundary->set("END_CHAR", $end_char);
 	}
+}
+
+sub get_BOUNDARY {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	if($self->exists($id)) {
+		my $segments = $self->get("BY_KEY", $id);
+		foreach my $segment($segments->toarray()) {
+			my ($start_char, $end_char) = map {$segment->get($_)} qw(START_CHAR END_CHAR);
+			return $segment if($sx >= $start_char && $ex <= $end_char);
+		}
+	}
+	0;
 }
 
 #####################################################################################
