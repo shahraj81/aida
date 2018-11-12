@@ -3460,7 +3460,6 @@ sub score_responses {
 	foreach my $response($responses->get("RESPONSES")->toarray()) {
 		my $query_id = $response->get("QUERYID");
 		next unless grep {$query_id eq $_} @$queries_to_score;
-		print STDERR "$query_id\n";
 		my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
 		$node_id =~ s/^\?//;
 		foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
