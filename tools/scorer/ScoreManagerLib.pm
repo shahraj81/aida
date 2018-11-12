@@ -3481,7 +3481,7 @@ sub score_responses {
 						push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
 					}
 				}
-				elsif($assessment eq "Wrong") {
+				elsif($assessment eq "Incorrect") {
 					push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $mention_span);
 					push(@{$categorized_submissions{$query_id}{"WRONG"}}, $mention_span);
 				}
@@ -3504,7 +3504,7 @@ sub score_responses {
 		my $num_redundant = @{$categorized_submissions{$query_id}{"REDUNDANT"} || []};
 		my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
 		my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOT_IN_POOL"} || []};
-		my $num_ground_truth = keys %{$category_store{GROUND_TRUTH}{$node_id} || []};
+		my $num_ground_truth = keys %{$category_store{GROUND_TRUTH}{$node_id}};
 		my $score = Score->new($logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
 		$scores->add($score, $query_id);
 	}
