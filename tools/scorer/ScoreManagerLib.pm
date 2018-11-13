@@ -3473,12 +3473,12 @@ sub score_responses {
 				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, {FILENAME => __FILE__, LINENUM => __LINE__});
 				if($assessment eq "Correct") {
 					push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
-					if(exists $category_store{CORRECT_FOUND}{$node_id}{$fqec}) {
+					if(exists $category_store{CORRECT_FOUND}{$query_id}{$fqec}) {
 						push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $mention_span);
 						push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
 					}
 					else {
-						$category_store{CORRECT_FOUND}{$node_id}{$fqec} = 1;
+						$category_store{CORRECT_FOUND}{$query_id}{$fqec} = 1;
 						push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
 					}
 				}
