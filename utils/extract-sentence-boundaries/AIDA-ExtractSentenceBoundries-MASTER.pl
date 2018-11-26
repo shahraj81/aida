@@ -18,7 +18,7 @@ use ExtractSentenceBoundriesManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2018.0.0";
+my $version = "2018.0.1";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};
@@ -36,7 +36,6 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
-$switches->addParam("coredocs", "required", "List of core documents included in the pool");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("ltf", "required", "Directory containing raw ltf files included in the corpus");
 $switches->addParam("output", "required", "Output file");
@@ -48,8 +47,7 @@ my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
 $error_output = $logger->get_error_output();
 
-foreach my $path(($switches->get("coredocs"),
-					$switches->get("docid_mappings"),
+foreach my $path(($switches->get("docid_mappings"),
 					$switches->get("ltf"))) {
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
@@ -63,13 +61,11 @@ open($program_output, ">:utf8", $output_filename)
 
 my $ltf_directory = $switches->get("ltf");
 my $docid_mappings_file = $switches->get("docid_mappings");
-my $coredocs_file = $switches->get("coredocs");
 
-my $coredocs = CoreDocs->new($logger, $coredocs_file);
 my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 
 my %sentence_boundaries;
-foreach my $docid($coredocs->toarray()) {
+foreach my $docid($docid_mappings->get("DOCUMENTS")->get("ALL_KEYS")) {
 	my @doceids = map {$_->get("DOCUMENTELEMENTID")} $docid_mappings->get("DOCUMENTS")->get("BY_KEY", $docid)->get("DOCUMENTELEMENTS")->toarray();
 	foreach my $doceid(@doceids) { 
 		my $filename = "$ltf_directory/$doceid.ltf.xml";
@@ -109,3 +105,8 @@ unless($switches->get('error_file') eq "STDERR") {
 
 print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
 exit 0;
+
+# change log
+
+# 2018.0.1: sentence boundaries generated for all documents (and not limited to coredocs)
+# 2018.0.0: original version
