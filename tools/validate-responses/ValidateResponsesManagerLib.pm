@@ -150,6 +150,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
+  BOUNDINGBOX_OFF_BOUNDARY                WARNING        Bounding box in mention span %s is out of boundary %s (corrected to %s)
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
@@ -158,13 +159,17 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
   INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
   INVALID_START                           WARNING        Invalid start %s in %s
+  KEYFRAMEID_CORRECTED                    WARNING        KeyframeID %s is not in MasterShotBoundary file (corrected to %s)
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
+  MISSING_DOCUMENTELEMENT_BOUNDARY        WARNING        Missing boundary information for %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MISSING_MODALITY                        ERROR          Modality corresponding to encoding format %s not found
   MISSING_XML_ELEMENT                     FATAL_ERROR    Missing %s in %s
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
+  OFF_BOUNDARY_SPAN                       WARNING        Span %s is not within document boundary %s (corrected to %s)
+  START_BIGGER_THAN_END                   WARNING        Start cannot come before end (provided: start=%s, end=%s)
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_JUSTIFICATION_MODALITY       WARNING        Unexpected justification modality provided %s from document element %s of modality %s
@@ -175,6 +180,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNKNOWN_DOCUMENT                        WARNING        Unknown Document %s in response
   UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
   UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s 
+  UNKNOWN_KEYFRAMEID                      WARNING        Unknown KeyFrameID %s
   UNKNOWN_QUERYID                         WARNING        Unknown query %s in response
 END_PROBLEM_FORMATS
 
@@ -1348,13 +1354,17 @@ package ResponseSet;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $queries, $docid_mappings, $dtd_filename, $xml_filename) = @_;
+	my ($class, $logger, $queries, $docid_mappings, $text_document_boundaries, 
+		$images_boundingboxes, $keyframes_boundingboxes, $dtd_filename, $xml_filename) = @_;
 	my $self = {
 		CLASS => 'ResponseSet',
 		QUERIES => $queries,
 		DTD_FILENAME => $dtd_filename,
 		XML_FILENAME => $xml_filename,
-		DOCID_MAPPINGS => $docid_mappings, 
+		DOCID_MAPPINGS => $docid_mappings,
+		TEXT_BOUNDARIES => $text_document_boundaries,
+		IMAGE_BOUNDARIES => $images_boundingboxes, 
+		KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
 		RESPONSES => Container->new($logger, "Response"),
 		LOGGER => $logger,
 	};
@@ -1370,15 +1380,18 @@ sub load {
 	my $xml_filename = $self->get("XML_FILENAME");
 	my $query_type = $self->get("QUERIES")->get("QUERYTYPE");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $text_boundaries = $self->get("TEXT_BOUNDARIES");
+	my $image_boundaries = $self->get("IMAGE_BOUNDARIES");
+	my $keyframe_boundaries = $self->get("KEYFRAME_BOUNDARIES");
 	my $queries = $self->get("QUERIES");
 	my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
 	my $i = 0;
 	while(my $xml_response_object = $xml_filehandler->get("NEXT_OBJECT")) {
 		$i++;
 		my $response;
-		$response = ClassResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "class_query");
-		$response = ZeroHopResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "zerohop_query");
-		$response = GraphResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "graph_query");
+		$response = ClassResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries) if($query_type eq "class_query");
+		$response = ZeroHopResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries) if($query_type eq "zerohop_query");
+		$response = GraphResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries) if($query_type eq "graph_query");
 		$self->get("RESPONSES")->add($response, $i) if $response->is_valid();
 	}
 }
@@ -1411,12 +1424,15 @@ package ClassResponse;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries) = @_;
   my $self = {
     CLASS => 'ClassResponse',
     XML_FILENAME => $xml_filename,
     XML_OBJECT => $xml_object,
     DOCID_MAPPINGS => $docid_mappings,
+		TEXT_BOUNDARIES => $text_boundaries,
+		IMAGE_BOUNDARIES => $image_boundaries, 
+		KEYFRAME_BOUNDARIES => $keyframe_boundaries,
     QUERIES => $queries,
     QUERYID => undef,
     RESPONSE_DOCID => undef,
@@ -1552,6 +1568,9 @@ sub is_valid {
 	my ($self) = @_;
 	my $scope = $self->get("SCOPE");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $text_boundaries = $self->get("TEXT_BOUNDARIES");
+	my $image_boundaries = $self->get("IMAGE_BOUNDARIES");
+	my $keyframe_boundaries = $self->get("KEYFRAME_BOUNDARIES");
 	my $query_id = $self->get("QUERYID");
 	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
 	my $is_valid = 1;
@@ -1571,7 +1590,7 @@ sub is_valid {
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		$i++;
 		# Validate the justification span and confidence
-		if ($justification->is_valid($docid_mappings, $scope)) {
+		if ($justification->is_valid($docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries, $scope)) {
 			$num_valid_justifications++;
 		}
 		else {
@@ -1673,12 +1692,15 @@ package ZeroHopResponse;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries) = @_;
   my $self = {
     CLASS => 'ZeroHopResponse',
     XML_FILENAME => $xml_filename,
     XML_OBJECT => $xml_object,
     DOCID_MAPPINGS => $docid_mappings,
+		TEXT_BOUNDARIES => $text_boundaries,
+		IMAGE_BOUNDARIES => $image_boundaries, 
+		KEYFRAME_BOUNDARIES => $keyframe_boundaries,
     QUERIES => $queries,
     QUERYID => undef,
     JUSTIFICATIONS => undef,
@@ -1823,6 +1845,9 @@ sub is_valid {
 	my ($self) = @_;
 	my $scope = $self->get("SCOPE");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $text_boundaries = $self->get("TEXT_BOUNDARIES");
+	my $image_boundaries = $self->get("IMAGE_BOUNDARIES");
+	my $keyframe_boundaries = $self->get("KEYFRAME_BOUNDARIES");
 	my $query_id = $self->get("QUERYID");
 	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
 	my $is_valid = 1;
@@ -1838,7 +1863,7 @@ sub is_valid {
 	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
 		$i++;
 		# Validate the justification span and confidence
-		if ($justification->is_valid($docid_mappings, $scope)) {
+		if ($justification->is_valid($docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries, $scope)) {
 			$num_valid_justifications++;
 		}
 		else{
@@ -1935,12 +1960,15 @@ package GraphResponse;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries) = @_;
   my $self = {
     CLASS => 'GraphResponse',
     XML_FILENAME => $xml_filename,
     XML_OBJECT => $xml_object,
     DOCID_MAPPINGS => $docid_mappings,
+		TEXT_BOUNDARIES => $text_boundaries,
+		IMAGE_BOUNDARIES => $image_boundaries, 
+		KEYFRAME_BOUNDARIES => $keyframe_boundaries,
     QUERIES => $queries,
     QUERYID => undef,
     EDGES => undef,
@@ -2067,6 +2095,9 @@ sub is_valid {
 	my ($self) = @_;
 	my $scope = $self->get("SCOPE");
 	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $text_boundaries = $self->get("TEXT_BOUNDARIES");
+	my $image_boundaries = $self->get("IMAGE_BOUNDARIES");
+	my $keyframe_boundaries = $self->get("KEYFRAME_BOUNDARIES");
 	my $query_id = $self->get("QUERYID");
 	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
 	my $is_valid = 1;
@@ -2111,9 +2142,9 @@ sub is_valid {
 				$is_justification_valid = 0;
 			}
 			$is_justification_valid = 0
-				unless $justification->get("SUBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+				unless $justification->get("SUBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries, $scope);
 			$is_justification_valid = 0
-				unless $justification->get("OBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+				unless $justification->get("OBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries, $scope);
 			my @edge_justification_spans = $justification->get("EDGE_JUSTIFICATION")->get("SPANS")->toarray();
 			my $num_edge_justification_spans = scalar @edge_justification_spans;
 			my $num_valid_edge_justification_spans = 0;
@@ -2121,7 +2152,7 @@ sub is_valid {
 				$self->get("LOGGER")->record_problem("EXTRA_EDGE_JUSTIFICATIONS", $max_edge_justifications, $num_edge_justification_spans, $where);
 			}
 			foreach my $edge_justification_span(@edge_justification_spans) {
-				if($edge_justification_span->is_valid($docid_mappings, $scope)) {
+				if($edge_justification_span->is_valid($docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries, $scope)) {
 					$num_valid_edge_justification_spans++;
 					$edge_justification_span->get("XML_OBJECT")->set("IGNORE", 1)
 						if($num_valid_edge_justification_spans);
@@ -2738,25 +2769,34 @@ sub new {
 }
 
 sub is_valid {
-	my ($self, $docid_mappings, $scope) = @_;
+	my ($self, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries, $scope) = @_;
 	my $logger = $self->get("LOGGER");
 	my $where = $self->get("WHERE");
 	my $is_valid = 1;
 	# Check if confidence is valid
-	if(defined $self->get("CONFIDENCE")) {
-		if(looks_like_number($self->get("CONFIDENCE"))) {
-			if($self->get("CONFIDENCE") < 0 || $self->get("CONFIDENCE") > 1) {
-				$logger->record_problem("INVALID_CONFIDENCE", $self->get("CONFIDENCE"), $where);
+	my $confidence = $self->get("CONFIDENCE");
+	if(defined $confidence) {
+		if(looks_like_number($confidence)) {
+			if($confidence < 0 || $confidence > 1) {
+				$logger->record_problem("INVALID_CONFIDENCE", $confidence, $where);
 				$is_valid = 0;
+			}
+			if($confidence =~ /e/i) {
+				$confidence = sprintf("%f", $confidence);
+				$self->get("XML_OBJECT")->get("CHILD", "confidence")->set("ELEMENT", $confidence);
 			}
 		}
 		else{
-			$logger->record_problem("INVALID_CONFIDENCE", $self->get("CONFIDENCE"), $where);
+			$logger->record_problem("INVALID_CONFIDENCE", $confidence, $where);
 			$is_valid = 0;
 		}
 	}
 	my ($doceid, $keyframeid, $start, $end, $type)
 				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END TYPE);
+	my ($sx, $sy) = split(",", $start);
+	my ($ex, $ey) = split(",", $end);
+	$sy = 0 unless $sy;
+	$ey = 0 unless $ey;
 	my ($justification_modality) = $type =~ /^(.*?)_JUSTIFICATION$/;
 	if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
 		my $document_element = 
@@ -2769,7 +2809,8 @@ sub is_valid {
 		}
 	}
 	if($type eq "TEXT_JUSTIFICATION" || $type eq "AUDIO_JUSTIFICATION") {
-		if($start =~ /^-?\d+$/) {
+		# Check if start and end are both numbers
+		if(looks_like_number($start)) {
 			if ($start < 0) {
 				$logger->record_problem("INVALID_START", $start, $type, $where);
 				$is_valid = 0;
@@ -2779,7 +2820,7 @@ sub is_valid {
 			$logger->record_problem("NONNUMERIC_START", $start, $where);
 			$is_valid = 0;
 		}
-		if($end =~ /^-?\d+$/) {
+		if(looks_like_number($end)) {
 			if ($end < 0) {
 				$logger->record_problem("INVALID_END", $end, $type, $where);
 				$is_valid = 0;
@@ -2789,8 +2830,46 @@ sub is_valid {
 			$logger->record_problem("NONNUMERIC_END", $end, $where);
 			$is_valid = 0;
 		}
+		# Check if start comes before the end
+		if($is_valid && $end < $start) {
+			$logger->record_problem("START_BIGGER_THAN_END", $start, $end, $where);
+			$is_valid = 0;
+		}
+		# Check if the span is within document boundary
+		if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid) && $is_valid) {
+			my $mention_span = $self->tostring();
+			my $text_boundary = $text_boundaries->get("BOUNDARY", $mention_span);
+			unless($text_boundary) {
+				$logger->record_problem("MISSING_DOCUMENTELEMENT_BOUNDARY", $doceid, {FILENAME => __FILE__, LINENUM => __LINE__});
+			}
+			else {
+				my $modified_flag = 0;
+				my ($tb_start_char, $tb_end_char) = map {$text_boundary->get($_)} qw(START_CHAR END_CHAR);
+				if($sx < $tb_start_char) {
+					$sx = $tb_start_char;
+					$self->set("START", $sx);
+					$self->get("XML_OBJECT")->get("CHILD", "start")->set("ELEMENT", $sx);
+					$modified_flag = 1;
+				}
+				if($ex > $tb_end_char) {
+					$ex = $tb_end_char;
+					$self->set("END", $ex);
+					$self->get("XML_OBJECT")->get("CHILD", "end")->set("ELEMENT", $ex);
+					$modified_flag = 1;
+				}
+				if($modified_flag) {
+					my $doc_boundary = "$tb_start_char-$tb_end_char";
+					my $corrected_mention_span = "$doceid:($sx,$sy)-($ex,$ey)";
+					$logger->record_problem("OFF_BOUNDARY_SPAN", $mention_span, $doc_boundary, $corrected_mention_span, 
+						{FILENAME => __FILE__, LINENUM => __LINE__});
+				}
+			}
+		}
 	}
-	elsif($type eq "VIDEO_JUSTIFICATION" || $type eq "IMAGE_JUSTIFICATION") {
+	elsif($type eq "IMAGE_JUSTIFICATION" || $type eq "VIDEO_JUSTIFICATION") {
+		# Checks common to both images and videos
+		# Check if start and end are both in proper format
+		my ($sx, $sy, $ex, $ey);
 		unless ($start =~ /^\d+\,\d+$/) {
 			$logger->record_problem("INVALID_START", $start, $type, $where);
 			$is_valid = 0;
@@ -2799,7 +2878,17 @@ sub is_valid {
 			$logger->record_problem("INVALID_END", $end, $type, $where);
 			$is_valid = 0;
 		}
+		if($is_valid) {
+			# Check if start comes before the end
+			($sx, $sy) = split(",", $start);
+			($ex, $ey) = split(",", $end);
+			if($ex < $sx || $ey < $sy) {
+				$logger->record_problem("START_BIGGER_THAN_END", $start, $end, $where);
+				$is_valid = 0;
+			}
+		}
 		if($type eq "VIDEO_JUSTIFICATION") {
+			# Checks specific to videos
 			# For a video justification:
 			#  (1) DOCEID should be the prefix of KEYFRAMEID
 			#  (2) KEYFRAMEID should not end in an extension, e.g. .jpg
@@ -2807,7 +2896,50 @@ sub is_valid {
 				$logger->record_problem("INVALID_KEYFRAMEID", $keyframeid, $where);
 				$is_valid = 0;
 			}
-			# TODO: lookup keyframeid in the boundingbox file
+			# Check if the keyframeid exists in the boundingbox file
+			# If not, see if the previous one exists and map the incorrect one to the last keyframe
+			# Otherwise, throw an error.
+			my ($doceid, $shot_num) = $keyframeid =~ /^(.*?)\_(\d+)$/;
+			unless($keyframe_boundaries->exists($keyframeid)) {
+				my $new_keyframeid = $doceid . "_" . ($shot_num-1);
+				if($keyframe_boundaries->exists($new_keyframeid)) {
+					my $old_keyframeid = $keyframeid;
+					$keyframeid = $new_keyframeid;
+					$self->get("XML_OBJECT")->get("CHILD", "keyframeid")->set("ELEMENT", $keyframeid);
+					$logger->record_problem("KEYFRAMEID_CORRECTED", $old_keyframeid, $keyframeid, $where);
+				}
+				else {
+					$logger->record_problem("UNKNOWN_KEYFRAMEID", $keyframeid, $where);
+					$is_valid = 0;
+				}
+			}
+		}
+		if($is_valid) {
+			# Check if the boundingbox provided is within the image/keyframe
+			my ($boundingbox, $id);
+			if ($type eq "IMAGE_JUSTIFICATION") {
+				$id = $doceid;
+				$boundingbox = $image_boundaries->get("BY_KEY", $id)
+					if($image_boundaries->exists($id));
+			}
+			else{
+				$id = $keyframeid;
+				$boundingbox = $keyframe_boundaries->get("BY_KEY", $id)
+					if($keyframe_boundaries->exists($id));
+			}
+			if ($boundingbox && !$boundingbox->validate($self->tostring())) {
+				($sx, $sy, $ex, $ey) 
+					= map {$boundingbox->get($_)} 
+						qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+				my $boundary = "($sx,$sy)-($ex,$ey)";
+				my $corrected_mention_span = "$id:($sx,$sy)-($ex,$ey)";
+				$logger->record_problem("BOUNDINGBOX_OFF_BOUNDARY", $self->tostring(), $boundary, $corrected_mention_span, 
+					$where);
+				my $topleft = "$sx,$sy";
+				my $bottomright = "$ex,$ey";
+				$self->get("XML_OBJECT")->get("CHILD", "topleft")->set("ELEMENT", $topleft);
+				$self->get("XML_OBJECT")->get("CHILD", "bottomright")->set("ELEMENT", $bottomright);
+			}
 		}
 	}
 	else {
@@ -2815,6 +2947,41 @@ sub is_valid {
 		$is_valid = 0;
 	}
 	$is_valid;
+}
+
+sub get_DOCIDS {
+	my ($self, $docid_mappings, $scope) = @_;
+	my $where = $self->get("WHERE");
+	my @docids;
+	my $doceid = $self->get("DOCEID");
+	if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+		my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+		@docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
+	}
+	else {
+		$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where)
+			if($scope ne "anywhere");
+	}
+	@docids;
+}
+
+sub get_MODALITY {
+	my ($self) = @_;
+	($self->get("TYPE") =~ /^(.*?)_/)[0];
+}
+
+sub tostring {
+	my ($self) = @_;
+	my ($filename, $keyframeid, $start, $end)
+				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END);
+	if($self->get("MODALITY") eq "TEXT" or $self->get("MODALITY") eq "AUDIO") {
+		$start = "$start,0";
+		$end = "$end,0";
+	}
+	$start = "($start)";
+	$end = "($end)";
+	$filename = $keyframeid if($self->get("MODALITY") eq "VIDEO");
+	"$filename:$start-$end";
 }
 
 #####################################################################################
@@ -3068,6 +3235,341 @@ sub get_MODALITY_FROM_ENCODING_FORMAT {
 						{FILENAME => $self->get("FILENAME"), LINENUM => "n/a"});
 	}
 	$modality;
+}
+
+#####################################################################################
+# ImagesBoundingBoxes
+#####################################################################################
+
+package ImagesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
+  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my $filename = $entry->get("filename");
+		my $doceid = $filename;
+		$doceid =~ s/\..*?$//;
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(ImageBoundingBox->new($self->get("LOGGER"), $doceid, undef,
+												0, 0, $bottom_right_x, $bottom_right_y), $doceid);
+	}
+}
+
+#####################################################################################
+# ImageBoundingBox
+#####################################################################################
+
+package ImageBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'ImageBoundingBox',
+    DOCEID => $doceid,
+    TYPE => $type,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+	my ($self, $span_string) = @_;
+	my $is_valid = 0;
+	if(my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
+		my ($min_x, $min_y, $max_x, $max_y) 
+			= map {$self->get($_)} 
+				qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+		$is_valid = 1
+			unless($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+				|| $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+	}
+	$is_valid;
+}
+
+#####################################################################################
+# KeyFramesBoundingBoxes
+#####################################################################################
+
+package KeyFramesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
+  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
+												0, 0,
+												$bottom_right_x, $bottom_right_y),
+								$entry->get("keyframeid"));
+	}
+}
+
+sub get_KEYFRAMESIDS {
+	my ($self, $doceid) = @_;
+	my @keyframeids = $self->get("ALL_KEYS");
+	@keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
+	sort @keyframeids;
+}
+
+#####################################################################################
+# KeyFramesBoundingBox
+#####################################################################################
+
+package KeyFrameBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'KeyFrameBoundingBox',
+    KEYFRAMEID => $keyframeid,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_DOCEID {
+	my ($self) = @_;
+	my ($doceid) = split("_", $self->get("KEYFRAMEID"));
+	$doceid;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+	my ($self, $span_string) = @_;
+	my $is_valid = 0;
+	if(my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
+		my ($min_x, $min_y, $max_x, $max_y) 
+			= map {$self->get($_)} 
+				qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+		$is_valid = 1
+			unless($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+				|| $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+	}
+	$is_valid;
+}
+
+#####################################################################################
+# TextDocumentBoundaries
+#####################################################################################
+
+package TextDocumentBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'TextDocumentBoundary');
+  $self->{CLASS} = 'TextDocumentBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my ($doceid, $segment_id, $start_char, $end_char) =
+			map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+		my $text_document_boundary;
+		unless($self->exists($doceid)) {
+			$text_document_boundary = $self->get("BY_KEY", $doceid);
+			$text_document_boundary->set("DOCEID", $doceid);
+			$text_document_boundary->set("START_CHAR", $start_char);
+			$text_document_boundary->set("END_CHAR", $end_char);
+		}
+		else{
+			$text_document_boundary = $self->get("BY_KEY", $doceid);
+		}
+		my ($tb_start_char, $tb_end_char)
+			= map {$text_document_boundary->get($_)}
+				qw(START_CHAR END_CHAR);
+		$text_document_boundary->set("START_CHAR", $start_char)
+			if($start_char < $tb_start_char);
+		$text_document_boundary->set("END_CHAR", $end_char)
+			if($end_char > $tb_end_char);
+	}
+}
+
+sub get_BOUNDARY {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	my $text_document_boundary;
+	$text_document_boundary = $self->get("BY_KEY", $id) 
+		if($self->exists($id));
+	$text_document_boundary;
+}
+
+#####################################################################################
+# TextDocumentBoundary
+#####################################################################################
+
+package TextDocumentBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $start_char, $end_char) = @_;
+  my $self = {
+    CLASS => 'TextDocumentBoundary',
+    START_CHAR => $start_char,
+    END_CHAR => $end_char,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# SentenceBoundaries
+#####################################################################################
+
+package SentenceBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'Segments');
+  $self->{CLASS} = 'SentenceBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my ($doceid, $segment_id, $start_char, $end_char) =
+			map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+		my $segments = $self->get("BY_KEY", $doceid);
+		my $sentence_boundary = $segments->get("BY_KEY", "$doceid:$segment_id");
+		$sentence_boundary->set("SEGMENT_ID", $segment_id);
+		$sentence_boundary->set("START_CHAR", $start_char);
+		$sentence_boundary->set("END_CHAR", $end_char);
+	}
+}
+
+sub get_BOUNDARY {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	if($self->exists($id)) {
+		my $segments = $self->get("BY_KEY", $id);
+		foreach my $segment($segments->toarray()) {
+			my ($start_char, $end_char) = map {$segment->get($_)} qw(START_CHAR END_CHAR);
+			return $segment if($sx >= $start_char && $ex <= $end_char);
+		}
+	}
+	0;
+}
+
+#####################################################################################
+# Segments
+#####################################################################################
+
+package Segments;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'SentenceBoundary');
+  $self->{CLASS} = 'Segments';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# SentenceBoundary
+#####################################################################################
+
+package SentenceBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'SentenceBoundary',
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
 }
 
 ### BEGIN INCLUDE Utils
