@@ -1589,6 +1589,7 @@ sub is_valid {
 	}
 	else {
 		# Is the queryid valid?
+		$where = $self->get("XML_OBJECT")->get("CHILD", "classquery_response")->get("WHERE");
 		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
 		$is_valid = 0;
 	}
@@ -1608,6 +1609,7 @@ sub is_valid {
 		}
 		# Check if the enttype matches to that of the query
 		if($query && $justification->get("ENTTYPE") ne $query_enttype) {
+			$where = $self->get("XML_OBJECT")->get("CHILD", "enttype")->get("WHERE");
 			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
 			$is_valid = 0;
 		}
@@ -1623,6 +1625,7 @@ sub is_valid {
 				}
 			}
 			else {
+				$where = $self->get("XML_OBJECT")->get("CHILD", "doceid")->get("WHERE");
 				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
 				$is_valid = 0;
 			}
