@@ -1076,8 +1076,7 @@ sub get_NEXT_OBJECT {
 		}
 	}
 	return unless $found;
-	my $next_object = $self->get("STRING_TO_OBJECT", $object_string, $search_node, $self->get("OBJECT_WHERE")->{LINENUM});
-	$next_object;
+	$self->get("STRING_TO_OBJECT", $object_string, $search_node, $self->get("OBJECT_WHERE")->{LINENUM});
 }
 
 sub get_STRING_TO_OBJECT {
@@ -2782,12 +2781,11 @@ sub new {
 sub is_valid {
 	my ($self, $docid_mappings, $text_boundaries, $image_boundaries, $keyframe_boundaries, $scope) = @_;
 	my $logger = $self->get("LOGGER");
-	my $where = $self->get("WHERE");
 	my $is_valid = 1;
 	# Check if confidence is valid
 	my $confidence = $self->get("CONFIDENCE");
 	if(defined $confidence) {
-		$where = $self->get("XML_OBJECT")->get("CHILD", "confidence")->get("WHERE");
+		my $where = $self->get("XML_OBJECT")->get("CHILD", "confidence")->get("WHERE");
 		if(looks_like_number($confidence)) {
 			if($confidence < 0 || $confidence > 1) {
 				$logger->record_problem("INVALID_CONFIDENCE", $confidence, $where);
@@ -2817,6 +2815,7 @@ sub is_valid {
 		my $de_modality = $document_element->get("MODALITY");
 		unless ($de_modality eq $justification_modality) {
 			$is_valid = 0;
+			my $where = $self->get("WHERE");
 			$logger->record_problem("UNEXPECTED_JUSTIFICATION_MODALITY", $justification_modality, $doceid, $de_modality, $where);			
 		}
 	}
@@ -2824,30 +2823,31 @@ sub is_valid {
 		# Check if start and end are both numbers
 		if(looks_like_number($start)) {
 			if ($start < 0) {
-				$where = $self->get("XML_OBJECT")->get("CHILD", "start")->get("WHERE");
+				my $where = $self->get("XML_OBJECT")->get("CHILD", "start")->get("WHERE");
 				$logger->record_problem("INVALID_START", $start, $type, $where);
 				$is_valid = 0;
 			}
 		}
 		else{
-			$where = $self->get("XML_OBJECT")->get("CHILD", "start")->get("WHERE");
+			my $where = $self->get("XML_OBJECT")->get("CHILD", "start")->get("WHERE");
 			$logger->record_problem("NONNUMERIC_START", $start, $where);
 			$is_valid = 0;
 		}
 		if(looks_like_number($end)) {
 			if ($end < 0) {
-				$where = $self->get("XML_OBJECT")->get("CHILD", "end")->get("WHERE");
+				my $where = $self->get("XML_OBJECT")->get("CHILD", "end")->get("WHERE");
 				$logger->record_problem("INVALID_END", $end, $type, $where);
 				$is_valid = 0;
 			}
 		}
 		else{
-			$where = $self->get("XML_OBJECT")->get("CHILD", "end")->get("WHERE");
+			my $where = $self->get("XML_OBJECT")->get("CHILD", "end")->get("WHERE");
 			$logger->record_problem("NONNUMERIC_END", $end, $where);
 			$is_valid = 0;
 		}
 		# Check if start comes before the end
 		if($is_valid && $end < $start) {
+			my $where = $self->get("WHERE");
 			$logger->record_problem("START_BIGGER_THAN_END", $start, $end, $where);
 			$is_valid = 0;
 		}
@@ -2856,7 +2856,7 @@ sub is_valid {
 			my $mention_span = $self->tostring();
 			my $text_boundary = $text_boundaries->get("BOUNDARY", $mention_span);
 			unless($text_boundary) {
-				$where = $self->get("XML_OBJECT")->get("CHILD", "doceid")->get("WHERE");
+				my $where = $self->get("XML_OBJECT")->get("CHILD", "doceid")->get("WHERE");
 				$logger->record_problem("MISSING_DOCUMENTELEMENT_BOUNDARY", $doceid, $where);
 			}
 			else {
@@ -2877,6 +2877,7 @@ sub is_valid {
 				if($modified_flag) {
 					my $doc_boundary = "$tb_start_char-$tb_end_char";
 					my $corrected_mention_span = "$doceid:($sx,$sy)-($ex,$ey)";
+					my $where = $self->get("WHERE");
 					$logger->record_problem("OFF_BOUNDARY_SPAN", $mention_span, $doc_boundary, $corrected_mention_span, $where);
 				}
 			}
@@ -2887,12 +2888,12 @@ sub is_valid {
 		# Check if start and end are both in proper format
 		my ($sx, $sy, $ex, $ey);
 		unless ($start =~ /^\d+\,\d+$/) {
-			$where = $self->get("XML_OBJECT")->get("CHILD", "topleft")->get("WHERE");
+			my $where = $self->get("XML_OBJECT")->get("CHILD", "topleft")->get("WHERE");
 			$logger->record_problem("INVALID_START", $start, $type, $where);
 			$is_valid = 0;
 		}
 		unless ($end =~ /^\d+\,\d+$/) {
-			$where = $self->get("XML_OBJECT")->get("CHILD", "bottomright")->get("WHERE");
+			my $where = $self->get("XML_OBJECT")->get("CHILD", "bottomright")->get("WHERE");
 			$logger->record_problem("INVALID_END", $end, $type, $where);
 			$is_valid = 0;
 		}
@@ -2901,6 +2902,7 @@ sub is_valid {
 			($sx, $sy) = split(",", $start);
 			($ex, $ey) = split(",", $end);
 			if($ex < $sx || $ey < $sy) {
+				my $where = $self->get("WHERE");
 				$logger->record_problem("START_BIGGER_THAN_END", $start, $end, $where);
 				$is_valid = 0;
 			}
@@ -2911,7 +2913,7 @@ sub is_valid {
 			#  (1) DOCEID should be the prefix of KEYFRAMEID
 			#  (2) KEYFRAMEID should not end in an extension, e.g. .jpg
 			if($keyframeid !~ /^$doceid\_\d+$/ || $keyframeid =~ /\..*?$/){
-				$where = $self->get("XML_OBJECT")->get("CHILD", "keyframeid")->get("WHERE");
+				my $where = $self->get("XML_OBJECT")->get("CHILD", "keyframeid")->get("WHERE");
 				$logger->record_problem("INVALID_KEYFRAMEID", $keyframeid, $where);
 				$is_valid = 0;
 			}
@@ -2921,7 +2923,7 @@ sub is_valid {
 			my ($doceid, $shot_num) = $keyframeid =~ /^(.*?)\_(\d+)$/;
 			unless($keyframe_boundaries->exists($keyframeid)) {
 				my $new_keyframeid = $doceid . "_" . ($shot_num-1);
-				$where = $self->get("XML_OBJECT")->get("CHILD", "keyframeid")->get("WHERE");
+				my $where = $self->get("XML_OBJECT")->get("CHILD", "keyframeid")->get("WHERE");
 				if($keyframe_boundaries->exists($new_keyframeid)) {
 					my $old_keyframeid = $keyframeid;
 					$keyframeid = $new_keyframeid;
@@ -2953,6 +2955,7 @@ sub is_valid {
 						qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
 				my $boundary = "($sx,$sy)-($ex,$ey)";
 				my $corrected_mention_span = "$id:($sx,$sy)-($ex,$ey)";
+				my $where = $self->get("WHERE");
 				$logger->record_problem("BOUNDINGBOX_OFF_BOUNDARY", $self->tostring(), $boundary, $corrected_mention_span, 
 					$where);
 				my $topleft = "$sx,$sy";
@@ -2963,6 +2966,7 @@ sub is_valid {
 		}
 	}
 	else {
+		my $where = $self->get("WHERE");
 		$logger->record_problem("INVALID_JUSTIFICATION_TYPE", $type, $where);
 		$is_valid = 0;
 	}
