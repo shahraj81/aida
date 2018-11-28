@@ -1033,7 +1033,7 @@ sub new {
 		DTD_FILENAME => $dtd_filename,
 		XML_FILENAME => $xml_filename,
 		XML_FILEHANDLE => undef,
-		LINENUM => -1,
+		LINENUM => 0,
 		OBJECT_WHERE => undef,
 		LOGGER => $logger,
 	};
@@ -1076,11 +1076,12 @@ sub get_NEXT_OBJECT {
 		}
 	}
 	return unless $found;
-	$self->get("STRING_TO_OBJECT", $object_string, $search_node);
+	my $next_object = $self->get("STRING_TO_OBJECT", $object_string, $search_node, $self->get("OBJECT_WHERE")->{LINENUM});
+	$next_object;
 }
 
 sub get_STRING_TO_OBJECT {
-	my ($self, $object_string, $search_node) = @_;
+	my ($self, $object_string, $search_node, $linenum) = @_;
 	my $logger = $self->get("LOGGER");
 	my $search_tag = $search_node->get("NODEID");
 	my $num_of_children = $search_node->get("NUM_OF_CHILDREN");
@@ -1108,7 +1109,8 @@ sub get_STRING_TO_OBJECT {
 					$value = "\t$value\n";
 					$new_line = 1;
 				}
-				return XMLElement->new($logger, $value, $search_tag, $new_line, $xml_attributes, $self->get("OBJECT_WHERE"));
+				my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$linenum}; 
+				return XMLElement->new($logger, $value, $search_tag, $new_line, $xml_attributes, $new_where);
 			}
 			else{
 				# TODO: did not find the pattern we were expecting; throw an exception here
@@ -1128,7 +1130,8 @@ sub get_STRING_TO_OBJECT {
 					}
 				}
 				my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
-				return XMLElement->new($logger, $xml_child_object, $search_tag, 1, $xml_attributes, $self->get("OBJECT_WHERE"));
+				my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$linenum}; 
+				return XMLElement->new($logger, $xml_child_object, $search_tag, 1, $xml_attributes, $new_where);
 			}
 			else{
 				# TODO: did not find the pattern we were expecting; throw an exception here
@@ -1149,10 +1152,13 @@ sub get_STRING_TO_OBJECT {
 		# $found = 0: the start of the tag not found yet
 		# $found = 1: start-tag found but the end-tag is not
 		my $found = 0;
+		my $found_linenum = $linenum;
+		my $containerfound_linenum = $linenum;
 		my $xml_container = XMLContainer->new($logger);
 		my $new_search_tag;
 		foreach my $line(split(/\n/, $object_string)){
 			chomp $line;
+			$linenum++;
 process_next_child:
 			# Get allowed types for this child
 			my @this_child_allowed_types = $search_node->get("CHILDNUM_TYPES", $looking_for_child_num);
@@ -1168,11 +1174,12 @@ process_next_child:
 						$new_search_tag = $this_child_allowed_type;
 						$new_object_string = $line;
 						$found = 1;
+						$found_linenum = $linenum;
 						$check_next_child = 0;
 						# Handle cases like <tag.*?> value <\/tag>
 						if($line =~ /\<\/$new_search_tag\>/) {
 							my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $this_child_allowed_type);
-							my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+							my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node, $found_linenum);
 							$xml_container->add($xml_child_object);
 							$new_object_string = "";
 							# Found the end; reset $found
@@ -1197,7 +1204,7 @@ process_next_child:
 					# end found
 					$new_object_string .= "\n$line";
 					my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $new_search_tag);
-					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node, $found_linenum);
 					$xml_container->add($xml_child_object);
 					$new_object_string = "";
 					# Found the end; reset $found
@@ -1216,7 +1223,8 @@ process_next_child:
 				$xml_attributes->add($value, $key);
 			}
 		}
-		return XMLElement->new($logger, $xml_container, $search_tag, 1, $xml_attributes, $self->get("OBJECT_WHERE"));
+		my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$containerfound_linenum}; 
+		return XMLElement->new($logger, $xml_container, $search_tag, 1, $xml_attributes, $new_where);
 	}
 }
 
@@ -2776,6 +2784,7 @@ sub is_valid {
 	# Check if confidence is valid
 	my $confidence = $self->get("CONFIDENCE");
 	if(defined $confidence) {
+		$where = $self->get("XML_OBJECT")->get("CHILD", "confidence")->get("WHERE");
 		if(looks_like_number($confidence)) {
 			if($confidence < 0 || $confidence > 1) {
 				$logger->record_problem("INVALID_CONFIDENCE", $confidence, $where);
@@ -2812,21 +2821,25 @@ sub is_valid {
 		# Check if start and end are both numbers
 		if(looks_like_number($start)) {
 			if ($start < 0) {
+				$where = $self->get("XML_OBJECT")->get("CHILD", "start")->get("WHERE");
 				$logger->record_problem("INVALID_START", $start, $type, $where);
 				$is_valid = 0;
 			}
 		}
 		else{
+			$where = $self->get("XML_OBJECT")->get("CHILD", "start")->get("WHERE");
 			$logger->record_problem("NONNUMERIC_START", $start, $where);
 			$is_valid = 0;
 		}
 		if(looks_like_number($end)) {
 			if ($end < 0) {
+				$where = $self->get("XML_OBJECT")->get("CHILD", "end")->get("WHERE");
 				$logger->record_problem("INVALID_END", $end, $type, $where);
 				$is_valid = 0;
 			}
 		}
 		else{
+			$where = $self->get("XML_OBJECT")->get("CHILD", "end")->get("WHERE");
 			$logger->record_problem("NONNUMERIC_END", $end, $where);
 			$is_valid = 0;
 		}
@@ -2840,7 +2853,8 @@ sub is_valid {
 			my $mention_span = $self->tostring();
 			my $text_boundary = $text_boundaries->get("BOUNDARY", $mention_span);
 			unless($text_boundary) {
-				$logger->record_problem("MISSING_DOCUMENTELEMENT_BOUNDARY", $doceid, {FILENAME => __FILE__, LINENUM => __LINE__});
+				$where = $self->get("XML_OBJECT")->get("CHILD", "doceid")->get("WHERE");
+				$logger->record_problem("MISSING_DOCUMENTELEMENT_BOUNDARY", $doceid, $where);
 			}
 			else {
 				my $modified_flag = 0;
@@ -2860,8 +2874,7 @@ sub is_valid {
 				if($modified_flag) {
 					my $doc_boundary = "$tb_start_char-$tb_end_char";
 					my $corrected_mention_span = "$doceid:($sx,$sy)-($ex,$ey)";
-					$logger->record_problem("OFF_BOUNDARY_SPAN", $mention_span, $doc_boundary, $corrected_mention_span, 
-						{FILENAME => __FILE__, LINENUM => __LINE__});
+					$logger->record_problem("OFF_BOUNDARY_SPAN", $mention_span, $doc_boundary, $corrected_mention_span, $where);
 				}
 			}
 		}
@@ -2871,10 +2884,12 @@ sub is_valid {
 		# Check if start and end are both in proper format
 		my ($sx, $sy, $ex, $ey);
 		unless ($start =~ /^\d+\,\d+$/) {
+			$where = $self->get("XML_OBJECT")->get("CHILD", "topleft")->get("WHERE");
 			$logger->record_problem("INVALID_START", $start, $type, $where);
 			$is_valid = 0;
 		}
 		unless ($end =~ /^\d+\,\d+$/) {
+			$where = $self->get("XML_OBJECT")->get("CHILD", "bottomright")->get("WHERE");
 			$logger->record_problem("INVALID_END", $end, $type, $where);
 			$is_valid = 0;
 		}
@@ -2893,6 +2908,7 @@ sub is_valid {
 			#  (1) DOCEID should be the prefix of KEYFRAMEID
 			#  (2) KEYFRAMEID should not end in an extension, e.g. .jpg
 			if($keyframeid !~ /^$doceid\_\d+$/ || $keyframeid =~ /\..*?$/){
+				$where = $self->get("XML_OBJECT")->get("CHILD", "keyframeid")->get("WHERE");
 				$logger->record_problem("INVALID_KEYFRAMEID", $keyframeid, $where);
 				$is_valid = 0;
 			}
@@ -2902,6 +2918,7 @@ sub is_valid {
 			my ($doceid, $shot_num) = $keyframeid =~ /^(.*?)\_(\d+)$/;
 			unless($keyframe_boundaries->exists($keyframeid)) {
 				my $new_keyframeid = $doceid . "_" . ($shot_num-1);
+				$where = $self->get("XML_OBJECT")->get("CHILD", "keyframeid")->get("WHERE");
 				if($keyframe_boundaries->exists($new_keyframeid)) {
 					my $old_keyframeid = $keyframeid;
 					$keyframeid = $new_keyframeid;
