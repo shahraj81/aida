@@ -18,7 +18,7 @@ use ExtractSentenceBoundriesManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2018.0.1";
+my $version = "2018.0.2";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};
@@ -65,22 +65,35 @@ my $docid_mappings_file = $switches->get("docid_mappings");
 my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 
 my %sentence_boundaries;
-foreach my $docid($docid_mappings->get("DOCUMENTS")->get("ALL_KEYS")) {
+foreach my $docid(sort $docid_mappings->get("DOCUMENTS")->get("ALL_KEYS")) {
 	my @doceids = map {$_->get("DOCUMENTELEMENTID")} $docid_mappings->get("DOCUMENTS")->get("BY_KEY", $docid)->get("DOCUMENTELEMENTS")->toarray();
-	foreach my $doceid(@doceids) { 
+	foreach my $doceid(sort @doceids) { 
 		my $filename = "$ltf_directory/$doceid.ltf.xml";
 		unless(-e $filename) {
 			$logger->record_debug_information("FILENOTFOUND", $filename, {FILENAME => __FILE__, LINENUM => __LINE__});
 			next;
 		}
 		print STDERR "$filename\n";
-		open(my $program_input, "<:utf8", $filename) or $logger->NIST_die("Could not open $filename");
+		open(my $program_input, "<", $filename) or $logger->NIST_die("Could not open $filename");
+		my ($running_offset, $start_segment_offset, $end_segment_offset, $segment_id, $start_char, $end_char) = (0,0,0,0,0,0);
 		while(my $line = <$program_input>) {
+			my $length = length($line);
 			chomp $line;
 			if($line =~ /^<SEG id="segment-(\d+)" start_char="(\d+)" end_char="(\d+)">$/){
-				my ($segment_id, $start_char, $end_char) = ($1, $2, $3);
-				$sentence_boundaries{$doceid}{$segment_id} = {START_CHAR=>$start_char, END_CHAR=>$end_char};
+				$start_segment_offset = $running_offset;
+				($segment_id, $start_char, $end_char) = ($1, $2, $3);
 			}
+			if($line =~ /^<\/SEG>/) {
+				$end_segment_offset = $running_offset + $length - 1;
+				$sentence_boundaries{$doceid}{$segment_id} = 
+					{ 
+						START_CHAR => $start_char, 
+						END_CHAR => $end_char,
+						START_SEGMENT_OFFSET => $start_segment_offset,
+						END_SEGMENT_OFFSET => $end_segment_offset,
+					};
+			}
+			$running_offset += $length;
 		}
 		close($program_input);
 	}
@@ -88,12 +101,13 @@ foreach my $docid($docid_mappings->get("DOCUMENTS")->get("ALL_KEYS")) {
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
-	print $program_output "doceid\tsegment_id\tstart_char\tend_char\n";
+	print $program_output join("\t", ("doceid", "segment_id", "start_char", "end_char", "start_segment_offset", "end_segment_offset")), "\n";
 	foreach my $doceid(sort keys %sentence_boundaries) {
 		foreach my $segment_id(sort {$a<=>$b} keys %{$sentence_boundaries{$doceid}}) {
-			my $start_char = $sentence_boundaries{$doceid}{$segment_id}{START_CHAR};
-			my $end_char = $sentence_boundaries{$doceid}{$segment_id}{END_CHAR};
-			print $program_output "$doceid\t$segment_id\t$start_char\t$end_char\n";
+			my ($start_char, $end_char, $start_segment_offset, $end_segment_offset)
+				= map {$sentence_boundaries{$doceid}{$segment_id}{$_}}
+					qw(START_CHAR END_CHAR START_SEGMENT_OFFSET END_SEGMENT_OFFSET);
+			print $program_output join("\t", ($doceid, $segment_id, $start_char, $end_char, $start_segment_offset, $end_segment_offset)), "\n";
 		}
 	}
 }
@@ -108,5 +122,6 @@ exit 0;
 
 # change log
 
+# 2018.0.2: adding segment start and end offsets to the output
 # 2018.0.1: sentence boundaries generated for all documents (and not limited to coredocs)
 # 2018.0.0: original version
