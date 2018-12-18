@@ -96,13 +96,10 @@ if($segment) {
 	
 	my ($original_text) = $segment_text =~ /<ORIGINAL_TEXT>(.*?)<\/ORIGINAL_TEXT>/;
 	my $sentence_start_char = $segment->get("START_CHAR");
-	#print "$start $end\n";
 	$start = $start - $sentence_start_char;
 	$end = $end - $sentence_start_char;
 	my $length = $end-$start+1;
 	$span_string = substr($original_text, $start, $length);
-	#print "--start $start length $length\n";
-	#$span_string = $original_text;
 }
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
