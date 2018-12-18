@@ -1864,6 +1864,7 @@ sub is_valid {
 	my $where = $self->get("XML_OBJECT")->get("WHERE");
 	unless($query) {
 		# Is the queryid valid?
+		$where = $self->get("XML_OBJECT")->get("CHILD", "zerohopquery_response")->get("WHERE");
 		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
 		$is_valid = 0;
 	}
@@ -1893,6 +1894,7 @@ sub is_valid {
 				}
 			}
 			else {
+				$where = $self->get("XML_OBJECT")->get("CHILD", "doceid")->get("WHERE");
 				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
 				$is_valid = 0;
 			}
@@ -2115,6 +2117,7 @@ sub is_valid {
 	my $max_edge_justifications = 2;
 	unless($query) {
 		# Is the queryid valid?
+		$where = $self->get("XML_OBJECT")->get("CHILD", "graphquery_responses")->get("WHERE");
 		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
 		$is_valid = 0;
 	}
@@ -2131,6 +2134,7 @@ sub is_valid {
 			$query_edge_predicate = $query_edge->get("PREDICATE");
 		}
 		else{
+			$where = $response_edge->get("XML_OBJECT")->get("WHERE");
 			$self->get("LOGGER")->record_problem("UNKNOWN_EDGEID", $edge_num, $query_id, $where);
 			$response_edge->get("XML_OBJECT")->set("IGNORE", 1);
 			$is_valid_response_edge = 0;
