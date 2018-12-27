@@ -118,5 +118,5 @@ unless($switches->get('error_file') eq "STDERR") {
 	print STDERR "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
 	print STDERR "No problems encountered.\n" unless ($num_errors || $num_warnings);
 }
-print $error_output ($num_warnings || 'No'), " problems", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
+print $error_output ($num_warnings || 'No'), " problem", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
 exit $validation_retval;
