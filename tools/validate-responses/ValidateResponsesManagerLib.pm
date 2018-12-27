@@ -2030,6 +2030,7 @@ sub load {
 			$edges->add($edge, $edge_num);
 		}
 		$response->set("EDGES", $edges);
+		$response->set("XML_OBJECT", $response_xml_object);
 		$responses->add($response, $response_num);
 	}
 	$self->set("RESPONSES", $responses);
@@ -2186,10 +2187,9 @@ sub is_valid {
 					}
 				}
 				$num_valid_justifications++ if($is_justification_valid);
-				$justification->get("XML_OBJECT")->set("IGNORE", 1) unless $is_justification_valid;
 			}
 			unless($num_valid_justifications) {
-				$response_edge->get("XML_OBJECT")->set("IGNORE", 1);
+				$response->get("XML_OBJECT")->set("IGNORE", 1);
 				$is_valid_response_edge = 0;
 			}
 			if($is_valid_response_edge) {
