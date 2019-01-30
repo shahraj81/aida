@@ -112,7 +112,7 @@ $query_type =~ s/^(.*?\/)+//g; $query_type =~ s/.dtd//;
 my $coredocs = CoreDocs->new($logger, $coredocs_file);
 my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
 my $queries = QuerySet->new($logger, $queries_dtd_file, $queries_xml_file);
-my $ldc_queries = QuerySet->new($logger, $queries_dtd_file, $ldc_queries_xml_file);
+my $ldc_queries = QuerySet->new($logger, $queries_dtd_file, $ldc_queries_xml_file) if $ldc_queries_xml_file ne "none";
 
 $pooled_responses = ResponsesPool->new($logger, $k, $coredocs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $existing_pool);
 

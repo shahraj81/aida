@@ -2452,8 +2452,15 @@ sub tostring {
 	my $type = $self->get("TYPE");
 	
 	my $method = $self->can("tostring_$type");
-  return $method->($self) if $method;
-  return "nil";
+	return $method->($self) if $method;
+	return "nil";
+}
+
+sub tostring_class_query {
+	my ($self) = @_;
+	my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
+		= map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
+	join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
 }
 
 sub tostring_zerohop_query {
@@ -2514,6 +2521,119 @@ sub load {
 sub write_output {
 	my ($self, $program_output) = @_;
 	$self->get("RESPONSES_POOL")->write_output($program_output);
+}
+
+#####################################################################################
+# ClassResponsesPool
+#####################################################################################
+
+package ClassResponsesPool;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
+	my $self = {
+		CLASS => 'ClassResponsesPool',
+		CORE_DOCS => $core_docs,
+		DOCID_MAPPINGS => $docid_mappings,
+		ENTIRE_POOL => $entire_pool,
+		K => $k,
+		LDC_QUERIES => $ldc_queries,
+		QUERIES => $queries,
+		QUERYTYPE => $queries->get("QUERYTYPE"),
+		RESPONSES_DTD_FILENAME => $responses_dtd_file,
+		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
+		RESPONSES_POOL => undef,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $core_docs = $self->get("CORE_DOCS");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $queries = $self->get("QUERIES");
+	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
+	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
+	my $query_type = $self->get("QUERYTYPE");
+	my $entire_pool = $self->get("ENTIRE_POOL");
+	$entire_pool = Pool->new($logger) if $entire_pool eq "nil";
+	
+	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $responses_xml_file = $entry->get("filename");
+		print STDERR "--processing $responses_xml_file\n";
+		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
+		foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
+			my $query_id = $response->get("QUERYID");
+			#my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
+			#	if $ldc_queries->get("QUERY", $query_id);
+			my $kb_id = $query_id;
+			next unless $kb_id;
+			$kb_id =~ s/^\?//;
+			my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
+			# Making the enttype NIL as desired by LDC
+			my $enttype = "NIL";
+			my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
+			my $scope = $response->get("SCOPE");
+			my %kit_entries_by_docids;
+			foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
+				my $mention_span = $justification->tostring();
+				my $mention_modality = $justification->get("MODALITY");
+				my $confidence = $justification->get("CONFIDENCE");
+				my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
+				@docids = grep {$_ eq $source_docid} @docids if $source_docid;
+				foreach my $docid(@docids) {
+					next unless $core_docs->exists($docid);
+					my $kit_entry = KitEntry->new($logger);
+					$kit_entry->set("TYPE", $query_type);
+					$kit_entry->set("KB_ID", $kb_id);
+					$kit_entry->set("ENTTYPE", $enttype);
+					$kit_entry->set("ID", "<ID>");
+					$kit_entry->set("MENTION_MODALITY", $mention_modality);
+					$kit_entry->set("DOCID", $docid);
+					$kit_entry->set("MENTION_SPAN", $mention_span);
+					$kit_entry->set("LABEL_1", "NIL");
+					$kit_entry->set("LABEL_2", "NIL");
+					$kit_entry->set("CONFIDENCE", $confidence);
+					my $key = &main::generate_uuid_from_string($kit_entry->tostring());
+					$kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
+				}
+			}
+			foreach my $docid_modality (keys %kit_entries_by_docids) {
+				my $i = 0;
+				foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
+										keys %{$kit_entries_by_docids{$docid_modality}}) {
+					$i++;
+					last if $i > $k;
+					my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
+					my $value = $kit_entry->tostring();
+					$kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
+				}
+			}
+		}
+	}
+	$self->set("RESPONSES_POOL", $entire_pool);
+}
+
+sub write_output {
+	my ($self, $program_output) = @_;
+	my $pool = $self->get("RESPONSES_POOL");
+	my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+	print "$header\n";
+	foreach my $kb_id($pool->get("ALL_KEYS")) {
+		my $kit = $pool->get("BY_KEY", $kb_id);
+		foreach my $output_line($kit->toarray()) {
+			print $program_output "$output_line\n";
+		}
+	}
 }
 
 #####################################################################################
