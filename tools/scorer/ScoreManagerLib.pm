@@ -153,6 +153,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
+  MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS    ERROR          Multiple incompatible assessments provided (node: %s, mention_span: %s)
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
@@ -3370,9 +3371,21 @@ sub load {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
-		my ($nodeid, $mention_span, $assessment, $fqec)
-			= map {$entry->get($_)} qw(NODEID MENTION_SPAN ASSESSMENT FQEC);
-		$self->add({ASSESSMENT=>$assessment, FQEC=>$fqec}, "$nodeid:$mention_span");
+		my ($nodeid, $mention_span, $assessment, $where)
+			= map {$entry->get($_)} qw(NODEID MENTION_SPAN ASSESSMENT WHERE);
+		my $key = "$nodeid:$mention_span";
+		if($self->exists($key)) {
+			my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
+			my $existing_linenum = $self->get("BY_KEY", $key)->{WHERE}{LINENUM};
+			if($existing_assessment ne $assessment) {
+				my $filename = $where->{FILENAME};
+				$self->{LOGGER}->record_problem("MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS",
+													$nodeid,
+													$mention_span,
+													{FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});  
+			}
+		}
+		$self->add({ASSESSMENT=>$assessment, WHERE=>$where}, $key);
 	}
 	$filehandler->cleanup();	
 }
@@ -3451,11 +3464,9 @@ sub score_responses {
 	my %category_store;
 	foreach my $key($qrel->get("ALL_KEYS")) {
 		my ($node_id, $doceid, $start_and_end) = split(":", $key);
+		my $mention_span = "$doceid:$start_and_end";
 		my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
-		my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
-		if ($assessment eq "Correct") {
-			$category_store{GROUND_TRUTH}{$node_id}{$fqec} = 1;
-		}
+		$category_store{GROUND_TRUTH}{$node_id}{$mention_span} = 1 if ($assessment eq "Correct")
 	}
 	foreach my $response($responses->get("RESPONSES")->toarray()) {
 		my $query_id = $response->get("QUERYID");
@@ -3468,17 +3479,16 @@ sub score_responses {
 			push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $mention_span);
 			if($qrel->exists($key)) {
 				my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
-				my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
-				my $line = "$node_id $query_id $mention_span $assessment $fqec";
+				my $line = "$node_id $query_id $mention_span $assessment";
 				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, {FILENAME => __FILE__, LINENUM => __LINE__});
 				if($assessment eq "Correct") {
 					push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
-					if(exists $category_store{CORRECT_FOUND}{$query_id}{$fqec}) {
+					if(exists $category_store{CORRECT_FOUND}{$query_id}{$mention_span}) {
 						push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $mention_span);
 						push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
 					}
 					else {
-						$category_store{CORRECT_FOUND}{$query_id}{$fqec} = 1;
+						$category_store{CORRECT_FOUND}{$query_id}{$mention_span} = 1;
 						push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
 					}
 				}
