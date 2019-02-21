@@ -164,6 +164,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
+  NO_FQEC_FOR_CORRECT_ENTRY               ERROR          No FQEC found for a correct entry
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
@@ -1065,7 +1066,7 @@ sub new {
 		DTD_FILENAME => $dtd_filename,
 		XML_FILENAME => $xml_filename,
 		XML_FILEHANDLE => undef,
-		LINENUM => -1,
+		LINENUM => 0,
 		OBJECT_WHERE => undef,
 		LOGGER => $logger,
 	};
@@ -1108,11 +1109,11 @@ sub get_NEXT_OBJECT {
 		}
 	}
 	return unless $found;
-	$self->get("STRING_TO_OBJECT", $object_string, $search_node);
+	$self->get("STRING_TO_OBJECT", $object_string, $search_node, $self->get("OBJECT_WHERE")->{LINENUM});
 }
 
 sub get_STRING_TO_OBJECT {
-	my ($self, $object_string, $search_node) = @_;
+	my ($self, $object_string, $search_node, $linenum) = @_;
 	my $logger = $self->get("LOGGER");
 	my $search_tag = $search_node->get("NODEID");
 	my $num_of_children = $search_node->get("NUM_OF_CHILDREN");
@@ -1140,7 +1141,8 @@ sub get_STRING_TO_OBJECT {
 					$value = "\t$value\n";
 					$new_line = 1;
 				}
-				return XMLElement->new($logger, $value, $search_tag, $new_line, $xml_attributes, $self->get("OBJECT_WHERE"));
+				my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$linenum}; 
+				return XMLElement->new($logger, $value, $search_tag, $new_line, $xml_attributes, $new_where);
 			}
 			else{
 				# TODO: did not find the pattern we were expecting; throw an exception here
@@ -1160,7 +1162,8 @@ sub get_STRING_TO_OBJECT {
 					}
 				}
 				my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
-				return XMLElement->new($logger, $xml_child_object, $search_tag, 1, $xml_attributes, $self->get("OBJECT_WHERE"));
+				my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$linenum}; 
+				return XMLElement->new($logger, $xml_child_object, $search_tag, 1, $xml_attributes, $new_where);
 			}
 			else{
 				# TODO: did not find the pattern we were expecting; throw an exception here
@@ -1181,10 +1184,13 @@ sub get_STRING_TO_OBJECT {
 		# $found = 0: the start of the tag not found yet
 		# $found = 1: start-tag found but the end-tag is not
 		my $found = 0;
+		my $found_linenum = $linenum;
+		my $containerfound_linenum = $linenum;
 		my $xml_container = XMLContainer->new($logger);
 		my $new_search_tag;
 		foreach my $line(split(/\n/, $object_string)){
 			chomp $line;
+			$linenum++;
 process_next_child:
 			# Get allowed types for this child
 			my @this_child_allowed_types = $search_node->get("CHILDNUM_TYPES", $looking_for_child_num);
@@ -1200,11 +1206,12 @@ process_next_child:
 						$new_search_tag = $this_child_allowed_type;
 						$new_object_string = $line;
 						$found = 1;
+						$found_linenum = $linenum;
 						$check_next_child = 0;
 						# Handle cases like <tag.*?> value <\/tag>
 						if($line =~ /\<\/$new_search_tag\>/) {
 							my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $this_child_allowed_type);
-							my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+							my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node, $found_linenum);
 							$xml_container->add($xml_child_object);
 							$new_object_string = "";
 							# Found the end; reset $found
@@ -1229,7 +1236,7 @@ process_next_child:
 					# end found
 					$new_object_string .= "\n$line";
 					my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $new_search_tag);
-					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node, $found_linenum);
 					$xml_container->add($xml_child_object);
 					$new_object_string = "";
 					# Found the end; reset $found
@@ -1248,7 +1255,8 @@ process_next_child:
 				$xml_attributes->add($value, $key);
 			}
 		}
-		return XMLElement->new($logger, $xml_container, $search_tag, 1, $xml_attributes, $self->get("OBJECT_WHERE"));
+		my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$containerfound_linenum}; 
+		return XMLElement->new($logger, $xml_container, $search_tag, 1, $xml_attributes, $new_where);
 	}
 }
 
@@ -3371,8 +3379,10 @@ sub load {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
-		my ($nodeid, $mention_span, $assessment, $where)
-			= map {$entry->get($_)} qw(NODEID MENTION_SPAN ASSESSMENT WHERE);
+		my ($nodeid, $mention_span, $assessment, $fqec, $where)
+			= map {$entry->get($_)} qw(NODEID MENTION_SPAN ASSESSMENT FQEC WHERE);
+		$self->{LOGGER}->record_problem("NO_FQEC_FOR_CORRECT_ENTRY", $where)
+		  if $assessment eq "Correct" && !$fqec;
 		my $key = "$nodeid:$mention_span";
 		if($self->exists($key)) {
 			my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
@@ -3385,7 +3395,8 @@ sub load {
 													{FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});  
 			}
 		}
-		$self->add({ASSESSMENT=>$assessment, WHERE=>$where}, $key);
+		$self->add({ASSESSMENT=>$assessment, FQEC=> $fqec, WHERE=>$where}, $key)
+			unless $self->exists($key);
 	}
 	$filehandler->cleanup();	
 }
@@ -3466,7 +3477,8 @@ sub score_responses {
 		my ($node_id, $doceid, $start_and_end) = split(":", $key);
 		my $mention_span = "$doceid:$start_and_end";
 		my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
-		$category_store{GROUND_TRUTH}{$node_id}{$mention_span} = 1 if ($assessment eq "Correct")
+		my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
+		$category_store{GROUND_TRUTH}{$node_id}{$fqec} = 1 if ($assessment eq "Correct")
 	}
 	foreach my $response($responses->get("RESPONSES")->toarray()) {
 		my $query_id = $response->get("QUERYID");
@@ -3479,20 +3491,21 @@ sub score_responses {
 			push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $mention_span);
 			if($qrel->exists($key)) {
 				my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
-				my $line = "$node_id $query_id $mention_span $assessment";
-				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, {FILENAME => __FILE__, LINENUM => __LINE__});
+				my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
+				my $line = "$node_id $query_id $mention_span $assessment $fqec";
+				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $justification->get("WHERE"));
 				if($assessment eq "Correct") {
 					push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
-					if(exists $category_store{CORRECT_FOUND}{$query_id}{$mention_span}) {
+					if(exists $category_store{CORRECT_FOUND}{$query_id}{$fqec}) {
 						push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $mention_span);
 						push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
 					}
 					else {
-						$category_store{CORRECT_FOUND}{$query_id}{$mention_span} = 1;
+						$category_store{CORRECT_FOUND}{$query_id}{$fqec} = 1;
 						push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
 					}
 				}
-				elsif($assessment eq "Incorrect") {
+				elsif($assessment eq "Wrong") {
 					push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $mention_span);
 					push(@{$categorized_submissions{$query_id}{"WRONG"}}, $mention_span);
 				}
