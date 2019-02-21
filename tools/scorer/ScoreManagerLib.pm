@@ -168,7 +168,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   NONNUMERIC_END                          WARNING        End %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
-  RESPONSE_ASSESSMENT                     DEBUG_INFO     Response assessment: %s
+  RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
@@ -3489,31 +3489,49 @@ sub score_responses {
 			my $mention_span = $justification->tostring();
 			my $key = "$node_id:$mention_span";
 			push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $mention_span);
+			my $fqec = "UNASSESSED";
+			my %pre_policy = (SUBMITTED=>1);
+			my %post_policy;
 			if($qrel->exists($key)) {
 				my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
-				my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
-				my $line = "$node_id $query_id $mention_span $assessment $fqec";
-				$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $justification->get("WHERE"));
+				$fqec = $qrel->get("BY_KEY", $key)->{FQEC};
 				if($assessment eq "Correct") {
 					push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
+					$pre_policy{CORRECT} = 1;
 					if(exists $category_store{CORRECT_FOUND}{$query_id}{$fqec}) {
 						push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $mention_span);
 						push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
+						$pre_policy{REDUNDANT} = 1;
+						$post_policy{IGNORED} = 1;
 					}
 					else {
 						$category_store{CORRECT_FOUND}{$query_id}{$fqec} = 1;
 						push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
+						$post_policy{RIGHT} = 1;
 					}
 				}
 				elsif($assessment eq "Wrong") {
 					push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $mention_span);
 					push(@{$categorized_submissions{$query_id}{"WRONG"}}, $mention_span);
+					$pre_policy{INCORRECT} = 1;
+					$post_policy{WRONG} = 1;
 				}
 			}
 			else {
 				push(@{$categorized_submissions{$query_id}{"NOT_IN_POOL"}}, $mention_span);
 				push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
+				$pre_policy{NOT_IN_POOL} = 1;
+				$post_policy{IGNORED} = 1;
 			}
+			my $pre_policy = join(",", sort keys %pre_policy);
+			my $post_policy = join(",", sort keys %post_policy);
+			my $line = "\nNODEID=$node_id " .
+			           "QUERYID=$query_id " .
+			           "MENTION=$mention_span " .
+			           "PRE_POLICY_ASSESSMENT=$pre_policy " .
+			           "POST_POLICY_ASSESSMENT=$post_policy " .
+			           "FQEC=$fqec\n";
+			$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $justification->get("WHERE"));
 		}
 	}
 	foreach my $query_id(@$queries_to_score) {
