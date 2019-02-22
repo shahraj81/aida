@@ -95,7 +95,7 @@ my $query_type = $queries_dtd_file;
 $query_type =~ s/^(.*?\/)+//g; $query_type =~ s/.dtd//;
 
 my $coredocs = CoreDocs->new($logger, $coredocs_file);
-my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file);
+my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_file, $coredocs);
 my $queries = QuerySet->new($logger, $queries_dtd_file, $queries_xml_file);
 my $ldc_queries = QuerySet->new($logger, $queries_dtd_file, $ldc_queries_xml_file);
 
@@ -119,7 +119,7 @@ else {
 
 my $responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, @responses_xml_filenames);
 my $assessments = QREL->new($logger, $qrel_filename, $query_type);
-my $scorer = ScoresManager->new($logger, $runid, $ldc_queries, $responses, $assessments, $query_type, @queries_to_score);
+my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $ldc_queries, $responses, $assessments, $query_type, @queries_to_score);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {

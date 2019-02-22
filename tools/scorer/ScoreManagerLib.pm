@@ -3193,12 +3193,13 @@ package DocumentIDsMappings;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $filename) = @_;
+  my ($class, $logger, $filename, $coredocs) = @_;
   my $self = {
 		CLASS => "DocumentIDsMappings",
 		FILENAME => $filename,
 		DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTS => DocumentElements->new($logger),
+    COREDOCS => $coredocs,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -3228,8 +3229,11 @@ sub load_data {
 		next if $document_eid eq "n/a";
 		foreach my $document_id(sort keys %{$doceid_to_docid_mapping{$document_eid}}) {
 			my $detype = $doceid_to_type_mapping{$document_eid};
+			my $is_core = 0;
+			$is_core = 1 if $self->get("COREDOCS")->exists($document_id);
 			my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
 			$document->set("DOCUMENTID", $document_id);
+			$document->set("IS_CORE", $is_core);
 			my $documentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
 			$documentelement->get("DOCUMENTS")->add($document, $document_id);
 			$documentelement->set("DOCUMENTELEMENTID", $document_eid);
@@ -3318,6 +3322,16 @@ sub new {
   };
   bless($self, $class);
   $self;
+}
+
+sub get_IS_CORE {
+	my ($self) = @_;
+	my $is_core = 0;
+	foreach my $document($self->get("DOCUMENTS")->toarray()) {
+		$is_core = $is_core || $document->get("IS_CORE");
+	}
+	$self->set("IS_CORE", $is_core);
+	$is_core;
 }
 
 #####################################################################################
@@ -3410,9 +3424,10 @@ package ScoresManager;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
   my $self = {
   	CLASS => 'ScoresManager',
+  	DOCID_MAPPINGS => $docid_mappings,
   	LDC_QUERIES => $ldc_queries,
   	RESPONSES => $responses,
   	QREL => $qrel,
@@ -3428,12 +3443,12 @@ sub new {
 
 sub score_responses {
 	my ($self) = @_;
-	my ($responses, $qrel, $query_type, $queries_to_score, $ldc_queries, $runid, $logger)
-		= map {$self->get($_)} qw(RESPONSES QREL QUERY_TYPE QUERIES_TO_SCORE LDC_QUERIES RUNID LOGGER);
+	my ($docid_mappings, $responses, $qrel, $query_type, $queries_to_score, $ldc_queries, $runid, $logger)
+		= map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES QREL QUERY_TYPE QUERIES_TO_SCORE LDC_QUERIES RUNID LOGGER);
 	my $scores;
-	$scores = ClassScores->new($logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "class_query");
-	$scores = ZeroHopScores->new($logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "zerohop_query");
-	$scores = GraphScores->new($logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "graph_query");
+	$scores = ClassScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "class_query");
+	$scores = ZeroHopScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "zerohop_query");
+	$scores = GraphScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "graph_query");
 	$self->set("SCORES", $scores);
 }
 
@@ -3451,9 +3466,10 @@ package ZeroHopScores;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
   my $self = {
   	CLASS => 'ZeroHopScores',
+  	DOCID_MAPPINGS => $docid_mappings,
   	LDC_QUERIES => $ldc_queries,
   	RESPONSES => $responses,
   	QREL => $qrel,
@@ -3468,8 +3484,8 @@ sub new {
 
 sub score_responses {
 	my ($self) = @_;
-	my ($runid, $responses, $qrel, $queries_to_score, $ldc_queries, $logger)
-		= map {$self->get($_)} qw(RUNID RESPONSES QREL QUERIES_TO_SCORE LDC_QUERIES LOGGER);
+	my ($runid, $docid_mappings, $responses, $qrel, $queries_to_score, $ldc_queries, $logger)
+		= map {$self->get($_)} qw(RUNID DOCID_MAPPINGS RESPONSES QREL QUERIES_TO_SCORE LDC_QUERIES LOGGER);
 	my $scores = ScoresPrinter->new($logger);
 	my %categorized_submissions;
 	my %category_store;
@@ -3478,7 +3494,9 @@ sub score_responses {
 		my $mention_span = "$doceid:$start_and_end";
 		my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
 		my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
-		$category_store{GROUND_TRUTH}{$node_id}{$fqec} = 1 if ($assessment eq "Correct")
+		my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
+			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
+		$category_store{GROUND_TRUTH}{$node_id}{$fqec} = 1 if ($assessment eq "Correct" && $is_core);
 	}
 	foreach my $response($responses->get("RESPONSES")->toarray()) {
 		my $query_id = $response->get("QUERYID");
@@ -3486,13 +3504,16 @@ sub score_responses {
 		my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
 		$node_id =~ s/^\?//;
 		foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
+			my $doceid = $justification->get("DOCEID");
+			my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
+				if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
 			my $mention_span = $justification->tostring();
 			my $key = "$node_id:$mention_span";
 			push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $mention_span);
 			my $fqec = "UNASSESSED";
 			my %pre_policy = (SUBMITTED=>1);
 			my %post_policy;
-			if($qrel->exists($key)) {
+			if($qrel->exists($key) && $is_core) {
 				my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
 				$fqec = $qrel->get("BY_KEY", $key)->{FQEC};
 				if($assessment eq "Correct") {
