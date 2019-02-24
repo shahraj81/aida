@@ -153,6 +153,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
+  GROUND_TRUTH                            DEBUG_INFO     GROUND_TRUTH_INFO: %s     
   MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS    ERROR          Multiple incompatible assessments provided (node: %s, mention_span: %s)
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
@@ -3491,12 +3492,25 @@ sub score_responses {
 	my %category_store;
 	foreach my $key($qrel->get("ALL_KEYS")) {
 		my ($node_id, $doceid, $start_and_end) = split(":", $key);
+		if($doceid =~ /^(.*?)\_(\d+)$/){
+			$doceid = $1;
+		}
 		my $mention_span = "$doceid:$start_and_end";
 		my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
 		my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
 		my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
 			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
-		$category_store{GROUND_TRUTH}{$node_id}{$fqec} = 1 if ($assessment eq "Correct" && $is_core);
+		if ($assessment eq "Correct" && $is_core) {
+			$category_store{GROUND_TRUTH}{$node_id}{$fqec} = 1;
+			$logger->record_debug_information("GROUND_TRUTH", 
+								"NODEID=$node_id MENTION=$mention_span FQEC=$fqec CORRECT\n", 
+								$qrel->get("BY_KEY", $key)->{WHERE});
+		}
+		elsif($assessment eq "Wrong" && $is_core) {
+			$logger->record_debug_information("GROUND_TRUTH", 
+								"NODEID=$node_id MENTION=$mention_span FQEC=$fqec INCORRECT\n", 
+								$qrel->get("BY_KEY", $key)->{WHERE});
+		}
 	}
 	foreach my $response($responses->get("RESPONSES")->toarray()) {
 		my $query_id = $response->get("QUERYID");
@@ -3546,7 +3560,7 @@ sub score_responses {
 			}
 			my $pre_policy = join(",", sort keys %pre_policy);
 			my $post_policy = join(",", sort keys %post_policy);
-			my $line = "\nNODEID=$node_id " .
+			my $line = "NODEID=$node_id " .
 			           "QUERYID=$query_id " .
 			           "MENTION=$mention_span " .
 			           "PRE_POLICY_ASSESSMENT=$pre_policy " .
