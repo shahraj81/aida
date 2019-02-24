@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zerohopquery_responses>
+  <zerohopquery_response QUERY_ID="AIDA_ZH_2018_37">
+    <system_nodeid> node-43nb </system_nodeid>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 988 </start>
+      <end> 996 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 378 </start>
+      <end> 386 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 2848 </start>
+      <end> 2857 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 2830 </start>
+      <end> 2840 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+  </zerohopquery_response>
+  <zerohopquery_response QUERY_ID="AIDA_ZH_2018_81">
+    <system_nodeid> node-22mn </system_nodeid>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 4294 </start>
+      <end> 4304 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 822 </start>
+      <end> 832 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 441 </start>
+      <end> 451 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 228 </start>
+      <end> 238 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 4014 </start>
+      <end> 4024 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 1819 </start>
+      <end> 1829 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 740 </start>
+      <end> 750 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+    <text_justification>
+      <doceid> IC001L4O4 </doceid>
+      <start> 3115 </start>
+      <end> 3125 </end>
+      <confidence> 1e+00 </confidence>
+    </text_justification>
+  </zerohopquery_response>
+</zerohopquery_responses>

@@ -1,0 +1,24 @@
+<!ELEMENT graphqueries_responses (graphquery_responses+)>
+<!ELEMENT graphquery_responses (response+)>
+<!ELEMENT response (edge+)>
+<!ELEMENT edge (justifications)>
+<!ELEMENT justifications (justification+)>
+<!ELEMENT justification (subject_justification,object_justification,edge_justification)>
+<!ELEMENT system_nodeid (#PCDATA)>
+<!ELEMENT subject_justification (system_nodeid,enttype,(text_span|video_span|image_span),confidence)>
+<!ELEMENT object_justification (system_nodeid,enttype,(text_span|video_span|image_span),confidence)>
+<!ELEMENT edge_justification ((text_span|video_span|image_span)+,confidence)>
+<!ELEMENT text_span (doceid,start,end)>
+<!ELEMENT video_span (doceid,keyframeid,topleft,bottomright)>
+<!ELEMENT image_span (doceid,topleft,bottomright)>
+<!ELEMENT confidence (#PCDATA)>
+<!ELEMENT doceid (#PCDATA)>
+<!ELEMENT start (#PCDATA)>
+<!ELEMENT end (#PCDATA)>
+<!ELEMENT enttype (#PCDATA)>
+<!ELEMENT keyframeid (#PCDATA)>
+<!ELEMENT topleft (#PCDATA)>
+<!ELEMENT bottomright (#PCDATA)>
+<!ATTLIST graphquery_responses id ID #REQUIRED>
+<!ATTLIST edge id CDATA #REQUIRED>
+<!ATTLIST justification docid CDATA #REQUIRED>

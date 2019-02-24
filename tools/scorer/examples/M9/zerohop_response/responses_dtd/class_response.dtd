@@ -1,0 +1,15 @@
+<!ELEMENT classquery_responses (classquery_response+)> 
+<!ELEMENT classquery_response (justifications+)> 
+<!ELEMENT justifications ((text_justification|video_justification|image_justification)+)> 
+<!ELEMENT text_justification (doceid,start,end,enttype,confidence)>
+<!ELEMENT video_justification (doceid,keyframeid,topleft,bottomright,enttype,confidence)>
+<!ELEMENT image_justification (doceid,topleft,bottomright,enttype,confidence)>
+<!ELEMENT doceid (#PCDATA)>
+<!ELEMENT start (#PCDATA)>
+<!ELEMENT end (#PCDATA)>
+<!ELEMENT enttype (#PCDATA)>
+<!ELEMENT keyframeid (#PCDATA)>
+<!ELEMENT topleft (#PCDATA)>
+<!ELEMENT bottomright (#PCDATA)>
+<!ELEMENT confidence (#PCDATA)>
+<!ATTLIST classquery_response QUERY_ID CDATA #REQUIRED> 
