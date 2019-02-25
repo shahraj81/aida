@@ -1,6 +1,6 @@
 # Introduction
 
-February 24, 2019
+February 25, 2019
 
 This document describes:
 
@@ -65,10 +65,11 @@ Total_F1 = 2 * Total_Precision * Total_Recall / (Total_Precision + Total_Recall)
 For each query, the scorer output the following counts:
 
 ~~~
+QID/EC    Query ID / Equivalence class
 Node      KB id of the node corresponding to the query entrypoint as assigned by LDC,
 Mode      Modality of the query entrypoint document element  
 RunID     System name
-GT        Ground truth
+GT        Ground truth (computed as described below)
 Sub       Number of responses submitted
 NtAssd    Number of responses not in the pool of assessed responses
 Correct   Number of responses assessed to be correct (Pre-policy)
@@ -99,20 +100,20 @@ In this section, we highlight two types of entries in the log file:
 
 ## GROUND_TRUTH_INFO
 
-The scorer reads the QREL and coredocs, and uses the GROUND_TRUTH_INFO tag to log what mention spans are in the pool and what is their respective assessment. An example is given below:
+The scorer reads the QREL and coredocs, and uses the GROUND_TRUTH_INFO tag to record what mention spans in the QREL are considered to be in the pool (i.e. restricting the QREL to coredocs) and what is their respective assessment. An example is given below:
 
 ~~~
 DEBUG_INFO: GROUND_TRUTH_INFO: NODEID=E0632 MENTION=HC000T65W:(10120,0)-(10133,0) FQEC=HC000T65W:90 CORRECT
       (examples/M9/zerohop_response/example_qrels/M09-ZeroHop-FQEC-QREL.tab line 16)
 ~~~
 
-This line provides the information that the mention span `HC000T65W:(10120,0)-(10133,0)` is a CORRECT mention of the entity corresponding to the node `E0632` and that this mention falls in the equivalence class (i.e. FQEC) `HC000T65W:90`. Note that for text document elements, FQEC is the document element ID plus the sentence number in which the span falls, whereas video/image bounding boxes, the FQEC is the name of the document element.
+This line provides the information that the mention span `HC000T65W:(10120,0)-(10133,0)` is a CORRECT mention of the entity corresponding to the node `E0632` and that this mention falls in the equivalence class (i.e. FQEC) `HC000T65W:90`. Note that for text document elements, FQEC is the document element ID plus the sentence number (as read from LTF files in LDC2018E62) in which the span falls, whereas video/image bounding boxes, the FQEC is the name of the document element.
 
 The number of distinct FQECs for a given node is value of GT used for computing F1.
 
 ## ASSESSMENT_INFO
 
-The scorer reads the responses and uses ASSESSMENT_INFO tag to log what were the pre-policy and post-policy assessments for a response. An example is given below:
+The scorer reads the responses and uses ASSESSMENT_INFO tag to record the pre-policy and post-policy assessments decisions made for a given response. An example is given below:
 
 ~~~
 DEBUG_INFO: ASSESSMENT_INFO: NODEID=E0632 QUERYID=AIDA_ZH_2018_37 MENTION=HC000T65W:(10052,0)-(10059,0) PRE_POLICY_ASSESSMENT=NOT_IN_POOL,SUBMITTED POST_POLICY_ASSESSMENT=IGNORED FQEC=UNASSESSED
@@ -120,6 +121,8 @@ DEBUG_INFO: ASSESSMENT_INFO: NODEID=E0632 QUERYID=AIDA_ZH_2018_37 MENTION=HC000T
 ~~~
 
 # Example submission files and scores
+
+In order to demonstrate the usage, the scorer comes with example submission files and corresponding scores.
 
 ## Scoring example ZeroHop responses for M9
 
@@ -140,6 +143,8 @@ The score and debug files will be produced in `examples/M9/zerohop_response/outp
 Note: The scorer does not overwrite score and debug file, and therefore, it is necessary to remove these files if they already exist. Also, note that the input to scorer is a pathfile containing paths of all the input xml response files.
 
 # Revision history
+## 2/25/2019
+	- Minor edits
 ## 2/24/2019
 	- Documentation on how to score example ZeroHop responses added
 ## 2/23/2019
