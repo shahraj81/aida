@@ -1,0 +1,16 @@
+<!ELEMENT zerohop_queries (zerohop_query+)> 
+<!ELEMENT zerohop_query (entrypoint,sparql)> 
+<!ELEMENT sparql (#PCDATA)>
+<!ELEMENT entrypoint (node,enttype,(text_descriptor|video_descriptor|image_descriptor)+)>
+<!ELEMENT text_descriptor (doceid,start,end)>
+<!ELEMENT video_descriptor (doceid,keyframeid,topleft,bottomright)>
+<!ELEMENT image_descriptor (doceid,topleft,bottomright)>
+<!ELEMENT node (#PCDATA)>
+<!ELEMENT doceid (#PCDATA)>
+<!ELEMENT start (#PCDATA)>
+<!ELEMENT end (#PCDATA)>
+<!ELEMENT enttype (#PCDATA)>
+<!ELEMENT keyframeid (#PCDATA)>
+<!ELEMENT topleft (#PCDATA)>
+<!ELEMENT bottomright (#PCDATA)>
+<!ATTLIST zerohop_query id CDATA #REQUIRED> 

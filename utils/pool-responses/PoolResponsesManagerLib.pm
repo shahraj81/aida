@@ -147,18 +147,21 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 # Error Name                              Type           Error Message
 # ----------                              ----           -------------
-
 ########## General Errors
   ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
+  BOUNDINGBOX_OFF_BOUNDARY                WARNING        Bounding box in mention span %s is out of boundary %s (corrected to %s)
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
+  IGNORED                                 WARNING        Ignoring %s
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
   INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
   INVALID_START                           WARNING        Invalid start %s in %s
+  KEYFRAMEID_CORRECTED                    WARNING        KeyframeID %s is not in MasterShotBoundary file (corrected to %s)
+  MENTION_OFF_BOUNDARY                    WARNING        Mention span %s is not within document boundary %s (corrected to %s)
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
@@ -475,7 +478,7 @@ package FileHandler;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $filename) = @_;
+  my ($class, $logger, $filename, $header) = @_;
   my $self = {
     CLASS => 'FileHandler',
     FILENAME => $filename,
@@ -484,19 +487,26 @@ sub new {
     LOGGER => $logger,
   };
   bless($self, $class);
-  $self->load($filename);
+  $self->load($filename, $header);
   $self;
 }
 
 sub load {
-  my ($self, $filename) = @_;
+  my ($self, $filename, $header) = @_;
 
+	my $line;
   my $linenum = 0;
 
   open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
-  my $line = <FILE>; 
-  $line =~ s/\r\n?//g;
-  chomp $line;
+
+  unless($header) {
+		$line = <FILE>;
+		$line =~ s/\r\n?//g;
+		chomp $line;
+  }
+  else {
+		$line = $header;
+  }
 
   $linenum++;
 
@@ -930,10 +940,9 @@ package Nodes;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $logger, $parameters) = @_;
+  my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'Node');
   $self->{CLASS} = 'Nodes';
-  $self->{PARAMETERS} = $parameters;
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -1385,7 +1394,7 @@ package ResponseSet;
 use parent -norequire, 'Super';
 
 sub new {
-	my ($class, $logger, $queries, $docid_mappings, $dtd_filename, $xml_filename, $scope) = @_;
+	my ($class, $logger, $queries, $docid_mappings, $dtd_filename, $xml_filename) = @_;
 	my $self = {
 		CLASS => 'ResponseSet',
 		QUERIES => $queries,
@@ -1393,7 +1402,6 @@ sub new {
 		XML_FILENAME => $xml_filename,
 		DOCID_MAPPINGS => $docid_mappings, 
 		RESPONSES => Container->new($logger, "Response"),
-		SCOPE => $scope,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -1407,16 +1415,17 @@ sub load {
 	my $dtd_filename = $self->get("DTD_FILENAME");
 	my $xml_filename = $self->get("XML_FILENAME");
 	my $query_type = $self->get("QUERIES")->get("QUERYTYPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $queries = $self->get("QUERIES");
 	my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
 	my $i = 0;
 	while(my $xml_response_object = $xml_filehandler->get("NEXT_OBJECT")) {
 		$i++;
 		my $response;
-		$response = ClassResponse->new($logger, $xml_response_object) if($query_type eq "class_query");
-		$response = ZeroHopResponse->new($logger, $xml_response_object) if($query_type eq "zerohop_query");
-		$response = GraphResponse->new($logger, $xml_response_object) if($query_type eq "graph_query");
-		$self->get("RESPONSES")->add($response, $i)
-			if $response->is_valid($self->get("QUERIES"), $self->get("DOCID_MAPPINGS"), $self->get("SCOPE"));
+		$response = ClassResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "class_query");
+		$response = ZeroHopResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "zerohop_query");
+		$response = GraphResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "graph_query");
+		$self->get("RESPONSES")->add($response, $i) if $response->is_valid();
 	}
 }
 
@@ -1448,11 +1457,15 @@ package ClassResponse;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $xml_object) = @_;
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
   my $self = {
     CLASS => 'ClassResponse',
+    XML_FILENAME => $xml_filename,
     XML_OBJECT => $xml_object,
+    DOCID_MAPPINGS => $docid_mappings,
+    QUERIES => $queries,
     QUERYID => undef,
+    RESPONSE_DOCID => undef,
     JUSTIFICATIONS => undef,
     LOGGER => $logger,
   };
@@ -1582,9 +1595,11 @@ sub parse_object {
 ##  (3). Depending on the scope see if the justifications come from the right set of documents
 ##  (4). The response is not valid if none of the justifications is valid
 sub is_valid {
-	my ($self, $queries, $docid_mappings, $scope) = @_;
+	my ($self) = @_;
+	my $scope = $self->get("SCOPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
 	my $query_id = $self->get("QUERYID");
-	my $query = $queries->get("QUERY", $query_id);
+	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
 	my $is_valid = 1;
 	my $where = $self->get("XML_OBJECT")->get("WHERE");
 	my $query_enttype = "unavailable";
@@ -1621,7 +1636,7 @@ sub is_valid {
 			my $doceid = $justification->get("DOCEID");
 			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
 				my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
-				my @docids = $docelement->get("DOCUMENTS")->toarray();
+				my @docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
 				foreach my $docid(@docids) {
 					$docids{$docid}++;
 				}
@@ -1632,19 +1647,62 @@ sub is_valid {
 			}
 		}
 		if($scope eq "withindoc") {
-#			my @justifiying_docs;
-#			foreach my $docid(keys %docids) {
-#				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
-#			}
-#			if(scalar @justifiying_docs > 1) {
-#				$is_valid = 0;
-#				my $justifying_docs_string = join(",", @justifiying_docs);
-#				$self->get("LOGGER")->record_problem("MULTIPLE_JUSTIFYING_DOCS", $justifying_docs_string, $where);
-#			}
+			my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+			my @justifiying_docs;
+			foreach my $docid(keys %docids) {
+				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
+			}
+			unless(scalar grep {$_ eq $response_docid} @justifiying_docs) {
+				$is_valid = 0;
+				my $justifying_docs_string = join(",", @justifiying_docs);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_JUSTIFICATION_SOURCE", $justifying_docs_string, $response_docid, $where);
+			}
 		}
 	}
 	$is_valid = 0 unless $num_valid_justifications;
 	$is_valid;
+}
+
+sub get_RESPONSE_FILENAME_PREFIX {
+	my ($self) = @_;
+	my $xml_file = $self->get("XML_FILENAME");
+	$xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
+	my ($path, $filename) = ($1, $2);
+	my ($prefix) = $filename =~ /^(.*?)\..*?_responses.xml/;
+	$prefix;	
+}
+
+sub get_SYSTEM_TYPE {
+	my ($self) = @_;
+	my $prefix = $self->get("RESPONSE_FILENAME_PREFIX");
+	my $system_type = "TA1";
+	$system_type = "TA2" if $prefix eq "TA2";
+	$system_type;
+}
+
+sub get_RESPONSE_DOCID_FROM_FILENAME {
+	my ($self) = @_;
+	my $response_docid = $self->get("RESPONSE_FILENAME_PREFIX");
+	$response_docid = undef if $response_docid eq "TA2";
+	$response_docid;
+}
+
+sub get_SCOPE {
+	my ($self) = @_;
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $system_type = $self->get("SYSTEM_TYPE");
+	my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+	my $scope = "anywhere";
+	if($system_type eq "TA2") {
+		$scope = "withincorpus";
+	}
+	elsif($response_docid) {
+		$scope = "withindoc"
+			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
+	}
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
+		if $scope eq "anywhere";
+	$scope;
 }
 
 sub tostring {
@@ -1661,10 +1719,13 @@ package ZeroHopResponse;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $xml_object) = @_;
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
   my $self = {
     CLASS => 'ZeroHopResponse',
+    XML_FILENAME => $xml_filename,
     XML_OBJECT => $xml_object,
+    DOCID_MAPPINGS => $docid_mappings,
+    QUERIES => $queries,
     QUERYID => undef,
     JUSTIFICATIONS => undef,
     LOGGER => $logger,
@@ -1686,7 +1747,6 @@ sub load {
 	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("ELEMENT")->toarray()){
 		next if $justification_xml_object->get("NAME") eq "system_nodeid";
 		$i++;
-		my $justification;
 		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
 		my $justification_type = uc $justification_xml_object->get("NAME");
 		my $where = $justification_xml_object->get("WHERE");
@@ -1709,7 +1769,7 @@ sub load {
 			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
 			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
 		}
-		$justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $justification_xml_object, $where);
+		my $justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $justification_xml_object, $where);
 		$justifications->add($justification, $i);
 	}
 	$self->set("JUSTIFICATIONS", $justifications);
@@ -1797,9 +1857,11 @@ sub parse_object {
 ##  (3). Depending on the scope see if the justifications come from the right set of documents
 ##  (4). The response is not valid if none of the justifications is valid
 sub is_valid {
-	my ($self, $queries, $docid_mappings, $scope) = @_;
+	my ($self) = @_;
+	my $scope = $self->get("SCOPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
 	my $query_id = $self->get("QUERYID");
-	my $query = $queries->get("QUERY", $query_id);
+	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
 	my $is_valid = 1;
 	my $where = $self->get("XML_OBJECT")->get("WHERE");
 	unless($query) {
@@ -1827,7 +1889,7 @@ sub is_valid {
 			my $doceid = $justification->get("DOCEID");
 			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
 				my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
-				my @docids = $docelement->get("DOCUMENTS")->toarray();
+				my @docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
 				foreach my $docid(@docids) {
 					$docids{$docid}++;
 				}
@@ -1838,19 +1900,62 @@ sub is_valid {
 			}
 		}
 		if($scope eq "withindoc") {
+			my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
 			my @justifiying_docs;
 			foreach my $docid(keys %docids) {
 				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
 			}
-			if(scalar @justifiying_docs > 1) {
+			unless(scalar grep {$_ eq $response_docid} @justifiying_docs) {
 				$is_valid = 0;
 				my $justifying_docs_string = join(",", @justifiying_docs);
-				$self->get("LOGGER")->record_problem("MULTIPLE_JUSTIFYING_DOCS", $justifying_docs_string, $where);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_JUSTIFICATION_SOURCE", $justifying_docs_string, $response_docid, $where);
 			}
 		}
 	}
 	$is_valid = 0 unless $num_valid_justifications;
 	$is_valid;
+}
+
+sub get_RESPONSE_FILENAME_PREFIX {
+	my ($self) = @_;
+	my $xml_file = $self->get("XML_FILENAME");
+	$xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
+	my ($path, $filename) = ($1, $2);
+	my ($prefix) = $filename =~ /^(.*?)\..*?_responses.xml/;
+	$prefix;	
+}
+
+sub get_SYSTEM_TYPE {
+	my ($self) = @_;
+	my $prefix = $self->get("RESPONSE_FILENAME_PREFIX");
+	my $system_type = "TA1";
+	$system_type = "TA2" if $prefix eq "TA2";
+	$system_type;
+}
+
+sub get_RESPONSE_DOCID_FROM_FILENAME {
+	my ($self) = @_;
+	my $response_docid = $self->get("RESPONSE_FILENAME_PREFIX");
+	$response_docid = undef if $response_docid eq "TA2";
+	$response_docid;
+}
+
+sub get_SCOPE {
+	my ($self) = @_;
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $system_type = $self->get("SYSTEM_TYPE");
+	my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+	my $scope = "anywhere";
+	if($system_type eq "TA2") {
+		$scope = "withincorpus";
+	}
+	elsif($response_docid) {
+		$scope = "withindoc"
+			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
+	}
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
+		if $scope eq "anywhere";
+	$scope;
 }
 
 sub tostring {
@@ -1867,10 +1972,13 @@ package GraphResponse;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $xml_object) = @_;
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
   my $self = {
     CLASS => 'GraphResponse',
+    XML_FILENAME => $xml_filename,
     XML_OBJECT => $xml_object,
+    DOCID_MAPPINGS => $docid_mappings,
+    QUERIES => $queries,
     QUERYID => undef,
     EDGES => undef,
     LOGGER => $logger,
@@ -1910,6 +2018,7 @@ sub load {
 		}
 		$edge->set("EDGE_NUM", $edge_num);
 		$edge->set("JUSTIFICATIONS", $justifications);
+		$edge->set("XML_OBJECT", $edge_xml_object);
 		$edges->add($edge, $edge_num);
 	}
 	$self->set("EDGES", $edges);
@@ -1992,9 +2101,11 @@ sub parse_object {
 }
 
 sub is_valid {
-	my ($self, $queries, $docid_mappings, $scope) = @_;
+	my ($self) = @_;
+	my $scope = $self->get("SCOPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
 	my $query_id = $self->get("QUERYID");
-	my $query = $queries->get("QUERY", $query_id);
+	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
 	my $is_valid = 1;
 	my $where = $self->get("XML_OBJECT")->get("WHERE");
 	my $max_edge_justifications = 2;
@@ -2028,7 +2139,8 @@ sub is_valid {
 				unless($self->check_within_doc_spans($docid_mappings, $docid, $justification, $scope, $where));
 			my $subject_enttype = $justification->get("SUBJECT_JUSTIFICATION")->get("ENTTYPE");
 			if($query_edge_predicate && $query_edge_predicate !~ /^$subject_enttype\_/) {
-				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $where);
+				my ($query_edge_enttype, $predicate) = split(/_/, $query_edge_predicate);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $query_edge_enttype, $query_id, $edge_num, $where);
 				$is_justification_valid = 0;
 			}
 			if($scope ne "anywhere" && !$docid_mappings->get("DOCUMENTS")->exists($docid)) {
@@ -2079,26 +2191,29 @@ sub is_valid {
 			$nodes{$query_edge->get("OBJECT")}{$edge_num} = 1;
 		}
 	}
-	my ($a_nodeid) = (keys %nodes); # arbitrady node
-	my %reachable_nodes = ($a_nodeid => 1);
-	my $flag = 1; # keep going flag
-	while($flag){
-		my @new_nodes;
-		foreach my $node_id(keys %reachable_nodes) {
-			foreach my $edge_num(keys %{$nodes{$node_id}}) {
-				foreach my $other_nodeid(keys %{$edges{$edge_num}}) {
-					push(@new_nodes, $other_nodeid)
-							unless $reachable_nodes{$other_nodeid};
+	my %reachable_nodes;
+	if(scalar keys %nodes) {
+		my ($a_nodeid) = (keys %nodes); # arbitrady node
+		%reachable_nodes = ($a_nodeid => 1);
+		my $flag = 1; # keep going flag
+		while($flag){
+			my @new_nodes;
+			foreach my $node_id(keys %reachable_nodes) {
+				foreach my $edge_num(keys %{$nodes{$node_id}}) {
+					foreach my $other_nodeid(keys %{$edges{$edge_num}}) {
+						push(@new_nodes, $other_nodeid)
+								unless $reachable_nodes{$other_nodeid};
+					}
 				}
 			}
-		}
-		if(@new_nodes){
-			foreach my $new_nodeid(@new_nodes) {
-				$reachable_nodes{$new_nodeid} = 1;
+			if(@new_nodes){
+				foreach my $new_nodeid(@new_nodes) {
+					$reachable_nodes{$new_nodeid} = 1;
+				}
 			}
-		}
-		else{
-			$flag = 0;
+			else{
+				$flag = 0;
+			}
 		}
 	}
 	my $num_all_valid_nodes = scalar keys %nodes;
@@ -2107,6 +2222,50 @@ sub is_valid {
 		if($num_reachable_nodes != $num_all_valid_nodes);
 
 	$self->get("XML_OBJECT")->set("IGNORE", 1) unless $num_valid_response_edges;
+	$num_valid_response_edges;
+}
+
+
+sub get_RESPONSE_FILENAME_PREFIX {
+	my ($self) = @_;
+	my $xml_file = $self->get("XML_FILENAME");
+	$xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
+	my ($path, $filename) = ($1, $2);
+	my ($prefix) = $filename =~ /^(.*?)\..*?_responses.xml/;
+	$prefix;	
+}
+
+sub get_SYSTEM_TYPE {
+	my ($self) = @_;
+	my $prefix = $self->get("RESPONSE_FILENAME_PREFIX");
+	my $system_type = "TA1";
+	$system_type = "TA2" if $prefix eq "TA2";
+	$system_type;
+}
+
+sub get_RESPONSE_DOCID_FROM_FILENAME {
+	my ($self) = @_;
+	my $response_docid = $self->get("RESPONSE_FILENAME_PREFIX");
+	$response_docid = undef if $response_docid eq "TA2";
+	$response_docid;
+}
+
+sub get_SCOPE {
+	my ($self) = @_;
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $system_type = $self->get("SYSTEM_TYPE");
+	my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+	my $scope = "anywhere";
+	if($system_type eq "TA2") {
+		$scope = "withincorpus";
+	}
+	elsif($response_docid) {
+		$scope = "withindoc"
+			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
+	}
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
+		if $scope eq "anywhere";
+	$scope;
 }
 
 sub get_NODE_JUSTIFICATION {
@@ -2218,6 +2377,377 @@ sub check_within_doc_spans {
 sub tostring {
 	my ($self, $indent) = @_;
 	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# Pool
+#####################################################################################
+
+package Pool;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'Kit');
+  $self->{CLASS} = 'Pool';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load($filename) if $filename;
+  $self;
+}
+
+sub load {
+	my ($self, $filename) = @_;
+	my $logger = $self->get("LOGGER");
+	my $filehandler = FileHandler->new($logger, $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $kb_id = $entry->get("KBID");
+		my $kbid_kit = $self->get("BY_KEY", $kb_id);
+		my $value = $entry->get("LINE");
+		my $key = &main::generate_uuid_from_string($value);
+		$kbid_kit->add($value, $key) unless $self->exists($key);
+	}
+}
+
+#####################################################################################
+# Kit
+#####################################################################################
+
+package Kit;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'KitEntry');
+  $self->{CLASS} = 'Pool';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# KitEntry
+#####################################################################################
+
+package KitEntry;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'KitEntry',
+    TYPE => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $type = $self->get("TYPE");
+	
+	my $method = $self->can("tostring_$type");
+	return $method->($self) if $method;
+	return "nil";
+}
+
+sub tostring_class_query {
+	my ($self) = @_;
+	my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
+		= map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
+	join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
+}
+
+sub tostring_zerohop_query {
+	my ($self) = @_;
+	my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
+		= map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
+	join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
+}
+
+#####################################################################################
+# ResponsesPool
+#####################################################################################
+
+package ResponsesPool;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) = @_;
+	my $self = {
+		CLASS => 'ResponsesPool',
+		CORE_DOCS => $core_docs,
+		DOCID_MAPPINGS => $docid_mappings,
+		K => $k,
+		LDC_QUERIES => $ldc_queries,
+		PREVIOUS_POOL => $previous_pool,
+		QUERIES => $queries,
+		QUERYTYPE => $queries->get("QUERYTYPE"),
+		RESPONSES_DTD_FILENAME => $responses_dtd_file,
+		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
+		RESPONSES_POOL => undef,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $core_docs = $self->get("CORE_DOCS");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $queries = $self->get("QUERIES");
+	my $ldc_queries = $self->get("LDC_QUERIES");
+	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
+	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
+	my $query_type = $self->get("QUERYTYPE");
+	my $previous_pool = $self->get("PREVIOUS_POOL");
+	my $responses_pool;
+	$responses_pool = ClassResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "class_query");
+	$responses_pool = ZeroHopResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "zerohop_query");
+	$responses_pool = GraphResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "graph_query");
+	$self->set("RESPONSES_POOL", $responses_pool);
+}
+
+sub write_output {
+	my ($self, $program_output) = @_;
+	$self->get("RESPONSES_POOL")->write_output($program_output);
+}
+
+#####################################################################################
+# ClassResponsesPool
+#####################################################################################
+
+package ClassResponsesPool;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
+	my $self = {
+		CLASS => 'ClassResponsesPool',
+		CORE_DOCS => $core_docs,
+		DOCID_MAPPINGS => $docid_mappings,
+		ENTIRE_POOL => $entire_pool,
+		K => $k,
+		LDC_QUERIES => $ldc_queries,
+		QUERIES => $queries,
+		QUERYTYPE => $queries->get("QUERYTYPE"),
+		RESPONSES_DTD_FILENAME => $responses_dtd_file,
+		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
+		RESPONSES_POOL => undef,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $core_docs = $self->get("CORE_DOCS");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $queries = $self->get("QUERIES");
+	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
+	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
+	my $query_type = $self->get("QUERYTYPE");
+	my $entire_pool = $self->get("ENTIRE_POOL");
+	$entire_pool = Pool->new($logger) if $entire_pool eq "nil";
+	
+	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $responses_xml_file = $entry->get("filename");
+		print STDERR "--processing $responses_xml_file\n";
+		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
+		foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
+			my $query_id = $response->get("QUERYID");
+			#my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
+			#	if $ldc_queries->get("QUERY", $query_id);
+			my $kb_id = $query_id;
+			next unless $kb_id;
+			$kb_id =~ s/^\?//;
+			my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
+			# Making the enttype NIL as desired by LDC
+			my $enttype = "NIL";
+			my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
+			my $scope = $response->get("SCOPE");
+			my %kit_entries_by_docids;
+			foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
+				my $mention_span = $justification->tostring();
+				my $mention_modality = $justification->get("MODALITY");
+				my $confidence = $justification->get("CONFIDENCE");
+				my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
+				@docids = grep {$_ eq $source_docid} @docids if $source_docid;
+				foreach my $docid(@docids) {
+					next unless $core_docs->exists($docid);
+					my $kit_entry = KitEntry->new($logger);
+					$kit_entry->set("TYPE", $query_type);
+					$kit_entry->set("KB_ID", $kb_id);
+					$kit_entry->set("ENTTYPE", $enttype);
+					$kit_entry->set("ID", "<ID>");
+					$kit_entry->set("MENTION_MODALITY", $mention_modality);
+					$kit_entry->set("DOCID", $docid);
+					$kit_entry->set("MENTION_SPAN", $mention_span);
+					$kit_entry->set("LABEL_1", "NIL");
+					$kit_entry->set("LABEL_2", "NIL");
+					$kit_entry->set("CONFIDENCE", $confidence);
+					my $key = &main::generate_uuid_from_string($kit_entry->tostring());
+					$kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
+				}
+			}
+			foreach my $docid_modality (keys %kit_entries_by_docids) {
+				my $i = 0;
+				foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
+										keys %{$kit_entries_by_docids{$docid_modality}}) {
+					$i++;
+					last if $i > $k;
+					my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
+					my $value = $kit_entry->tostring();
+					$kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
+				}
+			}
+		}
+	}
+	$self->set("RESPONSES_POOL", $entire_pool);
+}
+
+sub write_output {
+	my ($self, $program_output) = @_;
+	my $pool = $self->get("RESPONSES_POOL");
+	my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+	print "$header\n";
+	foreach my $kb_id($pool->get("ALL_KEYS")) {
+		my $kit = $pool->get("BY_KEY", $kb_id);
+		foreach my $output_line($kit->toarray()) {
+			print $program_output "$output_line\n";
+		}
+	}
+}
+
+#####################################################################################
+# ZeroHopResponsesPool
+#####################################################################################
+
+package ZeroHopResponsesPool;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
+	my $self = {
+		CLASS => 'ZeroHopResponsesPool',
+		CORE_DOCS => $core_docs,
+		DOCID_MAPPINGS => $docid_mappings,
+		ENTIRE_POOL => $entire_pool,
+		K => $k,
+		LDC_QUERIES => $ldc_queries,
+		QUERIES => $queries,
+		QUERYTYPE => $queries->get("QUERYTYPE"),
+		RESPONSES_DTD_FILENAME => $responses_dtd_file,
+		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
+		RESPONSES_POOL => undef,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $core_docs = $self->get("CORE_DOCS");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $queries = $self->get("QUERIES");
+	my $ldc_queries = $self->get("LDC_QUERIES");
+	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
+	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
+	my $query_type = $self->get("QUERYTYPE");
+	my $entire_pool = $self->get("ENTIRE_POOL");
+	$entire_pool = Pool->new($logger) if $entire_pool eq "nil";
+	
+	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $responses_xml_file = $entry->get("filename");
+		print STDERR "--processing $responses_xml_file\n";
+		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
+		foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
+			my $query_id = $response->get("QUERYID");
+			my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
+				if $ldc_queries->get("QUERY", $query_id);
+			next unless $kb_id;
+			$kb_id =~ s/^\?//;
+			my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
+			my $enttype = $queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("ENTTYPE");
+			# Making the enttype NIL as desired by LDC
+			$enttype = "NIL";
+			my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
+			my $scope = $response->get("SCOPE");
+			my %kit_entries_by_docids;
+			foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
+				my $mention_span = $justification->tostring();
+				my $mention_modality = $justification->get("MODALITY");
+				my $confidence = $justification->get("CONFIDENCE");
+				my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
+				@docids = grep {$_ eq $source_docid} @docids if $source_docid;
+				foreach my $docid(@docids) {
+					next unless $core_docs->exists($docid);
+					my $kit_entry = KitEntry->new($logger);
+					$kit_entry->set("TYPE", $query_type);
+					$kit_entry->set("KB_ID", $kb_id);
+					$kit_entry->set("ENTTYPE", $enttype);
+					$kit_entry->set("ID", "<ID>");
+					$kit_entry->set("MENTION_MODALITY", $mention_modality);
+					$kit_entry->set("DOCID", $docid);
+					$kit_entry->set("MENTION_SPAN", $mention_span);
+					$kit_entry->set("LABEL_1", "NIL");
+					$kit_entry->set("LABEL_2", "NIL");
+					$kit_entry->set("CONFIDENCE", $confidence);
+					my $key = &main::generate_uuid_from_string($kit_entry->tostring());
+					$kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
+				}
+			}
+			foreach my $docid_modality (keys %kit_entries_by_docids) {
+				my $i = 0;
+				foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
+										keys %{$kit_entries_by_docids{$docid_modality}}) {
+					$i++;
+					last if $i > $k;
+					my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
+					my $value = $kit_entry->tostring();
+					$kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
+				}
+			}
+		}
+	}
+	$self->set("RESPONSES_POOL", $entire_pool);
+}
+
+sub write_output {
+	my ($self, $program_output) = @_;
+	my $pool = $self->get("RESPONSES_POOL");
+	my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+	print "$header\n";
+	foreach my $kb_id($pool->get("ALL_KEYS")) {
+		my $kit = $pool->get("BY_KEY", $kb_id);
+		foreach my $output_line($kit->toarray()) {
+			print $program_output "$output_line\n";
+		}
+	}
 }
 
 #####################################################################################
@@ -2901,6 +3431,510 @@ sub new {
   };
   bless($self, $class);
   $self;
+}
+
+#####################################################################################
+# CoreDocs
+#####################################################################################
+
+package CoreDocs;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = {
+  	CLASS => 'CoreDocs',
+  	FILENAME => $filename,
+  	LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $docid = $entry->get("root_id");
+		$self->add("KEY", $docid);
+	}
+	$filehandler->cleanup();
+}
+
+#####################################################################################
+# ImagesBoundingBoxes
+#####################################################################################
+
+package ImagesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
+  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my $filename = $entry->get("filename");
+		my $doceid = $filename;
+		$doceid =~ s/\..*?$//;
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(ImageBoundingBox->new($self->get("LOGGER"), $doceid, undef,
+												0, 0, $bottom_right_x, $bottom_right_y), $doceid);
+	}
+}
+
+#####################################################################################
+# ImageBoundingBox
+#####################################################################################
+
+package ImageBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'ImageBoundingBox',
+    DOCEID => $doceid,
+    TYPE => $type,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	my ($min_x, $min_y, $max_x, $max_y) 
+		= map {$self->get($_)} 
+			qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+	my $is_valid = 1;		
+	$is_valid = 0
+		if($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+			|| $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+	$is_valid;
+}
+
+#####################################################################################
+# KeyFramesBoundingBoxes
+#####################################################################################
+
+package KeyFramesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
+  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry( $entries->toarray() ){
+		my ($bottom_right_x, $bottom_right_y) = (0,0);
+		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+		$self->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
+												0, 0,
+												$bottom_right_x, $bottom_right_y),
+								$entry->get("keyframeid"));
+	}
+}
+
+sub get_KEYFRAMESIDS {
+	my ($self, $doceid) = @_;
+	my @keyframeids = $self->get("ALL_KEYS");
+	@keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
+	sort @keyframeids;
+}
+
+#####################################################################################
+# KeyFramesBoundingBox
+#####################################################################################
+
+package KeyFrameBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'KeyFrameBoundingBox',
+    KEYFRAMEID => $keyframeid,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_DOCEID {
+	my ($self) = @_;
+	my ($doceid) = split("_", $self->get("KEYFRAMEID"));
+	$doceid;
+}
+
+sub get_START {
+	my ($self) = @_;
+	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+	my ($self) = @_;
+	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	my ($min_x, $min_y, $max_x, $max_y) 
+		= map {$self->get($_)} 
+			qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+	my $is_valid = 1;		
+	$is_valid = 0
+		if($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+			|| $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+	$is_valid;
+}
+
+#####################################################################################
+# TextDocumentBoundaries
+#####################################################################################
+
+package TextDocumentBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'TextDocumentBoundary');
+  $self->{CLASS} = 'TextDocumentBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my ($doceid, $segment_id, $start_char, $end_char) =
+			map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+		my $text_document_boundary;
+		unless($self->exists($doceid)) {
+			$text_document_boundary = $self->get("BY_KEY", $doceid);
+			$text_document_boundary->set("DOCEID", $doceid);
+			$text_document_boundary->set("START_CHAR", $start_char);
+			$text_document_boundary->set("END_CHAR", $end_char);
+		}
+		else{
+			$text_document_boundary = $self->get("BY_KEY", $doceid);
+		}
+		my ($tb_start_char, $tb_end_char)
+			= map {$text_document_boundary->get($_)}
+				qw(START_CHAR END_CHAR);
+		$text_document_boundary->set("START_CHAR", $start_char)
+			if($start_char < $tb_start_char);
+		$text_document_boundary->set("END_CHAR", $end_char)
+			if($end_char > $tb_end_char);
+	}
+}
+
+sub get_BOUNDARY {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	my $text_document_boundary;
+	$text_document_boundary = $self->get("BY_KEY", $id) 
+		if($self->exists($id));
+	$text_document_boundary;
+}
+
+#####################################################################################
+# TextDocumentBoundary
+#####################################################################################
+
+package TextDocumentBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $start_char, $end_char) = @_;
+  my $self = {
+    CLASS => 'TextDocumentBoundary',
+    START_CHAR => $start_char,
+    END_CHAR => $end_char,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# SentenceBoundaries
+#####################################################################################
+
+package SentenceBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'Segments');
+  $self->{CLASS} = 'SentenceBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my ($doceid, $segment_id, $start_char, $end_char) =
+			map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+		my $segments = $self->get("BY_KEY", $doceid);
+		my $sentence_boundary = $segments->get("BY_KEY", "$doceid:$segment_id");
+		$sentence_boundary->set("SEGMENT_ID", $segment_id);
+		$sentence_boundary->set("START_CHAR", $start_char);
+		$sentence_boundary->set("END_CHAR", $end_char);
+	}
+}
+
+sub get_BOUNDARY {
+	my ($self, $span_string) = @_;
+	my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+	if($self->exists($id)) {
+		my $segments = $self->get("BY_KEY", $id);
+		foreach my $segment($segments->toarray()) {
+			my ($start_char, $end_char) = map {$segment->get($_)} qw(START_CHAR END_CHAR);
+			return $segment if($sx >= $start_char && $ex <= $end_char);
+		}
+	}
+	0;
+}
+
+#####################################################################################
+# Segments
+#####################################################################################
+
+package Segments;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'SentenceBoundary');
+  $self->{CLASS} = 'Segments';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# SentenceBoundary
+#####################################################################################
+
+package SentenceBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'SentenceBoundary',
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Assessments
+#####################################################################################
+
+package Assessments;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $kits_dir, $sentence_boundaries, $type) = @_;
+  my $self = {
+    CLASS => 'Assessments',
+    KITS_DIRECTORY => $kits_dir,
+    SENTENCE_BOUNDARIES => $sentence_boundaries,
+    ASSESSMENTS => undef,
+    TYPE => $type,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $type = $self->get("TYPE");
+	my $method = $self->can("load_$type");
+  return $method->($self) if $method;
+}
+
+sub load_zerohop {
+	my ($self) = @_;
+	my ($kits_dir, $sentence_boundaries, $logger) =
+		map {$self->get($_)} qw(KITS_DIRECTORY SENTENCE_BOUNDARIES LOGGER);
+	my $zerohop_assessments = ZeroHopAssessments->new($logger, $kits_dir, $sentence_boundaries);
+	$self->set("ASSESSMENTS", $zerohop_assessments);
+}
+
+sub toarray {
+	my ($self) = @_;
+	$self->get("ASSESSMENTS")->toarray();
+}
+
+sub tostring {
+	my ($self) = @_;
+	$self->get("ASSESSMENTS")->tostring();
+}
+
+#####################################################################################
+# ZeroHopAssessments
+#####################################################################################
+
+package ZeroHopAssessments;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $kits_dir, $sentence_boundaries) = @_;
+  my $self = {
+    CLASS => 'ZeroHopAssessments',
+    KITS_DIRECTORY => $kits_dir,
+    SENTENCE_BOUNDARIES => $sentence_boundaries,
+    ASSESSMENTS => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self->get_equivalence_classes();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $kits_dir = $self->get("KITS_DIRECTORY");
+	foreach my $filename(<$kits_dir/*.tab>) {
+		my $header = "NODEID\tCLASS\tID\tMODALITY\tDOCID\tMENTION_SPAN\tC1\tC2";
+		my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
+		my $entries = $filehandler->get("ENTRIES");
+		foreach my $entry($entries->toarray()) {
+			my ($nodeid, $class, $id, $modality, $docid, $mention_span, $line)
+				= map {$entry->get($_)} qw(NODEID CLASS ID MODALITY DOCID MENTION_SPAN LINE);
+			my ($doceid) = $mention_span =~ /^(.*?):/;
+			$entry->set("DOCEID", $doceid);
+			$self->{ASSESSMENTS}{$nodeid}{$id} = $entry;
+		}
+	}
+}
+
+sub get_equivalence_classes {
+	my ($self) = @_;
+	my %next_equivalence_class;
+	foreach my $nodeid(keys %{$self->{ASSESSMENTS}}) {
+		unless ($next_equivalence_class{$nodeid}) {
+			$next_equivalence_class{$nodeid} = 1;
+		}
+		my @entries = sort {$a->get("ID") <=> $b->get("ID")} values %{$self->{ASSESSMENTS}{$nodeid}};
+		for(my $i=0;  $i<=$#entries; $i++ ) {
+			next if $entries[$i]->get("FQECID");
+			my $fqecid = $nodeid . ":" . $next_equivalence_class{$nodeid};
+			$entries[$i]->set("FQECID", $fqecid);
+			$next_equivalence_class{$nodeid}++;
+			my $span1 = $entries[$i]->get("MENTION_SPAN");
+			for(my $j=$i+1; $j<=$#entries; $j++) {
+				my $span2 = $entries[$j]->get("MENTION_SPAN");
+				if(&check_overlap($span1, $span2)) {
+					$entries[$j]->set("FQECID", $fqecid);
+				}
+			}
+		}
+	}
+}
+
+sub check_overlap {
+	my ($span1, $span2) = @_;
+	my $retval = 0;
+	my ($de1, $sx1, $sy1, $ex1, $ey1) = $span1 =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+	my ($de2, $sx2, $sy2, $ex2, $ey2) = $span2 =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+	if($de1 eq $de2) {
+		$retval = 1 if($sx2 >= $sx1 && $sx2 <= $ex1 && $sy2 >= $sy1 && $sy2 <= $ey1);
+		$retval = 1 if($ex2 >= $sx1 && $ex2 <= $ex1 && $ey2 >= $sy1 && $ey2 <= $ey1);
+		$retval = 1 if($sx2 >= $sx1 && $sx2 <= $ex1 && $ey2 >= $sy1 && $ey2 <= $ey1);
+		$retval = 1 if($ex2 >= $sx1 && $ex2 <= $ex1 && $sy2 >= $sy1 && $sy2 <= $ey1);
+	}
+	$retval;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $retval = "NODEID\tCLASS\tID\tMODALITY\tDOCID\tMENTION_SPAN\tASSESSMENT\tTYPE\tFQECID\n";
+	foreach my $nodeid(sort keys %{$self->{ASSESSMENTS}}) {
+		foreach my $id(sort {$a<=>$b} keys %{$self->{ASSESSMENTS}{$nodeid}}) {
+			my $line = $self->{ASSESSMENTS}{$nodeid}{$id}->get("LINE");
+			my $fqecid = $self->{ASSESSMENTS}{$nodeid}{$id}->get("FQECID");
+			$retval .= "$line\t$fqecid\n";
+		}
+	}
+	$retval;
 }
 
 ### BEGIN INCLUDE Utils

@@ -1,0 +1,193 @@
+PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+# Query: AIDA_EG_2018_P103_Q002_H001_1hop_1_1
+
+
+SELECT ?cluster_10001 ?nid_ep_10001 ?nid_ot_10001 ?doceid_10001 ?sid_10001 ?kfid_10001 ?so_10001 ?eo_10001 ?ulx_10001 ?uly_10001 ?lrx_10001 ?lry_10001 ?st_10001 ?et_10001 ?cmcv_ep_10001 ?cmcv_ot_10001 ?type_cv_10001 ?cluster_10001 ?type_cv_10001 ?cluster_10002 ?nid_ep_10002 ?nid_ot_10002 ?doceid_10002 ?sid_10002 ?kfid_10002 ?so_10002 ?eo_10002 ?ulx_10002 ?uly_10002 ?lrx_10002 ?lry_10002 ?st_10002 ?et_10002 ?cmcv_ep_10002 ?cmcv_ot_10002 ?type_cv_10002 ?cluster_10002 ?type_cv_10002 ?edge_cv_10003 ?doceid_1_10003 ?sid_1_10003 ?kfid_1_10003 ?so_1_10003 ?eo_1_10003 ?ulx_1_10003 ?uly_1_10003 ?lrx_1_10003 ?lry_1_10003 ?st_1_10003 ?et_1_10003 ?doceid_2_10003 ?sid_2_10003 ?kfid_2_10003 ?so_2_10003 ?eo_2_10003 ?ulx_2_10003 ?uly_2_10003 ?lrx_2_10003 ?lry_2_10003 ?st_2_10003 ?et_2_10003
+WHERE {
+        ?statement1_10001    a                    rdf:Statement .
+        ?statement1_10001    rdf:object           ldcOnt:Conflict.Attack .
+        ?statement1_10001    rdf:predicate        rdf:type .
+        ?statement1_10001    rdf:subject          ?nid_ot_10001 .
+        ?statement1_10001    aida:justifiedBy     ?justification_10001 .
+        ?justification_10001 aida:source          ?doceid_10001 .
+        ?justification_10001 aida:confidence      ?confidence_10001 .
+        ?confidence_10001    aida:confidenceValue ?type_cv_10001 .
+
+        ?cluster_10001          a                    aida:SameAsCluster .
+        ?statement2_10001       a                    aida:ClusterMembership .
+        ?statement2_10001       aida:cluster         ?cluster_10001 .
+        ?statement2_10001       aida:clusterMember   ?nid_ep_10001 .
+        ?statement2_10001       aida:confidence      ?cm_confidence_ep_10001 .
+        ?cm_confidence_ep_10001 aida:confidenceValue ?cmcv_ep_10001 .
+
+        ?statement3_10001       a                    aida:ClusterMembership .
+        ?statement3_10001       aida:cluster         ?cluster_10001 .
+        ?statement3_10001       aida:clusterMember   ?nid_ot_10001 .
+        ?statement3_10001       aida:confidence      ?cm_confidence_ot_10001 .
+        ?cm_confidence_ot_10001 aida:confidenceValue ?cmcv_ot_10001 .
+
+        ?statement4_10001       a                         rdf:Statement .
+        ?statement4_10001       rdf:object                ldcOnt:Conflict.Attack .
+        ?statement4_10001       rdf:predicate             rdf:type .
+        ?statement4_10001       rdf:subject               ?nid_ep_10001 .
+        ?statement4_10001       aida:justifiedBy          ?justification_ep_10001 .
+        
+        OPTIONAL { ?justification_10001 a                  aida:TextJustification .
+                   ?justification_10001 aida:startOffset            ?so_10001 .
+                   ?justification_10001 aida:endOffsetInclusive     ?eo_10001 }
+
+        OPTIONAL { ?justification_10001 a                  aida:ImageJustification .
+                   ?justification_10001 aida:boundingBox            ?bb_10001  .
+                   ?bb_10001            aida:boundingBoxUpperLeftX  ?ulx_10001 .
+                   ?bb_10001            aida:boundingBoxUpperLeftY  ?uly_10001 .
+                   ?bb_10001            aida:boundingBoxLowerRightX ?lrx_10001 .
+                   ?bb_10001            aida:boundingBoxLowerRightY ?lry_10001 }
+
+        OPTIONAL { ?justification_10001 a                  aida:KeyFrameVideoJustification .
+                   ?justification_10001 aida:keyFrame               ?kfid_10001 .
+                   ?justification_10001 aida:boundingBox            ?bb_10001  .
+                   ?bb_10001            aida:boundingBoxUpperLeftX  ?ulx_10001 .
+                   ?bb_10001            aida:boundingBoxUpperLeftY  ?uly_10001 .
+                   ?bb_10001            aida:boundingBoxLowerRightX ?lrx_10001 .
+                   ?bb_10001            aida:boundingBoxLowerRightY ?lry_10001 }
+
+        OPTIONAL { ?justification_10001 a                  aida:ShotVideoJustification .
+                   ?justification_10001 aida:shot                   ?sid_10001 }
+
+        OPTIONAL { ?justification_10001 a                  aida:AudioJustification .
+                   ?justification_10001 aida:startTimestamp         ?st_10001 .
+                   ?justification_10001 aida:endTimestamp           ?et_10001 }
+
+        ?statement1_10002    a                    rdf:Statement .
+        ?statement1_10002    rdf:object           ldcOnt:Facility .
+        ?statement1_10002    rdf:predicate        rdf:type .
+        ?statement1_10002    rdf:subject          ?nid_ot_10002 .
+        ?statement1_10002    aida:justifiedBy     ?justification_10002 .
+        ?justification_10002 aida:source          ?doceid_10002 .
+        ?justification_10002 aida:confidence      ?confidence_10002 .
+        ?confidence_10002    aida:confidenceValue ?type_cv_10002 .
+
+        ?cluster_10002          a                    aida:SameAsCluster .
+        ?statement2_10002       a                    aida:ClusterMembership .
+        ?statement2_10002       aida:cluster         ?cluster_10002 .
+        ?statement2_10002       aida:clusterMember   ?nid_ep_10002 .
+        ?statement2_10002       aida:confidence      ?cm_confidence_ep_10002 .
+        ?cm_confidence_ep_10002 aida:confidenceValue ?cmcv_ep_10002 .
+
+        ?statement3_10002       a                    aida:ClusterMembership .
+        ?statement3_10002       aida:cluster         ?cluster_10002 .
+        ?statement3_10002       aida:clusterMember   ?nid_ot_10002 .
+        ?statement3_10002       aida:confidence      ?cm_confidence_ot_10002 .
+        ?cm_confidence_ot_10002 aida:confidenceValue ?cmcv_ot_10002 .
+
+        ?statement4_10002       a                         rdf:Statement .
+        ?statement4_10002       rdf:object                ldcOnt:Facility .
+        ?statement4_10002       rdf:predicate             rdf:type .
+        ?statement4_10002       rdf:subject               ?nid_ep_10002 .
+        ?statement4_10002       aida:justifiedBy          ?justification_ep_10002 .
+        ?justification_ep_10002 a                         aida:TextJustification .
+        ?justification_ep_10002 aida:source               "HC000T6J5" .
+        ?justification_ep_10002 aida:startOffset          ?epso_10002 .
+        ?justification_ep_10002 aida:endOffsetInclusive   ?epeo_10002 .
+        FILTER ( (?epeo_10002 >= 9354 && ?epeo_10002 <= 9363) || (?epso_10002 >= 9354 && ?epso_10002 <= 9363) ) .
+
+
+        OPTIONAL { ?justification_10002 a                  aida:TextJustification .
+                   ?justification_10002 aida:startOffset            ?so_10002 .
+                   ?justification_10002 aida:endOffsetInclusive     ?eo_10002 }
+
+        OPTIONAL { ?justification_10002 a                  aida:ImageJustification .
+                   ?justification_10002 aida:boundingBox            ?bb_10002  .
+                   ?bb_10002            aida:boundingBoxUpperLeftX  ?ulx_10002 .
+                   ?bb_10002            aida:boundingBoxUpperLeftY  ?uly_10002 .
+                   ?bb_10002            aida:boundingBoxLowerRightX ?lrx_10002 .
+                   ?bb_10002            aida:boundingBoxLowerRightY ?lry_10002 }
+
+        OPTIONAL { ?justification_10002 a                  aida:KeyFrameVideoJustification .
+                   ?justification_10002 aida:keyFrame               ?kfid_10002 .
+                   ?justification_10002 aida:boundingBox            ?bb_10002  .
+                   ?bb_10002            aida:boundingBoxUpperLeftX  ?ulx_10002 .
+                   ?bb_10002            aida:boundingBoxUpperLeftY  ?uly_10002 .
+                   ?bb_10002            aida:boundingBoxLowerRightX ?lrx_10002 .
+                   ?bb_10002            aida:boundingBoxLowerRightY ?lry_10002 }
+
+        OPTIONAL { ?justification_10002 a                  aida:ShotVideoJustification .
+                   ?justification_10002 aida:shot                   ?sid_10002 }
+
+        OPTIONAL { ?justification_10002 a                  aida:AudioJustification .
+                   ?justification_10002 aida:startTimestamp         ?st_10002 .
+                   ?justification_10002 aida:endTimestamp           ?et_10002 }
+
+        ?statement1_10003      a                    rdf:Statement .
+        ?statement1_10003      rdf:object           ?nid_ot_10002 .
+        ?statement1_10003      rdf:predicate        ldcOnt:Conflict.Attack_Place .
+        ?statement1_10003      rdf:subject          ?nid_ot_10001 .
+        ?statement1_10003      aida:confidence      ?edge_confidence_10003 .
+        ?statement1_10003      aida:justifiedBy     ?compound_justification_10003 .
+        ?edge_confidence_10003 aida:confidenceValue ?edge_cv_10003 .
+
+        ?compound_justification_10003 a                           aida:CompoundJustification .
+        ?compound_justification_10003 aida:containedJustification ?justification_1_10003 .
+        ?justification_1_10003 aida:source                 ?doceid_1_10003 .
+
+        OPTIONAL { ?compound_justification_10003 aida:containedJustification ?justification_2_10003 . 
+                   ?justification_2_10003 aida:source                 ?doceid_2_10003 . }
+
+        OPTIONAL { ?justification_1_10003 a                           aida:TextJustification .
+                   ?justification_1_10003 aida:startOffset            ?so_1_10003 .
+                   ?justification_1_10003 aida:endOffsetInclusive     ?eo_1_10003 }
+
+        OPTIONAL { ?justification_1_10003 a                           aida:ImageJustification .
+                   ?justification_1_10003 aida:boundingBox            ?bb_1_10003  .
+                   ?bb_1_10003            aida:boundingBoxUpperLeftX  ?ulx_1_10003 .
+                   ?bb_1_10003            aida:boundingBoxUpperLeftY  ?uly_1_10003 .
+                   ?bb_1_10003            aida:boundingBoxLowerRightX ?lrx_1_10003 .
+                   ?bb_1_10003            aida:boundingBoxLowerRightY ?lry_1_10003 }
+
+        OPTIONAL { ?justification_1_10003 a                           aida:KeyFrameVideoJustification .
+                   ?justification_1_10003 aida:keyFrame               ?kfid_1_10003 .
+                   ?justification_1_10003 aida:boundingBox            ?bb_1_10003  .
+                   ?bb_1_10003            aida:boundingBoxUpperLeftX  ?ulx_1_10003 .
+                   ?bb_1_10003            aida:boundingBoxUpperLeftY  ?uly_1_10003 .
+                   ?bb_1_10003            aida:boundingBoxLowerRightX ?lrx_1_10003 .
+                   ?bb_1_10003            aida:boundingBoxLowerRightY ?lry_1_10003 }
+
+        OPTIONAL { ?justification_1_10003 a                           aida:ShotVideoJustification .
+                   ?justification_1_10003 aida:shot                   ?sid_1_10003 }
+
+        OPTIONAL { ?justification_1_10003 a                           aida:AudioJustification .
+                   ?justification_1_10003 aida:startTimestamp         ?st_1_10003 .
+                   ?justification_1_10003 aida:endTimestamp           ?et_1_10003 }
+
+        OPTIONAL { ?justification_2_10003 a                           aida:TextJustification .
+                   ?justification_2_10003 aida:startOffset            ?so_2_10003 .
+                   ?justification_2_10003 aida:endOffsetInclusive     ?eo_2_10003 }
+
+        OPTIONAL { ?justification_2_10003 a                           aida:ImageJustification .
+                   ?justification_2_10003 aida:boundingBox            ?bb_2_10003  .
+                   ?bb_2_10003            aida:boundingBoxUpperLeftX  ?ulx_2_10003 .
+                   ?bb_2_10003            aida:boundingBoxUpperLeftY  ?uly_2_10003 .
+                   ?bb_2_10003            aida:boundingBoxLowerRightX ?lrx_2_10003 .
+                   ?bb_2_10003            aida:boundingBoxLowerRightY ?lry_2_10003 }
+
+        OPTIONAL { ?justification_2_10003 a                           aida:KeyFrameVideoJustification .
+                   ?justification_2_10003 aida:keyFrame               ?kfid_2_10003 .
+                   ?justification_2_10003 aida:boundingBox            ?bb_2_10003  .
+                   ?bb_2_10003            aida:boundingBoxUpperLeftX  ?ulx_2_10003 .
+                   ?bb_2_10003            aida:boundingBoxUpperLeftY  ?uly_2_10003 .
+                   ?bb_2_10003            aida:boundingBoxLowerRightX ?lrx_2_10003 .
+                   ?bb_2_10003            aida:boundingBoxLowerRightY ?lry_2_10003 }
+
+        OPTIONAL { ?justification_2_10003 a                           aida:ShotVideoJustification .
+                   ?justification_2_10003 aida:shot                   ?sid_2_10003 }
+
+        OPTIONAL { ?justification_2_10003 a                           aida:AudioJustification .
+                   ?justification_2_10003 aida:startTimestamp         ?st_2_10003 .
+                   ?justification_2_10003 aida:endTimestamp           ?et_2_10003 }
+
+}
+

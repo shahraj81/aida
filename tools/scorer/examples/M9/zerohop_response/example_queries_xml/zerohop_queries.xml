@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zerohop_queries>
+  <zerohop_query id="AIDA_ZH_2018_37">
+    <entrypoint>
+      <node> ?node </node>
+      <enttype> Person </enttype>
+      <text_descriptor>
+        <doceid> IC001L4O4 </doceid>
+        <start> 365 </start>
+        <end> 386 </end>
+      </text_descriptor>
+    </entrypoint>
+    <sparql>
+ 	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_ZH_2018_37
+
+	SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cmcv_ep ?cmcv_ot ?cv
+	WHERE {
+		?statement1    a                    rdf:Statement .
+		?statement1    rdf:object           ldcOnt:Person .
+		?statement1    rdf:predicate        rdf:type .
+		?statement1    rdf:subject          ?nid_ot .
+		?statement1    aida:justifiedBy     ?justification .
+		?justification aida:source          ?doceid .
+		?justification aida:confidence      ?confidence .
+		?confidence    aida:confidenceValue ?cv .
+
+		?cluster          a                    aida:SameAsCluster .
+		?statement2       a                    aida:ClusterMembership .
+		?statement2       aida:cluster         ?cluster .
+		?statement2       aida:clusterMember   ?nid_ep .
+		?statement2       aida:confidence      ?cm_confidence_ep .
+		?cm_confidence_ep aida:confidenceValue ?cmcv_ep .
+
+		?statement3       a                    aida:ClusterMembership .
+		?statement3       aida:cluster         ?cluster .
+		?statement3       aida:clusterMember   ?nid_ot .
+		?statement3       aida:confidence      ?cm_confidence_ot .
+		?cm_confidence_ot aida:confidenceValue ?cmcv_ot .
+
+		?statement4       a                         rdf:Statement .
+		?statement4       rdf:object                ldcOnt:Person .
+		?statement4       rdf:predicate             rdf:type .
+		?statement4       rdf:subject               ?nid_ep .
+		?statement4       aida:justifiedBy          ?justification_ep .
+		?justification_ep a                         aida:TextJustification .
+		?justification_ep aida:source               "IC001L4O4" .
+		?justification_ep aida:startOffset          ?epso .
+		?justification_ep aida:endOffsetInclusive   ?epeo .
+		FILTER ( (?epeo >= 365 && $epeo <= 386) || (?epso >= 365 && ?epso <= 386) ) .
+
+
+		OPTIONAL { ?justification a                  aida:TextJustification .
+			?justification aida:startOffset            ?so .
+			?justification aida:endOffsetInclusive     ?eo }
+
+		OPTIONAL { ?justification a                  aida:ImageJustification .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?lrx .
+			?bb            aida:boundingBoxLowerRightY ?lry }
+
+		OPTIONAL { ?justification a                  aida:KeyFrameVideoJustification .
+			?justification aida:keyFrame               ?kfid .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?lrx .
+			?bb            aida:boundingBoxLowerRightY ?lry }
+
+		OPTIONAL { ?justification a                  aida:ShotVideoJustification .
+			?justification aida:shot                   ?sid }
+
+		OPTIONAL { ?justification a                  aida:AudioJustification .
+			?justification aida:startTimestamp         ?st .
+			?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+     </sparql>
+  </zerohop_query>
+  <zerohop_query id="AIDA_ZH_2018_81">
+    <entrypoint>
+      <node> ?node </node>
+      <enttype> GeopoliticalEntity </enttype>
+      <text_descriptor>
+        <doceid> HC000T65W </doceid>
+        <start> 519 </start>
+        <end> 524 </end>
+      </text_descriptor>
+    </entrypoint>
+    <sparql>
+ 	<![CDATA[
+	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
+	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
+	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+	# Query: AIDA_ZH_2018_81
+
+	SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cmcv_ep ?cmcv_ot ?cv
+	WHERE {
+		?statement1    a                    rdf:Statement .
+		?statement1    rdf:object           ldcOnt:GeopoliticalEntity .
+		?statement1    rdf:predicate        rdf:type .
+		?statement1    rdf:subject          ?nid_ot .
+		?statement1    aida:justifiedBy     ?justification .
+		?justification aida:source          ?doceid .
+		?justification aida:confidence      ?confidence .
+		?confidence    aida:confidenceValue ?cv .
+
+		?cluster          a                    aida:SameAsCluster .
+		?statement2       a                    aida:ClusterMembership .
+		?statement2       aida:cluster         ?cluster .
+		?statement2       aida:clusterMember   ?nid_ep .
+		?statement2       aida:confidence      ?cm_confidence_ep .
+		?cm_confidence_ep aida:confidenceValue ?cmcv_ep .
+
+		?statement3       a                    aida:ClusterMembership .
+		?statement3       aida:cluster         ?cluster .
+		?statement3       aida:clusterMember   ?nid_ot .
+		?statement3       aida:confidence      ?cm_confidence_ot .
+		?cm_confidence_ot aida:confidenceValue ?cmcv_ot .
+
+		?statement4       a                         rdf:Statement .
+		?statement4       rdf:object                ldcOnt:GeopoliticalEntity .
+		?statement4       rdf:predicate             rdf:type .
+		?statement4       rdf:subject               ?nid_ep .
+		?statement4       aida:justifiedBy          ?justification_ep .
+		?justification_ep a                         aida:TextJustification .
+		?justification_ep aida:source               "HC000T65W" .
+		?justification_ep aida:startOffset          ?epso .
+		?justification_ep aida:endOffsetInclusive   ?epeo .
+		FILTER ( (?epeo >= 519 && $epeo <= 524) || (?epso >= 519 && ?epso <= 524) ) .
+
+
+		OPTIONAL { ?justification a                  aida:TextJustification .
+			?justification aida:startOffset            ?so .
+			?justification aida:endOffsetInclusive     ?eo }
+
+		OPTIONAL { ?justification a                  aida:ImageJustification .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?lrx .
+			?bb            aida:boundingBoxLowerRightY ?lry }
+
+		OPTIONAL { ?justification a                  aida:KeyFrameVideoJustification .
+			?justification aida:keyFrame               ?kfid .
+			?justification aida:boundingBox            ?bb  .
+			?bb            aida:boundingBoxUpperLeftX  ?ulx .
+			?bb            aida:boundingBoxUpperLeftY  ?uly .
+			?bb            aida:boundingBoxLowerRightX ?lrx .
+			?bb            aida:boundingBoxLowerRightY ?lry }
+
+		OPTIONAL { ?justification a                  aida:ShotVideoJustification .
+			?justification aida:shot                   ?sid }
+
+		OPTIONAL { ?justification a                  aida:AudioJustification .
+			?justification aida:startTimestamp         ?st .
+			?justification aida:endTimestamp           ?et }
+
+	}
+	]]>
+     </sparql>
+  </zerohop_query>
+</zerohop_queries>
