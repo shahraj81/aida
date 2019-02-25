@@ -124,6 +124,7 @@ DEBUG_INFO: ASSESSMENT_INFO: NODEID=E0632 QUERYID=AIDA_ZH_2018_37 MENTION=HC000T
 ## Scoring example ZeroHop responses for M9
 
 Example ZeroHop responses can be found at the following directory `examples/M9/zerohop_response`:
+
 	1. TA1 example submission: `examples/M9/zerohop_response/AIDA_TA1_teamA_run_1`
 	2. TA2 example submission: `examples/M9/zerohop_response/AIDA_TA2_teamA_run_1`
 
@@ -136,7 +137,7 @@ make
 
 The score and debug files will be produced in `examples/M9/zerohop_response/output_scores/`.
 
-Note: The scorer does not overwrite score and debug file, and therefore, it is necessary to remove these files if they already exist.
+Note: The scorer does not overwrite score and debug file, and therefore, it is necessary to remove these files if they already exist. Also, note that the input to scorer is a pathfile containing paths of all the input xml response files.
 
 # Revision history
 ## 2/24/2019
