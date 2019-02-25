@@ -1,13 +1,15 @@
 # Introduction
 
-February 23, 2019
+February 24, 2019
 
 This document describes:
 
 	1. Usage of the Scorer,
 	2. How to generate the official scores for ZeroHop responses, 
-	3. How to interpret scores output, and
-	4. How to read the debug file.
+	3. How to interpret scores output,
+	4. How to read the debug file,
+	5. Example submission and corresponding scores, and
+	6. Revision history
 
 # Usage of the Scorer
 
@@ -116,3 +118,28 @@ The scorer reads the responses and uses ASSESSMENT_INFO tag to log what were the
 DEBUG_INFO: ASSESSMENT_INFO: NODEID=E0632 QUERYID=AIDA_ZH_2018_37 MENTION=HC000T65W:(10052,0)-(10059,0) PRE_POLICY_ASSESSMENT=NOT_IN_POOL,SUBMITTED POST_POLICY_ASSESSMENT=IGNORED FQEC=UNASSESSED
  (examples/M9/zerohop_response/AIDA_TA1_teamA_run_1/IC00162QM.zerohop_responses.xml line 11)
 ~~~
+
+# Example submission files and scores
+
+## Scoring example ZeroHop responses for M9
+
+Example ZeroHop responses can be found at the following directory `examples/M9/zerohop_response`:
+	1. TA1 example submission: `examples/M9/zerohop_response/AIDA_TA1_teamA_run_1`
+	2. TA2 example submission: `examples/M9/zerohop_response/AIDA_TA2_teamA_run_1`
+
+In order to score these example submissions, you may run the following command:
+
+~~~
+cd examples/M9
+make
+~~~
+
+The score and debug files will be produced in `examples/M9/zerohop_response/output_scores/`.
+
+Note: The scorer does not overwrite score and debug file, and therefore, it is necessary to remove these files if they already exist.
+
+# Revision history
+## 2/24/2019
+	- Documentation on how to score example ZeroHop responses added
+## 2/23/2019
+	- First version
