@@ -1385,25 +1385,26 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $parameters) = @_;
   my $self = {
-  	LDC_NIST_MAPPINGS => LDCNISTMappings->new($logger, $parameters),
-  	NODES => Nodes->new($logger),
-		CANONICAL_MENTIONS => CanonicalMentions->new($logger, $parameters),
-  	EDGES => Edges->new($logger),
-  	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
-  	NODEIDS_LOOKUP => {},
-    IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($logger, $parameters),
-    KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($logger, $parameters),
-    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($logger, $parameters),
-    HYPOTHESIS_RELEVANT_NODEIDS => Container->new($logger, $parameters, "RAW"),
+#  	LDC_NIST_MAPPINGS => LDCNISTMappings->new($logger, $parameters),
+#  	NODES => Nodes->new($logger),
+#		CANONICAL_MENTIONS => CanonicalMentions->new($logger, $parameters),
+#  	EDGES => Edges->new($logger),
+#  	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
+#  	NODEIDS_LOOKUP => {},
+#    IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($logger, $parameters),
+#    KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($logger, $parameters),
+#    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($logger, $parameters),
+#    HYPOTHESIS_RELEVANT_NODEIDS => Container->new($logger, $parameters, "RAW"),
+		TYPES_HIERARCHY => {},
     PARAMETERS => $parameters,
     LOGGER => $logger,
   };
   bless($self, $class);
   $self->load_data();
-  foreach my $node($self->get("NODES")->toarray()) {
-  	my $node_id = $node->get("NODEID");
-  	my $node_types = join(",", $node->get("NIST_TYPES"));
-  }
+#  foreach my $node($self->get("NODES")->toarray()) {
+#  	my $node_id = $node->get("NODEID");
+#  	my $node_types = join(",", $node->get("NIST_TYPES"));
+#  }
   $self;
 }
 
@@ -1416,12 +1417,35 @@ sub get_DOCUMENTELEMENTS {
 sub load_data {
 	my ($self) = @_;
 
-	$self->load_keyframes_boundingboxes();
-	$self->load_images_boundingboxes();
-	$self->load_nodes();
-	$self->load_edges();
-	$self->load_hypothesis_relevant_nodeids();
-	$self->load_canonical_mentions();
+	$self->load_ontology_mappings();
+#	$self->load_keyframes_boundingboxes();
+#	$self->load_images_boundingboxes();
+#	$self->load_nodes();
+#	$self->load_edges();
+#	$self->load_hypothesis_relevant_nodeids();
+#	$self->load_canonical_mentions();
+}
+
+sub load_ontology_mappings {
+	my ($self) = @_;
+	
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("ONTOLOGY_MAPPING_ENTITIES_FILE"));
+	foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
+		my $type = $entry->get("Type");
+		my $type_output_value = $entry->get("Output Value for Type");
+		my $subtype = $entry->get("Subtype");
+		my $subtype_output_value = $entry->get("Output Value for Subtype");
+		my $subsubtype = $entry->get("Sub-subtype");
+		my $subsubtype_output_value = $entry->get("Output Value for Sub-subtype");
+		my $full_type = $type;
+		$full_type = $full_type . "." . $subtype unless $subtype eq "n/a"; 
+		$full_type = $full_type . "." . $subsubtype unless $subsubtype eq "n/a"; 
+		my $full_type_output_value = $type_output_value;
+		$full_type_output_value = $full_type_output_value . "." . $subtype_output_value unless $subtype_output_value eq "n/a"; 
+		$full_type_output_value = $full_type_output_value . "." . $subsubtype_output_value unless $subsubtype_output_value eq "n/a"; 		
+		$self->{TYPES_HIERARCHY}{ENTITIES}{TYPE_TO_OUTPUTVALUE}{$full_type} = $full_type_output_value;
+		$self->{TYPES_HIERARCHY}{ENTITIES}{OUTPUTVALUE_TO_TYPE}{$full_type_output_value} = $full_type;
+	}
 }
 
 sub load_canonical_mentions {
@@ -1616,8 +1640,8 @@ sub generate_queries {
 	my ($self) = @_;
 	
 	$self->generate_class_queries();
-	$self->generate_zerohop_queries();
-	$self->generate_graph_queries();
+#	$self->generate_zerohop_queries();
+#	$self->generate_graph_queries();
 }
 
 sub generate_class_queries {
@@ -1625,9 +1649,7 @@ sub generate_class_queries {
 	my $queries = ClassQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
 	my $i = 0;
-	my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
-	foreach my $type(sort keys %is_valid_entrypoint) {
-		next unless ($is_valid_entrypoint{$type} eq "true");
+	foreach my $type(sort keys %{$self->{TYPES_HIERARCHY}{ENTITIES}{TYPE_TO_OUTPUTVALUE}}) {
 		$i++;
 		my $query_id = "$query_id_prefix\_$i";
 		my $query = ClassQuery->new($self->get("LOGGER"), $self->get("PARAMETERS"), $query_id, $type);
@@ -2026,6 +2048,10 @@ sub write_to_file {
 	$attributes->add("$query_id", "id");
 
 	my $xml_enttype = XMLElement->new($self->get("LOGGER"), $enttype, "enttype", 0);
+	
+	my $type_levels = split(/\./, $enttype);
+	my @type_specifities = qw(TYPE TYPE.SUBTYPE TYPE.SUBTYPE.SUBSUBTYPE);
+	my $xml_type_specificity = XMLElement->new($self->get("LOGGER"), $type_specifities[$type_levels-1], "type_specificity", 0);
 
 	my $sparql = <<'END_SPARQL_QUERY';
 
@@ -2038,10 +2064,10 @@ sub write_to_file {
 	# Query: QUERYID
 	# Query description: Find all mentions of type ENTTYPE
 
-	SELECT ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
+	SELECT ?type ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
 	WHERE {
 			?statement1    a                    rdf:Statement .
-			?statement1    rdf:object           ldcOnt:ENTTYPE .
+			?statement1    rdf:object           ?type .
 			?statement1    rdf:predicate        rdf:type .
 			?statement1    aida:justifiedBy     ?justification .
 			?justification aida:source          ?doceid .
@@ -2073,6 +2099,8 @@ sub write_to_file {
 			OPTIONAL { ?justification a                           aida:AudioJustification .
 					   ?justification aida:startTimestamp         ?st .
 					   ?justification aida:endTimestamp           ?et }
+					   
+			FILTER(cfn:superTypeOf(str(ldcOnt:ENTTYPE), str(?type))) .
 
 	}
 	]]>
@@ -2083,7 +2111,7 @@ END_SPARQL_QUERY
 	$sparql =~ s/ENTTYPE/$enttype/g;
 	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
 	my $xml_query = XMLElement->new($self->get("LOGGER"),
-			XMLContainer->new($self->get("LOGGER"), $xml_enttype, $xml_sparql),
+			XMLContainer->new($self->get("LOGGER"), $xml_enttype, $xml_type_specificity, $xml_sparql),
 			"class_query", 1, $attributes);
 	print $program_output $xml_query->tostring(2);
 }
