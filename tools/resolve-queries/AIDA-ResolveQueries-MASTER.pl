@@ -21,7 +21,7 @@ use ResolveQueriesManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2018.0.0";
+my $version = "2019.0.0";
 
 ##################################################################################### 
 # Runtime switches and main program
@@ -35,8 +35,11 @@ $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
-$switches->addVarSwitch('sparql', "Specify path to SPARQL executable");
-$switches->put('sparql', "sparql");
+$switches->addConstantSwitch("split_queries", "true", "Run SPARQL queries");
+$switches->addConstantSwitch("apply_queries", "true", "Run SPARQL queries");
+$switches->addConstantSwitch("xml_output", "true", "Convert SPARQL output to XML");
+$switches->addVarSwitch('graphdb', "Specify path to SPARQL executable");
+$switches->put('graphdb', "none");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
@@ -52,7 +55,11 @@ my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
 my $error_output = $logger->get_error_output();
 
-foreach my $path(($switches->get("sparql"), $switches->get("docid_mappings"), $switches->get("queries_dtd"), $switches->get("queries_xml"), $switches->get("input"))) {
+foreach my $path(($switches->get("sparql"), 
+									$switches->get("docid_mappings"), 
+									$switches->get("queries_dtd"), 
+									$switches->get("queries_xml"), 
+									$switches->get("input"))) {
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
 
@@ -67,15 +74,15 @@ $parameters->set("QUERIES_XML_FILE", $switches->get("queries_xml"));
 $parameters->set("INPUT", $switches->get("input"));
 $parameters->set("INTERMEDIATE_DIR", $switches->get("intermediate"));
 $parameters->set("OUTPUT_DIR", $switches->get("output"));
-$parameters->set("SPARQL_EXECUTABLE", $switches->get("sparql"));
+$parameters->set("GRAPHDB", $switches->get("grapdh"));
 
 my $queries = Queries->new($logger, $parameters);
 # Generate RQ files
-$queries->generate_sparql_query_files();
+$queries->generate_sparql_query_files() if($switches->get("split_queries"));
 # Resolve queries against KB(s)
-$queries->apply_sparql_queries();
+$queries->apply_sparql_queries() if($switches->get("apply_queries"));
 # Convert sparql output to XML
-$queries->convert_output_files_to_xml();
+$queries->convert_output_files_to_xml() if($switches->get("xml_output"));
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($switches->get('error_file') eq "STDERR") {
