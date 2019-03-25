@@ -833,6 +833,95 @@ sub new {
 }
 
 #####################################################################################
+# CompactOutputPrinter
+#####################################################################################
+
+package CompactOutputPrinter;
+
+use parent -norequire, 'Super';
+
+my %schemas = (
+  '2019-TA1-CLASS-OUTPUT' => {
+    YEAR => 2019,
+    TYPE => 'COMPACT_OUTPUT',
+    SAMPLES => [""],
+    COLUMNS => [qw(
+      QUERY_ID
+      TASK
+      QUERY_TYPE
+      RUNID
+      KB_DOCID
+      VALUE_DOCID
+      VALUE_PROVENANCE_TRIPLES
+      CONFIDENCE
+    )],
+  },
+);
+
+my %columns = (
+	QUERY_ID => {
+	    # Note: ASSESSMENT is a normalized LDC conclusion; JUDGMENT maps
+	    # ASSESSMENT onto {CORRECT, INCORRECT, IGNORE, NOT_ASSESSED}
+	    DESCRIPTION => "{CORRECT, INCORRECT, INEXACT, IGNORE, INEXACT_SHORT, INEXACT_LONG}",
+	    GENERATOR => sub {
+	      my ($logger) = @_;
+	      
+	    },
+	    # DEPENDENCIES => [qw()],
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},   
+);
+
+our %printable_fields = (
+  DOCID => {
+  	NAME => 'DOCID',
+    DESCRIPTION => "Query or equivalence class name",
+    HEADER => 'QID/EC',
+    FORMAT => '%s',
+    JUSTIFY => 'L',
+    FN => sub { $_[0]{EC} },
+  },
+  RUNID => {
+  	NAME => 'RUNID',
+    DESCRIPTION => "Run ID",
+    HEADER => 'RunID',
+    FORMAT => '%s',
+    JUSTIFY => 'L',
+    FN => sub { $_[0]{RUNID} },
+  },
+  LEVEL => {
+  	NAME => 'LEVEL',
+    DESCRIPTION => "Hop level",
+    HEADER => 'Hop',
+    FORMAT => '%s',
+    JUSTIFY => 'L',
+    FN => sub { $_[0]{LEVEL} },
+  },
+  AP => {
+  	NAME => 'AP',
+    DESCRIPTION => "Average Precision",
+    HEADER => 'AP',
+    FORMAT => '%6.4f',
+    JUSTIFY => 'L',
+    FN => sub { $_[0]->get('AP') },
+  },
+);
+
+sub new {
+	my ($class, $logger, $input_file, $output_type, $output_year, $output_file) = @_;
+	my $self = {
+		CLASS => 'CompactOutputPrinter',
+		INPUT_FILE => $input_file,
+		OUTPUT_FILE => $output_file,
+		OUTPUT_TYPE => $output_type,
+		OUTPUT_YEAR => $output_year,
+	};
+	bless($self, $class);
+	$self;
+}
+
+#####################################################################################
 # Queries
 #####################################################################################
 
@@ -903,7 +992,10 @@ sub apply_sparql_queries {
 	my $run_id = $self->get("PARAMETERS")->get("RUN_ID");
 	my $system_type = $self->get("PARAMETERS")->get("SYSTEM_TYPE");
 	my $output = $self->get("PARAMETERS")->get("OUTPUT_DIR");
-	my $queries_dir = $self->get("PARAMETERS")->get("SPLIT_QUERIES_DIR");;
+	my $queries_dir = $self->get("PARAMETERS")->get("SPLIT_QUERIES_DIR");
+	my $output_type = $self->get("PARAMETERS")->get("QUERIES_DTD_FILE");
+	$output_type =~ s/^(.*?\/)+//g;
+	$output_type =~ s/.dtd//;
 	
 	$intermediate_directory =~ s/\/$//;
 	my $cmd;
@@ -941,6 +1033,20 @@ sub apply_sparql_queries {
 
 		# remove the output intermediate directory
 		system("rm -rf $intermediate_directory/sparql-output/$filename/* $intermediate_directory/sparql-output/$filename");
+		
+		# convert output into compact format
+		$self->compactify_output("$output/$filename", $output_type, "2019");
+	}
+}
+
+sub compactify_output {
+	my ($self, $output_dir, $output_type, $output_spec) = @_;
+	my $logger = $self->get("LOGGER");
+	foreach my $input_file(<$output_dir/*.rq.tsv>) {
+		print "--compacting output: $input_file\n";
+		my ($filename) = $input_file =~ /$output_dir\/(.*?).rq.tsv/;
+		my $output_file = "$output_dir/$filename.rq.tsv.compact";
+		my $compact_output_printer = CompactOutputPrinter->new($logger, $input_file, $output_type, "2019", $output_file);
 	}
 }
 
