@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classquery_responses>
+  <classquery_response QUERY_ID="AIDA_CL_2018_6">
+    <justifications>
+      <image_justification>
+        <doceid> IC0011TSA </doceid>
+        <topleft> 0,0 </topleft>
+        <bottomright> 0,0 </bottomright>
+        <enttype> Vehicle </enttype>
+        <confidence> 1.0000 </confidence>
+      </image_justification>
+      <image_justification>
+        <doceid> IC0011TSC </doceid>
+        <topleft> 0,0 </topleft>
+        <bottomright> 0,0 </bottomright>
+        <enttype> Vehicle </enttype>
+        <confidence> 1.0000 </confidence>
+      </image_justification>
+      <text_justification>
+        <doceid> HC00038RQ </doceid>
+        <start> 1246 </start>
+        <end> 1257 </end>
+        <enttype> Vehicle </enttype>
+        <confidence> 1.0000 </confidence>
+      </text_justification>
+      <image_justification>
+        <doceid> IC0011TSD </doceid>
+        <topleft> 0,0 </topleft>
+        <bottomright> 0,0 </bottomright>
+        <enttype> Vehicle </enttype>
+        <confidence> 1.0000 </confidence>
+      </image_justification>
+      <text_justification>
+        <doceid> HC00038RQ </doceid>
+        <start> 98 </start>
+        <end> 126 </end>
+        <enttype> Vehicle </enttype>
+        <confidence> 1.0000 </confidence>
+      </text_justification>
+    </justifications>
+  </classquery_response>
+</classquery_responses>

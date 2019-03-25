@@ -1640,6 +1640,7 @@ sub generate_queries {
 	my ($self) = @_;
 	
 	$self->generate_class_queries();
+	$self->generate_ta2edge_queries();
 #	$self->generate_zerohop_queries();
 #	$self->generate_graph_queries();
 }
@@ -1657,6 +1658,32 @@ sub generate_class_queries {
 	}
 	$queries->write_to_file();
 }
+
+sub generate_ta2edge_queries {
+	my ($self) = @_;
+	my $queries = TA2EdgeQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
+	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
+	my $topic_id = $self->get("PARAMETERS")->get("TOPICID");
+	my $prevailing_theory_id = $self->get("PARAMETERS")->get("PREVAILING_THEORY_ID");
+	my $prevailing_theory_data_file = $self->get("PARAMETERS")->get("PREVAILING_THEORY_DATA_FILES")->get("BY_KEY", "$topic_id:$prevailing_theory_id");
+
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $prevailing_theory_data_file);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+
+
+	}
+	
+	my $i = 0;
+	foreach my $type(sort keys %{$self->{TYPES_HIERARCHY}{ENTITIES}{TYPE_TO_OUTPUTVALUE}}) {
+		$i++;
+		my $query_id = "$query_id_prefix\_$i";
+		my $query = ClassQuery->new($self->get("LOGGER"), $self->get("PARAMETERS"), $query_id, $type);
+		$queries->add($query);
+	}
+	$queries->write_to_file();
+}
+
 
 sub generate_zerohop_queries {
 	my ($self) = @_;

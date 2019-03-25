@@ -15,11 +15,9 @@ my $error_output = $logger->get_error_output();
 
 my $ontology_mapping_entities_file = "2019/input/ontology/LDC_AIDAAnnotationOntologyWithMapping_V8_entities.tab";
 
-#my $nodes_data_files = Container->new("String");
-#$nodes_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_ent_mentions.tab");
-#$nodes_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_evt_mentions.tab");
-#$nodes_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_rel_mentions.tab");
-#
+my $prevailingtheory_data_files = Container->new("String");
+$prevailingtheory_data_files->add("2019/input/prevailing-theories/Prevailing_theory_matrix_for_R103_sample_R103_pvth5.tab", "R103:pvth5");
+
 #my $edge_data_files = Container->new("String");
 #$edge_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_evt_slots.tab");
 #$edge_data_files->add("input/annotations-local/data/$topic_id$postfix/$topic_id\_rel_slots.tab");
@@ -31,6 +29,7 @@ my $parameters = Parameters->new($logger);
 $parameters->set("TOPICID", $topic_id);
 $parameters->set("PREVAILING_THEORY_ID", $prevailing_theory_id);
 $parameters->set("ONTOLOGY_MAPPING_ENTITIES_FILE", $ontology_mapping_entities_file);
+$parameters->set("PREVAILING_THEORY_DATA_FILES", $prevailingtheory_data_files);
 #$parameters->set("IGNORE_NIL", "true");
 #$parameters->set("DOCUMENTIDS_MAPPING_FILE", "input/LDC2018E62.parent_children.tsv");
 ##$parameters->set("ROLE_MAPPING_FILE","input/nist-role-mapping.txt");

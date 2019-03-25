@@ -170,6 +170,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   NONNUMERIC_START                        WARNING        Start %s is not numeric
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
+  RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
@@ -1420,6 +1421,11 @@ sub load {
 	my $queries = $self->get("QUERIES");
 	my $i = 0;
 	foreach my $xml_filename(@xml_filenames) {
+		my $task = "task1";
+		$task = "task2" if $xml_filename =~ /TA2.*_responses.xml$/;
+		$self->set("TASK", $task) if $self->get("TASK") eq "nil";
+		$logger->record_problem("RUNS_HAVE_MULTIPLE_TASKS", {FILENAME => __FILE__, LINENUM => __LINE__})
+			if($task ne $self->get("TASK"));
 		my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
 		while(my $xml_response_object = $xml_filehandler->get("NEXT_OBJECT")) {
 			$i++;
@@ -3394,8 +3400,8 @@ sub load {
 	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
-		my ($nodeid, $mention_span, $assessment, $fqec, $where)
-			= map {$entry->get($_)} qw(NODEID MENTION_SPAN ASSESSMENT FQEC WHERE);
+		my ($nodeid, $docid, $mention_span, $assessment, $fqec, $where)
+			= map {$entry->get($_)} qw(NODEID DOCID MENTION_SPAN ASSESSMENT FQEC WHERE);
 		$self->{LOGGER}->record_problem("NO_FQEC_FOR_CORRECT_ENTRY", $where)
 		  if $assessment eq "Correct" && !$fqec;
 		my $key = "$nodeid:$mention_span";
@@ -3410,7 +3416,7 @@ sub load {
 													{FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});  
 			}
 		}
-		$self->add({ASSESSMENT=>$assessment, FQEC=> $fqec, WHERE=>$where}, $key)
+		$self->add({ASSESSMENT=>$assessment, DOCID => $docid, FQEC=> $fqec, WHERE=>$where}, $key)
 			unless $self->exists($key);
 	}
 	$filehandler->cleanup();	
@@ -3498,10 +3504,12 @@ sub score_responses {
 		my $mention_span = "$doceid:$start_and_end";
 		my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
 		my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
+		my $docid = $qrel->get("BY_KEY", $key)->{DOCID};
 		my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
 			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
 		if ($assessment eq "Correct" && $is_core) {
-			$category_store{GROUND_TRUTH}{$node_id}{$fqec} = 1;
+			$category_store{GROUND_TRUTH}{$node_id}{$docid}{$fqec} = 1;			
+			$category_store{GROUND_TRUTH}{$node_id}{"all"}{$fqec} = 1;
 			$logger->record_debug_information("GROUND_TRUTH", 
 								"NODEID=$node_id MENTION=$mention_span FQEC=$fqec CORRECT\n", 
 								$qrel->get("BY_KEY", $key)->{WHERE});

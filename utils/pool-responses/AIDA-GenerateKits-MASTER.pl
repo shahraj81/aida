@@ -114,6 +114,16 @@ my $prefix = $switches->get("prefix");
 
 my $pool = Pool->new($logger, $pool_filename);
 
+#my %last_number = (
+#			'AIDA_CL_2018_1'=>952, 
+#			'AIDA_CL_2018_2'=>1218, 
+#			'AIDA_CL_2018_3'=>780,
+#			'AIDA_CL_2018_4'=>1123,
+#			'AIDA_CL_2018_5'=>2173,
+#			'AIDA_CL_2018_6'=>1194,
+#			'AIDA_CL_2018_7'=>574
+#		);
+
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
 	my %languages_in_kit;
@@ -122,7 +132,8 @@ unless($num_errors+$num_warnings) {
  		my $total_entries = scalar($kit->toarray());
  		my $total_kits = ceil($total_entries/$max_kit_size);
 		my @kit_entries = sort custom_sort $kit->toarray();
- 		my $linenum = 0;
+		my $linenum = 0;
+ 		# my $linenum = $last_number{$kb_id};
  		for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
  			my $output_filename = "$output_dir/$prefix\_$kb_id\_$kit_num\_$total_kits\.tab";
  			open(my $program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");

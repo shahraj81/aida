@@ -1,0 +1,32 @@
+<!ELEMENT graph_queries (graph_query+)>
+<!ELEMENT graph_query (graph,entrypoints,sparql)>
+<!ELEMENT graph (edges)>
+<!ELEMENT sparql (#PCDATA)>
+<!ELEMENT edges (edge+)>
+<!ELEMENT edge (subject,predicate,object)>
+<!ELEMENT subject (#PCDATA)>
+<!ELEMENT predicate (#PCDATA)>
+<!ELEMENT object (#PCDATA)>
+<!ELEMENT entrypoints (entrypoint+)>
+<!--
+<!ELEMENT entrypoint (node,enttype,(string_descriptor|text_descriptor|video_descriptor|image_descriptor|audio_descriptor)+)>
+-->
+<!ELEMENT entrypoint (node,(typed_descriptor)+)>
+<!ELEMENT typed_descriptor (enttype,(string_descriptor|text_descriptor|video_descriptor|image_descriptor))>
+<!ELEMENT string_descriptor (name_string)>
+<!ELEMENT text_descriptor (doceid,start,end)>
+<!ELEMENT video_descriptor (doceid,keyframeid,topleft,bottomright)>
+<!ELEMENT image_descriptor (doceid,topleft,bottomright)>
+<!-- <!ELEMENT audio_descriptor (enttype,doceid,segmentid,start,end)> -->
+<!ELEMENT node (#PCDATA)>
+<!ELEMENT name_string (#PCDATA)>
+<!ELEMENT doceid (#PCDATA)>
+<!ELEMENT start (#PCDATA)>
+<!ELEMENT end (#PCDATA)>
+<!ELEMENT enttype (#PCDATA)>
+<!ELEMENT keyframeid (#PCDATA)>
+<!-- <!ELEMENT segmentid (#PCDATA)> -->
+<!ELEMENT topleft (#PCDATA)>
+<!ELEMENT bottomright (#PCDATA)>
+<!ATTLIST graph_query id ID #REQUIRED>
+<!ATTLIST edge id CDATA #REQUIRED>
