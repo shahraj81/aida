@@ -933,7 +933,14 @@ sub apply_sparql_queries {
 		print "$cmd\n";
 		system($cmd);
 
+		# make the output subdirectory
+		system("mkdir -p $output/$filename");
+
 		# move the output out of the intermediate directory
+		system("mv $intermediate_directory/sparql-output/$filename/*/* $output/$filename/");
+
+		# remove the output intermediate directory
+		system("rm -rf $intermediate_directory/sparql-output/$filename/* $intermediate_directory/sparql-output/$filename");
 	}
 }
 
