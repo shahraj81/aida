@@ -833,10 +833,10 @@ sub new {
 }
 
 #####################################################################################
-# CompactOutputPrinter
+# EvaluationQueryOutput
 #####################################################################################
 
-package CompactOutputPrinter;
+package EvaluationQueryOutput;
 
 use parent -norequire, 'Super';
 
@@ -851,7 +851,7 @@ my %schemas = (
       QUERY_TYPE
       RUNID
       KB_DOCID
-      VALUE_DOCID
+      ENTRY_DOCID
       VALUE_PROVENANCE_TRIPLES
       CONFIDENCE
     )],
@@ -859,53 +859,62 @@ my %schemas = (
 );
 
 my %columns = (
-	QUERY_ID => {
-	    # Note: ASSESSMENT is a normalized LDC conclusion; JUDGMENT maps
-	    # ASSESSMENT onto {CORRECT, INCORRECT, IGNORE, NOT_ASSESSED}
-	    DESCRIPTION => "{CORRECT, INCORRECT, INEXACT, IGNORE, INEXACT_SHORT, INEXACT_LONG}",
+	ENTRY_DOCID => {
+	    DESCRIPTION => "DocID of the entry/response",
 	    GENERATOR => sub {
-	      my ($logger) = @_;
-	      
+	      my ($logger, $entry) = @_;
 	    },
-	    # DEPENDENCIES => [qw()],
 	    YEARS => [qw(2019)],
 	    REQUIRED => [qw(SPARQL_OUTPUT)],
-	},   
-);
-
-our %printable_fields = (
-  DOCID => {
-  	NAME => 'DOCID',
-    DESCRIPTION => "Query or equivalence class name",
-    HEADER => 'QID/EC',
-    FORMAT => '%s',
-    JUSTIFY => 'L',
-    FN => sub { $_[0]{EC} },
-  },
-  RUNID => {
-  	NAME => 'RUNID',
-    DESCRIPTION => "Run ID",
-    HEADER => 'RunID',
-    FORMAT => '%s',
-    JUSTIFY => 'L',
-    FN => sub { $_[0]{RUNID} },
-  },
-  LEVEL => {
-  	NAME => 'LEVEL',
-    DESCRIPTION => "Hop level",
-    HEADER => 'Hop',
-    FORMAT => '%s',
-    JUSTIFY => 'L',
-    FN => sub { $_[0]{LEVEL} },
-  },
-  AP => {
-  	NAME => 'AP',
-    DESCRIPTION => "Average Precision",
-    HEADER => 'AP',
-    FORMAT => '%6.4f',
-    JUSTIFY => 'L',
-    FN => sub { $_[0]->get('AP') },
-  },
+	},
+	KB_DOCID => {
+	    DESCRIPTION => "DOCID from which the KB is build. NODOC for TA2 and TA3 systems.",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	QUERY_ID => {
+	    DESCRIPTION => "Query ID",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	QUERY_TYPE => {
+	    DESCRIPTION => "Type of the query",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	RUN_ID => {
+	    DESCRIPTION => "Run ID",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	TASK => {
+	    DESCRIPTION => "Name of the task",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	VALUE_PROVENANCE_TRIPLES => {
+	    DESCRIPTION => "The provencance of the value (i.e. mention)",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
 );
 
 sub new {
