@@ -1,5 +1,5 @@
 <!ELEMENT graph_queries (graph_query+)>
-<!ELEMENT graph_query (subject,predicate,object,reference_kbid?,sparql)>
+<!ELEMENT graph_query (subject,predicate,object,sparql)>
 <!ELEMENT subject (#PCDATA)>
 <!ELEMENT predicate (#PCDATA)>
 <!ELEMENT object (#PCDATA)>
