@@ -60,6 +60,7 @@ while(my $query = $xml_filehandler->get("NEXT_OBJECT")) {
 	my $filename = $switches->get("output") . "/$query_id.rq";
 	open(my $program_output, ">:utf8", $filename)
 		or $logger->record_problem('MISSING_FILE', $filename, $!);
+	$sparql_query_string =~ s/\n              /\n/gs;
 	print $program_output $sparql_query_string;
 	close($program_output);	
 }

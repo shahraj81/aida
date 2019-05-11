@@ -2999,6 +2999,7 @@ sub generate_graph_queries {
 				my $edge_label = $event_or_relation_type . "_" . $argument_label;
 				next if $edge_label_and_argkbids_used{$edge_label . "_" . $argument_kbid};
 				my $i = $self->get("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
+				$i = $self->normalize_querynum($i);
 				my $query_id = "$query_id_prefix\_$i";
 				my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
 				my $sparql = $self->get($task_short_name . "_GRAPH_SPARQL_QUERY_TEMPLATE");
@@ -3058,6 +3059,7 @@ sub generate_task1_class_queries {
 				next if $types_used{$query_type};
 				# Generate a query at all granularities
 				my $i = $self->get("NEXT_TASK1_CLASS_QUERY_NUM");
+				$i = $self->normalize_querynum($i);
 				my $query_id = "$query_id_prefix\_$i";		
 				# Generate the XML object corresponding to the query
 				my $sparql = $self->get("TA1_CLASS_SPARQL_QUERY_TEMPLATE");
@@ -3109,6 +3111,7 @@ sub generate_task2_zerohop_queries {
 			# If yes, generate the query
 			next if $argument_kbids_used{$argument_kbid};
 			my $i = $self->get("NEXT_TASK2_ZEROHOP_QUERY_NUM");
+			$i = $self->normalize_querynum($i);
 			my $query_id = "$query_id_prefix\_$i";
 			my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
 			# Generate the XML object corresponding to the query
@@ -3984,6 +3987,15 @@ END_SPARQL_QUERY
 	$sparql;
 }
 
+sub normalize_querynum {
+	my ($self, $querynum) = @_;
+	my $normalized_querynum = $querynum;
+	while($querynum < 1000) {
+		$normalized_querynum = "0" . $normalized_querynum;
+		$querynum *= 10;
+	}
+	$normalized_querynum;
+}
 
 #####################################################################################
 # QuerySet
