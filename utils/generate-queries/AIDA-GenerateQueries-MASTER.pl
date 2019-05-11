@@ -44,9 +44,11 @@ $parameters->set("REFERENCE_KBID_PREFIX", "LDC2018E80");
 my $query_generator = QueryGenerator->new($logger, $parameters);
 
 my $year = "2019";
-my $topic_id = "R105";
-my $pt_id = "PT002";
-$query_generator->generate_queries($year, $topic_id, $pt_id);
+my @topic_and_pt_ids = qw(R103_PT001 R103_PT002 R103_PT003 R103_PT004 R103_PT005 R105_PT001 R105_PT002 R107_PT001 R107_PT002);
+foreach my $topic_and_pt_id(@topic_and_pt_ids) {
+	my ($topic_id, $pt_id) = split("_", $topic_and_pt_id);
+	$query_generator->generate_queries($year, $topic_id, $pt_id);
+}
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);

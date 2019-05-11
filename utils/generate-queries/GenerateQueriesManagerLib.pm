@@ -2868,10 +2868,18 @@ sub new {
 	my ($class, $logger, $parameters) = @_;
 	my $self = {
 		CLASS => 'QueryGenerator',
+		TA1_CLASS_QUERIES => undef,
+		TA1_GRAPH_QUERIES => undef,
+		TA2_ZEROHOP_QUERIES => undef,
+		TA2_GRAPH_QUERIES => undef,
 		ENTITIES => OntologyContainer->new($logger),
 		RELATIONS => OntologyContainer->new($logger),
 		EVENTS => OntologyContainer->new($logger),
 		PREVAILING_THEORY_ENTRIES => PrevailingTheoryContainer->new($logger),
+		NEXT_TASK1_CLASS_QUERY_NUM => 1,
+		NEXT_TASK1_GRAPH_QUERY_NUM => 1,
+		NEXT_TASK2_ZEROHOP_QUERY_NUM => 1,
+		NEXT_TASK2_GRAPH_QUERY_NUM => 1,
 		PARAMETERS => $parameters,
 		LOGGER => $logger,
 	};
@@ -2944,6 +2952,10 @@ sub generate_queries {
 	$self->generate_task1_graph_queries($year, $topic_id, $prevailing_theory_id);
 	$self->generate_task2_zerohop_queries($year, $topic_id, $prevailing_theory_id);
   $self->generate_task2_graph_queries($year, $topic_id, $prevailing_theory_id);	
+  
+  foreach my $queries_container_name(qw(TA1_CLASS_QUERIES TA1_GRAPH_QUERIES TA2_ZEROHOP_QUERIES TA2_GRAPH_QUERIES)) {
+  	$self->get($queries_container_name)->write_to_file();
+  }
 }
 
 sub generate_graph_queries {
@@ -2953,14 +2965,17 @@ sub generate_graph_queries {
 	$task_short_name ="TA2" if $task eq "task2";
 	my $logger = $self->get("LOGGER");
 	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "graph_query");
-	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
+	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR");
 	system("mkdir -p $output_dir");
 	my $xml_file = "$output_dir/" . $task_long_name . "\_graph_queries.xml";
-	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
+	my $queries = $self->get($task_short_name . "_GRAPH_QUERIES");
+	if ($queries eq "nil") {
+		$queries = QuerySet->new($logger, $dtd_file, $xml_file);
+		$self->set($task_short_name . "_GRAPH_QUERIES", $queries);
+	}
 	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
 	my $query_id_prefix = $self->get("PARAMETERS")->get($task_short_name . "_GRAPH_QUERYID_PREFIX");
 	my $reference_kbid_prefix = $self->get("PARAMETERS")->get("REFERENCE_KBID_PREFIX");
-	my $i = 0;
 	my %edge_label_and_argkbids_used;
 	foreach my $pt_entry($subcontainer->toarray()) {
 		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
@@ -2983,7 +2998,7 @@ sub generate_graph_queries {
 				my $argument_label = $argument_spec->get("LABEL");
 				my $edge_label = $event_or_relation_type . "_" . $argument_label;
 				next if $edge_label_and_argkbids_used{$edge_label . "_" . $argument_kbid};
-				$i++;
+				my $i = $self->get("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
 				my $query_id = "$query_id_prefix\_$i";
 				my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
 				my $sparql = $self->get($task_short_name . "_GRAPH_SPARQL_QUERY_TEMPLATE");
@@ -3007,25 +3022,27 @@ sub generate_graph_queries {
 							$query_attributes);
 				my $query = GraphQuery->new($logger, $xml_query);
 				$queries->add($query);
+				$self->increment("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
 				$edge_label_and_argkbids_used{$edge_label . "_" . $argument_kbid} = 1;
 			}
 		}
 	}
-	$queries->write_to_file();
 }
 
 sub generate_task1_class_queries {
 	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
 	my $logger = $self->get("LOGGER");
 	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "class_query");
-	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
+	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR");
 	system("mkdir -p $output_dir");
 	my $xml_file = "$output_dir/task1_class_queries.xml";
-	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
-	
+	my $queries = $self->get("TA1_CLASS_QUERIES");
+	if ($queries eq "nil") {
+		$queries = QuerySet->new($logger, $dtd_file, $xml_file);
+		$self->set("TA1_CLASS_QUERIES", $queries); 
+	}
 	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
 	my $query_id_prefix = $self->get("PARAMETERS")->get("TA1_CLASS_QUERYID_PREFIX");
-	my $i = 0;
 	my %types_used;
 	foreach my $pt_entry($subcontainer->toarray()) {
 		# Is this an entity involved in the prevailing theory?
@@ -3040,7 +3057,7 @@ sub generate_task1_class_queries {
 			foreach my $query_type(@query_types) {
 				next if $types_used{$query_type};
 				# Generate a query at all granularities
-				$i++;
+				my $i = $self->get("NEXT_TASK1_CLASS_QUERY_NUM");
 				my $query_id = "$query_id_prefix\_$i";		
 				# Generate the XML object corresponding to the query
 				my $sparql = $self->get("TA1_CLASS_SPARQL_QUERY_TEMPLATE");
@@ -3056,12 +3073,12 @@ sub generate_task1_class_queries {
 								1,
 								$query_attributes);
 				my $query = ClassQuery->new($logger, $xml_object);
-				$queries->add($query); 
+				$queries->add($query);
+				$self->increment("NEXT_TASK1_CLASS_QUERY_NUM");
 				$types_used{$query_type} = 1;
 			}
 		}
 	}
-	$queries->write_to_file();
 }
 
 sub generate_task1_graph_queries {
@@ -3069,71 +3086,21 @@ sub generate_task1_graph_queries {
 	$self->generate_graph_queries($year, $topic_id, $prevailing_theory_id, "task1");
 }
 
-#sub generate_task1_graph_queries_old {
-#	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
-#	my $logger = $self->get("LOGGER");
-#	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "graph_query");
-#	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
-#	system("mkdir -p $output_dir");
-#	my $xml_file = "$output_dir/task1_graph_queries.xml";
-#	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
-#	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
-#	my $query_id_prefix = $self->get("PARAMETERS")->get("TA1_GRAPH_QUERYID_PREFIX");
-#	my $i = 0;
-#	my %edge_labels_used;
-#	foreach my $pt_entry($subcontainer->toarray()) {
-#		# Is this an entity involved in the prevailing theory?
-#		my $ontology_id = $pt_entry->get("ONTOLOGY_ID");
-#		my $role;
-#		if($ontology_id =~ /^LDC_ent_/) {
-#			# If yes, generate the query
-#			my $entity_spec = $self->get("ENTITIES")->get("BY_KEY", $ontology_id);
-#			my ($type, $subtype, $subsubtype) = map {$entity_spec->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
-#			my $item_ke = $pt_entry->get("ITEM_KE");
-#			my $subject_spec;
-#			if($item_ke =~ /^evt/) {
-#				my ($event_spec, $argument_spec) = $self->get("EVENTS")->get("EVENT_WITH_ITEM_KE", $item_ke);
-#				my $event_type = $event_spec->get("FULL_TYPE");
-#				my $argument_label = $argument_spec->get("LABEL");
-#				my $edge_label = $event_type . "_" . $argument_label;
-#				next if $edge_labels_used{$edge_label};
-#				$i++;
-#				my $query_id = "$query_id_prefix\_$i";
-#				my $sparql = $self->get("TA1_GRAPH_SPARQL_QUERY_TEMPLATE");
-#				$sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
-#				$sparql =~ s/\[__PREDICATE__\]/$edge_label/gs;
-#				my $query_attributes = XMLAttributes->new($logger);
-#				$query_attributes->add("$query_id", "id");
-#				my $xml_subject = XMLElement->new($logger, "?subject", "subject", 0);
-#				my $xml_predicate = XMLElement->new($logger, $edge_label, "predicate", 0);
-#				my $xml_object = XMLElement->new($logger, "?object", "object", 0);
-#				my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
-#				my $xml_query = XMLElement->new($logger,
-#							XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object, $xml_sparql),
-#							"graph_query",
-#							1,
-#							$query_attributes);
-#				my $query = GraphQuery->new($logger, $xml_query);
-#				$queries->add($query);
-#				$edge_labels_used{$edge_label} = 1;
-#			}
-#		}
-#	}
-#	$queries->write_to_file();
-#}
-
 sub generate_task2_zerohop_queries {
 	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
 	my $logger = $self->get("LOGGER");
 	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "zerohop_query");
-	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
+	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR");
 	system("mkdir -p $output_dir");
 	my $xml_file = "$output_dir/task2_zerohop_queries.xml";
-	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
+	my $queries = $self->get("TA2_ZEROHOP_QUERIES");
+	if ($queries eq "nil") {
+		$queries = QuerySet->new($logger, $dtd_file, $xml_file);
+		$self->set("TA2_ZEROHOP_QUERIES", $queries);
+	}
 	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
 	my $query_id_prefix = $self->get("PARAMETERS")->get("TA2_ZEROHOP_QUERYID_PREFIX");
 	my $reference_kbid_prefix = $self->get("PARAMETERS")->get("REFERENCE_KBID_PREFIX");
-	my $i = 0;
 	my %argument_kbids_used;
 	foreach my $pt_entry($subcontainer->toarray()) {
 		# Is this an entity involved in the prevailing theory?
@@ -3141,7 +3108,7 @@ sub generate_task2_zerohop_queries {
 		if($argument_kbid =~ /^\d+$/) {
 			# If yes, generate the query
 			next if $argument_kbids_used{$argument_kbid};
-			$i++;
+			my $i = $self->get("NEXT_TASK2_ZEROHOP_QUERY_NUM");
 			my $query_id = "$query_id_prefix\_$i";
 			my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
 			# Generate the XML object corresponding to the query
@@ -3158,11 +3125,11 @@ sub generate_task2_zerohop_queries {
 							1,
 							$query_attributes);
 			my $query = ZeroHopQuery->new($logger, $xml_object);
-			$queries->add($query); 
+			$queries->add($query);
+			$self->increment("NEXT_TASK2_ZEROHOP_QUERY_NUM");
 			$argument_kbids_used{$argument_kbid} = 1;
 		}
 	}
-	$queries->write_to_file();
 }
 
 sub generate_task2_graph_queries {
