@@ -1,0 +1,27 @@
+Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range
+KE001	shooting of protesters by snipers in Maidan in February 2014	TBD	event	LDC_evt_008	conflict	attack	firearmattack		Shooting by snipers on 20 February 2014		2014-02-XX	2014-02-01	2014-02-28
+KE001	snipers	TBD	evt008arg01attacker	LDC_ent_106	per	combatant	sniper	TBD	snipers shooting during Maidan				
+KE001	protesters	TBD	evt008arg02target	LDC_ent_126	per	protester	unspecified	TBD					
+KE001	Maidan	TBD	evt008arg04place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE002	shooting of police by snipers in Maidan in February 2014	TBD	event	LDC_evt_008	conflict	attack	firearmattack		Shooting by snipers on 20 February 2014		2014-02-XX	2014-02-01	2014-02-28
+KE002	snipers	TBD	evt008arg01attacker	LDC_ent_106	per	combatant	sniper	TBD	snipers shooting during Maidan				
+KE002	police	TBD	evt008arg02target	LDC_ent_111	per	police	unspecified	TBD					
+KE002	Maidan	TBD	evt008arg04place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE003	protests in Maidan in February 2014	TBD	event	LDC_evt_017	conflict	demonstrate	marchprotestpoliticalgathering		Euromaidan Revolution		2014-02-XX	2014-02-01	2014-02-28
+KE003	protesters	TBD	evt017arg01demonstrator	LDC_ent_126	per	protester	unspecified	TBD					
+KE003	Maidan	TBD	evt017arg02place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE004	sponsorship by CIA of firing on protesters	TBD	relation	LDC_rel_021	generalaffiliation	sponsorship	unspecified				Unknown		
+KE004	shooting of protesters by snipers in Maidan in February 2014	TBD	rel021arg01actororevent	LDC_evt_008	conflict	attack	firearmattack	TBD	Shooting by snipers on 20 February 2014				
+KE004	CIA	TBD	rel021arg02sponsor	LDC_ent_086	org	government	agency	TBD	Central Intelligence Agency (a.k.a. CIA)				
+KE005	sponsorship by CIA of firing on police	TBD	relation	LDC_rel_021	generalaffiliation	sponsorship	unspecified				Unknown		
+KE005	shooting of police by snipers in Maidan in February 2014	TBD	rel021arg01actororevent	LDC_evt_008	conflict	attack	firearmattack	TBD	Shooting by snipers on 20 February 2014				
+KE005	CIA	TBD	rel021arg02sponsor	LDC_ent_086	org	government	agency	TBD	Central Intelligence Agency (a.k.a. CIA)				
+KE006	affiliation between CIA and US	TBD	relation	LDC_rel_018	generalaffiliation	organizationpoliticalreligiousaffiliation	nationalitycitizen				Unknown		
+KE006	CIA	TBD	rel018arg01organization	LDC_ent_086	org	government	agency	TBD	Central Intelligence Agency (a.k.a. CIA)				
+KE006	US	TBD	rel018arg02nationality	LDC_ent_053	gpe	country	country	TBD	United States of America				
+KE007	location of Maidan in Kiev	TBD	relation	LDC_rel_051	physical	locatednear	unspecified				Unknown		
+KE007	Maidan	TBD	rel051arg01entityorfiller	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE007	Kiev	TBD	rel051arg02place	LDC_ent_057	gpe	urbanarea	city	703448	Kyiv (a.k.a. Kiev)				
+KE008	affiliation between police and Berkut	TBD	relation	LDC_rel_034	organizationaffiliation	employmentmembership	unspecified				Unknown		
+KE008	police	TBD	rel034arg01employeemember	LDC_ent_111	per	police	unspecified	TBD					
+KE008	Berkut	TBD	rel034arg02placeofemploymentmembership	LDC_ent_089	org	government	lawenforcementagency	TBD	Berkut Riot Police				

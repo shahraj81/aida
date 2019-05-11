@@ -5,6 +5,14 @@ use strict;
 use Encode;
 use Carp;
 
+### BEGIN INCLUDE Switches
+
+# I don't know where this script will be run, so pick a reasonable
+# screen width for describing program usage (with the -help switch)
+my $terminalWidth = 80;
+
+### END INCLUDE Switches
+
 #####################################################################################
 # Super
 #####################################################################################
@@ -12,10 +20,10 @@ use Carp;
 package Super;
 
 sub set {
-  my ($self, $field, $value) = @_;
+  my ($self, $field, @values) = @_;
   my $method = $self->can("set_$field");
-  $method->($self, $value) if $method;
-  $self->{$field} = $value unless $method;
+  $method->($self, @values) if $method;
+  $self->{$field} = $values[0] unless $method;
 }
 
 sub get {
@@ -34,6 +42,17 @@ sub get_BY_INDEX {
 sub get_BY_KEY {
   my ($self) = @_;
   die "Abstract method 'get_BY_KEY' not defined in derived class '", $self->get("CLASS") ,"'\n";
+}
+
+sub increment {
+	my ($self, $field, $increment_by) = @_;
+	$increment_by = 1 unless $increment_by;
+	$self->set($field, $self->get($field) + $increment_by);
+}
+
+sub has {
+	my ($self, $key) = @_;
+	$self->{$key};
 }
 
 sub dump_structure {
@@ -91,6 +110,24 @@ sub dump_structure {
   }
 }
 
+#####################################################################################
+# SuperObject
+#####################################################################################
+
+package SuperObject;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'SuperObject',
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
 ### BEGIN INCLUDE Logger
 
 # The package Logger is taken with permission from James Mayfield's ColdStart library
@@ -112,19 +149,38 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 # ----------                              ----           -------------
 
 ########## General Errors
-  IGNORING_LINE                           DEBUG_INFO     Ingoring the line due to a problem: %s
-  INVALID_ENTRYPOINT                      FATAL_ERROR    Entrypoint of invalid type %s found
-  MISSING_DOCUMENT_ELEMENT                WARNING        Missing document element %s
-  MISSING_ENCODING_FORMAT                 FATAL_ERROR    Missing encoding format for document element %s
+  ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
+  DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
+  DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
+  DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
+  GROUND_TRUTH                            DEBUG_INFO     GROUND_TRUTH_INFO: %s     
+  MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS    ERROR          Multiple incompatible assessments provided (node: %s, mention_span: %s)
+  EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
+  INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
+  INVALID_END                             WARNING        Invalid end %s in response justification of type %s
+  INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
+  INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
+  INVALID_START                           WARNING        Invalid start %s in %s
+  MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
-  MISSING_RAW_KEY                         FATAL_ERROR    Missing key %s in container of type %s
-  MISSING_NODEID_FOR_MENTIONID            WARNING        Missing node_id for nodemention_id %s
-  SKIPPING_NODE                           DEBUG_INFO     Skipping node %s because it is not relevant to topic-level hypothesis
-  UNDEFINED_VARIABLE                      FATAL_ERROR    Undefined variable %s
-  UNEXPECTED_RECORD_DEBUG_INFO_CALL       WARNING        unexpected call to record_debug_info()
-  ZEROHOP_QUERY_DEBUG_INFO_01             DEBUG_INFO     Zero-hop query %s corresponds to mention %s of node %s (treeid = %s)
+  MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
+  MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
+  NO_FQEC_FOR_CORRECT_ENTRY               ERROR          No FQEC found for a correct entry
+  NONNUMERIC_END                          WARNING        End %s is not numeric
+  NONNUMERIC_START                        WARNING        Start %s is not numeric
+  PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
+  RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
+  RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
+  UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
+  UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
+  UNEXPECTED_PARAMETER_LINE               WARNING        Unexpected line in the parameters file
+  UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
+  UNKNOWN_DOCUMENT                        WARNING        Unknown Document %s in response
+  UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
+  UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s 
+  UNKNOWN_QUERYID                         WARNING        Unknown query %s in response
 END_PROBLEM_FORMATS
-
 
 #####################################################################################
 # Logger
@@ -213,13 +269,14 @@ sub record_problem {
   my $format = $self->{FORMATS}{$problem} ||
                {TYPE => 'INTERNAL_ERROR',
 		FORMAT => "Unknown problem $problem: %s"};
-  $self->{PROBLEM_COUNTS}{$format->{TYPE}}++;
   my $type = $format->{TYPE};
   my $message = "$type: " . sprintf($format->{FORMAT}, @args);
   # Use Encode to support Unicode.
   $message = Encode::encode_utf8($message);
   my $where = (ref $source ? "$source->{FILENAME} line $source->{LINENUM}" : $source);
   $self->NIST_die("$message\n$where") if $type eq 'FATAL_ERROR' || $type eq 'INTERNAL_ERROR';
+  $self->{PROBLEM_COUNTS}{$format->{TYPE}}++
+		unless $self->{PROBLEMS}{$problem}{$message}{$where};
   $self->{PROBLEMS}{$problem}{$message}{$where}++;
 }
 
@@ -237,7 +294,7 @@ sub set_error_output {
       $output = *STDERR{IO};
     }
     else {
-      # $self->NIST_die("File $output already exists") if -e $output;
+      $self->NIST_die("File $output already exists") if -e $output;
       open(my $outfile, ">:utf8", $output) or $self->NIST_die("Could not open $output: $!");
       $output = $outfile;
       $self->{OPENED_ERROR_OUTPUT} = 'true';
@@ -274,7 +331,7 @@ sub report_all_information {
 					print $error_output "s" if $num_instances > 2;
 					print $error_output ")";
 				}
-				print $error_output "\n\n";
+				print $error_output "\n";
 			}
 		}
 	}
@@ -290,6 +347,11 @@ sub get_num_errors {
 sub get_num_warnings {
   my ($self) = @_;
   $self->{PROBLEM_COUNTS}{WARNING} || 0;
+}
+
+sub get_num_problems {
+	my ($self) = @_;
+	$self->get_num_errors() + $self->get_num_warnings();
 }
 
 sub get_error_type {
@@ -318,452 +380,6 @@ sub NIST_die {
 ### END INCLUDE Logger
 
 #####################################################################################
-# LDCNISTMappings
-#####################################################################################
-
-package LDCNISTMappings;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = {
-    CLASS => "LDCNISTMappings",
-    PARAMETERS => $parameters,
-    ROLE_MAPPINGS => {},
-    TYPE_MAPPINGS => {},
-    TYPE_CATEGORY => {},
-    IS_VALID_ENTRYPOINT => {},
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self->load_data();
-  $self;
-}
-
-sub get_LDC_TYPE {
-	my ($self, $type, $subtype) = @_;
-	
-	my $ldc_type = $type;
-	$ldc_type = "$ldc_type.$subtype" if $subtype;
-	
-	$ldc_type;
-}
-
-sub get_NIST_TYPE {
-	my ($self, $type, $subtype) = @_;
-	
-	my $key = $type;
-	$key = "$key.$subtype" if $subtype;
-	
-	$self->{TYPE_MAPPINGS}{$key};
-}
-
-sub get_NIST_ROLE {
-	my ($self, $ldc_role) = @_;
-	
-	$self->{ROLE_MAPPINGS}{$ldc_role};
-}
-
-sub get_NIST_TYPE_CATEGORY {
-	my ($self, $nist_type) = @_;
-
-	$self->{TYPE_CATEGORY}{$nist_type};
-}
-
-sub is_valid_entrypoint {
-	my ($self, $nist_type) = @_;
-
-	$self->{IS_VALID_ENTRYPOINT}{$nist_type};
-}
-
-sub load_data {
-	my ($self) = @_;
-	my ($filename, $filehandler, $header, $entries, $i);
-	
-	# Load data from role mappings
-	$filename = $self->get("PARAMETERS")->get("ROLE_MAPPING_FILE");
-	$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-	$header = $filehandler->get("HEADER");
-  $entries = $filehandler->get("ENTRIES");
-  $i=0;
-
-  foreach my $entry( $entries->toarray() ){
-    $i++;
-    #print "ENTRY # $i:\n", $entry->tostring(), "\n";
-    my $category = $entry->get("category");
-    my $ldc_type = $entry->get("ldctype");
-    my $ldc_subtype = $entry->get("ldcsubtype");
-    my $ldc_role = $entry->get("ldcrole");
-    my $nist_type = $entry->get("nisttype");
-    my $nist_subtype = $entry->get("nistsubtype");
-    my $nist_role = $entry->get("nistrole");
-  
-    $self->{TYPE_MAPPINGS}{"$ldc_type.$ldc_subtype"} = "$nist_type.$nist_subtype";
-    $self->{TYPE_CATEGORY}{"$nist_type.$nist_subtype"} = $category;
-  
-    my $ldc_fqrolename = "$ldc_type.$ldc_subtype\_$ldc_role";
-    my $nist_fqrolename = "$nist_type.$nist_subtype\_$nist_role";
-    $self->{ROLE_MAPPINGS}{$ldc_fqrolename} = $nist_fqrolename;
-  }
-  
-  # Load data from type mappings
-  $filename = $self->get("PARAMETERS")->get("TYPE_MAPPING_FILE");
-  $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-  $header = $filehandler->get("HEADER");
-  $entries = $filehandler->get("ENTRIES");
-  $i=0;
-  
-  foreach my $entry( $entries->toarray() ){
-    $i++;
-    #print "ENTRY # $i:\n", $entry->tostring(), "\n";
-    my $ldc_type = $entry->get("LDCTypeOutput");
-    my $nist_type = $entry->get("NISTType");
-    my $category = $entry->get("Category");
-    my $is_valid_entrypoint = $entry->get("IsValidEntrypoint");
-
-    $self->{TYPE_MAPPINGS}{$ldc_type} = $nist_type;  
-    $self->{TYPE_CATEGORY}{$nist_type} = $category;
-    $self->{IS_VALID_ENTRYPOINT}{$nist_type} = $is_valid_entrypoint;
-  }
-}
-
-#####################################################################################
-# DocumentIDsMappings
-#####################################################################################
-
-package DocumentIDsMappings;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = {
-  	CLASS => "DocumentIDsMappings",
-  	PARAMETERS => $parameters,
-  	DOCUMENTS => Documents->new($logger),
-    DOCUMENTELEMENTS => DocumentElements->new($logger),
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self->load_data();
-  $self;
-}
-
-sub load_data {
-	my ($self) = @_;
-	
-	# Load document-element to language mapping
-	my %doceid_to_langs_mapping;
-	my $filename = $self->get("PARAMETERS")->get("UID_INFO_FILE");
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-	my $header = $filehandler->get("HEADER");
-	my $entries = $filehandler->get("ENTRIES");
-	foreach my $entry($entries->toarray()) {
-		my $doceid = $entry->get("derived_uid");
-		my $languages = $entry->get("lang_id");
-		$doceid_to_langs_mapping{$doceid} = $languages;
-	}
-	$filehandler->cleanup();
-	
-	# Load the DocumentIDsMappingsFile
-	my (%doceid_to_docid_mapping, %doceid_to_type_mapping);
-	$filename = $self->get("PARAMETERS")->get("DOCUMENTIDS_MAPPING_FILE");
-	$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-	$entries = $filehandler->get("ENTRIES");
-	foreach my $entry($entries->toarray()) {
-		my $doceid = $entry->get("doceid");
-		my $docid = $entry->get("docid");
-		my $detype = $entry->get("detype");
-		$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $doceid, $entry->get("WHERE"))
-			if $detype eq "nil";
-		$doceid_to_docid_mapping{$doceid}{$docid} = 1;
-		$doceid_to_type_mapping{$doceid} = $detype;
-	}
-	$filehandler->cleanup();
-
-	foreach my $document_eid(sort keys %doceid_to_docid_mapping) {
-		next if $document_eid eq "n/a";
-		foreach my $document_id(sort keys %{$doceid_to_docid_mapping{$document_eid}}) {
-			my $delanguage = $doceid_to_langs_mapping{$document_eid};
-			my $detype = $doceid_to_type_mapping{$document_eid};
-			my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
-			$document->set("DOCUMENTID", $document_id);
-			my $documentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
-			$documentelement->get("DOCUMENTS")->add($document, $document_id);
-			$documentelement->set("DOCUMENTELEMENTID", $document_eid);
-			$documentelement->set("LANGUAGES", $delanguage);
-			$documentelement->set("TYPE", $detype);
-			$document->add_document_element($documentelement);
-		}
-	}
-}
-
-#####################################################################################
-# Documents
-#####################################################################################
-
-package Documents;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'Document');
-  $self->{CLASS} = 'Documents';
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-#####################################################################################
-# DocumentElements
-#    contains 'DocumentElement' across documents
-#####################################################################################
-
-package DocumentElements;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'DocumentElement');
-  $self->{CLASS} = 'DocumentElements';
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-#####################################################################################
-# TheDocumentElements
-#    has 1+ 'DocumentElement' contained in the Document
-#####################################################################################
-
-package TheDocumentElements;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'DocumentElement');
-  $self->{CLASS} = 'TheDocumentElements';
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-#####################################################################################
-# Document
-#####################################################################################
-
-package Document;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $document_id) = @_;
-  my $self = {
-    CLASS => 'Document',
-    DOCUMENTID => $document_id,
-    DOCUMENTELEMENTS => DocumentElements->new($logger),
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub add_document_element {
-  my ($self, $document_element) = @_;
-  $self->get("DOCUMENTELEMENTS")->add($document_element, $document_element->get("DOCUMENTELEMENTID"));
-}
-
-#####################################################################################
-# DocumentElement
-#####################################################################################
-
-package DocumentElement;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = {
-    CLASS => 'DocumentElement',
-    DOCUMENTS => Documents->new($logger),
-    DOCUMENTELEMENTID => undef,
-    TYPE => undef,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-#####################################################################################
-# Edges
-#####################################################################################
-
-package Edges;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'Edge');
-  $self->{CLASS} = 'Edges';
-  $self->{EDGE_LOOKUP} = {};
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub add {
-	my ($self, $value, $key) = @_;
-	
-	$self->SUPER::add($value, $key);
-	push(@{$self->{EDGE_LOOKUP}{SUBJECT}{$value->get("SUBJECT_NODEID")}}, $value); 
-	push(@{$self->{EDGE_LOOKUP}{OBJECT}{$value->get("OBJECT_NODEID")}}, $value); 
-	push(@{$self->{EDGE_LOOKUP}{PREDICATE}{$value->get("PREDICATE")}}, $value);
-	push(@{$self->{EDGE_LOOKUP}
-								{"SUBJECT->OBJECT"}
-								{$value->get("SUBJECT_NODEID")."->".$value->get("OBJECT_NODEID")}
-								{$value->get("PREDICATE")}}, 
-			$value);
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->tostring() cmp $b->tostring()}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# Edge
-#####################################################################################
-
-package Edge;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $subject, $nist_role, $object, $attribute, $line) = @_;
-  my $self = {
-    CLASS => 'Edge',
-    SUBJECT => $subject,
-    PREDICATE => $nist_role,
-    OBJECT => $object,
-    ATTRIBUTE => $attribute,
-    LINE => $line,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub get_OBJECT_NODEID {
-	my ($self) = @_;
-	$self->get("OBJECT")->get("NODEID");
-}
-
-sub get_SUBJECT_NODEID {
-	my ($self) = @_;
-	$self->get("SUBJECT")->get("NODEID");
-}
-
-sub tostring {
-	my ($self) = @_;
-	$self->get("SUBJECT_NODEID") . "-" . $self->get("PREDICATE") . "-" . $self->get("OBJECT_NODEID")
-}
-
-#####################################################################################
-# Nodes
-#####################################################################################
-
-package Nodes;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'Node');
-  $self->{CLASS} = 'Nodes';
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->get("NODEID") cmp $b->get("NODEID")}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# Node
-#####################################################################################
-
-package Node;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = {
-    CLASS => 'Node',
-    NODEID => undef,
-    MENTIONS => Mentions->new($logger),
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub add_mention {
-  my ($self, $mention, $mention_id) = @_;
-  $self->get("MENTIONS")->add($mention, $mention_id);
-}
-
-sub get_LDC_TYPES {
-	my ($self) = @_;
-	my %hash = map {$_=>1} map {$_->get("LDC_TYPE")} $self->get("MENTIONS")->toarray();
-	keys %hash
-}
-
-sub get_MENTION {
-  my ($self, $mention_id) = @_;
-  $self->get("MENTIONS")->get("MENTION", $mention_id);
-}
-
-
-sub get_NIST_TYPES {
-	my ($self) = @_;
-	my %hash = map {$_=>1} map {$_->get("NIST_TYPE")} $self->get("MENTIONS")->toarray();
-	keys %hash;
-}
-
-sub get_NIST_TYPE_CATEGORIES {
-	my ($self) = @_;
-	my %hash = map {$_=>1} map {$_->get("NIST_TYPE_CATEGORY")} $self->get("MENTIONS")->toarray();
-	keys %hash;
-}
-
-sub get_NIST_TYPE {
-	my ($self, $canonical_mention) = @_;
-	$self->get("MENTIONS")->get("BY_KEY", $canonical_mention->get("MENTIONID"))->get("NIST_TYPE");
-}
-
-sub get_TEXT_STRING {
-	my ($self, $canonical_mention) = @_;
-	$self->get("MENTIONS")->get("BY_KEY", $canonical_mention->get("MENTIONID"))->get("TEXT_STRING");
-}
-
-sub has_compatible_types {
-	my ($self) = @_;
-	my @type_categories = grep {$_ ne "Filler"} $self->get("NIST_TYPE_CATEGORIES");
-	return 0 if @type_categories > 1;
-	return 1;
-}
-
-#####################################################################################
 # Container
 #####################################################################################
 
@@ -773,7 +389,7 @@ use parent -norequire, 'Super';
 
 sub new {
   my ($class, $logger, $element_class) = @_;
-  
+  $element_class = "RAW" unless $element_class;
   my $self = {
     CLASS => 'Container',
     ELEMENT_CLASS => $element_class,
@@ -853,198 +469,6 @@ sub tostring {
     $string .= "\n";
   }
   $string;
-}
-
-#####################################################################################
-# Mentions
-#####################################################################################
-
-package Mentions;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'Mention');
-  $self->{CLASS} = 'Mentions';
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub get_MENTION {
-  my ($self, $mention_id) = @_;
-  my ($matching_mention) = grep {$_->{MENTIONID} eq $mention_id} $self->toarray();
-  $matching_mention || "n/a";
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->get("MENTIONID") cmp $b->get("MENTIONID")}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# Mention
-#####################################################################################
-
-package Mention;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = {
-    CLASS => 'Mention',
-    LDC_TYPE => undef, 
-    NIST_TYPE => undef, 
-    MENTIONID => undef,
-    TREEID => undef,
-    JUSTIFICATIONS => Justifications->new($logger),
-    MODALITY => undef,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub add_justification {
-  my ($self, $justification) = @_;
-  $self->get("JUSTIFICATIONS")->add($justification);
-}
-
-sub get_START {
-  my ($self) = @_;
-  my @starts;
-  foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
-    foreach my $span($justification->get("SPANS")->toarray()) {
-      push(@starts, $span->get("START"));
-    }
-  }
-  push(@starts, "nil") unless scalar @starts;
-  @starts;
-}
-
-sub get_END {
-  my ($self) = @_;
-  my @ends;
-  foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
-    foreach my $span($justification->get("SPANS")->toarray()) {
-      push(@ends, $span->get("END"));
-    }
-  }
-  push(@ends, "nil") unless scalar @ends;
-  @ends;
-}
-
-sub get_SPANS {
-	my ($self) = @_;
-	my $spans = Spans->new($self->get("LOGGER"));
-	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
-		foreach my $span($justification->get("SPANS")->toarray()) {
-			$spans->add($span);
-		}
-	}
-	$spans;
-}
-
-sub get_SOURCE_DOCUMENT_ELEMENTS {
-  my ($self) = @_;
-  my @source_doces;
-  foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
-    foreach my $span($justification->get("SPANS")->toarray()) {
-      push(@source_doces, $span->get("DOCUMENTEID"));
-    }
-  }
-  @source_doces;
-}
-
-#####################################################################################
-# Justifications
-#####################################################################################
-
-package Justifications;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'Justification');
-  $self->{CLASS} = 'Justifications';
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-#####################################################################################
-# Justification
-#####################################################################################
-
-package Justification;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'Spans');
-  $self->{CLASS} = 'Justification';
-  $self->{LOGGER} = $logger;
-  $self->{SPANS} = Spans->new($self->get("LOGGER"));
-  bless($self, $class);
-  $self;
-}
-
-sub add_span {
-  my ($self, $span) = @_;
-  $self->get("SPANS")->add($span);
-}
-
-#####################################################################################
-# Spans
-#####################################################################################
-
-package Spans;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'Span');
-  $self->{CLASS} = 'Spans';
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->{DOCUMENTEID} cmp $b->{DOCUMENTEID} ||
-					$a->{START} cmp $b->{START} ||
-					$a->{END} cmp $b->{END}}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# Span
-#####################################################################################
-
-package Span;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $documenteid, $start, $end) = @_;
-  $start = "nil" if $start eq "";
-  $end = "nil" if $end eq "";
-  my $self = {
-    CLASS => 'Span',
-    DOCUMENTEID => $documenteid,
-    START => $start,
-    END => $end,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
 }
 
 #####################################################################################
@@ -1137,6 +561,7 @@ sub new {
     CLASS => 'Header',
     ELEMENTS => [],
     FIELD_SEPARATOR => $field_separator,
+    LINE => $line,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1212,8 +637,10 @@ sub get {
 
 sub add {
   my ($self, $line, $header) = @_;
+  $line .= "\tEND";
   my $field_separator = $self->get("FIELD_SEPARATOR");
   @{$self->{ELEMENTS}} = split( /$field_separator/, $line);
+  my $end = pop @{$self->{ELEMENTS}};
   %{$self->{MAP}} = map {$header->get("ELEMENT_AT",$_) => $self->get("ELEMENT_AT",$_)} (0..$header->get("NUM_OF_COLUMNS")-1);
 }
 
@@ -1263,14 +690,20 @@ sub tostring {
   my ($self) = @_;
 
   my $num_of_columns_header = $self->get("HEADER")->get("NUM_OF_COLUMNS");
-  my $num_of_columns_entry  = $self->get("NUM_OF_COLUMNS"); 
-
-  die("Mismatching column numbers")
-    if ($num_of_columns_header != $num_of_columns_entry);
+  my $num_of_columns_entry  = $self->get("NUM_OF_COLUMNS");
+  my $header_line = $self->get("HEADER")->get("LINE");
+	my $entry_line = $self->get("LINE");
+  $self->get("LOGGER")->record_problem("MISMATCHING_COLUMNS", 
+  												$num_of_columns_header, 
+  												$num_of_columns_entry,
+  												"\nHEADER: ==>$header_line<==\n",
+  												"\nENTRY: ==>$entry_line<==\n",
+  												$self->get("WHERE"))
+		if ($num_of_columns_header != $num_of_columns_entry);
 
   my $string = "";
 
-  foreach my $i(0..$num_of_columns_entry-1) {
+  foreach my $i(0..$num_of_columns_header-1) {
     $string = $string . $self->get("HEADER")->get("ELEMENT_AT", $i);
     $string = $string . ": "; 
     $string = $string . $self->get("ELEMENT_AT", $i);
@@ -1289,13 +722,47 @@ package Parameters;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger) = @_;
+  my ($class, $logger, $filename) = @_;
   my $self = {
     CLASS => 'Parameters',
+    FILENAME => $filename,
     LOGGER => $logger,
   };
   bless($self, $class);
+  $self->load() if $filename;
   $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	open(my $infile, "<:utf8", $filename) 
+		or $self->get("LOGGER")->NIST_die("Could not open $filename: $!");
+	my $linenum = 0;
+	while(my $line = <$infile>) {
+		$linenum++;
+		chomp $line;
+		$line =~ s/\s+//g;
+		next if $line =~ /^\#/;
+		next if $line =~ /^$/;
+		if($line =~ /^(.*?)\=\>(.*?)$/){
+			my ($key, $value) = ($1, $2);
+			if($self->get("$key") eq "nil") {
+				$self->set($key, $value);
+			}
+			else {
+				$self->get("LOGGER")->record_problem(
+						"PARAMETER_KEY_EXISTS", $key,
+						{FILENAME=>$filename, LINENUM=>$linenum});
+			}
+		}
+		else{
+			$self->get("LOGGER")->record_problem(
+					"UNEXPECTED_PARAMETER_LINE", 
+					{FILENAME=>$filename, LINENUM=>$linenum});
+		}
+	}
+	close($infile);
 }
 
 sub get_GRAPH_QUERIES_PREFIX {
@@ -1313,1879 +780,486 @@ sub get_EDGE_QUERIES_PREFIX {
 }
 
 #####################################################################################
-# CanonicalMention
+# DTD
 #####################################################################################
 
-package CanonicalMention;
+package DTD;
 
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $type, $node_id, $mention_id, $keyframe_id, $topic_id, $node) = @_;
-  my $self = {
-    CLASS => 'CanonicalMention',
-    KEYFRAMEID => $keyframe_id,
-    MENTIONID => $mention_id,
-    NODE => $node,
-    NODEID => $node_id,
-    TOPICID => $topic_id,
-    TYPE => $type,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-#####################################################################################
-# CanonicalMentions
-#####################################################################################
-
-package CanonicalMentions;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = $class->SUPER::new($logger, 'CanonicalMention');
-  $self->{CLASS} = 'CanonicalMentions';
-  $self->{PARAMETERS} = $parameters;
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub get_WHERE {
-	my ($self, $field_name, $value) = @_;
-	my @retVal;
-	foreach my $canonical_mention($self->toarray()) {
-		push(@retVal, $canonical_mention)
-			if($canonical_mention->get($field_name) eq $value);
-	}
-	@retVal;
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->{TOPICID} cmp $b->{TOPICID} ||
-					$a->{NODEID} cmp $b->{NODEID} ||
-					$a->{MENTIONID} cmp $b->{MENTIONID} ||
-					$a->{KEYFRAMEID} cmp $b->{KEYFRAMEID} ||
-					$a->{TYPE} cmp $b->{TYPE}}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# Graph
-#####################################################################################
-
-package Graph;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = {
-#  	LDC_NIST_MAPPINGS => LDCNISTMappings->new($logger, $parameters),
-#  	NODES => Nodes->new($logger),
-#		CANONICAL_MENTIONS => CanonicalMentions->new($logger, $parameters),
-#  	EDGES => Edges->new($logger),
-#  	DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
-#  	NODEIDS_LOOKUP => {},
-#    IMAGES_BOUNDINGBOXES => ImagesBoundingBoxes->new($logger, $parameters),
-#    KEYFRAMES_BOUNDINGBOXES => KeyFramesBoundingBoxes->new($logger, $parameters),
-#    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($logger, $parameters),
-#    HYPOTHESIS_RELEVANT_NODEIDS => Container->new($logger, $parameters, "RAW"),
-		TYPES_HIERARCHY => {},
-    PARAMETERS => $parameters,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self->load_data();
-#  foreach my $node($self->get("NODES")->toarray()) {
-#  	my $node_id = $node->get("NODEID");
-#  	my $node_types = join(",", $node->get("NIST_TYPES"));
-#  }
-  $self;
-}
-
-sub get_DOCUMENTELEMENTS {
-	my ($self) = @_;
+	my ($class, $logger, $filename) = @_;
 	
-	$self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS");
-}
-
-sub load_data {
-	my ($self) = @_;
-
-	$self->load_ontology_mappings();
-#	$self->load_keyframes_boundingboxes();
-#	$self->load_images_boundingboxes();
-#	$self->load_nodes();
-#	$self->load_edges();
-#	$self->load_hypothesis_relevant_nodeids();
-#	$self->load_canonical_mentions();
-}
-
-sub load_ontology_mappings {
-	my ($self) = @_;
-	
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("ONTOLOGY_MAPPING_ENTITIES_FILE"));
-	foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
-		my $type = $entry->get("Type");
-		my $type_output_value = $entry->get("Output Value for Type");
-		my $subtype = $entry->get("Subtype");
-		my $subtype_output_value = $entry->get("Output Value for Subtype");
-		my $subsubtype = $entry->get("Sub-subtype");
-		my $subsubtype_output_value = $entry->get("Output Value for Sub-subtype");
-		my $full_type = $type;
-		$full_type = $full_type . "." . $subtype unless $subtype eq "n/a"; 
-		$full_type = $full_type . "." . $subsubtype unless $subsubtype eq "n/a"; 
-		my $full_type_output_value = $type_output_value;
-		$full_type_output_value = $full_type_output_value . "." . $subtype_output_value unless $subtype_output_value eq "n/a"; 
-		$full_type_output_value = $full_type_output_value . "." . $subsubtype_output_value unless $subsubtype_output_value eq "n/a"; 		
-		$self->{TYPES_HIERARCHY}{ENTITIES}{TYPE_TO_OUTPUTVALUE}{$full_type} = $full_type_output_value;
-		$self->{TYPES_HIERARCHY}{ENTITIES}{OUTPUTVALUE_TO_TYPE}{$full_type_output_value} = $full_type;
-	}
-}
-
-sub load_canonical_mentions {
-	my ($self) = @_;
-
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("CANONICAL_MENTIONS_FILE"));
-	foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
-		my $node_id = $entry->get("node_id");
-		my $mention_id = $entry->get("mention_id");
-		my $keyframe_id = $entry->get("keyframe_id");
-		my $topic_id = $entry->get("topic_id");
-		next unless $self->get("NODES")->exists($node_id);
-		my $node = $self->get("NODES")->get("BY_KEY", $node_id);
-		my $enttype = $node->get("MENTIONS")->get("BY_KEY", $mention_id)->get("NIST_TYPE");
-		my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
-		unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true") {
-			$self->get("LOGGER")->record_problem("INVALID_ENTRYPOINT", $enttype, $entry->get("WHERE"));
-			next;
-		}
-		$self->get("CANONICAL_MENTIONS")->add(CanonicalMention->new($self->get("LOGGER"), "NONSTRING_ENTRYPOINT", $node_id, $mention_id, $keyframe_id, $topic_id, $node));
-	}
-}
-
-sub load_hypothesis_relevant_nodeids {
-	my ($self) = @_;
-	# Store the set of nodes relevant to include those nodes that are connected to
-	# relevant relation and event nodes by an edge
-	my %edge_lookup = %{$self->get("EDGES")->get("EDGE_LOOKUP")};
-	foreach my $nodemention_id(keys %{$self->{HYPOTHESIS_RELEVANT_NODEMENTIONIDS}}) {
-		my $relevantnode_id = $self->{NODEIDS_LOOKUP}{$nodemention_id};
-		unless ($relevantnode_id) {
-			my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
-			$self->get("LOGGER")->record_problem("MISSING_NODEID_FOR_MENTIONID", $nodemention_id, $where);
-			next;
-		}
-		next if ($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true" && $relevantnode_id =~ /^NIL/);
-		$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $relevantnode_id);
-		foreach my $edge(@{$edge_lookup{OBJECT}{$relevantnode_id} || []}) {
-			my $connectednode_id = $edge->get("SUBJECT")->get("NODEID");
-			next if ($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true" && $connectednode_id =~ /^NIL/);
-			# Connected node is also relevant
-			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $connectednode_id);
-		}
-		foreach my $edge(@{$edge_lookup{SUBJECT}{$relevantnode_id} || []}) {
-			my $connectednode_id = $edge->get("OBJECT")->get("NODEID");
-			next if ($self->get("PARAMETERS")->get("IGNORE_NIL") eq "true" && $connectednode_id =~ /^NIL/);
-			# Connected node is also relevant
-			$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->add("KEY", $connectednode_id);
-		}
-	}
-	# No more need this temporary hash
-	delete $self->{HYPOTHESIS_RELEVANT_NODEMENTIONIDS};
-}
-
-sub load_images_boundingboxes {
-	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("IMAGES_BOUNDINGBOXES_FILE"));
-	my $entries = $filehandler->get("ENTRIES");
-	foreach my $entry( $entries->toarray() ){
-		my $filename = $entry->get("filename");
-		my $doceid = $filename;
-		$doceid =~ s/\..*?$//;
-		my ($bottom_right_x, $bottom_right_y) = (0,0);
-		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
-		$self->get("IMAGES_BOUNDINGBOXES")->add(ImageBoundingBox->new($self->get("LOGGER"), $doceid, undef,
-												0, 0, $bottom_right_x, $bottom_right_y), $doceid);
-	}
-}
-
-sub load_keyframes_boundingboxes {
-	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("KEYFRAMES_BOUNDINGBOXES_FILE"));
-	my $entries = $filehandler->get("ENTRIES");
-	foreach my $entry( $entries->toarray() ){
-		my ($bottom_right_x, $bottom_right_y) = (0,0);
-		($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
-		$self->get("KEYFRAMES_BOUNDINGBOXES")->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
-												0, 0,
-												$bottom_right_x, $bottom_right_y),
-								$entry->get("keyframeid"));
-	}
-}
-
-sub load_edges {
-	my ($self) = @_;
-	my ($filehandler, $header, $entries, $i);
-	foreach my $filename($self->get("PARAMETERS")->get("EDGES_DATA_FILES")->toarray()) {
-		$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-		$header = $filehandler->get("HEADER");
-		$entries = $filehandler->get("ENTRIES");
-		
-		foreach my $entry( $entries->toarray() ){
-			my $subject_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")};
-			my $object_node_id = $self->{NODEIDS_LOOKUP}{$entry->get("arg_id")};
-			# skip the edge unless you have both ids
-			next unless ($subject_node_id && $object_node_id);
-			my $subject = $self->get("NODES")->get("BY_KEY", $subject_node_id);
-			my @subject_types = $subject->get("LDC_TYPES");
-			my $slot_type = $entry->get("slot_type");
-			my $attribute = $entry->get("attribute");
-			my $object = $self->get("NODES")->get("BY_KEY", $object_node_id);
-			
-			foreach my $subject_type(@subject_types) {
-				my $ldc_role = "$subject_type\_$slot_type";
-				my $nist_role = $self->get("LDC_NIST_MAPPINGS")->get("NIST_ROLE", $ldc_role);
-				next unless $nist_role;
-				my $edge = Edge->new($self->get("LOGGER"), $subject, $nist_role, $object, $attribute, $entry->get("LINE"));
-				$self->get("EDGES")->add($edge);
-			}
-		}
-	}
-}
-
-sub load_nodes {
-	my ($self) = @_;
-	my ($filehandler, $header, $entries, $i);
-	
-	# Load hypothesis file for information about relevant nodes
-	my %acceptable_relevance = map {$_=>1} $self->get("PARAMETERS")->get("ACCEPTABLE_RELEVANCE")->toarray();
-	my $filename = $self->get("PARAMETERS")->get("HYPOTHESES_FILE");
-	$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-	$header = $filehandler->get("HEADER");
-	$entries = $filehandler->get("ENTRIES");
-	foreach my $entry( $entries->toarray() ){
-		next unless $entry->get("hypothesis_id") eq $self->get("PARAMETERS")->get("HYPOTHESISID");
-		my $nodemention_id = $entry->get("nodemention_id");
-		my $relevance = $entry->get("value");
-		next unless $acceptable_relevance{$relevance};
-		$self->{HYPOTHESIS_RELEVANT_NODEMENTIONIDS}{$nodemention_id} = 1;
-	}
-	
-	# Load nodes relevant to hypothesis
-	foreach my $filename($self->get("PARAMETERS")->get("NODES_DATA_FILES")->toarray()) {
-		$filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-		$header = $filehandler->get("HEADER");
-		$entries = $filehandler->get("ENTRIES"); 
-		
-		foreach my $entry( $entries->toarray() ){
-			my $document_eid = $entry->get("provenance");
-			unless ($self->get("DOCUMENTELEMENTS")->exists($document_eid)) {
-				$self->get("LOGGER")->record_problem("MISSING_DOCUMENT_ELEMENT", $document_eid, $entry->get("WHERE"));
-				$self->get("LOGGER")->record_problem("IGNORING_LINE", $self->get("LINE"), $entry->get("WHERE"));
-				next;
-			}
-			my $thedocumentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
-			my $thedocumentelement_encodingformat = $thedocumentelement->get("TYPE");
-			$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $document_eid, $entry->get("WHERE"))
-				if $thedocumentelement_encodingformat eq "nil";
-			my $thedocumentelementmodality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("BY_KEY", 
-																										$thedocumentelement_encodingformat);
-			my $mention = Mention->new($self->get("LOGGER"));
-			my $span = Span->new(
-								$self->get("LOGGER"),
-								$document_eid,
-								$entry->get("textoffset_startchar"),
-								$entry->get("textoffset_endchar"),
-						);
-			my $justification = Justification->new($self->get("LOGGER"));
-			$justification->add_span($span);
-			$mention->add_justification($justification);
-			$mention->set("MODALITY", $thedocumentelementmodality);
-			$mention->set("MENTIONID", $entry->get("nodemention_id"));
-			$mention->set("DOC_NODEID", $entry->get("document_level_node_id"));
-			$mention->set("TEXT_STRING", $entry->get("text_string"));
-			$mention->set("JUSTIFICATION_STRING", $entry->get("justification"));
-			$mention->set("TYPE", $entry->get("level"));
-			$mention->set("TREEID", $entry->get("tree_id"));
-			$mention->set("WHERE", $entry->get("WHERE"));
-			
-			$mention->set("LDC_TYPE", 
-							$self->get("LDC_NIST_MAPPINGS")->get("LDC_TYPE", 
-								$entry->get("type"), 
-								$entry->get("subtype")));
-			$mention->set("NIST_TYPE", 
-							$self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE", 
-								$entry->get("type"), 
-								$entry->get("subtype")));
-			$mention->set("NIST_TYPE_CATEGORY",
-							$self->get("LDC_NIST_MAPPINGS")->get("NIST_TYPE_CATEGORY",
-								$mention->get("NIST_TYPE")));
-			my $node = $self->get("NODES")->get("BY_KEY", $entry->get("kb_id"));
-
-			$node->set("NODEID", $entry->get("kb_id")) unless $node->set("NODEID");
-			$node->add_mention($mention, $mention->get("MENTIONID"));
-			$self->{NODEIDS_LOOKUP}{$entry->get("document_level_node_id")} = $entry->get("kb_id");
-			$self->{NODEIDS_LOOKUP}{$entry->get("nodemention_id")} = $entry->get("kb_id");
-		}
-	}
-}
-
-sub generate_queries {
-	my ($self) = @_;
-	
-	$self->generate_class_queries();
-	$self->generate_ta2edge_queries();
-#	$self->generate_zerohop_queries();
-#	$self->generate_graph_queries();
-}
-
-sub generate_class_queries {
-	my ($self) = @_;
-	my $queries = ClassQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
-	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
-	my $i = 0;
-	foreach my $type(sort keys %{$self->{TYPES_HIERARCHY}{ENTITIES}{TYPE_TO_OUTPUTVALUE}}) {
-		$i++;
-		my $query_id = "$query_id_prefix\_$i";
-		my $query = ClassQuery->new($self->get("LOGGER"), $self->get("PARAMETERS"), $query_id, $type);
-		$queries->add($query);
-	}
-	$queries->write_to_file();
-}
-
-sub generate_ta2edge_queries {
-	my ($self) = @_;
-	my $queries = TA2EdgeQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
-	my $query_id_prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
-	my $topic_id = $self->get("PARAMETERS")->get("TOPICID");
-	my $prevailing_theory_id = $self->get("PARAMETERS")->get("PREVAILING_THEORY_ID");
-	my $prevailing_theory_data_file = $self->get("PARAMETERS")->get("PREVAILING_THEORY_DATA_FILES")->get("BY_KEY", "$topic_id:$prevailing_theory_id");
-
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $prevailing_theory_data_file);
-	my $entries = $filehandler->get("ENTRIES");
-	foreach my $entry($entries->toarray()) {
-
-
-	}
-	
-	my $i = 0;
-	foreach my $type(sort keys %{$self->{TYPES_HIERARCHY}{ENTITIES}{TYPE_TO_OUTPUTVALUE}}) {
-		$i++;
-		my $query_id = "$query_id_prefix\_$i";
-		my $query = ClassQuery->new($self->get("LOGGER"), $self->get("PARAMETERS"), $query_id, $type);
-		$queries->add($query);
-	}
-	$queries->write_to_file();
-}
-
-
-sub generate_zerohop_queries {
-	my ($self) = @_;
-	my $queries = ZeroHopQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
-	my $query_id_prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
-	my $i = 0;
-	my %is_valid_entrypoint = %{$self->get("LDC_NIST_MAPPINGS")->get("IS_VALID_ENTRYPOINT")};
-	foreach my $node($self->get("NODES")->toarray()) {
-		foreach my $mention($node->get("MENTIONS")->toarray()){
-			my ($canonical_mention) = $self->get("CANONICAL_MENTIONS")->get("WHERE", "MENTIONID", $mention->get("MENTIONID"));
-			next unless $canonical_mention;
-			next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
-			my $enttype = $mention->get("NIST_TYPE");
-			next unless (exists $is_valid_entrypoint{$enttype} && $is_valid_entrypoint{$enttype} eq "true");
-			my $modality = $mention->get("MODALITY");
-#			NAMESTRING zerohop queries are out of scope
-#			if($mention->get("TYPE") eq "nam") {
-#				$i++;
-#				my $query_id = "$query_id_prefix\_$i";
-#				my $text_string = $mention->get("TEXT_STRING");
-#				$self->get("LOGGER")->record_debug_information("ZEROHOP_QUERY_DEBUG_INFO_01", $query_id, $mention->get("MENTIONID"),
-#																$node->get("NODEID"), $mention->get("TREEID"), $mention->get("WHERE"));
-#				my $query = NameStringZeroHopQuery->new($self->get("LOGGER"),
-#											$query_id, $enttype, $text_string);
-#				$queries->add($query);
-#			}
-			foreach my $span($mention->get("SPANS")->toarray()) {
-				$i++;
-				my $query_id = "$query_id_prefix\_$i";
-				my $doceid = $span->get("DOCUMENTEID");
-				my $start = $span->get("START");
-				my $end = $span->get("END");
-				my $keyframe_id = $canonical_mention->get("KEYFRAMEID") if $modality eq "video";
-				my $query = NonNameStringZeroHopQuery->new($self->get("LOGGER"),
-											$self->get("PARAMETERS"),
-											$self->get("KEYFRAMES_BOUNDINGBOXES"),
-											$self->get("IMAGES_BOUNDINGBOXES"),
-											$query_id, $enttype, $modality, $doceid, $keyframe_id, $start, $end);
-				$queries->add($query);
-			}
-		}
-	}	
-	$queries->write_to_file();
-}
-
-sub generate_graph_queries {
-	my ($self) = @_;
-	my $queries = GraphQueries->new($self->get("LOGGER"), $self->get("PARAMETERS"));
-	$self->generate_all_edges_graph_queries($queries);
-	$self->generate_single_edge_graph_queries($queries);
-	$queries->write_to_file();
-}
-
-sub generate_all_edges_graph_queries {
-	my ($self, $queries) = @_;
-	my $query_id_prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX");
-	my $i = 0;
-	# Edges and node relevant to the hypothesis
-	my $edges = Edges->new($self->get("LOGGER"));
-	my $nodes = Nodes->new($self->get("LOGGER"));
-	foreach my $edge($self->get("EDGES")->toarray()) {
-		my $subject = $edge->get("SUBJECT");
-		my $object = $edge->get("OBJECT");
-		if($subject->has_compatible_types() && $object->has_compatible_types()) {
-			if($self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($subject->get("NODEID")) &&
-			   $self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($object->get("NODEID"))) {
-			   my $key = $edge->get("PREDICATE") . "(" . $subject->get("NODEID") . "," . $object->get("NODEID") . ")";
-			   $edges->add($edge, $key);
-			   $nodes->add($subject, $subject->get("NODEID"));
-			   $nodes->add($object, $object->get("NODEID"));
-			}
-		}
-	}
-	my %strings_used;
-	foreach my $node($nodes->toarray()) {
-		my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "NODEID", $node->get("NODEID"));
-		next unless @matching_cannoical_mentions;
-		$i++;
-		my $composite_query_id = "$query_id_prefix\_$i\_0";
-		my $composite_query = GraphQuery->new($self->get("LOGGER"),
-											$self->get("PARAMETERS"),
-											"ALL_EDGES_GRAPH_QUERY",
-											$self->get("KEYFRAMES_BOUNDINGBOXES"),
-											$self->get("IMAGES_BOUNDINGBOXES"),
-											$composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
-		my $j = 0;
-		foreach my $canonical_mention(@matching_cannoical_mentions) {
-			next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
-			$j++;
-			my $single_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
-			my $single_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
-											$self->get("PARAMETERS"),
-											"ALL_EDGES_GRAPH_QUERY",
-											$self->get("KEYFRAMES_BOUNDINGBOXES"),
-											$self->get("IMAGES_BOUNDINGBOXES"),
-											$single_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
-			$composite_query->add_entrypoint($canonical_mention);
-			$single_entrypoint_query->add_entrypoint($canonical_mention);
-			$queries->add($single_entrypoint_query);
-			# string entrypoint
-			next if $node->get("TEXT_STRING", $canonical_mention) eq "";
-			unless($strings_used{$node->get("NODEID")}
-				{$node->get("NIST_TYPE", $canonical_mention)}
-				{$node->get("TEXT_STRING", $canonical_mention)} && $node->get("TEXT_STRING", $canonical_mention) !~ /^\s+$/) {
-					$j++;
-					my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
-					my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
-												$self->get("PARAMETERS"),
-												"ALL_EDGES_GRAPH_QUERY",
-												$self->get("KEYFRAMES_BOUNDINGBOXES"),
-												$self->get("IMAGES_BOUNDINGBOXES"),
-												$string_entrypoint_query_id, "DONOT_GENERATE_SPARQL", $edges);
-					my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
-																NODEID => $node->get("NODEID"),
-																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
-																NIST_TYPE => $node->get("NIST_TYPE", $canonical_mention), 
-																TEXT_STRING => $node->get("TEXT_STRING", $canonical_mention)};
-					$string_entrypoint_query->add_entrypoint($string_entrypoint);
-					$composite_query->add_entrypoint($string_entrypoint);
-					$queries->add($string_entrypoint_query);
-					$strings_used{$node->get("NODEID")}
-									{$node->get("NIST_TYPE", $canonical_mention)}
-									{$node->get("TEXT_STRING", $canonical_mention)} = 1;
-				}
-		}
-		$queries->add($composite_query);
-	}
-}
-
-sub generate_single_edge_graph_queries {
-	my ($self, $queries) = @_;
-	my $query_id_prefix = $self->get("PARAMETERS")->get("EDGE_QUERIES_PREFIX");
-	my $i = 0;
-	foreach my $edge($self->get("EDGES")->toarray()) {
-		my $edges = Edges->new($self->get("LOGGER"));
-		$edges->add($edge);
-		my $subject = $edge->get("SUBJECT");
-		my $object = $edge->get("OBJECT");
-		if($subject->has_compatible_types() && $object->has_compatible_types()) {
-			if($self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($subject->get("NODEID")) &&
-				$self->get("HYPOTHESIS_RELEVANT_NODEIDS")->exists($object->get("NODEID"))) {
-				my $key = $edge->get("PREDICATE") . "(" . $subject->get("NODEID") . "," . $object->get("NODEID") . ")";
-				my %strings_used;
-				foreach my $node(($subject, $object)) {
-					my @matching_cannoical_mentions = $self->get("CANONICAL_MENTIONS")->get("WHERE", "NODEID", $node->get("NODEID"));
-					next unless @matching_cannoical_mentions;
-					$i++;
-					my $composite_query_id = "$query_id_prefix\_$i\_0";
-					my $composite_query = GraphQuery->new($self->get("LOGGER"),
-											$self->get("PARAMETERS"),
-											"SINGLE_EDGE_GRAPH_QUERY",
-											$self->get("KEYFRAMES_BOUNDINGBOXES"),
-											$self->get("IMAGES_BOUNDINGBOXES"),
-											$composite_query_id, "DONOT_GENERATE_SPARQL", $edges);
-					my $j = 0;
-					foreach my $canonical_mention(@matching_cannoical_mentions) {
-						next unless $canonical_mention->get("TOPICID") eq $self->get("PARAMETERS")->get("TOPICID");
-						$j++;
-						my $single_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
-						my $single_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
-											$self->get("PARAMETERS"),
-											"SINGLE_EDGE_GRAPH_QUERY",
-											$self->get("KEYFRAMES_BOUNDINGBOXES"),
-											$self->get("IMAGES_BOUNDINGBOXES"),
-											$single_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
-						$composite_query->add_entrypoint($canonical_mention);
-						$single_entrypoint_query->add_entrypoint($canonical_mention);
-						$queries->add($single_entrypoint_query);
-						# string entrypoint
-						next if $node->get("TEXT_STRING", $canonical_mention) eq "";
-						unless($strings_used{$node->get("NODEID")}
-									{$node->get("NIST_TYPE", $canonical_mention)}
-									{$node->get("TEXT_STRING", $canonical_mention)} && $node->get("TEXT_STRING", $canonical_mention) !~ /^\s+$/) {
-							$j++;
-							my $string_entrypoint_query_id = "$query_id_prefix\_$i\_$j";
-							my $string_entrypoint_query = GraphQuery->new($self->get("LOGGER"),
-												$self->get("PARAMETERS"),
-												"SINGLE_EDGE_GRAPH_QUERY",
-												$self->get("KEYFRAMES_BOUNDINGBOXES"),
-												$self->get("IMAGES_BOUNDINGBOXES"),
-												$string_entrypoint_query_id, "DO_GENERATE_SPARQL", $edges);
-							my $string_entrypoint = {TYPE => "STRING_ENTRYPOINT",
-																NODEID => $node->get("NODEID"),
-																TOPICID => $self->get("PARAMETERS")->get("TOPICID"),
-																NIST_TYPE => $node->get("NIST_TYPE", $canonical_mention), 
-																TEXT_STRING => $node->get("TEXT_STRING", $canonical_mention)};
-							$string_entrypoint_query->add_entrypoint($string_entrypoint);
-							$composite_query->add_entrypoint($string_entrypoint);
-							$queries->add($string_entrypoint_query);
-							$strings_used{$node->get("NODEID")}
-											{$node->get("NIST_TYPE", $canonical_mention)}
-											{$node->get("TEXT_STRING", $canonical_mention)} = 1;
-						}
-					}
-					$queries->add($composite_query);
-				}
-			}
-		}
-	}
-}
-
-#####################################################################################
-# ImagesBoundingBoxes
-#####################################################################################
-
-package ImagesBoundingBoxes;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
-  $self->{CLASS} = 'ImagesBoundingBoxes';
-  $self->{PARAMETERS} = $parameters;
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-#####################################################################################
-# ImageBoundingBox
-#####################################################################################
-
-package ImageBoundingBox;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
-  my $self = {
-    CLASS => 'ImageBoundingBox',
-    DOCEID => $doceid,
-    TYPE => $type,
-    TOP_LEFT_X => $top_left_x,
-    TOP_LEFT_Y => $top_left_y,
-    BOTTOM_RIGHT_X => $bottom_right_x,
-    BOTTOM_RIGHT_Y => $bottom_right_y,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub get_START {
-	my ($self) = @_;
-	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
-}
-
-sub get_END {
-	my ($self) = @_;
-	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
-}
-
-#####################################################################################
-# KeyFramesBoundingBoxes
-#####################################################################################
-
-package KeyFramesBoundingBoxes;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
-  $self->{CLASS} = 'KeyFramesBoundingBoxes';
-  $self->{PARAMETERS} = $parameters;
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub get_KEYFRAMESIDS {
-	my ($self, $doceid) = @_;
-	my @keyframeids = $self->get("ALL_KEYS");
-	@keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
-	sort @keyframeids;
-}
-
-#####################################################################################
-# KeyFramesBoundingBox
-#####################################################################################
-
-package KeyFrameBoundingBox;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
-  my $self = {
-    CLASS => 'KeyFrameBoundingBox',
-    KEYFRAMEID => $keyframeid,
-    TOP_LEFT_X => $top_left_x,
-    TOP_LEFT_Y => $top_left_y,
-    BOTTOM_RIGHT_X => $bottom_right_x,
-    BOTTOM_RIGHT_Y => $bottom_right_y,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub get_DOCEID {
-	my ($self) = @_;
-	my ($doceid) = split("_", $self->get("KEYFRAMEID"));
-	$doceid;
-}
-
-sub get_START {
-	my ($self) = @_;
-	$self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
-}
-
-sub get_END {
-	my ($self) = @_;
-	$self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
-}
-
-#####################################################################################
-# ClassQueries
-#####################################################################################
-
-package ClassQueries;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = $class->SUPER::new($logger, 'ClassQuery');
-  $self->{CLASS} = 'ClassQueries';
-  $self->{PARAMETERS} = $parameters;
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub write_to_file {
-	my ($self) = @_;
-	my $output_filename_xml = $self->get("PARAMETERS")->get("CLASS_QUERIES_XML_OUTPUT_FILE");
-	open(my $program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
-	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<class_queries>\n";
-	foreach my $query($self->toarray()) {
-		$query->write_to_file($program_output_xml);
-	}
-	print $program_output_xml "<\/class_queries>\n";
-	close($program_output_xml);
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->get("NUMERIC_ID") <=> $b->get("NUMERIC_ID")}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# ClassQuery
-#####################################################################################
-
-package ClassQuery;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $parameters, $query_id, $enttype) = @_;
-  my $self = {
-    CLASS => 'ClassQuery',
-    PARAMETERS => $parameters,
-    QUERY_ID => $query_id,
-    ENTTYPE => $enttype,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub get_NUMERIC_ID {
-	my ($self) = @_;
-	my $prefix = $self->get("PARAMETERS")->get("CLASS_QUERIES_PREFIX");
-	my ($numeric_id) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+)$/;
-	$numeric_id;
-}
-
-sub write_to_file {
-	my ($self, $program_output) = @_;
-	my $query_id = $self->get("QUERY_ID");
-	my $enttype = $self->get("ENTTYPE");
-
-	my $attributes = XMLAttributes->new($self->get("LOGGER"));
-	$attributes->add("$query_id", "id");
-
-	my $xml_enttype = XMLElement->new($self->get("LOGGER"), $enttype, "enttype", 0);
-	
-	my $type_levels = split(/\./, $enttype);
-	my @type_specifities = qw(TYPE TYPE.SUBTYPE TYPE.SUBTYPE.SUBSUBTYPE);
-	my $xml_type_specificity = XMLElement->new($self->get("LOGGER"), $type_specifities[$type_levels-1], "type_specificity", 0);
-
-	my $sparql = <<'END_SPARQL_QUERY';
-
-	<![CDATA[
-	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
-	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
-	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
-
-	# Query: QUERYID
-	# Query description: Find all mentions of type ENTTYPE
-
-	SELECT ?type ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
-	WHERE {
-			?statement1    a                    rdf:Statement .
-			?statement1    rdf:object           ?type .
-			?statement1    rdf:predicate        rdf:type .
-			?statement1    aida:justifiedBy     ?justification .
-			?justification aida:source          ?doceid .
-			?justification aida:confidence      ?confidence .
-			?confidence    aida:confidenceValue ?cv .
-
-			OPTIONAL { ?justification a                           aida:TextJustification .
-					   ?justification aida:startOffset            ?so .
-					   ?justification aida:endOffsetInclusive     ?eo }
-
-			OPTIONAL { ?justification a                           aida:ImageJustification .
-					   ?justification aida:boundingBox            ?bb  .
-					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?lrx .
-					   ?bb            aida:boundingBoxLowerRightY ?lry }
-
-			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
-					   ?justification aida:keyFrame               ?kfid .
-					   ?justification aida:boundingBox            ?bb  .
-					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-					   ?bb            aida:boundingBoxLowerRightX ?lrx .
-					   ?bb            aida:boundingBoxLowerRightY ?lry }
-
-			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
-					   ?justification aida:shot                   ?sid }
-
-			OPTIONAL { ?justification a                           aida:AudioJustification .
-					   ?justification aida:startTimestamp         ?st .
-					   ?justification aida:endTimestamp           ?et }
-					   
-			FILTER(cfn:superTypeOf(str(ldcOnt:ENTTYPE), str(?type))) .
-
-	}
-	]]>
-
-END_SPARQL_QUERY
-
-	$sparql =~ s/QUERYID/$query_id/g;
-	$sparql =~ s/ENTTYPE/$enttype/g;
-	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
-	my $xml_query = XMLElement->new($self->get("LOGGER"),
-			XMLContainer->new($self->get("LOGGER"), $xml_enttype, $xml_type_specificity, $xml_sparql),
-			"class_query", 1, $attributes);
-	print $program_output $xml_query->tostring(2);
-}
-
-#####################################################################################
-# ZeroHopQueries
-#####################################################################################
-
-package ZeroHopQueries;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = $class->SUPER::new($logger, 'ZeroHopQuery');
-  $self->{CLASS} = 'ZeroHopQueries';
-  $self->{PARAMETERS} = $parameters;
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub write_to_file {
-	my ($self) = @_;
-	my $output_filename_xml = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_XML_OUTPUT_FILE");
-	open(my $program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
-	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<zerohop_queries>\n";
-	foreach my $query($self->toarray()) {
-		$query->write_to_file($program_output_xml);
-	}
-	print $program_output_xml "<\/zerohop_queries>\n";
-	close($program_output_xml);
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->get("NUMERIC_ID") <=> $b->get("NUMERIC_ID")}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# NameStringZeroHopQuery
-# These are currently out of scope
-#####################################################################################
-#
-#package NameStringZeroHopQuery;
-#
-#use parent -norequire, 'Super';
-#
-#sub new {
-#  my ($class, $logger, $query_id, $enttype, $name_string) = @_;
-#  my $self = {
-#    CLASS => 'NameStringZeroHopQuery',
-#    QUERY_ID => $query_id,
-#    ENTTYPE => $enttype,
-#    NAME_STRING => $name_string,
-#    LOGGER => $logger,
-#  };
-#  bless($self, $class);
-#  $self;
-#}
-#
-#sub write_to_file {
-#	my ($self, $program_output) = @_;
-#	my $logger = $self->get("LOGGER");
-#	my $query_id = $self->get("QUERY_ID");
-#	my $enttype = $self->get("ENTTYPE");
-#	my $name_string = $self->get("NAME_STRING");
-#
-#	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
-#	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
-#	my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
-#	my $xml_descriptor = XMLElement->new(
-#			$logger,
-#			XMLContainer->new($logger, $xml_namestring),
-#			"string_descriptor",
-#			1);
-#	my $attributes = XMLAttributes->new($logger);
-#	$attributes->add("$query_id", "id");
-#	my $xml_entrypoint = XMLElement->new($logger,
-#			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor),
-#			"entrypoint", 1);
-#
-#	my $sparql = <<'END_SPARQL_QUERY';
-#
-#	<![CDATA[
-#	SELECT ?nid ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cv
-#	WHERE {
-#			?statement1    a                    rdf:Statement .
-#			?statement1    rdf:object           ldcOnt:ENTTYPE .
-#			?statement1    rdf:predicate        rdf:type .
-#			?statement1    rdf:subject          ?nid .
-#			?statement1    aida:justifiedBy     ?justification .
-#			?justification aida:source          ?doceid .
-#			?justification aida:confidence      ?confidence .
-#			?confidence    aida:confidenceValue ?cv .
-#			?nid           a                    aida:Entity .
-#			?nid           aida:hasName         "NAME_STRING" .
-#
-#			OPTIONAL { ?justification a                           aida:TextJustification .
-#					   ?justification aida:startOffset            ?so .
-#					   ?justification aida:endOffsetInclusive     ?eo }
-#
-#			OPTIONAL { ?justification a                           aida:ImageJustification .
-#					   ?justification aida:boundingBox            ?bb  .
-#					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-#					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-#					   ?bb            aida:boundingBoxLowerRightX ?lrx .
-#					   ?bb            aida:boundingBoxLowerRightY ?lry }
-#
-#			OPTIONAL { ?justification a                           aida:KeyFrameVideoJustification .
-#					   ?justification aida:keyFrame               ?kfid .
-#					   ?justification aida:boundingBox            ?bb  .
-#					   ?bb            aida:boundingBoxUpperLeftX  ?ulx .
-#					   ?bb            aida:boundingBoxUpperLeftY  ?uly .
-#					   ?bb            aida:boundingBoxLowerRightX ?lrx .
-#					   ?bb            aida:boundingBoxLowerRightY ?lry }
-#
-#			OPTIONAL { ?justification a                           aida:ShotVideoJustification .
-#					   ?justification aida:shot                   ?sid }
-#
-#			OPTIONAL { ?justification a                           aida:AudioJustification .
-#					   ?justification aida:startTimestamp         ?st .
-#					   ?justification aida:endTimestamp           ?et }
-#
-#	}
-#	]]>
-#
-#END_SPARQL_QUERY
-#
-#	$sparql =~ s/QUERYID/$query_id/g;
-#	$sparql =~ s/ENTTYPE/$enttype/g;
-#	$sparql =~ s/NAME_STRING/$name_string/;
-#	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
-#
-#	my $xml_query = XMLElement->new($logger,
-#																	XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
-#																	"zerohop_query", 1, $attributes);
-#	print $program_output $xml_query->tostring(2);
-#}
-
-#####################################################################################
-# NonNameStringZeroHopQuery
-#####################################################################################
-
-package NonNameStringZeroHopQuery;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $parameters, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $enttype, $modality, $doceid, $keyframe_id, $start, $end) = @_;
-  my $self = {
-    CLASS => 'NonNameStringZeroHopQuery',
-    PARAMETERS => $parameters,
-    KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
-    IMAGES_BOUNDINGBOXES => $images_boundingboxes,
-    QUERY_ID => $query_id,
-    ENTTYPE => $enttype,
-    DOCUMENTELEMENTID => $doceid,
-    KEYFRAMEID => $keyframe_id,
-    MODALITY => $modality,
-    START => $start,
-    END => $end,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
-}
-
-sub get_NUMERIC_ID {
-	my ($self) = @_;
-	my $prefix = $self->get("PARAMETERS")->get("ZEROHOP_QUERIES_PREFIX");
-	my ($numeric_id) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+)$/;
-	$numeric_id;
-}
-
-sub write_to_file {
-	my ($self, $program_output) = @_;
-	my $logger = $self->get("LOGGER");
-	my $query_id = $self->get("QUERY_ID");
-	my $enttype = $self->get("ENTTYPE");
-	my $doceid = $self->get("DOCUMENTELEMENTID");
-	my $modality = $self->get("MODALITY");
-	my $start = $self->get("START");
-	my $end = $self->get("END");
-	my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
-	my ($keyframeid, $xml_keyframeid);
-	if($modality eq "video") {
-		$keyframeid = $self->get("KEYFRAMEID");
-		my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
-		$start = $keyframe_boundingbox->get("START");
-		$end = $keyframe_boundingbox->get("END");
-		$xml_keyframeid = XMLElement->new($logger, $keyframeid, "keyframeid", 0);
-	}
-	if($modality eq "image") {
-		my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
-		$start = $image_boundingbox->get("START");
-		$end = $image_boundingbox->get("END");
-	}
-	my $xml_node = XMLElement->new($logger, "?node", "node", 0);
-	my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
-	my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
-	my $xml_start = XMLElement->new($logger, $start, $fn_manager->get("FIELDNAME", "start"), 0);
-	my $xml_end = XMLElement->new($logger, $end, $fn_manager->get("FIELDNAME", "end"), 0);
-	my $xml_descriptor;
-	$xml_descriptor = XMLElement->new(
-			$logger,
-			XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end),
-			$fn_manager->get("FIELDNAME", "descriptor"),
-			1);
-	$xml_descriptor = XMLElement->new(
-			$logger,
-			XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_start, $xml_end),
-			$fn_manager->get("FIELDNAME", "descriptor"),
-			1) if $modality eq "video";
-	my $xml_entrypoint = XMLElement->new(
-			$logger, 
-			XMLContainer->new($logger, $xml_node, $xml_enttype, $xml_descriptor), 
-			"entrypoint",
-			1);
-	my $attributes = XMLAttributes->new($logger);
-	$attributes->add("$query_id", "id");
-
-	my $text_entrypoint_constraints = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                         aida:TextJustification .
-		?justification_ep aida:source               "DOCEID" .
-		?justification_ep aida:startOffset          ?epso .
-		?justification_ep aida:endOffsetInclusive   ?epeo .
-		FILTER ( (?epeo >= START_OFFSET && $epeo <= END_OFFSET) || (?epso >= START_OFFSET && ?epso <= END_OFFSET) ) .
-TEXT_ENTRYPOINT_CONSTRAINTS
-
-	my $image_entrypoint_constraints = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                         aida:ImageJustification .
-		?justification_ep aida:source               "DOCEID" .
-		?justification_ep aida:boundingBox          ?boundingbox_ep .
-		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
-		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
-		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
-		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
-		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
-IMAGE_ENTRYPOINT_CONSTRAINTS
-
-	my $video_entrypoint_constraints = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                         aida:KeyFrameVideoJustification .
-		?justification_ep aida:source               "DOCEID" .
-		?justification_ep aida:keyFrame             "KEYFRAMEID" .
-		?justification_ep aida:boundingBox          ?boundingbox_ep .
-		?boundingbox_ep aida:boundingBoxUpperLeftX  ?epulx .
-		?boundingbox_ep aida:boundingBoxUpperLeftY  ?epuly .
-		?boundingbox_ep aida:boundingBoxLowerRightX ?eplrx .
-		?boundingbox_ep aida:boundingBoxLowerRightY ?eplry .
-		FILTER ((?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y) ||
-			(?eplrx >= UPPER_LEFT_X && ?eplrx <= LOWER_RIGHT_X && ?epuly <= LOWER_RIGHT_Y && ?epuly >= UPPER_LEFT_Y) ||
-			(?epulx >= UPPER_LEFT_X && ?epulx <= LOWER_RIGHT_X && ?eplry <= LOWER_RIGHT_Y && ?eplry >= UPPER_LEFT_Y)) .
-VIDEO_ENTRYPOINT_CONSTRAINTS
-
-	my $audio_entrypoint_constrinats = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
-?justification_ep a                       aida:AudioJustification .
-		?justification_ep aida:source             "DOCEID" .
-		?justification_ep aida:startTimestamp     ?epst .
-		?justification_ep aida:endTimestamp       ?epet .
-		FILTER ( (?epet >= START_TIME && $epet <= END_TIME) || (?epst >= START_TIME && ?epst <= END_TIME) ) .
-AUDIO_ENTRYPOINT_CONSTRAINTS
-
-	my $sparql = <<'END_SPARQL_QUERY';
-
-	<![CDATA[
-	PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
-	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
-	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
-
-	# Query: QUERYID
-
-	SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cmcv_ep ?cmcv_ot ?cv
-	WHERE {
-		?statement1    a                    rdf:Statement .
-		?statement1    rdf:object           ldcOnt:ENTTYPE .
-		?statement1    rdf:predicate        rdf:type .
-		?statement1    rdf:subject          ?nid_ot .
-		?statement1    aida:justifiedBy     ?justification .
-		?justification aida:source          ?doceid .
-		?justification aida:confidence      ?confidence .
-		?confidence    aida:confidenceValue ?cv .
-
-		?cluster          a                    aida:SameAsCluster .
-		?statement2       a                    aida:ClusterMembership .
-		?statement2       aida:cluster         ?cluster .
-		?statement2       aida:clusterMember   ?nid_ep .
-		?statement2       aida:confidence      ?cm_confidence_ep .
-		?cm_confidence_ep aida:confidenceValue ?cmcv_ep .
-
-		?statement3       a                    aida:ClusterMembership .
-		?statement3       aida:cluster         ?cluster .
-		?statement3       aida:clusterMember   ?nid_ot .
-		?statement3       aida:confidence      ?cm_confidence_ot .
-		?cm_confidence_ot aida:confidenceValue ?cmcv_ot .
-
-		?statement4       a                         rdf:Statement .
-		?statement4       rdf:object                ldcOnt:ENTTYPE .
-		?statement4       rdf:predicate             rdf:type .
-		?statement4       rdf:subject               ?nid_ep .
-		?statement4       aida:justifiedBy          ?justification_ep .
-		ENTRYPOINT_CONSTRAINTS
-
-		OPTIONAL { ?justification a                  aida:TextJustification .
-			?justification aida:startOffset            ?so .
-			?justification aida:endOffsetInclusive     ?eo }
-
-		OPTIONAL { ?justification a                  aida:ImageJustification .
-			?justification aida:boundingBox            ?bb  .
-			?bb            aida:boundingBoxUpperLeftX  ?ulx .
-			?bb            aida:boundingBoxUpperLeftY  ?uly .
-			?bb            aida:boundingBoxLowerRightX ?lrx .
-			?bb            aida:boundingBoxLowerRightY ?lry }
-
-		OPTIONAL { ?justification a                  aida:KeyFrameVideoJustification .
-			?justification aida:keyFrame               ?kfid .
-			?justification aida:boundingBox            ?bb  .
-			?bb            aida:boundingBoxUpperLeftX  ?ulx .
-			?bb            aida:boundingBoxUpperLeftY  ?uly .
-			?bb            aida:boundingBoxLowerRightX ?lrx .
-			?bb            aida:boundingBoxLowerRightY ?lry }
-
-		OPTIONAL { ?justification a                  aida:ShotVideoJustification .
-			?justification aida:shot                   ?sid }
-
-		OPTIONAL { ?justification a                  aida:AudioJustification .
-			?justification aida:startTimestamp         ?st .
-			?justification aida:endTimestamp           ?et }
-
-	}
-	]]>
-
-END_SPARQL_QUERY
-
-	if($modality eq "text") {
-		$text_entrypoint_constraints =~ s/START_OFFSET/$start/g;
-		$text_entrypoint_constraints =~ s/END_OFFSET/$end/g;
-		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$text_entrypoint_constraints/;
-	}
-	elsif($modality eq "image") {
-		my ($ulx, $uly) = split(",", $start);
-		my ($lrx, $lry) = split(",", $end);
-		$image_entrypoint_constraints =~ s/UPPER_LEFT_X/$ulx/g;
-		$image_entrypoint_constraints =~ s/UPPER_LEFT_Y/$uly/g;
-		$image_entrypoint_constraints =~ s/LOWER_RIGHT_X/$lrx/g;
-		$image_entrypoint_constraints =~ s/LOWER_RIGHT_Y/$lry/g;
-		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$image_entrypoint_constraints/;
-	}
-	elsif($modality eq "video") {
-		my ($ulx, $uly) = split(",", $start);
-		my ($lrx, $lry) = split(",", $end);
-		$video_entrypoint_constraints =~ s/UPPER_LEFT_X/$ulx/g;
-		$video_entrypoint_constraints =~ s/UPPER_LEFT_Y/$uly/g;
-		$video_entrypoint_constraints =~ s/LOWER_RIGHT_X/$lrx/g;
-		$video_entrypoint_constraints =~ s/LOWER_RIGHT_Y/$lry/g;
-		$video_entrypoint_constraints =~ s/KEYFRAMEID/$keyframeid/g;
-		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$video_entrypoint_constraints/;
-	}
-	elsif($modality eq "audio") {
-		$audio_entrypoint_constrinats =~ s/START_TIME/$start/g;
-		$audio_entrypoint_constrinats =~ s/END_TIME/$end/g;
-		$sparql =~ s/ENTRYPOINT_CONSTRAINTS/$audio_entrypoint_constrinats/;
-	}
-
-	$sparql =~ s/QUERYID/$query_id/g;
-	$sparql =~ s/ENTTYPE/$enttype/g;
-	$sparql =~ s/DOCEID/$doceid/g;
-	my $xml_sparql = XMLElement->new($self->get("LOGGER"), $sparql, "sparql", 1);
-
-	my $xml_query = XMLElement->new($logger,
-						XMLContainer->new($logger, $xml_entrypoint, $xml_sparql),
-						"zerohop_query", 1, $attributes);
-	print $program_output $xml_query->tostring(2);
-}
-
-#####################################################################################
-# GraphQueries
-#####################################################################################
-
-package GraphQueries;
-
-use parent -norequire, 'Container', 'Super';
-
-sub new {
-  my ($class, $logger, $parameters) = @_;
-  my $self = $class->SUPER::new($logger, 'GraphQuery');
-  $self->{CLASS} = 'GraphQueries';
-  $self->{PARAMETERS} = $parameters;
-  $self->{LOGGER} = $logger;
-  bless($self, $class);
-  $self;
-}
-
-sub write_to_file {
-	my ($self) = @_;
-	my $output_filename_xml = $self->get("PARAMETERS")->get("GRAPH_QUERIES_XML_OUTPUT_FILE");
-	open(my $program_output_xml, ">:utf8", $output_filename_xml) or die("Could not open $output_filename_xml: $!");
-	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	print $program_output_xml "<graph_queries>\n";
-	foreach my $query($self->toarray()) {
-		$query->write_to_file($program_output_xml);
-	}
-	print $program_output_xml "<\/graph_queries>\n";
-	close($program_output_xml);
-}
-
-sub toarray {
-	my ($self) = @_;
-	sort {$a->get("NUMERIC_ID", "P1") <=> $b->get("NUMERIC_ID", "P1") ||
-		$a->get("NUMERIC_ID", "P2") <=> $b->get("NUMERIC_ID", "P2")}
-		@{$self->{STORE}{LIST} || []};
-}
-
-#####################################################################################
-# GraphQuery
-#####################################################################################
-
-package GraphQuery;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $parameters, $type, $keyframes_boundingboxes, $images_boundingboxes, $query_id, $generate_sparql, $edges) = @_;
-  my $self = {
-    CLASS => 'GraphQuery',
-    PARAMETERS => $parameters,
-    KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
-    IMAGES_BOUNDINGBOXES => $images_boundingboxes,
-    QUERY_ID => $query_id,
-    EDGES => $edges,
-    ENTRYPOINTS => [],
-    GENERATE_SPARQL => undef,
-    TYPE => $type,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self->set("GENERATE_SPARQL", 1) if($generate_sparql eq "DO_GENERATE_SPARQL");
-  $self->set("GENERATE_SPARQL", 0) if($generate_sparql eq "DONOT_GENERATE_SPARQL");
-  $self;
-}
-
-sub get_NUMERIC_ID {
-	my ($self, $part_num) = @_;
-	my $prefix;
-	$prefix = $self->get("PARAMETERS")->get("GRAPH_QUERIES_PREFIX") if $self->get("TYPE") eq "ALL_EDGES_GRAPH_QUERY";
-	$prefix = $self->get("PARAMETERS")->get("EDGE_QUERIES_PREFIX") if $self->get("TYPE") eq "SINGLE_EDGE_GRAPH_QUERY";
-	my ($numeric_id_p1, $numeric_id_p2) = $self->get("QUERY_ID") =~ /^$prefix\_(\d+?)_(\d+?)$/;
-	return $numeric_id_p1 if $part_num eq "P1";
-	return $numeric_id_p2 if $part_num eq "P2";
-}
-
-sub add_entrypoint {
-	my ($self, $canonical_mention) = @_;
-	push(@{$self->{ENTRYPOINTS}}, $canonical_mention);
-}
-
-sub write_to_file {
-	my ($self, $program_output) = @_;
-	my $logger = $self->get("LOGGER");
-	my $query_id = $self->get("QUERY_ID");
-	my $query_attributes = XMLAttributes->new($logger);
-	$query_attributes->add("$query_id", "id");
-	# process the edges into a graph
-	my $xml_edges_container = XMLContainer->new($logger);
-	my $edge_id = 0;
-	foreach my $edge($self->get("EDGES")->toarray()) {
-		$edge_id++;
-		my $subject = &mask($edge->get("SUBJECT")->get("NODEID"));
-		my $object = &mask($edge->get("OBJECT")->get("NODEID"));
-		my $predicate = $edge->get("PREDICATE");
-		my $xml_subject = XMLElement->new($logger, $subject, "subject", 0);
-		my $xml_object = XMLElement->new($logger, $object, "object", 0);
-		my $xml_predicate = XMLElement->new($logger, $predicate, "predicate", 0);
-		my $edge_attributes = XMLAttributes->new($logger);
-		$edge_attributes->add("$edge_id", "id");
-		my $xml_edge = XMLElement->new(
-							$logger,
-							XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object),
-							"edge",
-							1,
-							$edge_attributes);
-		$xml_edges_container->add($xml_edge);
-	}
-	my $xml_edges = XMLElement->new($logger, $xml_edges_container, "edges", 1);
-	my $xml_graph = XMLElement->new($logger, $xml_edges, "graph", 1);
-	# process the entrypoints
-	my $xml_entrypoints_container = XMLContainer->new($logger);
-	foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
-		if($entrypoint->{TYPE} eq "STRING_ENTRYPOINT") {
-			my $node_id = &mask($entrypoint->{"NODEID"});
-			my $enttype = $entrypoint->{"NIST_TYPE"};
-			my $name_string = $entrypoint->{"TEXT_STRING"};
-			my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
-			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
-			my $xml_namestring = XMLElement->new($logger, $name_string, "name_string", 0);
-			my $xml_descriptor_container = XMLContainer->new($logger, $xml_namestring);
-			my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, "string_descriptor", 1);
-			my $xml_typed_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_descriptor);
-			my $xml_typed_descriptor = XMLElement->new($logger, $xml_typed_descriptor_container, "typed_descriptor", 1);
-			my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node, $xml_typed_descriptor);
-			my $xml_entrypoint = XMLElement->new($logger, $xml_entrypoint_container, "entrypoint", 1);
-			$xml_entrypoints_container->add($xml_entrypoint);
-			next;
-		}
-		my $node_id = &mask($entrypoint->get("NODEID"));
-		my $xml_node = XMLElement->new($logger, $node_id, "node", 0);
-		my $xml_entrypoint_container = XMLContainer->new($logger, $xml_node);
-		my $ep_mention_id = $entrypoint->get("MENTIONID");
-		my $ep_keyframe_id = $entrypoint->get("KEYFRAMEID");
-		my $ep_node = $entrypoint->get("NODE");
-		foreach my $mention($ep_node->get("MENTIONS")->toarray()){
-			next unless $mention->get("MENTIONID") eq $ep_mention_id;
-			my $enttype = $mention->get("NIST_TYPE");
-			my $xml_enttype = XMLElement->new($logger, $enttype, "enttype", 0);
-			my $modality = $mention->get("MODALITY");
-			my $fn_manager = FieldNameManager->new($self->get("LOGGER"), $modality);
-			foreach my $span($mention->get("SPANS")->toarray()) {
-				my $doceid = $span->get("DOCUMENTEID");
-				my $start = $span->get("START");
-				my $end = $span->get("END");
-				my $xml_keyframeid;
-				if($modality eq "video") {
-					my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $ep_keyframe_id);
-					$start = $keyframe_boundingbox->get("START");
-					$end = $keyframe_boundingbox->get("END");
-					$xml_keyframeid = XMLElement->new($logger, $ep_keyframe_id, "keyframeid", 0);
-				}
-				if($modality eq "image") {
-					my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
-					$start = $image_boundingbox->get("START");
-					$end = $image_boundingbox->get("END");
-				}
-				my $xml_doceid = XMLElement->new($logger, $doceid, "doceid", 0);
-				my $xml_start = XMLElement->new($logger, $start, $fn_manager->get("FIELDNAME", "start"), 0);
-				my $xml_end = XMLElement->new($logger, $end, $fn_manager->get("FIELDNAME", "end"), 0);
-				my $xml_descriptor_container = XMLContainer->new($logger, $xml_doceid, $xml_start, $xml_end);
-				$xml_descriptor_container = XMLContainer->new($logger, $xml_doceid, $xml_keyframeid, $xml_start, $xml_end)
-					if $modality eq "video";
-				my $xml_descriptor = XMLElement->new($logger, $xml_descriptor_container, $fn_manager->get("FIELDNAME", "descriptor"), 1);
-				my $xml_typed_descriptor_container = XMLContainer->new($logger, $xml_enttype, $xml_descriptor);
-				my $xml_typed_descriptor = XMLElement->new($logger, $xml_typed_descriptor_container, "typed_descriptor", 1);
-				$xml_entrypoint_container->add($xml_typed_descriptor);
-			}
-		}
-		my $xml_entrypoint = XMLElement->new($logger, $xml_entrypoint_container, "entrypoint", 1);
-		$xml_entrypoints_container->add($xml_entrypoint);
-	}
-	my $xml_entrypoints = XMLElement->new($logger, $xml_entrypoints_container, "entrypoints", 1);
-	my $sparql = "";
-	$sparql = $self->get("SPARQL") if($self->get("GENERATE_SPARQL"));
-	my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
-	my $xml_query_container = XMLContainer->new($logger, $xml_graph, $xml_entrypoints, $xml_sparql);
-	my $xml_query = XMLElement->new($logger, $xml_query_container, "graph_query", 1, $query_attributes);
-	print $program_output $xml_query->tostring(2);
-}
-
-sub get_SPARQL {
-	my ($self) = @_;
-	my $sparql = SPARQL->new($self->get("LOGGER"), 
-								$self->get("QUERY_ID"),
-								$self->get("KEYFRAMES_BOUNDINGBOXES"), 
-								$self->get("IMAGES_BOUNDINGBOXES"), 
-								$self->get("EDGES"), 
-								$self->get("ENTRYPOINTS"));
-	$sparql->tostring();
-}
-
-sub mask {
-	my ($input) = @_;
-
-	"?$input";
-}
-
-#####################################################################################
-# SPARQL
-#####################################################################################
-
-package SPARQL;
-
-use parent -norequire, 'Super';
-
-sub new {
-	my ($class, $logger, $query_id, $keyframes_boundingboxes, $images_boundingboxes, $edges, $entrypoints) = @_;
 	my $self = {
-    CLASS => 'SPARQL',
-    LOGGER => $logger,
-    QUERY_ID => $query_id,
-    KEYFRAMES_BOUNDINGBOXES => $keyframes_boundingboxes,
-    IMAGES_BOUNDINGBOXES => $images_boundingboxes,
-    _NEXT_GROUP_POSTFIX => 10001,
-    EDGES => $edges,
-    ENTRYPOINTS => $entrypoints,
-    SELECT_VARIABLES => "",
-    WHERE_CLAUSE_STRING => "",
-    WHERE_TEMPLATE => undef,
-    TEXT_ENTRYPOINT_CONSTRAINTS => undef,
-    IMAGE_ENTRYPOINT_CONSTRAINTS => undef,
-    VIDEO_ENTRYPOINT_CONSTRAINTS => undef,
-    AUDIO_ENTRYPOINT_CONSTRAINTS => undef,
-    SELECT_NODE_VARIABLES_TEMPLATE => undef,
-    ALL_NODE_VARIABLES_TEMPLATE => undef,
-  };
+		CLASS => 'DTD',
+		LOGGER => $logger,
+		FILENAME => $filename,
+		TREE => Tree->new($logger, $filename),
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	
+	my $filename = $self->get("FILENAME");
+	open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
+	my $linenum = 0;
+	while(my $line = <FILE>) {
+		chomp $line;
+		$linenum++;
+		if(my ($parent, $children) = $line =~ /\<\!ELEMENT (.*?) \((.*?)\)\>/) {
+			my $child_num = 0;
+			foreach my $types(split(/,/, $children)) {
+				$child_num++;
+				my $modifier = 1;
+				if($types =~ /\+$/) {
+					$modifier = "+";
+					$types =~ s/\+$//;
+				}
+				if($types =~ /^\((.*?)\)$/){
+					$types = $1;
+				}
+				foreach my $type(split(/\|/, $types)) {
+					$self->get("TREE")->add("CHILD", $parent, $child_num, $type, $modifier, {FILENAME=>$filename, LINENUM=>$linenum});
+				}
+			}
+		}
+		elsif(my ($node_id, $attribute) = $line =~ /\<\!ATTLIST (.*?) (.*?) .*?\>/) {
+			$self->get("TREE")->add("ATTRIBUTE", $node_id, $attribute);
+		}
+	}
+	$self->determine_root();
+	close(FILE);
+}
+
+sub determine_root {
+	my ($self) = @_;
+	$self->get("TREE")->get("ROOT");
+}
+
+sub get_ROOT {
+	my ($self) = @_;
+	$self->get("TREE")->get("ROOT");
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("TREE")->tostring();
+}
+
+#####################################################################################
+# Tree
+#####################################################################################
+
+package Tree;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $filename) = @_;
+	
+	my $self = {
+		CLASS => 'Tree',
+		LOGGER => $logger,
+		FILENAME => $filename,
+		ROOT => undef,
+		POTENTIAL_ROOTS => [],
+		NODES => Nodes->new($logger),
+	};
+	bless($self, $class);
+	$self;
+}
+
+sub add {
+	my ($self, $field, @arguments) = @_;
+	my $method = $self->can("add_$field");
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	$self->get("LOGGER")->record_problem("UNDEFINED_FUNCTION", "add(\"$field\",...)", "Node", $where)
+		unless $method;
+	$method->($self, @arguments);
+}
+
+sub add_CHILD {
+	my ($self, $parent_id, $child_num, $child_type_id, $child_modifier, $where) = @_;
+	my $parent_node = $self->get("NODES")->get("BY_KEY", $parent_id);
+	$parent_node->set("NODEID", $parent_id);
+	my $type_node = $self->get("NODES")->get("BY_KEY", $child_type_id);
+	$parent_node->set("CHILD_TYPES_MODIFIER", $child_num, $child_type_id, $child_modifier);	
+	$type_node->add("PARENT", $parent_node);
+}
+
+sub add_ATTRIBUTE {
+	my ($self, $node_id, $attribute) = @_;
+	$self->get("NODES")->get("BY_KEY", $node_id)->add("ATTRIBUTE", $attribute);
+}
+
+sub get_ROOT {
+	my ($self) = @_;
+	return $self->get("ROOT") if $self->{ROOT};
+	my $filename = $self->get("FILENAME");
+	foreach my $node($self->get("NODES")->toarray()) {
+		push (@{$self->get("POTENTIAL_ROOTS")}, $node) unless $node->has_parents();
+	}
+	my @potential_roots = @{$self->get("POTENTIAL_ROOTS")};
+	my $potential_roots_ids_string = join(",", map {$_->get("NODEID")} @potential_roots);
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	$self->get("LOGGER")->record_problem("MULTIPLE_POTENTIAL_ROOTS", $potential_roots_ids_string, $filename, $where)
+		if scalar @potential_roots > 1;
+	$self->set("ROOT", $potential_roots[0]);
+	$potential_roots[0];
+}
+
+sub get_NODE {
+	my ($self, $node_id) = @_;
+	$self->get("NODES")->get("BY_KEY", $node_id);
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	my $retVal = "";
+	foreach my $node($self->get("NODES")->toarray()) {
+		$retVal .= $node->tostring();
+	}
+	$retVal;
+}
+
+#####################################################################################
+# Nodes
+#####################################################################################
+
+package Nodes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Node');
+  $self->{CLASS} = 'Nodes';
+  $self->{LOGGER} = $logger;
   bless($self, $class);
-  $self->setup_constants();
-  $self->process_all_edges();
   $self;
 }
 
-sub get_NEXT_GROUP_POSTFIX {
+#####################################################################################
+# Node
+#####################################################################################
+
+package Node;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $node_id) = @_;
+	my $self = {
+		CLASS => 'Node',
+		NODEID => $node_id,
+		PARENTS => Nodes->new($logger),
+		CHILDNUM_TYPES_MAPPING => {},
+		CHILDNUM_MODIFIER_MAPPING => {},
+		ATTRIBUTES => Container->new($logger, "RAW"),
+		TYPES => Container->new($logger, "RAW"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self;
+}
+
+sub add {
+	my ($self, $field, @arguments) = @_;
+	my $method = $self->can("add_$field");
+	my $where = {FILENAME => __FILE__, LINENUM => __LINE__};
+	$self->get("LOGGER")->record_problem("UNDEFINED_FUNCTION", "add(\"$field\",...)", "Node", $where)
+		unless $method;
+	$method->($self, @arguments);
+}
+
+sub add_PARENT {
+	my ($self, $parent) = @_;
+	$self->get("PARENTS")->add($parent, $parent->get("NODEID"));
+}
+
+#sub add_CHILD {
+#	my ($self, $child) = @_;
+#	$self->get("CHILDREN")->add($child, $child->get("NODEID"));
+#}
+
+#sub add_TYPE {
+#	my ($self, $type) = @_;
+#	$self->get("TYPES")->add("KEY", $type);
+#}
+
+sub add_ATTRIBUTE {
+	my ($self, $attribute) = @_;
+	my $i = scalar $self->get("ATTRIBUTES")->toarray();
+	$self->get("ATTRIBUTES")->add($attribute, $i+1);
+}
+
+sub get_CHILDNUM_TYPES {
+	my ($self, $child_num) = @_;
+	keys %{$self->{CHILDNUM_TYPES_MAPPING}{$child_num}};
+}
+
+sub get_CHILDNUM_MODIFIER {
+	my ($self, $child_num) = @_;
+	$self->{CHILDNUM_MODIFIER_MAPPING}{$child_num};
+}
+
+sub get_NUM_OF_CHILDREN {
 	my ($self) = @_;
-	my $group_postfix = $self->get("_NEXT_GROUP_POSTFIX");
-	$self->set("_NEXT_GROUP_POSTFIX", $group_postfix+1);
-	$group_postfix;
+	scalar keys %{$self->{CHILDNUM_MODIFIER_MAPPING}};
 }
 
-sub setup_constants {
+sub set_CHILD_TYPES_MODIFIER {
+	my ($self, $child_num, $child_type_id, $child_modifier) = @_;
+	$self->{CHILDNUM_TYPES_MAPPING}{$child_num}{$child_type_id} = 1;
+	$self->{CHILDNUM_MODIFIER_MAPPING}{$child_num} = $child_modifier;
+}
+
+sub has_parents {
 	my ($self) = @_;
-
-	$self->{PREFIX} = <<'PREFIX';
-PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/SeedlingOntology#>
-	PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-	PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2018/ontologies/InterchangeOntology#>
-	PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
-
-	# Query: QUERYID
-
-PREFIX
-
-	$self->{STRING_ENTRYPOINT_CONSTRAINTS} = <<'STRING_ENTRYPOINT_CONSTRAINTS';
-[NID_EP] aida:hasName               "[NAME_STRING]" .
-STRING_ENTRYPOINT_CONSTRAINTS
-
-	$self->{TEXT_ENTRYPOINT_CONSTRAINTS} = <<'TEXT_ENTRYPOINT_CONSTRAINTS';
-[JUSTIFICATION_EP] a                         aida:TextJustification .
-		[JUSTIFICATION_EP] aida:source               "[EPDOCEID]" .
-		[JUSTIFICATION_EP] aida:startOffset          [EPSO] .
-		[JUSTIFICATION_EP] aida:endOffsetInclusive   [EPEO] .
-		FILTER ( ([EPEO] >= [START_OFFSET] && [EPEO] <= [END_OFFSET]) || ([EPSO] >= [START_OFFSET] && [EPSO] <= [END_OFFSET]) ) .
-TEXT_ENTRYPOINT_CONSTRAINTS
-
-	$self->{IMAGE_ENTRYPOINT_CONSTRAINTS} = <<'IMAGE_ENTRYPOINT_CONSTRAINTS';
-[JUSTIFICATION_EP] a                         aida:ImageJustification .
-		[JUSTIFICATION_EP] aida:source               "[EPDOCEID]" .
-		[JUSTIFICATION_EP] aida:boundingBox          [BB_EP] .
-		[BB_EP] aida:boundingBoxUpperLeftX  [EPULX] .
-		[BB_EP] aida:boundingBoxUpperLeftY  [EPULY] .
-		[BB_EP] aida:boundingBoxLowerRightX [EPLRX] .
-		[BB_EP] aida:boundingBoxLowerRightY [EPLRY] .
-		FILTER (([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
-			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y]) ||
-			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
-			([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y])) .
-IMAGE_ENTRYPOINT_CONSTRAINTS
-
-	$self->{VIDEO_ENTRYPOINT_CONSTRAINTS} = <<'VIDEO_ENTRYPOINT_CONSTRAINTS';
-[JUSTIFICATION_EP] a                         aida:KeyFrameVideoJustification .
-		[JUSTIFICATION_EP] aida:source               "[EPDOCEID]" .
-		[JUSTIFICATION_EP] aida:keyFrame             "[KEYFRAMEID]" .
-		[JUSTIFICATION_EP] aida:boundingBox          [BB_EP] .
-		[BB_EP] aida:boundingBoxUpperLeftX  [EPULX] .
-		[BB_EP] aida:boundingBoxUpperLeftY  [EPULY] .
-		[BB_EP] aida:boundingBoxLowerRightX [EPLRX] .
-		[BB_EP] aida:boundingBoxLowerRightY [EPLRY] .
-		FILTER (([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
-			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y]) ||
-			([EPLRX] >= [UPPER_LEFT_X] && [EPLRX] <= [LOWER_RIGHT_X] && [EPULY] <= [LOWER_RIGHT_Y] && [EPULY] >= [UPPER_LEFT_Y]) ||
-			([EPULX] >= [UPPER_LEFT_X] && [EPULX] <= [LOWER_RIGHT_X] && [EPLRY] <= [LOWER_RIGHT_Y] && [EPLRY] >= [UPPER_LEFT_Y])) .
-VIDEO_ENTRYPOINT_CONSTRAINTS
-
-	$self->{AUDIO_ENTRYPOINT_CONSTRAINTS} = <<'AUDIO_ENTRYPOINT_CONSTRAINTS';
-[JUSTIFICATION_EP] a                       aida:AudioJustification .
-		[JUSTIFICATION_EP] aida:source             "[EPDOCEID]" .
-		[JUSTIFICATION_EP] aida:startTimestamp     [EPST] .
-		[JUSTIFICATION_EP] aida:endTimestamp       [EPET] .
-		FILTER ( ([EPET] >= [START_TIME] && $epet <= [END_TIME]) || ([EPST] >= [START_TIME] && [EPST] <= [END_TIME]) ) .
-AUDIO_ENTRYPOINT_CONSTRAINTS
-
-	$self->{STATEMENT1_TYPE_TRIPLE_TEMPLATE} = "[STATEMENT1]    rdf:object           ldcOnt:[ENTTYPE] .";
-	
-	$self->{STATEMENT4_TYPE_TRIPLE_TEMPLATE} = "[STATEMENT4]       rdf:object                ldcOnt:[ENTTYPE] .";
-
-	#SELECT ?cluster ?nid_ep ?nid_ot ?doceid ?sid ?kfid ?so ?eo ?ulx ?uly ?lrx ?lry ?st ?et ?cmcv_ep ?cmcv_ot ?typecv
-
-	$self->{WHERE_EDGE_TEMPLATE} = <<'END_SPARQL_EDGE_WHERE';
-		[STATEMENT1]      a                    rdf:Statement .
-		[STATEMENT1]      rdf:object           [OBJECT_NODEID] .
-		[STATEMENT1]      rdf:predicate        ldcOnt:[EDGE_TYPE] .
-		[STATEMENT1]      rdf:subject          [SUBJECT_NODEID] .
-		[STATEMENT1]      aida:confidence      [EDGE_CONFIDENCE] .
-		[STATEMENT1]      aida:justifiedBy     [COMPOUND_JUSTIFICATION] .
-		[EDGE_CONFIDENCE] aida:confidenceValue [EDGE_CV] .
-
-		[COMPOUND_JUSTIFICATION] a                           aida:CompoundJustification .
-		[COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_1] .
-		[JUSTIFICATION_1] aida:source                 [DOCEID_1] .
-
-		OPTIONAL { [COMPOUND_JUSTIFICATION] aida:containedJustification [JUSTIFICATION_2] . 
-			   [JUSTIFICATION_2] aida:source                 [DOCEID_2] . }
-
-		OPTIONAL { [JUSTIFICATION_1] a                           aida:TextJustification .
-			   [JUSTIFICATION_1] aida:startOffset            [SO_1] .
-			   [JUSTIFICATION_1] aida:endOffsetInclusive     [EO_1] }
-
-		OPTIONAL { [JUSTIFICATION_1] a                           aida:ImageJustification .
-			   [JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
-			   [BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
-			   [BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
-			   [BB_1]            aida:boundingBoxLowerRightX [LRX_1] .
-			   [BB_1]            aida:boundingBoxLowerRightY [LRY_1] }
-
-		OPTIONAL { [JUSTIFICATION_1] a                           aida:KeyFrameVideoJustification .
-			   [JUSTIFICATION_1] aida:keyFrame               [KFID_1] .
-			   [JUSTIFICATION_1] aida:boundingBox            [BB_1]  .
-			   [BB_1]            aida:boundingBoxUpperLeftX  [ULX_1] .
-			   [BB_1]            aida:boundingBoxUpperLeftY  [ULY_1] .
-			   [BB_1]            aida:boundingBoxLowerRightX [LRX_1] .
-			   [BB_1]            aida:boundingBoxLowerRightY [LRY_1] }
-
-		OPTIONAL { [JUSTIFICATION_1] a                           aida:ShotVideoJustification .
-			   [JUSTIFICATION_1] aida:shot                   [SID_1] }
-
-		OPTIONAL { [JUSTIFICATION_1] a                           aida:AudioJustification .
-			   [JUSTIFICATION_1] aida:startTimestamp         [ST_1] .
-			   [JUSTIFICATION_1] aida:endTimestamp           [ET_1] }
-
-		OPTIONAL { [JUSTIFICATION_2] a                           aida:TextJustification .
-			   [JUSTIFICATION_2] aida:startOffset            [SO_2] .
-			   [JUSTIFICATION_2] aida:endOffsetInclusive     [EO_2] }
-
-		OPTIONAL { [JUSTIFICATION_2] a                           aida:ImageJustification .
-			   [JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
-			   [BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
-			   [BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
-			   [BB_2]            aida:boundingBoxLowerRightX [LRX_2] .
-			   [BB_2]            aida:boundingBoxLowerRightY [LRY_2] }
-
-		OPTIONAL { [JUSTIFICATION_2] a                           aida:KeyFrameVideoJustification .
-			   [JUSTIFICATION_2] aida:keyFrame               [KFID_2] .
-			   [JUSTIFICATION_2] aida:boundingBox            [BB_2]  .
-			   [BB_2]            aida:boundingBoxUpperLeftX  [ULX_2] .
-			   [BB_2]            aida:boundingBoxUpperLeftY  [ULY_2] .
-			   [BB_2]            aida:boundingBoxLowerRightX [LRX_2] .
-			   [BB_2]            aida:boundingBoxLowerRightY [LRY_2] }
-
-		OPTIONAL { [JUSTIFICATION_2] a                           aida:ShotVideoJustification .
-			   [JUSTIFICATION_2] aida:shot                   [SID_2] }
-
-		OPTIONAL { [JUSTIFICATION_2] a                           aida:AudioJustification .
-			   [JUSTIFICATION_2] aida:startTimestamp         [ST_2] .
-			   [JUSTIFICATION_2] aida:endTimestamp           [ET_2] }
-
-END_SPARQL_EDGE_WHERE
-
-	$self->{WHERE_NODE_TEMPLATE} = <<'END_SPARQL_NODE_WHERE';
-		[STATEMENT1]    a                    rdf:Statement .
-		[STATEMENT1_TYPE_TRIPLE_TEMPLATE]
-		[STATEMENT1]    rdf:predicate        rdf:type .
-		[STATEMENT1]    rdf:subject          [NID_OT] .
-		[STATEMENT1]    aida:justifiedBy     [JUSTIFICATION] .
-		[JUSTIFICATION] aida:source          [DOCEID] .
-		[JUSTIFICATION] aida:confidence      [CONFIDENCE] .
-		[CONFIDENCE]    aida:confidenceValue [TYPE_CV] .
-
-		[CLUSTER]          a                    aida:SameAsCluster .
-		[STATEMENT2]       a                    aida:ClusterMembership .
-		[STATEMENT2]       aida:cluster         [CLUSTER] .
-		[STATEMENT2]       aida:clusterMember   [NID_EP] .
-		[STATEMENT2]       aida:confidence      [CM_CONFIDENCE_EP] .
-		[CM_CONFIDENCE_EP] aida:confidenceValue [CMCV_EP] .
-
-		[STATEMENT3]       a                    aida:ClusterMembership .
-		[STATEMENT3]       aida:cluster         [CLUSTER] .
-		[STATEMENT3]       aida:clusterMember   [NID_OT] .
-		[STATEMENT3]       aida:confidence      [CM_CONFIDENCE_OT] .
-		[CM_CONFIDENCE_OT] aida:confidenceValue [CMCV_OT] .
-
-		[STATEMENT4]       a                         rdf:Statement .
-		[STATEMENT4_TYPE_TRIPLE_TEMPLATE]
-		[STATEMENT4]       rdf:predicate             rdf:type .
-		[STATEMENT4]       rdf:subject               [NID_EP] .
-		[STATEMENT4]       aida:justifiedBy          [JUSTIFICATION_EP] .
-		[ENTRYPOINT_CONSTRAINTS]
-
-		OPTIONAL { [JUSTIFICATION] a                  aida:TextJustification .
-			   [JUSTIFICATION] aida:startOffset            [SO] .
-			   [JUSTIFICATION] aida:endOffsetInclusive     [EO] }
-
-		OPTIONAL { [JUSTIFICATION] a                  aida:ImageJustification .
-			   [JUSTIFICATION] aida:boundingBox            [BB]  .
-			   [BB]            aida:boundingBoxUpperLeftX  [ULX] .
-			   [BB]            aida:boundingBoxUpperLeftY  [ULY] .
-			   [BB]            aida:boundingBoxLowerRightX [LRX] .
-			   [BB]            aida:boundingBoxLowerRightY [LRY] }
-
-		OPTIONAL { [JUSTIFICATION] a                  aida:KeyFrameVideoJustification .
-			   [JUSTIFICATION] aida:keyFrame               [KFID] .
-			   [JUSTIFICATION] aida:boundingBox            [BB]  .
-			   [BB]            aida:boundingBoxUpperLeftX  [ULX] .
-			   [BB]            aida:boundingBoxUpperLeftY  [ULY] .
-			   [BB]            aida:boundingBoxLowerRightX [LRX] .
-			   [BB]            aida:boundingBoxLowerRightY [LRY] }
-
-		OPTIONAL { [JUSTIFICATION] a                  aida:ShotVideoJustification .
-			   [JUSTIFICATION] aida:shot                   [SID] }
-
-		OPTIONAL { [JUSTIFICATION] a                  aida:AudioJustification .
-			   [JUSTIFICATION] aida:startTimestamp         [ST] .
-			   [JUSTIFICATION] aida:endTimestamp           [ET] }
-END_SPARQL_NODE_WHERE
-
-    $self->{"SELECT_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly lrx lry st et cmcv_ep cmcv_ot type_cv
-													doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 lrx_1 lry_1 st_1 et_1
-													doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 lrx_2 lry_2 st_2 et_2
-													edge_cv)];
-
-    $self->{"ALL_NODE_VARIABLES_TEMPLATE"} = [qw(cluster nid_ep nid_ot doceid sid kfid so eo ulx uly lrx lry st et cmcv_ep cmcv_ot type_cv
-													statement1 statement2 statement3 statement4 cluster justification justification_ep bb
-													confidence type_cv cm_confidence_ep cm_confidence_ot bb_ep epulx epuly eplrx eplry epst
-													epet epso epeo)];
-
-    $self->{"ALL_EDGE_VARIABLES_TEMPLATE"} = [qw(statement1 edge_confidence compound_justification edge_cv
-													justification_1 doceid_1 sid_1 kfid_1 so_1 eo_1 ulx_1 uly_1 lrx_1 lry_1 st_1 et_1 bb_1
-													justification_2 doceid_2 sid_2 kfid_2 so_2 eo_2 ulx_2 uly_2 lrx_2 lry_2 st_2 et_2 bb_2)]
+	my $retVal = scalar $self->get("PARENTS")->toarray();
+	$retVal;
 }
 
-sub process_all_edges {
+sub is_leaf {
 	my ($self) = @_;
-	foreach my $edge($self->get("EDGES")->toarray()) {
-		$self->process_edge($edge);
-	}
-}
-
-sub process_edge {
-	my ($self, $edge) = @_;
-	my $subject = $edge->get("SUBJECT");
-	# Get the subject type
-	my $subject_type;
-	foreach my $nist_type($subject->get("NIST_TYPES")) {
-		$subject_type = $nist_type
-			if($edge->get("PREDICATE") =~ /$nist_type/)
-	}
-	my $subject_nodevariable = $self->process_node($subject, $subject_type);
-	my $object = $edge->get("OBJECT");
-	# See if you can find a single object type
-	my $object_type;
-	if($object->get("NIST_TYPES") == 1) {
-		# If there is a single type for the object
-		($object_type) = $object->get("NIST_TYPES");
-	}
-	else {
-		# otherwise, see if you obtain this information from the entrypoints
-		foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
-			next if $entrypoint->{TYPE} eq "STRING_ENTRYPOINT";
-			if($object->get("NODEID") eq $entrypoint->{NODEID}) {
-				$object_type = $object->get("MENTION", $entrypoint->{"MENTIONID"})->get("NIST_TYPE") unless($object_type);
-				last if $object_type;
-			}
-		}
-	}
-	my $object_nodevariable = $self->process_node($object, $object_type);
-	my $edge_type = $edge->get("PREDICATE");
-	# Process the edge
-	my $group_postfix = $self->get("NEXT_GROUP_POSTFIX");
-	my $where_clause = $self->get("WHERE_EDGE_TEMPLATE");
-	$where_clause =~ s/\[SUBJECT_NODEID\]/?$subject_nodevariable/g;
-	$where_clause =~ s/\[OBJECT_NODEID\]/?$object_nodevariable/g;
-	$where_clause =~ s/\[EDGE_TYPE\]/$edge_type/g;
-	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
-	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
-	foreach my $variable(@{$self->get("ALL_EDGE_VARIABLES_TEMPLATE")}) {
-		my $is_select_variable = $select_node_variables_template{$variable};
-		my $new_variable = "$variable\_$group_postfix";
-		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " ?" . $new_variable) if $is_select_variable;
-		my $old_variable = "\\[" . uc $variable . "\\]";
-		$where_clause =~ s/$old_variable/\?$new_variable/gs;
-	}
-	$self->set("WHERE_CLAUSE_STRING", $self->get("WHERE_CLAUSE_STRING") . "\n" . $where_clause);
-}
-
-sub process_node {
-	my ($self, $node, $type) = @_;
-	my $group_postfix = $self->get("NEXT_GROUP_POSTFIX");
-	my $where_clause = $self->get("WHERE_NODE_TEMPLATE");
-	my @select_node_variables_template = @{$self->get("SELECT_NODE_VARIABLES_TEMPLATE")};
-	my %select_node_variables_template = map {$_=>1} @select_node_variables_template;
-	my $statement1_type_triple_template = $self->get("STATEMENT1_TYPE_TRIPLE_TEMPLATE");
-	my $statement4_type_triple_template = $self->get("STATEMENT4_TYPE_TRIPLE_TEMPLATE");
-	my $string_entrypoint_constraints = $self->get("STRING_ENTRYPOINT_CONSTRAINTS");
-	my $text_entrypoint_constraints = $self->get("TEXT_ENTRYPOINT_CONSTRAINTS");
-	my $image_entrypoint_constraints = $self->get("IMAGE_ENTRYPOINT_CONSTRAINTS");
-	my $video_entrypoint_constraints = $self->get("VIDEO_ENTRYPOINT_CONSTRAINTS");
-	my $audio_entrypoint_constraints = $self->get("AUDIO_ENTRYPOINT_CONSTRAINTS");
-	my ($retval_nodevariable, $retval_clustervariable);
-	foreach my $variable(@{$self->get("ALL_NODE_VARIABLES_TEMPLATE")}) {
-		my $is_select_variable = $select_node_variables_template{$variable};
-		my $new_variable = "$variable\_$group_postfix";
-		$retval_nodevariable = $new_variable if($variable eq "nid_ot");
-		$self->set("SELECT_VARIABLES", $self->get("SELECT_VARIABLES") . " ?" . $new_variable) if $is_select_variable;
-		my $old_variable = "\\[" . uc $variable . "\\]";
-		$where_clause =~ s/$old_variable/\?$new_variable/gs;
-		$statement1_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
-		$statement4_type_triple_template =~ s/$old_variable/\?$new_variable/gs;
-		$string_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
-		$text_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
-		$image_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
-		$video_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
-		$audio_entrypoint_constraints =~ s/$old_variable/\?$new_variable/gs;
-	}
-	if($type) {
-		$statement1_type_triple_template =~ s/\[ENTTYPE\]/$type/;
-		$statement4_type_triple_template =~ s/\[ENTTYPE\]/$type/;
-		$where_clause =~ s/\[STATEMENT1_TYPE_TRIPLE_TEMPLATE\]\n/$statement1_type_triple_template\n/g;
-		$where_clause =~ s/\[STATEMENT4_TYPE_TRIPLE_TEMPLATE\]\n/$statement4_type_triple_template\n/g;
-	}
-	else {
-		$where_clause =~ s/\n\s+?\[STATEMENT1_TYPE_TRIPLE_TEMPLATE\]\n/\n/gs;
-		$where_clause =~ s/\n\s+?\[STATEMENT4_TYPE_TRIPLE_TEMPLATE\]\n/\n/gs;
-	}
-	my $the_entrypoint;
-	foreach my $entrypoint(@{$self->get("ENTRYPOINTS")}) {
-		if($node->get("NODEID") eq $entrypoint->{NODEID}) {
-			$the_entrypoint = $entrypoint;
-		}
-	}
-	if($the_entrypoint) {
-		# replace the [ENTRYPOINT_CONSTRAINTS] with appropriate string
-		if($the_entrypoint->{TYPE} eq "STRING_ENTRYPOINT") {
-			my $text_string = $the_entrypoint->{TEXT_STRING};
-			$string_entrypoint_constraints =~ s/\[NAME_STRING\]/$text_string/g;
-			$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$string_entrypoint_constraints/;
-		}
-		elsif($the_entrypoint->{TYPE} eq "NONSTRING_ENTRYPOINT") {
-			my $modality = $node->get("MENTION", $the_entrypoint->{MENTIONID})->get("MODALITY");
-			my ($span) = $node->get("MENTION", $the_entrypoint->{MENTIONID})->get("SPANS")->toarray();
-			my ($start, $end) = ($span->get("START"), $span->get("END"));
-			my $doceid = $span->get("DOCUMENTEID");
-			my $keyframeid;
-			if($modality eq "text") {
-				$text_entrypoint_constraints =~ s/\[START_OFFSET\]/$start/gs;
-				$text_entrypoint_constraints =~ s/\[END_OFFSET\]/$end/gs;
-				$text_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
-				$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$text_entrypoint_constraints/;
-			}
-			elsif($modality eq "image") {
-				if($self->get("IMAGES_BOUNDINGBOXES")->exists($doceid)) {
-					my $image_boundingbox = $self->get("IMAGES_BOUNDINGBOXES")->get("BY_KEY", $doceid);
-					$start = $image_boundingbox->get("START");
-					$end = $image_boundingbox->get("END");
-					my ($ulx, $uly) = split(",", $start);
-					my ($lrx, $lry) = split(",", $end);
-					$image_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
-					$image_entrypoint_constraints =~ s/\[UPPER_LEFT_X\]/$ulx/gs;
-					$image_entrypoint_constraints =~ s/\[UPPER_LEFT_Y\]/$uly/gs;
-					$image_entrypoint_constraints =~ s/\[LOWER_RIGHT_X\]/$lrx/gs;
-					$image_entrypoint_constraints =~ s/\[LOWER_RIGHT_Y\]/$lry/gs;
-					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$image_entrypoint_constraints/;
-				}
-				else {
-					$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
-				}
-			}
-			elsif($modality eq "video") {
-				$keyframeid = $the_entrypoint->get("KEYFRAMEID");
-				my $keyframe_boundingbox = $self->get("KEYFRAMES_BOUNDINGBOXES")->get("BY_KEY", $keyframeid);
-				$start = $keyframe_boundingbox->get("START");
-				$end = $keyframe_boundingbox->get("END");
-				my ($ulx, $uly) = split(",", $start);
-				my ($lrx, $lry) = split(",", $end);
-				$video_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
-				$video_entrypoint_constraints =~ s/\[UPPER_LEFT_X\]/$ulx/gs;
-				$video_entrypoint_constraints =~ s/\[UPPER_LEFT_Y\]/$uly/gs;
-				$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_X\]/$lrx/gs;
-				$video_entrypoint_constraints =~ s/\[LOWER_RIGHT_Y\]/$lry/gs;
-				$video_entrypoint_constraints =~ s/\[KEYFRAMEID\]/$keyframeid/gs;
-				$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$video_entrypoint_constraints/;
-			}
-			elsif($modality eq "audio") {
-				$audio_entrypoint_constraints =~ s/\[EPDOCEID\]/$doceid/gs;
-				$audio_entrypoint_constraints =~ s/\[START_TIME\]/$start/g;
-				$audio_entrypoint_constraints =~ s/\[END_TIME\]/$end/g;
-				$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]/$audio_entrypoint_constraints/;
-			}
-		}
-	}
-	else {
-		$where_clause =~ s/\[ENTRYPOINT_CONSTRAINTS\]\n//gs;
-	}
-	$self->set("WHERE_CLAUSE_STRING", $self->get("WHERE_CLAUSE_STRING") . "\n" . $where_clause);
-	$retval_nodevariable;
+	scalar keys %{$self->{CHILDNUM_MODIFIER_MAPPING}} == 0;
 }
 
 sub tostring {
 	my ($self) = @_;
-	my $query_id = $self->get("QUERY_ID");
-	my $sparql = "\n\t<![CDATA[\n";
-	$sparql .= "\t". $self->get("PREFIX");
-	$sparql .= "\n\tSELECT";
-	$sparql .= $self->get("SELECT_VARIABLES");
-	$sparql .= "\n\tWHERE {";
-	$sparql .= $self->get("WHERE_CLAUSE_STRING");
-	$sparql .= "\t}\n";
-	$sparql .= "\t]]>\n";
-	$sparql =~ s/QUERYID/$query_id/;
-
-	$sparql;
+	my $attributes = join(",", $self->get("ATTRIBUTES")->toarray()) 
+		if scalar $self->get("ATTRIBUTES")->toarray();
+	$attributes = " attributes=$attributes" if $attributes;
+	my $retVal = $self->get("NODEID") . ": ";
+	foreach my $child_num(sort {$a<=>$b} keys %{$self->{CHILDNUM_TYPES_MAPPING}}) {
+		my $child_modifier = $self->get("CHILDNUM_MODIFIER", $child_num);
+		my @types = $self->get("CHILDNUM_TYPES", $child_num);
+		my $types = join("|", @types);
+		if(scalar @types > 1) {
+			$retVal .= "(" . $types . ")";
+		}
+		else {
+			$retVal .= $types;
+		}
+		$retVal .= "+" if($child_modifier eq "+");
+		$retVal .= " ";
+	}
+	$retVal .= " $attributes\n";
+	$retVal;
 }
 
 #####################################################################################
-# FieldNameManager
+# XMLFileHandler
 #####################################################################################
 
-package FieldNameManager;
+package XMLFileHandler;
 
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $modality) = @_;
-  my $self = {
-    CLASS => 'FieldNameManager',
-    MODALITY => $modality,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  $self;
+	my ($class, $logger, $dtd_filename, $xml_filename) = @_;
+	my $self = {
+		CLASS => "XMLFileHandler",
+		DTD => DTD->new($logger, $dtd_filename),
+		DTD_FILENAME => $dtd_filename,
+		XML_FILENAME => $xml_filename,
+		XML_FILEHANDLE => undef,
+		LINENUM => 0,
+		OBJECT_WHERE => undef,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->setup();
+	$self;
 }
 
-sub get_FIELDNAME {
-	my ($self, $field) = @_;
-	my $retVal = $field;
-	my $modality = $self->get("MODALITY");
-	if($field eq "start") {
-		$retVal = "topleft" if $modality eq "video" or $modality eq "image";
+sub setup {
+	my ($self) = @_;
+	open(my $filehandle, "<:utf8", $self->get("XML_FILENAME"));
+	$self->set("XML_FILEHANDLE", $filehandle);
+}
+
+sub get_NEXT_OBJECT {
+	my ($self) = @_;
+	my ($search_tag) = $self->get("DTD")->get("ROOT")->get("CHILDNUM_TYPES", 1);
+	my $search_node = $self->get("DTD")->get("TREE")->get("NODES")->get("BY_KEY", $search_tag);
+	my $filehandle = $self->get("XML_FILEHANDLE");
+	my $object_string = "";
+	my $working = 0;
+	my $done = 0;
+	my $found = 0;
+	while(my $line = <$filehandle>){
+		$self->increment("LINENUM", 1);
+		chomp $line;
+		if($line =~ /(<$search_tag>|<$search_tag .*?=.*?>)/) {
+			$self->set("OBJECT_WHERE", {FILENAME=>$self->get("XML_FILENAME"), LINENUM=>$self->get("LINENUM")});
+			$working = 1;
+			$object_string .= "$line\n";
+		}
+		elsif($line =~ /<\/$search_tag>/) {
+			$working = 0;
+			$object_string .= "$line\n";
+			$found = 1;
+			last;
+		}
+		elsif($working == 1) {
+			$object_string .= "$line\n";
+		}
 	}
-	elsif($field eq "end") {
-		$retVal = "bottomright" if $modality eq "video" or $modality eq "image";
+	return unless $found;
+	$self->get("STRING_TO_OBJECT", $object_string, $search_node, $self->get("OBJECT_WHERE")->{LINENUM});
+}
+
+sub get_STRING_TO_OBJECT {
+	my ($self, $object_string, $search_node, $linenum) = @_;
+	my $logger = $self->get("LOGGER");
+	my $search_tag = $search_node->get("NODEID");
+	my $num_of_children = $search_node->get("NUM_OF_CHILDREN");
+	if($num_of_children == 1 && $search_node->get("CHILDNUM_MODIFIER", 1) eq "1") {
+		# There is only one child and it appears only once
+		# This is the base case of this recursive function
+		my ($child_id) = $search_node->get("CHILDNUM_TYPES", 1);
+		my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $child_id);
+		if($child_node->is_leaf()){
+			# The child appears once and its a leaf
+			# This serves as the base case for recursion
+			if($object_string =~ /(<$search_tag>|<$search_tag .*?=.*?>)\s*(.*?)\s*<\/$search_tag>/gs){
+				my ($attributes, $value) = ($1, $2);
+				($attributes) = $attributes =~ /<$search_tag(.*?)>/;
+				my $xml_attributes;
+				if($attributes) {
+					$xml_attributes = XMLAttributes->new($logger);
+					while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
+						my ($key, $value) = ($1, $2);
+						$xml_attributes->add($value, $key);
+					}
+				}
+				my $new_line = 0;
+				if($search_tag eq "sparql") {
+					$value = "\t$value\n";
+					$new_line = 1;
+				}
+				my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$linenum}; 
+				return XMLElement->new($logger, $value, $search_tag, $new_line, $xml_attributes, $new_where);
+			}
+			else{
+				# TODO: did not find the pattern we were expecting; throw an exception here
+			}
+		}
+		else {
+		# The child appears once but it is not a leaf node
+			if($object_string =~ /(<$search_tag>|<$search_tag .*?=.*?>)\s*(.*?)\s*<\/$search_tag>/gs){
+				my ($attributes, $new_object_string) = ($1, $2);
+				($attributes) = $attributes =~ /<$search_tag(.*?)>/;
+				my $xml_attributes;
+				if($attributes) {
+					$xml_attributes = XMLAttributes->new($logger);
+					while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
+						my ($key, $value) = ($1, $2);
+						$xml_attributes->add($value, $key);
+					}
+				}
+				my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node);
+				my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$linenum}; 
+				return XMLElement->new($logger, $xml_child_object, $search_tag, 1, $xml_attributes, $new_where);
+			}
+			else{
+				# TODO: did not find the pattern we were expecting; throw an exception here
+			}
+		}
 	}
-	elsif($field eq "descriptor") {
-		$retVal = $modality . "_" . $field;
+	else {
+		# First obtain the attributes and then unwrap $search_tag
+		my ($attributes, $new_object_string) = $object_string =~ /(<$search_tag>|<$search_tag .*?=.*?>)\s*(.*?)\s*<\/$search_tag>/gs;
+		($attributes) = $attributes =~ /<$search_tag(.*?)>/;
+		$object_string = $new_object_string;
+		$new_object_string = "";
+		# Handle multiple children case
+		my $looking_for_child_num = 1;
+		# $done = 0: we have not found all children yet
+		# $done = 1: found all children, move on
+		my $done = 0;
+		# $found = 0: the start of the tag not found yet
+		# $found = 1: start-tag found but the end-tag is not
+		my $found = 0;
+		my $found_linenum = $linenum;
+		my $containerfound_linenum = $linenum;
+		my $xml_container = XMLContainer->new($logger);
+		my $new_search_tag;
+		foreach my $line(split(/\n/, $object_string)){
+			chomp $line;
+			$linenum++;
+process_next_child:
+			# Get allowed types for this child
+			my @this_child_allowed_types = $search_node->get("CHILDNUM_TYPES", $looking_for_child_num);
+			my $this_child_modifier = $search_node->get("CHILDNUM_MODIFIER", $looking_for_child_num);
+			# Get next child allowed types (undef)
+			my @next_child_allowed_types = $search_node->get("CHILDNUM_TYPES", $looking_for_child_num+1);
+			if(not $found) {
+				# start not found
+				# see if you find one of the allowed types for this child
+				my $check_next_child = 1;
+				foreach my $this_child_allowed_type(@this_child_allowed_types) {
+					if($line =~ /\<$this_child_allowed_type.*?>/) {
+						$new_search_tag = $this_child_allowed_type;
+						$new_object_string = $line;
+						$found = 1;
+						$found_linenum = $linenum;
+						$check_next_child = 0;
+						# Handle cases like <tag.*?> value <\/tag>
+						if($line =~ /\<\/$new_search_tag\>/) {
+							my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $this_child_allowed_type);
+							my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node, $found_linenum);
+							$xml_container->add($xml_child_object);
+							$new_object_string = "";
+							# Found the end; reset $found
+							$found = 0;
+						}
+					}
+				}
+				if($check_next_child) {
+					# allowed types for this child not found
+					# see if what you found is the next child
+					foreach my $next_child_allowed_type(@next_child_allowed_types) {
+						if($line =~ /\<$next_child_allowed_type.*?>/) {
+							$looking_for_child_num++;
+							goto process_next_child;
+						}
+					}
+				}
+			}
+			else {
+				# start of the next child has been found but the end is not, find the end
+				if($line =~ /\<\/$new_search_tag\>/) {
+					# end found
+					$new_object_string .= "\n$line";
+					my $child_node = $self->get("DTD")->get("TREE")->get("NODE", $new_search_tag);
+					my $xml_child_object = $self->get("STRING_TO_OBJECT", $new_object_string, $child_node, $found_linenum);
+					$xml_container->add($xml_child_object);
+					$new_object_string = "";
+					# Found the end; reset $found
+					$found = 0;
+				}
+				else{
+					$new_object_string .= "\n$line";
+				}
+			}
+		}
+		my $xml_attributes;
+		if($attributes) {
+			$xml_attributes = XMLAttributes->new($logger);
+			while($attributes =~ /\s*(.*?)\s*=\s*\"(.*?)\"/g){
+				my ($key, $value) = ($1, $2);
+				$xml_attributes->add($value, $key);
+			}
+		}
+		my $new_where = {FILENAME=>$self->get("OBJECT_WHERE")->{FILENAME}, LINENUM=>$containerfound_linenum}; 
+		return XMLElement->new($logger, $xml_container, $search_tag, 1, $xml_attributes, $new_where);
 	}
-	$retVal;
 }
 
 #####################################################################################
@@ -3198,9 +1272,10 @@ use parent -norequire, 'Container', 'Super';
 
 sub new {
   my ($class, $logger) = @_;
-  my $self = $class->SUPER::new($logger, 'XMLAttribute');
-  $self->{CLASS} = 'XMLAttributes';
-  $self->{LOGGER} = $logger;
+  my $self = {
+  	CLASS => 'XMLAttributes',
+  	LOGGER => $logger,
+  };
   bless($self, $class);
   $self;
 }
@@ -3220,13 +1295,14 @@ package XMLElement;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $element, $name, $newline, $attributes) = @_;
+  my ($class, $logger, $element, $name, $newline, $attributes, $where) = @_;
   my $self = {
     CLASS => 'XMLElement',
     NAME => $name,
     NEWLINE => $newline,
     ATTRIBUTES => $attributes,
     ELEMENT => $element,
+    WHERE => $where,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -3235,22 +1311,31 @@ sub new {
 
 sub get_OPENTAG {
 	my ($self) = @_;
-	
+
 	my $attributes = "";
 	$attributes = " " . $self->get("ATTRIBUTES")->tostring() if $self->get("ATTRIBUTES") ne "nil";
-	
+
 	"<" . $self->get("NAME") . $attributes . ">";
 }
 
 sub get_CLOSETAG {
 	my ($self) = @_;
-	
+
 	"<\/" . $self->get("NAME") . ">";
+}
+
+sub get_CHILD {
+	my ($self, $childname) = @_;
+
+	return $self if($self->get("NAME") eq $childname);
+	return $self->get("ELEMENT")->get("CHILD", $childname) if ref $self->get("ELEMENT");
+	return unless ref $self->get("ELEMENT");
 }
 
 sub tostring {
 	my ($self, $indent) = @_;
-	
+	return "" if $self->get("IGNORE") eq "1";
+	$indent = 0 unless $indent;
 	my $retVal = " " x $indent;
 	$retVal .= $self->get("OPENTAG");
 	$retVal .= "\n" if $self->get("NEWLINE");
@@ -3260,7 +1345,6 @@ sub tostring {
 	$retVal .= " " x $indent if $self->get("NEWLINE");
 	$retVal .= $self->get("CLOSETAG");
 	$retVal .= "\n";
-	
 	$retVal;
 }
 
@@ -3284,6 +1368,16 @@ sub new {
 	$self;
 }
 
+sub get_CHILD {
+	my ($self, $childname) = @_;
+	my $child;
+	foreach my $xml_element($self->toarray()){
+		$child = $xml_element->get("CHILD", $childname);
+		last if $child;
+	}
+	$child;
+}
+
 sub tostring {
 	my ($self, $indent) = @_;
 	my $retVal = "";
@@ -3294,33 +1388,4664 @@ sub tostring {
 }
 
 #####################################################################################
-# EncodingFormatToModalityMappings
+# ResponseSet
 #####################################################################################
 
-package EncodingFormatToModalityMappings;
+package ResponseSet;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $queries, $docid_mappings, $dtd_filename, @xml_filenames) = @_;
+	my $self = {
+		CLASS => 'ResponseSet',
+		QUERIES => $queries,
+		DTD_FILENAME => $dtd_filename,
+		XML_FILENAMES => [@xml_filenames],
+		DOCID_MAPPINGS => $docid_mappings, 
+		RESPONSES => Container->new($logger, "Response"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $dtd_filename = $self->get("DTD_FILENAME");
+	my @xml_filenames = @{$self->get("XML_FILENAMES")};
+	my $query_type = $self->get("QUERIES")->get("QUERYTYPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $queries = $self->get("QUERIES");
+	my $i = 0;
+	foreach my $xml_filename(@xml_filenames) {
+		my $task = "task1";
+		$task = "task2" if $xml_filename =~ /TA2.*_responses.xml$/;
+		$self->set("TASK", $task) if $self->get("TASK") eq "nil";
+		$logger->record_problem("RUNS_HAVE_MULTIPLE_TASKS", {FILENAME => __FILE__, LINENUM => __LINE__})
+			if($task ne $self->get("TASK"));
+		my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
+		while(my $xml_response_object = $xml_filehandler->get("NEXT_OBJECT")) {
+			$i++;
+			my $response;
+			$response = ClassResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "class_query");
+			$response = ZeroHopResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "zerohop_query");
+			$response = GraphResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "graph_query");
+			$self->get("RESPONSES")->add($response, $i) if $response->is_valid();
+		}
+	}
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	return "" unless $self->get("RESPONSES")->toarray(); 
+	my $output_type = $self->get("DTD_FILENAME");
+	$output_type =~ s/^(.*?\/)+//g;
+	$output_type =~ s/.dtd//;
+	my $retVal = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	$retVal .= "<classquery_responses>\n" if($output_type eq "class_response");
+	$retVal .= "<zerohopquery_responses>\n" if($output_type eq "zerohop_response");
+	$retVal .= "<graphqueries_responses>\n" if($output_type eq "graph_response");
+	foreach my $response($self->get("RESPONSES")->toarray()) {
+		$retVal .= $response->tostring($indent);
+	}
+	$retVal .= "<\/classquery_responses>\n" if($output_type eq "class_response");
+	$retVal .= "<\/zerohopquery_responses>\n" if($output_type eq "zerohop_response");
+	$retVal .= "<\/graphqueries_responses>\n" if($output_type eq "graph_response");
+	$retVal;
+}
+
+#####################################################################################
+# ClassResponse
+#####################################################################################
+
+package ClassResponse;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
+  my $self = {
+    CLASS => 'ClassResponse',
+    XML_FILENAME => $xml_filename,
+    XML_OBJECT => $xml_object,
+    DOCID_MAPPINGS => $docid_mappings,
+    QUERIES => $queries,
+    QUERYID => undef,
+    RESPONSE_DOCID => undef,
+    JUSTIFICATIONS => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "QUERY_ID");
+	$self->set("QUERYID", $query_id);
+	my $justifications = Container->new($logger, "Justification");
+	my $i = 0;
+	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("CHILD", "justifications")->get("ELEMENT")->toarray()){
+		$i++;
+		my $justification;
+		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
+		my $justification_type = uc $justification_xml_object->get("NAME");
+		my $where = $justification_xml_object->get("WHERE");
+		my $enttype = $justification_xml_object->get("CHILD", "enttype")->get("ELEMENT");
+		my $confidence = $justification_xml_object->get("CHILD", "confidence")->get("ELEMENT");
+		my ($keyframeid, $start, $end);
+		if($justification_xml_object->get("NAME") eq "text_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "video_justification") {
+			$keyframeid = $justification_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "image_justification") {
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "audio_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		$justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $justification_xml_object, $where);
+		$justifications->add($justification, $i);
+	}
+	$self->set("JUSTIFICATIONS", $justifications);
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($xml_object->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = SuperObject->new($logger);
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+					my $doceid = $value->get($key)->get("DOCEID");
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						$logger->record_problem("INVALID_JUSTIFICATION_TYPE", $key, $xml_object->get("WHERE"));
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
+					$key = "DESCRIPTOR";
+				}
+				elsif($key eq "STRING_DESCRIPTOR") {
+					$value = StringDescriptor->new($logger, $value->get($key));
+					$key = "DESCRIPTOR";
+				}
+				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+				$retVal->set($key, $value);
+			}
+		}
+	}
+	$retVal;
+}
+
+# Determine if the response is valid:
+##  (1). Is the queryid valid?
+##  (2). Is the enttype matching?
+##  (3). Depending on the scope see if the justifications come from the right set of documents
+##  (4). The response is not valid if none of the justifications is valid
+sub is_valid {
+	my ($self) = @_;
+	my $scope = $self->get("SCOPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $query_id = $self->get("QUERYID");
+	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
+	my $is_valid = 1;
+	my $where = $self->get("XML_OBJECT")->get("WHERE");
+	my $query_enttype = "unavailable";
+	if($query) {
+		$query_enttype = $query->get("ENTTYPE");
+	}
+	else {
+		# Is the queryid valid?
+		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
+		$is_valid = 0;
+	}
+	my $i = 0;
+	my %docids;
+	my $num_valid_justifications = 0;
+	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+		$i++;
+		# Validate the justification span and confidence
+		if ($justification->is_valid($docid_mappings, $scope)) {
+			$num_valid_justifications++;
+		}
+		else {
+			# Simply ignore the $justification
+			# No need to ignore the entire object
+			$justification->get("XML_OBJECT")->set("IGNORE", 1);
+		}
+		# Check if the enttype matches to that of the query
+		if($query && $justification->get("ENTTYPE") ne $query_enttype) {
+			$self->get("LOGGER")->record_problem("UNEXPECTED_ENTTYPE", $justification->get("ENTTYPE"), $query_enttype, $where);
+			$is_valid = 0;
+		}
+		# Valiate documents used
+		if($scope ne "anywhere") {
+			# DOCID should be known to us
+			my $doceid = $justification->get("DOCEID");
+			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+				my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+				my @docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
+				foreach my $docid(@docids) {
+					$docids{$docid}++;
+				}
+			}
+			else {
+				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
+				$is_valid = 0;
+			}
+		}
+		if($scope eq "withindoc") {
+			my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+			my @justifiying_docs;
+			foreach my $docid(keys %docids) {
+				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
+			}
+			unless(scalar grep {$_ eq $response_docid} @justifiying_docs) {
+				$is_valid = 0;
+				my $justifying_docs_string = join(",", @justifiying_docs);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_JUSTIFICATION_SOURCE", $justifying_docs_string, $response_docid, $where);
+			}
+		}
+	}
+	$is_valid = 0 unless $num_valid_justifications;
+	$is_valid;
+}
+
+sub get_RESPONSE_FILENAME_PREFIX {
+	my ($self) = @_;
+	my $xml_file = $self->get("XML_FILENAME");
+	$xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
+	my ($path, $filename) = ($1, $2);
+	my ($prefix) = $filename =~ /^(.*?)\..*?_responses.xml/;
+	$prefix;	
+}
+
+sub get_SYSTEM_TYPE {
+	my ($self) = @_;
+	my $prefix = $self->get("RESPONSE_FILENAME_PREFIX");
+	my $system_type = "TA1";
+	$system_type = "TA2" if $prefix eq "TA2";
+	$system_type;
+}
+
+sub get_RESPONSE_DOCID_FROM_FILENAME {
+	my ($self) = @_;
+	my $response_docid = $self->get("RESPONSE_FILENAME_PREFIX");
+	$response_docid = undef if $response_docid eq "TA2";
+	$response_docid;
+}
+
+sub get_SCOPE {
+	my ($self) = @_;
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $system_type = $self->get("SYSTEM_TYPE");
+	my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+	my $scope = "anywhere";
+	if($system_type eq "TA2") {
+		$scope = "withincorpus";
+	}
+	elsif($response_docid) {
+		$scope = "withindoc"
+			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
+	}
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
+		if $scope eq "anywhere";
+	$scope;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# ZeroHopResponse
+#####################################################################################
+
+package ZeroHopResponse;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
+  my $self = {
+    CLASS => 'ZeroHopResponse',
+    XML_FILENAME => $xml_filename,
+    XML_OBJECT => $xml_object,
+    DOCID_MAPPINGS => $docid_mappings,
+    QUERIES => $queries,
+    QUERYID => undef,
+    JUSTIFICATIONS => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "QUERY_ID");
+	$self->set("QUERYID", $query_id);
+	my $system_nodeid = $self->get("XML_OBJECT")->get("CHILD", "system_nodeid")->get("ELEMENT");
+	$self->set("SYSTEM_NODEID", $system_nodeid);
+	my $justifications = Container->new($logger, "Justification");
+	my $i = 0;
+	foreach my $justification_xml_object($self->get("XML_OBJECT")->get("ELEMENT")->toarray()){
+		next if $justification_xml_object->get("NAME") eq "system_nodeid";
+		$i++;
+		my $doceid = $justification_xml_object->get("CHILD", "doceid")->get("ELEMENT");
+		my $justification_type = uc $justification_xml_object->get("NAME");
+		my $where = $justification_xml_object->get("WHERE");
+		my $confidence = $justification_xml_object->get("CHILD", "confidence")->get("ELEMENT");
+		my ($keyframeid, $start, $end, $enttype);
+		if($justification_xml_object->get("NAME") eq "text_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "video_justification") {
+			$keyframeid = $justification_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "image_justification") {
+			$start = $justification_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($justification_xml_object->get("NAME") eq "audio_justification") {
+			$start = $justification_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $justification_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		my $justification = Justification->new($logger, $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $justification_xml_object, $where);
+		$justifications->add($justification, $i);
+	}
+	$self->set("JUSTIFICATIONS", $justifications);
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($xml_object->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = SuperObject->new($logger);
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+					my $doceid = $value->get($key)->get("DOCEID");
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						# TODO: throw exception
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
+					$key = "DESCRIPTOR";
+				}
+				elsif($key eq "STRING_DESCRIPTOR") {
+					$value = StringDescriptor->new($logger, $value->get($key));
+					$key = "DESCRIPTOR";
+				}
+				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+				$retVal->set($key, $value);
+			}
+		}
+	}
+	$retVal;
+}
+
+# Determine if the response is valid:
+##  (1). Is the queryid valid?
+##  (2). Is the enttype matching?
+##  (3). Depending on the scope see if the justifications come from the right set of documents
+##  (4). The response is not valid if none of the justifications is valid
+sub is_valid {
+	my ($self) = @_;
+	my $scope = $self->get("SCOPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $query_id = $self->get("QUERYID");
+	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
+	my $is_valid = 1;
+	my $where = $self->get("XML_OBJECT")->get("WHERE");
+	unless($query) {
+		# Is the queryid valid?
+		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
+		$is_valid = 0;
+	}
+	my $i = 0;
+	my %docids;
+	my $num_valid_justifications = 0;
+	foreach my $justification($self->get("JUSTIFICATIONS")->toarray()) {
+		$i++;
+		# Validate the justification span and confidence
+		if ($justification->is_valid($docid_mappings, $scope)) {
+			$num_valid_justifications++;
+		}
+		else{
+			# Simply ignore the $justification
+			# No need to ignore the entire object
+			$justification->get("XML_OBJECT")->set("IGNORE", 1);
+		}
+		# Valiate documents used
+		if($scope ne "anywhere") {
+			# DOCID should be known to us
+			my $doceid = $justification->get("DOCEID");
+			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+				my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+				my @docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
+				foreach my $docid(@docids) {
+					$docids{$docid}++;
+				}
+			}
+			else {
+				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
+				$is_valid = 0;
+			}
+		}
+		if($scope eq "withindoc") {
+			my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+			my @justifiying_docs;
+			foreach my $docid(keys %docids) {
+				push(@justifiying_docs, $docid) if($docids{$docid} == $i);
+			}
+			unless(scalar grep {$_ eq $response_docid} @justifiying_docs) {
+				$is_valid = 0;
+				my $justifying_docs_string = join(",", @justifiying_docs);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_JUSTIFICATION_SOURCE", $justifying_docs_string, $response_docid, $where);
+			}
+		}
+	}
+	$is_valid = 0 unless $num_valid_justifications;
+	$is_valid;
+}
+
+sub get_RESPONSE_FILENAME_PREFIX {
+	my ($self) = @_;
+	my $xml_file = $self->get("XML_FILENAME");
+	$xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
+	my ($path, $filename) = ($1, $2);
+	my ($prefix) = $filename =~ /^(.*?)\..*?_responses.xml/;
+	$prefix;	
+}
+
+sub get_SYSTEM_TYPE {
+	my ($self) = @_;
+	my $prefix = $self->get("RESPONSE_FILENAME_PREFIX");
+	my $system_type = "TA1";
+	$system_type = "TA2" if $prefix eq "TA2";
+	$system_type;
+}
+
+sub get_RESPONSE_DOCID_FROM_FILENAME {
+	my ($self) = @_;
+	my $response_docid = $self->get("RESPONSE_FILENAME_PREFIX");
+	$response_docid = undef if $response_docid eq "TA2";
+	$response_docid;
+}
+
+sub get_SCOPE {
+	my ($self) = @_;
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $system_type = $self->get("SYSTEM_TYPE");
+	my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+	my $scope = "anywhere";
+	if($system_type eq "TA2") {
+		$scope = "withincorpus";
+	}
+	elsif($response_docid) {
+		$scope = "withindoc"
+			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
+	}
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
+		if $scope eq "anywhere";
+	$scope;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# GraphResponse
+#####################################################################################
+
+package GraphResponse;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object, $xml_filename, $queries, $docid_mappings) = @_;
+  my $self = {
+    CLASS => 'GraphResponse',
+    XML_FILENAME => $xml_filename,
+    XML_OBJECT => $xml_object,
+    DOCID_MAPPINGS => $docid_mappings,
+    QUERIES => $queries,
+    QUERYID => undef,
+    EDGES => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
+	$self->set("QUERYID", $query_id);
+	my $edges = Container->new($logger);
+	foreach my $edge_xml_object($self->get("XML_OBJECT")->get("CHILD", "response")->get("ELEMENT")->toarray()){
+		my $edge = SuperObject->new($logger);
+		my $edge_num = $edge_xml_object->get("ATTRIBUTES")->get("BY_KEY", "id");
+		my $justifications = Container->new($logger);
+		my $justification_num = 0;
+		foreach my $justification_xml_object($edge_xml_object->get("ELEMENT")->get("ELEMENT")->toarray()) {
+			$justification_num++;
+			my $justification = SuperObject->new($logger);
+			my $docid = $justification_xml_object->get("ATTRIBUTES")->get("BY_KEY", "docid");
+			my $subjectjustification_xml_object = $justification_xml_object->get("CHILD", "subject_justification")->get("ELEMENT");
+			my $subject_justification = $self->get("NODE_JUSTIFICATION", $subjectjustification_xml_object);
+			my $objectjustification_xml_object = $justification_xml_object->get("CHILD", "object_justification")->get("ELEMENT");
+			my $object_justification = $self->get("NODE_JUSTIFICATION", $objectjustification_xml_object);
+			my $edgejustification_xml_object = $justification_xml_object->get("CHILD", "edge_justification")->get("ELEMENT");
+			my $edge_justification = $self->get("EDGE_JUSTIFICATION", $edgejustification_xml_object);
+			$justification->set("DOCID", $docid);
+			$justification->set("SUBJECT_JUSTIFICATION", $subject_justification);
+			$justification->set("OBJECT_JUSTIFICATION", $object_justification);
+			$justification->set("EDGE_JUSTIFICATION", $edge_justification);
+			$justification->set("XML_OBJECT", $justification_xml_object);
+			$justifications->add($justification, $justification_num);
+		}
+		$edge->set("EDGE_NUM", $edge_num);
+		$edge->set("JUSTIFICATIONS", $justifications);
+		$edge->set("XML_OBJECT", $edge_xml_object);
+		$edges->add($edge, $edge_num);
+	}
+	$self->set("EDGES", $edges);
+}
+
+sub parse_object {
+	my ($self, $xml_object) = @_;
+	my $logger = $self->get("LOGGER");
+	my $retVal;
+	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+		# base-case of recursive function
+		my $key = uc($xml_object->get("NAME"));
+		my $value = $xml_object->get("ELEMENT");
+		if($xml_object->get("ATTRIBUTES") ne "nil") {
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+				$retVal->set($attribute_key, $attribute_value);
+			}
+		}
+		else {
+			$retVal = $value;
+		}
+	}
+	else {
+		if($xml_object->get("CLASS") eq "XMLElement") {
+			my $key = uc($xml_object->get("NAME"));
+			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+			$retVal = SuperObject->new($logger);
+			$retVal->set($key, $value);
+			if($xml_object->get("ATTRIBUTES") ne "nil") {
+				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+					$retVal->set($attribute_key, $attribute_value);
+				}
+			}
+		}
+		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+			$retVal = SuperObject->new($logger);
+			foreach my $xml_element($xml_object->toarray()){
+				my $key = uc($xml_element->get("NAME"));
+				my $value = $self->parse_object($xml_element);
+				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+					my $doceid = $value->get($key)->get("DOCEID");
+					my ($keyframeid, $start, $end);
+					if($key eq "TEXT_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					elsif($key eq "IMAGE_DESCRIPTOR") {
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					elsif($key eq "VIDEO_DESCRIPTOR") {
+						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+						$start = $value->get($key)->get("TOPLEFT");
+						$end = $value->get($key)->get("BOTTOMRIGHT");
+					}
+					if($key eq "AUDIO_DESCRIPTOR") {
+						$start = $value->get($key)->get("START");
+						$end = $value->get($key)->get("END");
+					}
+					else{
+						# TODO: throw exception
+					}
+					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
+					$key = "DESCRIPTOR";
+				}
+				elsif($key eq "STRING_DESCRIPTOR") {
+					$value = StringDescriptor->new($logger, $value->get($key));
+					$key = "DESCRIPTOR";
+				}
+				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+				$retVal->set($key, $value);
+			}
+		}
+	}
+	$retVal;
+}
+
+sub is_valid {
+	my ($self) = @_;
+	my $scope = $self->get("SCOPE");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $query_id = $self->get("QUERYID");
+	my $query = $self->get("QUERIES")->get("QUERY", $query_id);
+	my $is_valid = 1;
+	my $where = $self->get("XML_OBJECT")->get("WHERE");
+	my $max_edge_justifications = 2;
+	unless($query) {
+		# Is the queryid valid?
+		$self->get("LOGGER")->record_problem("UNKNOWN_QUERYID", $query_id, $where);
+		$is_valid = 0;
+	}
+	# Check validity of edges
+	my $num_valid_response_edges = 0;
+	my @valid_edges;
+	foreach my $response_edge($self->get("EDGES")->toarray()) {
+		my $edge_num = $response_edge->get("EDGE_NUM");
+		my $is_valid_response_edge = 1;
+		# Check if edge_num mataches one in query
+		my ($query_edge, $query_edge_predicate);
+		if($query && $query->get("EDGES")->exists($edge_num)) {
+			$query_edge = $query->get("EDGES")->get("BY_KEY", $edge_num);
+			$query_edge_predicate = $query_edge->get("PREDICATE");
+		}
+		else{
+			$self->get("LOGGER")->record_problem("UNKNOWN_EDGEID", $edge_num, $query_id, $where);
+			$response_edge->get("XML_OBJECT")->set("IGNORE", 1);
+			$is_valid_response_edge = 0;
+		}
+		my $num_valid_justifications = 0;
+		foreach my $justification($response_edge->get("JUSTIFICATIONS")->toarray()) {
+			my $is_justification_valid = 1;
+			my $docid = $justification->get("DOCID");
+			$is_justification_valid = 0
+				unless($self->check_within_doc_spans($docid_mappings, $docid, $justification, $scope, $where));
+			my $subject_enttype = $justification->get("SUBJECT_JUSTIFICATION")->get("ENTTYPE");
+			if($query_edge_predicate && $query_edge_predicate !~ /^$subject_enttype\_/) {
+				my ($query_edge_enttype, $predicate) = split(/_/, $query_edge_predicate);
+				$self->get("LOGGER")->record_problem("UNEXPECTED_SUBJECT_ENTTYPE", $subject_enttype, $query_edge_enttype, $query_id, $edge_num, $where);
+				$is_justification_valid = 0;
+			}
+			if($scope ne "anywhere" && !$docid_mappings->get("DOCUMENTS")->exists($docid)) {
+				$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT", $docid, $where);
+				$is_justification_valid = 0;
+			}
+			$is_justification_valid = 0
+				unless $justification->get("SUBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+			$is_justification_valid = 0
+				unless $justification->get("OBJECT_JUSTIFICATION")->get("SPAN")->is_valid($docid_mappings, $scope);
+			my @edge_justification_spans = $justification->get("EDGE_JUSTIFICATION")->get("SPANS")->toarray();
+			my $num_edge_justification_spans = scalar @edge_justification_spans;
+			my $num_valid_edge_justification_spans = 0;
+			if($num_edge_justification_spans > $max_edge_justifications) {
+				$self->get("LOGGER")->record_problem("EXTRA_EDGE_JUSTIFICATIONS", $max_edge_justifications, $num_edge_justification_spans, $where);
+			}
+			foreach my $edge_justification_span(@edge_justification_spans) {
+				if($edge_justification_span->is_valid($docid_mappings, $scope)) {
+					$num_valid_edge_justification_spans++;
+					$edge_justification_span->get("XML_OBJECT")->set("IGNORE", 1)
+						if($num_valid_edge_justification_spans);
+				}
+				else{
+					$edge_justification_span->get("XML_OBJECT")->set("IGNORE", 1);
+				}
+			}
+			$num_valid_justifications++ if($is_justification_valid);
+			$justification->get("XML_OBJECT")->set("IGNORE", 1) unless $is_justification_valid;
+		}
+		unless($num_valid_justifications) {
+			$response_edge->get("XML_OBJECT")->set("IGNORE", 1);
+			$is_valid_response_edge = 0;
+		}
+		if ($is_valid_response_edge) {
+			$num_valid_response_edges++;
+			push(@valid_edges, $edge_num);
+		}
+	}
+	# Check if the valid edges are all connected
+	my %edges;
+	my %nodes;
+	foreach my $edge_num(@valid_edges) {
+		if($query && $query->get("EDGES")->exists($edge_num)) {
+			my $query_edge = $query->get("EDGES")->get("BY_KEY", $edge_num);
+			$edges{$edge_num}{$query_edge->get("SUBJECT")} = 1;
+			$edges{$edge_num}{$query_edge->get("OBJECT")} = 1;
+			$nodes{$query_edge->get("SUBJECT")}{$edge_num} = 1;
+			$nodes{$query_edge->get("OBJECT")}{$edge_num} = 1;
+		}
+	}
+	my %reachable_nodes;
+	if(scalar keys %nodes) {
+		my ($a_nodeid) = (keys %nodes); # arbitrady node
+		%reachable_nodes = ($a_nodeid => 1);
+		my $flag = 1; # keep going flag
+		while($flag){
+			my @new_nodes;
+			foreach my $node_id(keys %reachable_nodes) {
+				foreach my $edge_num(keys %{$nodes{$node_id}}) {
+					foreach my $other_nodeid(keys %{$edges{$edge_num}}) {
+						push(@new_nodes, $other_nodeid)
+								unless $reachable_nodes{$other_nodeid};
+					}
+				}
+			}
+			if(@new_nodes){
+				foreach my $new_nodeid(@new_nodes) {
+					$reachable_nodes{$new_nodeid} = 1;
+				}
+			}
+			else{
+				$flag = 0;
+			}
+		}
+	}
+	my $num_all_valid_nodes = scalar keys %nodes;
+	my $num_reachable_nodes = scalar keys %reachable_nodes;
+	$self->get("LOGGER")->record_problem("DISCONNECTED_VALID_GRAPH", $where)
+		if($num_reachable_nodes != $num_all_valid_nodes);
+
+	$self->get("XML_OBJECT")->set("IGNORE", 1) unless $num_valid_response_edges;
+	$num_valid_response_edges;
+}
+
+
+sub get_RESPONSE_FILENAME_PREFIX {
+	my ($self) = @_;
+	my $xml_file = $self->get("XML_FILENAME");
+	$xml_file =~ /(^.*\/)+(.*?\..*?_responses.xml)/;
+	my ($path, $filename) = ($1, $2);
+	my ($prefix) = $filename =~ /^(.*?)\..*?_responses.xml/;
+	$prefix;	
+}
+
+sub get_SYSTEM_TYPE {
+	my ($self) = @_;
+	my $prefix = $self->get("RESPONSE_FILENAME_PREFIX");
+	my $system_type = "TA1";
+	$system_type = "TA2" if $prefix eq "TA2";
+	$system_type;
+}
+
+sub get_RESPONSE_DOCID_FROM_FILENAME {
+	my ($self) = @_;
+	my $response_docid = $self->get("RESPONSE_FILENAME_PREFIX");
+	$response_docid = undef if $response_docid eq "TA2";
+	$response_docid;
+}
+
+sub get_SCOPE {
+	my ($self) = @_;
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $system_type = $self->get("SYSTEM_TYPE");
+	my $response_docid = $self->get("RESPONSE_DOCID_FROM_FILENAME");
+	my $scope = "anywhere";
+	if($system_type eq "TA2") {
+		$scope = "withincorpus";
+	}
+	elsif($response_docid) {
+		$scope = "withindoc"
+			if $docid_mappings->get("DOCUMENTS")->exists($response_docid);
+	}
+	$self->get("LOGGER")->NIST_die("Improper filename caused unexpected value for scope: $scope")
+		if $scope eq "anywhere";
+	$scope;
+}
+
+sub get_NODE_JUSTIFICATION {
+	my ($self, $xml_object) = @_;
+	my $system_nodeid = $xml_object->get("CHILD", "system_nodeid")->get("ELEMENT");
+	my $enttype = $xml_object->get("CHILD", "enttype")->get("ELEMENT");
+	my $doceid = $xml_object->get("CHILD", "doceid")->get("ELEMENT");
+	my $confidence = $xml_object->get("CHILD", "confidence")->get("ELEMENT");
+	my ($keyframeid, $start, $end);
+	my @span_xml_objects = grep {$_->get("NAME") =~ /^.*?span$/} $xml_object->toarray();
+	# TODO: throw an error if there are more than one spans
+	my $span_xml_object = $span_xml_objects[0];
+	if($span_xml_object->get("NAME") eq "text_span") {
+		$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+	}
+	elsif($span_xml_object->get("NAME") eq "video_span") {
+		$keyframeid = $span_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+		$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+	}
+	elsif($span_xml_object->get("NAME") eq "image_span") {
+		$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+	}
+	elsif($span_xml_object->get("NAME") eq "audio_span") {
+		$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+		$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+	}
+	my $where = $span_xml_object->get("WHERE");
+	my $justification_type = uc $span_xml_object->get("NAME");
+	$justification_type =~ s/SPAN/JUSTIFICATION/;
+	my $span = Justification->new($self->get("LOGGER"), $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $xml_object, $where);
+	my $node_justification = SuperObject->new($self->get("LOGGER"));
+	$node_justification->set("SYSTEM_NODEID", $system_nodeid);
+	$node_justification->set("ENTTYPE", $enttype);
+	$node_justification->set("SPAN", $span);
+	$node_justification->set("CONFIDENCE", $confidence);
+	$node_justification;
+}
+
+sub get_EDGE_JUSTIFICATION {
+	my ($self, $xml_object) = @_;
+	my $confidence = $xml_object->get("CHILD", "confidence")->get("ELEMENT");
+	my ($keyframeid, $start, $end);
+	my $spans = Container->new($self->get("LOGGER"));
+	my @span_xml_objects = grep {$_->get("NAME") =~ /^.*?span$/} $xml_object->toarray();
+	# TODO: throw an error/warning if there are more than two spans
+	my $span_num = 0;
+	foreach my $span_xml_object(@span_xml_objects) {
+		$span_num++;
+		my $doceid = $span_xml_object->get("CHILD", "doceid")->get("ELEMENT");
+		my ($start, $end, $keyframeid, $enttype);
+		if($span_xml_object->get("NAME") eq "text_span") {
+			$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		elsif($span_xml_object->get("NAME") eq "video_span") {
+			$keyframeid = $span_xml_object->get("CHILD", "keyframeid")->get("ELEMENT");
+			$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($span_xml_object->get("NAME") eq "image_span") {
+			$start = $span_xml_object->get("CHILD", "topleft")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "bottomright")->get("ELEMENT");
+		}
+		elsif($span_xml_object->get("NAME") eq "audio_span") {
+			$start = $span_xml_object->get("CHILD", "start")->get("ELEMENT");
+			$end = $span_xml_object->get("CHILD", "end")->get("ELEMENT");
+		}
+		my $where = $span_xml_object->get("WHERE");
+		my $justification_type = uc $span_xml_object->get("NAME");
+		$justification_type =~ s/SPAN/JUSTIFICATION/;
+		my $span = Justification->new($self->get("LOGGER"), $justification_type, $doceid, $keyframeid, $start, $end, $enttype, $confidence, $xml_object, $where);
+		$spans->add($span, $span_num);
+	}
+	my $edge_justification = SuperObject->new($self->get("LOGGER"));
+	$edge_justification->set("CONFIDENCE", $confidence);
+	$edge_justification->set("SPANS", $spans);
+	$edge_justification;
+}
+
+sub check_within_doc_spans {
+	my ($self, $docid_mappings, $docid, $justification, $scope, $where) = @_;
+	my $is_valid = 1;
+	my @spans = (
+								$justification->get("SUBJECT_JUSTIFICATION")->get("SPAN"),
+								$justification->get("OBJECT_JUSTIFICATION")->get("SPAN"),
+								$justification->get("EDGE_JUSTIFICATION")->get("SPANS")->toarray(),
+							);
+	my %doceids = map {$_->get("DOCEID")=>1} @spans;
+	foreach my $doceid(keys %doceids) {
+		if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+			my %docids =
+				map {$_->get("DOCUMENTID")=>1}
+				$docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("DOCUMENTS")->toarray();
+			unless($docids{$docid}) {
+				$self->get("LOGGER")->record_problem("ACROSS_DOCUMENT_JUSTIFICATION", $docid, $where);
+				$is_valid = 0;
+			}
+		}
+		elsif($scope ne "anywhere"){
+			$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where);
+		}
+	}
+	$is_valid;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# Pool
+#####################################################################################
+
+package Pool;
 
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-	my ($class, $logger, $parameters) = @_;
-	my $self = $class->SUPER::new($logger, 'RAW');
-	$self->{CLASS} = 'EncodingFormatToModalityMappings';
-	$self->{PARAMETERS} = $parameters;
-	$self->{LOGGER} = $logger;
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'Kit');
+  $self->{CLASS} = 'Pool';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load($filename) if $filename;
+  $self;
+}
+
+sub load {
+	my ($self, $filename) = @_;
+	my $logger = $self->get("LOGGER");
+	my $filehandler = FileHandler->new($logger, $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $kb_id = $entry->get("KBID");
+		my $kbid_kit = $self->get("BY_KEY", $kb_id);
+		my $value = $entry->get("LINE");
+		my $key = &main::generate_uuid_from_string($value);
+		$kbid_kit->add($value, $key) unless $self->exists($key);
+	}
+}
+
+#####################################################################################
+# Kit
+#####################################################################################
+
+package Kit;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'KitEntry');
+  $self->{CLASS} = 'Pool';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# KitEntry
+#####################################################################################
+
+package KitEntry;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'KitEntry',
+    TYPE => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $type = $self->get("TYPE");
+	
+	my $method = $self->can("tostring_$type");
+  return $method->($self) if $method;
+  return "nil";
+}
+
+sub tostring_zerohop_query {
+	my ($self) = @_;
+	my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
+		= map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
+	join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
+}
+
+#####################################################################################
+# ResponsesPool
+#####################################################################################
+
+package ResponsesPool;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) = @_;
+	my $self = {
+		CLASS => 'ResponsesPool',
+		CORE_DOCS => $core_docs,
+		DOCID_MAPPINGS => $docid_mappings,
+		K => $k,
+		LDC_QUERIES => $ldc_queries,
+		PREVIOUS_POOL => $previous_pool,
+		QUERIES => $queries,
+		QUERYTYPE => $queries->get("QUERYTYPE"),
+		RESPONSES_DTD_FILENAME => $responses_dtd_file,
+		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
+		RESPONSES_POOL => undef,
+		LOGGER => $logger,
+	};
 	bless($self, $class);
-	$self->load_data();
+	$self->load();
 	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $core_docs = $self->get("CORE_DOCS");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $queries = $self->get("QUERIES");
+	my $ldc_queries = $self->get("LDC_QUERIES");
+	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
+	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
+	my $query_type = $self->get("QUERYTYPE");
+	my $previous_pool = $self->get("PREVIOUS_POOL");
+	my $responses_pool;
+	$responses_pool = ClassResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "class_query");
+	$responses_pool = ZeroHopResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "zerohop_query");
+	$responses_pool = GraphResponsesPool->new($logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $previous_pool) if($query_type eq "graph_query");
+	$self->set("RESPONSES_POOL", $responses_pool);
+}
+
+sub write_output {
+	my ($self, $program_output) = @_;
+	$self->get("RESPONSES_POOL")->write_output($program_output);
+}
+
+#####################################################################################
+# ZeroHopResponsesPool
+#####################################################################################
+
+package ZeroHopResponsesPool;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
+	my $self = {
+		CLASS => 'ZeroHopResponsesPool',
+		CORE_DOCS => $core_docs,
+		DOCID_MAPPINGS => $docid_mappings,
+		ENTIRE_POOL => $entire_pool,
+		K => $k,
+		LDC_QUERIES => $ldc_queries,
+		QUERIES => $queries,
+		QUERYTYPE => $queries->get("QUERYTYPE"),
+		RESPONSES_DTD_FILENAME => $responses_dtd_file,
+		RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
+		RESPONSES_POOL => undef,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $core_docs = $self->get("CORE_DOCS");
+	my $docid_mappings = $self->get("DOCID_MAPPINGS");
+	my $k = $self->get("K");
+	my $queries = $self->get("QUERIES");
+	my $ldc_queries = $self->get("LDC_QUERIES");
+	my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
+	my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
+	my $query_type = $self->get("QUERYTYPE");
+	my $entire_pool = $self->get("ENTIRE_POOL");
+	$entire_pool = Pool->new($logger) if $entire_pool eq "nil";
+	
+	my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $responses_xml_file = $entry->get("filename");
+		print STDERR "--processing $responses_xml_file\n";
+		my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
+		foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
+			my $query_id = $response->get("QUERYID");
+			my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
+				if $ldc_queries->get("QUERY", $query_id);
+			next unless $kb_id;
+			$kb_id =~ s/^\?//;
+			my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
+			my $enttype = $queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("ENTTYPE");
+			# Making the enttype NIL as desired by LDC
+			$enttype = "NIL";
+			my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
+			my $scope = $response->get("SCOPE");
+			my %kit_entries_by_docids;
+			foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
+				my $mention_span = $justification->tostring();
+				my $mention_modality = $justification->get("MODALITY");
+				my $confidence = $justification->get("CONFIDENCE");
+				my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
+				@docids = grep {$_ eq $source_docid} @docids if $source_docid;
+				foreach my $docid(@docids) {
+					next unless $core_docs->exists($docid);
+					my $kit_entry = KitEntry->new($logger);
+					$kit_entry->set("TYPE", $query_type);
+					$kit_entry->set("KB_ID", $kb_id);
+					$kit_entry->set("ENTTYPE", $enttype);
+					$kit_entry->set("ID", "<ID>");
+					$kit_entry->set("MENTION_MODALITY", $mention_modality);
+					$kit_entry->set("DOCID", $docid);
+					$kit_entry->set("MENTION_SPAN", $mention_span);
+					$kit_entry->set("LABEL_1", "NIL");
+					$kit_entry->set("LABEL_2", "NIL");
+					$kit_entry->set("CONFIDENCE", $confidence);
+					my $key = &main::generate_uuid_from_string($kit_entry->tostring());
+					$kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
+				}
+			}
+			foreach my $docid_modality (keys %kit_entries_by_docids) {
+				my $i = 0;
+				foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
+										keys %{$kit_entries_by_docids{$docid_modality}}) {
+					$i++;
+					last if $i > $k;
+					my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
+					my $value = $kit_entry->tostring();
+					$kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
+				}
+			}
+		}
+	}
+	$self->set("RESPONSES_POOL", $entire_pool);
+}
+
+sub write_output {
+	my ($self, $program_output) = @_;
+	my $pool = $self->get("RESPONSES_POOL");
+	my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+	print "$header\n";
+	foreach my $kb_id($pool->get("ALL_KEYS")) {
+		my $kit = $pool->get("BY_KEY", $kb_id);
+		foreach my $output_line($kit->toarray()) {
+			print $program_output "$output_line\n";
+		}
+	}
+}
+
+#####################################################################################
+# PrevailingTheoryEntry
+#####################################################################################
+
+package PrevailingTheoryEntry;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $entry) = @_;
+	my $self = {
+		CLASS => 'PrevailingTheoryEntry',
+		ENTRY => $entry,
+		MATRIX_KE_ITEM_NUM => $entry->get("Matrix KE Item Number"),
+		ONTOLOGY_ID => $entry->get("Ontology ID"),
+	  ARGUMENT_KBID => $entry->get("Argument KB ID"),
+	  ITEM_KE => $entry->get("Item KE"),
+	  TYPE => $entry->get("Type"),
+	  SUBTYPE => $entry->get("Subtype"),
+	  SUBSUBTYPE => $entry->get("Sub-subtype"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self;
+}
+
+#####################################################################################
+# ArgumentSpec
+#####################################################################################
+
+package ArgumentSpec;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $entry, $argnum) = @_;
+	my $self = {
+		CLASS => 'ArgumentSpec',
+		ENTRY => $entry,
+		ARGUMENT_NUM => $argnum,
+		LABEL => $entry->get("arg" . $argnum . " " . "label"),
+		OUTPUT_VALUE => $entry->get("Output value for arg" . $argnum),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self;
+}
+
+#####################################################################################
+# EntitySpec
+#####################################################################################
+
+package EntitySpec;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $entry) = @_;
+	my $self = {
+		CLASS => 'EntitySpec',
+		ENTRY => $entry,
+		ANNOTATION_ID => $entry->get("AnnotIndexID"),
+		TYPE => $entry->get("Type"),
+		SUBTYPE => $entry->get("Subtype"),
+		SUBSUBTYPE => $entry->get("Sub-subtype"),
+		TYPE_OV => $entry->get("Output Value for Type"),
+		SUBTYPE_OV => $entry->get("Output Value for Subtype"),
+		SUBSUBTYPE_OV => $entry->get("Output Value for Sub-subtype"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self;
+}
+
+#####################################################################################
+# EventSpec
+#####################################################################################
+
+package EventSpec;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $entry) = @_;
+	my $self = {
+		CLASS => 'EventSpec',
+		ENTRY => $entry,
+		ARGUMENTS => Container->new($logger),
+		ANNOTATION_ID => $entry->get("AnnotIndexID"),
+		TYPE => $entry->get("Type"),
+		SUBTYPE => $entry->get("Subtype"),
+		SUBSUBTYPE => $entry->get("Sub-subtype"),
+		TYPE_OV => $entry->get("Output Value for Type"),
+		SUBTYPE_OV => $entry->get("Output Value for Subtype"),
+		SUBSUBTYPE_OV => $entry->get("Output Value for Sub-subtype"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	for(my $argnum = 1; $argnum <= 5; $argnum++) {
+		$self->{ARGUMENTS}->add(
+			ArgumentSpec->new($logger, $entry, $argnum), 
+			"arg" . $argnum
+		);
+	}
+	$self;
+}
+
+sub get_FULL_TYPE {
+	my ($self) = @_;
+	my ($type, $subtype, $subsubtype) = map {$self->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
+	my $full_type = $type;
+	$full_type = "$type.$subtype" if $subtype ne "n/a";
+	$full_type = "$type.$subtype.$subsubtype" if $subtype ne "n/a" && $subsubtype ne "n/a";
+	$full_type;	
+}
+
+#####################################################################################
+# RelationSpec
+#####################################################################################
+
+package RelationSpec;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $entry) = @_;
+	my $self = {
+		CLASS => 'RelationSpec',
+		ENTRY => $entry,
+		ARGUMENTS => Container->new($logger),
+		ANNOTATION_ID => $entry->get("AnnotIndexID"),
+		TYPE => $entry->get("Type"),
+		SUBTYPE => $entry->get("Subtype"),
+		SUBSUBTYPE => $entry->get("Sub-Subtype"),
+		TYPE_OV => $entry->get("Output Value for Type"),
+		SUBTYPE_OV => $entry->get("Output Value for Subtype"),
+		SUBSUBTYPE_OV => $entry->get("Output Value for Sub-Subtype"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	for(my $argnum = 1; $argnum <= 2; $argnum++) {
+		$self->{ARGUMENTS}->add(
+			ArgumentSpec->new($logger, $entry, $argnum), 
+			"arg" . $argnum
+		);
+	}
+	$self;
+}
+
+sub get_FULL_TYPE {
+	my ($self) = @_;
+	my ($type, $subtype, $subsubtype) = map {$self->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
+	my $full_type = $type;
+	$full_type = "$type.$subtype" if $subtype ne "n/a";
+	$full_type = "$type.$subtype.$subsubtype" if $subtype ne "n/a" && $subsubtype ne "n/a";
+	$full_type;	
+}
+
+#####################################################################################
+# PrevailingTheoryContainer
+#####################################################################################
+
+package PrevailingTheoryContainer;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, "Container");
+  $self->{CLASS} = 'PrevailingTheoryContainer';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# OntologyContainer
+#####################################################################################
+
+package OntologyContainer;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger);
+  $self->{CLASS} = 'OntologyContainer';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+sub get_RELATION_WITH_ITEM_KE {
+	my ($self, $item_ke) = @_;
+	my $spec;
+	foreach my $ontology_id($self->get("ALL_KEYS")) {
+		next unless $ontology_id =~ /^LDC_rel_/;
+		$spec = $self->get("BY_KEY", $ontology_id);
+		foreach my $argument_num($spec->get("ARGUMENTS")->get("ALL_KEYS")) {
+			my $argument = $spec->get("ARGUMENTS")->get("BY_KEY", $argument_num);
+			return ($spec, $argument) if $argument->get("OUTPUT_VALUE") eq $item_ke;
+		}
+	}}
+
+sub get_EVENT_WITH_ITEM_KE {
+	my ($self, $item_ke) = @_;
+	my $spec;
+	foreach my $ontology_id($self->get("ALL_KEYS")) {
+		next unless $ontology_id =~ /^LDC_evt_/;
+		$spec = $self->get("BY_KEY", $ontology_id);
+		foreach my $argument_num($spec->get("ARGUMENTS")->get("ALL_KEYS")) {
+			my $argument = $spec->get("ARGUMENTS")->get("BY_KEY", $argument_num);
+			return ($spec, $argument) if $argument->get("OUTPUT_VALUE") eq $item_ke;
+		}
+	}
+}
+
+#####################################################################################
+# QueryGenerator
+#####################################################################################
+
+package QueryGenerator;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $parameters) = @_;
+	my $self = {
+		CLASS => 'QueryGenerator',
+		ENTITIES => OntologyContainer->new($logger),
+		RELATIONS => OntologyContainer->new($logger),
+		EVENTS => OntologyContainer->new($logger),
+		PREVAILING_THEORY_ENTRIES => PrevailingTheoryContainer->new($logger),
+		PARAMETERS => $parameters,
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	$self->load();
+	$self;
+}
+
+sub load {
+	my ($self, $field, @arguments) = @_;
+  $field = "MAIN" unless $field;
+  my $method = $self->can("load_$field");
+  return $method->($self, @arguments) if $method;
+}
+
+sub load_MAIN {
+	my ($self) = @_;
+	my $parameters = $self->get("PARAMETERS");
+	foreach my $key($parameters->get("ONTOLOGY_FILES")->get("ALL_KEYS")) {
+		my $filename = $parameters->get("ONTOLOGY_FILES")->get("BY_KEY", $key);
+		$self->load("ONTOLOGY", $key, $filename);
+	}
+	foreach my $key($parameters->get("PREVAILING_THEORY_FILES")->get("ALL_KEYS")) {
+		my $filename = $parameters->get("PREVAILING_THEORY_FILES")->get("BY_KEY", $key);
+		$self->load("PREVAILING_THEORY", $key, $filename);
+	}
+}
+
+sub load_ONTOLOGY {
+	my ($self, $ontology_type, $filename) = @_;
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $ontology_container = $self->get(uc($ontology_type));
+	foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
+		my $ontology_id = $entry->get("AnnotIndexID");
+		my $spec;
+		$spec = EntitySpec->new($self->get("LOGGER"), $entry) if $ontology_type eq "entities";
+		$spec = EventSpec->new($self->get("LOGGER"), $entry) if $ontology_type eq "events";
+		$spec = RelationSpec->new($self->get("LOGGER"), $entry) if $ontology_type eq "relations";
+		$ontology_container->add($spec, $ontology_id);
+	}
+}
+
+sub load_PREVAILING_THEORY {
+	my ($self, $key, $filename) = @_;
+	$key = uc($key);
+	my $prevailing_theory_container = $self->get("PREVAILING_THEORY_ENTRIES");
+	my $subcontainer = $prevailing_theory_container->get("BY_KEY", $key);
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
+		my $pt_entry = PrevailingTheoryEntry->new($self->get("LOGGER"), $entry);
+		$subcontainer->add($pt_entry);
+	}
+}
+
+#		my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+#		my $entries = $filehandler->get("ENTRIES");
+#		foreach my $entry($entries->toarray()) {
+#			my ($doceid, $segment_id, $start_char, $end_char) =
+#				map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+#			my $segments = $self->get("BY_KEY", $doceid);
+#			my $sentence_boundary = $segments->get("BY_KEY", "$doceid:$segment_id");
+#			$sentence_boundary->set("SEGMENT_ID", $segment_id);
+#			$sentence_boundary->set("START_CHAR", $start_char);
+#			$sentence_boundary->set("END_CHAR", $end_char);
+
+
+sub generate_queries {
+	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
+	$self->generate_task1_class_queries($year, $topic_id, $prevailing_theory_id);
+	$self->generate_task1_graph_queries($year, $topic_id, $prevailing_theory_id);
+	$self->generate_task2_zerohop_queries($year, $topic_id, $prevailing_theory_id);
+  $self->generate_task2_graph_queries($year, $topic_id, $prevailing_theory_id);	
+}
+
+sub generate_graph_queries {
+	my ($self, $year, $topic_id, $prevailing_theory_id, $task) = @_;
+	my $task_long_name = $task;
+	my $task_short_name = "TA1";
+	$task_short_name ="TA2" if $task eq "task2";
+	my $logger = $self->get("LOGGER");
+	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "graph_query");
+	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
+	system("mkdir -p $output_dir");
+	my $xml_file = "$output_dir/" . $task_long_name . "\_graph_queries.xml";
+	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
+	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
+	my $query_id_prefix = $self->get("PARAMETERS")->get($task_short_name . "_GRAPH_QUERYID_PREFIX");
+	my $reference_kbid_prefix = $self->get("PARAMETERS")->get("REFERENCE_KBID_PREFIX");
+	my $i = 0;
+	my %edge_label_and_argkbids_used;
+	foreach my $pt_entry($subcontainer->toarray()) {
+		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
+		# For task1, we need only distict edge labels for queryids
+		$argument_kbid = 0 if $task_long_name eq "task1";
+		next unless $argument_kbid =~ /^\d+$/;
+		my $role;
+		if($pt_entry->get("ONTOLOGY_ID") =~ /^LDC_ent_/) {
+			my $item_ke = $pt_entry->get("ITEM_KE");
+			my $subject_spec;
+			if($item_ke =~ /^(evt|rel)\d/) {
+				my ($event_or_relation_spec, $argument_spec);
+				($event_or_relation_spec, $argument_spec)
+					= $self->get("EVENTS")->get("EVENT_WITH_ITEM_KE", $item_ke)
+						if $item_ke =~ /^evt\d/;
+				($event_or_relation_spec, $argument_spec)
+					= $self->get("RELATIONS")->get("RELATION_WITH_ITEM_KE", $item_ke)
+						if $item_ke =~ /^rel\d/;
+				my $event_or_relation_type = $event_or_relation_spec->get("FULL_TYPE");
+				my $argument_label = $argument_spec->get("LABEL");
+				my $edge_label = $event_or_relation_type . "_" . $argument_label;
+				next if $edge_label_and_argkbids_used{$edge_label . "_" . $argument_kbid};
+				$i++;
+				my $query_id = "$query_id_prefix\_$i";
+				my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
+				my $sparql = $self->get($task_short_name . "_GRAPH_SPARQL_QUERY_TEMPLATE");
+				$sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
+				$sparql =~ s/\[__PREDICATE__\]/$edge_label/gs;
+				$sparql =~ s/\[__KBID__\]/$query_reference_kbid/gs if $task_long_name eq "task2";
+				my $query_attributes = XMLAttributes->new($logger);
+				$query_attributes->add("$query_id", "id");
+				my $xml_subject = XMLElement->new($logger, "?subject", "subject", 0);
+				my $xml_predicate = XMLElement->new($logger, $edge_label, "predicate", 0);
+				my $xml_object;
+				$xml_object = XMLElement->new($logger, "?object", "object", 0)
+					if $task_long_name eq "task1";
+				$xml_object = XMLElement->new($logger, $query_reference_kbid, "object", 0)
+					if $task_long_name eq "task2";
+				my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
+				my $xml_query = XMLElement->new($logger,
+							XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object, $xml_sparql),
+							"graph_query",
+							1,
+							$query_attributes);
+				my $query = GraphQuery->new($logger, $xml_query);
+				$queries->add($query);
+				$edge_label_and_argkbids_used{$edge_label . "_" . $argument_kbid} = 1;
+			}
+		}
+	}
+	$queries->write_to_file();
+}
+
+sub generate_task1_class_queries {
+	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
+	my $logger = $self->get("LOGGER");
+	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "class_query");
+	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
+	system("mkdir -p $output_dir");
+	my $xml_file = "$output_dir/task1_class_queries.xml";
+	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
+	
+	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
+	my $query_id_prefix = $self->get("PARAMETERS")->get("TA1_CLASS_QUERYID_PREFIX");
+	my $i = 0;
+	my %types_used;
+	foreach my $pt_entry($subcontainer->toarray()) {
+		# Is this an entity involved in the prevailing theory?
+		my $ontology_id = $pt_entry->get("ONTOLOGY_ID");
+		if($ontology_id =~ /^LDC_ent_/) {
+			# If yes, pick up its type, subtype and subsubtypes from ontology file
+			my $entity_spec = $self->get("ENTITIES")->get("BY_KEY", $ontology_id);
+			my ($type, $subtype, $subsubtype) = map {$entity_spec->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
+			my @query_types = ($type);
+			push(@query_types, "$type.$subtype") if $subtype ne "n/a";
+			push(@query_types, "$type.$subtype.$subsubtype") if $subtype ne "n/a" && $subsubtype ne "n/a";
+			foreach my $query_type(@query_types) {
+				next if $types_used{$query_type};
+				# Generate a query at all granularities
+				$i++;
+				my $query_id = "$query_id_prefix\_$i";		
+				# Generate the XML object corresponding to the query
+				my $sparql = $self->get("TA1_CLASS_SPARQL_QUERY_TEMPLATE");
+				$sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
+				$sparql =~ s/\[__TYPE__\]/$query_type/gs;
+				my $query_attributes = XMLAttributes->new($logger);
+				$query_attributes->add("$query_id", "id");
+				my $xml_doceid = XMLElement->new($logger, $query_type, "enttype", 0);
+				my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
+				my $xml_object = XMLElement->new($logger,
+								XMLContainer->new($logger, $xml_doceid, $xml_sparql),
+								"class_query",
+								1,
+								$query_attributes);
+				my $query = ClassQuery->new($logger, $xml_object);
+				$queries->add($query); 
+				$types_used{$query_type} = 1;
+			}
+		}
+	}
+	$queries->write_to_file();
+}
+
+sub generate_task1_graph_queries {
+	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
+	$self->generate_graph_queries($year, $topic_id, $prevailing_theory_id, "task1");
+}
+
+#sub generate_task1_graph_queries_old {
+#	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
+#	my $logger = $self->get("LOGGER");
+#	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "graph_query");
+#	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
+#	system("mkdir -p $output_dir");
+#	my $xml_file = "$output_dir/task1_graph_queries.xml";
+#	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
+#	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
+#	my $query_id_prefix = $self->get("PARAMETERS")->get("TA1_GRAPH_QUERYID_PREFIX");
+#	my $i = 0;
+#	my %edge_labels_used;
+#	foreach my $pt_entry($subcontainer->toarray()) {
+#		# Is this an entity involved in the prevailing theory?
+#		my $ontology_id = $pt_entry->get("ONTOLOGY_ID");
+#		my $role;
+#		if($ontology_id =~ /^LDC_ent_/) {
+#			# If yes, generate the query
+#			my $entity_spec = $self->get("ENTITIES")->get("BY_KEY", $ontology_id);
+#			my ($type, $subtype, $subsubtype) = map {$entity_spec->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
+#			my $item_ke = $pt_entry->get("ITEM_KE");
+#			my $subject_spec;
+#			if($item_ke =~ /^evt/) {
+#				my ($event_spec, $argument_spec) = $self->get("EVENTS")->get("EVENT_WITH_ITEM_KE", $item_ke);
+#				my $event_type = $event_spec->get("FULL_TYPE");
+#				my $argument_label = $argument_spec->get("LABEL");
+#				my $edge_label = $event_type . "_" . $argument_label;
+#				next if $edge_labels_used{$edge_label};
+#				$i++;
+#				my $query_id = "$query_id_prefix\_$i";
+#				my $sparql = $self->get("TA1_GRAPH_SPARQL_QUERY_TEMPLATE");
+#				$sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
+#				$sparql =~ s/\[__PREDICATE__\]/$edge_label/gs;
+#				my $query_attributes = XMLAttributes->new($logger);
+#				$query_attributes->add("$query_id", "id");
+#				my $xml_subject = XMLElement->new($logger, "?subject", "subject", 0);
+#				my $xml_predicate = XMLElement->new($logger, $edge_label, "predicate", 0);
+#				my $xml_object = XMLElement->new($logger, "?object", "object", 0);
+#				my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
+#				my $xml_query = XMLElement->new($logger,
+#							XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object, $xml_sparql),
+#							"graph_query",
+#							1,
+#							$query_attributes);
+#				my $query = GraphQuery->new($logger, $xml_query);
+#				$queries->add($query);
+#				$edge_labels_used{$edge_label} = 1;
+#			}
+#		}
+#	}
+#	$queries->write_to_file();
+#}
+
+sub generate_task2_zerohop_queries {
+	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
+	my $logger = $self->get("LOGGER");
+	my $dtd_file = $self->get("PARAMETERS")->get("DTD_FILES")->get("BY_KEY", "zerohop_query");
+	my $output_dir = $self->get("PARAMETERS")->get("OUTPUT_DIR") . "/" . $topic_id . "_" . $prevailing_theory_id;
+	system("mkdir -p $output_dir");
+	my $xml_file = "$output_dir/task2_zerohop_queries.xml";
+	my $queries = QuerySet->new($logger, $dtd_file, $xml_file);
+	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
+	my $query_id_prefix = $self->get("PARAMETERS")->get("TA2_ZEROHOP_QUERYID_PREFIX");
+	my $reference_kbid_prefix = $self->get("PARAMETERS")->get("REFERENCE_KBID_PREFIX");
+	my $i = 0;
+	my %argument_kbids_used;
+	foreach my $pt_entry($subcontainer->toarray()) {
+		# Is this an entity involved in the prevailing theory?
+		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
+		if($argument_kbid =~ /^\d+$/) {
+			# If yes, generate the query
+			next if $argument_kbids_used{$argument_kbid};
+			$i++;
+			my $query_id = "$query_id_prefix\_$i";
+			my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
+			# Generate the XML object corresponding to the query
+			my $sparql = $self->get("TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE");
+			$sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
+			$sparql =~ s/\[__KBID__\]/$query_reference_kbid/gs;
+			my $query_attributes = XMLAttributes->new($logger);
+			$query_attributes->add("$query_id", "id");
+			my $xml_argument_kbid = XMLElement->new($logger, $query_reference_kbid, "reference_kbid", 0);
+			my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
+			my $xml_object = XMLElement->new($logger,
+							XMLContainer->new($logger, $xml_argument_kbid, $xml_sparql),
+							"zerohop_query",
+							1,
+							$query_attributes);
+			my $query = ZeroHopQuery->new($logger, $xml_object);
+			$queries->add($query); 
+			$argument_kbids_used{$argument_kbid} = 1;
+		}
+	}
+	$queries->write_to_file();
+}
+
+sub generate_task2_graph_queries {
+	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
+	$self->generate_graph_queries($year, $topic_id, $prevailing_theory_id, "task2");
+}
+
+
+
+sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
+	my ($self) = @_;
+	my $sparql = <<'END_SPARQL_QUERY';
+	<![CDATA[
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+              PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
+              PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+              PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+              # Query: [__QUERY_ID__]
+              # Query description: Find all informative mentions of type [__TYPE__]
+              # Aggregate confidence of ?cluster is product of
+              #       ?t_cv       # confidenceValue of asserting ?member being of ?type
+              #       ?cm_cv      # confidenceValue of asserting ?member being a member of the ?cluster
+              #       ?j_cv       # confidenceValue of informativeJustification
+
+              SELECT 
+                ?docid      # sourceDocument
+                ?query_type # query type
+                ?cluster    # ?cluster containing ?member1 of type ?type that matches ?query_type
+                ?type       # matching ?type
+                ?infj_span  # informativeJustification span
+                ?t_cv       # confidenceValue of asserting ?member being of ?type
+                ?cm_cv      # confidenceValue of asserting ?member being a member of the ?cluster
+                ?j_cv       # confidenceValue of informativeJustification
+
+              WHERE {
+
+                  BIND(ldcOnt:[__TYPE__] as ?query_type)
+
+                  ?cluster              aida:informativeJustification ?inf_justification .
+
+                  ?statement1           a                             rdf:Statement .
+                  ?statement1           rdf:object                    ?type .
+                  ?statement1           rdf:predicate                 rdf:type .
+                  ?statement1           rdf:subject                   ?member .
+                  ?statement1           aida:justifiedBy              ?inf_justification .
+                  ?statement1           aida:confidence               ?t_confidence .
+                  ?t_confidence         aida:confidenceValue          ?t_cv .
+
+                  FILTER(cfn:superTypeOf(str(?query_type), str(?type)))
+
+                  ?statement2           a                             aida:ClusterMembership .
+                  ?statement2           aida:cluster                  ?cluster .
+                  ?statement2           aida:clusterMember            ?member .
+                  ?statement2           aida:confidence               ?cm_confidence .
+                  ?cm_confidence       aida:confidenceValue          ?cm_cv .
+
+                  ?inf_justification    aida:source          ?doceid .
+                  ?inf_justification    aida:sourceDocument  ?docid .
+                  ?inf_justification    aida:confidence      ?j_confidence .
+                  ?j_confidence         aida:confidenceValue ?j_cv .
+
+                  OPTIONAL {
+                         ?inf_justification a                           aida:TextJustification .
+                         ?inf_justification aida:startOffset            ?so .
+                         ?inf_justification aida:endOffsetInclusive     ?eo
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:ImageJustification .
+                         ?inf_justification aida:boundingBox            ?bb  .
+                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
+                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
+                         ?bb                aida:boundingBoxLowerRightX ?lrx .
+                         ?bb                aida:boundingBoxLowerRightY ?lry
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:KeyFrameVideoJustification .
+                         ?inf_justification aida:keyFrame               ?kfid .
+                         ?inf_justification aida:boundingBox            ?bb  .
+                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
+                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
+                         ?bb                aida:boundingBoxLowerRightX ?lrx .
+                         ?bb                aida:boundingBoxLowerRightY ?lry
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:ShotVideoJustification .
+                         ?inf_justification aida:shot                   ?sid
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:AudioJustification .
+                         ?inf_justification aida:startTimestamp         ?st .
+                         ?inf_justification aida:endTimestamp           ?et
+                  }
+
+                  BIND( IF( BOUND(?sid), ?sid, "__NULL__") AS ?_sid) .
+                  BIND( IF( BOUND(?kfid), ?kfid, "__NULL__") AS ?_kfid) .
+                  BIND( IF( BOUND(?so), ?so, "__NULL__") AS ?_so) .
+                  BIND( IF( BOUND(?eo), ?eo, "__NULL__") AS ?_eo) .
+                  BIND( IF( BOUND(?st), ?st, "__NULL__") AS ?_st) .
+                  BIND( IF( BOUND(?et), ?et, "__NULL__") AS ?_et) .
+                  BIND( IF( BOUND(?ulx), ?ulx, "__NULL__") AS ?_ulx) .
+                  BIND( IF( BOUND(?uly), ?uly, "__NULL__") AS ?_uly) .
+                  BIND( IF( BOUND(?lrx), ?lrx, "__NULL__") AS ?_lrx) .
+                  BIND( IF( BOUND(?lry), ?lry, "__NULL__") AS ?_lry) .
+
+                  BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) as ?infj_span ) .
+              }
+	]]>
+END_SPARQL_QUERY
+	$sparql;
+}
+
+sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
+	my ($self) = @_;
+	my $sparql = <<'END_SPARQL_QUERY';
+	<![CDATA[
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+              PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
+              PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+              PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+              
+              # Query: [__QUERY_ID__]
+              # Query description: Find all edges of type ldcOnt:[__PREDICATE__]
+              
+              # By default, NIST will compute aggregate edge justification confidence (AEJC) as product of:
+              #        ?oinf_j_cv    # confidence of object informativeJustification
+              #        ?obcm_cv      # cluster membership confidence of the object
+              #        ?edge_cv      # confidence of a compound justification for the argument assertion
+              #        ?sbcm_cv      # cluster membership confidence of the subject
+              
+              SELECT ?docid        # sourceDocument
+                     ?edge_type_q  # edge type in the query
+                     ?edge_type    # edge type in response matching the edge type in query
+                     ?object_cluster  ?objectmo  ?oinf_j_span # object cluster, cluster member and its informativeJustification
+                     ?subject_cluster ?subjectmo  # subject cluster, cluster member (its informativeJustification is not needed by LDC for assessment)
+                     ?ej_span      # CompoundJustification span(s) for argument assertion
+                     ?oinf_j_cv    # confidence of object informativeJustification
+                     ?obcm_cv      # cluster membership confidence of the object
+                     ?edge_cv      # confidence of a compound justification for the argument assertion
+                     ?sbcm_cv      # cluster membership confidence of the subject
+              
+              WHERE {
+              
+                  BIND (ldcOnt:[__PREDICATE__] as ?edge_type_q)
+              
+                  # Get the object informativeJustification
+                  ?objectmo             a                             aida:Entity .
+                  ?objectmo             aida:informativeJustification ?oinf_justification .
+                  ?oinf_justification   aida:sourceDocument           ?docid .
+                  ?oinf_justification   aida:source                   ?oinf_j_doceid .
+                  ?oinf_justification   aida:confidence               ?oinf_j_confidence .
+                  ?oinf_j_confidence    aida:confidenceValue          ?oinf_j_cv .
+              
+                  # Get the object cluster and cluster membership confidence
+                  ?statement1           a                             aida:ClusterMembership .
+                  ?statement1           aida:cluster                  ?object_cluster .
+                  ?statement1           aida:clusterMember            ?objectmo .
+                  ?statement1           aida:confidence               ?objcm_confidence .
+                  ?objcm_confidence     aida:confidenceValue          ?obcm_cv .
+              
+                  # Get the edge and it's justifications
+                  ?statement2           rdf:object                    ?objectmo .
+                  ?statement2           rdf:predicate                 ?edge_type .
+                  ?statement2           rdf:subject                   ?subjectmo .
+              
+                  # The ?edge_type should be matching ?edge_type_q
+                  FILTER(cfn:superTypeOf(str(?edge_type_q), str(?edge_type)))
+              
+                  ?statement2           aida:justifiedBy              ?compoundedge_just .
+                  ?statement2           aida:confidence               ?edge_confidence .
+                  ?edge_confidence      aida:confidenceValue          ?edge_cv .
+                  # The first contained justification
+                  ?compoundedge_just    aida:containedJustification   ?edge_justification1 .
+                  ?edge_justification1  aida:sourceDocument           ?docid .
+                  ?edge_justification1  aida:source                   ?edgecj1_doceid .
+                  ?edge_justification1  aida:confidence               ?edgecj1_j_confidence .
+                  ?edgecj1_j_confidence aida:confidenceValue          ?edgecj1_j_cv .
+                  # The second contained justification
+                  ?compoundedge_just    aida:containedJustification   ?edge_justification2 .
+                  ?edge_justification2  aida:sourceDocument           ?docid .
+                  ?edge_justification2  aida:source                   ?edgecj2_doceid .
+                  ?edge_justification2  aida:confidence               ?edgecj2_j_confidence .
+                  ?edgecj2_j_confidence aida:confidenceValue          ?edgecj2_j_cv .
+              
+                  # Get the subject informativeJustification
+                  ?subjectmo            aida:informativeJustification ?sinf_justification .
+                  ?sinf_justification   aida:sourceDocument           ?docid .
+                  ?sinf_justification   aida:source                   ?sinf_j_doceid .
+                  ?sinf_justification   aida:confidence               ?sinf_j_confidence .
+                  ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
+              
+                  # Get the subject cluster and cluster membership confidence
+                  ?statement3           a                             aida:ClusterMembership .
+                  ?statement3           aida:cluster                  ?subject_cluster .
+                  ?statement3           aida:clusterMember            ?subjectmo .
+                  ?statement3           aida:confidence               ?subjcm_confidence .
+                  ?subjcm_confidence    aida:confidenceValue          ?sbcm_cv .
+              
+                  # Get the number of justifications (?edge_num_cjs) that are contained in
+                  # the ?compoundedge_just
+                  {
+                     SELECT ?compoundedge_just (count(?cj) as ?edge_num_cjs)
+                     WHERE {
+                         ?compoundedge_just aida:containedJustification ?cj .
+                     }
+                     GROUP BY ?compoundedge_just
+                  }
+              
+                  # Get object's informative justification span
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:TextJustification .
+                         ?oinf_justification aida:startOffset            ?oso .
+                         ?oinf_justification aida:endOffsetInclusive     ?oeo
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:ImageJustification .
+                         ?oinf_justification aida:boundingBox            ?obb  .
+                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
+                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
+                         ?obb                aida:boundingBoxLowerRightX ?olrx .
+                         ?obb                aida:boundingBoxLowerRightY ?olry
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:KeyFrameVideoJustification .
+                         ?oinf_justification aida:keyFrame               ?okfid .
+                         ?oinf_justification aida:boundingBox            ?obb  .
+                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
+                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
+                         ?obb                aida:boundingBoxLowerRightX ?olrx .
+                         ?obb                aida:boundingBoxLowerRightY ?olry
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:ShotVideoJustification .
+                         ?oinf_justification aida:shot                   ?osid
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:AudioJustification .
+                         ?oinf_justification aida:startTimestamp         ?ost .
+                         ?oinf_justification aida:endTimestamp           ?oet
+                  }
+              
+                  BIND( IF( BOUND(?osid), ?osid, "__NULL__") AS ?_osid) .
+                  BIND( IF( BOUND(?okfid), ?okfid, "__NULL__") AS ?_okfid) .
+                  BIND( IF( BOUND(?oso), ?oso, "__NULL__") AS ?_oso) .
+                  BIND( IF( BOUND(?oeo), ?oeo, "__NULL__") AS ?_oeo) .
+                  BIND( IF( BOUND(?ost), ?ost, "__NULL__") AS ?_ost) .
+                  BIND( IF( BOUND(?oet), ?oet, "__NULL__") AS ?_oet) .
+                  BIND( IF( BOUND(?oulx), ?oulx, "__NULL__") AS ?_oulx) .
+                  BIND( IF( BOUND(?ouly), ?ouly, "__NULL__") AS ?_ouly) .
+                  BIND( IF( BOUND(?olrx), ?olrx, "__NULL__") AS ?_olrx) .
+                  BIND( IF( BOUND(?olry), ?olry, "__NULL__") AS ?_olry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) as ?oinf_j_span ) .
+              
+                  # Get subject's informative justification span
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:TextJustification .
+                         ?sinf_justification aida:startOffset            ?sso .
+                         ?sinf_justification aida:endOffsetInclusive     ?seo
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:ImageJustification .
+                         ?sinf_justification aida:boundingBox            ?sbb  .
+                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
+                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
+                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
+                         ?sbb                aida:boundingBoxLowerRightY ?slry
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:KeyFrameVideoJustification .
+                         ?sinf_justification aida:keyFrame               ?skfid .
+                         ?sinf_justification aida:boundingBox            ?sbb  .
+                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
+                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
+                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
+                         ?sbb                aida:boundingBoxLowerRightY ?slry
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:ShotVideoJustification .
+                         ?sinf_justification aida:shot                   ?ssid
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:AudioJustification .
+                         ?sinf_justification aida:startTimestamp         ?sst .
+                         ?sinf_justification aida:endTimestamp           ?set
+                  }
+              
+                  BIND( IF( BOUND(?ssid), ?ssid, "__NULL__") AS ?_ssid) .
+                  BIND( IF( BOUND(?skfid), ?skfid, "__NULL__") AS ?_skfid) .
+                  BIND( IF( BOUND(?sso), ?sso, "__NULL__") AS ?_sso) .
+                  BIND( IF( BOUND(?seo), ?seo, "__NULL__") AS ?_seo) .
+                  BIND( IF( BOUND(?sst), ?sst, "__NULL__") AS ?_sst) .
+                  BIND( IF( BOUND(?set), ?set, "__NULL__") AS ?_set) .
+                  BIND( IF( BOUND(?sulx), ?sulx, "__NULL__") AS ?_sulx) .
+                  BIND( IF( BOUND(?suly), ?suly, "__NULL__") AS ?_suly) .
+                  BIND( IF( BOUND(?slrx), ?slrx, "__NULL__") AS ?_slrx) .
+                  BIND( IF( BOUND(?slry), ?slry, "__NULL__") AS ?_slry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) as ?sinf_j_span ) .
+              
+                  # Get edge's justification span # 1
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:TextJustification .
+                         ?edge_justification1 aida:startOffset            ?ej1so .
+                         ?edge_justification1 aida:endOffsetInclusive     ?ej1eo
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:ImageJustification .
+                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
+                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
+                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
+                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
+                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:KeyFrameVideoJustification .
+                         ?edge_justification1 aida:keyFrame               ?ej1kfid .
+                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
+                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
+                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
+                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
+                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:ShotVideoJustification .
+                         ?edge_justification1 aida:shot                   ?ej1sid
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:AudioJustification .
+                         ?edge_justification1 aida:startTimestamp         ?ej1st .
+                         ?edge_justification1 aida:endTimestamp           ?ej1et
+                  }
+              
+                  BIND( IF( BOUND(?ej1sid), ?ej1sid, "__NULL__") AS ?_ej1sid) .
+                  BIND( IF( BOUND(?ej1kfid), ?ej1kfid, "__NULL__") AS ?_ej1kfid) .
+                  BIND( IF( BOUND(?ej1so), ?ej1so, "__NULL__") AS ?_ej1so) .
+                  BIND( IF( BOUND(?ej1eo), ?ej1eo, "__NULL__") AS ?_ej1eo) .
+                  BIND( IF( BOUND(?ej1st), ?ej1st, "__NULL__") AS ?_ej1st) .
+                  BIND( IF( BOUND(?ej1et), ?ej1et, "__NULL__") AS ?_ej1et) .
+                  BIND( IF( BOUND(?ej1ulx), ?ej1ulx, "__NULL__") AS ?_ej1ulx) .
+                  BIND( IF( BOUND(?ej1uly), ?ej1uly, "__NULL__") AS ?_ej1uly) .
+                  BIND( IF( BOUND(?ej1lrx), ?ej1lrx, "__NULL__") AS ?_ej1lrx) .
+                  BIND( IF( BOUND(?ej1lry), ?ej1lry, "__NULL__") AS ?_ej1lry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) as ?ej1_span ) .
+              
+              
+                  # Get edge's justification span # 2
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:TextJustification .
+                         ?edge_justification2 aida:startOffset            ?ej2so .
+                         ?edge_justification2 aida:endOffsetInclusive     ?ej2eo
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:ImageJustification .
+                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
+                         ?ej2bb               aida:boundingBoxUpperLeftX  ?ej2ulx .
+                         ?ej2bb               aida:boundingBoxUpperLeftY  ?ej2uly .
+                         ?ej2bb               aida:boundingBoxLowerRightX ?ej2lrx .
+                         ?ej2bb               aida:boundingBoxLowerRightY ?ej2lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:KeyFrameVideoJustification .
+                         ?edge_justification2 aida:keyFrame               ?ej2kfid .
+                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
+                         ?ej2bb               aida:boundingBoxUpperLeftX  ?ej2ulx .
+                         ?ej2bb               aida:boundingBoxUpperLeftY  ?ej2uly .
+                         ?ej2bb               aida:boundingBoxLowerRightX ?ej2lrx .
+                         ?ej2bb               aida:boundingBoxLowerRightY ?ej2lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:ShotVideoJustification .
+                         ?edge_justification2 aida:shot                   ?ej2sid
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:AudioJustification .
+                         ?edge_justification2 aida:startTimestamp         ?ej2st .
+                         ?edge_justification2 aida:endTimestamp           ?ej2et
+                  }
+              
+                  BIND( IF( BOUND(?ej2sid), ?ej2sid, "__NULL__") AS ?_ej2sid) .
+                  BIND( IF( BOUND(?ej2kfid), ?ej2kfid, "__NULL__") AS ?_ej2kfid) .
+                  BIND( IF( BOUND(?ej2so), ?ej2so, "__NULL__") AS ?_ej2so) .
+                  BIND( IF( BOUND(?ej2eo), ?ej2eo, "__NULL__") AS ?_ej2eo) .
+                  BIND( IF( BOUND(?ej2st), ?ej2st, "__NULL__") AS ?_ej2st) .
+                  BIND( IF( BOUND(?ej2et), ?ej2et, "__NULL__") AS ?_ej2et) .
+                  BIND( IF( BOUND(?ej2ulx), ?ej2ulx, "__NULL__") AS ?_ej2ulx) .
+                  BIND( IF( BOUND(?ej2uly), ?ej2uly, "__NULL__") AS ?_ej2uly) .
+                  BIND( IF( BOUND(?ej2lrx), ?ej2lrx, "__NULL__") AS ?_ej2lrx) .
+                  BIND( IF( BOUND(?ej2lry), ?ej2lry, "__NULL__") AS ?_ej2lry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) as ?ej2_span ) .
+                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) as ?ej2_span)
+                  FILTER(?ej1_span > ?ej2_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) as ?ej_span)
+              }
+	]]>
+END_SPARQL_QUERY
+	$sparql;
+}
+
+sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
+	my ($self) = @_;
+	my $sparql = <<'END_SPARQL_QUERY';
+	<![CDATA[
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+              PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
+              PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+              PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+              
+              # Query: [__QUERY_ID__]
+              # Query description: Find all informative mentions of entities linked to "[__KBID__]"
+              # NIST default aggregate confidence of ?cluster is a function of
+              #      ?link_cv      # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
+              #      ?j_cv         # confidenceValue of informativeJustification
+              
+              # ?j_cv is used to rank informative mentions within a cluster for purposes of pooling and AP scoring.
+              
+              # In M18, we use the ?j_cv (confidence in the justification, e.g., confidence of _:b02) and interpret that confidence
+              # as the confidence of linking the justification to the cluster; _:b02 is used *only* to represent an informative
+              # mention for some cluster, even though that cluster is not referenced in _:b02. Ideally (in future), there would be
+              # an aida:InformativeJustificationAssertion construct (paralleling the structure of an aida:LinkAssertion) that
+              # associates a confidence to each aida:informativeJustification, and could represent the confidence of linking an
+              # InformativeJustification to a cluster.
+              
+              # _:b12 a                        aida:TextJustification ;
+              #      aida:confidence          [ a                     aida:Confidence ;
+              #                                 aida:confidenceValue  "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
+              #                                 aida:system           ldc:testSystem
+              #                               ] ;
+              #      aida:endOffsetInclusive  "286"^^<http://www.w3.org/2001/XMLSchema#int> ;
+              #      aida:privateData         [ a                 aida:PrivateData ;
+              #                                 aida:jsonContent  "{\"mention\":\"M000721\"}" ;
+              #                                 aida:system       ldc:testSystem
+              #                               ] ;
+              #      aida:source              "DE005" ;
+              #      aida:sourceDocument      "D0100" ;
+              #      aida:startOffset         "260"^^<http://www.w3.org/2001/XMLSchema#int> ;
+              #      aida:system              ldc:testSystem .
+              #
+              # _:b11 a              aida:LinkAssertion ;
+              #      aida:confidence [ a                     aida:Confidence ;
+              #                        aida:confidenceValue  "0.498"^^xsd:double ;
+              #                        aida:system           ldc:testSystem
+              #                      ] ;
+              #      aida:linkTarget "ldc:E0137" ;
+              #      aida:system     ldc:testSystem .
+              #
+              # _:c12 a               aida:InformativeJustificationAssertion ;
+              #       aida:confidence [ a                     aida:Confidence ;
+              #                         aida:confidenceValue  "0.498"^^xsd:double ;
+              #                         aida:system           ldc:testSystem
+              #                       ] ;
+              #      aida:informativeJustification _:b12 ;
+              #      aida:system     ldc:testSystem .
+              #
+              # ldc:cluster-E0137     a                             aida:SameAsCluster ;
+              #                       aida:informativeJustification _:c12 ;
+              #                       aida:link                     _:b11 ;
+              #                       aida:system                   ldc:testSystem .
+              
+              
+              SELECT ?docid        # sourceDocument
+                     ?link_target  # link target as part of the query
+                     ?cluster      # the ?cluster linked to ?link_target
+                     ?infj_span    # informativeJustification span taken from the ?cluster
+                     ?j_cv         # confidenceValue of informativeJustification
+                     ?link_target  # query reference KB node linked to a ?cluster
+                     ?link_cv      # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
+              
+              WHERE {
+                  BIND ("[__KBID__]" AS ?link_target)
+              
+                  # Find ?cluster linked to "[__KBID__]"
+                  # Find the ?link_cv: confidenceValue of linking to external KB entity
+                  ?cluster              a                             aida:SameAsCluster .
+                  ?cluster              aida:informativeJustification ?inf_justification .
+                  ?cluster              aida:link                     ?ref_kb_link .
+                  ?ref_kb_link          a                             aida:LinkAssertion .
+                  ?ref_kb_link          aida:linkTarget               ?link_target .
+                  ?ref_kb_link          aida:confidence               ?link_confidence .
+                  ?link_confidence      aida:confidenceValue          ?link_cv .
+              
+                  # Find mention spans for ?inf_justification
+                  ?inf_justification    aida:source          ?doceid .
+                  ?inf_justification    aida:sourceDocument  ?docid .
+                  ?inf_justification    aida:confidence      ?j_confidence .
+                  ?j_confidence         aida:confidenceValue ?j_cv .
+              
+                  OPTIONAL {
+                         ?inf_justification a                           aida:TextJustification .
+                         ?inf_justification aida:startOffset            ?so .
+                         ?inf_justification aida:endOffsetInclusive     ?eo
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:ImageJustification .
+                         ?inf_justification aida:boundingBox            ?bb  .
+                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
+                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
+                         ?bb                aida:boundingBoxLowerRightX ?lrx .
+                         ?bb                aida:boundingBoxLowerRightY ?lry
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:KeyFrameVideoJustification .
+                         ?inf_justification aida:keyFrame               ?kfid .
+                         ?inf_justification aida:boundingBox            ?bb  .
+                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
+                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
+                         ?bb                aida:boundingBoxLowerRightX ?lrx .
+                         ?bb                aida:boundingBoxLowerRightY ?lry
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:ShotVideoJustification .
+                         ?inf_justification aida:shot                   ?sid
+                  }
+                  OPTIONAL {
+                         ?inf_justification a                           aida:AudioJustification .
+                         ?inf_justification aida:startTimestamp         ?st .
+                         ?inf_justification aida:endTimestamp           ?et
+                  }
+              
+                  BIND( IF( BOUND(?sid), ?sid, "__NULL__") AS ?_sid) .
+                  BIND( IF( BOUND(?kfid), ?kfid, "__NULL__") AS ?_kfid) .
+                  BIND( IF( BOUND(?so), ?so, "__NULL__") AS ?_so) .
+                  BIND( IF( BOUND(?eo), ?eo, "__NULL__") AS ?_eo) .
+                  BIND( IF( BOUND(?st), ?st, "__NULL__") AS ?_st) .
+                  BIND( IF( BOUND(?et), ?et, "__NULL__") AS ?_et) .
+                  BIND( IF( BOUND(?ulx), ?ulx, "__NULL__") AS ?_ulx) .
+                  BIND( IF( BOUND(?uly), ?uly, "__NULL__") AS ?_uly) .
+                  BIND( IF( BOUND(?lrx), ?lrx, "__NULL__") AS ?_lrx) .
+                  BIND( IF( BOUND(?lry), ?lry, "__NULL__") AS ?_lry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) as ?infj_span ) .
+              }
+	]]>
+END_SPARQL_QUERY
+	$sparql;
+}
+
+sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
+	my ($self) = @_;
+	my $sparql = <<'END_SPARQL_QUERY';
+	<![CDATA[
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+              PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
+              PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+              PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+              
+              # Query: [__QUERY_ID__]
+              # Query description: Find all edges of type ldcOnt:Conflict.Attack_Place such that the object
+              #                    of the edge is linked to reference KB node [__KBID__]
+              #
+              # Edge: consists of a Subject (cluster) Id, a Predicate label and an Object (cluster) Id. Subject is an event
+              # KE (cluster) or relation KE (cluster). Object is an entity KE (cluster), relation KE (cluster), or event KE (cluster).
+              # An edge that is returned in response to a TA2 graph query will only have entity KEs as the Object (because the 
+              # TA2 graph query will bind the Object to a specific entity in the evaluation reference KB).
+              #
+              # Aggregate edge justification confidence (AEJC) is used to rank triples to determine which will be pooled and assessed by LDC.
+              # AEJC is also used to rank edges whose triples will be assessed by LDC.
+              # AEJC is also used to compute subject importance, to determine which relation and event frames get assessed by LDC.
+              #
+              # By default, NIST will compute aggregate edge justification confidence (AEJC) for TA2 as the product of:
+              #        ?orfkblink_cv # confidence of linking the object to the query reference KB ID
+              #        ?oinf_j_cv    # confidence of object informativeJustification
+              #        ?obcm_cv      # cluster membership confidence of the object
+              #        ?edge_cv      # confidence of a compound justification for the argument assertion
+              #        ?sbcm_cv      # cluster membership confidence of the subject
+              
+              SELECT ?docid        # sourceDocument
+                     ?edge_type_q  # edge type in the query
+                     ?edge_type    # edge type in response matching the edge type in query
+                     ?olink_target # reference KB node linked to the object of the edge
+                     ?object_cluster  ?objectmo  ?oinf_j_span # object cluster, cluster member and its informativeJustification
+                     ?subject_cluster ?subjectmo  # subject cluster, cluster member (its informativeJustification is not needed by LDC for assessment)
+                     ?ej_span      # CompoundJustification span(s) for argument assertion
+                     ?orfkblink_cv # confidence of linking the object to the query reference KB ID
+                     ?oinf_j_cv    # confidence of object informativeJustification
+                     ?obcm_cv      # cluster membership confidence of the object
+                     ?edge_cv      # confidence of a compound justification for the argument assertion
+                     ?sbcm_cv      # cluster membership confidence of the subject
+              
+              WHERE {
+              
+                  BIND ("[__KBID__]" AS ?olink_target)
+                  BIND (ldcOnt:[__PREDICATE__] as ?edge_type_q)
+              
+                  # Find ?objectmo linked to "[__KBID__]"
+                  ?objectmo             a                             aida:Entity .
+                  ?objectmo             aida:link                     ?objectmo_rfkbl .
+              
+                  ?objectmo_rfkbl       a                             aida:LinkAssertion .
+                  ?objectmo_rfkbl       aida:linkTarget               ?olink_target .
+                  ?objectmo_rfkbl       aida:confidence               ?orfkblink_confidence .
+                  ?orfkblink_confidence aida:confidenceValue          ?orfkblink_cv .
+              
+                  # Get the object informativeJustification
+                  ?objectmo             aida:informativeJustification ?oinf_justification .
+                  ?oinf_justification   aida:sourceDocument           ?docid .
+                  ?oinf_justification   aida:source                   ?oinf_j_doceid .
+                  ?oinf_justification   aida:confidence               ?oinf_j_confidence .
+                  ?oinf_j_confidence    aida:confidenceValue          ?oinf_j_cv .
+              
+                  # Get the object cluster and cluster membership confidence
+                  ?statement1           a                             aida:ClusterMembership .
+                  ?statement1           aida:cluster                  ?object_cluster .
+                  ?statement1           aida:clusterMember            ?objectmo .
+                  ?statement1           aida:confidence               ?objcm_confidence .
+                  ?objcm_confidence     aida:confidenceValue          ?obcm_cv .
+              
+                  # Get the edge and it's justifications
+                  ?statement2           rdf:object                    ?objectmo .
+                  ?statement2           rdf:predicate                 ?edge_type .
+                  ?statement2           rdf:subject                   ?subjectmo .
+              
+                  # The ?edge_type should be matching ?edge_type_q
+                  FILTER(cfn:superTypeOf(str(?edge_type_q), str(?edge_type)))
+              
+                  ?statement2           aida:justifiedBy              ?compoundedge_just .
+                  ?statement2           aida:confidence               ?edge_confidence .
+                  ?edge_confidence      aida:confidenceValue          ?edge_cv .
+                  # The first contained justification
+                  ?compoundedge_just    aida:containedJustification   ?edge_justification1 .
+                  ?edge_justification1  aida:sourceDocument           ?docid .
+                  ?edge_justification1  aida:source                   ?edgecj1_doceid .
+                  ?edge_justification1  aida:confidence               ?edgecj1_j_confidence .
+                  ?edgecj1_j_confidence aida:confidenceValue          ?edgecj1_j_cv .
+                  # The second contained justification
+                  ?compoundedge_just    aida:containedJustification   ?edge_justification2 .
+                  ?edge_justification2  aida:sourceDocument           ?docid .
+                  ?edge_justification2  aida:source                   ?edgecj2_doceid .
+                  ?edge_justification2  aida:confidence               ?edgecj2_j_confidence .
+                  ?edgecj2_j_confidence aida:confidenceValue          ?edgecj2_j_cv .
+              
+                  # Get the subject informativeJustification
+                  ?subjectmo            aida:informativeJustification ?sinf_justification .
+                  ?sinf_justification   aida:sourceDocument           ?docid .
+                  ?sinf_justification   aida:source                   ?sinf_j_doceid .
+                  ?sinf_justification   aida:confidence               ?sinf_j_confidence .
+                  ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
+              
+                  # Get the subject cluster and cluster membership confidence
+                  ?statement3           a                             aida:ClusterMembership .
+                  ?statement3           aida:cluster                  ?subject_cluster .
+                  ?statement3           aida:clusterMember            ?subjectmo .
+                  ?statement3           aida:confidence               ?subjcm_confidence .
+                  ?subjcm_confidence    aida:confidenceValue          ?sbcm_cv .
+              
+                  # Get the number of justifications (?edge_num_cjs) that are contained in
+                  # the ?compoundedge_just
+                  {
+                     SELECT ?compoundedge_just (count(?cj) as ?edge_num_cjs)
+                     WHERE {
+                         ?compoundedge_just aida:containedJustification ?cj .
+                     }
+                     GROUP BY ?compoundedge_just
+                  }
+              
+                  # Get object's informative justification span
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:TextJustification .
+                         ?oinf_justification aida:startOffset            ?oso .
+                         ?oinf_justification aida:endOffsetInclusive     ?oeo
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:ImageJustification .
+                         ?oinf_justification aida:boundingBox            ?obb  .
+                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
+                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
+                         ?obb                aida:boundingBoxLowerRightX ?olrx .
+                         ?obb                aida:boundingBoxLowerRightY ?olry
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:KeyFrameVideoJustification .
+                         ?oinf_justification aida:keyFrame               ?okfid .
+                         ?oinf_justification aida:boundingBox            ?obb  .
+                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
+                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
+                         ?obb                aida:boundingBoxLowerRightX ?olrx .
+                         ?obb                aida:boundingBoxLowerRightY ?olry
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:ShotVideoJustification .
+                         ?oinf_justification aida:shot                   ?osid
+                  }
+                  OPTIONAL {
+                         ?oinf_justification a                           aida:AudioJustification .
+                         ?oinf_justification aida:startTimestamp         ?ost .
+                         ?oinf_justification aida:endTimestamp           ?oet
+                  }
+              
+                  BIND( IF( BOUND(?osid), ?osid, "__NULL__") AS ?_osid) .
+                  BIND( IF( BOUND(?okfid), ?okfid, "__NULL__") AS ?_okfid) .
+                  BIND( IF( BOUND(?oso), ?oso, "__NULL__") AS ?_oso) .
+                  BIND( IF( BOUND(?oeo), ?oeo, "__NULL__") AS ?_oeo) .
+                  BIND( IF( BOUND(?ost), ?ost, "__NULL__") AS ?_ost) .
+                  BIND( IF( BOUND(?oet), ?oet, "__NULL__") AS ?_oet) .
+                  BIND( IF( BOUND(?oulx), ?oulx, "__NULL__") AS ?_oulx) .
+                  BIND( IF( BOUND(?ouly), ?ouly, "__NULL__") AS ?_ouly) .
+                  BIND( IF( BOUND(?olrx), ?olrx, "__NULL__") AS ?_olrx) .
+                  BIND( IF( BOUND(?olry), ?olry, "__NULL__") AS ?_olry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) as ?oinf_j_span ) .
+              
+                  # Get subject's informative justification span
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:TextJustification .
+                         ?sinf_justification aida:startOffset            ?sso .
+                         ?sinf_justification aida:endOffsetInclusive     ?seo
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:ImageJustification .
+                         ?sinf_justification aida:boundingBox            ?sbb  .
+                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
+                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
+                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
+                         ?sbb                aida:boundingBoxLowerRightY ?slry
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:KeyFrameVideoJustification .
+                         ?sinf_justification aida:keyFrame               ?skfid .
+                         ?sinf_justification aida:boundingBox            ?sbb  .
+                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
+                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
+                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
+                         ?sbb                aida:boundingBoxLowerRightY ?slry
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:ShotVideoJustification .
+                         ?sinf_justification aida:shot                   ?ssid
+                  }
+                  OPTIONAL {
+                         ?sinf_justification a                           aida:AudioJustification .
+                         ?sinf_justification aida:startTimestamp         ?sst .
+                         ?sinf_justification aida:endTimestamp           ?set
+                  }
+              
+                  BIND( IF( BOUND(?ssid), ?ssid, "__NULL__") AS ?_ssid) .
+                  BIND( IF( BOUND(?skfid), ?skfid, "__NULL__") AS ?_skfid) .
+                  BIND( IF( BOUND(?sso), ?sso, "__NULL__") AS ?_sso) .
+                  BIND( IF( BOUND(?seo), ?seo, "__NULL__") AS ?_seo) .
+                  BIND( IF( BOUND(?sst), ?sst, "__NULL__") AS ?_sst) .
+                  BIND( IF( BOUND(?set), ?set, "__NULL__") AS ?_set) .
+                  BIND( IF( BOUND(?sulx), ?sulx, "__NULL__") AS ?_sulx) .
+                  BIND( IF( BOUND(?suly), ?suly, "__NULL__") AS ?_suly) .
+                  BIND( IF( BOUND(?slrx), ?slrx, "__NULL__") AS ?_slrx) .
+                  BIND( IF( BOUND(?slry), ?slry, "__NULL__") AS ?_slry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) as ?sinf_j_span ) .
+              
+                  # Get edge's justification span # 1
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:TextJustification .
+                         ?edge_justification1 aida:startOffset            ?ej1so .
+                         ?edge_justification1 aida:endOffsetInclusive     ?ej1eo
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:ImageJustification .
+                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
+                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
+                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
+                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
+                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:KeyFrameVideoJustification .
+                         ?edge_justification1 aida:keyFrame               ?ej1kfid .
+                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
+                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
+                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
+                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
+                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:ShotVideoJustification .
+                         ?edge_justification1 aida:shot                   ?ej1sid
+                  }
+                  OPTIONAL {
+                         ?edge_justification1 a                           aida:AudioJustification .
+                         ?edge_justification1 aida:startTimestamp         ?ej1st .
+                         ?edge_justification1 aida:endTimestamp           ?ej1et
+                  }
+              
+                  BIND( IF( BOUND(?ej1sid), ?ej1sid, "__NULL__") AS ?_ej1sid) .
+                  BIND( IF( BOUND(?ej1kfid), ?ej1kfid, "__NULL__") AS ?_ej1kfid) .
+                  BIND( IF( BOUND(?ej1so), ?ej1so, "__NULL__") AS ?_ej1so) .
+                  BIND( IF( BOUND(?ej1eo), ?ej1eo, "__NULL__") AS ?_ej1eo) .
+                  BIND( IF( BOUND(?ej1st), ?ej1st, "__NULL__") AS ?_ej1st) .
+                  BIND( IF( BOUND(?ej1et), ?ej1et, "__NULL__") AS ?_ej1et) .
+                  BIND( IF( BOUND(?ej1ulx), ?ej1ulx, "__NULL__") AS ?_ej1ulx) .
+                  BIND( IF( BOUND(?ej1uly), ?ej1uly, "__NULL__") AS ?_ej1uly) .
+                  BIND( IF( BOUND(?ej1lrx), ?ej1lrx, "__NULL__") AS ?_ej1lrx) .
+                  BIND( IF( BOUND(?ej1lry), ?ej1lry, "__NULL__") AS ?_ej1lry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) as ?ej1_span ) .
+              
+              
+                  # Get edge's justification span # 2
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:TextJustification .
+                         ?edge_justification2 aida:startOffset            ?ej2so .
+                         ?edge_justification2 aida:endOffsetInclusive     ?ej2eo
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:ImageJustification .
+                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
+                         ?ej2bb                aida:boundingBoxUpperLeftX  ?ej2ulx .
+                         ?ej2bb                aida:boundingBoxUpperLeftY  ?ej2uly .
+                         ?ej2bb                aida:boundingBoxLowerRightX ?ej2lrx .
+                         ?ej2bb                aida:boundingBoxLowerRightY ?ej2lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:KeyFrameVideoJustification .
+                         ?edge_justification2 aida:keyFrame               ?ej2kfid .
+                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
+                         ?ej2bb                aida:boundingBoxUpperLeftX  ?ej2ulx .
+                         ?ej2bb                aida:boundingBoxUpperLeftY  ?ej2uly .
+                         ?ej2bb                aida:boundingBoxLowerRightX ?ej2lrx .
+                         ?ej2bb                aida:boundingBoxLowerRightY ?ej2lry
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:ShotVideoJustification .
+                         ?edge_justification2 aida:shot                   ?ej2sid
+                  }
+                  OPTIONAL {
+                         ?edge_justification2 a                           aida:AudioJustification .
+                         ?edge_justification2 aida:startTimestamp         ?ej2st .
+                         ?edge_justification2 aida:endTimestamp           ?ej2et
+                  }
+              
+                  BIND( IF( BOUND(?ej2sid), ?ej2sid, "__NULL__") AS ?_ej2sid) .
+                  BIND( IF( BOUND(?ej2kfid), ?ej2kfid, "__NULL__") AS ?_ej2kfid) .
+                  BIND( IF( BOUND(?ej2so), ?ej2so, "__NULL__") AS ?_ej2so) .
+                  BIND( IF( BOUND(?ej2eo), ?ej2eo, "__NULL__") AS ?_ej2eo) .
+                  BIND( IF( BOUND(?ej2st), ?ej2st, "__NULL__") AS ?_ej2st) .
+                  BIND( IF( BOUND(?ej2et), ?ej2et, "__NULL__") AS ?_ej2et) .
+                  BIND( IF( BOUND(?ej2ulx), ?ej2ulx, "__NULL__") AS ?_ej2ulx) .
+                  BIND( IF( BOUND(?ej2uly), ?ej2uly, "__NULL__") AS ?_ej2uly) .
+                  BIND( IF( BOUND(?ej2lrx), ?ej2lrx, "__NULL__") AS ?_ej2lrx) .
+                  BIND( IF( BOUND(?ej2lry), ?ej2lry, "__NULL__") AS ?_ej2lry) .
+              
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) as ?ej2_span ) .
+                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) as ?ej2_span)
+                  FILTER(?ej1_span > ?ej2_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) as ?ej_span)
+              }
+	]]>
+END_SPARQL_QUERY
+	$sparql;
+}
+
+
+#####################################################################################
+# QuerySet
+#####################################################################################
+
+package QuerySet;
+
+use parent -norequire, 'Super';
+
+sub new {
+	my ($class, $logger, $dtd_filename, $xml_filename) = @_;
+	my $self = {
+		CLASS => 'QuerySet',
+		DTD_FILENAME => $dtd_filename,
+		XML_FILENAME => $xml_filename,
+		QUERIES => Container->new($logger, "Query"),
+		LOGGER => $logger,
+	};
+	bless($self, $class);
+	#$self->load();
+	$self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my $dtd_filename = $self->get("DTD_FILENAME");
+	my $xml_filename = $self->get("XML_FILENAME");
+	my $query_type = $dtd_filename;
+	$query_type =~ s/^(.*?\/)+//g;
+	$query_type =~ s/.dtd//;
+	$self->set("QUERYTYPE", $query_type);
+	my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
+	while(my $xml_query_object = $xml_filehandler->get("NEXT_OBJECT")) {
+		my $query;
+		$query = ClassQuery->new($logger, $xml_query_object) if($query_type eq "class_query");
+		$query = ZeroHopQuery->new($logger, $xml_query_object) if($query_type eq "zerohop_query");
+		$query = GraphQuery->new($logger, $xml_query_object) if($query_type eq "graph_query");
+		$self->add($query);
+	}
+}
+
+sub add {
+	my ($self, $query) = @_;
+	$self->get("QUERIES")->add($query, $query->get("QUERYID"));
+}
+
+sub write_to_file {
+	my ($self) = @_;
+	my $query_type = $self->get("DTD_FILENAME");
+	$query_type =~ s/^(.*?\/)+//g;
+	$query_type =~ s/.dtd//;
+	$query_type =~ s/query/queries/;
+	open(my $program_output_xml, ">:utf8", $self->get("XML_FILENAME"))
+		or $self->get("LOGGER")->record_problem('MISSING_FILE', $self->get("XML_FILENAME"), $!);
+	print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	print $program_output_xml "<$query_type>\n";
+	print $program_output_xml $self->tostring(2);
+	print $program_output_xml "<\/$query_type>\n";
+	close($program_output_xml);
+}
+
+sub get_QUERY {
+	my ($self, $query_id) = @_;
+	my $query;
+	if($self->get("QUERIES")->exists($query_id)) {
+		$query = $self->get("QUERIES")->get("BY_KEY", $query_id);
+	}
+	$query;
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	my $retVal = "";
+	foreach my $query($self->get("QUERIES")->toarray()) {
+		$retVal .= $query->tostring($indent);
+	}
+	$retVal;
+}
+
+#####################################################################################
+# ClassQuery
+#####################################################################################
+
+package ClassQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'ClassQuery',
+    QUERYID => undef,
+    QUERYTYPE => undef,
+    ENTTYPE => undef,
+    SPARQL => undef,
+    XML_OBJECT => $xml_object,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
+	my $query_type = "class_query";
+	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
+		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
+	$self->set("QUERYID", $query_id);
+	$self->set("QUERYTYPE", $query_type);
+	$self->set("ENTTYPE", $self->get("XML_OBJECT")->get("CHILD", "enttype")->get("ELEMENT"));
+	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
+}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# ZeroHopQuery
+#####################################################################################
+
+package ZeroHopQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'ZeroHopQuery',
+    XML_OBJECT => $xml_object,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
+	my $query_type = "zerohop_query";
+	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
+		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
+	$self->set("QUERYID", $query_id);
+	$self->set("QUERYTYPE", $query_type);
+	$self->set("REFERENCE_KBID", $self->get("XML_OBJECT")->get("CHILD", "reference_kbid")->get("ELEMENT"));
+	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
+}
+
+#sub parse_object {
+#	my ($self, $xml_object) = @_;
+#	my $logger = $self->get("LOGGER");
+#	my $retVal;
+#	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+#		# base-case of recursive function
+#		my $key = uc($xml_object->get("NAME"));
+#		my $value = $xml_object->get("ELEMENT");
+#		if($xml_object->get("ATTRIBUTES") ne "nil") {
+#			$retVal = SuperObject->new($logger);
+#			$retVal->set($key, $value);
+#			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+#				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+#				$retVal->set($attribute_key, $attribute_value);
+#			}
+#		}
+#		else {
+#			$retVal = $value;
+#		}
+#	}
+#	else {
+#		if($xml_object->get("CLASS") eq "XMLElement") {
+#			my $key = uc($xml_object->get("NAME"));
+#			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+#			$retVal = SuperObject->new($logger);
+#			$retVal->set($key, $value);
+#			if($self->get("ATTRIBUTES") ne "nil") {
+#				foreach my $attribute_key($self->get("ATTRIBUTES")->get("ALL_KEYS")) {
+#					my $attribute_value = $self->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+#					$retVal->set($attribute_key, $attribute_value);
+#				}
+#			}
+#		}
+#		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+#			$retVal = SuperObject->new($logger);
+#			foreach my $xml_element($xml_object->toarray()){
+#				my $key = uc($xml_element->get("NAME"));
+#				my $value = $self->parse_object($xml_element);
+#				if($key =~ /.*?_DESCRIPTOR/) {
+#					my $doceid = $value->get($key)->get("DOCEID");
+#					my ($keyframeid, $start, $end);
+#					if($key eq "TEXT_DESCRIPTOR") {
+#						$start = $value->get($key)->get("START");
+#						$end = $value->get($key)->get("END");
+#					}
+#					elsif($key eq "IMAGE_DESCRIPTOR") {
+#						$start = $value->get($key)->get("TOPLEFT");
+#						$end = $value->get($key)->get("BOTTOMRIGHT");
+#					}
+#					elsif($key eq "VIDEO_DESCRIPTOR") {
+#						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+#						$start = $value->get($key)->get("TOPLEFT");
+#						$end = $value->get($key)->get("BOTTOMRIGHT");
+#					}
+#					if($key eq "AUDIO_DESCRIPTOR") {
+#						$start = $value->get($key)->get("START");
+#						$end = $value->get($key)->get("END");
+#					}
+#					else{
+#						# TODO: throw exception
+#					}
+#					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
+#					$key = "DESCRIPTOR";
+#				}
+#				$retVal->set($key, $value);
+#			}
+#		}
+#	}
+#	$retVal;
+#}
+
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# GraphQuery
+#####################################################################################
+
+package GraphQuery;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $xml_object) = @_;
+  my $self = {
+    CLASS => 'GraphQuery',
+    XML_OBJECT => $xml_object,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $query_id = $self->get("XML_OBJECT")->get("ATTRIBUTES")->get("BY_KEY", "id");
+	my $query_type = "graph_query";
+	$self->get("LOGGER")->record_problem("UNEXPECTED_QUERY_TYPE", $self->get("XML_OBJECT")->get("NAME"), $self->get("WHERE")) 
+		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
+	$self->set("QUERYID", $query_id);
+	$self->set("QUERYTYPE", $query_type);
+	$self->set("PREDICATE", $self->get("XML_OBJECT")->get("CHILD", "predicate")->get("ELEMENT"));
+	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
+}
+
+#
+#sub parse_object {
+#	my ($self, $xml_object) = @_;
+#	my $logger = $self->get("LOGGER");
+#	my $retVal;
+#	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
+#		# base-case of recursive function
+#		my $key = uc($xml_object->get("NAME"));
+#		my $value = $xml_object->get("ELEMENT");
+#		if($xml_object->get("ATTRIBUTES") ne "nil") {
+#			$retVal = SuperObject->new($logger);
+#			$retVal->set($key, $value);
+#			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+#				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+#				$retVal->set($attribute_key, $attribute_value);
+#			}
+#		}
+#		else {
+#			$retVal = $value;
+#		}
+#	}
+#	else {
+#		if($xml_object->get("CLASS") eq "XMLElement") {
+#			my $key = uc($xml_object->get("NAME"));
+#			my $value = $self->parse_object($xml_object->get("ELEMENT"));
+#			$retVal = SuperObject->new($logger);
+#			$retVal->set($key, $value);
+#			if($xml_object->get("ATTRIBUTES") ne "nil") {
+#				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
+#					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
+#					$retVal->set($attribute_key, $attribute_value);
+#				}
+#			}
+#		}
+#		elsif($xml_object->get("CLASS") eq "XMLContainer") {
+#			$retVal = SuperObject->new($logger);
+#			foreach my $xml_element($xml_object->toarray()){
+#				my $key = uc($xml_element->get("NAME"));
+#				my $value = $self->parse_object($xml_element);
+#				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
+#					my $doceid = $value->get($key)->get("DOCEID");
+#					my ($keyframeid, $start, $end);
+#					if($key eq "TEXT_DESCRIPTOR") {
+#						$start = $value->get($key)->get("START");
+#						$end = $value->get($key)->get("END");
+#					}
+#					elsif($key eq "IMAGE_DESCRIPTOR") {
+#						$start = $value->get($key)->get("TOPLEFT");
+#						$end = $value->get($key)->get("BOTTOMRIGHT");
+#					}
+#					elsif($key eq "VIDEO_DESCRIPTOR") {
+#						$keyframeid = $value->get($key)->get("KEYFRAMEID");
+#						$start = $value->get($key)->get("TOPLEFT");
+#						$end = $value->get($key)->get("BOTTOMRIGHT");
+#					}
+#					if($key eq "AUDIO_DESCRIPTOR") {
+#						$start = $value->get($key)->get("START");
+#						$end = $value->get($key)->get("END");
+#					}
+#					else{
+#						# TODO: throw exception
+#					}
+#					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
+#					$key = "DESCRIPTOR";
+#				}
+#				elsif($key eq "STRING_DESCRIPTOR") {
+#					$value = StringDescriptor->new($logger, $value->get($key));
+#					$key = "DESCRIPTOR";
+#				}
+#				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
+#				$retVal->set($key, $value);
+#			}
+#		}
+#	}
+#	$retVal;
+#}
+#
+sub tostring {
+	my ($self, $indent) = @_;
+	$self->get("XML_OBJECT")->tostring($indent);
+}
+
+#####################################################################################
+# Edge
+#####################################################################################
+
+package Edge;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $edge_num, $subject_id, $predicate, $object_id, $where) = @_;
+  my $self = {
+    CLASS => 'Edge',
+    EDGENUM => $edge_num,
+    SUBJECT => $subject_id,
+    PREDICATE => $predicate,
+    OBJECT => $object_id,
+    WHERE => $where,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Justification
+#####################################################################################
+
+package Justification;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $justification_type, $doceid, $keyframeid, $start, $end, 
+  		$enttype, $confidence, $xml_object, $where) = @_;
+  my $self = {
+    CLASS => 'Justification',
+    TYPE => $justification_type,
+    DOCEID => $doceid,
+    KEYFRAMEID => $keyframeid,
+    START => $start,
+    END => $end,
+    ENTTYPE => $enttype,
+    CONFIDENCE => $confidence,
+    XML_OBJECT => $xml_object,
+    WHERE => $where,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub is_valid {
+	my ($self, $docid_mappings, $scope) = @_;
+	my $logger = $self->get("LOGGER");
+	my $where = $self->get("WHERE");
+	my $is_valid = 1;
+	# Check if confidence is valid
+	if(defined $self->get("CONFIDENCE")) {
+		if($self->get("CONFIDENCE") < 0 || $self->get("CONFIDENCE") > 1) {
+			$logger->record_problem("INVALID_CONFIDENCE", $self->get("CONFIDENCE"), $where);
+			$is_valid = 0;
+		}
+	}
+	my ($doceid, $keyframeid, $start, $end, $type)
+				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END TYPE);
+	if($type eq "TEXT_JUSTIFICATION" || $type eq "AUDIO_JUSTIFICATION") {
+		if($start =~ /^-?\d+$/) {
+			if ($start < 0) {
+				$logger->record_problem("INVALID_START", $start, $type, $where);
+				$is_valid = 0;
+			}
+		}
+		else{
+			$logger->record_problem("NONNUMERIC_START", $start, $where);
+			$is_valid = 0;
+		}
+		if($end =~ /^-?\d+$/) {
+			if ($end < 0) {
+				$logger->record_problem("INVALID_END", $end, $type, $where);
+				$is_valid = 0;
+			}
+		}
+		else{
+			$logger->record_problem("NONNUMERIC_END", $end, $where);
+			$is_valid = 0;
+		}
+	}
+	elsif($type eq "VIDEO_JUSTIFICATION" || $type eq "IMAGE_JUSTIFICATION") {
+		unless ($start =~ /^\d+\,\d+$/) {
+			$logger->record_problem("INVALID_START", $start, $type, $where);
+			$is_valid = 0;
+		}
+		unless ($end =~ /^\d+\,\d+$/) {
+			$logger->record_problem("INVALID_END", $end, $type, $where);
+			$is_valid = 0;
+		}
+		if($type eq "VIDEO_JUSTIFICATION") {
+			# For a video justification:
+			#  (1) DOCEID should be the prefix of KEYFRAMEID
+			#  (2) KEYFRAMEID should not end in an extension, e.g. .jpg
+			if($keyframeid !~ /^$doceid\_\d+$/ || $keyframeid =~ /\..*?$/){
+				$logger->record_problem("INVALID_KEYFRAMEID", $keyframeid, $where);
+				$is_valid = 0;
+			}
+			# TODO: lookup keyframeid in the boundingbox file
+		}
+	}
+	else {
+		$logger->record_problem("INVALID_JUSTIFICATION_TYPE", $type, $where);
+		$is_valid = 0;
+	}
+	$is_valid;
+}
+
+sub get_DOCIDS {
+	my ($self, $docid_mappings, $scope) = @_;
+	my $where = $self->get("WHERE");
+	my @docids;
+	my $doceid = $self->get("DOCEID");
+	if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid)) {
+		my $docelement = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+		@docids = map {$_->get("DOCUMENTID")} $docelement->get("DOCUMENTS")->toarray();
+	}
+	else {
+		$self->get("LOGGER")->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $doceid, $where)
+			if($scope ne "anywhere");
+	}
+	@docids;
+}
+
+sub get_MODALITY {
+	my ($self) = @_;
+	($self->get("TYPE") =~ /^(.*?)_/)[0];
+}
+
+sub tostring {
+	my ($self) = @_;
+	my ($filename, $keyframeid, $start, $end)
+				= map {$self->get($_)} qw(DOCEID KEYFRAMEID START END);
+	if($self->get("MODALITY") eq "TEXT" or $self->get("MODALITY") eq "AUDIO") {
+		$start = "$start,0";
+		$end = "$end,0";
+	}
+	$start = "($start)";
+	$end = "($end)";
+	$filename = $keyframeid if($self->get("MODALITY") eq "VIDEO");
+	"$filename:$start-$end";
+}
+
+#####################################################################################
+# StringDescriptor
+#####################################################################################
+
+package StringDescriptor;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $name_string) = @_;
+  my $self = {
+    CLASS => 'StringDescriptor',
+    TYPE => "STRING_DESCRIPTOR",
+    NAMESTRING => $name_string,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub tostring {
+	my ($self) = @_;
+	$self->get("NAMESTRING");
+}
+
+#####################################################################################
+# NonStringDescriptor
+#####################################################################################
+
+package NonStringDescriptor;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $type, $doceid, $keyframeid, $start, $end) = @_;
+  my $self = {
+    CLASS => 'NonStringDescriptor',
+    TYPE => $type,
+    DOCEID => $doceid,
+    KEYFRAMEID => $keyframeid,
+    START => $start,
+    END => $end,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_MODALITY {
+	my ($self) = @_;
+	($self->get("TYPE") =~ /^(.*?)_/)[0];
+}
+
+sub tostring {
+	my ($self) = @_;
+	my $doceid = $self->get("DOCEID");
+	my $start = $self->get("START");
+	my $end = $self->get("END");
+	"$doceid:$start-$end";
+}
+
+#####################################################################################
+# DocumentIDsMappings
+#####################################################################################
+
+package DocumentIDsMappings;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $filename, $coredocs) = @_;
+  my $self = {
+		CLASS => "DocumentIDsMappings",
+		FILENAME => $filename,
+		DOCUMENTS => Documents->new($logger),
+    DOCUMENTELEMENTS => DocumentElements->new($logger),
+    COREDOCS => $coredocs,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load_data();
+  $self;
 }
 
 sub load_data {
 	my ($self) = @_;
-	my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("PARAMETERS")->get("ENCODINGFORMAT_TO_MODALITYMAPPING_FILE"));
+	# Load the DocumentIDsMappingsFile
+	my (%doceid_to_docid_mapping, %doceid_to_type_mapping);
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
 	my $entries = $filehandler->get("ENTRIES");
 	foreach my $entry($entries->toarray()) {
-		my $encoding_format = $entry->get("encoding_format");
-		my $modality = $entry->get("modality");
-		$self->add($modality, $encoding_format);
+		my $doceid = $entry->get("doceid");
+		my $docid = $entry->get("docid");
+		my $detype = $entry->get("detype");
+		$self->get("LOGGER")->record_problem("MISSING_ENCODING_FORMAT", $doceid, $entry->get("WHERE"))
+			if $detype eq "nil";
+		$doceid_to_docid_mapping{$doceid}{$docid} = 1;
+		$doceid_to_type_mapping{$doceid} = $detype;
+	}
+	$filehandler->cleanup();
+
+	foreach my $document_eid(sort keys %doceid_to_docid_mapping) {
+		next if $document_eid eq "n/a";
+		foreach my $document_id(sort keys %{$doceid_to_docid_mapping{$document_eid}}) {
+			my $detype = $doceid_to_type_mapping{$document_eid};
+			my $is_core = 0;
+			$is_core = 1 if $self->get("COREDOCS")->exists($document_id);
+			my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
+			$document->set("DOCUMENTID", $document_id);
+			$document->set("IS_CORE", $is_core);
+			my $documentelement = $self->get("DOCUMENTELEMENTS")->get("BY_KEY", $document_eid);
+			$documentelement->get("DOCUMENTS")->add($document, $document_id);
+			$documentelement->set("DOCUMENTELEMENTID", $document_eid);
+			$documentelement->set("TYPE", $detype);
+			$document->add_document_element($documentelement);
+		}
 	}
 }
 
-1;
+#####################################################################################
+# Documents
+#####################################################################################
+
+package Documents;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'Document');
+  $self->{CLASS} = 'Documents';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# DocumentElements
+#    contains 'DocumentElement' across documents
+#####################################################################################
+
+package DocumentElements;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = $class->SUPER::new($logger, 'DocumentElement');
+  $self->{CLASS} = 'DocumentElements';
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# Document
+#####################################################################################
+
+package Document;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $document_id) = @_;
+  my $self = {
+    CLASS => 'Document',
+    DOCUMENTID => $document_id,
+    DOCUMENTELEMENTS => DocumentElements->new($logger),
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub add_document_element {
+  my ($self, $document_element) = @_;
+  $self->get("DOCUMENTELEMENTS")->add($document_element, $document_element->get("DOCUMENTELEMENTID"));
+}
+
+#####################################################################################
+# DocumentElement
+#####################################################################################
+
+package DocumentElement;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'DocumentElement',
+    DOCUMENTS => Documents->new($logger),
+    DOCUMENTELEMENTID => undef,
+    TYPE => undef,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_IS_CORE {
+	my ($self) = @_;
+	my $is_core = 0;
+	foreach my $document($self->get("DOCUMENTS")->toarray()) {
+		$is_core = $is_core || $document->get("IS_CORE");
+	}
+	$self->set("IS_CORE", $is_core);
+	$is_core;
+}
+
+#####################################################################################
+# CoreDocs
+#####################################################################################
+
+package CoreDocs;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = {
+  	CLASS => 'CoreDocs',
+  	FILENAME => $filename,
+  	LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my $docid = $entry->get("root_id");
+		$self->add("KEY", $docid);
+	}
+	$filehandler->cleanup();
+}
+
+#####################################################################################
+# QREL
+#####################################################################################
+
+package QREL;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename, $query_type) = @_;
+  my $self = {
+  	CLASS => 'QREL',
+  	FILENAME => $filename,
+  	QUERY_TYPE => $query_type,
+  	LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+	my ($self) = @_;
+	my $filename = $self->get("FILENAME");
+	my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+	my $entries = $filehandler->get("ENTRIES");
+	foreach my $entry($entries->toarray()) {
+		my ($nodeid, $docid, $mention_span, $assessment, $fqec, $where)
+			= map {$entry->get($_)} qw(NODEID DOCID MENTION_SPAN ASSESSMENT FQEC WHERE);
+		$self->{LOGGER}->record_problem("NO_FQEC_FOR_CORRECT_ENTRY", $where)
+		  if $assessment eq "Correct" && !$fqec;
+		my $key = "$nodeid:$mention_span";
+		if($self->exists($key)) {
+			my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
+			my $existing_linenum = $self->get("BY_KEY", $key)->{WHERE}{LINENUM};
+			if($existing_assessment ne $assessment) {
+				my $filename = $where->{FILENAME};
+				$self->{LOGGER}->record_problem("MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS",
+													$nodeid,
+													$mention_span,
+													{FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});  
+			}
+		}
+		$self->add({ASSESSMENT=>$assessment, DOCID => $docid, FQEC=> $fqec, WHERE=>$where}, $key)
+			unless $self->exists($key);
+	}
+	$filehandler->cleanup();	
+}
+
+#####################################################################################
+# ScoresManager
+#####################################################################################
+
+package ScoresManager;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $runid, $docid_mappings, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
+  my $self = {
+  	CLASS => 'ScoresManager',
+  	DOCID_MAPPINGS => $docid_mappings,
+  	LDC_QUERIES => $ldc_queries,
+  	RESPONSES => $responses,
+  	QREL => $qrel,
+  	QUERY_TYPE => $query_type,
+  	QUERIES_TO_SCORE => [@queries_to_score],
+		RUNID => $runid,
+  	LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->score_responses();
+  $self;
+}
+
+sub score_responses {
+	my ($self) = @_;
+	my ($docid_mappings, $responses, $qrel, $query_type, $queries_to_score, $ldc_queries, $runid, $logger)
+		= map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES QREL QUERY_TYPE QUERIES_TO_SCORE LDC_QUERIES RUNID LOGGER);
+	my $scores;
+	$scores = ClassScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "class_query");
+	$scores = ZeroHopScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "zerohop_query");
+	$scores = GraphScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "graph_query");
+	$self->set("SCORES", $scores);
+}
+
+sub print_lines {
+	my ($self, $program_output) = @_;
+	$self->get("SCORES")->print_lines($program_output);
+}
+
+#####################################################################################
+# ZeroHopScores
+#####################################################################################
+
+package ZeroHopScores;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
+  my $self = {
+  	CLASS => 'ZeroHopScores',
+  	DOCID_MAPPINGS => $docid_mappings,
+  	LDC_QUERIES => $ldc_queries,
+  	RESPONSES => $responses,
+  	QREL => $qrel,
+  	QUERIES_TO_SCORE => $queries_to_score,
+		RUNID => $runid,
+  	LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->score_responses();
+  $self;
+}
+
+sub score_responses {
+	my ($self) = @_;
+	my ($runid, $docid_mappings, $responses, $qrel, $queries_to_score, $ldc_queries, $logger)
+		= map {$self->get($_)} qw(RUNID DOCID_MAPPINGS RESPONSES QREL QUERIES_TO_SCORE LDC_QUERIES LOGGER);
+	my $scores = ScoresPrinter->new($logger);
+	my %categorized_submissions;
+	my %category_store;
+	foreach my $key($qrel->get("ALL_KEYS")) {
+		my ($node_id, $doceid, $start_and_end) = split(":", $key);
+		if($doceid =~ /^(.*?)\_(\d+)$/){
+			$doceid = $1;
+		}
+		my $mention_span = "$doceid:$start_and_end";
+		my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
+		my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
+		my $docid = $qrel->get("BY_KEY", $key)->{DOCID};
+		my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
+			if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
+		if ($assessment eq "Correct" && $is_core) {
+			$category_store{GROUND_TRUTH}{$node_id}{$docid}{$fqec} = 1;			
+			$category_store{GROUND_TRUTH}{$node_id}{"all"}{$fqec} = 1;
+			$logger->record_debug_information("GROUND_TRUTH", 
+								"NODEID=$node_id MENTION=$mention_span FQEC=$fqec CORRECT\n", 
+								$qrel->get("BY_KEY", $key)->{WHERE});
+		}
+		elsif($assessment eq "Wrong" && $is_core) {
+			$logger->record_debug_information("GROUND_TRUTH", 
+								"NODEID=$node_id MENTION=$mention_span FQEC=$fqec INCORRECT\n", 
+								$qrel->get("BY_KEY", $key)->{WHERE});
+		}
+	}
+	foreach my $response($responses->get("RESPONSES")->toarray()) {
+		my $query_id = $response->get("QUERYID");
+		next unless grep {$query_id eq $_} @$queries_to_score;
+		my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
+		$node_id =~ s/^\?//;
+		foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
+			my $doceid = $justification->get("DOCEID");
+			my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
+				if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
+			my $mention_span = $justification->tostring();
+			my $key = "$node_id:$mention_span";
+			push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $mention_span);
+			my $fqec = "UNASSESSED";
+			my %pre_policy = (SUBMITTED=>1);
+			my %post_policy;
+			if($qrel->exists($key) && $is_core) {
+				my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
+				$fqec = $qrel->get("BY_KEY", $key)->{FQEC};
+				if($assessment eq "Correct") {
+					push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
+					$pre_policy{CORRECT} = 1;
+					if(exists $category_store{CORRECT_FOUND}{$query_id}{$fqec}) {
+						push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $mention_span);
+						push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
+						$pre_policy{REDUNDANT} = 1;
+						$post_policy{IGNORED} = 1;
+					}
+					else {
+						$category_store{CORRECT_FOUND}{$query_id}{$fqec} = 1;
+						push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
+						$post_policy{RIGHT} = 1;
+					}
+				}
+				elsif($assessment eq "Wrong") {
+					push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $mention_span);
+					push(@{$categorized_submissions{$query_id}{"WRONG"}}, $mention_span);
+					$pre_policy{INCORRECT} = 1;
+					$post_policy{WRONG} = 1;
+				}
+			}
+			else {
+				push(@{$categorized_submissions{$query_id}{"NOT_IN_POOL"}}, $mention_span);
+				push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
+				$pre_policy{NOT_IN_POOL} = 1;
+				$post_policy{IGNORED} = 1;
+			}
+			my $pre_policy = join(",", sort keys %pre_policy);
+			my $post_policy = join(",", sort keys %post_policy);
+			my $line = "NODEID=$node_id " .
+			           "QUERYID=$query_id " .
+			           "MENTION=$mention_span " .
+			           "PRE_POLICY_ASSESSMENT=$pre_policy " .
+			           "POST_POLICY_ASSESSMENT=$post_policy " .
+			           "FQEC=$fqec\n";
+			$logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $justification->get("WHERE"));
+		}
+	}
+	foreach my $query_id(@$queries_to_score) {
+		my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
+		my $modality = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("DESCRIPTOR")->get("MODALITY");
+		$node_id =~ s/^\?//;
+		my $num_submitted = @{$categorized_submissions{$query_id}{"SUBMITTED"} || []};
+		my $num_correct = @{$categorized_submissions{$query_id}{"CORRECT"} || []};
+		my $num_incorrect = @{$categorized_submissions{$query_id}{"INCORRECT"} || []};
+		my $num_right = @{$categorized_submissions{$query_id}{"RIGHT"} || []};
+		my $num_wrong = @{$categorized_submissions{$query_id}{"WRONG"} || []};
+		my $num_redundant = @{$categorized_submissions{$query_id}{"REDUNDANT"} || []};
+		my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
+		my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOT_IN_POOL"} || []};
+		my $num_ground_truth = keys %{$category_store{GROUND_TRUTH}{$node_id}};
+		my $score = Score->new($logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
+		$scores->add($score, $query_id);
+	}
+	$self->set("SCORES", $scores);
+}
+
+sub print_lines {
+	my ($self, $program_output) = @_;
+	$self->get("SCORES")->print_lines($program_output);
+}
+
+#####################################################################################
+# ScoresPrinter
+#####################################################################################
+
+package ScoresPrinter;
+
+use parent -norequire, 'Container', 'Super';
+
+my @fields_to_print = (
+  {NAME => 'EC',               HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NODEID',           HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'MODALITY',         HEADER => 'Mode',     FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',            HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_NOT_IN_POOL',  HEADER => 'NtAssd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_CORRECT',      HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_REDUNDANT',    HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT',    HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED',      HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT',        HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG',        HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED',      HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'PRECISION',        HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL',           HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'F1',               HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+);
+
+sub new {
+  my ($class, $logger, $program_output) = @_;
+  my $self = $class->SUPER::new($logger, 'Score');
+  $self->{CLASS} = 'ScoresPrinter';
+  $self->{PROGRAM_OUTPUT} = $program_output;
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @fields_to_print};
+  $self->{LOGGER} = $logger;
+  $self->{LINES} = [];
+  @{$self->{FIELDS_TO_PRINT}} = @fields_to_print;
+  bless($self, $class);
+  $self;
+}
+
+sub get_MICRO_AVERAGE {
+	my ($self) = @_;
+	my $logger = $self->get("LOGGER");
+	my ($runid, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+	foreach my $score($self->toarray()) {
+		my ($num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth)
+			= map {$score->get($_)} qw(NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH);
+		$runid = $score->get("RUNID") unless $runid;
+		$total_num_submitted += $num_submitted;
+		$total_num_correct += $num_correct;
+		$total_num_incorrect += $num_incorrect;
+		$total_num_right += $num_right;
+		$total_num_wrong += $num_wrong;
+		$total_num_redundant += $num_redundant;
+		$total_num_not_in_pool += $num_not_in_pool;
+		$total_num_ignored += $num_ignored;
+		$total_num_ground_truth += $num_ground_truth;
+	}
+	Score->new($logger, $runid, "ALL-Micro", "", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+}
+
+sub print_line {
+  my ($self, $line) = @_;
+  my $program_output = $self->get("PROGRAM_OUTPUT");
+  my $separator = "";
+  foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+    my $value = (defined $line ? $line->{$field->{NAME}} : $field->{HEADER});
+    print $program_output $separator;
+    my $numspaces = defined $self->{SEPARATOR} ? 0 : $self->{WIDTHS}{$field->{NAME}} - length($value);
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'R' && !defined $self->{SEPARATOR};
+    print $program_output $value;
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'L' && !defined $self->{SEPARATOR};
+    $separator = defined $self->{SEPARATOR} ? $self->{SEPARATOR} : ' ';
+  }
+  print $program_output "\n";
+}
+  
+sub print_headers {
+  my ($self) = @_;
+  $self->print_line();
+}
+
+sub prepare_lines {
+	my ($self) = @_;
+	my @scores = $self->toarray();
+	push(@scores, $self->get("MICRO_AVERAGE"));
+	foreach my $score (@scores) {
+		my %elements_to_print;
+		foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+			my $value = $score->get($field->{NAME});
+			my $text = sprintf($field->{FORMAT}, $value);
+			$elements_to_print{$field->{NAME}} = $text;
+			$self->{WIDTHS}{$field->{NAME}} = length($text) if length($text) > $self->{WIDTHS}{$field->{NAME}};
+		}
+		push(@{$self->{LINES}}, \%elements_to_print);
+	}
+}
+
+sub print_lines {
+  my ($self, $program_output) = @_;
+  $self->set("PROGRAM_OUTPUT", $program_output);
+  $self->prepare_lines();
+  $self->print_headers();
+  foreach my $line (@{$self->{LINES}}) {
+    $self->print_line($line);
+  }
+}
+
+#####################################################################################
+# Score
+#####################################################################################
+
+package Score;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
+  my $self = {
+		CLASS => 'Scores',
+		EC => $query_id,
+		MODALITY => $modality,
+		NODEID => $node_id,
+		NUM_CORRECT => $num_correct,
+		NUM_GROUND_TRUTH => $num_ground_truth,
+		NUM_IGNORED => $num_ignored,
+		NUM_INCORRECT => $num_incorrect,
+		NUM_NOT_IN_POOL => $num_not_in_pool,
+		NUM_REDUNDANT => $num_redundant,
+		NUM_RIGHT => $num_right,
+		NUM_SUBMITTED => $num_submitted,
+		NUM_WRONG => $num_wrong,
+		RUNID => $runid,
+		LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_NUM_COUNTED {
+	my ($self) = @_;
+	$self->get("NUM_RIGHT") + $self->get("NUM_WRONG");
+}
+
+sub get_PRECISION {
+	my ($self) = @_;
+	$self->get("NUM_COUNTED") ? $self->get("NUM_RIGHT")/($self->get("NUM_COUNTED")) : 0;
+}
+
+sub get_RECALL {
+	my ($self) = @_;
+	$self->get("NUM_GROUND_TRUTH") ? $self->get("NUM_RIGHT")/($self->get("NUM_GROUND_TRUTH")) : 0;
+}
+
+sub get_F1 {
+	my ($self) = @_;
+	my $precision = $self->get("PRECISION");
+	my $recall = $self->get("RECALL");
+	($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
+}
+
+### BEGIN INCLUDE Utils
+package main;
+use JSON;
+
+#####################################################################################
+# UUIDs from UUID::Tiny
+#####################################################################################
+
+# The following UUID code is taken from UUID::Tiny, available on
+# cpan.org. I have stripped out much of the functionality in that
+# module, keeping only what's needed here. If there is a better way to
+# deliver a cpan module within a single script, I'd love to know about
+# it. I believe that this use conforms with the perl terms.
+
+####################################
+# From the UUID::Tiny documentation:
+####################################
+
+=head1 ACKNOWLEDGEMENTS
+
+Kudos to ITO Nobuaki E<lt>banb@cpan.orgE<gt> for his UUID::Generator::PurePerl
+module! My work is based on his code, and without it I would've been lost with
+all those incomprehensible RFC texts and C codes ...
+
+Thanks to Jesse Vincent (C<< <jesse at bestpractical.com> >>) for his feedback, tips and refactoring!
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2009, 2010, 2013 Christian Augustin, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+ITO Nobuaki has very graciously given me permission to take over copyright for
+the portions of code that are copied from or resemble his work (see
+rt.cpan.org #53642 L<https://rt.cpan.org/Public/Bug/Display.html?id=53642>).
+
+=cut
+
+use Digest::MD5;
+
+our $IS_UUID_STRING = qr/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/is;
+our $IS_UUID_HEX    = qr/^[0-9a-f]{32}$/is;
+our $IS_UUID_Base64 = qr/^[+\/0-9A-Za-z]{22}(?:==)?$/s;
+
+my $MD5_CALCULATOR = Digest::MD5->new();
+
+use constant UUID_NIL => "\x00" x 16;
+use constant UUID_V1 => 1; use constant UUID_TIME   => 1;
+use constant UUID_V3 => 3; use constant UUID_MD5    => 3;
+use constant UUID_V4 => 4; use constant UUID_RANDOM => 4;
+use constant UUID_V5 => 5; use constant UUID_SHA1   => 5;
+
+sub _create_v3_uuid {
+    my $ns_uuid = shift;
+    my $name    = shift;
+    my $uuid    = '';
+
+    # Create digest in UUID ...
+    $MD5_CALCULATOR->reset();
+    $MD5_CALCULATOR->add($ns_uuid);
+
+    if ( ref($name) =~ m/^(?:GLOB|IO::)/ ) {
+        $MD5_CALCULATOR->addfile($name);
+    }
+    elsif ( ref $name ) {
+        Logger->new()->NIST_die('::create_uuid(): Name for v3 UUID'
+            . ' has to be SCALAR, GLOB or IO object, not '
+            . ref($name) .'!')
+            ;
+    }
+    elsif ( defined $name ) {
+    	# Use Encode to support Unicode.
+        $MD5_CALCULATOR->add(Encode::encode_utf8($name));
+    }
+    else {
+        Logger->new()->NIST_die('::create_uuid(): Name for v3 UUID is not defined!');
+    }
+
+    # Use only first 16 Bytes ...
+    $uuid = substr( $MD5_CALCULATOR->digest(), 0, 16 );
+
+    return _set_uuid_version( $uuid, 0x30 );
+}
+
+sub _set_uuid_version {
+    my $uuid = shift;
+    my $version = shift;
+    substr $uuid, 6, 1, chr( ord( substr( $uuid, 6, 1 ) ) & 0x0f | $version );
+
+    return $uuid;
+}
+
+sub create_uuid {
+    use bytes;
+    my ($v, $arg2, $arg3) = (shift || UUID_V1, shift, shift);
+    my $uuid    = UUID_NIL;
+    my $ns_uuid = string_to_uuid(defined $arg3 ? $arg2 : UUID_NIL);
+    my $name    = defined $arg3 ? $arg3 : $arg2;
+
+    ### Portions redacted from UUID::Tiny
+    if ($v == UUID_V3 ) {
+        $uuid = _create_v3_uuid($ns_uuid, $name);
+    }
+    else {
+        Logger->new()->NIST_die("::create_uuid(): Invalid UUID version '$v'!");
+    }
+
+    # Set variant 2 in UUID ...
+    substr $uuid, 8, 1, chr(ord(substr $uuid, 8, 1) & 0x3f | 0x80);
+
+    return $uuid;
+}
+
+sub string_to_uuid {
+    my $uuid = shift;
+
+    use bytes;
+    return $uuid if length $uuid == 16;
+    return decode_base64($uuid) if ($uuid =~ m/$IS_UUID_Base64/);
+    my $str = $uuid;
+    $uuid =~ s/^(?:urn:)?(?:uuid:)?//io;
+    $uuid =~ tr/-//d;
+    return pack 'H*', $uuid if $uuid =~ m/$IS_UUID_HEX/;
+    Logger->new()->NIST_die("::string_to_uuid(): '$str' is no UUID string!");
+}
+
+sub uuid_to_string {
+    my $uuid = shift;
+    use bytes;
+    return $uuid
+        if $uuid =~ m/$IS_UUID_STRING/;
+    Logger->new()->NIST_die("::uuid_to_string(): Invalid UUID!")
+        unless length $uuid == 16;
+    return  join '-',
+            map { unpack 'H*', $_ }
+            map { substr $uuid, 0, $_, '' }
+            ( 4, 2, 2, 2, 6 );
+}
+
+sub create_UUID_as_string {
+    return uuid_to_string(create_uuid(@_));
+}
+
+#####################################################################################
+# This is the end of the code taken from UUID::Tiny
+#####################################################################################
+
+my $json = JSON->new->allow_nonref->utf8;
+
+sub generate_uuid_from_values {
+  my ($queryid, $value, $provenance_string, $length) = @_;
+  my $encoded_string = $json->encode("$queryid:$value:$provenance_string");
+  $encoded_string =~ s/^"//;
+  $encoded_string =~ s/"$//;
+  &generate_uuid_from_string($encoded_string, $length);
+}
+
+sub generate_uuid_from_string {
+  my ($string, $length) = @_;
+  my $long_uuid = create_UUID_as_string(UUID_V3, $string);
+  return substr($long_uuid, -$length, $length) if $length;
+  $long_uuid;
+}
+### DO NOT INCLUDE
+# sub uuid_generate {
+#   my ($queryid, $value, $provenance_string) = @_;
+#   my $encoded_string = $json->encode("$queryid:$value:$provenance_string");
+#   $encoded_string =~ s/^"//;
+#   $encoded_string =~ s/"$//;
+# ### DO NOT INCLUDE
+# # NOTE: this is the 2014 code, which special cased a query that had a funky character. I expect the patch is not backward compatible.  
+# # # FIXME
+# # my $glop = $value;
+# # $glop =~ s/’/'/g;
+# # #  create_UUID_as_string(UUID_V3, "$queryid:$value:$provenance_string");
+# #  create_UUID_as_string(UUID_V3, "$queryid:$glop:$provenance_string");
+# ### DO INCLUDE
+#   # We're shortening the uuid for 2015
+#   my $long_uuid = create_UUID_as_string(UUID_V3, $encoded_string);
+#   substr($long_uuid, -12, 12);
+# }
+
+# sub short_uuid_generate {
+#   my ($string) = @_;
+#   my $encoded_string = $json->encode($string);
+#   $encoded_string =~ s/^"//;
+#   $encoded_string =~ s/"$//;
+# ### DO NOT INCLUDE
+# print STDERR "Original string = <<$string>>\n Encoded string = <<$encoded_string>>\n" unless $string eq $encoded_string;
+# ### DO INCLUDE
+#   my $long_uuid = create_UUID_as_string(UUID_V3, $encoded_string);
+#   substr($long_uuid, -10, 10);
+# }
+### DO INCLUDE
+
+sub min {
+  my ($result, @values) = @_;
+  foreach (@values) {
+    $result = $_ if $_ < $result;
+  }
+  $result;
+}
+
+sub max {
+  my ($result, @values) = @_;
+  foreach (@values) {
+    $result = $_ if $_ > $result;
+  }
+  $result;
+}
+
+sub remove_quotes {
+  my ($string) = @_;
+  if($string =~ /^"(.*)"$/) {
+    return $1;
+  }
+  return $string;
+}
+
+# Pull DOCUMENTATION strings out of a table and format for the help screen
+sub build_documentation {
+  my ($structure, $sort_key) = @_;
+  if (ref $structure eq 'HASH') {
+    my $max_len = &max(map {length} keys %{$structure});
+    "  " . join("\n  ", map {$_ . ": " . (' ' x ($max_len - length($_))) . $structure->{$_}{DESCRIPTION}}
+		sort keys %{$structure}) . "\n";
+  }
+  elsif (ref $structure eq 'ARRAY') {
+    $sort_key = 'TYPE' unless defined $sort_key;
+    my $max_len = &max(map {length($_->{$sort_key})}  @{$structure});
+    "  " . join("\n  ", map {$_->{$sort_key} . ": " . (' ' x ($max_len - length($_->{$sort_key}))) . $_->{DESCRIPTION}}
+		sort {$a->{$sort_key} cmp $b->{$sort_key}} @{$structure}) . "\n";
+  }
+  else {
+    "Internal error: Better call Saul.\n";
+  }
+}
+
+sub dump_structure {
+  my ($structure, $label, $indent, $history, $skip) = @_;
+  if (ref $indent) {
+    $skip = $indent;
+    undef $indent;
+  }
+  my $outfile = *STDERR;
+  $indent = 0 unless defined $indent;
+  $history = {} unless defined $history;
+
+  # Handle recursive structures
+  if ($history->{$structure}) {
+    print $outfile "  " x $indent, "$label: CIRCULAR\n";
+    return;
+  }
+
+  my $type = ref $structure;
+  unless ($type) {
+    $structure = 'undef' unless defined $structure;
+    print $outfile "  " x $indent, "$label: $structure\n";
+    return;
+  }
+  if ($type eq 'ARRAY') {
+    $history->{$structure}++;
+    print $outfile "  " x $indent, "$label:\n";
+    for (my $i = 0; $i < @{$structure}; $i++) {
+      &dump_structure($structure->[$i], $i, $indent + 1, $history, $skip);
+    }
+  }
+  elsif ($type eq 'CODE') {
+    print $outfile "  " x $indent, "$label: CODE\n";
+  }
+  elsif ($type eq 'IO::File') {
+    print $outfile "  " x $indent, "$label: IO::File\n";
+  }
+  else {
+    $history->{$structure}++;
+    print $outfile "  " x $indent, "$label:\n";
+    my %done;
+  outer:
+    # You can add field names prior to the sort to order the fields in a desired way
+    foreach my $key (sort keys %{$structure}) {
+      if ($skip) {
+	foreach my $skipname (@{$skip}) {
+	  next outer if $key eq $skipname;
+	}
+      }
+      next if $done{$key}++;
+      # Skip undefs
+      next unless defined $structure->{$key};
+      &dump_structure($structure->{$key}, $key, $indent + 1, $history, $skip);
+    }
+  }
+}
+
+### END INCLUDE Utils
+
+### BEGIN INCLUDE Switches
+
+#####################################################################################
+# This switch processing code written many years ago by James Mayfield
+# and used here with permission. It really has nothing to do with
+# TAC KBP; it's just a partial replacement for getopt that closely ties
+# the documentation to the switch specification. The code may well be cheesy,
+# so no peeking.
+#####################################################################################
+
+package SwitchProcessor;
+
+sub _max {
+    my $first = shift;
+    my $second = shift;
+    $first > $second ? $first : $second;
+}
+
+sub _quotify {
+    my $string = shift;
+    if (ref($string)) {
+	join(", ", @{$string});
+    }
+    else {
+	(!$string || $string =~ /\s/) ? "'$string'" : $string;
+    }
+}
+
+sub _formatSubs {
+    my $value = shift;
+    my $switch = shift;
+    my $formatted;
+    if ($switch->{SUBVARS}) {
+	$formatted = "";
+	foreach my $subval (@{$value}) {
+	    $formatted .= " " if $formatted;
+	    $formatted .= _quotify($subval);
+	}
+    }
+    # else if this is a constant switch, omit the vars [if they match?]
+    else {
+	$formatted = _quotify($value);
+    }
+    $formatted;
+}
+
+# Print an error message, display program usage, and exit unsuccessfully
+sub _barf {
+    my $self = shift;
+    my $errstring = shift;
+    open(my $handle, "|more") or Logger->new()->NIST_die("Couldn't even barf with message $errstring");
+    print $handle "ERROR: $errstring\n";
+    $self->showUsage($handle);
+    close $handle;
+    exit(-1);
+}
+
+# Create a new switch processor.  Arguments are the name of the
+# program being run, and deneral documentation for the program
+sub new {
+    my $classname = shift;
+    my $self = {};
+    bless ($self, $classname);
+    $self->{PROGNAME} = shift;
+    $self->{PROGNAME} =~ s(^.*/)();
+    $self->{DOCUMENTATION} = shift;
+    $self->{POSTDOCUMENTATION} = shift;
+    $self->{HASH} = {};
+    $self->{PARAMS} = [];
+    $self->{SWITCHWIDTH} = 0;
+    $self->{PARAMWIDTH} = 0;
+    $self->{SWITCHES} = {};
+    $self->{VARSTOCHECK} = ();
+    $self->{LEGALVARS} = {};
+    $self->{PROCESS_INVOKED} = undef;
+    $self;
+}
+
+# Fill a paragraph, with different leaders for first and subsequent lines
+sub _fill {
+    $_ = shift;
+    my $leader1 = shift;
+    my $leader2 = shift;
+    my $width = shift;
+    my $result = "";
+    my $thisline = $leader1;
+    my $spaceOK = undef;
+    foreach my $word (split) {
+	if (length($thisline) + length($word) + 1 <= $width) {
+	    $thisline .= " " if ($spaceOK);
+	    $spaceOK = "TRUE";
+	    $thisline .= $word;
+	}
+	else {
+			if(length($word) > $width) {
+				my @chars = split("", $word);
+				my $numsplits = int((scalar @chars/$width)) + 1;
+				my $start  =  0;
+				my $length =  @chars / $numsplits;
+
+				foreach my $i (0 .. $numsplits-1)
+				{
+				    my $end = ($i == $numsplits-1) ? $#chars : $start + $length - 1;
+				    my $splitword = join("", @chars[$start .. $end]);
+				    $start += $length;
+				    $result .= "$thisline\n";
+				    $thisline = "$leader2$splitword";
+				    $thisline .= "/" if $i < $numsplits-1;
+				    $spaceOK = "TRUE";
+				}
+				
+			}
+			else {
+		    $result .= "$thisline\n";
+		    $thisline = "$leader2$word";
+		    $spaceOK = "TRUE";
+			}
+	}
+    }
+    "$result$thisline\n";
+}
+
+# Show program usage
+sub showUsage {
+    my $self = shift;
+    my $handle = shift;
+    open($handle, "|more") unless defined $handle;
+    print $handle _fill($self->{DOCUMENTATION}, "$self->{PROGNAME}:  ",
+			" " x (length($self->{PROGNAME}) + 3), $terminalWidth);
+    print $handle "\nUsage: $self->{PROGNAME}";
+    print $handle " {-switch {-switch ...}}"
+	if (keys(%{$self->{SWITCHES}}) > 0);
+    # Count the number of optional parameters
+    my $optcount = 0;
+    # Print each parameter
+    foreach my $param (@{$self->{PARAMS}}) {
+	print $handle " ";
+	print $handle "{" unless $param->{REQUIRED};
+	print $handle $param->{NAME};
+	$optcount++ if (!$param->{REQUIRED});
+	print $handle "..." if $param->{ALLOTHERS};
+    }
+    # Close out the optional parameters
+    print $handle "}" x $optcount;
+    print $handle "\n\n";
+    # Show details of each switch
+    my $headerprinted = undef;
+    foreach my $key (sort keys %{$self->{SWITCHES}}) {
+	my $usage = "  $self->{SWITCHES}->{$key}->{USAGE}" .
+	    " " x ($self->{SWITCHWIDTH} - length($self->{SWITCHES}->{$key}->{USAGE}) + 2);
+	if (defined($self->{SWITCHES}->{$key}->{DOCUMENTATION})) {
+	    print $handle "Legal switches are:\n"
+		unless defined($headerprinted);
+	    $headerprinted = "TRUE";
+	    print $handle _fill($self->{SWITCHES}->{$key}->{DOCUMENTATION},
+			$usage,
+			" " x (length($usage) + 2),
+			$terminalWidth);
+	}
+    }
+    # Show details of each parameter
+    if (@{$self->{PARAMS}} > 0) {
+	print $handle "parameters are:\n";
+	foreach my $param (@{$self->{PARAMS}}) {
+	    my $usage = "  $param->{USAGE}" .
+		" " x ($self->{PARAMWIDTH} - length($param->{USAGE}) + 2);
+	    print $handle _fill($param->{DOCUMENTATION}, $usage, " " x (length($usage) + 2), $terminalWidth);
+	}
+    }
+    print $handle "\n$self->{POSTDOCUMENTATION}\n" if $self->{POSTDOCUMENTATION};
+}
+
+# Retrieve all keys defined for this switch processor
+sub keys {
+    my $self = shift;
+    keys %{$self->{HASH}};
+}
+
+# Add a switch that causes display of program usage
+sub addHelpSwitch {
+    my $self = shift;
+    my ($shouldBeUndef, $filename, $line) = caller;
+    my $switch = SP::_Switch->newHelp($filename, $line, @_);
+    $self->_addSwitch($filename, $line, $switch);
+}
+
+# Add a switch that causes a given variable(s) to be assigned a given
+# constant value(s)
+sub addConstantSwitch {
+    my $self = shift;
+    my ($shouldBeUndef, $filename, $line) = caller;
+    my $switch = SP::_Switch->newConstant($filename, $line, @_);
+    $self->_addSwitch($filename, $line, $switch);
+}
+
+# Add a switch that assigns to a given variable(s) value(s) provided
+# by the user on the command line
+sub addVarSwitch {
+    my $self = shift;
+    my ($shouldBeUndef, $filename, $line) = caller;
+    my $switch = SP::_Switch->newVar($filename, $line, @_);
+    $self->_addSwitch($filename, $line, $switch);
+}
+
+# Add a switch that invokes a callback as soon as it is encountered on
+# the command line.  The callback receives three arguments: the switch
+# object (which is needed by the internal routines, but presumably may
+# be ignored by user-defined functions), the switch processor, and all
+# the remaining arguments on the command line after the switch (as the
+# remainder of @_, not a reference).  If it returns, it must return
+# the list of command-line arguments that remain after it has dealt
+# with whichever ones it wants to.
+sub addImmediateSwitch {
+    my $self = shift;
+    my ($shouldBeUndef, $filename, $line) = caller;
+    my $switch = SP::_Switch->newImmediate($filename, $line, @_);
+    $self->_addSwitch($filename, $line, $switch);
+}
+
+sub addMetaSwitch {
+    my $self = shift;
+    my ($shouldBeUndef, $filename, $line) = caller;
+    my $switch = SP::_Switch->newMeta($filename, $line, @_);
+    $self->_addSwitch($filename, $line, $switch);
+}
+
+# Add a new switch
+sub _addSwitch {
+    my $self = shift;
+    my $filename = shift;
+    my $line = shift;
+    my $switch = shift;
+    # Can't add switches after process() has been invoked
+    Logger->new()->NIST_die("Attempt to add a switch after process() has been invoked, at $filename line $line\n")
+	if ($self->{PROCESS_INVOKED});
+    # Bind the switch object to its name
+    $self->{SWITCHES}->{$switch->{NAME}} = $switch;
+    # Remember how much space is required for the usage line
+    $self->{SWITCHWIDTH} = _max($self->{SWITCHWIDTH}, length($switch->{USAGE}))
+	if (defined($switch->{DOCUMENTATION}));
+    # Make a note of the variable names that are legitimized by this switch
+    $self->{LEGALVARS}->{$switch->{NAME}} = "TRUE";
+}
+
+# Add a new command-line parameter
+sub addParam {
+    my ($shouldBeUndef, $filename, $line) = caller;
+    my $self = shift;
+    # Can't add params after process() has been invoked
+    Logger->new()->NIST_die("Attempt to add a param after process() has been invoked, at $filename line $line\n")
+	if ($self->{PROCESS_INVOKED});
+    # Create the parameter object
+    my $param = SP::_Param->new($filename, $line, @_);
+    # Remember how much space is required for the usage line
+    $self->{PARAMWIDTH} = _max($self->{PARAMWIDTH}, length($param->{NAME}));
+    # Check for a couple of potential problems with parameter ordering
+    if (@{$self->{PARAMS}} > 0) {
+	my $previous = ${$self->{PARAMS}}[$#{$self->{PARAMS}}];
+        Logger->new()->NIST_die("Attempt to add param after an allOthers param, at $filename line $line\n")
+	    if ($previous->{ALLOTHERS});
+        Logger->new()->NIST_die("Attempt to add required param after optional param, at $filename line $line\n")
+	    if ($param->{REQUIRED} && !$previous->{REQUIRED});
+    }
+    # Make a note of the variable names that are legitimized by this param
+    $self->{LEGALVARS}->{$param->{NAME}} = "TRUE";
+    # Add the parameter object to the list of parameters for this program
+    push(@{$self->{PARAMS}}, $param);
+}
+
+# Set a switch processor variable to a given value
+sub put {
+    my $self = shift;
+    my $key = shift;
+    my $value = shift;
+    my ($shouldBeUndef, $filename, $line) = caller;
+    $self->_varNameCheck($filename, $line, $key, undef);
+    my $switch = $self->{SWITCHES}->{$key};
+    Logger->new()->NIST_die("Wrong number of values in second argument to put, at $filename line $line.\n")
+	if ($switch->{SUBVARS} &&
+	    (!ref($value) ||
+	     scalar(@{$value}) != @{$switch->{SUBVARS}}));
+    $self->{HASH}->{$key} = $value;
+}
+
+# Get the value of a switch processor variable
+sub get {
+    my $self = shift;
+    my $key = shift;
+    # Internally, we sometimes want to do a get before process() has
+    # been invoked.  The secret second argument to get allows this.
+    my $getBeforeProcess = shift;
+    my ($shouldBeUndef, $filename, $line) = caller;
+    Logger->new()->NIST_die("Get called before process, at $filename line $line\n")
+	if (!$self->{PROCESS_INVOKED} && !$getBeforeProcess);
+    # Check for var.subvar syntax
+    $key =~ /([^.]*)\.*(.*)/;
+    my $var = $1;
+    my $subvar = $2;
+    # Make sure this is a legitimate switch processor variable
+    $self->_varNameCheck($filename, $line, $var, $subvar);
+    my $value = $self->{HASH}->{$var};
+    $subvar ? $value->[$self->_getSubvarIndex($var, $subvar)] : $value;
+}
+
+sub _getSubvarIndex {
+    my $self = shift;
+    my $var = shift;
+    my $subvar = shift;
+    my $switch = $self->{SWITCHES}->{$var};
+    return(-1) unless $switch;
+    return(-1) unless $switch->{SUBVARS};
+    for (my $i = 0; $i < @{$switch->{SUBVARS}}; $i++) {
+	return($i) if ${$switch->{SUBVARS}}[$i] eq $subvar;
+    }
+    -1;
+}
+
+# Check whether a given switch processor variable is legitimate
+sub _varNameCheck {
+    my $self = shift;
+    my $filename = shift;
+    my $line = shift;
+    my $key = shift;
+    my $subkey = shift;
+    # If process() has already been invoked, check the variable name now...
+    if ($self->{PROCESS_INVOKED}) {
+	$self->_immediateVarNameCheck($filename, $line, $key, $subkey);
+    }
+    # ...Otherwise, remember the variable name and check it later
+    else {
+	push(@{$self->{VARSTOCHECK}}, [$filename, $line, $key, $subkey]);
+    }
+}
+
+# Make sure this variable is legitimate
+sub _immediateVarNameCheck {
+    my $self = shift;
+    my $filename = shift;
+    my $line = shift;
+    my $key = shift;
+    my $subkey = shift;
+    Logger->new()->NIST_die("No such SwitchProcessor variable: $key, at $filename line $line\n")
+	unless $self->{LEGALVARS}->{$key};
+    Logger->new()->NIST_die("No such SwitchProcessor subvariable: $key.$subkey, at $filename line $line\n")
+	unless (!$subkey || $self->_getSubvarIndex($key, $subkey) >= 0);
+}
+
+# Add default values to switch and parameter documentation strings,
+# where appropriate
+sub _addDefaultsToDoc {
+    my $self = shift;
+    # Loop over all switches
+    foreach my $switch (values %{$self->{SWITCHES}}) {
+	if ($switch->{METAMAP}) {
+	    $switch->{DOCUMENTATION} .= " (Equivalent to";
+	    foreach my $var (sort CORE::keys %{$switch->{METAMAP}}) {
+		my $rawval = $switch->{METAMAP}->{$var};
+		my $val = SwitchProcessor::_formatSubs($rawval, $self->{SWITCHES}->{$var});
+		$switch->{DOCUMENTATION} .= " -$var $val";
+	    }
+	    $switch->{DOCUMENTATION} .= ")";
+	}
+	# Default values aren't reported for constant switches
+	if (!defined($switch->{CONSTANT})) {
+	    my $default = $self->get($switch->{NAME}, "TRUE");
+	    if (defined($default)) {
+		$switch->{DOCUMENTATION} .= " (Default = " . _formatSubs($default, $switch) . ").";
+	    }
+	}
+    }
+    # Loop over all params
+    foreach my $param (@{$self->{PARAMS}}) {
+	my $default = $self->get($param->{NAME}, "TRUE");
+	# Add default to documentation if the switch is optional and there
+	# is a default value
+	$param->{DOCUMENTATION} .= " (Default = " . _quotify($default) . ")."
+	    if (!$param->{REQUIRED} && defined($default));
+    }
+}
+
+# Process the command line
+sub process {
+    my $self = shift;
+    # Add defaults to the documentation
+    $self->_addDefaultsToDoc();
+    # Remember that process() has been invoked
+    $self->{PROCESS_INVOKED} = "TRUE";
+    # Now that all switches have been defined, check all pending
+    # variable names for legitimacy
+    foreach (@{$self->{VARSTOCHECK}}) {
+	# FIXME: Can't we just use @{$_} here?
+	$self->_immediateVarNameCheck(${$_}[0], ${$_}[1], ${$_}[2], ${$_}[3]);
+    }
+    # Switches must come first.  Keep processing switches as long as
+    # the next element begins with a dash
+    while (@_ && $_[0] =~ /^-(.*)/) {
+	# Get the switch with this name
+	my $switch = $self->{SWITCHES}->{$1};
+	$self->_barf("Unknown switch: -$1\n")
+	    unless $switch;
+	# Throw away the switch name
+	shift;
+	# Invoke the process code associated with this switch
+	# FIXME:  How can switch be made implicit?
+	@_ = $switch->{PROCESS}->($switch, $self, @_);
+    }
+    # Now that the switches have been handled, loop over the legal params
+    foreach my $param (@{$self->{PARAMS}}) {
+	# Bomb if a required arg wasn't provided
+	$self->_barf("Not enough arguments; $param->{NAME} must be provided\n")
+	    if (!@_ && $param->{REQUIRED});
+	# If this is an all others param, grab all the remaining arguments
+	if ($param->{ALLOTHERS}) {
+	    $self->put($param->{NAME}, [@_]) if @_;
+	    @_ = ();
+	}
+	# Otherwise, if there are arguments left, bind the next one to the parameter
+	elsif (@_) {
+	    $self->put($param->{NAME}, shift);
+	}
+    }
+    # If any arguments are left over, the user botched it
+    $self->_barf("Too many arguments\n")
+	if (@_);
+}
+
+################################################################################
+
+package SP::_Switch;
+
+sub new {
+    my $classname = shift;
+    my $filename = shift;
+    my $line = shift;
+    my $self = {};
+    bless($self, $classname);
+    Logger->new()->NIST_die("Too few arguments to constructor while creating classname, at $filename line $line\n")
+	unless @_ >= 2;
+    # Switch name and documentation are always present
+    $self->{NAME} = shift;
+    $self->{DOCUMENTATION} = pop;
+    $self->{USAGE} = "-$self->{NAME}";
+    # I know, these are unnecessary
+    $self->{PROCESS} = undef;
+    $self->{CONSTANT} = undef;
+    $self->{SUBVARS} = ();
+    # Return two values
+    # FIXME: Why won't [$self, \@_] work here?
+    ($self, @_);
+}
+
+# Create new help switch
+sub newHelp {
+    my @args = new (@_);
+    my $self = shift(@args);
+    Logger->new()->NIST_die("Too many arguments to addHelpSwitch, at $_[1] line $_[2]\n")
+	if (@args);
+    # A help switch just prints out program usage then exits
+    $self->{PROCESS} = sub {
+	my $self = shift;
+	my $sp = shift;
+	$sp->showUsage();
+	exit(0);
+    };
+    $self;
+}
+
+# Create a new constant switch
+sub newConstant {
+    my @args = new(@_);
+    my $self = shift(@args);
+    Logger->new()->NIST_die("Too few arguments to addConstantSwitch, at $_[1] line $_[2]\n")
+	unless @args >= 1;
+    Logger->new()->NIST_die("Too many arguments to addConstantSwitch, at $_[1] line $_[2]\n")
+	unless @args <= 2;
+    # Retrieve the constant value
+    $self->{CONSTANT} = pop(@args);
+    if (@args) {
+	$self->{SUBVARS} = shift(@args);
+	# Make sure, if there are subvars, that the number of subvars
+	# matches the number of constant arguments
+	Logger->new()->NIST_die("Number of values [" . join(", ", @{$self->{CONSTANT}}) .
+	    "] does not match number of variables [" . join(", ", @{$self->{SUBVARS}}) .
+		"], at $_[1] line $_[2]\n")
+		    unless $#{$self->{CONSTANT}} == $#{$self->{SUBVARS}};
+    }
+    $self->{PROCESS} = sub {
+	my $self = shift;
+	my $sp = shift;
+	my $counter = 0;
+	$sp->put($self->{NAME}, $self->{CONSTANT});
+	@_;
+    };
+    $self;
+}
+
+# Create a new var switch
+sub newVar {
+    my @args = new(@_);
+    my $self = shift(@args);
+    Logger->new()->NIST_die("Too many arguments to addVarSwitch, at $_[1] line $_[2]\n")
+	unless @args <= 1;
+    # If there are subvars
+    if (@args) {
+	my $arg = shift(@args);
+	if (ref $arg) {
+	    $self->{SUBVARS} = $arg;
+	    # Augment the usage string with the name of the subvar
+	    foreach my $subvar (@{$self->{SUBVARS}}) {
+		$self->{USAGE} .= " <$subvar>";
+	    }
+	    # A var switch with subvars binds each subvar
+	    $self->{PROCESS} = sub {
+		my $self = shift;
+		my $sp = shift;
+		my $counter = 0;
+		my $value = [];
+		# Make sure there are enough arguments for this switch
+		foreach (@{$self->{SUBVARS}}) {
+		    $sp->_barf("Not enough arguments to switch -$self->{NAME}\n")
+			unless @_;
+		    push(@{$value}, shift);
+		}
+		$sp->put($self->{NAME}, $value);
+		@_;
+	    };
+	}
+	else {
+	    $self->{USAGE} .= " <$arg>";
+	    $self->{PROCESS} = sub {
+		my $self = shift;
+		my $sp = shift;
+		$sp->put($self->{NAME}, shift);
+		@_;
+	    };
+	}
+    }
+    else {
+	# A var switch without subvars gets one argument, called 'value'
+	# in the usage string
+	$self->{USAGE} .= " <value>";
+	# Bind the argument to the parameter
+	$self->{PROCESS} = sub {
+	    my $self = shift;
+	    my $sp = shift;
+	    $sp->put($self->{NAME}, shift);
+	    @_;
+	};
+    }
+    $self;
+}
+
+# Create a new immediate switch
+sub newImmediate {
+    my @args = new(@_);
+    my $self = shift(@args);
+    Logger->new()->NIST_die("Wrong number of arguments to addImmediateSwitch or addMetaSwitch, at $_[1] line $_[2]\n")
+	unless @args == 1;
+    $self->{PROCESS} = shift(@args);
+    $self;
+}
+
+# Create a new meta switch
+sub newMeta {
+    # The call looks just like a call to newImmediate, except that
+    # instead of a fn as the second argument, there's a hashref.  So
+    # use newImmediate to do the basic work, then strip out the
+    # hashref and replace it with the required function.
+    my $self = newImmediate(@_);
+    $self->{METAMAP} = $self->{PROCESS};
+    $self->{PROCESS} = sub {
+	my $var;
+	my $val;
+	my $self = shift;
+	my $sp = shift;
+	# FIXME: Doesn't properly handle case where var is itself a metaswitch
+	while (($var, $val) = each %{$self->{METAMAP}}) {
+	    $sp->put($var, $val);
+	}
+	@_;
+    };
+    $self;
+}
+
+################################################################################
+
+package SP::_Param;
+
+# A parameter is just a struct for the four args
+sub new {
+    my $classname = shift;
+    my $filename = shift;
+    my $line = shift;
+    my $self = {};
+    bless($self, $classname);
+    $self->{NAME} = shift;
+    # param name and documentation are first and last, respectively.
+    $self->{DOCUMENTATION} = pop;
+    $self->{USAGE} = $self->{NAME};
+    # If omitted, REQUIRED and ALLOTHERS default to undef
+    $self->{REQUIRED} = shift;
+    $self->{ALLOTHERS} = shift;
+    # Tack on required to the documentation stream if this arg is required
+    $self->{DOCUMENTATION} .= " (Required)."
+	if ($self->{REQUIRED});
+    $self;
+}
+
+################################################################################
+
+### END INCLUDE Switches

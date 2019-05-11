@@ -1,0 +1,35 @@
+Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range
+KE001	"shooting of protesters by ""Sergei"" in Maidan in February 2014"	TBD	event	LDC_evt_008	conflict	attack	firearmattack		Shooting by snipers on 20 February 2014		2014-02-20	2014-02-20	2014-02-20
+KE001	Sergei	TBD	evt008arg01attacker	LDC_ent_106	per	combatant	sniper	TBD	"Protester identified by BBC as the one who started the clashes by firing on police, no surname given"				
+KE001	protesters	TBD	evt008arg02target	LDC_ent_126	per	protester	unspecified	TBD					
+KE001	Saiga hunting rifle	TBD	evt008arg03instrument	LDC_ent_179	wea	gun	firearm	TBD	Sergei's Saiga hunting rifle				
+KE001	Kiev Conservatory	TBD	evt008arg04place	LDC_ent_034	fac	building	school	TBD	"Conservatory Building in Kiev, largely occupied by protesters during clashes"				
+KE002	"shooting of police by ""Sergei"" in Maidan in February 2014"	TBD	event	LDC_evt_008	conflict	attack	firearmattack		Shooting by snipers on 20 February 2014		2014-02-20	2014-02-20	2014-02-20
+KE002	Sergei	TBD	evt008arg01attacker	LDC_ent_106	per	combatant	sniper	TBD	"Protester identified by BBC as the one who started the clashes by firing on police, no surname given"				
+KE002	police	TBD	evt008arg02target	LDC_ent_111	per	police	unspecified	TBD					
+KE002	Saiga hunting rifle	TBD	evt008arg03instrument	LDC_ent_179	wea	gun	firearm	TBD	Sergei's Saiga hunting rifle				
+KE002	Kiev Conservatory	TBD	evt008arg04place	LDC_ent_034	fac	building	school	TBD	"Conservatory Building in Kiev, largely occupied by protesters during clashes"				
+KE003	protests in Maidan in February 2014	TBD	event	LDC_evt_017	conflict	demonstrate	marchprotestpoliticalgathering		Euromaidan Revolution		2014-02-XX	2014-02-01	2014-02-28
+KE003	Maidan	TBD	evt017arg02place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE004	hide the rifle in the post office	TBD	event	LDC_evt_105	movement	transportartifact	hide		Sergei hides hunting rifle at Maidan post office		2014-02-19	2014-02-19	2014-02-19
+KE004	Sergei	TBD	evt105arg01transporter	LDC_ent_106	per	combatant	sniper	TBD	"Protester identified by BBC as the one who started the clashes by firing on police, no surname given"				
+KE004	Saiga hunting rifle	TBD	evt105arg02artifact	LDC_ent_179	wea	gun	firearm	TBD	Sergei's Saiga hunting rifle				
+KE004	the post office	TBD	evt105arg03hidingplace	LDC_ent_031	fac	building	governmentbuilding	TBD	Maidan post office				
+KE005	location of Maidan in Kiev	TBD	relation	LDC_rel_051	physical	locatednear	unspecified				Unknown		
+KE005	Maidan	TBD	rel051arg01entityorfiller	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE005	Kiev	TBD	rel051arg02place	LDC_ent_057	gpe	urbanarea	city	703448	Kyiv (a.k.a. Kiev)				
+KE006	location of post office in Maidan	TBD	relation	LDC_rel_051	physical	locatednear	unspecified				Unknown		
+KE006	the post office	TBD	rel051arg01entityorfiller	LDC_ent_031	fac	building	governmentbuilding	TBD	Maidan post office				
+KE006	Maidan	TBD	rel051arg02place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE007	location of Conservatory in Maidan	TBD	relation	LDC_rel_051	physical	locatednear	unspecified				Unknown		
+KE007	Kiev Conservatory	TBD	rel051arg01entityorfiller	LDC_ent_034	fac	building	school	TBD	"Conservatory Building in Kiev, largely occupied by protesters during clashes"				
+KE007	Maidan	TBD	rel051arg02place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE008	affiliation between Sergei and Maidan movement	TBD	relation	LDC_rel_014	generalaffiliation	memberoriginreligionethnicity	unspecified				Unknown		
+KE008	Sergei	TBD	rel014arg01person	LDC_ent_106	per	combatant	sniper	TBD	"Protester identified by BBC as the one who started the clashes by firing on police, no surname given"				
+KE008	Maidan protest movement	TBD	rel014arg02entityorfiller	LDC_ent_133	sid	ideological	ideological	TBD	Pro-Maidan				
+KE009	make of the hunting rifle is Saiga	TBD	relation	LDC_rel_028	information	make	make				Unknown		
+KE009	hunting rifle	TBD	rel028arg01entityorfiller	LDC_ent_179	wea	gun	firearm	TBD	Sergei's Saiga hunting rifle				
+KE009	Saiga	TBD	rel028arg02brand	LDC_ent_138	val	unspecified	unspecified	TBD					
+KE010	affiliation between police and Berkut	TBD	relation	LDC_rel_034	organizationaffiliation	employmentmembership	unspecified				Unknown		
+KE010	police	TBD	rel034arg01employeemember	LDC_ent_111	per	police	unspecified	TBD					
+KE010	Berkut	TBD	rel034arg02placeofemploymentmembership	LDC_ent_089	org	government	lawenforcementagency	TBD	Berkut Riot Police				
