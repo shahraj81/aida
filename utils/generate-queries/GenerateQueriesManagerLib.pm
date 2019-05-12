@@ -3152,7 +3152,7 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
 	my ($self) = @_;
 	my $sparql = <<'END_SPARQL_QUERY';
 	<![CDATA[
-              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
               PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
@@ -3256,7 +3256,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
 	my ($self) = @_;
 	my $sparql = <<'END_SPARQL_QUERY';
 	<![CDATA[
-              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
               PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
@@ -3546,7 +3546,7 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
 	my ($self) = @_;
 	my $sparql = <<'END_SPARQL_QUERY';
 	<![CDATA[
-              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
               PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
@@ -3685,7 +3685,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
 	my ($self) = @_;
 	my $sparql = <<'END_SPARQL_QUERY';
 	<![CDATA[
-              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/SeedlingOntology#>
+              PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
               PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
