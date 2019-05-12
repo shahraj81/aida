@@ -2880,6 +2880,10 @@ sub new {
 		NEXT_TASK1_GRAPH_QUERY_NUM => 1,
 		NEXT_TASK2_ZEROHOP_QUERY_NUM => 1,
 		NEXT_TASK2_GRAPH_QUERY_NUM => 1,
+		USED_TA1_CLASS_QUERY_KEYS => Container->new($logger),
+		USED_TA1_GRAPH_QUERY_KEYS => Container->new($logger),
+		USED_TA2_ZEROHOP_QUERY_KEYS => Container->new($logger),
+		USED_TA2_GRAPH_QUERY_KEYS => Container->new($logger),
 		PARAMETERS => $parameters,
 		LOGGER => $logger,
 	};
@@ -2976,7 +2980,7 @@ sub generate_graph_queries {
 	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
 	my $query_id_prefix = $self->get("PARAMETERS")->get($task_short_name . "_GRAPH_QUERYID_PREFIX");
 	my $reference_kbid_prefix = $self->get("PARAMETERS")->get("REFERENCE_KBID_PREFIX");
-	my %edge_label_and_argkbids_used;
+	my $used_query_keys = $self->get("USED_" . $task_short_name . "_GRAPH_QUERY_KEYS");
 	foreach my $pt_entry($subcontainer->toarray()) {
 		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
 		# For task1, we need only distict edge labels for queryids
@@ -2997,7 +3001,9 @@ sub generate_graph_queries {
 				my $event_or_relation_type = $event_or_relation_spec->get("FULL_TYPE");
 				my $argument_label = $argument_spec->get("LABEL");
 				my $edge_label = $event_or_relation_type . "_" . $argument_label;
-				next if $edge_label_and_argkbids_used{$edge_label . "_" . $argument_kbid};
+				my $query_key = $edge_label;
+				$query_key = $edge_label . "_" . $argument_kbid if $task_long_name eq "task2";
+				next if $used_query_keys->exists($query_key);
 				my $i = $self->get("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
 				$i = $self->normalize_querynum($i);
 				my $query_id = "$query_id_prefix\_$i";
@@ -3024,7 +3030,7 @@ sub generate_graph_queries {
 				my $query = GraphQuery->new($logger, $xml_query);
 				$queries->add($query);
 				$self->increment("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
-				$edge_label_and_argkbids_used{$edge_label . "_" . $argument_kbid} = 1;
+				$used_query_keys->add("KEY", $query_key);
 			}
 		}
 	}
@@ -3044,7 +3050,7 @@ sub generate_task1_class_queries {
 	}
 	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
 	my $query_id_prefix = $self->get("PARAMETERS")->get("TA1_CLASS_QUERYID_PREFIX");
-	my %types_used;
+	my $used_query_keys = $self->get("USED_TA1_CLASS_QUERY_KEYS");
 	foreach my $pt_entry($subcontainer->toarray()) {
 		# Is this an entity involved in the prevailing theory?
 		my $ontology_id = $pt_entry->get("ONTOLOGY_ID");
@@ -3056,7 +3062,7 @@ sub generate_task1_class_queries {
 			push(@query_types, "$type.$subtype") if $subtype ne "n/a";
 			push(@query_types, "$type.$subtype.$subsubtype") if $subtype ne "n/a" && $subsubtype ne "n/a";
 			foreach my $query_type(@query_types) {
-				next if $types_used{$query_type};
+				next if $used_query_keys->exists($query_type);
 				# Generate a query at all granularities
 				my $i = $self->get("NEXT_TASK1_CLASS_QUERY_NUM");
 				$i = $self->normalize_querynum($i);
@@ -3077,7 +3083,7 @@ sub generate_task1_class_queries {
 				my $query = ClassQuery->new($logger, $xml_object);
 				$queries->add($query);
 				$self->increment("NEXT_TASK1_CLASS_QUERY_NUM");
-				$types_used{$query_type} = 1;
+				$used_query_keys->add("KEY", $query_type);
 			}
 		}
 	}
@@ -3103,13 +3109,13 @@ sub generate_task2_zerohop_queries {
 	my $subcontainer = $self->get("PREVAILING_THEORY_ENTRIES")->get("BY_KEY", $topic_id . "_" . $prevailing_theory_id);
 	my $query_id_prefix = $self->get("PARAMETERS")->get("TA2_ZEROHOP_QUERYID_PREFIX");
 	my $reference_kbid_prefix = $self->get("PARAMETERS")->get("REFERENCE_KBID_PREFIX");
-	my %argument_kbids_used;
+	my $used_query_keys = $self->get("USED_TA2_ZEROHOP_QUERY_KEYS");
 	foreach my $pt_entry($subcontainer->toarray()) {
 		# Is this an entity involved in the prevailing theory?
 		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
 		if($argument_kbid =~ /^\d+$/) {
 			# If yes, generate the query
-			next if $argument_kbids_used{$argument_kbid};
+			next if $used_query_keys->exists($argument_kbid);
 			my $i = $self->get("NEXT_TASK2_ZEROHOP_QUERY_NUM");
 			$i = $self->normalize_querynum($i);
 			my $query_id = "$query_id_prefix\_$i";
@@ -3130,7 +3136,7 @@ sub generate_task2_zerohop_queries {
 			my $query = ZeroHopQuery->new($logger, $xml_object);
 			$queries->add($query);
 			$self->increment("NEXT_TASK2_ZEROHOP_QUERY_NUM");
-			$argument_kbids_used{$argument_kbid} = 1;
+			$used_query_keys->add("KEY", $argument_kbid);
 		}
 	}
 }
@@ -3171,7 +3177,7 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
 
               WHERE {
 
-                  BIND(ldcOnt:[__TYPE__] as ?query_type)
+                  BIND(ldcOnt:[__TYPE__] AS ?query_type)
 
                   ?cluster              aida:informativeJustification ?inf_justification .
 
@@ -3239,7 +3245,7 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?lrx), ?lrx, "__NULL__") AS ?_lrx) .
                   BIND( IF( BOUND(?lry), ?lry, "__NULL__") AS ?_lry) .
 
-                  BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) as ?infj_span ) .
+                  BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?infj_span ) .
               }
 	]]>
 END_SPARQL_QUERY
@@ -3278,7 +3284,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
               
               WHERE {
               
-                  BIND (ldcOnt:[__PREDICATE__] as ?edge_type_q)
+                  BIND (ldcOnt:[__PREDICATE__] AS ?edge_type_q)
               
                   # Get the object informativeJustification
                   ?objectmo             a                             aida:Entity .
@@ -3387,7 +3393,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?olrx), ?olrx, "__NULL__") AS ?_olrx) .
                   BIND( IF( BOUND(?olry), ?olry, "__NULL__") AS ?_olry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) as ?oinf_j_span ) .
+                  BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) AS ?oinf_j_span ) .
               
                   # Get subject's informative justification span
                   OPTIONAL {
@@ -3433,7 +3439,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?slrx), ?slrx, "__NULL__") AS ?_slrx) .
                   BIND( IF( BOUND(?slry), ?slry, "__NULL__") AS ?_slry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) as ?sinf_j_span ) .
+                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) AS ?sinf_j_span ) .
               
                   # Get edge's justification span # 1
                   OPTIONAL {
@@ -3479,7 +3485,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej1lrx), ?ej1lrx, "__NULL__") AS ?_ej1lrx) .
                   BIND( IF( BOUND(?ej1lry), ?ej1lry, "__NULL__") AS ?_ej1lry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) as ?ej1_span ) .
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) AS ?ej1_span ) .
               
               
                   # Get edge's justification span # 2
@@ -3526,10 +3532,10 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej2lrx), ?ej2lrx, "__NULL__") AS ?_ej2lrx) .
                   BIND( IF( BOUND(?ej2lry), ?ej2lry, "__NULL__") AS ?_ej2lry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) as ?ej2_span ) .
-                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) as ?ej2_span)
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
+                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
-                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) as ?ej_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
               }
 	]]>
 END_SPARQL_QUERY
@@ -3668,7 +3674,7 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?lrx), ?lrx, "__NULL__") AS ?_lrx) .
                   BIND( IF( BOUND(?lry), ?lry, "__NULL__") AS ?_lry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) as ?infj_span ) .
+                  BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?infj_span ) .
               }
 	]]>
 END_SPARQL_QUERY
@@ -3721,7 +3727,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
               WHERE {
               
                   BIND ("[__KBID__]" AS ?olink_target)
-                  BIND (ldcOnt:[__PREDICATE__] as ?edge_type_q)
+                  BIND (ldcOnt:[__PREDICATE__] AS ?edge_type_q)
               
                   # Find ?objectmo linked to "[__KBID__]"
                   ?objectmo             a                             aida:Entity .
@@ -3838,7 +3844,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?olrx), ?olrx, "__NULL__") AS ?_olrx) .
                   BIND( IF( BOUND(?olry), ?olry, "__NULL__") AS ?_olry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) as ?oinf_j_span ) .
+                  BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) AS ?oinf_j_span ) .
               
                   # Get subject's informative justification span
                   OPTIONAL {
@@ -3884,7 +3890,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?slrx), ?slrx, "__NULL__") AS ?_slrx) .
                   BIND( IF( BOUND(?slry), ?slry, "__NULL__") AS ?_slry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) as ?sinf_j_span ) .
+                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) AS ?sinf_j_span ) .
               
                   # Get edge's justification span # 1
                   OPTIONAL {
@@ -3930,8 +3936,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej1lrx), ?ej1lrx, "__NULL__") AS ?_ej1lrx) .
                   BIND( IF( BOUND(?ej1lry), ?ej1lry, "__NULL__") AS ?_ej1lry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) as ?ej1_span ) .
-              
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) AS ?ej1_span ) .
               
                   # Get edge's justification span # 2
                   OPTIONAL {
@@ -3977,10 +3982,10 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej2lrx), ?ej2lrx, "__NULL__") AS ?_ej2lrx) .
                   BIND( IF( BOUND(?ej2lry), ?ej2lry, "__NULL__") AS ?_ej2lry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) as ?ej2_span ) .
-                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) as ?ej2_span)
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
+                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
-                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) as ?ej_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
               }
 	]]>
 END_SPARQL_QUERY
