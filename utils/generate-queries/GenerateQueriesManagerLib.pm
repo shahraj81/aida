@@ -3165,7 +3165,7 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
               #       ?cm_cv      # confidenceValue of asserting ?member being a member of the ?cluster
               #       ?j_cv       # confidenceValue of informativeJustification
 
-              SELECT 
+              SELECT DISTINCT
                 ?docid      # sourceDocument
                 ?query_type # query type
                 ?cluster    # ?cluster containing ?member1 of type ?type that matches ?query_type
@@ -3271,7 +3271,8 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
               #        ?edge_cv      # confidence of a compound justification for the argument assertion
               #        ?sbcm_cv      # cluster membership confidence of the subject
               
-              SELECT ?docid        # sourceDocument
+              SELECT DISTINCT 
+                     ?docid        # sourceDocument
                      ?edge_type_q  # edge type in the query
                      ?edge_type    # edge type in response matching the edge type in query
                      ?object_cluster  ?objectmo  ?oinf_j_span # object cluster, cluster member and its informativeJustification
@@ -3604,7 +3605,8 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
               #                       aida:system                   ldc:testSystem .
               
               
-              SELECT ?docid        # sourceDocument
+              SELECT DISTINCT
+                     ?docid        # sourceDocument
                      ?link_target  # link target as part of the query
                      ?cluster      # the ?cluster linked to ?link_target
                      ?infj_span    # informativeJustification span taken from the ?cluster
@@ -3692,7 +3694,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
               PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
               
               # Query: [__QUERY_ID__]
-              # Query description: Find all edges of type ldcOnt:Conflict.Attack_Place such that the object
+              # Query description: Find all edges of type ldcOnt:[__PREDICATE__] such that the object
               #                    of the edge is linked to reference KB node [__KBID__]
               #
               # Edge: consists of a Subject (cluster) Id, a Predicate label and an Object (cluster) Id. Subject is an event
@@ -3711,7 +3713,8 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
               #        ?edge_cv      # confidence of a compound justification for the argument assertion
               #        ?sbcm_cv      # cluster membership confidence of the subject
               
-              SELECT ?docid        # sourceDocument
+              SELECT DISTINCT
+                     ?docid        # sourceDocument
                      ?edge_type_q  # edge type in the query
                      ?edge_type    # edge type in response matching the edge type in query
                      ?olink_target # reference KB node linked to the object of the edge
