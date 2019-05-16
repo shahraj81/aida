@@ -2938,17 +2938,6 @@ sub load_PREVAILING_THEORY {
 	}
 }
 
-#		my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
-#		my $entries = $filehandler->get("ENTRIES");
-#		foreach my $entry($entries->toarray()) {
-#			my ($doceid, $segment_id, $start_char, $end_char) =
-#				map {$entry->get($_)} qw(doceid segment_id start_char end_char);
-#			my $segments = $self->get("BY_KEY", $doceid);
-#			my $sentence_boundary = $segments->get("BY_KEY", "$doceid:$segment_id");
-#			$sentence_boundary->set("SEGMENT_ID", $segment_id);
-#			$sentence_boundary->set("START_CHAR", $start_char);
-#			$sentence_boundary->set("END_CHAR", $end_char);
-
 
 sub generate_queries {
 	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
@@ -4163,77 +4152,6 @@ sub load {
 	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
 }
 
-#sub parse_object {
-#	my ($self, $xml_object) = @_;
-#	my $logger = $self->get("LOGGER");
-#	my $retVal;
-#	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
-#		# base-case of recursive function
-#		my $key = uc($xml_object->get("NAME"));
-#		my $value = $xml_object->get("ELEMENT");
-#		if($xml_object->get("ATTRIBUTES") ne "nil") {
-#			$retVal = SuperObject->new($logger);
-#			$retVal->set($key, $value);
-#			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
-#				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
-#				$retVal->set($attribute_key, $attribute_value);
-#			}
-#		}
-#		else {
-#			$retVal = $value;
-#		}
-#	}
-#	else {
-#		if($xml_object->get("CLASS") eq "XMLElement") {
-#			my $key = uc($xml_object->get("NAME"));
-#			my $value = $self->parse_object($xml_object->get("ELEMENT"));
-#			$retVal = SuperObject->new($logger);
-#			$retVal->set($key, $value);
-#			if($self->get("ATTRIBUTES") ne "nil") {
-#				foreach my $attribute_key($self->get("ATTRIBUTES")->get("ALL_KEYS")) {
-#					my $attribute_value = $self->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
-#					$retVal->set($attribute_key, $attribute_value);
-#				}
-#			}
-#		}
-#		elsif($xml_object->get("CLASS") eq "XMLContainer") {
-#			$retVal = SuperObject->new($logger);
-#			foreach my $xml_element($xml_object->toarray()){
-#				my $key = uc($xml_element->get("NAME"));
-#				my $value = $self->parse_object($xml_element);
-#				if($key =~ /.*?_DESCRIPTOR/) {
-#					my $doceid = $value->get($key)->get("DOCEID");
-#					my ($keyframeid, $start, $end);
-#					if($key eq "TEXT_DESCRIPTOR") {
-#						$start = $value->get($key)->get("START");
-#						$end = $value->get($key)->get("END");
-#					}
-#					elsif($key eq "IMAGE_DESCRIPTOR") {
-#						$start = $value->get($key)->get("TOPLEFT");
-#						$end = $value->get($key)->get("BOTTOMRIGHT");
-#					}
-#					elsif($key eq "VIDEO_DESCRIPTOR") {
-#						$keyframeid = $value->get($key)->get("KEYFRAMEID");
-#						$start = $value->get($key)->get("TOPLEFT");
-#						$end = $value->get($key)->get("BOTTOMRIGHT");
-#					}
-#					if($key eq "AUDIO_DESCRIPTOR") {
-#						$start = $value->get($key)->get("START");
-#						$end = $value->get($key)->get("END");
-#					}
-#					else{
-#						# TODO: throw exception
-#					}
-#					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
-#					$key = "DESCRIPTOR";
-#				}
-#				$retVal->set($key, $value);
-#			}
-#		}
-#	}
-#	$retVal;
-#}
-
 sub tostring {
 	my ($self, $indent) = @_;
 	$self->get("XML_OBJECT")->tostring($indent);
@@ -4271,83 +4189,6 @@ sub load {
 	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
 }
 
-#
-#sub parse_object {
-#	my ($self, $xml_object) = @_;
-#	my $logger = $self->get("LOGGER");
-#	my $retVal;
-#	if($xml_object->get("CLASS") eq "XMLElement" && !ref $xml_object->get("ELEMENT")) {
-#		# base-case of recursive function
-#		my $key = uc($xml_object->get("NAME"));
-#		my $value = $xml_object->get("ELEMENT");
-#		if($xml_object->get("ATTRIBUTES") ne "nil") {
-#			$retVal = SuperObject->new($logger);
-#			$retVal->set($key, $value);
-#			foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
-#				my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
-#				$retVal->set($attribute_key, $attribute_value);
-#			}
-#		}
-#		else {
-#			$retVal = $value;
-#		}
-#	}
-#	else {
-#		if($xml_object->get("CLASS") eq "XMLElement") {
-#			my $key = uc($xml_object->get("NAME"));
-#			my $value = $self->parse_object($xml_object->get("ELEMENT"));
-#			$retVal = SuperObject->new($logger);
-#			$retVal->set($key, $value);
-#			if($xml_object->get("ATTRIBUTES") ne "nil") {
-#				foreach my $attribute_key($xml_object->get("ATTRIBUTES")->get("ALL_KEYS")) {
-#					my $attribute_value = $xml_object->get("ATTRIBUTES")->get("BY_KEY", $attribute_key);
-#					$retVal->set($attribute_key, $attribute_value);
-#				}
-#			}
-#		}
-#		elsif($xml_object->get("CLASS") eq "XMLContainer") {
-#			$retVal = SuperObject->new($logger);
-#			foreach my $xml_element($xml_object->toarray()){
-#				my $key = uc($xml_element->get("NAME"));
-#				my $value = $self->parse_object($xml_element);
-#				if($key =~ /.*?_DESCRIPTOR/ && $key ne "TYPED_DESCRIPTOR" && $key ne "STRING_DESCRIPTOR") {
-#					my $doceid = $value->get($key)->get("DOCEID");
-#					my ($keyframeid, $start, $end);
-#					if($key eq "TEXT_DESCRIPTOR") {
-#						$start = $value->get($key)->get("START");
-#						$end = $value->get($key)->get("END");
-#					}
-#					elsif($key eq "IMAGE_DESCRIPTOR") {
-#						$start = $value->get($key)->get("TOPLEFT");
-#						$end = $value->get($key)->get("BOTTOMRIGHT");
-#					}
-#					elsif($key eq "VIDEO_DESCRIPTOR") {
-#						$keyframeid = $value->get($key)->get("KEYFRAMEID");
-#						$start = $value->get($key)->get("TOPLEFT");
-#						$end = $value->get($key)->get("BOTTOMRIGHT");
-#					}
-#					if($key eq "AUDIO_DESCRIPTOR") {
-#						$start = $value->get($key)->get("START");
-#						$end = $value->get($key)->get("END");
-#					}
-#					else{
-#						# TODO: throw exception
-#					}
-#					$value = NonStringDescriptor->new($logger, $key, $doceid, $keyframeid, $start, $end);
-#					$key = "DESCRIPTOR";
-#				}
-#				elsif($key eq "STRING_DESCRIPTOR") {
-#					$value = StringDescriptor->new($logger, $value->get($key));
-#					$key = "DESCRIPTOR";
-#				}
-#				$value = $value->get($key) if($key eq "TYPED_DESCRIPTOR");
-#				$retVal->set($key, $value);
-#			}
-#		}
-#	}
-#	$retVal;
-#}
-#
 sub tostring {
 	my ($self, $indent) = @_;
 	$self->get("XML_OBJECT")->tostring($indent);
