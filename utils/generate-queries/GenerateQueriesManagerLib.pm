@@ -3606,16 +3606,17 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
               
               
               SELECT DISTINCT
-                     ?docid        # sourceDocument
-                     ?link_target  # link target as part of the query
-                     ?cluster      # the ?cluster linked to ?link_target
-                     ?infj_span    # informativeJustification span taken from the ?cluster
-                     ?j_cv         # confidenceValue of informativeJustification
-                     ?link_target  # query reference KB node linked to a ?cluster
-                     ?link_cv      # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
+                     ?docid             # sourceDocument
+                     ?query_link_target # link target as part of the query
+                     ?link_target       # link target in the KB matching ?query_link_target
+                     ?cluster           # the ?cluster linked to ?link_target
+                     ?infj_span         # informativeJustification span taken from the ?cluster
+                     ?j_cv              # confidenceValue of informativeJustification
+                     ?link_target       # query reference KB node linked to a ?cluster
+                     ?link_cv           # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
               
               WHERE {
-                  BIND ("[__KBID__]" AS ?link_target)
+                  BIND ("[__KBID__]" AS ?query_link_target)
               
                   # Find ?cluster linked to "[__KBID__]"
                   # Find the ?link_cv: confidenceValue of linking to external KB entity
@@ -3626,6 +3627,8 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
                   ?ref_kb_link          aida:linkTarget               ?link_target .
                   ?ref_kb_link          aida:confidence               ?link_confidence .
                   ?link_confidence      aida:confidenceValue          ?link_cv .
+                  
+                  FILTER(cfn:memberOf(str(?link_target), str(?query_link_target))) .
               
                   # Find mention spans for ?inf_justification
                   ?inf_justification    aida:source          ?doceid .
@@ -3714,22 +3717,23 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
               #        ?sbcm_cv      # cluster membership confidence of the subject
               
               SELECT DISTINCT
-                     ?docid        # sourceDocument
-                     ?edge_type_q  # edge type in the query
-                     ?edge_type    # edge type in response matching the edge type in query
-                     ?olink_target # reference KB node linked to the object of the edge
+                     ?docid           # sourceDocument
+                     ?edge_type_q     # edge type in the query
+                     ?edge_type       # edge type in response matching the edge type in query
+                     ?olink_target_q  # reference KB node given in query
+                     ?olink_target    # reference KB node linked to the object of the edge matching ?olink_target_q
                      ?object_cluster  ?objectmo  ?oinf_j_span # object cluster, cluster member and its informativeJustification
                      ?subject_cluster ?subjectmo  # subject cluster, cluster member (its informativeJustification is not needed by LDC for assessment)
-                     ?ej_span      # CompoundJustification span(s) for argument assertion
-                     ?orfkblink_cv # confidence of linking the object to the query reference KB ID
-                     ?oinf_j_cv    # confidence of object informativeJustification
-                     ?obcm_cv      # cluster membership confidence of the object
-                     ?edge_cv      # confidence of a compound justification for the argument assertion
-                     ?sbcm_cv      # cluster membership confidence of the subject
+                     ?ej_span         # CompoundJustification span(s) for argument assertion
+                     ?orfkblink_cv    # confidence of linking the object to the query reference KB ID
+                     ?oinf_j_cv       # confidence of object informativeJustification
+                     ?obcm_cv         # cluster membership confidence of the object
+                     ?edge_cv         # confidence of a compound justification for the argument assertion
+                     ?sbcm_cv         # cluster membership confidence of the subject
               
               WHERE {
               
-                  BIND ("[__KBID__]" AS ?olink_target)
+                  BIND ("[__KBID__]" AS ?olink_target_q)
                   BIND (ldcOnt:[__PREDICATE__] AS ?edge_type_q)
               
                   # Find ?objectmo linked to "[__KBID__]"
@@ -3740,6 +3744,8 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   ?objectmo_rfkbl       aida:linkTarget               ?olink_target .
                   ?objectmo_rfkbl       aida:confidence               ?orfkblink_confidence .
                   ?orfkblink_confidence aida:confidenceValue          ?orfkblink_cv .
+                  
+                  FILTER(cfn:memberOf(str(?olink_target), str(?olink_target_q))) .
               
                   # Get the object informativeJustification
                   ?objectmo             aida:informativeJustification ?oinf_justification .
