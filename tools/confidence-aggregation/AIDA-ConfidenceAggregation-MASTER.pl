@@ -108,6 +108,7 @@ foreach $path(($switches->get("input"))) {
   $logger->NIST_die("$path does not exist") unless -e $path;
 }
 
+system("mkdir -p " . $switches->get("output"));
 foreach $path(($switches->get("output"))) {
   foreach my $subdir(<$path/*>) {
     $logger->NIST_die("$path is non-empty") if -e $path;
@@ -120,8 +121,6 @@ my $type = $switches->get("type");
 
 $logger->NIST_die("$input_dir is not a directory") unless -d $input_dir;
 $logger->NIST_die("Unexpected value of type $type") unless $types_allowed->{$type};
-
-system("mkdir -p " . $switches->get("output"));
 
 foreach my $input_subdir (<$input_dir/*>) {
   # skip if not a directory
