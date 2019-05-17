@@ -25,10 +25,15 @@ my $version = "2019.0.0";
 # Library inclusions
 ##################################################################################### 
 ### DO INCLUDE
-### DO INCLUDE Utils                  ConfidenceAggregationManagerLib.pm
-### DO INCLUDE Logger                 ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Container              ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Entry                  ConfidenceAggregationManagerLib.pm
 ### DO INCLUDE FileHandler            ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Header                 ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Logger                 ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Super                  ConfidenceAggregationManagerLib.pm
+### DO INCLUDE SuperObject            ConfidenceAggregationManagerLib.pm
 ### DO INCLUDE Switches               ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Utils                  ConfidenceAggregationManagerLib.pm
 
 #####################################################################################
 # Subroutines and support code
