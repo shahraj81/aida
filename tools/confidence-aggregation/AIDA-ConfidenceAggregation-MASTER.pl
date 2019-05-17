@@ -109,7 +109,9 @@ foreach $path(($switches->get("input"))) {
 }
 
 foreach $path(($switches->get("output"))) {
-  $logger->NIST_die("$path already exists") if -e $path;
+  foreach my $subdir(<$path/*>) {
+    $logger->NIST_die("$path is non-empty") if -e $path;
+  }
 }
 
 my $input_dir = $switches->get("input");
