@@ -167,6 +167,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   INVALID_START                           WARNING        Invalid start %s in %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
+  MULTIPLE_ENTRIES_IN_A_CLUSTER           ERROR          Multiple response entries in the cluster %s (expected no more than one)
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NO_FQEC_FOR_CORRECT_ENTRY               ERROR          No FQEC found for a correct entry

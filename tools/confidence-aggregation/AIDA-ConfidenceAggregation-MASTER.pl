@@ -47,14 +47,23 @@ my $types_allowed = {
       my ($logger, $input_file, $output_file) = @_;
       my $filehandler = FileHandler->new($logger, $input_file);
       my @entries = $filehandler->get("ENTRIES")->toarray();
+      my %clusters;
+      # compute aggregate confidence
       foreach my $entry(@entries) {
-        $entry->set("?ag_cv", $entry->get("?t_cv") * $entry->get("?j_cv") * $entry->get("?cm_cv"))
+        $logger->record_problem("MULTIPLE_ENTRIES_IN_A_CLUSTER", $entry->get("?cluster"), $entry->get("WHERE"))
+          if($clusters{$entry->get("?cluster")});
+        $entry->set("?ag_cv", $entry->get("?t_cv") * $entry->get("?j_cv") * $entry->get("?cm_cv"));
+        $clusters{$entry->get("?cluster")} = $entry->get("?ag_cv");
       }
       open(my $program_output, ">:utf8", $output_file)
         or $logger->record_problem('MISSING_FILE', $output_file, $!);
-      print $program_output $filehandler->get("HEADER")->get("LINE"), "\n";
-      foreach my $entry(sort {$b->get("?ag_cv") <=> $a->get("?ag_cv")} @entries) {
-        print $program_output $entry->get("LINE"), "\n";
+      my $rank = 1;
+      # print header
+      print $program_output join("\t", ("cluster_id", "rank")), "\n";
+      # print lines
+      foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
+        print $program_output join("\t", ($cluster_id, $rank)), "\n";
+        $rank++;
       }
       close $program_output;
     },
