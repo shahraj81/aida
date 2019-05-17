@@ -20,6 +20,16 @@ use ConfidenceAggregationManagerLib;
 
 my $version = "2019.0.0";
 
+### DO NOT INCLUDE
+##################################################################################### 
+# Library inclusions
+##################################################################################### 
+### DO INCLUDE
+### DO INCLUDE Utils                  ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Logger                 ConfidenceAggregationManagerLib.pm
+### DO INCLUDE FileHandler            ConfidenceAggregationManagerLib.pm
+### DO INCLUDE Switches               ConfidenceAggregationManagerLib.pm
+
 #####################################################################################
 # Subroutines and support code
 #####################################################################################
