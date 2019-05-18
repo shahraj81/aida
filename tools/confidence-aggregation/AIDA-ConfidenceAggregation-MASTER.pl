@@ -127,11 +127,33 @@ my $types_allowed = {
       # For 2019, for each query, NIST will evaluate only the cluster with rank 1.
       #
       # NIST will provide a default docker that ranks an entity cluster according to the confidence of the aida:LinkAssertion
-      #linking the cluster to the reference KB ID (see example zero-hop SQARQL query).  If two clusters have the same
-      #aida:LinkAssertion confidence for the same reference KB ID, NIST will arbitrarily pick one cluster as having higher rank.
-      #Therefore, it is the responsibility of participants to define the confidence of the aida:LinkAssertion in such a way that
-      #distinguishes between clusters (or else optionally provide an alternative docker to rank the entity clusters).
+      # linking the cluster to the reference KB ID (see example zero-hop SQARQL query).  If two clusters have the same
+      # aida:LinkAssertion confidence for the same reference KB ID, NIST will arbitrarily pick one cluster as having higher rank.
+      # Therefore, it is the responsibility of participants to define the confidence of the aida:LinkAssertion in such a way that
+      # distinguishes between clusters (or else optionally provide an alternative docker to rank the entity clusters).
+      my ($logger, $input_file, $output_file, @ac_fields) = @_;
+      my $filehandler = FileHandler->new($logger, $input_file);
+      my @entries = $filehandler->get("ENTRIES")->toarray();
+      my %clusters;
+      # compute aggregate confidence
+      foreach my $entry(@entries) {
+        $entry->set("?ag_cv", &aggregate_confidence_value($entry, @ac_fields));
+        next if exists $clusters{$entry->get("?cluster")} && $clusters{$entry->get("?cluster")} > $entry->get("?ag_cv");
+        $clusters{$entry->get("?cluster")} = $entry->get("?ag_cv");
+      }
+      open(my $program_output, ">:utf8", $output_file)
+        or $logger->record_problem('MISSING_FILE', $output_file, $!);
+      my $rank = 1;
+      # print header
+      print $program_output join("\t", ("cluster_id", "rank")), "\n";
+      # print lines
+      foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
+        print $program_output join("\t", ($cluster_id, $rank)), "\n";
+        $rank++;
+      }
+      close $program_output;
     },
+    CONFIDENCE_AGGREGATION_FIELDS => [qw(?link_cv)],
   },
   TA2_GR => {
     NAME => 'TA2_GR',
