@@ -56,11 +56,13 @@ my $types_allowed = {
         $entry->set("?ag_cv", &aggregate_confidence_value($entry, @ac_fields));
         $clusters{$entry->get("?cluster")} = $entry->get("?ag_cv");
       }
+      $logger->NIST_die("$output_file already exists")
+        if -e $output_file;
       open(my $program_output, ">:utf8", $output_file)
-        or $logger->record_problem('MISSING_FILE', $output_file, $!);
+        or $logger->NIST_die("Could not open $output_file: $!");
       my $rank = 1;
       # print header
-      print $program_output join("\t", ("cluster_id", "rank")), "\n";
+      print $program_output join("\t", ("?cluster_id", "?rank")), "\n";
       # print lines
       foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
         print $program_output join("\t", ($cluster_id, $rank)), "\n";
@@ -101,8 +103,10 @@ my $types_allowed = {
         next if (exists $edges{$edge_str} && $confidence <= $edges{$edge_str}->get("?ag_cv"));
         $edges{$edge_str} = $entry;
       }
+      $logger->NIST_die("$output_file already exists")
+        if -e $output_file;
       open(my $program_output, ">:utf8", $output_file)
-        or $logger->record_problem('MISSING_FILE', $output_file, $!);
+        or $logger->NIST_die("Could not open $output_file: $!");
       my $header = $filehandler->get("HEADER")->get("LINE");
       print $program_output join("\t", ($header, "?ag_cv", "?rank")), "\n";
       my $rank = 1;
@@ -141,11 +145,13 @@ my $types_allowed = {
         next if exists $clusters{$entry->get("?cluster")} && $clusters{$entry->get("?cluster")} > $entry->get("?ag_cv");
         $clusters{$entry->get("?cluster")} = $entry->get("?ag_cv");
       }
+      $logger->NIST_die("$output_file already exists")
+        if -e $output_file;
       open(my $program_output, ">:utf8", $output_file)
-        or $logger->record_problem('MISSING_FILE', $output_file, $!);
+        or $logger->NIST_die("Could not open $output_file: $!");
       my $rank = 1;
       # print header
-      print $program_output join("\t", ("cluster_id", "rank")), "\n";
+      print $program_output join("\t", ("?cluster_id", "?rank")), "\n";
       # print lines
       foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
         print $program_output join("\t", ($cluster_id, $rank)), "\n";
@@ -160,13 +166,40 @@ my $types_allowed = {
     DESCRIPTION => "Input directory contains responses to task2 graph queries",
     AGGREGATE_CONFIDENCE => sub {
       # The docker must rank the subject clusters and (for each cluster) filter possible assessment items to select k=1
-      # assessment items for the cluster. The docker for TA2 graph queries must take a SPARQL output file, edge label, and
-      # query entity KB ID.  The docker must output a file containing the same tab-delimited columns as the SPARQL output
+      # assessment items for the cluster. The docker must output a file containing the same tab-delimited columns as the SPARQL output
       # fill, plus two additional columns (rank and aggregate edge justification confidence value) appended at the end of
       # each line; the docker output file must filter the contents of the SPARQL output file such that for each subject
       # cluster ID, there is at most k=1 line in the docker output file.  Each line in the docker output file must have a
       # rank that is unique across the entire output file of the docker
+      my ($logger, $input_file, $output_file, @ac_fields) = @_;
+      my $filehandler = FileHandler->new($logger, $input_file);
+      my @entries = $filehandler->get("ENTRIES")->toarray();
+      my %subjects;
+      # compute aggregate confidence
+      foreach my $entry(@entries) {
+        $entry->set("?ag_cv", &aggregate_confidence_value($entry, @ac_fields));
+        next if exists $subjects{$entry->get("?subject_cluster")}
+                && $subjects{$entry->get("?subject_cluster")}->get("?ag_cv") > $entry->get("?ag_cv");
+        $subjects{$entry->get("?subject_cluster")} = $entry;
+      }
+      $logger->NIST_die("$output_file already exists")
+        if -e $output_file;
+      open(my $program_output, ">:utf8", $output_file)
+        or $logger->NIST_die("Could not open $output_file: $!");
+      my $rank = 1;
+      # print header
+      my $header = $filehandler->get("HEADER")->get("LINE");
+      print $program_output join("\t", ($header, "?ag_cv", "?rank")), "\n";
+      # print lines
+      foreach my $cluster_id(sort {$subjects{$b}->get("?ag_cv")<=>$subjects{$a}->get("?ag_cv")} keys %subjects) {
+        my $line = $subjects{$cluster_id}->get("LINE");
+        my $ag_cv = $subjects{$cluster_id}->get("?ag_cv");
+        print $program_output join("\t", ($line, $ag_cv, $rank)), "\n";
+        $rank++;
+      }
+      close $program_output;
     },
+    CONFIDENCE_AGGREGATION_FIELDS => [qw(?orfkblink_cv ?oinf_j_cv ?obcm_cv ?edge_cv ?sbcm_cv)],
   },
 };
 
@@ -215,11 +248,6 @@ foreach $path(($switches->get("input"))) {
 }
 
 system("mkdir -p " . $switches->get("output"));
-foreach $path(($switches->get("output"))) {
-  foreach my $subdir(<$path/*>) {
-    $logger->NIST_die("$path is non-empty") if -e $path;
-  }
-}
 
 my $input_dir = $switches->get("input");
 my $output_dir = $switches->get("output");
