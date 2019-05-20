@@ -7,7 +7,8 @@ This document describes how to use the docker to aggregate confidences of task1 
   1. How to build the docker
   2. How to run the docker
   3. How is aggregate confidence computed
-  4. Revision history
+  4. Output of the docker
+  5. Revision history
 
 # How to build the docker
 
@@ -74,6 +75,33 @@ The default aggregate confidence of a ?cluster is computed as the product of the
 4. |        ?sbcm_cv       |  cluster membership confidence of the subject
 
 Note that the task1 graph SPARQL query does not extract informativeJustification of member of ?subject_cluster as it is not needed by LDC for assessment.
+
+# Output of the docker
+
+For each file in the input directory, the docker produces an output file. For each line in the input file, the docker computes aggregate confidence values, and outputs
+ the same columns as the SPARQL output fill, plus two additional columns (rank and aggregate edge justification confidence value) appended at the end.
+
+The output output file also filter the contents of the SPARQL output file such that for each unique edge (having unique combination of subject cluster ID, edge label, and object cluster ID), there is at most one line in the docker output file.
+
+The output file contains the following columns:
+
+| Column  | Description
+---|---------|-------------
+1. |        ?docid         |  sourceDocument
+2. |        ?edge_type_q   |  edge type in the query
+3. |        ?edge_type     |  edge type in response matching the edge type in query
+4. |        ?object_cluster  |  object cluster
+5. |        ?objectmo      |  member of object cluster
+6. |        ?oinf_j_span   |  informativeJustification of the member of object cluster
+7. |        ?subject_cluster  |  subject cluster
+8. |        ?subjectmo     |  member of subject cluster
+9. |        ?ej_span       |  CompoundJustification span(s) for argument assertion
+10. |        ?oinf_j_cv     |  confidence of object informativeJustification
+11. |        ?obcm_cv       |  cluster membership confidence of the object
+12. |        ?edge_cv       |  confidence of a compound justification for the argument assertion
+13. |        ?sbcm_cv       |  cluster membership confidence of the subject
+14. |        ?ag_cv    |  aggregate confidence value
+15. |        ?rank       |  the rank of based on the aggregate confidence value computed as described above
 
 # Revision history:
 ### May 20, 2019
