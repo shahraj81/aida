@@ -50,28 +50,28 @@ The output of running task1 graph queries over a task1-run using `SPARQL query a
 
 | Column  | Description
 ---|---------|-------------
-1. |        ?docid         |  sourceDocument |
-2. |        ?edge_type_q   |  edge type in the query |
-3. |        ?edge_type     |  edge type in response matching the edge type in query |
-4. |        ?object_cluster  |  object cluster |
-5. |        ?objectmo      |  member of object cluster |
-6. |        ?oinf_j_span   |  informativeJustification of the member of object cluster |
-7. |        ?subject_cluster  |  subject cluster |
-8. |        ?subjectmo     |  member of subject cluster |
-9. |        ?ej_span       |  CompoundJustification span(s) for argument assertion |
-10. |        ?oinf_j_cv     |  confidence of object informativeJustification |
-11. |        ?obcm_cv       |  cluster membership confidence of the object |
-12. |        ?edge_cv       |  confidence of a compound justification for the argument assertion |
-13. |        ?sbcm_cv       |  cluster membership confidence of the subject |
+1. |        ?docid         |  sourceDocument
+2. |        ?edge_type_q   |  edge type in the query
+3. |        ?edge_type     |  edge type in response matching the edge type in query
+4. |        ?object_cluster  |  object cluster
+5. |        ?objectmo      |  member of object cluster
+6. |        ?oinf_j_span   |  informativeJustification of the member of object cluster
+7. |        ?subject_cluster  |  subject cluster
+8. |        ?subjectmo     |  member of subject cluster
+9. |        ?ej_span       |  CompoundJustification span(s) for argument assertion
+10. |        ?oinf_j_cv     |  confidence of object informativeJustification
+11. |        ?obcm_cv       |  cluster membership confidence of the object
+12. |        ?edge_cv       |  confidence of a compound justification for the argument assertion
+13. |        ?sbcm_cv       |  cluster membership confidence of the subject
 
 The default aggregate confidence of a ?cluster is computed as the product of the following columns:
 
 | Column  | Description
 ---|---------|-------------
-1. |        ?oinf_j_cv     |  confidence of object informativeJustification |
-2. |        ?obcm_cv       |  cluster membership confidence of the object |
-3. |        ?edge_cv       |  confidence of a compound justification for the argument assertion |
-4. |        ?sbcm_cv       |  cluster membership confidence of the subject |
+1. |        ?oinf_j_cv     |  confidence of object informativeJustification
+2. |        ?obcm_cv       |  cluster membership confidence of the object
+3. |        ?edge_cv       |  confidence of a compound justification for the argument assertion
+4. |        ?sbcm_cv       |  cluster membership confidence of the subject
 
 Note that the task1 graph SPARQL query does not extract informativeJustification of member of ?subject_cluster as it is not needed by LDC for assessment.
 
