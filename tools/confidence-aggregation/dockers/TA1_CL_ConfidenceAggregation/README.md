@@ -23,11 +23,17 @@ make build
 
 # How to run the docker
 
-In order to run the docker, you would need to change the value of the following variables inside the Makefile:
+In order to run the docker, first you would need to change the value of the following variables inside the Makefile:
 
 ~~~
 HOST_INPUT_DIR
 HOST_OUTPUT_DIR
+~~~
+
+Once the above change has been made, run the following command to run the docker over the `HOST_INPUT_DIR`
+
+~~~
+make run
 ~~~
 
 Make sure that the value of `HOST_INPUT_DIR` is the absolute path of the directory containing the SPARQL output of a task1/task2 run as produced by `NIST SPARQL query application docker for M18`.
@@ -40,7 +46,7 @@ make run HOST_INPUT_DIR=/absolute/path/to/inputdir HOST_OUTPUT_DIR=/absolute/pat
 
 # How is aggregate confidence computed
 
-The output running a task1 class queries over a task1-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
+The output of running task1 class queries over a task1-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
 
 | Column  | Description
 ---|---------|-------------
@@ -53,7 +59,7 @@ The output running a task1 class queries over a task1-run using `SPARQL query ap
 7. |   ?cm_cv       |  confidenceValue of asserting ?member being a member of the ?cluster
 8. |   ?j_cv        |  confidenceValue of informativeJustification
 
-The default aggregate confidence of a ?cluster is computed as the product of:
+The default aggregate confidence of a ?cluster is computed as the product of the following columns:
 
 | Column  | Description
 ---|---------|-------------
