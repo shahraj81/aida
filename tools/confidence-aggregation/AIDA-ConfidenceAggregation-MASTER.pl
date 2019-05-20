@@ -62,7 +62,7 @@ my $types_allowed = {
         or $logger->NIST_die("Could not open $output_file: $!");
       my $rank = 1;
       # print header
-      print $program_output join("\t", ("?cluster_id", "?rank")), "\n";
+      print $program_output join("\t", ("?cluster", "?rank")), "\n";
       # print lines
       foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
         print $program_output join("\t", ($cluster_id, $rank)), "\n";
@@ -151,7 +151,7 @@ my $types_allowed = {
         or $logger->NIST_die("Could not open $output_file: $!");
       my $rank = 1;
       # print header
-      print $program_output join("\t", ("?cluster_id", "?rank")), "\n";
+      print $program_output join("\t", ("?cluster", "?rank")), "\n";
       # print lines
       foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
         print $program_output join("\t", ($cluster_id, $rank)), "\n";
