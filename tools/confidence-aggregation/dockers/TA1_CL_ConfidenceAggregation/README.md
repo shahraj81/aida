@@ -7,7 +7,8 @@ This document describes how to use the docker to aggregate confidences of task1 
   1. How to build the docker
   2. How to run the docker
   3. How is aggregate confidence computed
-  4. Revision history
+  4. Output of the docker
+  5. Revision history
 
 # How to build the docker
 
@@ -66,6 +67,18 @@ The default aggregate confidence of a ?cluster is computed as the product of the
 1. |   ?t_cv        |  confidenceValue of asserting ?member being of ?type
 2. |   ?cm_cv       |  confidenceValue of asserting ?member being a member of the ?cluster
 3. |   ?j_cv        |  confidenceValue of informativeJustification
+
+# Output of the docker
+
+For each file in the input directory, the docker produces an output file.
+ For each line in the input file, the docker computes aggregate confidence values and outputs a ranking of all the entity clusters in the SPARQL output file.
+
+The output file contains the following columns:
+
+| Column  | Description
+---|---------|-------------
+1. |   ?cluster    |  a ?cluster in the SPARQL output file
+2. |   ?rank       |  the rank of ?cluster using the aggregate confidence value computed as described above
 
 # Revision history:
 ### May 20, 2019
