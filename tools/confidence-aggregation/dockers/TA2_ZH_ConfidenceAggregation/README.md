@@ -46,7 +46,7 @@ make run HOST_INPUT_DIR=/absolute/path/to/inputdir HOST_OUTPUT_DIR=/absolute/pat
 
 # How is aggregate confidence computed
 
-The output of running task2 zerohop queries over a task1-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
+The output of running task2 zerohop queries over a task2-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
 
 | Column  | Description
 ---|---------|-------------
