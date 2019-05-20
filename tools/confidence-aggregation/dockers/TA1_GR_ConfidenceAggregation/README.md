@@ -36,7 +36,7 @@ Once the above change has been made, run the following command to run the docker
 make run
 ~~~
 
-Make sure that the value of `HOST_INPUT_DIR` is the absolute path of the directory containing the SPARQL output of a task1/task2 run as produced by `NIST SPARQL query application docker for M18`.
+Make sure that the value of `HOST_INPUT_DIR` is the absolute path of the directory containing the SPARQL output of a task1 run as produced by `NIST SPARQL query application docker for M18`.
 
 Alternatively, you may run the docker using the following command:
 
