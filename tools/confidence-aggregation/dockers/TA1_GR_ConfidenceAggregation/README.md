@@ -81,7 +81,7 @@ Note that the task1 graph SPARQL query does not extract informativeJustification
 For each file in the input directory, the docker produces an output file. For each line in the input file, the docker computes aggregate confidence values, and outputs
  the same columns as the SPARQL output fill, plus two additional columns (rank and aggregate edge justification confidence value) appended at the end.
 
-The output output file also filter the contents of the SPARQL output file such that for each unique edge (having unique combination of subject cluster ID, edge label, and object cluster ID), there is at most one line in the docker output file.
+The docker also filters the contents of the SPARQL output file such that for each unique edge (having unique combination of subject cluster ID, edge label, and object cluster ID), there is at most one line in the docker output file.
 
 The output file contains the following columns:
 
