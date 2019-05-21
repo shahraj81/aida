@@ -1,4 +1,4 @@
-to# Introduction
+# Introduction
 
 May 20, 2019
 
@@ -11,6 +11,7 @@ This document describes:
 
 # Usage
 
+~~~
 AIDA-ConfidenceAggregation-MASTER.pl:  Aggregate Confidences.
 
 Usage: AIDA-ConfidenceAggregation-MASTER.pl {-switch {-switch ...}} type input output
@@ -31,7 +32,7 @@ type is one of the following:
   TA1_GR: Input directory contains responses to task1 graph queries
   TA2_GR: Input directory contains responses to task2 graph queries
   TA2_ZH: Input directory contains responses to task2 zerohop queries
-
+~~~
 
 # Input/output directory specifications
 
