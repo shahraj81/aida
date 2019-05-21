@@ -1,0 +1,15 @@
+Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range
+KE001	Russia hired provocateurs	TBD	event	LDC_evt_129	personnel	startposition	hiring		Russia hired Maidan provocateurs		Before 2014-02-XX	Before 2014-02-XX	2014-02-28
+KE001	provocateurs	TBD	evt129arg01employee	LDC_ent_105	per	combatant	mercenary	TBD	Titushky				
+KE001	Russia	TBD	evt129arg02placeofemployment	LDC_ent_053	gpe	country	country	2017370	"Russia (a.k.a. Russian Federation, RF)"				
+KE002	shootings in Maidan in February 2014	TBD	event	LDC_evt_008	conflict	attack	firearmattack		Shooting by snipers on 20 February 2014		2014-02-XX	2014-02-01	2014-02-28
+KE002	provocateurs	TBD	evt008arg01attacker	LDC_ent_105	per	combatant	mercenary	TBD	Titushky				
+KE002	Maidan	TBD	evt008arg04place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE003	protests in Maidan in February 2014	TBD	event	LDC_evt_017	conflict	demonstrate	marchprotestpoliticalgathering		Euromaidan Revolution		2014-02-XX	2014-02-01	2014-02-28
+KE003	Maidan	TBD	evt017arg02place	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE004	sponsorship of shootings by Russia	TBD	relation	LDC_rel_022	generalaffiliation	sponsorship	adviseplanorganize				Unknown		
+KE004	shootings in Maidan in February 2014	TBD	rel022arg01actororevent	LDC_evt_008	conflict	attack	firearmattack	TBD	Shooting by snipers on 20 February 2014				
+KE004	Russia	TBD	rel022arg02sponsor	LDC_ent_053	gpe	country	country	2017370	"Russia (a.k.a. Russian Federation, RF)"				
+KE005	location of Maidan in Kiev	TBD	relation	LDC_rel_051	physical	locatednear	unspecified				Unknown		
+KE005	Maidan	TBD	rel051arg01entityorfiller	LDC_ent_047	fac	structure	plaza	TBD	"Maidan Nezalezhnosti (a.k.a. Maidan, Independence Square)"				
+KE005	Kiev	TBD	rel051arg02place	LDC_ent_057	gpe	urbanarea	city	703448	Kyiv (a.k.a. Kiev)				

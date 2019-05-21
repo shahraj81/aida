@@ -1,0 +1,23 @@
+Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range															
+KE001	89% vote in Donetsk for self-rule	TBD	event	LDC_evt_072	government	vote	castvote		Donetsk status referendum		2014-05-XX	2014-05-10	2014-05-11															
+KE001	voters in Donetsk	TBD	evt072arg01voter	LDC_ent_103	per	unspecified	unspecified	TBD																				
+KE001	self-rule	TBD	evt072arg02candidate	LDC_ent_133	sid	ideological	ideological	TBD	Pro-independence referendum stance																			
+KE001	89% of voters	TBD	evt072arg04result	LDC_ent_129	res	numberpercentagevotes	numberpercentagevotes	TBD																				
+KE001	Donetsk	TBD	evt072arg05place	LDC_ent_052	gpe	unspecified	unspecified	709716|TBD	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"																			
+KE002	percentage of voters in Donetsk 89%	TBD	relation	LDC_rel_032	measurement	size	percentage				2014-05-XX	2014-05-10	2014-05-11															
+KE002	89%	TBD	rel032arg01measurement	LDC_ent_139	val	number	number	TBD																				
+KE002	voters in Donetsk	TBD	rel032arg02entityorfiller	LDC_ent_103	per	unspecified	unspecified	TBD																				
+KE003	96% vote in Luhansk for self-rule	TBD	event	LDC_evt_072	government	vote	castvote		Luhansk status referendum		2014-05-XX	2014-05-10	2014-05-11															
+KE003	voters in Luhansk	TBD	evt072arg01voter	LDC_ent_103	per	unspecified	unspecified	TBD																				
+KE003	self-rule	TBD	evt072arg02candidate	LDC_ent_133	sid	ideological	ideological	TBD	Pro-independence referendum stance																			
+KE003	96% of voters	TBD	evt072arg04result	LDC_ent_129	res	numberpercentagevotes	numberpercentagevotes	TBD																				
+KE003	Luhansk	TBD	evt072arg05place	LDC_ent_052	gpe	unspecified	unspecified	702657|TBD	"Luhansk Oblast (a.k.a. Lugansk)|Luhansk People's Republic (a.k.a. LPR, LNR)"																			
+KE004	percentage of voters in Luhansk 96%	TBD	relation	LDC_rel_032	measurement	size	percentage				2014-05-XX	2014-05-10	2014-05-11															
+KE004	96%	TBD	rel032arg01measurement	LDC_ent_139	val	number	number	TBD																				
+KE004	voters in Luhansk	TBD	rel032arg02entityorfiller	LDC_ent_103	per	unspecified	unspecified	TBD																				
+KE005	statement by separatists in Donetsk	TBD	event	LDC_evt_038	contact	mediastatement	broadcast		Separatists make statement regarding results of referendum in Donetsk		2014-05-XX	2014-05-10	Unknown															
+KE005	separatists	TBD	evt038arg01communicator	LDC_ent_103	per	unspecified	unspecified	TBD																				
+KE005	Donetsk	TBD	evt038arg03place	LDC_ent_052	gpe	unspecified	unspecified	709716|TBD	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"																			
+KE006	statement by separatists in Luhansk	TBD	event	LDC_evt_038	contact	mediastatement	broadcast		Separatists make statement regarding results of referendum in Luhansk		2014-05-XX	2014-05-10	Unknown															
+KE006	separatists	TBD	evt038arg01communicator	LDC_ent_103	per	unspecified	unspecified	TBD																				
+KE006	Luhansk	TBD	evt038arg03place	LDC_ent_052	gpe	unspecified	unspecified	702657|TBD	"Luhansk Oblast (a.k.a. Lugansk)|Luhansk People's Republic (a.k.a. LPR, LNR)"																			

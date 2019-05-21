@@ -21,7 +21,7 @@ use ResolveQueriesManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2018.0.0";
+my $version = "2019.0.0";
 
 ##################################################################################### 
 # Runtime switches and main program
@@ -35,12 +35,18 @@ $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
-$switches->addVarSwitch('sparql', "Specify path to SPARQL executable");
-$switches->put('sparql', "sparql");
+$switches->addVarSwitch('loadrdf', "Path to loadrdf");
+$switches->put('loadrdf', "2019/input/graphdb-free-8.7.2/bin/loadrdf");
+$switches->addVarSwitch('graphdb_manager', "Path to GraphDB.sh");
+$switches->put('graphdb_manager', "2019/input/GraphDB.sh");
+$switches->addVarSwitch('sparql', "Path to sparql-evaluation-x.x.x-SNAPSHOT-all.jar");
+$switches->put('sparql', "2019/input/sparql-evaluation-1.0.0-SNAPSHOT-all.jar");
+$switches->addVarSwitch('config', "Config file for sparql-evaluation-x.x.x-SNAPSHOT-all.jar");
+$switches->put('config', "2019/input/NIST-LOCAL.config.properties");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
-$switches->addParam("queries_xml", "required", "XML file containing queries");
+$switches->addParam("queries", "required", "Specify a directory containing split SPARQL queries.");
 $switches->addParam("input", "required", "File containing the KB (for TA2 system) or directory containing KBs (for TA1 system).");
 $switches->addParam("intermediate", "required", "Specify a directory to be used for storing intermediate files.");
 $switches->addParam("output", "required", "Specify an output directory.");
@@ -52,7 +58,14 @@ my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
 my $error_output = $logger->get_error_output();
 
-foreach my $path(($switches->get("sparql"), $switches->get("docid_mappings"), $switches->get("queries_dtd"), $switches->get("queries_xml"), $switches->get("input"))) {
+foreach my $path(($switches->get("loadrdf"), 
+									$switches->get("graphdb_manager"), 
+									$switches->get("sparql"), 
+									$switches->get("config"), 
+									$switches->get("docid_mappings"), 
+									$switches->get("queries_dtd"), 
+									$switches->get("queries"), 
+									$switches->get("input"))) {
 	$logger->NIST_die("$path does not exist") unless -e $path;
 }
 
@@ -60,22 +73,28 @@ foreach my $path(($switches->get("intermediate"), $switches->get("output"))) {
 	$logger->NIST_die("$path already exists") if -e $path;
 }
 
+# create required directories
+foreach my $path(($switches->get("intermediate"), $switches->get("output"))) {
+	system("mkdir -p $path");
+}
+
 my $parameters = Parameters->new($logger);
 $parameters->set("DOCUMENTIDS_MAPPING_FILE", $switches->get("docid_mappings"));
 $parameters->set("QUERIES_DTD_FILE", $switches->get("queries_dtd"));
-$parameters->set("QUERIES_XML_FILE", $switches->get("queries_xml"));
 $parameters->set("INPUT", $switches->get("input"));
 $parameters->set("INTERMEDIATE_DIR", $switches->get("intermediate"));
+$parameters->set("SPLIT_QUERIES_DIR", $switches->get("queries"));
 $parameters->set("OUTPUT_DIR", $switches->get("output"));
-$parameters->set("SPARQL_EXECUTABLE", $switches->get("sparql"));
+$parameters->set("LOADRDF", $switches->get("loadrdf"));
+$parameters->set("GRAPHDB_MANAGER", $switches->get("graphdb_manager"));
+$parameters->set("SPARQL", $switches->get("sparql"));
+$parameters->set("CONFIG", $switches->get("config"));
 
 my $queries = Queries->new($logger, $parameters);
-# Generate RQ files
-$queries->generate_sparql_query_files();
 # Resolve queries against KB(s)
 $queries->apply_sparql_queries();
-# Convert sparql output to XML
-$queries->convert_output_files_to_xml();
+## Convert sparql output to XML
+#$queries->convert_output_files_to_xml() if($switches->get("do_generate_xml"));
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($switches->get('error_file') eq "STDERR") {

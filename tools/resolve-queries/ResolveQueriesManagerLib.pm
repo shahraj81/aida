@@ -129,6 +129,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
+  DEBUG_INFO                              DEBUG_INFO     %s
 END_PROBLEM_FORMATS
 
 
@@ -219,13 +220,14 @@ sub record_problem {
   my $format = $self->{FORMATS}{$problem} ||
                {TYPE => 'INTERNAL_ERROR',
 		FORMAT => "Unknown problem $problem: %s"};
-  $self->{PROBLEM_COUNTS}{$format->{TYPE}}++;
   my $type = $format->{TYPE};
   my $message = "$type: " . sprintf($format->{FORMAT}, @args);
   # Use Encode to support Unicode.
   $message = Encode::encode_utf8($message);
   my $where = (ref $source ? "$source->{FILENAME} line $source->{LINENUM}" : $source);
   $self->NIST_die("$message\n$where") if $type eq 'FATAL_ERROR' || $type eq 'INTERNAL_ERROR';
+  $self->{PROBLEM_COUNTS}{$format->{TYPE}}++
+		unless $self->{PROBLEMS}{$problem}{$message}{$where};
   $self->{PROBLEMS}{$problem}{$message}{$where}++;
 }
 
@@ -243,7 +245,7 @@ sub set_error_output {
       $output = *STDERR{IO};
     }
     else {
-      # $self->NIST_die("File $output already exists") if -e $output;
+      $self->NIST_die("File $output already exists") if -e $output;
       open(my $outfile, ">:utf8", $output) or $self->NIST_die("Could not open $output: $!");
       $output = $outfile;
       $self->{OPENED_ERROR_OUTPUT} = 'true';
@@ -280,7 +282,7 @@ sub report_all_information {
 					print $error_output "s" if $num_instances > 2;
 					print $error_output ")";
 				}
-				print $error_output "\n\n";
+				print $error_output "\n";
 			}
 		}
 	}
@@ -296,6 +298,11 @@ sub get_num_errors {
 sub get_num_warnings {
   my ($self) = @_;
   $self->{PROBLEM_COUNTS}{WARNING} || 0;
+}
+
+sub get_num_problems {
+	my ($self) = @_;
+	$self->get_num_errors() + $self->get_num_warnings();
 }
 
 sub get_error_type {
@@ -826,6 +833,104 @@ sub new {
 }
 
 #####################################################################################
+# EvaluationQueryOutput
+#####################################################################################
+
+package EvaluationQueryOutput;
+
+use parent -norequire, 'Super';
+
+my %schemas = (
+  '2019-TA1-CLASS-OUTPUT' => {
+    YEAR => 2019,
+    TYPE => 'COMPACT_OUTPUT',
+    SAMPLES => [""],
+    COLUMNS => [qw(
+      QUERY_ID
+      TASK
+      QUERY_TYPE
+      RUNID
+      KB_DOCID
+      ENTRY_DOCID
+      VALUE_PROVENANCE_TRIPLES
+      CONFIDENCE
+    )],
+  },
+);
+
+my %columns = (
+	ENTRY_DOCID => {
+	    DESCRIPTION => "DocID of the entry/response",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	KB_DOCID => {
+	    DESCRIPTION => "DOCID from which the KB is build. NODOC for TA2 and TA3 systems.",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	QUERY_ID => {
+	    DESCRIPTION => "Query ID",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	QUERY_TYPE => {
+	    DESCRIPTION => "Type of the query",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	RUN_ID => {
+	    DESCRIPTION => "Run ID",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	TASK => {
+	    DESCRIPTION => "Name of the task",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+	VALUE_PROVENANCE_TRIPLES => {
+	    DESCRIPTION => "The provencance of the value (i.e. mention)",
+	    GENERATOR => sub {
+	      my ($logger, $entry) = @_;
+	    },
+	    YEARS => [qw(2019)],
+	    REQUIRED => [qw(SPARQL_OUTPUT)],
+	},
+);
+
+sub new {
+	my ($class, $logger, $input_file, $output_type, $output_year, $output_file) = @_;
+	my $self = {
+		CLASS => 'CompactOutputPrinter',
+		INPUT_FILE => $input_file,
+		OUTPUT_FILE => $output_file,
+		OUTPUT_TYPE => $output_type,
+		OUTPUT_YEAR => $output_year,
+	};
+	bless($self, $class);
+	$self;
+}
+
+#####################################################################################
 # Queries
 #####################################################################################
 
@@ -840,23 +945,18 @@ sub new {
 		CLASS => 'Queries',
 		LOGGER => $logger,
 		PARAMETERS => $parameters,
-		DOCUMENTIDS_MAPPINGS => DocumentIDsMappings->new($logger, $parameters),
 		_QUERYIDS => {},
-		XML_FILEHANDLER => XMLFileHandler->new($logger, $parameters->get("QUERIES_DTD_FILE"), $parameters->get("QUERIES_XML_FILE")),
 	};
 	bless($self, $class);
-	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
-	my $xmloutput_directory = $self->get("PARAMETERS")->get("OUTPUT_DIR");
-	system("mkdir $intermediate_directory") unless -d $intermediate_directory;
-	system("mkdir $intermediate_directory/split-queries") unless -d "$intermediate_directory/split-queries";
-	system("mkdir $intermediate_directory/sparql-output") unless -d "$intermediate_directory/sparql-output";
-	system("mkdir $xmloutput_directory") unless -d "$xmloutput_directory";
 	$self;
 }
 
 sub generate_sparql_query_files {
 	my ($self) = @_;
-	while(my $query = $self->get("XML_FILEHANDLER")->get("NEXT_OBJECT")) {
+	my $parameters = $self->get("PARAMETERS");
+	my $logger = $self->get("LOGGER");
+	my $xml_filehandler = XMLFileHandler->new($logger, $parameters->get("QUERIES_DTD_FILE"), $parameters->get("QUERIES_XML_FILE"));
+	while(my $query = $xml_filehandler->get("NEXT_OBJECT")) {
 		my ($query_id) = $query->get("ATTRIBUTES")->toarray();
 		my ($enttype, $subject_enttype, $object_enttype);
 		($enttype) = $query->get("CHILD", "enttype")->get("ELEMENT")
@@ -875,8 +975,8 @@ sub generate_sparql_query_files {
 
 sub write_sparql_query_to_file {
 	my ($self, $query_id, $sparql_query_string) = @_;
-	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
-	open(my $outputfile, ">:utf8", "$intermediate_directory/split-queries/$query_id.rq");
+	my $split_queries_directory = $self->get("PARAMETERS")->get("OUTPUT_DIR");
+	open(my $outputfile, ">:utf8", "$split_queries_directory/$query_id.rq");
 	foreach my $line(split(/\n/, $sparql_query_string)) {
 		chomp $line;
 		next if $line eq "";
@@ -887,23 +987,75 @@ sub write_sparql_query_to_file {
 }
 
 sub apply_sparql_queries {
+	# (1) Create configuration file for creating repository
+	# (2) Load the KB into GraphDB
+	# (3) Run queries
+	# (4) Move output from GraphDB to intermediate directory
 	my ($self) = @_;
 	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
-	my $sparql_executable = $self->get("PARAMETERS")->get("SPARQL_EXECUTABLE");
+	my $sparql = $self->get("PARAMETERS")->get("SPARQL");
+	my $graphdb_manager = $self->get("PARAMETERS")->get("GRAPHDB_MANAGER");
+	my $config = $self->get("PARAMETERS")->get("CONFIG");
+	my $loadrdf = $self->get("PARAMETERS")->get("LOADRDF");
 	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
-	map {$_ =~ s/\/$//} (($intermediate_directory, $kbs_dir));
-	foreach my $query_id(sort custom_compare $self->get("QUERYIDS")) {
-		my $query_file = "$intermediate_directory/split-queries/$query_id.rq";
-		system("mkdir $intermediate_directory/sparql-output/$query_id")
-			unless -d "$intermediate_directory/sparql-output/$query_id";
-		foreach my $kb_file(<$kbs_dir/*.ttl>) {
-			print "--applying query=$query_file to kb=$kb_file\n";
-			my ($document_id) = $kb_file =~ /$kbs_dir\/(.*).ttl/;
-			my $sparql_output_file = "$intermediate_directory/sparql-output/$query_id/$document_id.tsv";
-			my $apply_sparql_command = "$sparql_executable --data=$kb_file --query=$query_file --results=tsv > $sparql_output_file";
-			print "$apply_sparql_command\n\n";
-			system($apply_sparql_command);
+	my $run_id = $self->get("PARAMETERS")->get("RUN_ID");
+	my $system_type = $self->get("PARAMETERS")->get("SYSTEM_TYPE");
+	my $output = $self->get("PARAMETERS")->get("OUTPUT_DIR");
+	my $queries_dir = $self->get("PARAMETERS")->get("SPLIT_QUERIES_DIR");
+	my $output_type = $self->get("PARAMETERS")->get("QUERIES_DTD_FILE");
+	$output_type =~ s/^(.*?\/)+//g;
+	$output_type =~ s/.dtd//;
+	
+	$intermediate_directory =~ s/\/$//;
+	my $cmd;
+	foreach my $kb_file(<$kbs_dir/*.ttl>) {
+		my ($filename) = $kb_file =~ /$kbs_dir\/(.*).ttl/;
+		system("mkdir -p $intermediate_directory/sparql-output/$filename/");
+		# Load the KB
+		$cmd = "$graphdb_manager stop && " .
+		          "$loadrdf -i NIST-LOCAL -f -v -m parallel $kb_file && " .
+		          "$graphdb_manager start";
+		          
+		print "$cmd\n";
+		system($cmd);          
+
+		# Wait for graphDB to start
+		my $wait = 1;
+		while($wait) {
+			print "waiting for GraphDB to start ...\n";
+			sleep(5);
+			my $graphdb_pid = `$graphdb_manager pid`;
+			chomp $graphdb_pid;
+			$wait = 0 if $graphdb_pid ne "";
 		}
+
+		# Apply queries
+		$cmd = "java -jar $sparql -c $config -q $queries_dir/ -o $intermediate_directory/sparql-output/$filename/";
+		print "$cmd\n";
+		system($cmd);
+
+		# make the output subdirectory
+		system("mkdir -p $output/$filename");
+
+		# move the output out of the intermediate directory
+		system("mv $intermediate_directory/sparql-output/$filename/*/* $output/$filename/");
+
+		# remove the output intermediate directory
+		system("rm -rf $intermediate_directory/sparql-output/$filename/* $intermediate_directory/sparql-output/$filename");
+		
+		# convert output into compact format
+		$self->compactify_output("$output/$filename", $output_type, "2019");
+	}
+}
+
+sub compactify_output {
+	my ($self, $output_dir, $output_type, $output_spec) = @_;
+	my $logger = $self->get("LOGGER");
+	foreach my $input_file(<$output_dir/*.rq.tsv>) {
+		print "--compacting output: $input_file\n";
+		my ($filename) = $input_file =~ /$output_dir\/(.*?).rq.tsv/;
+		my $output_file = "$output_dir/$filename.rq.tsv.compact";
+		my $compact_output_printer = CompactOutputPrinter->new($logger, $input_file, $output_type, "2019", $output_file);
 	}
 }
 
@@ -912,7 +1064,7 @@ sub convert_output_files_to_xml {
 	my $intermediate_directory = $self->get("PARAMETERS")->get("INTERMEDIATE_DIR");
 	my $xmloutput_directory = $self->get("PARAMETERS")->get("OUTPUT_DIR");
 	my $kbs_dir = $self->get("PARAMETERS")->get("INPUT");
-	my $output_type = $self->get("XML_FILEHANDLER")->get("DTD")->get("FILENAME");
+	my $output_type = $self->get("PARAMETERS")->get("QUERIES_DTD_FILE");
 	$output_type =~ s/^(.*?\/)+//g;
 	$output_type =~ s/.dtd//;
 	foreach my $query_id($self->get("QUERYIDS")) {
@@ -1211,13 +1363,14 @@ sub convert_graph_query_output_file_to_xml {
 
 sub get_DOCIDS {
 	my ($self, $entry) = @_;
+	my $documentids_mappings = DocumentIDsMappings->new($self->get("LOGGER"), $self->get("PARAMETERS"));
 	my @doceid_vars = grep {$_ =~ /\?doceid/} keys %{$entry->{MAP}};
 	my @doceids = map {&trim($entry->get($_))} @doceid_vars;
 	my @all_docids;
 	my %doceid_docids;
 	foreach my $doceid(@doceids) {
 		my $document_element =
-			$self->get("DOCUMENTIDS_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
+			$documentids_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid);
 		my @docids = map {$_->get("DOCUMENTID")} $document_element->get("DOCUMENTS")->toarray();
 		map {$doceid_docids{$doceid}{$_}=1} @docids;
 		push(@all_docids, @docids);
