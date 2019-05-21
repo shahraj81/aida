@@ -49,16 +49,16 @@ make run HOST_INPUT_DIR=/absolute/path/to/inputdir HOST_OUTPUT_DIR=/absolute/pat
 
 The output of running Task2 Zerohop queries over a Task2-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
 
-| Column  | Description
----|---------|-------------
-1. |       ?docid              |  sourceDocument
-2. |        ?query_link_target  |  link target as part of the query
-3. |        ?link_target        |  link target in the KB matching ?query_link_target
-4. |        ?cluster            |  the ?cluster linked to ?link_target
-5. |        ?infj_span          |  informativeJustification span taken from the ?cluster
-6. |        ?j_cv               |  confidenceValue of informativeJustification
-7. |        ?link_target        |  query reference KB node linked to a ?cluster
-8. |        ?link_cv            |  confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
+|    | Column  | Description |
+|----|---------|-------------|
+| 1. | ?docid              |  sourceDocument |
+| 2. | ?query_link_target  |  link target as part of the query |
+| 3. | ?link_target        |  link target in the KB matching ?query_link_target |
+| 4. | ?cluster            |  the ?cluster linked to ?link_target |
+| 5. | ?infj_span          |  informativeJustification span taken from the ?cluster |
+| 6. | ?j_cv               |  confidenceValue of informativeJustification |
+| 7. | ?link_target        |  query reference KB node linked to a ?cluster |
+| 8. | ?link_cv            |  confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target |
 
 The default aggregate confidence is the value of `?link_cv`
 
