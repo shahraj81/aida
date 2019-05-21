@@ -1,21 +1,22 @@
-# Confidence aggregation docker for task2 zerohop responses
+# Confidence aggregation docker for Task2 Zerohop responses
 
-(Last modified: May 20, 2019)
+(Last modified: May 21, 2019)
 
-This document describes how to use the docker to aggregate confidences of task2 zerohop query responses. The layout of this document is as following:
+This document describes how to use the docker to aggregate confidences of Task2 Zerohop query responses. The layout of this document is as following:
 
   1. How to build the docker
   2. How to run the docker
   3. How is aggregate confidence computed
-  4. Revision history
+  4. Output of the docker
+  5. Revision history
 
 # How to build the docker
 
-In order to build the docker, assuming that you are inside the following directory:
+In order to build the docker, first change to the following directory:
 
 `dockers/TA2_ZH_ConfidenceAggregation`
 
-Once you are inside the above mentioned directory, you would need to run the following command:
+and then run the following command:
 
 ~~~
 make build
@@ -46,7 +47,7 @@ make run HOST_INPUT_DIR=/absolute/path/to/inputdir HOST_OUTPUT_DIR=/absolute/pat
 
 # How is aggregate confidence computed
 
-The output of running task2 zerohop queries over a task2-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
+The output of running Task2 Zerohop queries over a Task2-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
 
 | Column  | Description
 ---|---------|-------------
@@ -61,6 +62,23 @@ The output of running task2 zerohop queries over a task2-run using `SPARQL query
 
 The default aggregate confidence is the value of `?link_cv`
 
+# Output of the docker
+
+For each file in the input directory, the docker produces an output file. For each line in the input file, the docker computes aggregate confidence values and outputs a ranking of all the entity clusters in the SPARQL output file.
+
+Each cluster in the SPARQL output file appears exactly once in the docker output file. The clusters are ranked by ordering based on aggregate confidence values such that the cluster with highest aggregate confidence value is on the top with rank=1. Note that ties are broken arbitrarily.
+
+The output file contains the following columns:
+
+|    | Column       | Description |
+| ---|--------------|------------- |
+| 1. |   ?cluster    |  a ?cluster in the SPARQL output file |
+| 2. |   ?rank       |  the rank of ?cluster using the aggregate confidence value computed as described above |
+
 # Revision history:
 ### May 20, 2019
   * Initial version
+
+### May 21, 2019
+  * Fixed the formatting of tables
+  * Description in section `Output of the docker` revised

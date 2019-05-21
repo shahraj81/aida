@@ -1,8 +1,8 @@
-# Confidence aggregation docker for task1 class responses
+# Confidence aggregation docker for Task1 Class query responses
 
 (Last modified: May 21, 2019)
 
-This document describes how to use the docker to aggregate confidences of task1 class query responses. The layout of this document is as following:
+This document describes how to use the docker to aggregate confidences of Task1 Class query responses. The layout of this document is as following:
 
   1. How to build the docker
   2. How to run the docker
@@ -37,7 +37,7 @@ Once the above change has been made, run the following command to run the docker
 make run
 ~~~
 
-Make sure that the value of `HOST_INPUT_DIR` is the absolute path of the directory containing the SPARQL output of a task1 run as produced by `NIST SPARQL query application docker for M18`.
+Make sure that the value of `HOST_INPUT_DIR` is the absolute path of the directory containing the SPARQL output of a Task1 run as produced by `NIST SPARQL query application docker for M18`.
 
 Alternatively, you may run the docker as:
 
@@ -47,7 +47,7 @@ make run HOST_INPUT_DIR=/absolute/path/to/inputdir HOST_OUTPUT_DIR=/absolute/pat
 
 # How is aggregate confidence computed
 
-The output of running task1 class queries over a task1-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
+The output of running Task1 class queries over a Task1-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
 
 |    | Column       | Description |
 | ---|--------------|------------- |

@@ -1,8 +1,8 @@
-# Confidence aggregation docker for task1 graph responses
+# Confidence aggregation docker for Task1 Graph query responses
 
 (Last modified: May 21, 2019)
 
-This document describes how to use the docker to aggregate confidences of task1 graph query responses. The layout of this document is as following:
+This document describes how to use the docker to aggregate confidences of Task1 Graph query responses. The layout of this document is as following:
 
   1. How to build the docker
   2. How to run the docker
@@ -37,7 +37,7 @@ Once the above change has been made, run the following command to run the docker
 make run
 ~~~
 
-Make sure that the value of `HOST_INPUT_DIR` is the absolute path of the directory containing the SPARQL output of a task1 run as produced by `NIST SPARQL query application docker for M18`.
+Make sure that the value of `HOST_INPUT_DIR` is the absolute path of the directory containing the SPARQL output of a Task1 run as produced by `NIST SPARQL query application docker for M18`.
 
 Alternatively, you may run the docker using the following command:
 
@@ -47,7 +47,7 @@ make run HOST_INPUT_DIR=/absolute/path/to/inputdir HOST_OUTPUT_DIR=/absolute/pat
 
 # How is aggregate confidence computed
 
-The output of running task1 graph queries over a task1-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
+The output of running Task1 Graph queries over a Task1-run using `SPARQL query application docker for M18` is a set of files that contains one response per line. Each response contains tab separated values corresponding to the following fields (in that order):
 
 |     | Column            | Description |
 |-----|-------------------|-------------|
@@ -74,7 +74,7 @@ The default aggregate confidence of a ?cluster is computed as the product of the
 | 3.  | ?edge_cv          |  confidence of a compound justification for the argument assertion |
 | 4.  | ?sbcm_cv          |  cluster membership confidence of the subject |
 
-Note that the task1 graph SPARQL query does not extract informativeJustification of member of ?subject_cluster as it is not needed by LDC for assessment.
+Note that the Task1 Graph SPARQL query does not extract informativeJustification of member of ?subject_cluster as it is not needed by LDC for assessment.
 
 # Output of the docker
 
