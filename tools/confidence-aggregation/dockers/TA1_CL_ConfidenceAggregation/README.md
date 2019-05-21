@@ -12,11 +12,11 @@ This document describes how to use the docker to aggregate confidences of task1 
 
 # How to build the docker
 
-In order to build the docker, assuming that you are inside the following directory:
+In order to build the docker, first change to the following directory:
 
 `dockers/TA1_CL_ConfidenceAggregation`
 
-you would need to run the following command:
+and then run the following command:
 
 ~~~
 make build
