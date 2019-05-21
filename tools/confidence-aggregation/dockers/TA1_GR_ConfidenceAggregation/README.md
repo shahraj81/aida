@@ -82,7 +82,7 @@ For each file in the input directory, the docker produces an output file. For ea
 
 The docker also filters the contents of the SPARQL output file such that for each unique edge (having unique combination of subject cluster ID, edge label, and object cluster ID), there is at most one line in the docker output file. This is done by keeping the response that has the highest aggregate confidence value among all the responses corresponding to the edge.
 
-The filtered responses are then ranked by ordering based on aggregate confidence values such that the response with highest aggregate confidence value is on the top with rank=1.
+The filtered responses are then ranked by ordering based on aggregate confidence values such that the response with highest aggregate confidence value is on the top with rank=1. Note that ties are broken arbitrarily.
 
 The output file contains the following columns:
 
