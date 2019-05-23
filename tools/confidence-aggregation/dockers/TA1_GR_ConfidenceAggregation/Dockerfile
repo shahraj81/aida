@@ -26,7 +26,7 @@ WORKDIR $SCRIPTS
 
 # Pull AIDA Git Repository
 WORKDIR /tmp
-RUN git clone https://github.com/shahraj81/aida.git -b AIDACA-v2019.0.0
+RUN git clone https://github.com/shahraj81/aida.git -b AIDACA-v2019.0.1
 WORKDIR /tmp/aida/tools/confidence-aggregation/
 RUN perl Include.pl AIDA-ConfidenceAggregation-MASTER.pl > $SCRIPTS/AIDA-ConfidenceAggregation.pl
 
