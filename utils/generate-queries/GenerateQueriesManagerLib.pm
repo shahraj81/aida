@@ -3755,7 +3755,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   FILTER(cfn:superTypeOf(str(?edge_type_q), str(?edge_type)))
               
                   ?statement2           aida:justifiedBy              ?compoundedge_just .
-                  ?statement2           aida:confidence               ?edge_cj_confidence .
+                  ?compoundedge_just    aida:confidence               ?edge_cj_confidence .
                   ?edge_cj_confidence   aida:confidenceValue          ?edge_cj_cv .
                   # The first contained justification
                   ?compoundedge_just    aida:containedJustification   ?edge_justification1 .
