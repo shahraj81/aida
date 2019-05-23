@@ -1,6 +1,6 @@
 # Introduction
 
-May 20, 2019
+(Last modified: May 23, 2019)
 
 This document describes:
 
@@ -71,3 +71,4 @@ Please refer to `./dockers/TA[12]_[CL|GR|ZH]_ConfidenceAggregation/README.md` fo
 
 # Revision history
   * AIDACA-v2019.0.0: First version
+  * AIDACA-v2019.0.1: Bugfix: ?edge_cv changed to ?edge_cj_cv
