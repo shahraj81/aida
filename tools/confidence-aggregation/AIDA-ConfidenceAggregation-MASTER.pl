@@ -18,7 +18,7 @@ use ConfidenceAggregationManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2019.0.0";
+my $version = "2019.0.1";
 
 ### DO NOT INCLUDE
 ##################################################################################### 
@@ -118,7 +118,7 @@ my $types_allowed = {
       }
       close $program_output;
     },
-    CONFIDENCE_AGGREGATION_FIELDS => [qw(?oinf_j_cv ?obcm_cv ?edge_cv ?sbcm_cv)],
+    CONFIDENCE_AGGREGATION_FIELDS => [qw(?oinf_j_cv ?obcm_cv ?edge_cj_cv ?sbcm_cv)],
   },
   TA2_ZH => {
     NAME => 'TA2_ZH',
@@ -199,7 +199,7 @@ my $types_allowed = {
       }
       close $program_output;
     },
-    CONFIDENCE_AGGREGATION_FIELDS => [qw(?orfkblink_cv ?oinf_j_cv ?obcm_cv ?edge_cv ?sbcm_cv)],
+    CONFIDENCE_AGGREGATION_FIELDS => [qw(?orfkblink_cv ?oinf_j_cv ?obcm_cv ?edge_cj_cv ?sbcm_cv)],
   },
 };
 

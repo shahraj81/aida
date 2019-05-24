@@ -3257,7 +3257,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
               # By default, NIST will compute aggregate edge justification confidence (AEJC) as product of:
               #        ?oinf_j_cv    # confidence of object informativeJustification
               #        ?obcm_cv      # cluster membership confidence of the object
-              #        ?edge_cv      # confidence of a compound justification for the argument assertion
+              #        ?edge_cj_cv   # confidence of a compound justification for the argument assertion
               #        ?sbcm_cv      # cluster membership confidence of the subject
               
               SELECT DISTINCT 
@@ -3269,7 +3269,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                      ?ej_span      # CompoundJustification span(s) for argument assertion
                      ?oinf_j_cv    # confidence of object informativeJustification
                      ?obcm_cv      # cluster membership confidence of the object
-                     ?edge_cv      # confidence of a compound justification for the argument assertion
+                     ?edge_cj_cv   # confidence of a compound justification for the argument assertion
                      ?sbcm_cv      # cluster membership confidence of the subject
               
               WHERE {
@@ -3300,20 +3300,16 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   FILTER(cfn:superTypeOf(str(?edge_type_q), str(?edge_type)))
               
                   ?statement2           aida:justifiedBy              ?compoundedge_just .
-                  ?statement2           aida:confidence               ?edge_confidence .
-                  ?edge_confidence      aida:confidenceValue          ?edge_cv .
+                  ?compoundedge_just    aida:confidence               ?edge_cj_confidence .
+                  ?edge_cj_confidence   aida:confidenceValue          ?edge_cj_cv .
                   # The first contained justification
                   ?compoundedge_just    aida:containedJustification   ?edge_justification1 .
                   ?edge_justification1  aida:sourceDocument           ?docid .
                   ?edge_justification1  aida:source                   ?edgecj1_doceid .
-                  ?edge_justification1  aida:confidence               ?edgecj1_j_confidence .
-                  ?edgecj1_j_confidence aida:confidenceValue          ?edgecj1_j_cv .
                   # The second contained justification
                   ?compoundedge_just    aida:containedJustification   ?edge_justification2 .
                   ?edge_justification2  aida:sourceDocument           ?docid .
                   ?edge_justification2  aida:source                   ?edgecj2_doceid .
-                  ?edge_justification2  aida:confidence               ?edgecj2_j_confidence .
-                  ?edgecj2_j_confidence aida:confidenceValue          ?edgecj2_j_cv .
               
                   # Get the subject informativeJustification
                   ?subjectmo            aida:informativeJustification ?sinf_justification .
@@ -3702,7 +3698,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
               #        ?orfkblink_cv # confidence of linking the object to the query reference KB ID
               #        ?oinf_j_cv    # confidence of object informativeJustification
               #        ?obcm_cv      # cluster membership confidence of the object
-              #        ?edge_cv      # confidence of a compound justification for the argument assertion
+              #        ?edge_cj_cv   # confidence of a compound justification for the argument assertion
               #        ?sbcm_cv      # cluster membership confidence of the subject
               
               SELECT DISTINCT
@@ -3717,7 +3713,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                      ?orfkblink_cv    # confidence of linking the object to the query reference KB ID
                      ?oinf_j_cv       # confidence of object informativeJustification
                      ?obcm_cv         # cluster membership confidence of the object
-                     ?edge_cv         # confidence of a compound justification for the argument assertion
+                     ?edge_cj_cv      # confidence of a compound justification for the argument assertion
                      ?sbcm_cv         # cluster membership confidence of the subject
               
               WHERE {
@@ -3759,20 +3755,16 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   FILTER(cfn:superTypeOf(str(?edge_type_q), str(?edge_type)))
               
                   ?statement2           aida:justifiedBy              ?compoundedge_just .
-                  ?statement2           aida:confidence               ?edge_confidence .
-                  ?edge_confidence      aida:confidenceValue          ?edge_cv .
+                  ?compoundedge_just    aida:confidence               ?edge_cj_confidence .
+                  ?edge_cj_confidence   aida:confidenceValue          ?edge_cj_cv .
                   # The first contained justification
                   ?compoundedge_just    aida:containedJustification   ?edge_justification1 .
                   ?edge_justification1  aida:sourceDocument           ?docid .
                   ?edge_justification1  aida:source                   ?edgecj1_doceid .
-                  ?edge_justification1  aida:confidence               ?edgecj1_j_confidence .
-                  ?edgecj1_j_confidence aida:confidenceValue          ?edgecj1_j_cv .
                   # The second contained justification
                   ?compoundedge_just    aida:containedJustification   ?edge_justification2 .
                   ?edge_justification2  aida:sourceDocument           ?docid .
                   ?edge_justification2  aida:source                   ?edgecj2_doceid .
-                  ?edge_justification2  aida:confidence               ?edgecj2_j_confidence .
-                  ?edgecj2_j_confidence aida:confidenceValue          ?edgecj2_j_cv .
               
                   # Get the subject informativeJustification
                   ?subjectmo            aida:informativeJustification ?sinf_justification .

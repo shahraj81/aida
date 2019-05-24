@@ -1,6 +1,6 @@
 # Confidence aggregation docker for Task2 Graph query responses
 
-(Last modified: May 21, 2019)
+(Last modified: May 23, 2019)
 
 This document describes how to use the docker to aggregate confidences of Task2 Graph query responses. The layout of this document is as following:
 
@@ -66,7 +66,7 @@ The output of running Task2 Graph queries over a Task2-run using `SPARQL query a
 | 12. |        ?orfkblink_cv     |  confidence of linking the object to the query reference KB ID|
 | 13. |        ?oinf_j_cv        |  confidence of object informativeJustification|
 | 14. |        ?obcm_cv          |  cluster membership confidence of the object|
-| 15. |        ?edge_cv          |  confidence of a compound justification for the argument assertion|
+| 15. |        ?edge_cj_cv       |  confidence of a compound justification for the argument assertion|
 | 16. |        ?sbcm_cv          |  cluster membership confidence of the subject|
 
 The default aggregate confidence of a ?cluster is computed as the product of the following columns:
@@ -76,7 +76,7 @@ The default aggregate confidence of a ?cluster is computed as the product of the
 | 1. |        ?orfkblink_cv     |  confidence of linking the object to the query reference KB ID|
 | 2. |        ?oinf_j_cv        |  confidence of object informativeJustification|
 | 3. |        ?obcm_cv          |  cluster membership confidence of the object|
-| 4. |        ?edge_cv          |  confidence of a compound justification for the argument assertion|
+| 4. |        ?edge_cj_cv       |  confidence of a compound justification for the argument assertion|
 | 5. |        ?sbcm_cv          |  cluster membership confidence of the subject|
 
 Note that the Task2 Graph SPARQL query does not extract informativeJustification of ?subjectmo as it is not needed by LDC for assessment.
@@ -110,7 +110,7 @@ The output file contains the following columns:
 | 12. |        ?orfkblink_cv     |  confidence of linking the object to the query reference KB ID|
 | 13. |        ?oinf_j_cv        |  confidence of object informativeJustification|
 | 14. |        ?obcm_cv          |  cluster membership confidence of the object|
-| 15. |        ?edge_cv          |  confidence of a compound justification for the argument assertion|
+| 15. |        ?edge_cj_cv       |  confidence of a compound justification for the argument assertion|
 | 16. |        ?sbcm_cv          |  cluster membership confidence of the subject|
 | 17. |        ?ag_cv          |  aggregate confidence value|
 | 18. |        ?rank          | the rank of based on the aggregate confidence value computed as described above|
@@ -122,3 +122,6 @@ The output file contains the following columns:
 ### May 21, 2019
   * Section `Output of the docker` added
   * Fixed formatting of the tables
+
+### May 23, 2019
+  * bugfix: ?edge_cv changed to ?edge_cj_cv
