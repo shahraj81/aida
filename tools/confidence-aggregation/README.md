@@ -50,7 +50,7 @@ AIDA_TA1_[CL|GR]_2019_\d\d\d\d.rq.tsv
 
 ## Task 2
 
-A task2 run output would contain a single subdirectory. This subdirectory corresponds to a task2 KB. Within each subdirectory, there will be files matching the following pattern:
+The input directory for task2 is the directory containing output of NIST SPARQL query application docker applied to a task2 KB. The input directory contains exactly on subdirecotry corresponding to the task2 KB. Within the subdirectory, there will be files matching the following pattern:
 
 ~~~
 AIDA_TA2_[GR|ZH]_2019_\d\d\d\d.rq.tsv
