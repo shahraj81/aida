@@ -42,7 +42,7 @@ We expect that the output directory would be empty.
 
 ## Task 1
 
-A task1 run output would contain multiple subdirectories. Each subdirectory corresponds to one task1 KB corresponding to one (parent) document. Within each subdirectory, there will be files matching the following pattern:
+The input directory contains the output of NIST SPARQL query application docker when run over a TA1 system containing KBs corresponding to a set of evaluation documents conditioned upon either no hypothesis (Task 1a) or a single hypothesis (for Task 1b). This directory would contain multiple subdirectories. Each subdirectory corresponds to one task1 KB corresponding to one (parent) document. Within each subdirectory, there will be files matching the following pattern:
 
 ~~~
 AIDA_TA1_[CL|GR]_2019_\d\d\d\d.rq.tsv
@@ -50,7 +50,7 @@ AIDA_TA1_[CL|GR]_2019_\d\d\d\d.rq.tsv
 
 ## Task 2
 
-A task2 run output would contain a single subdirectory. This subdirectory corresponds to a task2 KB. Within each subdirectory, there will be files matching the following pattern:
+The input directory for task2 is the directory containing output of NIST SPARQL query application docker applied to a task2 KB. The input directory contains exactly one subdirectory corresponding to the task2 KB. Within the subdirectory, there will be files matching the following pattern:
 
 ~~~
 AIDA_TA2_[GR|ZH]_2019_\d\d\d\d.rq.tsv
