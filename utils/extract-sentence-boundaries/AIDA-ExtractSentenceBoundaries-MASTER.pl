@@ -29,7 +29,7 @@ my $error_output = *STDERR{IO};
 ##################################################################################### 
 
 # Handle run-time switches
-my $switches = SwitchProcessor->new($0, "Extract sentence boundaries",
+my $switches = SwitchProcessor->new($0, "Pool XML response files",
 				    						"");
 $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
