@@ -41,12 +41,13 @@ $switches->put('error_file', "STDERR");
 $switches->addConstantSwitch('no_error_code', 'false', "Do not return any error code if problems are encountered?");
 $switches->addConstantSwitch('reload', 'false', "Reload the cached input queries XML file");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
-$switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
+$switches->addParam("docid_mappings", "required", "LDC2019*.parent_children.tsv file containing DocumentID to DocumentElementID mappings");
 $switches->addParam("sentence_boundaries", "required", "File containing sentence boundaries");
 $switches->addParam("images_boundingboxes", "required", "File containing image bounding boxes");
 $switches->addParam("keyframes_boundingboxes", "required", "File containing keyframe bounding boxes");
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
 $switches->addParam("queries_xml", "required", "XML file containing queries");
+$switches->addParam("coredocs", "required", "File containing ids of core documents (responses from outside coredocs will be removed)");
 $switches->addParam("input", "required", "Run directory containing SPARQL output files");
 $switches->addParam("output", "required", "Specify a directory to which validated output should be written");
 
@@ -63,6 +64,7 @@ foreach my $path(($switches->get("docid_mappings"),
           $switches->get("keyframes_boundingboxes"),
           $switches->get("queries_dtd"),
           $switches->get("queries_xml"),
+          $switches->get("coredocs"),
           $switches->get("input"))) {
   $logger->NIST_die("$path does not exist") unless -e $path;
 }
@@ -78,13 +80,34 @@ my $docid_mappings_filename = $switches->get("docid_mappings");
 my $sentence_boundaries_filename = $switches->get("sentence_boundaries");
 my $images_boundingboxes_filename = $switches->get("images_boundingboxes");
 my $keyframes_boundingboxes_filename = $switches->get("keyframes_boundingboxes");
+my $coredocs_filename = $switches->get("coredocs");
 
-my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_filename);
+my $coredocs = CoreDocs->new($logger, $coredocs_filename);
+my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_filename, $coredocs);
 my $text_document_boundaries = TextDocumentBoundaries->new($logger, $sentence_boundaries_filename);
 my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $images_boundingboxes_filename);
 my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $keyframes_boundingboxes_filename);
 
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
+
+
+my @response_files;
+foreach my $input_subdir (<$input_dir/*>) {
+  # skip if not a directory
+  next unless -d $input_subdir;
+  # iterate through all response files
+  foreach my $input_file(<$input_subdir/*.rq.tsv>) {
+    my $query_id = $input_file;
+    $query_id =~ s/^(.*?\/)+//g;
+    $query_id =~ s/\.rq\.tsv//;
+    unless ($queries->exists($query_id)) {
+      $logger->record_debug_information("SKIPPING_INPUT_FILE", $input_file, {FILENAME => __FILE__, LINENUM => __LINE__});
+      next;
+    }
+    print STDERR "--file $input_file added to the process queue\n";
+    push(@response_files, $input_file);
+  }
+}
 
 # create a ResponseSet object
 my $responses = ResponseSet->new($logger,
@@ -92,19 +115,8 @@ my $responses = ResponseSet->new($logger,
                   $docid_mappings, 
                   $text_document_boundaries, 
                   $images_boundingboxes, 
-                  $keyframes_boundingboxes);
-
-foreach my $input_subdir (<$input_dir/*>) {
-  # skip if not a directory
-  next unless -d $input_subdir;
-  # iterate through all response files
-  foreach my $input_file(<*.rq.tsv>) {
-    print STDERR "-processing $input_file\n";
-    # load responses from the $input_file, and
-    # validate the responses while loading the file
-    $responses->load($input_file);
-  }
-}
+                  $keyframes_boundingboxes,
+                  @response_files);
 
 # write the validated responses to the directory maintaining the input directory structure
 
@@ -120,7 +132,7 @@ $responses->write_validated_output($output_dir);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 
-$validation_retval = $Logger::NIST_error_code if(!$switches->get("no_error_code") && $num_errors+$num_warnings);
+$validation_retval = $logger->get_error_code() if(!$switches->get("no_error_code") && $num_errors+$num_warnings);
 
 unless($switches->get('error_file') eq "STDERR") {
   print STDERR "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);

@@ -176,6 +176,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
+  SKIPPING_INPUT_FILE                     DEBUG_INFO     Skipping over file %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
@@ -365,7 +366,10 @@ sub get_error_type {
 }
 
 # NIST submission scripts demand an error code of 255 on failure
-my $NIST_error_code = 255;
+sub get_error_code {
+  my ($self) = @_;
+  255;
+}
 
 ### DO NOT INCLUDE
 # FIXME: Inconsistency: sometimes NIST_die is called directly; other
@@ -379,7 +383,7 @@ sub NIST_die {
   print $outfile Carp::longmess();
   print $outfile "================================================================\n";
   print $outfile join("", @messages), " at (", join(":", caller), ")\n";
-  exit $NIST_error_code;
+  exit $self->get_error_code();
 }
 
 ### END INCLUDE Logger
@@ -1408,47 +1412,213 @@ package ResponseSet;
 
 use parent -norequire, 'Super';
 
+my $anything_pattern = qr/.+/;
+my $provenance_triple_pattern = qr/[^:]+:\d+-\d+/;
+my $provenance_triples_pattern = qr/(?:[^:]+:\d+-\d+,){0,3}[^:]+:\d+-\d+/;
+
+my %schemas = ( 
+  '2019TA1ClassSubmission' => {
+    YEAR => 2019,
+    TYPE => 'SUBMISSION',
+    SAMPLES => ["D0100 <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> D0100:DE005_03:(210,60)-(310,210) 1.0E0 1.0E0 2.34E-1"],
+    HEADER => ["?docid  ?query_type ?cluster  ?type ?infj_span  ?t_cv ?cm_cv  ?j_cv"],
+    COLUMNS => [qw(
+      DOCUMENT_ID
+      QUERY_TYPE
+      CLUSTER_ID
+      MATCHING_TYPE
+      VALUE_PROVENANCE_TRIPLES
+      TYPE_CONFIDENCE
+      CLUSTER_MEMBERSHIP_CONFIDENCE
+      JUSTIFICATION_CONFIDENCE
+    )],
+  },
+);
+
+my %columns = (
+  CLUSTER_MEMBERSHIP_CONFIDENCE => {
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2014, 2015],
+    # We're lenient here. Guidelines state there must be a decimal
+    # point, but we want a warning only for a missing decimal point
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => sub {
+      my ($logger, $where, $value) = @_;
+      my $original_value = $value;
+      if ($value eq '1') {
+        $logger->record_problem('MISSING_DECIMAL_POINT', $value, $where);
+        $value = '1.0';
+      }
+      elsif($value =~ /^\d+\.\d+e[-+]?\d\d$/) {
+        $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
+        $value = sprintf("%.12f", $value);
+      }
+      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
+        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
+        $value = '1.0';
+      }
+      $value;
+    },
+  },
+
+  DOCID => {
+    DESCRIPTION => "Document ID for provenance, from 2012 and 2013 submissions",
+    YEARS => [2012, 2013],
+    PATTERN => $anything_pattern,
+  },
+
+  FILENAME => {
+    DESCRIPTION => "The name of the file from which the description of the entry was read; added by load",
+  },
+
+  JUSTIFICATION_CONFIDENCE => {
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2014, 2015],
+    # We're lenient here. Guidelines state there must be a decimal
+    # point, but we want a warning only for a missing decimal point
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => sub {
+      my ($logger, $where, $value) = @_;
+      my $original_value = $value;
+      if ($value eq '1') {
+        $logger->record_problem('MISSING_DECIMAL_POINT', $value, $where);
+        $value = '1.0';
+      }
+      elsif($value =~ /^\d+\.\d+e[-+]?\d\d$/) {
+        $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
+        $value = sprintf("%.12f", $value);
+      }
+      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
+        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
+        $value = '1.0';
+      }
+      $value;
+    },
+  },
+
+  LINE => {
+    DESCRIPTION => "the input line that generated this entry - added by load",
+  },
+
+  LINENUM => {
+    DESCRIPTION => "The line number in FILENAME containing LINE - added by load",  },
+
+  QUERY => {
+    DESCRIPTION => "A pointer to the appropriate query structure",
+    GENERATOR => sub {
+      my ($logger, $where, $queries, $schema, $entry) = @_;
+      my $query = $queries->get($entry->{QUERY_ID});
+      unless (defined $query && $query->get("FULL_QUERY_ID") eq $entry->{FULL_QUERY_ID}) {
+  # Generate the query if this is an assessment
+#&main::dump_structure($entry, 'Entry', [qw(LOGGER SCHEMA)]);
+        $logger->record_problem('UNLOADED_QUERY', $entry->{QUERY_ID}, $where);
+        $logger->NIST_die("Query $entry->{FULL_QUERY_ID} not loaded; caller = " . join(":", caller) . "");
+      }
+      else {
+        $entry->{QUERY} = $query;
+      }
+    },
+    DEPENDENCIES => [qw(QUERY_ID)],
+    REQUIRED => 'ALL',
+  },
+
+  QUERY_ID => {
+    DESCRIPTION => "Query ID of query this entry is responding to. Explicit in 2014, generated in other years",
+    YEARS => [2014, 2015],
+    GENERATOR => sub {
+      my ($logger, $where, $queries, $schema, $entry) = @_;
+    },
+    DEPENDENCIES => [qw(QUERY_AND_HOP QUERY_AND_SLOT_NAME)],
+    PATTERN => $anything_pattern,
+    REQUIRED => 'ALL',
+  },
+
+  RUNID => {
+    DESCRIPTION => "Run ID for this entry",
+    YEARS => [2014, 2015],
+    PATTERN => $anything_pattern,
+  },
+
+  TYPE => {
+    DESCRIPTION => "{ASSESSMENT, SUBMISSION} - from schema",
+  },
+
+  TYPE_CONFIDENCE => {
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2014, 2015],
+    # We're lenient here. Guidelines state there must be a decimal
+    # point, but we want a warning only for a missing decimal point
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => sub {
+      my ($logger, $where, $value) = @_;
+      my $original_value = $value;
+      if ($value eq '1') {
+        $logger->record_problem('MISSING_DECIMAL_POINT', $value, $where);
+        $value = '1.0';
+      }
+      elsif($value =~ /^\d+\.\d+e[-+]?\d\d$/) {
+        $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
+        $value = sprintf("%.12f", $value);
+      }
+      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
+        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
+        $value = '1.0';
+      }
+      $value;
+    },
+  },
+  
+  VALUE_PROVENANCE_TRIPLES => {
+    DESCRIPTION => "Original string representation of VALUE_PROVENANCE",
+    YEARS => [2013, 2014, 2015],
+    PATTERN => $provenance_triples_pattern,
+  },
+
+  YEAR => {
+    DESCRIPTION => "TAC year (according to format of submission) - from schema",
+  },
+
+);
+
 sub new {
-  my ($class, $logger, $queries, $docid_mappings, $dtd_filename, @xml_filenames) = @_;
+  my ($class, $logger, $queries, $docid_mappings, $text_document_boundaries, 
+    $images_boundingboxes, $keyframes_boundingboxes, @filenames) = @_;
+  $logger->NIST_die("$class->new called with no filenames") unless @filenames;  
   my $self = {
     CLASS => 'ResponseSet',
     QUERIES => $queries,
-    DTD_FILENAME => $dtd_filename,
-    XML_FILENAMES => [@xml_filenames],
-    DOCID_MAPPINGS => $docid_mappings, 
+    DOCID_MAPPINGS => $docid_mappings,
+    TEXT_BOUNDARIES => $text_document_boundaries,
+    IMAGE_BOUNDARIES => $images_boundingboxes, 
+    KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
     RESPONSES => Container->new($logger, "Response"),
+    FILENAMES => [@filenames],
     LOGGER => $logger,
   };
   bless($self, $class);
-  $self->load();
+  foreach my $filename(@filenames) {
+    my $schema_name = &identify_file_schema($logger, $filename);
+    my $schema = $schemas{$schema_name};
+    unless ($schema) {
+      $logger->record_problem('UNKNOWN_RESPONSE_FILE_TYPE', $schema_name, 'NO_SOURCE');
+      next;
+    }
+    $self->load($logger, $queries, $filename, $schema);
+  }
   $self;
 }
 
+sub identify_file_schema {
+  my ($logger, $filename) = @_;
+  
+}
+
 sub load {
-  my ($self) = @_;
+  my ($self, $logger, $filename, $schema) = @_;
   my $logger = $self->get("LOGGER");
-  my $dtd_filename = $self->get("DTD_FILENAME");
-  my @xml_filenames = @{$self->get("XML_FILENAMES")};
-  my $query_type = $self->get("QUERIES")->get("QUERYTYPE");
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
   my $queries = $self->get("QUERIES");
-  my $i = 0;
-  foreach my $xml_filename(@xml_filenames) {
-    my $task = "task1";
-    $task = "task2" if $xml_filename =~ /TA2.*_responses.xml$/;
-    $self->set("TASK", $task) if $self->get("TASK") eq "nil";
-    $logger->record_problem("RUNS_HAVE_MULTIPLE_TASKS", {FILENAME => __FILE__, LINENUM => __LINE__})
-      if($task ne $self->get("TASK"));
-    my $xml_filehandler = XMLFileHandler->new($logger, $dtd_filename, $xml_filename);
-    while(my $xml_response_object = $xml_filehandler->get("NEXT_OBJECT")) {
-      $i++;
-      my $response;
-      $response = ClassResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "class_query");
-      $response = ZeroHopResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "zerohop_query");
-      $response = GraphResponse->new($logger, $xml_response_object, $xml_filename, $queries, $docid_mappings) if($query_type eq "graph_query");
-      $self->get("RESPONSES")->add($response, $i) if $response->is_valid();
-    }
-  }
+  my $query_type = $queries->get("QUERYTYPE");
 }
 
 sub tostring {
@@ -4028,7 +4198,7 @@ sub new {
     LOGGER => $logger,
   };
   bless($self, $class);
-  #$self->load();
+  $self->load() if -e $xml_filename;
   $self;
 }
 
@@ -4062,8 +4232,10 @@ sub write_to_file {
   $query_type =~ s/^(.*?\/)+//g;
   $query_type =~ s/.dtd//;
   $query_type =~ s/query/queries/;
-  open(my $program_output_xml, ">:utf8", $self->get("XML_FILENAME"))
-    or $self->get("LOGGER")->record_problem('MISSING_FILE', $self->get("XML_FILENAME"), $!);
+  my $output_filename = $self->get("XML_FILENAME");
+  $self->get("LOGGER")->NIST_die("Output file exists") if -e $output_filename;
+  open(my $program_output_xml, ">:utf8", $output_filename)
+    or $self->get("LOGGER")->record_problem('MISSING_FILE', $output_filename, $!);
   print $program_output_xml "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
   print $program_output_xml "<$query_type>\n";
   print $program_output_xml $self->tostring(2);
@@ -4078,6 +4250,11 @@ sub get_QUERY {
     $query = $self->get("QUERIES")->get("BY_KEY", $query_id);
   }
   $query;
+}
+
+sub exists {
+  my ($self, $query_id) = @_;
+  $self->get("QUERIES")->exists($query_id);
 }
 
 sub tostring {
@@ -4984,6 +5161,341 @@ sub get_F1 {
   my $precision = $self->get("PRECISION");
   my $recall = $self->get("RECALL");
   ($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
+}
+
+#####################################################################################
+# ImagesBoundingBoxes
+#####################################################################################
+
+package ImagesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
+  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+  my ($self) = @_;
+  my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry( $entries->toarray() ){
+    my $filename = $entry->get("filename");
+    my $doceid = $filename;
+    $doceid =~ s/\..*?$//;
+    my ($bottom_right_x, $bottom_right_y) = (0,0);
+    ($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+    $self->add(ImageBoundingBox->new($self->get("LOGGER"), $doceid, undef,
+                        0, 0, $bottom_right_x, $bottom_right_y), $doceid);
+  }
+}
+
+#####################################################################################
+# ImageBoundingBox
+#####################################################################################
+
+package ImageBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'ImageBoundingBox',
+    DOCEID => $doceid,
+    TYPE => $type,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_START {
+  my ($self) = @_;
+  $self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+  my ($self) = @_;
+  $self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+  my ($self, $span_string) = @_;
+  my $is_valid = 0;
+  if(my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
+    my ($min_x, $min_y, $max_x, $max_y) 
+      = map {$self->get($_)} 
+        qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+    $is_valid = 1
+      unless($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+        || $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+  }
+  $is_valid;
+}
+
+#####################################################################################
+# KeyFramesBoundingBoxes
+#####################################################################################
+
+package KeyFramesBoundingBoxes;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
+  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+  my ($self) = @_;
+  my $filehandler = FileHandler->new($self->get("LOGGER"), $self->get("FILENAME"));
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry( $entries->toarray() ){
+    my ($bottom_right_x, $bottom_right_y) = (0,0);
+    ($bottom_right_x, $bottom_right_y) = split(/x/, $entry->get("wxh")) if $entry->get("wxh");
+    $self->add(KeyFrameBoundingBox->new($self->get("LOGGER"), $entry->get("keyframeid"),
+                        0, 0,
+                        $bottom_right_x, $bottom_right_y),
+                $entry->get("keyframeid"));
+  }
+}
+
+sub get_KEYFRAMESIDS {
+  my ($self, $doceid) = @_;
+  my @keyframeids = $self->get("ALL_KEYS");
+  @keyframeids = grep {$_ =~ /^$doceid/} @keyframeids if $doceid;
+  sort @keyframeids;
+}
+
+#####################################################################################
+# KeyFramesBoundingBox
+#####################################################################################
+
+package KeyFrameBoundingBox;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
+  my $self = {
+    CLASS => 'KeyFrameBoundingBox',
+    KEYFRAMEID => $keyframeid,
+    TOP_LEFT_X => $top_left_x,
+    TOP_LEFT_Y => $top_left_y,
+    BOTTOM_RIGHT_X => $bottom_right_x,
+    BOTTOM_RIGHT_Y => $bottom_right_y,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_DOCEID {
+  my ($self) = @_;
+  my ($doceid) = split("_", $self->get("KEYFRAMEID"));
+  $doceid;
+}
+
+sub get_START {
+  my ($self) = @_;
+  $self->get("TOP_LEFT_X") . "," . $self->get("TOP_LEFT_Y");
+}
+
+sub get_END {
+  my ($self) = @_;
+  $self->get("BOTTOM_RIGHT_X") . "," . $self->get("BOTTOM_RIGHT_Y");
+}
+
+sub validate {
+  my ($self, $span_string) = @_;
+  my $is_valid = 0;
+  if(my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
+    my ($min_x, $min_y, $max_x, $max_y) 
+      = map {$self->get($_)} 
+        qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
+    $is_valid = 1
+      unless($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+        || $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+  }
+  $is_valid;
+}
+
+#####################################################################################
+# TextDocumentBoundaries
+#####################################################################################
+
+package TextDocumentBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'TextDocumentBoundary');
+  $self->{CLASS} = 'TextDocumentBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+  my ($self) = @_;
+  my $filename = $self->get("FILENAME");
+  my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry($entries->toarray()) {
+    my ($doceid, $segment_id, $start_char, $end_char) =
+      map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+    my $text_document_boundary;
+    unless($self->exists($doceid)) {
+      $text_document_boundary = $self->get("BY_KEY", $doceid);
+      $text_document_boundary->set("DOCEID", $doceid);
+      $text_document_boundary->set("START_CHAR", $start_char);
+      $text_document_boundary->set("END_CHAR", $end_char);
+    }
+    else{
+      $text_document_boundary = $self->get("BY_KEY", $doceid);
+    }
+    my ($tb_start_char, $tb_end_char)
+      = map {$text_document_boundary->get($_)}
+        qw(START_CHAR END_CHAR);
+    $text_document_boundary->set("START_CHAR", $start_char)
+      if($start_char < $tb_start_char);
+    $text_document_boundary->set("END_CHAR", $end_char)
+      if($end_char > $tb_end_char);
+  }
+}
+
+sub get_BOUNDARY {
+  my ($self, $span_string) = @_;
+  my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+  my $text_document_boundary;
+  $text_document_boundary = $self->get("BY_KEY", $id) 
+    if($self->exists($id));
+  $text_document_boundary;
+}
+
+#####################################################################################
+# TextDocumentBoundary
+#####################################################################################
+
+package TextDocumentBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $start_char, $end_char) = @_;
+  my $self = {
+    CLASS => 'TextDocumentBoundary',
+    START_CHAR => $start_char,
+    END_CHAR => $end_char,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# SentenceBoundaries
+#####################################################################################
+
+package SentenceBoundaries;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'Segments');
+  $self->{CLASS} = 'SentenceBoundaries';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+  my ($self) = @_;
+  my $filename = $self->get("FILENAME");
+  my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry($entries->toarray()) {
+    my ($doceid, $segment_id, $start_char, $end_char) =
+      map {$entry->get($_)} qw(doceid segment_id start_char end_char);
+    my $segments = $self->get("BY_KEY", $doceid);
+    my $sentence_boundary = $segments->get("BY_KEY", "$doceid:$segment_id");
+    $sentence_boundary->set("SEGMENT_ID", $segment_id);
+    $sentence_boundary->set("START_CHAR", $start_char);
+    $sentence_boundary->set("END_CHAR", $end_char);
+  }
+}
+
+sub get_BOUNDARY {
+  my ($self, $span_string) = @_;
+  my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/;
+  if($self->exists($id)) {
+    my $segments = $self->get("BY_KEY", $id);
+    foreach my $segment($segments->toarray()) {
+      my ($start_char, $end_char) = map {$segment->get($_)} qw(START_CHAR END_CHAR);
+      return $segment if($sx >= $start_char && $ex <= $end_char);
+    }
+  }
+  0;
+}
+
+#####################################################################################
+# Segments
+#####################################################################################
+
+package Segments;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'SentenceBoundary');
+  $self->{CLASS} = 'Segments';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
+# SentenceBoundary
+#####################################################################################
+
+package SentenceBoundary;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'SentenceBoundary',
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
 }
 
 ### BEGIN INCLUDE Utils
