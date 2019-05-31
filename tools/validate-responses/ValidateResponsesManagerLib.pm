@@ -178,6 +178,8 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
   SKIPPING_INPUT_FILE                     DEBUG_INFO     Skipping over file %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
+  UNEXPECTED_COLUMN_HEADER                ERROR          Unexpected column # %s (expected %s, provided %s)
+  UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_PARAMETER_LINE               WARNING        Unexpected line in the parameters file
@@ -1421,7 +1423,7 @@ my %schemas = (
     YEAR => 2019,
     TYPE => 'SUBMISSION',
     SAMPLES => ["D0100 <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> D0100:DE005_03:(210,60)-(310,210) 1.0E0 1.0E0 2.34E-1"],
-    HEADER => ["?docid  ?query_type ?cluster  ?type ?infj_span  ?t_cv ?cm_cv  ?j_cv"],
+    HEADER => [qw(?docid ?query_type ?cluster ?type ?infj_span ?t_cv ?cm_cv ?j_cv)],
     COLUMNS => [qw(
       DOCUMENT_ID
       QUERY_TYPE
@@ -1582,7 +1584,7 @@ my %columns = (
 
 sub new {
   my ($class, $logger, $queries, $docid_mappings, $text_document_boundaries, 
-    $images_boundingboxes, $keyframes_boundingboxes, @filenames) = @_;
+    $images_boundingboxes, $keyframes_boundingboxes, $run_id, @filenames) = @_;
   $logger->NIST_die("$class->new called with no filenames") unless @filenames;  
   my $self = {
     CLASS => 'ResponseSet',
@@ -1610,15 +1612,32 @@ sub new {
 
 sub identify_file_schema {
   my ($logger, $filename) = @_;
-  
+  my $schema_name;
+  my $query_id = $filename;
+  $query_id =~ s/^(.*?\/)+//g;
+  $query_id =~ s/\.rq\.tsv//;
+  $schema_name = "2019TA1ClassSubmission" if($query_id =~ /^AIDA_TA1_CL_2019_\d+$/);
+  $schema_name;
 }
 
 sub load {
-  my ($self, $logger, $filename, $schema) = @_;
-  my $logger = $self->get("LOGGER");
+  my ($self, $logger, $queries, $filename, $schema) = @_;
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
-  my $queries = $self->get("QUERIES");
-  my $query_type = $queries->get("QUERYTYPE");
+  my $filehandler = FileHandler->new($logger, $filename);
+  # verify if the header is as expected
+  my @provided_header = @{$filehandler->get("HEADER")->get("ELEMENTS")};
+  my @expected_header = @{$schema->{HEADER}};
+  if (@provided_header != @expected_header) {
+    $logger->record_problem("UNEXPECTED_COLUMN_NUM", @expected_header, @provided_header, {FILENAME=>$filename, LINENUM=>1});
+    return;
+  }
+  for(my $i=0; $i<=$#provided_header; $i++) {
+    if($provided_header[$i] ne $expected_header[$i]) {
+      $logger->record_problem("UNEXPECTED_COLUMN_HEADER", $i+1, $expected_header[$i], $provided_header[$i], {FILENAME=>$filename, LINENUM=>1});
+      return;
+    }
+  }
+  my @entries = $filehandler->get("ENTRIES")->toarray();
 }
 
 sub tostring {

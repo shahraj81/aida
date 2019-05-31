@@ -48,6 +48,7 @@ $switches->addParam("keyframes_boundingboxes", "required", "File containing keyf
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
 $switches->addParam("queries_xml", "required", "XML file containing queries");
 $switches->addParam("coredocs", "required", "File containing ids of core documents (responses from outside coredocs will be removed)");
+$switches->addParam("run_id", "required", "Run ID");
 $switches->addParam("input", "required", "Run directory containing SPARQL output files");
 $switches->addParam("output", "required", "Specify a directory to which validated output should be written");
 
@@ -81,6 +82,7 @@ my $sentence_boundaries_filename = $switches->get("sentence_boundaries");
 my $images_boundingboxes_filename = $switches->get("images_boundingboxes");
 my $keyframes_boundingboxes_filename = $switches->get("keyframes_boundingboxes");
 my $coredocs_filename = $switches->get("coredocs");
+my $run_id = $switches->get("run_id");
 
 my $coredocs = CoreDocs->new($logger, $coredocs_filename);
 my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_filename, $coredocs);
@@ -89,7 +91,6 @@ my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $images_boundingbox
 my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $keyframes_boundingboxes_filename);
 
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
-
 
 my @response_files;
 foreach my $input_subdir (<$input_dir/*>) {
@@ -116,6 +117,7 @@ my $responses = ResponseSet->new($logger,
                   $text_document_boundaries, 
                   $images_boundingboxes, 
                   $keyframes_boundingboxes,
+                  $run_id,
                   @response_files);
 
 # write the validated responses to the directory maintaining the input directory structure
@@ -128,7 +130,7 @@ my $responses = ResponseSet->new($logger,
 
 
 
-$responses->write_validated_output($output_dir);
+#$responses->write_validated_output($output_dir);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 
