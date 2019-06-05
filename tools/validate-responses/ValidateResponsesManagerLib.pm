@@ -189,7 +189,8 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_COLUMN_HEADER                ERROR          Unexpected column # %s (expected %s, provided %s)
   UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
-  UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_DOCUMENT_ID                  ERROR          Unexpected document %s (expected %s)
+  UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_PARAMETER_LINE               WARNING        Unexpected line in the parameters file
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
@@ -1436,6 +1437,12 @@ my %validators = (
   'CONFIDENCE' => {
     NAME => 'CONFIDENCE',
     VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $value = $entry->get($column_name);
+      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
+        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $value, $where);
+        return;
+      }
       1;
     },
   },
@@ -1444,16 +1451,62 @@ my %validators = (
     NAME => 'DOCUMENT_ID',
     VALIDATE => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
-      my $document_id = $entry->get($column_name);
-      $responses->set("DOCUMENT_ID", $document_id) if $responses->get("DOCUMENT_ID") eq "nil";
-      my $responses_document_id = $responses->get("DOCUMENT_ID");
-      if($schema->{TASK} eq "task1" && $document_id ne $responses_document_id) {
-        $logger->record_problem("MULTIPLE_DOCUMENTS", $document_id, $responses_document_id, $where);
-        # proceed with following tests without breeaking anything; no need to return here 
-        # return;
+      my $entry_document_id = $entry->get($column_name);
+      unless ($responses->get("DOCID_MAPPINGS")->get("DOCUMENTS")->exists($entry_document_id)) {
+        $logger->record_problem("UNKNOWN_DOCUMENT", $entry_document_id, $where);
+        return;
       }
-      unless ($responses->get("DOCID_MAPPINGS")->get("DOCUMENTS")->exists($document_id)) {
-        $logger->record_problem("UNKNOWN_DOCUMENT", $document_id, $where);
+      if($schema->{TASK} eq "task1") {
+        my $kb_documentid = $entry->get("KB_DOCUMENT_ID");
+        # Check if the document matches the document from which the KB was generated
+        $logger->record_problem("UNEXPECTED_DOCUMENT_ID", $entry_document_id, $kb_documentid, $where)
+          if $entry_document_id ne $kb_documentid;
+        return;
+      }
+      1;
+    },
+  },
+  'QUERY_ENTITY_TYPE_IN_RESPONSE' => {
+    NAME => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $enttype_in_query = $entry->get("QUERY")->get("ENTTYPE");
+      my $enttype_in_response = $entry->get("QUERY_ENTITY_TYPE_IN_RESPONSE");
+      ($enttype_in_response) = $enttype_in_response =~ /\#(.*?)\>/;
+      unless ($enttype_in_response eq $enttype_in_query) {
+        $logger->record_problem("UNEXPECTED_ENTTYPE", $enttype_in_response, $enttype_in_query, $where);
+        return;
+      }
+      1;
+    },
+  },
+  
+  # Check if for TA1 system all responses come from the same (parent) document
+  'KB_DOCUMENT_ID' => {
+    NAME => 'KB_DOCUMENT_ID',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $kb_documentid = $entry->get($column_name);
+      my $entry_documentid = $entry->get("DOCUMENT_ID");
+      my $task = $schema->{TASK};
+      if($task eq "task1") {
+        unless ($kb_documentid eq $entry_documentid) {
+          $logger->record_problem("UNEXPECTED_DOCUMENT_ID", $entry_documentid, $kb_documentid, $where);
+          return;
+        }
+      }
+      1;
+    },
+  },
+  'MATCHING_ENTITY_TYPE_IN_RESPONSE' => {
+    NAME => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $enttype_in_query = $entry->get("QUERY")->get("ENTTYPE");
+      my $matching_enttype_in_response = $entry->get("MATCHING_ENTITY_TYPE_IN_RESPONSE");
+      ($matching_enttype_in_response) = $matching_enttype_in_response =~ /\#(.*?)\>/;
+      unless ($matching_enttype_in_response eq $enttype_in_query || $matching_enttype_in_response =~ /^$enttype_in_query\..*?$/) {
+        $logger->record_problem("UNEXPECTED_ENTTYPE", $matching_enttype_in_response, "$enttype_in_query or $enttype_in_query\.*", $where);
         return;
       }
       1;
@@ -1559,10 +1612,6 @@ my %normalizers = (
         $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
         $value = sprintf("%.12f", $value);
       }
-      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
-        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
-        $value = '1.0';
-      }
       $entry->set($column_name, $value);
     },
   },
@@ -1578,9 +1627,9 @@ my %schemas = (
     HEADER => [qw(?docid ?query_type ?cluster ?type ?infj_span ?t_cv ?cm_cv ?j_cv)],
     COLUMNS => [qw(
       DOCUMENT_ID
-      ENTITY_TYPE
+      QUERY_ENTITY_TYPE_IN_RESPONSE
       CLUSTER_ID
-      MATCHING_TYPE
+      MATCHING_ENTITY_TYPE_IN_RESPONSE
       VALUE_PROVENANCE_TRIPLE
       TYPE_CONFIDENCE
       CLUSTER_MEMBERSHIP_CONFIDENCE
@@ -1611,16 +1660,17 @@ my %columns = (
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
     VALIDATE => 'DOCUMENT_ID',
+    
   },
 
-  ENTITY_TYPE => {
-    NAME => 'ENTITY_TYPE',
+  QUERY_ENTITY_TYPE_IN_RESPONSE => {
+    NAME => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
     YEARS => [2019],
     TASKS => ['task1'],
     QUERY_TYPES => ['CLASS'],
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The type of entity as part of the query",
-    VALIDATE => 'ENTITY_TYPE',
+    VALIDATE => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
   },
 
   FILENAME => {
@@ -1653,7 +1703,11 @@ my %columns = (
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
-      # TO DO
+      my $filename = $entry->get("FILENAME");
+      my ($directory) = $filename =~ /\/(.*?)\.ttl\//;
+      my @elements = split(/\//, $directory);
+      my $kb_documentid = pop(@elements);
+      $entry->set("KB_DOCUMENT_ID", $kb_documentid);
     },
     VALIDATE => 'KB_DOCUMENT_ID',
   },
@@ -1666,6 +1720,16 @@ my %columns = (
   LINENUM => {
     NAME => 'LINENUM',
     DESCRIPTION => "The line number in FILENAME containing LINE - added by load",
+  },
+  
+  MATCHING_ENTITY_TYPE_IN_RESPONSE => {
+    NAME => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
+    DESCRIPTION => "The type of entity in response",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
+    VALIDATE => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
   },
   
   QUERY => {
@@ -1763,7 +1827,6 @@ sub new {
   $logger->NIST_die("$class->new called with no filenames") unless @filenames;  
   my $self = {
     CLASS => 'ResponseSet',
-    DOCUMENT_ID => undef, # defined and used later if validating a TA1 system
     QUERIES => $queries,
     DOCID_MAPPINGS => $docid_mappings,
     TEXT_BOUNDARIES => $text_document_boundaries,
