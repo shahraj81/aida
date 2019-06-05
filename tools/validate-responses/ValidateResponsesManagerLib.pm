@@ -160,23 +160,32 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   GROUND_TRUTH                            DEBUG_INFO     GROUND_TRUTH_INFO: %s     
   MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS    ERROR          Multiple incompatible assessments provided (node: %s, mention_span: %s)
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
+  ID_WITH_EXTENSION                       ERROR          File extension provided as part of %s %s
+  ILLEGAL_CONFIDENCE_VALUE                ERROR          Illegal confidence value: %s
+  IMPROPER_CONFIDENCE_VALUE               WARNING        Confidence value in scientific format: %s
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
-  INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s 
+  INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s
   INVALID_START                           WARNING        Invalid start %s in %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
+  MISSING_DECIMAL_POINT                   WARNING        Decimal point missing in confidence value: %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
+  MISSING_KEYFRAMEID                      ERROR          Missing keyframeid in video provenance %s (expecting %s, provided %s)
+  MULTIPLE_DOCUMENTS                      ERROR          Multiple documents used in response: %s, %s (expected exactly one)
   MULTIPLE_ENTRIES_IN_A_CLUSTER           ERROR          Multiple response entries in the cluster %s (expected no more than one)
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   NO_FQEC_FOR_CORRECT_ENTRY               ERROR          No FQEC found for a correct entry
-  NONNUMERIC_END                          WARNING        End %s is not numeric
+  NON_NUMERIC_VAL                         ERROR          Value %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
+  PARENT_CHILD_RELATION_FAILURE           ERROR          %s is not a child of %s
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
   SKIPPING_INPUT_FILE                     DEBUG_INFO     Skipping over file %s
+  SPAN_OFF_BOUNDARY                       ERROR          Provenance %s is outside the boundary %s of document element %s          
+  START_LARGER_THAN_END                   ERROR          Start (%s) is larger than (%s) in provenance %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_COLUMN_HEADER                ERROR          Unexpected column # %s (expected %s, provided %s)
   UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
@@ -184,9 +193,11 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_PARAMETER_LINE               WARNING        Unexpected line in the parameters file
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
-  UNKNOWN_DOCUMENT                        WARNING        Unknown Document %s in response
-  UNKNOWN_DOCUMENT_ELEMENT                WARNING        Unknown DocumentElement %s in response
-  UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s 
+  UNKNOWN_DOCUMENT                        ERROR          Unknown Document %s in response
+  UNKNOWN_DOCUMENT_ELEMENT                ERROR          Unknown DocumentElement %s in response
+  UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s
+  UNKNOWN_KEYFRAMEID                      ERROR          Unknown keyframeid %s
+  UNKNOWN_MODALITY                        ERROR          Unknown modality for document element %s
   UNKNOWN_QUERYID                         WARNING        Unknown query %s in response
 END_PROBLEM_FORMATS
 
@@ -1414,22 +1425,163 @@ package ResponseSet;
 
 use parent -norequire, 'Super';
 
+use Scalar::Util qw(looks_like_number);
+
 my $anything_pattern = qr/.+/;
 my $provenance_triple_pattern = qr/[^:]+:\d+-\d+/;
 my $provenance_triples_pattern = qr/(?:[^:]+:\d+-\d+,){0,3}[^:]+:\d+-\d+/;
 
+my %validators = (
+  # Check if the confidence is a numeric value and falls is inside (0,1]
+  'CONFIDENCE' => {
+    NAME => 'CONFIDENCE',
+    VALIDATE => sub {
+      1;
+    },
+  },
+  # Check if DocumentID belongs to the corpus
+  'DOCUMENT_ID' => {
+    NAME => 'DOCUMENT_ID',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $document_id = $entry->get($column_name);
+      $responses->set("DOCUMENT_ID", $document_id) if $responses->get("DOCUMENT_ID") eq "nil";
+      my $responses_document_id = $responses->get("DOCUMENT_ID");
+      if($schema->{TASK} eq "task1" && $document_id ne $responses_document_id) {
+        $logger->record_problem("MULTIPLE_DOCUMENTS", $document_id, $responses_document_id, $where);
+        # proceed with following tests without breeaking anything; no need to return here 
+        # return;
+      }
+      unless ($responses->get("DOCID_MAPPINGS")->get("DOCUMENTS")->exists($document_id)) {
+        $logger->record_problem("UNKNOWN_DOCUMENT", $document_id, $where);
+        return;
+      }
+      1;
+    },
+  },
+  # Check if DocumentElement and Document have parent-child relationship
+  # Check if provenance falls within the boundaries
+  'VALUE_PROVENANCE_TRIPLE' => {
+    NAME => 'VALUE_PROVENANCE_TRIPLE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $provenance = $entry->get($column_name);
+      my ($document_id, $document_element_id) = $provenance =~ /^(.*?):(.*?):(.*?)$/;
+      my $keyframe_id;
+      if($document_element_id =~ /^(.*?)_/) {
+        $keyframe_id =  $document_element_id;
+        $document_element_id = $1;
+      }
+      if($document_element_id =~ /\.(gif|jpg|png)$/) {
+        $logger->record_problem("ID_WITH_EXTENSION", "document element id", $document_element_id, $where);
+        return;
+      }
+      unless($document_id eq $entry->get("DOCUMENT_ID")) {
+        $logger->record_problem("MULTIPLE_DOCUMENTS", $document_id, $entry->get("DOCUMENT_ID"), $where);
+        return;
+      }
+      my $document_elements = $responses->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS");
+      my $documents = $responses->get("DOCID_MAPPINGS")->get("DOCUMENTS");
+
+      unless ($document_elements->exists($document_element_id)) {
+        $logger->record_problem("UNKNOWN_DOCUMENT_ELEMENT", $document_element_id, $where);
+        return;
+      }
+      my $document_element = $document_elements->get("BY_KEY", $document_element_id);
+      unless ($document_element->get("MODALITY")) {
+        $logger->record_problem("UNKNOWN_MODALITY", $document_element_id, $where);
+        return;
+      }
+      my $modality = $document_element->get("MODALITY");
+      if($modality eq "VIDEO") {
+        unless($keyframe_id) {
+          $logger->record_problem("MISSING_KEYFRAMEID", $provenance, "$document_element_id\_\\d+", $document_element_id, $where);
+          return;
+        }
+        else {
+          # keyframeid can't have extension
+          if($keyframe_id =~ /\.(gif|jpg|png)$/) {
+            $logger->record_problem("ID_WITH_EXTENSION", "keyframeid", $document_element_id, $where);
+            return;
+          }
+          unless($responses->get("KEYFRAME_BOUNDARIES")->exists($keyframe_id)) {
+            $logger->record_problem("UNKNOWN_KEYFRAMEID", $keyframe_id, $where);
+            return;
+          }
+        }
+      }
+      my $document = $documents->get("BY_KEY", $document_id);
+      unless($document->get("DOCUMENTELEMENTS")->exists($document_element_id)) {
+        $logger->record_problem("PARENT_CHILD_RELATION_FAILURE", $document_element_id, $document_id, $where);
+        return;
+      }
+      my ($sx, $sy, $ex, $ey) = $provenance =~ /\((.*?),(.*?)\)-\((.*?),(.*?)\)/;
+      # check if the span mentioned in the provenance contains numeric values
+      foreach my $value(($sx, $sy, $ex, $ey)) {
+        $logger->record_problem("NON_NUMERIC_VAL", $value, $where)
+          unless looks_like_number($value);
+        $logger->record_problem("NEGATIVE_VAL", $value, $where)
+          if looks_like_number($value) && $value < 0;
+      }
+      # check if start < end 
+      foreach my $start_and_end ({START=>$sx, END=>$ex}, {START=>$sy, END=>$ey}) {
+        $logger->record_problem("START_LARGER_THAN_END", $start_and_end->{START}, $start_and_end->{END}, $provenance, $where)
+         if looks_like_number($start_and_end->{START}) 
+            && looks_like_number($start_and_end->{END}) 
+            && $start_and_end->{START} > $start_and_end->{END};
+      }
+      # check if the span mentioned in the provenance is within the document element boundary
+      my $document_element_boundary;
+      $document_element_boundary = $responses->get("TEXT_BOUNDARIES")->get("BY_KEY", $document_element_id) if($modality eq "TEXT");
+      $document_element_boundary = $responses->get("IMAGE_BOUNDARIES")->get("BY_KEY", $document_element_id) if($modality eq "IMAGE");
+      $document_element_boundary = $responses->get("KEYFRAME_BOUNDARIES")->get("BY_KEY", $keyframe_id) if($modality eq "VIDEO");
+      unless($document_element_boundary->validate($provenance)) {
+        $logger->record_problem("SPAN_OFF_BOUNDARY", $provenance, $document_element_boundary->tostring(), $document_element_id, $where);
+        return;
+      }
+      1;
+    },
+  },
+);
+
+my %normalizers = (
+  'CONFIDENCE' => {
+    NAME => 'CONFIDENCE',
+    NORMALIZE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $original_value = $entry->get($column_name);
+      my $value = $original_value;
+      if ($value eq '1') {
+        $logger->record_problem('MISSING_DECIMAL_POINT', $value, $where);
+        $value = '1.0';
+      }
+      elsif($value =~ /^\d+\.\d+e[-+]?\d+$/i) {
+        $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
+        $value = sprintf("%.12f", $value);
+      }
+      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
+        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
+        $value = '1.0';
+      }
+      $entry->set($column_name, $value);
+    },
+  },
+);
+
 my %schemas = ( 
-  '2019TA1ClassSubmission' => {
+  '2019_TA1_CL_SUBMISSION' => {
     YEAR => 2019,
-    TYPE => 'SUBMISSION',
+    TASK => "task1",
+    QUERY_TYPE => 'CLASS',
+    FILE_TYPE => 'SUBMISSION',
     SAMPLES => ["D0100 <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> D0100:DE005_03:(210,60)-(310,210) 1.0E0 1.0E0 2.34E-1"],
     HEADER => [qw(?docid ?query_type ?cluster ?type ?infj_span ?t_cv ?cm_cv ?j_cv)],
     COLUMNS => [qw(
       DOCUMENT_ID
-      QUERY_TYPE
+      ENTITY_TYPE
       CLUSTER_ID
       MATCHING_TYPE
-      VALUE_PROVENANCE_TRIPLES
+      VALUE_PROVENANCE_TRIPLE
       TYPE_CONFIDENCE
       CLUSTER_MEMBERSHIP_CONFIDENCE
       JUSTIFICATION_CONFIDENCE
@@ -1439,145 +1591,168 @@ my %schemas = (
 
 my %columns = (
   CLUSTER_MEMBERSHIP_CONFIDENCE => {
+    NAME => 'CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
-    YEARS => [2014, 2015],
-    # We're lenient here. Guidelines state there must be a decimal
-    # point, but we want a warning only for a missing decimal point
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => sub {
-      my ($logger, $where, $value) = @_;
-      my $original_value = $value;
-      if ($value eq '1') {
-        $logger->record_problem('MISSING_DECIMAL_POINT', $value, $where);
-        $value = '1.0';
-      }
-      elsif($value =~ /^\d+\.\d+e[-+]?\d\d$/) {
-        $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
-        $value = sprintf("%.12f", $value);
-      }
-      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
-        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
-        $value = '1.0';
-      }
-      $value;
-    },
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
   },
 
-  DOCID => {
-    DESCRIPTION => "Document ID for provenance, from 2012 and 2013 submissions",
-    YEARS => [2012, 2013],
+  DOCUMENT_ID => {
+    NAME => 'DOCUMENT_ID',
+    DESCRIPTION => "Document ID for provenance",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
+    VALIDATE => 'DOCUMENT_ID',
+  },
+
+  ENTITY_TYPE => {
+    NAME => 'ENTITY_TYPE',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
+    DESCRIPTION => "The type of entity as part of the query",
+    VALIDATE => 'ENTITY_TYPE',
   },
 
   FILENAME => {
+    NAME => 'FILENAME',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The name of the file from which the description of the entry was read; added by load",
   },
 
   JUSTIFICATION_CONFIDENCE => {
+    NAME => 'JUSTIFICATION_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
-    YEARS => [2014, 2015],
-    # We're lenient here. Guidelines state there must be a decimal
-    # point, but we want a warning only for a missing decimal point
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => sub {
-      my ($logger, $where, $value) = @_;
-      my $original_value = $value;
-      if ($value eq '1') {
-        $logger->record_problem('MISSING_DECIMAL_POINT', $value, $where);
-        $value = '1.0';
-      }
-      elsif($value =~ /^\d+\.\d+e[-+]?\d\d$/) {
-        $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
-        $value = sprintf("%.12f", $value);
-      }
-      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
-        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
-        $value = '1.0';
-      }
-      $value;
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
+  },
+  
+  KB_DOCUMENT_ID => {
+    NAME => 'KB_DOCUMENT_ID',
+    DESCRIPTION => "DOCUMENT_ID from which the KB was build; required for task1 systems",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
+    GENERATOR => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
+      # TO DO
     },
+    VALIDATE => 'KB_DOCUMENT_ID',
   },
 
   LINE => {
+    NAME => 'LINE',
     DESCRIPTION => "the input line that generated this entry - added by load",
   },
 
   LINENUM => {
-    DESCRIPTION => "The line number in FILENAME containing LINE - added by load",  },
-
+    NAME => 'LINENUM',
+    DESCRIPTION => "The line number in FILENAME containing LINE - added by load",
+  },
+  
   QUERY => {
+    NAME => 'LINENUM',
     DESCRIPTION => "A pointer to the appropriate query structure",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
-      my ($logger, $where, $queries, $schema, $entry) = @_;
-      my $query = $queries->get($entry->{QUERY_ID});
-      unless (defined $query && $query->get("FULL_QUERY_ID") eq $entry->{FULL_QUERY_ID}) {
-  # Generate the query if this is an assessment
-#&main::dump_structure($entry, 'Entry', [qw(LOGGER SCHEMA)]);
-        $logger->record_problem('UNLOADED_QUERY', $entry->{QUERY_ID}, $where);
-        $logger->NIST_die("Query $entry->{FULL_QUERY_ID} not loaded; caller = " . join(":", caller) . "");
-      }
-      else {
-        $entry->{QUERY} = $query;
-      }
+      my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
+      my $query = $queries->get("QUERY", $entry->get("QUERY_ID"));
+      $entry->set("QUERY", $query);
     },
     DEPENDENCIES => [qw(QUERY_ID)],
-    REQUIRED => 'ALL',
   },
 
   QUERY_ID => {
-    DESCRIPTION => "Query ID of query this entry is responding to. Explicit in 2014, generated in other years",
-    YEARS => [2014, 2015],
+    NAME => 'QUERY_ID',
+    DESCRIPTION => "Query ID of query this entry is responding to.",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
-      my ($logger, $where, $queries, $schema, $entry) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
+      # recover the queryid from the filename
+      my $query_id = $entry->get("FILENAME");
+      $query_id =~ s/^(.*?\/)+//g;
+      $query_id =~ s/\.rq\.tsv//;
+      $entry->set("QUERY_ID", $query_id);
     },
-    DEPENDENCIES => [qw(QUERY_AND_HOP QUERY_AND_SLOT_NAME)],
     PATTERN => $anything_pattern,
     REQUIRED => 'ALL',
   },
 
-  RUNID => {
+  RUN_ID => {
+    NAME => 'RUN_ID',
     DESCRIPTION => "Run ID for this entry",
-    YEARS => [2014, 2015],
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
   },
 
-  TYPE => {
-    DESCRIPTION => "{ASSESSMENT, SUBMISSION} - from schema",
-  },
-
   TYPE_CONFIDENCE => {
+    NAME => 'TYPE_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
-    YEARS => [2014, 2015],
-    # We're lenient here. Guidelines state there must be a decimal
-    # point, but we want a warning only for a missing decimal point
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => sub {
-      my ($logger, $where, $value) = @_;
-      my $original_value = $value;
-      if ($value eq '1') {
-        $logger->record_problem('MISSING_DECIMAL_POINT', $value, $where);
-        $value = '1.0';
-      }
-      elsif($value =~ /^\d+\.\d+e[-+]?\d\d$/) {
-        $logger->record_problem('IMPROPER_CONFIDENCE_VALUE', $value, $where);
-        $value = sprintf("%.12f", $value);
-      }
-      unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
-        $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $original_value, $where);
-        $value = '1.0';
-      }
-      $value;
-    },
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
   },
   
   VALUE_PROVENANCE_TRIPLES => {
+    NAME => 'VALUE_PROVENANCE_TRIPLES',
     DESCRIPTION => "Original string representation of VALUE_PROVENANCE",
-    YEARS => [2013, 2014, 2015],
+    YEARS => [2019],
+    TASKS => [],
+    QUERY_TYPES => [],
+    FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLES',
+  },
+
+  VALUE_PROVENANCE_TRIPLE => {
+    NAME => 'VALUE_PROVENANCE_TRIPLE',
+    DESCRIPTION => "Original string representation of VALUE_PROVENANCE",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triple_pattern,
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLE',
   },
 
   YEAR => {
-    DESCRIPTION => "TAC year (according to format of submission) - from schema",
+    NAME => 'YEAR',
+    DESCRIPTION => "Year",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
   },
 
 );
@@ -1588,12 +1763,14 @@ sub new {
   $logger->NIST_die("$class->new called with no filenames") unless @filenames;  
   my $self = {
     CLASS => 'ResponseSet',
+    DOCUMENT_ID => undef, # defined and used later if validating a TA1 system
     QUERIES => $queries,
     DOCID_MAPPINGS => $docid_mappings,
     TEXT_BOUNDARIES => $text_document_boundaries,
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
     RESPONSES => Container->new($logger, "Response"),
+    RUN_ID => $run_id,
     FILENAMES => [@filenames],
     LOGGER => $logger,
   };
@@ -1616,7 +1793,7 @@ sub identify_file_schema {
   my $query_id = $filename;
   $query_id =~ s/^(.*?\/)+//g;
   $query_id =~ s/\.rq\.tsv//;
-  $schema_name = "2019TA1ClassSubmission" if($query_id =~ /^AIDA_TA1_CL_2019_\d+$/);
+  $schema_name = "2019_TA1_CL_SUBMISSION" if($query_id =~ /^AIDA_TA1_CL_2019_\d+$/);
   $schema_name;
 }
 
@@ -1624,20 +1801,84 @@ sub load {
   my ($self, $logger, $queries, $filename, $schema) = @_;
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
   my $filehandler = FileHandler->new($logger, $filename);
-  # verify if the header is as expected
+  # verify if the number of columns in the header are as expected
   my @provided_header = @{$filehandler->get("HEADER")->get("ELEMENTS")};
   my @expected_header = @{$schema->{HEADER}};
   if (@provided_header != @expected_header) {
     $logger->record_problem("UNEXPECTED_COLUMN_NUM", @expected_header, @provided_header, {FILENAME=>$filename, LINENUM=>1});
     return;
   }
+  # verify if the column names in the header are as expected
   for(my $i=0; $i<=$#provided_header; $i++) {
     if($provided_header[$i] ne $expected_header[$i]) {
       $logger->record_problem("UNEXPECTED_COLUMN_HEADER", $i+1, $expected_header[$i], $provided_header[$i], {FILENAME=>$filename, LINENUM=>1});
       return;
     }
   }
+  
   my @entries = $filehandler->get("ENTRIES")->toarray();
+  foreach my $entry(@entries) {
+    $entry->set("RUN_ID", $self->get("RUN_ID"));
+    $entry->set("FILENAME", $filename);
+    for(my $i=0; $i<=$#expected_header; $i++) {
+      $entry->set(@{$schema->{COLUMNS}}[$i], $entry->get(@{$schema->{HEADER}}[$i]))
+        if defined $entry->get(@{$schema->{HEADER}}[$i]);
+    }
+    foreach my $column_name(keys %columns) {
+      my $column = $columns{$column_name};
+      # skip the column if the it is not required for the given year, task and query_type
+      next unless $self->column_required($column, $schema);
+      # this is a required column
+      # generate this column if a generator is provided, 
+      # otherwise mark the entry as invalid and move on to the next column
+      $self->generate_slot($logger, $entry->get("WHERE"), $queries, $schema, $entry, $column_name);
+      # normalize if normalizer is provided
+      if($column->{NORMALIZE}) {
+        &{$normalizers{$column->{NORMALIZE}}->{NORMALIZE}}($self, $logger, $entry->get("WHERE"), $queries, $schema, $entry, $column_name);
+      }
+    }
+    my $valid = 1;
+    foreach my $column_name(keys %columns) {
+      my $column = $columns{$column_name};
+      # skip the column if the it is not required for the given year, task and query_type
+      next unless $self->column_required($column, $schema);
+      # validate the column, if a validator is provided
+      if($column->{VALIDATE}) {
+        $valid = 0
+          unless &{$validators{$column->{VALIDATE}}->{VALIDATE}}($self, $logger, $entry->get("WHERE"), $queries, $schema, $entry, $column_name);
+      }
+    }
+    $entry->set("VALID", $valid);
+  }
+}
+
+sub generate_slot {
+  my ($self, $logger, $where, $queries, $schema, $entry, $column) = @_;
+  return if $entry->get($column);
+  my $spec = $columns{$column};
+  $logger->NIST_die("No information available for $column column") unless defined $spec;
+  my $dependencies = $spec->{DEPENDENCIES};
+  if (defined $dependencies) {
+    foreach my $dependency (@{$dependencies}) {
+      $self->generate_slot($logger, $where, $queries, $schema, $entry, $dependency);
+    }
+  }
+  my $generator = $spec->{GENERATOR};
+  if (defined $generator) {
+    &{$generator}($self, $logger, $where, $queries, $schema, $entry);
+  }
+}
+
+sub column_required {
+  my ($self, $column, $schema) = @_;
+  my $year = $schema->{YEAR};
+  my $task = $schema->{TASK};
+  my $query_type = $schema->{QUERY_TYPE};
+  my $file_type = $schema->{FILE_TYPE};
+  return unless grep ($year, @{$column->{YEARS}});
+  return unless grep ($task, @{$column->{TASKS}});
+  return unless grep ($query_type, @{$column->{QUERY_TYPES}});
+  return 1;
 }
 
 sub tostring {
@@ -4625,6 +4866,7 @@ sub new {
     FILENAME => $filename,
     DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTS => DocumentElements->new($logger),
+    ENCODINGFORMAT_TO_MODALITY_MAPPINGS => EncodingFormatToModalityMappings->new($logger),
     COREDOCS => $coredocs,
     LOGGER => $logger,
   };
@@ -4655,6 +4897,7 @@ sub load_data {
     next if $document_eid eq "n/a";
     foreach my $document_id(sort keys %{$doceid_to_docid_mapping{$document_eid}}) {
       my $detype = $doceid_to_type_mapping{$document_eid};
+      my $modality = $self->get("ENCODINGFORMAT_TO_MODALITY_MAPPINGS")->get("MODALITY_FROM_ENCODING_FORMAT", $detype);
       my $is_core = 0;
       $is_core = 1 if $self->get("COREDOCS")->exists($document_id);
       my $document = $self->get("DOCUMENTS")->get("BY_KEY", $document_id);
@@ -4664,6 +4907,7 @@ sub load_data {
       $documentelement->get("DOCUMENTS")->add($document, $document_id);
       $documentelement->set("DOCUMENTELEMENTID", $document_eid);
       $documentelement->set("TYPE", $detype);
+      $documentelement->set("MODALITY", $modality);
       $document->add_document_element($documentelement);
     }
   }
@@ -5183,6 +5427,64 @@ sub get_F1 {
 }
 
 #####################################################################################
+# EncodingFormatToModalityMappings
+#####################################################################################
+
+package EncodingFormatToModalityMappings;
+
+use parent -norequire, 'Super';
+
+my $encoding_format_to_modality_mapping = <<'END_ENCODING_MODALITY_MAPPING';
+
+# Encoding Format      Modality
+# ---------------      --------
+gif                    image
+jpg                    image
+ltf                    text
+mp3                    audio
+mp4                    video
+pdf                    pdf
+png                    image
+psm                    text
+svg                    image
+bmp                    image
+vid                    video
+img                    image
+
+END_ENCODING_MODALITY_MAPPING
+
+sub new {
+  my ($class, $logger) = @_;
+  my $self = {
+    CLASS => 'EncodingFormatToModalityMappings',
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->load_data();
+  $self;
+}
+
+sub load_data {
+  my ($self) = @_;
+  chomp $encoding_format_to_modality_mapping;
+  foreach (grep {/\S/} grep {!/^\S*#/} split(/\n/, $encoding_format_to_modality_mapping)) {
+    s/^\s+//;
+    my ($encoding_format, $modality) = split(/\s+/, $_, 2);
+    $self->set($encoding_format, uc($modality));
+  }
+}
+
+sub get_MODALITY_FROM_ENCODING_FORMAT {
+  my ($self, $encoding_format) = @_;
+  my $modality = $self->get($encoding_format);
+  if($modality eq "nil") {
+    $self->get("LOGGER")->record_problem("MISSING_MODALITY", $encoding_format, 
+            {FILENAME => $self->get("FILENAME"), LINENUM => "n/a"});
+  }
+  $modality;
+}
+
+#####################################################################################
 # ImagesBoundingBoxes
 #####################################################################################
 
@@ -5253,7 +5555,7 @@ sub get_END {
 sub validate {
   my ($self, $span_string) = @_;
   my $is_valid = 0;
-  if(my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
+  if(my ($id, $eid, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
     my ($min_x, $min_y, $max_x, $max_y) 
       = map {$self->get($_)} 
         qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
@@ -5262,6 +5564,11 @@ sub validate {
         || $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
   }
   $is_valid;
+}
+
+sub tostring {
+  my ($self) = @_;
+  "(" . $self->get("START") . ")-(" . $self->get("END") . ")";
 }
 
 #####################################################################################
@@ -5346,7 +5653,7 @@ sub get_END {
 sub validate {
   my ($self, $span_string) = @_;
   my $is_valid = 0;
-  if(my ($id, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
+  if(my ($id, $eid, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
     my ($min_x, $min_y, $max_x, $max_y) 
       = map {$self->get($_)} 
         qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
@@ -5355,6 +5662,11 @@ sub validate {
         || $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
   }
   $is_valid;
+}
+
+sub tostring {
+  my ($self) = @_;
+  "(" . $self->get("START") . ")-(" . $self->get("END") . ")";
 }
 
 #####################################################################################
@@ -5432,6 +5744,37 @@ sub new {
   bless($self, $class);
   $self;
 }
+
+sub get_START {
+  my ($self) = @_;
+  $self->get("START_CHAR") . ",0";
+}
+
+sub get_END {
+  my ($self) = @_;
+  $self->get("END_CHAR") . ",0";
+}
+
+sub validate {
+  my ($self, $span_string) = @_;
+  my $is_valid = 0;
+  if(my ($id, $eid, $sx, $sy, $ex, $ey) = $span_string =~ /^(.*?):(.*?):\((\d+)\,(\d+)\)-\((\d+)\,(\d+)\)$/) {
+    my ($min_y, $max_y) = (0,0);
+    my ($min_x, $max_x) 
+      = map {$self->get($_)} 
+        qw(START_CHAR END_CHAR);
+    $is_valid = 1
+      unless($sx < $min_x || $sx > $max_x || $ex < $min_x || $ex > $max_x
+        || $sy < $min_y || $sy > $max_y || $ey < $min_y || $ey > $max_y);
+  }
+  $is_valid;
+}
+
+sub tostring {
+  my ($self) = @_;
+  "(" . $self->get("START") . ")-(" . $self->get("END") . ")";
+}
+
 
 #####################################################################################
 # SentenceBoundaries
