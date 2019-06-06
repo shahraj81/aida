@@ -191,6 +191,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
   UNEXPECTED_DOCUMENT_ID                  ERROR          Unexpected document %s (expected %s)
   UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_LINK_TARGET                  ERROR          Unexpected link target %s in response (expected %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_PARAMETER_LINE               WARNING        Unexpected line in the parameters file
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
@@ -200,6 +201,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNKNOWN_KEYFRAMEID                      ERROR          Unknown keyframeid %s
   UNKNOWN_MODALITY                        ERROR          Unknown modality for document element %s
   UNKNOWN_QUERYID                         WARNING        Unknown query %s in response
+  UNKNOWN_RESPONSE_FILE_TYPE              ERROR          Unknown response type of file %s
 END_PROBLEM_FORMATS
 
 #####################################################################################
@@ -1467,21 +1469,7 @@ my %validators = (
       1;
     },
   },
-  'QUERY_ENTITY_TYPE_IN_RESPONSE' => {
-    NAME => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
-    VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
-      my $enttype_in_query = $entry->get("QUERY")->get("ENTTYPE");
-      my $enttype_in_response = $entry->get("QUERY_ENTITY_TYPE_IN_RESPONSE");
-      ($enttype_in_response) = $enttype_in_response =~ /\#(.*?)\>/;
-      unless ($enttype_in_response eq $enttype_in_query) {
-        $logger->record_problem("UNEXPECTED_ENTTYPE", $enttype_in_response, $enttype_in_query, $where);
-        return;
-      }
-      1;
-    },
-  },
-  
+
   # Check if for TA1 system all responses come from the same (parent) document
   'KB_DOCUMENT_ID' => {
     NAME => 'KB_DOCUMENT_ID',
@@ -1499,6 +1487,7 @@ my %validators = (
       1;
     },
   },
+
   'MATCHING_ENTITY_TYPE_IN_RESPONSE' => {
     NAME => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
     VALIDATE => sub {
@@ -1513,6 +1502,51 @@ my %validators = (
       1;
     },
   },
+
+  'MATCHING_LINK_TARGET_IN_RESPONSE' => {
+    NAME => 'MATCHING_LINK_TARGET_IN_RESPONSE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $linktargets_in_query = $entry->get("QUERY")->get("REFERENCE_KBID");
+      my @linktargets_in_query = split(/\|/, $linktargets_in_query);
+      my $matching_linktarget_in_response = $entry->get("MATCHING_LINK_TARGET_IN_RESPONSE");
+      unless (grep {$matching_linktarget_in_response eq $_} @linktargets_in_query) {
+        $logger->record_problem("UNEXPECTED_LINK_TARGET", $matching_linktarget_in_response, $linktargets_in_query, $where);
+        return;
+      }
+      1;
+    },
+  },
+
+  'QUERY_ENTITY_TYPE_IN_RESPONSE' => {
+    NAME => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $enttype_in_query = $entry->get("QUERY")->get("ENTTYPE");
+      my $enttype_in_response = $entry->get("QUERY_ENTITY_TYPE_IN_RESPONSE");
+      ($enttype_in_response) = $enttype_in_response =~ /\#(.*?)\>/;
+      unless ($enttype_in_response eq $enttype_in_query) {
+        $logger->record_problem("UNEXPECTED_ENTTYPE", $enttype_in_response, $enttype_in_query, $where);
+        return;
+      }
+      1;
+    },
+  },
+
+  'QUERY_LINK_TARGET_IN_RESPONSE' => {
+    NAME => 'QUERY_LINK_TARGET_IN_RESPONSE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $linktarget_in_query = $entry->get("QUERY")->get("REFERENCE_KBID");
+      my $linktarget_in_response = $entry->get("QUERY_LINK_TARGET_IN_RESPONSE");
+      unless ($linktarget_in_response eq $linktarget_in_query) {
+        $logger->record_problem("UNEXPECTED_LINK_TARGET", $linktarget_in_response, $linktarget_in_query, $where);
+        return;
+      }
+      1;
+    },
+  },
+
   # Check if DocumentElement and Document have parent-child relationship
   # Check if provenance falls within the boundaries
   'VALUE_PROVENANCE_TRIPLE' => {
@@ -1637,9 +1671,35 @@ my %schemas = (
       JUSTIFICATION_CONFIDENCE
     )],
   },
+  '2019_TA2_ZH_SUBMISSION' => {
+    YEAR => 2019,
+    TASK => "task2",
+    QUERY_TYPE => 'ZEROHOP',
+    FILE_TYPE => 'SUBMISSION',
+    SAMPLES => ["IC0011UQQ LDC2018E80:703448 LDC2018E80:703448 <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0124> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) 2.34E-1 1.98E-1"],
+    HEADER => [qw(?docid ?query_link_target  ?link_target  ?cluster  ?infj_span  ?j_cv ?link_cv)],
+    COLUMNS => [qw(
+      DOCUMENT_ID
+      QUERY_LINK_TARGET_IN_RESPONSE
+      MATCHING_LINK_TARGET_IN_RESPONSE
+      CLUSTER_ID
+      VALUE_PROVENANCE_TRIPLE
+      JUSTIFICATION_CONFIDENCE
+      REFKB_LINK_CONFIDENCE
+    )],
+  },
 );
 
 my %columns = (
+  CLUSTER_ID => {
+    NAME => 'CLUSTER_ID',
+    DESCRIPTION => 'Cluster ID in response',
+    YEARS => [2019],
+    TASKS => ['task2'],
+    QUERY_TYPES => ['ZEROHOP'],
+    FILE_TYPES => ['SUBMISSION'],
+  },
+
   CLUSTER_MEMBERSHIP_CONFIDENCE => {
     NAME => 'CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
@@ -1656,29 +1716,19 @@ my %columns = (
     NAME => 'DOCUMENT_ID',
     DESCRIPTION => "Document ID for provenance",
     YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    TASKS => ['task1','task2'],
+    QUERY_TYPES => ['CLASS','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
     VALIDATE => 'DOCUMENT_ID',
     
   },
 
-  QUERY_ENTITY_TYPE_IN_RESPONSE => {
-    NAME => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
-    YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
-    FILE_TYPES => ['SUBMISSION'],
-    DESCRIPTION => "The type of entity as part of the query",
-    VALIDATE => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
-  },
-
   FILENAME => {
     NAME => 'FILENAME',
     YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    TASKS => ['task1','task2'],
+    QUERY_TYPES => ['CLASS','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The name of the file from which the description of the entry was read; added by load",
   },
@@ -1687,8 +1737,8 @@ my %columns = (
     NAME => 'JUSTIFICATION_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    TASKS => ['task1','task2'],
+    QUERY_TYPES => ['CLASS', 'ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
     NORMALIZE => 'CONFIDENCE',
@@ -1733,12 +1783,22 @@ my %columns = (
     VALIDATE => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
   },
   
+  MATCHING_LINK_TARGET_IN_RESPONSE => {
+    NAME => 'MATCHING_LINK_TARGET_IN_RESPONSE',
+    YEARS => [2019],
+    TASKS => ['task2'],
+    QUERY_TYPES => ['ZEROHOP'],
+    FILE_TYPES => ['SUBMISSION'],
+    DESCRIPTION => "The matching link target of the cluster in response",
+    VALIDATE => 'MATCHING_LINK_TARGET_IN_RESPONSE',
+  },
+
   QUERY => {
     NAME => 'LINENUM',
     DESCRIPTION => "A pointer to the appropriate query structure",
     YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    TASKS => ['task1','task2'],
+    QUERY_TYPES => ['CLASS','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
@@ -1748,12 +1808,22 @@ my %columns = (
     DEPENDENCIES => [qw(QUERY_ID)],
   },
 
+  QUERY_ENTITY_TYPE_IN_RESPONSE => {
+    NAME => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['CLASS'],
+    FILE_TYPES => ['SUBMISSION'],
+    DESCRIPTION => "The type of entity as part of the query",
+    VALIDATE => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
+  },
+  
   QUERY_ID => {
     NAME => 'QUERY_ID',
     DESCRIPTION => "Query ID of query this entry is responding to.",
     YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    TASKS => ['task1','task2'],
+    QUERY_TYPES => ['CLASS','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
@@ -1767,6 +1837,28 @@ my %columns = (
     REQUIRED => 'ALL',
   },
 
+  QUERY_LINK_TARGET_IN_RESPONSE => {
+    NAME => 'QUERY_LINK_TARGET_IN_RESPONSE',
+    YEARS => [2019],
+    TASKS => ['task2'],
+    QUERY_TYPES => ['ZEROHOP'],
+    FILE_TYPES => ['SUBMISSION'],
+    DESCRIPTION => "The link target as part of the query",
+    VALIDATE => 'QUERY_LINK_TARGET_IN_RESPONSE',
+  },
+
+  REFKB_LINK_CONFIDENCE => {
+    NAME => 'REFKB_LINK_CONFIDENCE',
+    DESCRIPTION => "Confidence of linking the cluster to reference KB, taken from submission",
+    YEARS => [2019],
+    TASKS => ['task2'],
+    QUERY_TYPES => ['ZEROHOP'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
+  },
+  
   RUN_ID => {
     NAME => 'RUN_ID',
     DESCRIPTION => "Run ID for this entry",
@@ -1843,7 +1935,7 @@ sub new {
     my $schema_name = &identify_file_schema($logger, $filename);
     my $schema = $schemas{$schema_name};
     unless ($schema) {
-      $logger->record_problem('UNKNOWN_RESPONSE_FILE_TYPE', $schema_name, 'NO_SOURCE');
+      $logger->record_problem('UNKNOWN_RESPONSE_FILE_TYPE', $filename, 'NO_SOURCE');
       next;
     }
     $self->load($logger, $queries, $filename, $schema);
@@ -1858,6 +1950,7 @@ sub identify_file_schema {
   $query_id =~ s/^(.*?\/)+//g;
   $query_id =~ s/\.rq\.tsv//;
   $schema_name = "2019_TA1_CL_SUBMISSION" if($query_id =~ /^AIDA_TA1_CL_2019_\d+$/);
+  $schema_name = "2019_TA2_ZH_SUBMISSION" if($query_id =~ /^AIDA_TA2_ZH_2019_\d+$/);
   $schema_name;
 }
 
@@ -1942,9 +2035,9 @@ sub column_required {
   my $task = $schema->{TASK};
   my $query_type = $schema->{QUERY_TYPE};
   my $file_type = $schema->{FILE_TYPE};
-  return unless grep ($year, @{$column->{YEARS}});
-  return unless grep ($task, @{$column->{TASKS}});
-  return unless grep ($query_type, @{$column->{QUERY_TYPES}});
+  return unless grep {$year eq $_} @{$column->{YEARS}};
+  return unless grep {$task eq $_} @{$column->{TASKS}};
+  return unless grep {$query_type eq $_} @{$column->{QUERY_TYPES}};
   return 1;
 }
 
