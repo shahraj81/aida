@@ -121,16 +121,7 @@ my $responses = ResponseSet->new($logger,
                   @response_files);
 
 # write the validated responses to the directory maintaining the input directory structure
-
-
-
-# This function either takes a directory or a file as the only parameter
-# If the parameter is a directory it may exist but the output file(s) within the directory must not
-# If the parameter is a file it must not exist
-
-
-
-#$responses->write_validated_output($output_dir);
+$responses->write_valid_output($output_dir);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 
