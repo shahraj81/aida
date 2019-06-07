@@ -1534,6 +1534,7 @@ my %validators = (
     VALIDATE => sub {
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $linktargets_in_query = $entry->get("QUERY")->get("REFERENCE_KBID");
+      $linktargets_in_query = $entry->get("QUERY")->get("OBJECT") if($schema->{QUERY_TYPE} eq "GRAPH");
       my @linktargets_in_query = split(/\|/, $linktargets_in_query);
       my $matching_linktarget_in_response = $entry->get("MATCHING_LINK_TARGET_IN_RESPONSE");
       unless (grep {$matching_linktarget_in_response eq $_} @linktargets_in_query) {
@@ -1578,10 +1579,11 @@ my %validators = (
     NAME => 'QUERY_LINK_TARGET_IN_RESPONSE',
     VALIDATE => sub {
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
-      my $linktarget_in_query = $entry->get("QUERY")->get("REFERENCE_KBID");
+      my $linktargets_in_query = $entry->get("QUERY")->get("REFERENCE_KBID");
+      $linktargets_in_query = $entry->get("QUERY")->get("OBJECT") if($schema->{QUERY_TYPE} eq "GRAPH");
       my $linktarget_in_response = $entry->get("QUERY_LINK_TARGET_IN_RESPONSE");
-      unless ($linktarget_in_response eq $linktarget_in_query) {
-        $logger->record_problem("UNEXPECTED_LINK_TARGET", $linktarget_in_response, $linktarget_in_query, $where);
+      unless ($linktarget_in_response eq $linktargets_in_query) {
+        $logger->record_problem("UNEXPECTED_LINK_TARGET", $linktarget_in_response, $linktargets_in_query, $where);
         return;
       }
       1;
@@ -1762,6 +1764,34 @@ my %schemas = (
       SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
     )],
   },
+
+  '2019_TA2_GR_SUBMISSION' => {
+    YEAR => 2019,
+    TASK => "task2",
+    QUERY_TYPE => 'GRAPH',
+    FILE_TYPE => 'SUBMISSION',
+    SAMPLES => ["IC0011UQQ <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack_Place> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Place> LDC2018E80:703448|LDC2018E80:703449 LDC2018E80:703448 <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0124> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0124-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0159> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0159-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0),IC0011UQQ:IC0011UQU:(200,100)-(400,300) 1.98E-1 2.34E-1 1.0E0 5.43E-1 1.0E0"],
+    HEADER => [qw(?docid ?edge_type_q ?edge_type ?olink_target_q ?olink_target ?object_cluster ?objectmo ?oinf_j_span ?subject_cluster ?subjectmo ?ej_span ?orfkblink_cv ?oinf_j_cv ?obcm_cv ?edge_cj_cv ?sbcm_cv)],
+    COLUMNS => [qw(
+      DOCUMENT_ID
+      QUERY_EDGE_TYPE_IN_RESPONSE
+      MATCHING_EDGE_TYPE_IN_RESPONSE
+      QUERY_LINK_TARGET_IN_RESPONSE
+      MATCHING_LINK_TARGET_IN_RESPONSE
+      OBJECT_CLUSTER_ID
+      OBJECT_MEMBER
+      OBJECT_VALUE_PROVENANCE_TRIPLE
+      SUBJECT_CLUSTER_ID
+      SUBJECT_MEMBER
+      EDGE_PROVENANCE_TRIPLES
+      REFKB_LINK_CONFIDENCE
+      OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE
+      OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
+      EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE
+      SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
+    )],
+  },
+
   '2019_TA2_ZH_SUBMISSION' => {
     YEAR => 2019,
     TASK => "task2",
@@ -1818,7 +1848,7 @@ my %columns = (
     NAME => 'EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -1830,7 +1860,7 @@ my %columns = (
     NAME => 'EDGE_PROVENANCE_TRIPLES_1',
     DESCRIPTION => "Original string representation of the edge justification",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,
@@ -1847,7 +1877,7 @@ my %columns = (
     NAME => 'EDGE_PROVENANCE_TRIPLES_2',
     DESCRIPTION => "Original string representation of the edge justification",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,
@@ -1862,10 +1892,10 @@ my %columns = (
   },
 
   EDGE_PROVENANCE_TRIPLES_ARRAY => {
-    NAME => 'EDGE_PROVENANCE_TRIPLES_2',
+    NAME => 'EDGE_PROVENANCE_TRIPLES_ARRAY',
     DESCRIPTION => "Original string representation of the edge justification",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,
@@ -1888,7 +1918,7 @@ my %columns = (
     NAME => 'EDGE_PROVENANCE_TRIPLES',
     DESCRIPTION => "Original string representation of the edge justification",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,
@@ -1948,7 +1978,7 @@ my %columns = (
     NAME => 'MATCHING_EDGE_TYPE_IN_RESPONSE',
     DESCRIPTION => "The type of edge in response",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     VALIDATE => 'MATCHING_EDGE_TYPE_IN_RESPONSE',
@@ -1968,7 +1998,7 @@ my %columns = (
     NAME => 'MATCHING_LINK_TARGET_IN_RESPONSE',
     YEARS => [2019],
     TASKS => ['task2'],
-    QUERY_TYPES => ['ZEROHOP'],
+    QUERY_TYPES => ['ZEROHOP','GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The matching link target of the cluster in response",
     VALIDATE => 'MATCHING_LINK_TARGET_IN_RESPONSE',
@@ -1978,7 +2008,7 @@ my %columns = (
     NAME => 'OBJECT_CLUSTER_ID',
     DESCRIPTION => 'Object cluster ID in response',
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
   },
@@ -1987,7 +2017,7 @@ my %columns = (
     NAME => 'OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -1999,7 +2029,7 @@ my %columns = (
     NAME => 'OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2011,7 +2041,7 @@ my %columns = (
     NAME => 'OBJECT_MEMBER',
     DESCRIPTION => 'Member of the object cluster in response',
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
   },
@@ -2020,7 +2050,7 @@ my %columns = (
     NAME => 'OBJECT_VALUE_PROVENANCE_TRIPLE',
     DESCRIPTION => "Original string representation of object's VALUE_PROVENANCE",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triple_pattern,
@@ -2045,7 +2075,7 @@ my %columns = (
   QUERY_EDGE_TYPE_IN_RESPONSE => {
     NAME => 'QUERY_EDGE_TYPE_IN_RESPONSE',
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The type of edge as part of the query",
@@ -2085,7 +2115,7 @@ my %columns = (
     NAME => 'QUERY_LINK_TARGET_IN_RESPONSE',
     YEARS => [2019],
     TASKS => ['task2'],
-    QUERY_TYPES => ['ZEROHOP'],
+    QUERY_TYPES => ['ZEROHOP','GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The link target as part of the query",
     VALIDATE => 'QUERY_LINK_TARGET_IN_RESPONSE',
@@ -2096,7 +2126,7 @@ my %columns = (
     DESCRIPTION => "Confidence of linking the cluster to reference KB, taken from submission",
     YEARS => [2019],
     TASKS => ['task2'],
-    QUERY_TYPES => ['ZEROHOP'],
+    QUERY_TYPES => ['ZEROHOP','GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
     NORMALIZE => 'CONFIDENCE',
@@ -2117,7 +2147,7 @@ my %columns = (
     NAME => 'SUBJECT_CLUSTER_ID',
     DESCRIPTION => 'Subject cluster ID in response',
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
   },
@@ -2126,7 +2156,7 @@ my %columns = (
     NAME => 'SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2138,7 +2168,7 @@ my %columns = (
     NAME => 'SUBJECT_MEMBER',
     DESCRIPTION => 'Member of the subject cluster in response',
     YEARS => [2019],
-    TASKS => ['task1'],
+    TASKS => ['task1','task2'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
   },
@@ -4150,6 +4180,7 @@ sub load {
   $self->set("QUERYID", $query_id);
   $self->set("QUERYTYPE", $query_type);
   $self->set("PREDICATE", $self->get("XML_OBJECT")->get("CHILD", "predicate")->get("ELEMENT"));
+  $self->set("OBJECT", $self->get("XML_OBJECT")->get("CHILD", "object")->get("ELEMENT"));
   $self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
 }
 
