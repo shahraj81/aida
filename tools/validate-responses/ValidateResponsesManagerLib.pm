@@ -163,6 +163,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   ID_WITH_EXTENSION                       ERROR          File extension provided as part of %s %s
   ILLEGAL_CONFIDENCE_VALUE                ERROR          Illegal confidence value: %s
   IMPROPER_CONFIDENCE_VALUE               WARNING        Confidence value in scientific format: %s
+  INCORRECT_PROVENANCE_FORMAT             ERROR          Incorrect format of provenance %s
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
@@ -190,11 +191,15 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_COLUMN_HEADER                ERROR          Unexpected column # %s (expected %s, provided %s)
   UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
   UNEXPECTED_DOCUMENT_ID                  ERROR          Unexpected document %s (expected %s)
+  UNEXPECTED_EDGETYPE                     ERROR          Unexpected edge %s in response (expected %s)
   UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_EVENTTYPE                    ERROR          Unexpected event type %s in response (expected %s)
   UNEXPECTED_LINK_TARGET                  ERROR          Unexpected link target %s in response (expected %s)
+  UNEXPECTED_NUM_SPANS                    ERROR          Unexpected number of spans in provenance %s (expected %s, provided %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_PARAMETER_LINE               WARNING        Unexpected line in the parameters file
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
+  UNEXPECTED_ROLENAME                     ERROR          Unexpected role name %s in response (expected %s)
   UNKNOWN_DOCUMENT                        ERROR          Unknown Document %s in response
   UNKNOWN_DOCUMENT_ELEMENT                ERROR          Unknown DocumentElement %s in response
   UNKNOWN_EDGEID                          WARNING        Unknown edge %s in response to query %s
@@ -1439,7 +1444,7 @@ my %validators = (
   'CONFIDENCE' => {
     NAME => 'CONFIDENCE',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $value = $entry->get($column_name);
       unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
         $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $value, $where);
@@ -1452,7 +1457,7 @@ my %validators = (
   'DOCUMENT_ID' => {
     NAME => 'DOCUMENT_ID',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $entry_document_id = $entry->get($column_name);
       unless ($responses->get("DOCID_MAPPINGS")->get("DOCUMENTS")->exists($entry_document_id)) {
         $logger->record_problem("UNKNOWN_DOCUMENT", $entry_document_id, $where);
@@ -1474,7 +1479,7 @@ my %validators = (
   'KB_DOCUMENT_ID' => {
     NAME => 'KB_DOCUMENT_ID',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $kb_documentid = $entry->get($column_name);
       my $entry_documentid = $entry->get("DOCUMENT_ID");
       my $task = $schema->{TASK};
@@ -1488,10 +1493,31 @@ my %validators = (
     },
   },
 
+  'MATCHING_EDGE_TYPE_IN_RESPONSE' => {
+    NAME => 'MATCHING_EDGE_TYPE_IN_RESPONSE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
+      my $edgetype_in_query = $entry->get("QUERY")->get("PREDICATE");
+      my $matching_edgetype_in_response = $entry->get("MATCHING_EDGE_TYPE_IN_RESPONSE");
+      ($matching_edgetype_in_response) = $matching_edgetype_in_response =~ /\#(.*?)\>/;
+      my ($event_or_relation_type_in_query, $rolename_in_query) = split("_",$edgetype_in_query);
+      my ($matching_event_or_relation_type_in_response, $matching_rolename_in_response) = split("_",$matching_edgetype_in_response);
+      unless ($rolename_in_query eq $matching_rolename_in_response) {
+        $logger->record_problem("UNEXPECTED_ROLENAME", $matching_rolename_in_response, $rolename_in_query, $where);
+        return;
+      }
+      unless ($matching_event_or_relation_type_in_response eq $event_or_relation_type_in_query || $matching_event_or_relation_type_in_response =~ /^$event_or_relation_type_in_query\..*?$/) {
+        $logger->record_problem("UNEXPECTED_EVENTTYPE", $matching_event_or_relation_type_in_response, "$event_or_relation_type_in_query or $event_or_relation_type_in_query\.*", $where);
+        return;
+      }
+      1;
+    },
+  },
+
   'MATCHING_ENTITY_TYPE_IN_RESPONSE' => {
     NAME => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $enttype_in_query = $entry->get("QUERY")->get("ENTTYPE");
       my $matching_enttype_in_response = $entry->get("MATCHING_ENTITY_TYPE_IN_RESPONSE");
       ($matching_enttype_in_response) = $matching_enttype_in_response =~ /\#(.*?)\>/;
@@ -1506,7 +1532,7 @@ my %validators = (
   'MATCHING_LINK_TARGET_IN_RESPONSE' => {
     NAME => 'MATCHING_LINK_TARGET_IN_RESPONSE',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $linktargets_in_query = $entry->get("QUERY")->get("REFERENCE_KBID");
       my @linktargets_in_query = split(/\|/, $linktargets_in_query);
       my $matching_linktarget_in_response = $entry->get("MATCHING_LINK_TARGET_IN_RESPONSE");
@@ -1518,10 +1544,25 @@ my %validators = (
     },
   },
 
+  'QUERY_EDGE_TYPE_IN_RESPONSE' => {
+    NAME => 'QUERY_EDGE_TYPE_IN_RESPONSE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
+      my $edgetype_in_query = $entry->get("QUERY")->get("PREDICATE");
+      my $edgetype_in_response = $entry->get("QUERY_EDGE_TYPE_IN_RESPONSE");
+      ($edgetype_in_response) = $edgetype_in_response =~ /\#(.*?)\>/;
+      unless ($edgetype_in_response eq $edgetype_in_query) {
+        $logger->record_problem("UNEXPECTED_EDGETYPE", $edgetype_in_response, $edgetype_in_query, $where);
+        return;
+      }
+      1;
+    },
+  },
+
   'QUERY_ENTITY_TYPE_IN_RESPONSE' => {
     NAME => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $enttype_in_query = $entry->get("QUERY")->get("ENTTYPE");
       my $enttype_in_response = $entry->get("QUERY_ENTITY_TYPE_IN_RESPONSE");
       ($enttype_in_response) = $enttype_in_response =~ /\#(.*?)\>/;
@@ -1536,7 +1577,7 @@ my %validators = (
   'QUERY_LINK_TARGET_IN_RESPONSE' => {
     NAME => 'QUERY_LINK_TARGET_IN_RESPONSE',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $linktarget_in_query = $entry->get("QUERY")->get("REFERENCE_KBID");
       my $linktarget_in_response = $entry->get("QUERY_LINK_TARGET_IN_RESPONSE");
       unless ($linktarget_in_response eq $linktarget_in_query) {
@@ -1552,9 +1593,16 @@ my %validators = (
   'VALUE_PROVENANCE_TRIPLE' => {
     NAME => 'VALUE_PROVENANCE_TRIPLE',
     VALIDATE => sub {
-      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
+      my $optional = 0;
+      $optional = 1 if $column->{OPTIONAL};
       my $provenance = $entry->get($column_name);
-      my ($document_id, $document_element_id) = $provenance =~ /^(.*?):(.*?):(.*?)$/;
+      return 1 if $optional && !$provenance;
+      unless($provenance =~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))$/) {
+        $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
+        return;
+      }
+      my ($document_id, $document_element_id, $span) = $provenance =~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))$/;
       my $keyframe_id;
       if($document_element_id =~ /^(.*?)_/) {
         $keyframe_id =  $document_element_id;
@@ -1603,7 +1651,7 @@ my %validators = (
         $logger->record_problem("PARENT_CHILD_RELATION_FAILURE", $document_element_id, $document_id, $where);
         return;
       }
-      my ($sx, $sy, $ex, $ey) = $provenance =~ /\((.*?),(.*?)\)-\((.*?),(.*?)\)/;
+      my ($sx, $sy, $ex, $ey) = $span =~ /\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\)/;
       # check if the span mentioned in the provenance contains numeric values
       foreach my $value(($sx, $sy, $ex, $ey)) {
         $logger->record_problem("NON_NUMERIC_VAL", $value, $where)
@@ -1630,6 +1678,25 @@ my %validators = (
       1;
     },
   },
+
+  'VALUE_PROVENANCE_TRIPLES' => {
+    NAME => 'VALUE_PROVENANCE_TRIPLES',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
+      my $provenances = $entry->get($column_name);
+      if($provenances !~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))(,(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\)))*?$/) {
+        $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenances, $where);
+        return;
+      }
+      my $num_provenances = split(",", $provenances) / 3;
+      unless($num_provenances == 1 or $num_provenances == 2) {
+        $logger->record_problem("UNEXPECTED_NUM_SPANS", $provenances, "1 or 2", $num_provenances, $where);
+        return;
+      }
+      1;
+    },
+  },
+
 );
 
 my %normalizers = (
@@ -1669,6 +1736,30 @@ my %schemas = (
       TYPE_CONFIDENCE
       CLUSTER_MEMBERSHIP_CONFIDENCE
       JUSTIFICATION_CONFIDENCE
+    )],
+  },
+
+  '2019_TA1_GR_SUBMISSION' => {
+    YEAR => 2019,
+    TASK => "task1",
+    QUERY_TYPE => 'GRAPH',
+    FILE_TYPE => 'SUBMISSION',
+    SAMPLES => ["IC0011UQQ <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Attacker> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Attacker> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0137-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0159> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0159-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0),IC0011UQQ:IC0011UQU:(200,100)-(400,300) 2.34E-1 1.0E0 5.43E-1 1.0E0"],
+    HEADER => [qw(?docid ?edge_type_q ?edge_type ?object_cluster ?objectmo ?oinf_j_span ?subject_cluster ?subjectmo ?ej_span ?oinf_j_cv ?obcm_cv ?edge_cj_cv ?sbcm_cv)], 
+    COLUMNS => [qw(
+      DOCUMENT_ID
+      QUERY_EDGE_TYPE_IN_RESPONSE
+      MATCHING_EDGE_TYPE_IN_RESPONSE
+      OBJECT_CLUSTER_ID
+      OBJECT_MEMBER
+      OBJECT_VALUE_PROVENANCE_TRIPLE
+      SUBJECT_CLUSTER_ID
+      SUBJECT_MEMBER
+      EDGE_PROVENANCE_TRIPLES
+      OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE
+      OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
+      EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE
+      SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
     )],
   },
   '2019_TA2_ZH_SUBMISSION' => {
@@ -1717,18 +1808,98 @@ my %columns = (
     DESCRIPTION => "Document ID for provenance",
     YEARS => [2019],
     TASKS => ['task1','task2'],
-    QUERY_TYPES => ['CLASS','ZEROHOP'],
+    QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
     VALIDATE => 'DOCUMENT_ID',
-    
+  },
+
+  EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE => {
+    NAME => 'EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE',
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
+  },
+
+  EDGE_PROVENANCE_TRIPLES_1 => {
+    NAME => 'EDGE_PROVENANCE_TRIPLES_1',
+    DESCRIPTION => "Original string representation of the edge justification",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triples_pattern,
+    GENERATOR => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
+      my $triples = $entry->get("EDGE_PROVENANCE_TRIPLES_ARRAY");
+      $entry->set("EDGE_PROVENANCE_TRIPLES_1", @$triples[0]);
+    },
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLE',
+    DEPENDENCIES => [qw(EDGE_PROVENANCE_TRIPLES_ARRAY)],
+  },
+
+  EDGE_PROVENANCE_TRIPLES_2 => {
+    NAME => 'EDGE_PROVENANCE_TRIPLES_2',
+    DESCRIPTION => "Original string representation of the edge justification",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triples_pattern,
+    GENERATOR => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
+      my $triples = $entry->get("EDGE_PROVENANCE_TRIPLES_ARRAY");
+      $entry->set("EDGE_PROVENANCE_TRIPLES_2", @$triples[1]) if @$triples > 1;
+    },
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLE',
+    OPTIONAL => 1,
+    DEPENDENCIES => [qw(EDGE_PROVENANCE_TRIPLES_ARRAY)],
+  },
+
+  EDGE_PROVENANCE_TRIPLES_ARRAY => {
+    NAME => 'EDGE_PROVENANCE_TRIPLES_2',
+    DESCRIPTION => "Original string representation of the edge justification",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triples_pattern,
+    GENERATOR => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
+      my $triples = $entry->get("EDGE_PROVENANCE_TRIPLES");
+      my @triples = split(/\),/, $triples);
+      my $i = 0;
+      foreach my $triple(@triples) {
+        $i++;
+        $triple .= ")" if $triple !~ /\)$/;
+      }
+      $entry->set("EDGE_PROVENANCE_TRIPLES_ARRAY", \@triples);
+    },
+    OPTIONAL => 1,
+    DEPENDENCIES => [qw(EDGE_PROVENANCE_TRIPLES)],
+  },
+
+  EDGE_PROVENANCE_TRIPLES => {
+    NAME => 'EDGE_PROVENANCE_TRIPLES',
+    DESCRIPTION => "Original string representation of the edge justification",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triples_pattern,
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLES',
   },
 
   FILENAME => {
     NAME => 'FILENAME',
     YEARS => [2019],
     TASKS => ['task1','task2'],
-    QUERY_TYPES => ['CLASS','ZEROHOP'],
+    QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The name of the file from which the description of the entry was read; added by load",
   },
@@ -1744,13 +1915,13 @@ my %columns = (
     NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
-  
+
   KB_DOCUMENT_ID => {
     NAME => 'KB_DOCUMENT_ID',
     DESCRIPTION => "DOCUMENT_ID from which the KB was build; required for task1 systems",
     YEARS => [2019],
     TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    QUERY_TYPES => ['CLASS','GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
@@ -1772,7 +1943,17 @@ my %columns = (
     NAME => 'LINENUM',
     DESCRIPTION => "The line number in FILENAME containing LINE - added by load",
   },
-  
+
+  MATCHING_EDGE_TYPE_IN_RESPONSE => {
+    NAME => 'MATCHING_EDGE_TYPE_IN_RESPONSE',
+    DESCRIPTION => "The type of edge in response",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    VALIDATE => 'MATCHING_EDGE_TYPE_IN_RESPONSE',
+  },
+
   MATCHING_ENTITY_TYPE_IN_RESPONSE => {
     NAME => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
     DESCRIPTION => "The type of entity in response",
@@ -1782,7 +1963,7 @@ my %columns = (
     FILE_TYPES => ['SUBMISSION'],
     VALIDATE => 'MATCHING_ENTITY_TYPE_IN_RESPONSE',
   },
-  
+
   MATCHING_LINK_TARGET_IN_RESPONSE => {
     NAME => 'MATCHING_LINK_TARGET_IN_RESPONSE',
     YEARS => [2019],
@@ -1793,12 +1974,65 @@ my %columns = (
     VALIDATE => 'MATCHING_LINK_TARGET_IN_RESPONSE',
   },
 
+  OBJECT_CLUSTER_ID => {
+    NAME => 'OBJECT_CLUSTER_ID',
+    DESCRIPTION => 'Object cluster ID in response',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+  },
+
+  OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE => {
+    NAME => 'OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
+  },
+
+  OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE => {
+    NAME => 'OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE',
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
+  },
+
+  OBJECT_MEMBER => {
+    NAME => 'OBJECT_MEMBER',
+    DESCRIPTION => 'Member of the object cluster in response',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+  },
+
+  OBJECT_VALUE_PROVENANCE_TRIPLE => {
+    NAME => 'OBJECT_VALUE_PROVENANCE_TRIPLE',
+    DESCRIPTION => "Original string representation of object's VALUE_PROVENANCE",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triple_pattern,
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLE',
+  },
+
   QUERY => {
     NAME => 'LINENUM',
     DESCRIPTION => "A pointer to the appropriate query structure",
     YEARS => [2019],
     TASKS => ['task1','task2'],
-    QUERY_TYPES => ['CLASS','ZEROHOP'],
+    QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
@@ -1806,6 +2040,16 @@ my %columns = (
       $entry->set("QUERY", $query);
     },
     DEPENDENCIES => [qw(QUERY_ID)],
+  },
+
+  QUERY_EDGE_TYPE_IN_RESPONSE => {
+    NAME => 'QUERY_EDGE_TYPE_IN_RESPONSE',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    DESCRIPTION => "The type of edge as part of the query",
+    VALIDATE => 'QUERY_EDGE_TYPE_IN_RESPONSE',
   },
 
   QUERY_ENTITY_TYPE_IN_RESPONSE => {
@@ -1817,13 +2061,13 @@ my %columns = (
     DESCRIPTION => "The type of entity as part of the query",
     VALIDATE => 'QUERY_ENTITY_TYPE_IN_RESPONSE',
   },
-  
+
   QUERY_ID => {
     NAME => 'QUERY_ID',
     DESCRIPTION => "Query ID of query this entry is responding to.",
     YEARS => [2019],
     TASKS => ['task1','task2'],
-    QUERY_TYPES => ['CLASS','ZEROHOP'],
+    QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
@@ -1858,15 +2102,45 @@ my %columns = (
     NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
-  
+
   RUN_ID => {
     NAME => 'RUN_ID',
     DESCRIPTION => "Run ID for this entry",
     YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    TASKS => ['task1','task2'],
+    QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
+  },
+
+  SUBJECT_CLUSTER_ID => {
+    NAME => 'SUBJECT_CLUSTER_ID',
+    DESCRIPTION => 'Subject cluster ID in response',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+  },
+
+  SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE => {
+    NAME => 'SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
+  },
+
+  SUBJECT_MEMBER => {
+    NAME => 'SUBJECT_MEMBER',
+    DESCRIPTION => 'Member of the subject cluster in response',
+    YEARS => [2019],
+    TASKS => ['task1'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
   },
 
   TYPE_CONFIDENCE => {
@@ -1879,17 +2153,6 @@ my %columns = (
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
     NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
-  },
-  
-  VALUE_PROVENANCE_TRIPLES => {
-    NAME => 'VALUE_PROVENANCE_TRIPLES',
-    DESCRIPTION => "Original string representation of VALUE_PROVENANCE",
-    YEARS => [2019],
-    TASKS => [],
-    QUERY_TYPES => [],
-    FILE_TYPES => ['SUBMISSION'],
-    PATTERN => $provenance_triples_pattern,
-    VALIDATE => 'VALUE_PROVENANCE_TRIPLES',
   },
 
   VALUE_PROVENANCE_TRIPLE => {
@@ -1907,8 +2170,8 @@ my %columns = (
     NAME => 'YEAR',
     DESCRIPTION => "Year",
     YEARS => [2019],
-    TASKS => ['task1'],
-    QUERY_TYPES => ['CLASS'],
+    TASKS => ['task1','task2'],
+    QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
   },
 
@@ -1950,7 +2213,9 @@ sub identify_file_schema {
   $query_id =~ s/^(.*?\/)+//g;
   $query_id =~ s/\.rq\.tsv//;
   $schema_name = "2019_TA1_CL_SUBMISSION" if($query_id =~ /^AIDA_TA1_CL_2019_\d+$/);
+  $schema_name = "2019_TA1_GR_SUBMISSION" if($query_id =~ /^AIDA_TA1_GR_2019_\d+$/);
   $schema_name = "2019_TA2_ZH_SUBMISSION" if($query_id =~ /^AIDA_TA2_ZH_2019_\d+$/);
+  $schema_name = "2019_TA2_GR_SUBMISSION" if($query_id =~ /^AIDA_TA2_GR_2019_\d+$/);
   $schema_name;
 }
 
@@ -1962,7 +2227,7 @@ sub load {
   my @provided_header = @{$filehandler->get("HEADER")->get("ELEMENTS")};
   my @expected_header = @{$schema->{HEADER}};
   if (@provided_header != @expected_header) {
-    $logger->record_problem("UNEXPECTED_COLUMN_NUM", @expected_header, @provided_header, {FILENAME=>$filename, LINENUM=>1});
+    $logger->record_problem("UNEXPECTED_COLUMN_NUM", $#expected_header, $#provided_header, {FILENAME=>$filename, LINENUM=>1});
     return;
   }
   # verify if the column names in the header are as expected
@@ -1976,6 +2241,11 @@ sub load {
   my @entries = $filehandler->get("ENTRIES")->toarray();
   my $i = 0;
   foreach my $entry(@entries) {
+    my @provided_columns = split(/\t/, $entry->get("LINE"));
+    if(@provided_columns != @expected_header) {
+      $logger->record_problem("UNEXPECTED_COLUMN_NUM", $#expected_header, $#provided_columns, $entry->get("WHERE"));
+      return;
+    }
     $entry->set("RUN_ID", $self->get("RUN_ID"));
     $entry->set("FILENAME", $filename);
     for(my $i=0; $i<=$#expected_header; $i++) {
@@ -2002,8 +2272,13 @@ sub load {
       next unless $self->column_required($column, $schema);
       # validate the column, if a validator is provided
       if($column->{VALIDATE}) {
-        $valid = 0
-          unless &{$validators{$column->{VALIDATE}}->{VALIDATE}}($self, $logger, $entry->get("WHERE"), $queries, $schema, $entry, $column_name);
+        if($validators{$column->{VALIDATE}}) {
+          $valid = 0
+            unless &{$validators{$column->{VALIDATE}}->{VALIDATE}}($self, $logger, $entry->get("WHERE"), $queries, $schema, $column, $entry, $column_name);
+        }
+        else {
+          $logger->NIST_die("VALIDATOR subroutine missing for $column_name");
+        }
       }
     }
     $entry->set("VALID", $valid);
