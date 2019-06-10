@@ -162,7 +162,9 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
   ID_WITH_EXTENSION                       ERROR          File extension provided as part of %s %s
   ILLEGAL_CONFIDENCE_VALUE                ERROR          Illegal confidence value: %s
+  ILLEGAL_IMPORTANCE_VALUE                ERROR          Illegal importance value: %s
   IMPROPER_CONFIDENCE_VALUE               WARNING        Confidence value in scientific format: %s
+  IMPROPER_IMPORTANCE_VALUE               WARNING        Importance value in scientific format: %s
   INCORRECT_PROVENANCE_FORMAT             ERROR          Incorrect format of provenance %s
   INVALID_CONFIDENCE                      WARNING        Invalid confidence %s in response
   INVALID_END                             WARNING        Invalid end %s in response justification of type %s
@@ -1446,6 +1448,7 @@ my %validators = (
     VALIDATE => sub {
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $value = $entry->get($column_name);
+      return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $value eq "NULL" && $column_name eq "EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE");
       unless ($value =~ /^(?:1\.0*)$|^(?:0?\.[0-9]*[1-9][0-9]*)$/) {
         $logger->record_problem('ILLEGAL_CONFIDENCE_VALUE', $value, $where);
         return;
@@ -1470,6 +1473,19 @@ my %validators = (
           $logger->record_problem("UNEXPECTED_DOCUMENT_ID", $entry_document_id, $kb_documentid, $where);
           return;
         }
+      }
+      1;
+    },
+  },
+  # Check if importance value is valid
+  'IMPORTANCE' => {
+    NAME => 'IMPORTANCE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
+      my $value = $entry->get($column_name);
+      unless (looks_like_number($value)) {
+        $logger->record_problem('ILLEGAL_IMPORTANCE_VALUE', $value, $where);
+        return;
       }
       1;
     },
@@ -1599,6 +1615,7 @@ my %validators = (
       my $optional = 0;
       $optional = 1 if $column->{OPTIONAL};
       my $provenance = $entry->get($column_name);
+      return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       return 1 if $optional && !$provenance;
       unless($provenance =~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
@@ -1686,6 +1703,7 @@ my %validators = (
     VALIDATE => sub {
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $provenances = $entry->get($column_name);
+      return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenances eq "NULL");
       if($provenances !~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))(,(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\)))*?$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenances, $where);
         return;
@@ -1719,10 +1737,24 @@ my %normalizers = (
       $entry->set($column_name, $value);
     },
   },
+  'IMPORTANCE' => {
+    NAME => 'IMPORTANCE',
+    NORMALIZE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry, $column_name) = @_;
+      my $original_value = $entry->get($column_name);
+      my $value = $original_value;
+      if($value =~ /^\d+\.\d+e[-+]?\d+$/i) {
+        $logger->record_problem('IMPROPER_IMPORTANCE_VALUE', $value, $where);
+        $value = sprintf("%.12f", $value);
+      }
+      $entry->set($column_name, $value);
+    },
+  },
 );
 
 my %schemas = ( 
   '2019_TA1_CL_SUBMISSION' => {
+    NAME => '2019_TA1_CL_SUBMISSION',
     YEAR => 2019,
     TASK => "task1",
     QUERY_TYPE => 'CLASS',
@@ -1742,6 +1774,7 @@ my %schemas = (
   },
 
   '2019_TA1_GR_SUBMISSION' => {
+    NAME => '2019_TA1_GR_SUBMISSION',
     YEAR => 2019,
     TASK => "task1",
     QUERY_TYPE => 'GRAPH',
@@ -1766,6 +1799,7 @@ my %schemas = (
   },
 
   '2019_TA2_GR_SUBMISSION' => {
+    NAME => '2019_TA2_GR_SUBMISSION',
     YEAR => 2019,
     TASK => "task2",
     QUERY_TYPE => 'GRAPH',
@@ -1791,8 +1825,37 @@ my %schemas = (
       SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
     )],
   },
+  
+  '2019_TA3_GR_SUBMISSION' => {
+    NAME => '2019_TA3_GR_SUBMISSION',
+    YEAR => 2019,
+    TASK => "task3",
+    QUERY_TYPE => 'GRAPH',
+    FILE_TYPE => 'SUBMISSION',
+    SAMPLES => ["IC0011UQQ <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Attacker> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0137-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0159> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0159-D0100> NULL  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack>  IC0011UQQ:HC000Q7P6:(45,0)-(55,0),IC0011UQQ:IC0011UQU:(200,100)-(400,300) 9.05E1  7.55E1  1.105E2 Sniper  5.43E-1"],
+    HEADER => [qw(?docid ?edge_type ?object_cluster ?objectmo ?oinf_j_span ?object_type ?subject_cluster ?subjectmo ?sinf_j_span ?subject_type ?ej_span ?hypothesis_iv ?subjectc_iv ?edge_iv ?objectc_handle ?edge_cj_cv)],
+    COLUMNS => [qw(
+      DOCUMENT_ID
+      EDGE_TYPE_IN_RESPONSE
+      OBJECT_CLUSTER_ID
+      OBJECT_MEMBER
+      OBJECT_VALUE_PROVENANCE_TRIPLE
+      OBJECT_TYPE
+      SUBJECT_CLUSTER_ID
+      SUBJECT_MEMBER
+      SUBJECT_VALUE_PROVENANCE_TRIPLE
+      SUBJECT_TYPE
+      EDGE_PROVENANCE_TRIPLES
+      HYPOTHESIS_IMPORTANCE_VALUE
+      SUBJECT_CLUSTER_IMPORTANCE_VALUE
+      EDGE_IMPORTANCE_VALUE
+      OBJECT_HANDLE
+      EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE
+    )],
+  },
 
   '2019_TA2_ZH_SUBMISSION' => {
+    NAME => '2019_TA2_ZH_SUBMISSION',
     YEAR => 2019,
     TASK => "task2",
     QUERY_TYPE => 'ZEROHOP',
@@ -1837,7 +1900,7 @@ my %columns = (
     NAME => 'DOCUMENT_ID',
     DESCRIPTION => "Document ID for provenance",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
@@ -1848,12 +1911,34 @@ my %columns = (
     NAME => 'EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
     NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
+  },
+
+  EDGE_IMPORTANCE_VALUE => {
+    NAME => 'EDGE_IMPORTANCE_VALUE',
+    DESCRIPTION => "Edge importance value; taken from submission",
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    NORMALIZE => 'IMPORTANCE',
+    VALIDATE => 'IMPORTANCE',
+  },
+
+  EDGE_PROVENANCE_TRIPLES => {
+    NAME => 'EDGE_PROVENANCE_TRIPLES',
+    DESCRIPTION => "Original string representation of the edge justification",
+    YEARS => [2019],
+    TASKS => ['task1','task2','task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triples_pattern,
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLES',
   },
 
   EDGE_PROVENANCE_TRIPLES_1 => {
@@ -1914,15 +1999,12 @@ my %columns = (
     DEPENDENCIES => [qw(EDGE_PROVENANCE_TRIPLES)],
   },
 
-  EDGE_PROVENANCE_TRIPLES => {
-    NAME => 'EDGE_PROVENANCE_TRIPLES',
-    DESCRIPTION => "Original string representation of the edge justification",
+  EDGE_TYPE_IN_RESPONSE => {
+    NAME => 'EDGE_TYPE_IN_RESPONSE',
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
-    PATTERN => $provenance_triples_pattern,
-    VALIDATE => 'VALUE_PROVENANCE_TRIPLES',
   },
 
   FILENAME => {
@@ -1932,6 +2014,16 @@ my %columns = (
     QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The name of the file from which the description of the entry was read; added by load",
+  },
+
+  HYPOTHESIS_IMPORTANCE_VALUE => {
+    NAME => 'HYPOTHESIS_IMPORTANCE_VALUE',
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    NORMALIZE => 'IMPORTANCE',
+    VALIDATE => 'IMPORTANCE',
   },
 
   JUSTIFICATION_CONFIDENCE => {
@@ -2008,7 +2100,7 @@ my %columns = (
     NAME => 'OBJECT_CLUSTER_ID',
     DESCRIPTION => 'Object cluster ID in response',
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
   },
@@ -2023,6 +2115,15 @@ my %columns = (
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
     NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
+  },
+
+  OBJECT_HANDLE => {
+    NAME => 'OBJECT_HANDLE',
+    DESCRIPTION => 'Natural lanugage handle of the object of the edge, taken from response',
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
   },
 
   OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE => {
@@ -2046,11 +2147,20 @@ my %columns = (
     FILE_TYPES => ['SUBMISSION'],
   },
 
+  OBJECT_TYPE => {
+    NAME => 'OBJECT_TYPE',
+    DESCRIPTION => 'Type of the object of the edge, taken from response',
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+  },
+
   OBJECT_VALUE_PROVENANCE_TRIPLE => {
     NAME => 'OBJECT_VALUE_PROVENANCE_TRIPLE',
     DESCRIPTION => "Original string representation of object's VALUE_PROVENANCE",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triple_pattern,
@@ -2061,7 +2171,7 @@ my %columns = (
     NAME => 'LINENUM',
     DESCRIPTION => "A pointer to the appropriate query structure",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
@@ -2096,7 +2206,7 @@ my %columns = (
     NAME => 'QUERY_ID',
     DESCRIPTION => "Query ID of query this entry is responding to.",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     GENERATOR => sub {
@@ -2137,7 +2247,7 @@ my %columns = (
     NAME => 'RUN_ID',
     DESCRIPTION => "Run ID for this entry",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['CLASS','GRAPH','ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $anything_pattern,
@@ -2147,9 +2257,19 @@ my %columns = (
     NAME => 'SUBJECT_CLUSTER_ID',
     DESCRIPTION => 'Subject cluster ID in response',
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
+  },
+
+  SUBJECT_CLUSTER_IMPORTANCE_VALUE => {
+    NAME => 'SUBJECT_CLUSTER_IMPORTANCE_VALUE',
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    NORMALIZE => 'IMPORTANCE',
+    VALIDATE => 'IMPORTANCE',
   },
 
   SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE => {
@@ -2168,9 +2288,29 @@ my %columns = (
     NAME => 'SUBJECT_MEMBER',
     DESCRIPTION => 'Member of the subject cluster in response',
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
+  },
+
+  SUBJECT_TYPE => {
+    NAME => 'SUBJECT_TYPE',
+    DESCRIPTION => 'Type of the subject of the edge, taken from response',
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+  },
+
+  SUBJECT_VALUE_PROVENANCE_TRIPLE => {
+    NAME => 'SUBJECT_VALUE_PROVENANCE_TRIPLE',
+    DESCRIPTION => "Original string representation of subject's VALUE_PROVENANCE",
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => $provenance_triple_pattern,
+    VALIDATE => 'VALUE_PROVENANCE_TRIPLE',
   },
 
   TYPE_CONFIDENCE => {
@@ -2246,6 +2386,7 @@ sub identify_file_schema {
   $schema_name = "2019_TA1_GR_SUBMISSION" if($query_id =~ /^AIDA_TA1_GR_2019_\d+$/);
   $schema_name = "2019_TA2_ZH_SUBMISSION" if($query_id =~ /^AIDA_TA2_ZH_2019_\d+$/);
   $schema_name = "2019_TA2_GR_SUBMISSION" if($query_id =~ /^AIDA_TA2_GR_2019_\d+$/);
+  $schema_name = "2019_TA3_GR_SUBMISSION" if($query_id =~ /^AIDA_TA3_GR_2019_\d+$/);
   $schema_name;
 }
 
@@ -2282,6 +2423,7 @@ sub load {
       $entry->set(@{$schema->{COLUMNS}}[$i], $entry->get(@{$schema->{HEADER}}[$i]))
         if defined $entry->get(@{$schema->{HEADER}}[$i]);
     }
+    $entry->set("SCHEMA", $schema);
     foreach my $column_name(keys %columns) {
       my $column = $columns{$column_name};
       # skip the column if the it is not required for the given year, task and query_type
@@ -2371,7 +2513,7 @@ sub write_valid_output {
         print $program_output $response->get("HEADER")->get("LINE"), "\n";
         $header = 1;
       }
-      my $line = $responses{$output_file}{$line_num}->get("LINE");
+      my $line = join("\t", map {$response->get($_)} @{$response->get("SCHEMA")->{COLUMNS}});
       print $program_output "$line\n";
     }
     close($program_output);
