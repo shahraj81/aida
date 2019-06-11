@@ -1,4 +1,4 @@
-ROOT=/absolute/path/to/sparql-query-application
+ROOT=/absolute/path/to/aida/tools/sparql-query-application
 M18DATA=M18-data
 TASK=task1
 TYPE=class
