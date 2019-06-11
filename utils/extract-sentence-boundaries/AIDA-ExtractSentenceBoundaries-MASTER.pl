@@ -6,7 +6,7 @@ use strict;
 binmode(STDOUT, ":utf8");
 
 ### DO NOT INCLUDE
-use ExtractSentenceBoundriesManagerLib;
+use ExtractSentenceBoundariesManagerLib;
 
 ### DO INCLUDE
 ##################################################################################### 
@@ -68,6 +68,7 @@ my %sentence_boundaries;
 foreach my $docid(sort $docid_mappings->get("DOCUMENTS")->get("ALL_KEYS")) {
 	my @doceids = map {$_->get("DOCUMENTELEMENTID")} $docid_mappings->get("DOCUMENTS")->get("BY_KEY", $docid)->get("DOCUMENTELEMENTS")->toarray();
 	foreach my $doceid(sort @doceids) { 
+	  next if $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("TYPE") ne "ltf";
 		my $filename = "$ltf_directory/$doceid.ltf.xml";
 		unless(-e $filename) {
 			$logger->record_debug_information("FILENOTFOUND", $filename, {FILENAME => __FILE__, LINENUM => __LINE__});

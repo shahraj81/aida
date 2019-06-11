@@ -41,6 +41,8 @@ $parameters->set("TA2_ZEROHOP_QUERYID_PREFIX", "AIDA_TA2_ZH_2019");
 $parameters->set("TA2_GRAPH_QUERYID_PREFIX", "AIDA_TA2_GR_2019");
 $parameters->set("REFERENCE_KBID_PREFIX", "LDC2018E80");
 
+$logger->NIST_die("Output directory exists") if -d $parameters->get("OUTPUT_DIR");
+
 my $query_generator = QueryGenerator->new($logger, $parameters);
 
 my $year = "2019";
