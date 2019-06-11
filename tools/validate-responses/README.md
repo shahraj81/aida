@@ -1,6 +1,6 @@
 # Validate Responses
 
-Last updated: 10/22/2018
+Last updated: 6/11/2019
 
 This document describes:
 
@@ -18,7 +18,7 @@ This tool validates the responses submitted for AIDA M9 evaluation.
 
 The following scripts and packages are provided for running the validator:
 
-	1. AIDA-ValidateResponse-MASTER.pl (v2018.0.2)
+	1. AIDA-ValidateResponse-MASTER.pl (v2019.0.1)
 	2. ValidateResponsesManagerLib.pm
 	
 You would also need to install the following Perl modules in order to run the above script(s):
@@ -31,56 +31,64 @@ Please refer to http://www.cpan.org/modules/INSTALL.html for a guide on how to i
 
 In order to run the above script(s), the following files are required:
 
-	1. docid_mappings: File containing DocumentID to DocumentElementID mappings. This file will be made available as `LDC2018E62.parent_children.tsv`.
-	2. queries_dtd: DTD file corresponding to the XML file containing queries. This file will be made available.
-	3. queries_xml: XML file containing queries. The query file(s) will made available.
-	4. responses_dtd: DTD file corresponding to the XML file containing responses. This file will be made available.
-	5. responses_xml: XML file containing responses. This is the file being validated.
+	1. docid_mappings: File containing DocumentID to DocumentElementID mappings (`LDC2018E62.parent_children.tsv`). This file will be provided.
+	2. queries_dtd: DTD file corresponding to the XML file containing queries. This file will be provided.
+	3. queries_xml: XML file containing queries. The query file(s) will be provided.
+	4. sentence_boundaries: File containing sentence boundary information for all LTF files in the corpus. This file will be provided.
+	5. images_boundingboxes: File containing sizes of all image files in the corpus. This file will be provided.
+	6. keyframes_boundingboxes: File containing sizes of all keyframe image sizes for all video shots. This file will be provided.
+	7. coredocs: File containing a subset of document IDs. Responses from these documents will be validated.
+	8. run_id: Run ID.
+	9. input: Run directory containing SPARQL output files as produced by the NIST SPARQL query application docker
+	10. output: Directory where validated output is to be written.
 	
-## How to use these script(s)
+### Usage of AIDA-ValidateResponse-MASTER.pl
 
 The usage of the script(s) can be seen by running with option -h or without any argument. For record, the usage of these scripts is given below:
 
-### Usage of AIDA-ValidateResponse-MASTER.pl
-
 ~~~
-AIDA-ValidateResponses-MASTER.pl:  Validate XML response file
+AIDA-ValidateResponses-MASTER.pl:  Validate SPARQL output files
 
-Usage: AIDA-ValidateResponses-MASTER.pl {-switch {-switch ...}} docid_mappings queries_dtd queries_xml responses_dtd responses_xml output
+Usage: AIDA-ValidateResponses-MASTER.pl {-switch {-switch ...}} docid_mappings sentence_boundaries images_boundingboxes keyframes_boundingboxes queries_dtd queries_xml coredocs run_id input output
 
 Legal switches are:
   -error_file <value>  Specify a file to which error output should be redirected
                          (Default = STDERR).
   -help                Show help
+  -no_error_code       Do not return any error code if problems are encountered?
+  -reload              Reload the cached input queries XML file
   -version             Print version number and exit
 parameters are:
-  docid_mappings  DocumentID to DocumentElementID mappings (Required).
-  queries_dtd     DTD file corresponding to the XML file containing queries
-                    (Required).
-  queries_xml     XML file containing queries (Required).
-  responses_dtd   DTD file corresponding to the XML file containing response
-                    (Required).
-  responses_xml   XML file containing responses (Required).
-  output          Validated responses file (Required).
+  docid_mappings           LDC2019*.parent_children.tsv file containing
+                             DocumentID to DocumentElementID mappings
+                             (Required).
+  sentence_boundaries      File containing sentence boundaries (Required).
+  images_boundingboxes     File containing image bounding boxes (Required).
+  keyframes_boundingboxes  File containing keyframe bounding boxes (Required).
+  queries_dtd              DTD file corresponding to the XML file containing
+                             queries (Required).
+  queries_xml              XML file containing queries (Required).
+  coredocs                 File containing ids of core documents (responses from
+                             outside coredocs will be removed) (Required).
+  run_id                   Run ID (Required).
+  input                    Run directory containing SPARQL output files
+                             (Required).
+  output                   Specify a directory to which validated output should
+                             be written (Required).
 ~~~
 
-### Running the validator on TA1 response file
+### How to run the validator?
 
-In order to validate a TA1 response file, you may run the following command:
-
-~~~
-perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog docid_mappings.tsv queries.dtd queries.xml responses.dtd responses.xml valid_responses.xml
-~~~
-
-### Running the validator on TA2 response file
-
-In order to validate a TA2 response file, you may run the following command:
+In order to validate responses in a run directory, you may run the following command:
 
 ~~~
-perl AIDA-ValidateResponses-MASTER.pl -error_file validate_responses.errlog docid_mappings.tsv queries.dtd queries.xml responses.dtd responses.xml valid_responses.xml
+perl AIDA-ValidateResponses-MASTER.pl parent_children.tsv sentence_boundaries.txt image_boundaries.txt keyframe_boundaries.txt queries.dtd queries.xml coredocs.txt runname inputdir outputdir
 ~~~
 
 ### Revision history
+
+#### v2019.0.1:
+- Validator modified to work on SPARQL output files for M18.
 
 #### v2018.0.3:
 - Validator generated false alarm when in a zerohop query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).
