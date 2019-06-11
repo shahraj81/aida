@@ -2,7 +2,7 @@
 
 Tools and utilities for supporting AIDA evaluations.
 
-## Tools and utilities for M9 evaluation
+## Tools and utilities for 2018 (M9) evaluation
 
 | Name | Description |
 |---|---|
@@ -10,7 +10,7 @@ Tools and utilities for supporting AIDA evaluations.
 | tools/resolve-queries                | Tool for applying SPARQL queries to a knowledge base in AIF format in order to produce output in the simplified xml response format |
 | tools/validate-responses             | Tool for validating responses for AIDA M9 evaluation |
 
-## Tools and utilities for M18 evaluations
+## Tools and utilities for 2019 (M18) evaluations
 
 | Name | Description | Location | Latest release branch |
 |---|---|---|---|
