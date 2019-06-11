@@ -18,7 +18,7 @@ This tool validates the responses submitted for AIDA M9 evaluation.
 
 The following scripts and packages are provided for running the validator:
 
-	1. AIDA-ValidateResponse-MASTER.pl (v2019.0.1)
+	1. AIDA-ValidateResponse-MASTER.pl (v2019.0.0)
 	2. ValidateResponsesManagerLib.pm
 	
 You would also need to install the following Perl modules in order to run the above script(s):
@@ -86,8 +86,8 @@ perl AIDA-ValidateResponses-MASTER.pl parent_children.tsv sentence_boundaries.tx
 
 ### Revision history
 
-#### v2019.0.1:
-- Validator modified to work on SPARQL output files for M18.
+#### v2019.0.0:
+- First version of the validator to work on SPARQL output files for M18.
 
 #### v2018.0.3:
 - Validator generated false alarm when in a zerohop query response it saw justification span from document elements belonging to multiple parents. (Thank you Hans for reporting the issue).

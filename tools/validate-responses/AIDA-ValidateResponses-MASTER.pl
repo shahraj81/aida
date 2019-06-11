@@ -18,7 +18,7 @@ use ValidateResponsesManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2019.0.1";
+my $version = "2019.0.0";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};
