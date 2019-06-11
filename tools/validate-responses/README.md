@@ -7,12 +7,13 @@ This document describes:
 	1. Scripts and packages required for running the validator,
 	2. Support files required for running the validator,
 	3. How to use these script(s),
-	4. Some additional notes
-	5. Revision history
+	4. What is the validator checking for?
+	5. Some additional notes,
+	6. Revision history
 	
 ## Introduction
 
-This tool validates the responses submitted for AIDA M9 evaluation. 
+This tool validates the output of SPARQL queries when applied using the NIST SPARQL query application docker. NOTE that the validator expects the output of the docker to be unchanged.
 
 ## Scripts and packages
 
@@ -84,6 +85,27 @@ In order to validate responses in a run directory, you may run the following com
 perl AIDA-ValidateResponses-MASTER.pl parent_children.tsv sentence_boundaries.txt image_boundaries.txt keyframe_boundaries.txt queries.dtd queries.xml coredocs.txt runname inputdir outputdir
 ~~~
 
+### What is the validator checking for?
+
+The validator is checking if:
+  1. the document (i.e. the parent document) belongs to the corpus,
+  2. the document element (i.e the child document) in the provenance (a) belongs to the corpus, and (b) is the child of the (parent) document,
+  3. a single response in from the same document,
+  4. confidence value is a number between (0,1],
+  5. importance value is a number (or NULL for task3 graph response),
+  6. Edge justification can be NULL for task3 graph responses,
+  7. Text provenances are within the boundary of text document element,
+  8. Image provenances are not outside the image boundary,
+  9. Keyframe ID should a valid one,
+  10. type of the entity should match one in the query, if the query specifies one,
+  11. type of the edge should match one in the query, if the query specifies one,
+  12. object link target should match one in the query, if the query specifies one,
+  13. the number of spans in the edge justification should be no more than two (or NULL for task3 graph response),
+  14. the document matches the name of the parent directory for task1 responses,
+  15. the query ID taken from the filename matches one in the queries file,
+
+In addition, if confidence or importance value is specified in scientific notation, the value will be converted to standard notation with a warning.
+
 ### Revision history
 
 #### v2019.0.0:
@@ -107,7 +129,6 @@ perl AIDA-ValidateResponses-MASTER.pl parent_children.tsv sentence_boundaries.tx
 
 ### Some notes
 
-- Teams are required to validate the `responses.xml` file required as input by the above script against the DTD provided by NIST.
 - The file specified in place of `docid_mappings` is a tsv file that is originally from LDC but is modified by NIST. This file will be provided along with the query files.
 - The above script(s) assume that the output file and error log file do not exist.
 - The file specified in place of `queries_dtd` or `responses_dtd` must not have any comments in it. Again, this file will be provided along with the queries file. Six DTD files will be provided, which should not be renamed nor the content be changed without approval:
