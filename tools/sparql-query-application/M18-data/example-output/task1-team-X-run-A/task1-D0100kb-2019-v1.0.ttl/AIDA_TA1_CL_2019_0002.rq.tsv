@@ -1,0 +1,2 @@
+?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
+D0100	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper>	D0100:DE005_03:(210,60)-(310,210)	1.0E0	1.0E0	2.34E-1
