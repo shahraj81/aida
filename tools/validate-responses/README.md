@@ -56,7 +56,6 @@ Legal switches are:
                          (Default = STDERR).
   -help                Show help
   -no_error_code       Do not return any error code if problems are encountered?
-  -reload              Reload the cached input queries XML file
   -version             Print version number and exit
 parameters are:
   docid_mappings           LDC2019*.parent_children.tsv file containing

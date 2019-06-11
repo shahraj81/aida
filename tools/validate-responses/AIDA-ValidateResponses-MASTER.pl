@@ -39,7 +39,6 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addConstantSwitch('no_error_code', 'false', "Do not return any error code if problems are encountered?");
-$switches->addConstantSwitch('reload', 'false', "Reload the cached input queries XML file");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("docid_mappings", "required", "LDC2019*.parent_children.tsv file containing DocumentID to DocumentElementID mappings");
 $switches->addParam("sentence_boundaries", "required", "File containing sentence boundaries");
