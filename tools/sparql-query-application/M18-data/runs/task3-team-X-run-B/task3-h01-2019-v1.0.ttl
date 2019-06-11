@@ -1,0 +1,482 @@
+@prefix schema: <http://schema.org/> .
+@prefix ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#> .
+@prefix olia:  <http://purl.org/olia/system.owl#> .
+@prefix aidaDomainCommon: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/AidaDomainOntologiesCommon#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ldc:   <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:testSystem  a  aida:System .
+
+##############################################################################
+# H0001: Hypothesis asserting that entity E0137 was the attacker in the
+#        shooting event E0159 happened at E0124.
+##############################################################################
+
+ldc:H0001 a                      aida:Hypothesis ;
+          aida:hypothesisContent [  a                     aida:Subgraph ;
+                                    aida:subgraphContains ldc:cluster-E0159 , ldc:cluster-E0137 , ldc:cluster-E0124 ;
+                                    aida:subgraphContains ldc:CM0001 , ldc:CM0002 , ldc:CM0003 ;
+                                    aida:subgraphContains ldc:CM0004 , ldc:CM0005 , ldc:CM0006 ;
+                                    aida:subgraphContains ldc:E0124-D0100 , ldc:E0124-D0101 ;
+                                    aida:subgraphContains ldc:E0137-D0100 , ldc:E0137-D0101 ;
+                                    aida:subgraphContains ldc:E0159-D0100 , ldc:E0159-D0101 ;
+                                    aida:subgraphContains ldc:A0001 , ldc:A0002 , ldc:A0003 ;
+                                    aida:subgraphContains ldc:A0004 , ldc:A0005 , ldc:A0006 ;
+                                 ] ;
+          aida:importance        "90.5"^^xsd:double ;
+          aida:system             ldc:testSystem .
+
+##############################################################################
+# E0159: Event Cluster representing the shooting event at Maidan
+##############################################################################
+
+_:b02 a                        aida:KeyFrameVideoJustification ;
+      aida:boundingBox        [ a                            aida:BoundingBox ;
+                                aida:boundingBoxLowerRightX  "300"^^xsd:int ;
+                                aida:boundingBoxLowerRightY  "200"^^xsd:int ;
+                                aida:boundingBoxUpperLeftX   "200"^^xsd:int ;
+                                aida:boundingBoxUpperLeftY   "50"^^xsd:int
+                              ] ;
+      aida:confidence         [ a                     aida:Confidence ;
+                                aida:confidenceValue  "0.234"^^xsd:double ;
+                                aida:system           ldc:testSystem
+                              ] ;
+      aida:keyFrame           "DE005_03" ;
+      aida:source             "DE005" ;
+      aida:sourceDocument     "D0100" ;
+      aida:system             ldc:testSystem .
+
+_:b03 a                        aida:TextJustification ;
+      aida:confidence          [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+      aida:endOffsetInclusive  "186"^^xsd:int ;
+      aida:source              "DE006" ;
+      aida:sourceDocument      "D0100" ;
+      aida:startOffset         "160"^^xsd:int ;
+      aida:system              ldc:testSystem .
+
+_:b04 a                        aida:TextJustification ;
+      aida:confidence          [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+      aida:endOffsetInclusive  "146"^^xsd:int ;
+      aida:source              "DE006" ;
+      aida:sourceDocument      "D0101" ;
+      aida:startOffset         "120"^^xsd:int ;
+      aida:system              ldc:testSystem .
+
+ldc:cluster-E0159     a                             aida:SameAsCluster ;
+                      aida:prototype                ldc:E0159-D0100 ;
+                      aida:informativeJustification _:b02, _:b04 ;
+                      aida:importance               "75.5"^^xsd:double ;
+                      aida:system                   ldc:testSystem .
+
+ldc:CM0001 a                   aida:ClusterMembership ;
+           aida:cluster        ldc:cluster-E0159 ;
+           aida:clusterMember  ldc:E0159-D0100 ;
+           aida:confidence     [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+           aida:system         ldc:testSystem .
+
+ldc:CM0002 a                   aida:ClusterMembership ;
+           aida:cluster        ldc:cluster-E0159 ;
+           aida:clusterMember  ldc:E0159-D0101 ;
+           aida:confidence     [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+           aida:system         ldc:testSystem .
+
+ldc:E0159-D0100       a                             aida:Event ;
+                      aida:informativeJustification _:b02 ;
+                      aida:system                   ldc:testSystem .
+
+[ a                   rdf:Statement ;
+  rdf:object          ldcOnt:Conflict.Attack.FirearmAttack ;
+  rdf:predicate       rdf:type ;
+  rdf:subject         ldc:E0159-D0100 ;
+  aida:confidence     [ a                     aida:Confidence ;
+                        aida:confidenceValue  "1.0"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+  aida:justifiedBy    _:b02, _:b03 ;
+  aida:system         ldc:testSystem
+] .
+
+ldc:E0159-D0101       a                             aida:Event ;
+                      aida:informativeJustification _:b04 ;
+                      aida:system                   ldc:testSystem .
+
+[ a                   rdf:Statement ;
+  rdf:object          ldcOnt:Conflict.Attack ;
+  rdf:predicate       rdf:type ;
+  rdf:subject         ldc:E0159-D0101 ;
+  aida:confidence     [ a                     aida:Confidence ;
+                        aida:confidenceValue  "1.0"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+  aida:justifiedBy    _:b04 ;
+  aida:system         ldc:testSystem
+] .
+
+##############################################################################
+# E0137: Entity cluster representing the Sniper who was shooting at Maidan
+##############################################################################
+
+_:b11 a               aida:LinkAssertion ;
+      aida:confidence [ a                     aida:Confidence ;
+                        aida:confidenceValue  "0.498"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+      aida:linkTarget "LDC2018E80:NIL" ;
+      aida:system     ldc:testSystem .
+
+_:b12 a                        aida:KeyFrameVideoJustification ;
+      aida:boundingBox        [ a                            aida:BoundingBox ;
+                                aida:boundingBoxLowerRightX  "310"^^xsd:int ;
+                                aida:boundingBoxLowerRightY  "210"^^xsd:int ;
+                                aida:boundingBoxUpperLeftX   "210"^^xsd:int ;
+                                aida:boundingBoxUpperLeftY   "60"^^xsd:int
+                              ] ;
+      aida:confidence         [ a                     aida:Confidence ;
+                                aida:confidenceValue  "0.234"^^xsd:double ;
+                                aida:system           ldc:testSystem
+                              ] ;
+      aida:keyFrame           "DE005_03" ;
+      aida:source             "DE005" ;
+      aida:sourceDocument     "D0100" ;
+      aida:system             ldc:testSystem .
+
+_:b13 a                        aida:TextJustification ;
+      aida:confidence          [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+      aida:endOffsetInclusive  "286"^^xsd:int ;
+      aida:source              "DE006" ;
+      aida:sourceDocument      "D0100" ;
+      aida:startOffset         "260"^^xsd:int ;
+      aida:system              ldc:testSystem .
+
+_:b14 a                        aida:TextJustification ;
+      aida:confidence          [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+      aida:endOffsetInclusive  "246"^^xsd:int ;
+      aida:source              "DE006" ;
+      aida:sourceDocument      "D0101" ;
+      aida:startOffset         "220"^^xsd:int ;
+      aida:system              ldc:testSystem .
+
+ldc:cluster-E0137      a                             aida:SameAsCluster ;
+                       aida:handle                   "Sniper" ;
+                       aida:prototype                ldc:E0137-D0100 ;
+                       aida:informativeJustification _:b12, _:b14 ;
+                       aida:link                     _:b11 ;
+                       aida:system                   ldc:testSystem .
+
+ldc:CM0003 a                   aida:ClusterMembership ;
+           aida:cluster        ldc:cluster-E0137 ;
+           aida:clusterMember  ldc:E0137-D0100 ;
+           aida:confidence     [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+           aida:system         ldc:testSystem .
+
+ldc:CM0004 a                   aida:ClusterMembership ;
+           aida:cluster        ldc:cluster-E0137 ;
+           aida:clusterMember  ldc:E0137-D0101 ;
+           aida:confidence     [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+           aida:system         ldc:testSystem .
+
+ldc:E0137-D0100       a                             aida:Entity ;
+                      aida:informativeJustification _:b12 ;
+                      aida:link                     _:b11 ;
+                      aida:system                   ldc:testSystem .
+
+[ a                   rdf:Statement ;
+  rdf:object          ldcOnt:PER.Combatant.Sniper ;
+  rdf:predicate       rdf:type ;
+  rdf:subject         ldc:E0137-D0100 ;
+  aida:confidence     [ a                     aida:Confidence ;
+                        aida:confidenceValue  "1.0"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+  aida:justifiedBy    _:b12, _:b13 ;
+  aida:system         ldc:testSystem
+] .
+
+[ a                   rdf:Statement ;
+  rdf:object          ldcOnt:PER.Politician ;
+  rdf:predicate       rdf:type ;
+  rdf:subject         ldc:E0137-D0100 ;
+  aida:confidence     [ a                     aida:Confidence ;
+                        aida:confidenceValue  "1.0"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+  aida:justifiedBy    _:b12 ;
+  aida:system         ldc:testSystem
+] .
+
+ldc:E0137-D0101       a                             aida:Entity ;
+                      aida:informativeJustification _:b14 ;
+                      aida:link                     _:b11 ;
+                      aida:system                   ldc:testSystem .
+
+[ a                   rdf:Statement ;
+  rdf:object          ldcOnt:PER.Combatant ;
+  rdf:predicate       rdf:type ;
+  rdf:subject         ldc:E0137-D0101 ;
+  aida:confidence     [ a                     aida:Confidence ;
+                        aida:confidenceValue  "1.0"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+  aida:justifiedBy    _:b14 ;
+  aida:system         ldc:testSystem
+] .
+
+##############################################################################
+# E0124: Entity Cluster representing Maidan (Kiev's Independence Square)
+##############################################################################
+
+_:b21 a               aida:LinkAssertion ;
+      aida:confidence [ a                     aida:Confidence ;
+                        aida:confidenceValue  "0.198"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+      aida:linkTarget "LDC2018E80:703448" ;
+      aida:system     ldc:testSystem .
+
+_:b22 a                        aida:KeyFrameVideoJustification ;
+      aida:boundingBox        [ a                            aida:BoundingBox ;
+                                aida:boundingBoxLowerRightX  "320"^^xsd:int ;
+                                aida:boundingBoxLowerRightY  "220"^^xsd:int ;
+                                aida:boundingBoxUpperLeftX   "220"^^xsd:int ;
+                                aida:boundingBoxUpperLeftY   "70"^^xsd:int
+                              ] ;
+      aida:confidence         [ a                     aida:Confidence ;
+                                aida:confidenceValue  "0.234"^^xsd:double ;
+                                aida:system           ldc:testSystem
+                              ] ;
+      aida:keyFrame           "DE005_03" ;
+      aida:source             "DE005" ;
+      aida:sourceDocument     "D0100" ;
+      aida:system             ldc:testSystem .
+
+_:b23 a                        aida:TextJustification ;
+      aida:confidence          [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+      aida:endOffsetInclusive  "386"^^xsd:int ;
+      aida:source              "DE006" ;
+      aida:sourceDocument      "D0100" ;
+      aida:startOffset         "360"^^xsd:int ;
+      aida:system              ldc:testSystem .
+
+_:b24 a                        aida:TextJustification ;
+      aida:confidence          [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+      aida:endOffsetInclusive  "346"^^xsd:int ;
+      aida:source              "DE006" ;
+      aida:sourceDocument      "D0101" ;
+      aida:startOffset         "320"^^xsd:int ;
+      aida:system              ldc:testSystem .
+
+ldc:cluster-E0124      a                             aida:SameAsCluster ;
+                       aida:handle                   "Kiev's Independence Square" ;
+                       aida:prototype                ldc:E0124-D0100 ;
+                       aida:informativeJustification _:b22, _:b24 ;
+                       aida:link                     _:b21 ;
+                       aida:system                   ldc:testSystem .
+
+ldc:CM0005 a                   aida:ClusterMembership ;
+           aida:cluster        ldc:cluster-E0124 ;
+           aida:clusterMember  ldc:E0124-D0100 ;
+           aida:confidence     [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+           aida:system         ldc:testSystem .
+
+ldc:CM0006 a                   aida:ClusterMembership ;
+           aida:cluster        ldc:cluster-E0124 ;
+           aida:clusterMember  ldc:E0124-D0101 ;
+           aida:confidence     [ a                     aida:Confidence ;
+                                 aida:confidenceValue  "1.0"^^xsd:double ;
+                                 aida:system           ldc:testSystem
+                               ] ;
+           aida:system         ldc:testSystem .
+
+ldc:E0124-D0100       a                             aida:Entity ;
+                      aida:informativeJustification _:b22 ;
+                      aida:link                     _:b21 ;
+                      aida:system                   ldc:testSystem .
+
+[ a                   rdf:Statement ;
+  rdf:object          ldcOnt:FAC.Structure.Plaza ;
+  rdf:predicate       rdf:type ;
+  rdf:subject         ldc:E0124-D0100 ;
+  aida:confidence     [ a                     aida:Confidence ;
+                        aida:confidenceValue  "1.0"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+  aida:justifiedBy    _:b22, _:b23 ;
+  aida:system         ldc:testSystem
+] .
+
+ldc:E0124-D0101       a                             aida:Entity ;
+                      aida:informativeJustification _:b24 ;
+                      aida:link                     _:b21 ;
+                      aida:system                   ldc:testSystem .
+
+[ a                   rdf:Statement ;
+  rdf:object          ldcOnt:FAC.Structure.Plaza ;
+  rdf:predicate       rdf:type ;
+  rdf:subject         ldc:E0124-D0101 ;
+  aida:confidence     [ a                     aida:Confidence ;
+                        aida:confidenceValue  "1.0"^^xsd:double ;
+                        aida:system           ldc:testSystem
+                      ] ;
+  aida:justifiedBy    _:b24 ;
+  aida:system         ldc:testSystem
+] .
+
+##############################################################################
+# EDGE: E0137 is the attacker of E0159
+##############################################################################
+
+ldc:A0001 a                 rdf:Statement ;
+          rdf:object        ldc:E0137-D0100 ;
+          rdf:predicate     ldcOnt:Conflict.Attack.FirearmAttack_Attacker ;
+          rdf:subject       ldc:E0159-D0100 ;
+          aida:confidence   [ a                     aida:Confidence ;
+                              aida:confidenceValue  "0.589"^^xsd:double ;
+                              aida:system           ldc:testSystem
+                            ] ;
+          aida:justifiedBy  [ a                     aida:CompoundJustification ;
+                              aida:confidence       [ a                     aida:Confidence ;
+                                                      aida:confidenceValue  "0.543"^^xsd:double ;
+                                                      aida:system           ldc:testSystem
+                                                    ] ;
+                              aida:containedJustification  _:b02, _:b12 ;
+                              aida:system                  ldc:testSystem
+                            ] ;
+          aida:importance   "110.5"^^xsd:double ;
+          aida:system       ldc:testSystem .
+
+#
+# HTD: performers could combine this statement with the previous statement;
+# only difference is that by splitting into two statements, separate values
+# of confidence can be asserted for the same edge in document D0100:
+# ( ldc:E0159-D0100 , ldcOnt:Conflict.Attack.FirearmAttack_Attacker , ldc:E0137-D0100 )
+#
+
+ldc:A0002 a                 rdf:Statement ;
+          rdf:object        ldc:E0137-D0100 ;
+          rdf:predicate     ldcOnt:Conflict.Attack.FirearmAttack_Attacker ;
+          rdf:subject       ldc:E0159-D0100 ;
+          aida:confidence   [ a                     aida:Confidence ;
+                              aida:confidenceValue  "0.589"^^xsd:double ;
+                              aida:system           ldc:testSystem
+                            ] ;
+          aida:justifiedBy  [ a               aida:CompoundJustification ;
+                              aida:confidence [ a                     aida:Confidence ;
+                                                aida:confidenceValue  "0.543"^^xsd:double ;
+                                                aida:system           ldc:testSystem
+                                              ] ;
+                              aida:containedJustification  _:b03, _:b13 ;
+                              aida:system                  ldc:testSystem
+                            ] ;
+          aida:importance   "43.7"^^xsd:double ;
+          aida:system       ldc:testSystem .
+
+ldc:A0003 a                 rdf:Statement ;
+          rdf:object        ldc:E0137-D0101 ;
+          rdf:predicate     ldcOnt:Conflict.Attack.FirearmAttack_Attacker ;
+          rdf:subject       ldc:E0159-D0101 ;
+          aida:confidence   [ a                     aida:Confidence ;
+                              aida:confidenceValue  "0.589"^^xsd:double ;
+                              aida:system           ldc:testSystem
+                            ] ;
+          aida:justifiedBy  [ a               aida:CompoundJustification ;
+                              aida:confidence [ a                     aida:Confidence ;
+                                                aida:confidenceValue  "0.543"^^xsd:double ;
+                                                aida:system           ldc:testSystem
+                                              ] ;
+                              aida:containedJustification  _:b04 ;
+                              aida:system                  ldc:testSystem
+                            ] ;
+          aida:importance   "32.4"^^xsd:double ;
+          aida:system       ldc:testSystem .
+
+##############################################################################
+# EDGE: E0124 is the place of E0159
+##############################################################################
+
+ldc:A0004 a                 rdf:Statement ;
+          rdf:object        ldc:E0124-D0100 ;
+          rdf:predicate     ldcOnt:Conflict.Attack.FirearmAttack_Place ;
+          rdf:subject       ldc:E0159-D0100 ;
+          aida:confidence   [ a                     aida:Confidence ;
+                              aida:confidenceValue  "0.589"^^xsd:double ;
+                              aida:system           ldc:testSystem
+                            ] ;
+          aida:justifiedBy  [ a               aida:CompoundJustification ;
+                              aida:confidence [ a                     aida:Confidence ;
+                                                aida:confidenceValue  "0.543"^^xsd:double ;
+                                                aida:system           ldc:testSystem
+                                              ] ;
+                              aida:containedJustification  _:b02, _:b22 ;
+                              aida:system                  ldc:testSystem
+                            ] ;
+          aida:importance   "88"^^xsd:double ;
+          aida:system       ldc:testSystem .
+
+# The following argument assertion provides an example where the assertion
+# is missing a justification completely (i.e. it doesn't contain aida:justifiedBy)
+ldc:A0005 a                 rdf:Statement ;
+          rdf:object        ldc:E0124-D0100 ;
+          rdf:predicate     ldcOnt:Conflict.Attack.FirearmAttack_Place ;
+          rdf:subject       ldc:E0159-D0100 ;
+          aida:confidence   [ a                     aida:Confidence ;
+                              aida:confidenceValue  "0.589"^^xsd:double ;
+                              aida:system           ldc:testSystem
+                            ] ;
+          aida:importance   "34.5"^^xsd:double ;
+          aida:system       ldc:testSystem .
+
+ldc:A0006 a                 rdf:Statement ;
+          rdf:object        ldc:E0124-D0101 ;
+          rdf:predicate     ldcOnt:Conflict.Attack.FirearmAttack_Place ;
+          rdf:subject       ldc:E0159-D0101 ;
+          aida:confidence   [ a                     aida:Confidence ;
+                              aida:confidenceValue  "0.589"^^xsd:double ;
+                              aida:system           ldc:testSystem
+                            ] ;
+          aida:justifiedBy  [ a               aida:CompoundJustification ;
+                              aida:confidence [ a                     aida:Confidence ;
+                                                aida:confidenceValue  "0.543"^^xsd:double ;
+                                                aida:system           ldc:testSystem
+                                              ] ;
+                              aida:containedJustification  _:b04 ;
+                              aida:system                  ldc:testSystem
+                            ] ;
+          aida:importance   "100.5"^^xsd:double ;
+          aida:system       ldc:testSystem .
