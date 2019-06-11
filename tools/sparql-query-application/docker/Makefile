@@ -1,4 +1,4 @@
-ROOT=/absolute/path/to/NIST-SPARQL-Evaluation-v2.3r
+ROOT=/absolute/path/to/sparql-query-application
 M18DATA=M18-data
 TASK=task1
 TYPE=class
