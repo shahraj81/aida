@@ -11,9 +11,7 @@ use TranslationManagerLib;
 ### DO INCLUDE
 ##################################################################################### 
 # This program takes LDCs annotation files in their original form, and adds keyframe 
-# ID to the entries that contain information from the audio channel. This tool also
-# replaces the keyframe_num with keyframe_id for video mentions (from video channel).
-# Currently, LDC writes keyframe number in the keyframe_id column.
+# ID to the entries that contain information from the audio channel.
 #
 # Author: Shahzad Rajput
 # Please send questions or comments to shahzadrajput "at" gmail "dot" com
@@ -105,15 +103,7 @@ foreach my $input_subdir (<$input_dir/*>) {
     my @entries = $filehandler->get("ENTRIES")->toarray();
     foreach my $entry(@entries) {
       my $signal_type = $entry->get("mediamention_signaltype");
-      if($signal_type eq "picture" ) {
-        my $keyframe_num = $entry->get("keyframe_id");
-        if($keyframe_num =~ /^\d+?$/) {
-          my $keyframe_id = $keyframenum_to_keyframeid{$keyframe_num};
-          $logger->NIST_die("Unexpected keyframe_num $keyframe_num") unless $keyframe_id;
-          $entry->{MAP}{keyframe_id} = $keyframe_id;
-        }
-      }
-      elsif($signal_type eq "sound") {
+      if($signal_type eq "sound") {
         my $shot_num;
         my $mention_start_time = $entry->get("mediamention_starttime");
         my $doceid = $entry->get("child_uid");
