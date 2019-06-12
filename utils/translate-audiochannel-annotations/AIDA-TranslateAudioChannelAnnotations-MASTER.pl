@@ -11,7 +11,9 @@ use TranslationManagerLib;
 ### DO INCLUDE
 ##################################################################################### 
 # This program takes LDCs annotation files in their original form, and adds keyframe 
-# ID to the entries that contain information from the audio channel.
+# ID to the entries that contain information from the audio channel. This tool also
+# replaces the keyframe_num with keyframe_id for video mentions (from video channel).
+# Currently, LDC writes keyframe number in the keyframe_id column.
 #
 # Author: Shahzad Rajput
 # Please send questions or comments to shahzadrajput "at" gmail "dot" com
