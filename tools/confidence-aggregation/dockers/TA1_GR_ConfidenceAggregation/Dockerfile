@@ -19,6 +19,9 @@ RUN perlbrew install-cpanm
 # Install Json
 RUN $PERLBREW_PATH/cpanm install JSON
 
+# Install Encode
+RUN $PERLBREW_PATH/cpanm install Encode
+
 #Create directory structure
 ENV SCRIPTS /opt/scripts
 RUN mkdir -p $SCRIPTS

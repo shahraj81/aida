@@ -2,7 +2,6 @@
 
 use warnings;
 use strict;
-use Encode;
 use Carp;
 
 ### BEGIN INCLUDE Switches
@@ -133,6 +132,8 @@ sub new {
 ### END INCLUDE SuperObject
 
 ### BEGIN INCLUDE Logger
+
+use Encode;
 
 # The package Logger is taken with permission from James Mayfield's ColdStart library
 
@@ -1306,6 +1307,8 @@ sub tostring {
 package XMLElement;
 
 use parent -norequire, 'Super';
+
+use Encode;
 
 sub new {
   my ($class, $logger, $element, $name, $newline, $attributes, $where) = @_;
@@ -4989,6 +4992,7 @@ sub get_F1 {
 ### BEGIN INCLUDE Utils
 package main;
 use JSON;
+use Encode;
 
 #####################################################################################
 # UUIDs from UUID::Tiny
