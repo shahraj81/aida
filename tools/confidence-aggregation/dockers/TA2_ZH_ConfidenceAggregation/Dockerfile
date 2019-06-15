@@ -19,6 +19,9 @@ RUN perlbrew install-cpanm
 # Install Json
 RUN $PERLBREW_PATH/cpanm install JSON
 
+# Install Encode
+RUN $PERLBREW_PATH/cpanm install Encode
+
 #Create directory structure
 ENV SCRIPTS /opt/scripts
 RUN mkdir -p $SCRIPTS
@@ -26,7 +29,7 @@ WORKDIR $SCRIPTS
 
 # Pull AIDA Git Repository
 WORKDIR /tmp
-RUN git clone https://github.com/shahraj81/aida.git -b AIDACA-v2019.0.1
+RUN git clone https://github.com/shahraj81/aida.git -b AIDACA-v2019.0.2
 WORKDIR /tmp/aida/tools/confidence-aggregation/
 RUN perl Include.pl AIDA-ConfidenceAggregation-MASTER.pl > $SCRIPTS/AIDA-ConfidenceAggregation.pl
 

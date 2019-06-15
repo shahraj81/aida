@@ -18,7 +18,7 @@ use ConfidenceAggregationManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2019.0.1";
+my $version = "2019.0.2";
 
 ### DO NOT INCLUDE
 ##################################################################################### 
@@ -51,10 +51,12 @@ my $types_allowed = {
       my %clusters;
       # compute aggregate confidence
       foreach my $entry(@entries) {
-        $logger->record_problem("MULTIPLE_ENTRIES_IN_A_CLUSTER", $entry->get("?cluster"), $entry->get("WHERE"))
-          if($clusters{$entry->get("?cluster")});
-        $entry->set("?ag_cv", &aggregate_confidence_value($entry, @ac_fields));
-        $clusters{$entry->get("?cluster")} = $entry->get("?ag_cv");
+        my $ag_cv = &aggregate_confidence_value($entry, @ac_fields);
+        $entry->set("?ag_cv", $ag_cv);
+        $clusters{$entry->get("?cluster")} = $ag_cv
+          unless $clusters{$entry->get("?cluster")};
+        $clusters{$entry->get("?cluster")} = $ag_cv
+          if $ag_cv > $clusters{$entry->get("?cluster")};
       }
       $logger->NIST_die("$output_file already exists")
         if -e $output_file;
@@ -285,9 +287,10 @@ foreach my $input_subdir (<$input_dir/*>) {
 }
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
+my $num_problems = $num_errors + $num_warnings;
 unless($switches->get('error_file') eq "STDERR") {
   print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
   print "No warnings encountered.\n" unless ($num_errors || $num_warnings);
 }
-print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
+print $error_output ($num_problems || 'No'), " problem", ($num_problems == 1 ? '' : 's'), " encountered.\n";
 exit 0;
