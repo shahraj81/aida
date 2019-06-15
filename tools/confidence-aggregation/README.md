@@ -1,6 +1,6 @@
 # Introduction
 
-(Last modified: May 23, 2019)
+(Last modified: Jun 15, 2019)
 
 This document describes:
 
@@ -72,3 +72,4 @@ Please refer to `./dockers/TA[12]_[CL|GR|ZH]_ConfidenceAggregation/README.md` fo
 # Revision history
   * AIDACA-v2019.0.0: First version
   * AIDACA-v2019.0.1: Bugfix: ?edge_cv changed to ?edge_cj_cv
+  * AIDACA-v2019.0.2: (1) Took care of duplicate items in responses, and (2) package Encode installed and used inside the docker.
