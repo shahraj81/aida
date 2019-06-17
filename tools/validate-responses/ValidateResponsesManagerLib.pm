@@ -190,6 +190,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   SPAN_OFF_BOUNDARY                       ERROR          Provenance %s is outside the boundary %s of document element %s          
   START_LARGER_THAN_END                   ERROR          Start (%s) is larger than (%s) in provenance %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
+  UNEXPECTED_CLUSTER_MEMBER_TYPE          ERROR          Unexpected cluster member type (expected %s, provided %s)
   UNEXPECTED_COLUMN_HEADER                ERROR          Unexpected column # %s (expected %s, provided %s)
   UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
   UNEXPECTED_DOCUMENT_ID                  ERROR          Unexpected document %s (expected %s)
@@ -1606,6 +1607,23 @@ my %validators = (
     },
   },
 
+  'SUBJECT_TYPE' => {
+    NAME => 'SUBJECT_TYPE',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
+      if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH") {
+        my $subject_type = $entry->get($column_name);
+        my $subject_cluster_id = $entry->get("SUBJECT_CLUSTER_ID");
+        $responses->get("CLUSTER_TYPES")->add($subject_type, $subject_cluster_id)
+          unless($responses->get("CLUSTER_TYPES")->exists($subject_cluster_id));
+        my $cluster_type = $responses->get("CLUSTER_TYPES")->get("BY_KEY", $subject_cluster_id);
+        $logger->record_problem("UNEXPECTED_CLUSTER_MEMBER_TYPE", $cluster_type, $subject_type, $where)
+          if $subject_type ne $cluster_type;
+      }
+      1;
+    },
+  },
+
   # Check if DocumentElement and Document have parent-child relationship
   # Check if provenance falls within the boundaries
   'VALUE_PROVENANCE_TRIPLE' => {
@@ -2300,6 +2318,7 @@ my %columns = (
     TASKS => ['task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
+    VALIDATE => 'SUBJECT_TYPE',
   },
 
   SUBJECT_VALUE_PROVENANCE_TRIPLE => {
@@ -2359,6 +2378,7 @@ sub new {
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
     RESPONSES => Container->new($logger, "Response"),
+    CLUSTER_TYPES => Container->new($logger),
     RUN_ID => $run_id,
     FILENAMES => [@filenames],
     LOGGER => $logger,
