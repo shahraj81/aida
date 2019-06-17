@@ -105,7 +105,7 @@ foreach my $input_subdir (<$input_dir/*>) {
     my @entries = $filehandler->get("ENTRIES")->toarray();
     foreach my $entry(@entries) {
       my $signal_type = $entry->get("mediamention_signaltype");
-      if($signal_type eq "sound") {
+      if($signal_type && $signal_type eq "sound") {
         my $shot_num;
         my $mention_start_time = $entry->get("mediamention_starttime");
         my $doceid = $entry->get("child_uid");
