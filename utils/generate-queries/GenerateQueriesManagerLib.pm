@@ -2926,6 +2926,7 @@ sub new {
 		RELATIONS => OntologyContainer->new($logger, "RELATIONS"),
 		EVENTS => OntologyContainer->new($logger, "EVENTS"),
 		PREVAILING_THEORY_ENTRIES => PrevailingTheoryContainer->new($logger),
+		NAMED_REFKBIDS => Container->new($logger),
 		NEXT_TASK1_CLASS_QUERY_NUM => 1,
 		NEXT_TASK1_GRAPH_QUERY_NUM => 1,
 		NEXT_TASK2_ZEROHOP_QUERY_NUM => 1,
@@ -2960,6 +2961,7 @@ sub load_MAIN {
 		my $filename = $parameters->get("PREVAILING_THEORY_FILES")->get("BY_KEY", $key);
 		$self->load("PREVAILING_THEORY", $key, $filename);
 	}
+	$self->load("NAMED_REFKBIDS");
 }
 
 sub load_ONTOLOGY {
@@ -2989,6 +2991,27 @@ sub load_PREVAILING_THEORY {
 	}
 }
 
+sub load_NAMED_REFKBIDS {
+  my ($self) = @_;
+  my $filename = $self->get("PARAMETERS")->get("NAMED_REFKBIDS_FILENAME");
+  my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+  foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
+    my $reference_kbid = $entry->get("reference_kbid");
+    $self->get("NAMED_REFKBIDS")->add("KEY", $reference_kbid);
+  }
+}
+
+sub filter_named_refkbids {
+  my ($self, $kbids_list) = @_;
+  my @filtered_kbids;
+  foreach my $kbid(split(/\|/, $kbids_list)) {
+    push (@filtered_kbids, $kbid)
+      if($self->get("NAMED_REFKBIDS")->exists($kbid));
+  }
+  my $filtered_kbids_list;
+  $filtered_kbids_list = join("|", @filtered_kbids) if scalar @filtered_kbids;
+  $filtered_kbids_list;
+}
 
 sub generate_queries {
 	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
@@ -3023,9 +3046,10 @@ sub generate_graph_queries {
 	my $used_query_keys = $self->get("USED_" . $task_short_name . "_GRAPH_QUERY_KEYS");
 	foreach my $pt_entry($subcontainer->toarray()) {
 		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
+		$argument_kbid = $self->filter_named_refkbids($pt_entry->get("ARGUMENT_KBID")) if $task_long_name eq "task2";
 		# For task1, we need only distict edge labels for queryids
 		$argument_kbid = 0 if $task_long_name eq "task1";
-		next unless ($argument_kbid =~ /^\d+$/ || $argument_kbid =~ /^\d+\|\d+$/);
+		next if ($task_long_name eq "task2" && !$argument_kbid);
 		my $role;
 		if($pt_entry->get("ONTOLOGY_ID") =~ /^LDC_ent_/) {
 			my $item_ke = $pt_entry->get("ITEM_KE");
@@ -3059,7 +3083,7 @@ sub generate_graph_queries {
 				  $i = $self->normalize_querynum($i);
 				  my $query_id = "$query_id_prefix\_$i";
 				  my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
-          if($argument_kbid =~ /^\d+\|\d+$/) {
+          if($argument_kbid =~ /^\S+?|\S+?$/) {
             $query_reference_kbid = join("|", map {"$reference_kbid_prefix:$_"} split(/\|/, $argument_kbid));
           }
 				  my $sparql = $self->get($task_short_name . "_GRAPH_SPARQL_QUERY_TEMPLATE");
@@ -3169,15 +3193,15 @@ sub generate_task2_zerohop_queries {
 	my $used_query_keys = $self->get("USED_TA2_ZEROHOP_QUERY_KEYS");
 	foreach my $pt_entry($subcontainer->toarray()) {
 		# Is this an entity involved in the prevailing theory?
-		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
-		if($argument_kbid =~ /^\d+$/ | $argument_kbid =~ /^\d+\|\d+$/) {
+		my $argument_kbid = $self->filter_named_refkbids($pt_entry->get("ARGUMENT_KBID"));
+		if($argument_kbid) {
 			# If yes, generate the query
 			next if $used_query_keys->exists($argument_kbid);
 			my $i = $self->get("NEXT_TASK2_ZEROHOP_QUERY_NUM");
 			$i = $self->normalize_querynum($i);
 			my $query_id = "$query_id_prefix\_$i";
 			my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
-			if($argument_kbid =~ /^\d+\|\d+$/) {
+			if($argument_kbid =~ /^\S+\|\S+$/) {
 			  $query_reference_kbid = join("|", map {"$reference_kbid_prefix:$_"} split(/\|/, $argument_kbid));
 			}
 			# Generate the XML object corresponding to the query

@@ -29,9 +29,12 @@ $prevailingtheory_files->add("2019/input/prevailing-theories/R105_PT002.tab", "R
 $prevailingtheory_files->add("2019/input/prevailing-theories/R107_PT001.tab", "R107_PT001");
 $prevailingtheory_files->add("2019/input/prevailing-theories/R107_PT002.tab", "R107_PT002");
 
+my $named_refkbids_file = "2019/input/named_reference_kb_nodes.txt";
+
 my $parameters = Parameters->new($logger);
 $parameters->set("ONTOLOGY_FILES", $ontology_files);
 $parameters->set("PREVAILING_THEORY_FILES", $prevailingtheory_files);
+$parameters->set("NAMED_REFKBIDS_FILENAME", $named_refkbids_file);
 $parameters->set("DTD_FILES", $dtd_files);
 $parameters->set("OUTPUT_DIR", "2019/output");
 $parameters->set("ERRORLOG_FILE", $error_filename);
