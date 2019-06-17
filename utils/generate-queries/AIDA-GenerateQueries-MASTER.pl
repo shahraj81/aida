@@ -40,6 +40,7 @@ $parameters->set("TA1_GRAPH_QUERYID_PREFIX", "AIDA_TA1_GR_2019");
 $parameters->set("TA2_ZEROHOP_QUERYID_PREFIX", "AIDA_TA2_ZH_2019");
 $parameters->set("TA2_GRAPH_QUERYID_PREFIX", "AIDA_TA2_GR_2019");
 $parameters->set("REFERENCE_KBID_PREFIX", "LDC2018E80");
+$parameters->set("TA2_GRAPH_QUERY_MAPPINGS_FILENAME", "TA2_GraphQuery_mappings.txt");
 
 $logger->NIST_die("Output directory exists") if -d $parameters->get("OUTPUT_DIR");
 
@@ -51,6 +52,20 @@ foreach my $topic_and_pt_id(@topic_and_pt_ids) {
 	my ($topic_id, $pt_id) = split("_", $topic_and_pt_id);
 	$query_generator->generate_queries($year, $topic_id, $pt_id);
 }
+
+# output the mapping file for TA2_GRAPH_QUERIES 
+my $output_mapping_filename = $parameters->get("OUTPUT_DIR") . "/" . $parameters->get("TA2_GRAPH_QUERY_MAPPINGS_FILENAME");
+open(my $mapping_output, ">:utf8", $output_mapping_filename)
+        or $logger->NIST_die("Could not open $output_mapping_filename: $!");
+print $mapping_output "query_id\tevent_or_relation_kbid\n";
+my @queries = $query_generator->get("TA2_GRAPH_QUERIES")->get("QUERIES")->toarray();
+foreach my $query(@queries) {
+  my $query_id = $query->get("QUERYID");
+  foreach my $event_or_relation_kbid($query->get("EVENT_OR_RELATION_KBIDS")->toarray()) {
+    print $mapping_output "$query_id\t$event_or_relation_kbid\n";
+  }
+}
+close($mapping_output);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 print "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
