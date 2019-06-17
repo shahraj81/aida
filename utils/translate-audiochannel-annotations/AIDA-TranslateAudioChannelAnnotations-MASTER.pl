@@ -39,7 +39,7 @@ $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
-$switches->addConstantSwitch("replace", "true", "Replace `sound` to `picture`?");
+$switches->addConstantSwitch("replace", "true", "Replace `sound` to `picture`");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("msbfile", "required", "masterShotBoundary.msb");
 $switches->addParam("keyframes_boundingboxes", "required", "File containing keyframe bounding boxes");
