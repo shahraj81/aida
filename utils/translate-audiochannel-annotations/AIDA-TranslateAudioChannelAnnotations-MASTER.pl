@@ -19,7 +19,7 @@ use TranslationManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2019.0.0";
+my $version = "2019.0.1";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};
@@ -39,6 +39,7 @@ $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
+$switches->addConstantSwitch("replace", "true", "Replace `sound` to `picture`");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("msbfile", "required", "masterShotBoundary.msb");
 $switches->addParam("keyframes_boundingboxes", "required", "File containing keyframe bounding boxes");
@@ -66,6 +67,7 @@ my $output_dir = $switches->get("output");
 $logger->NIST_die("$output_dir already exists") if -e $output_dir;
 system("mkdir -p $output_dir");
 
+my $replace_flag = $switches->get("replace");
 my $keyframes_boundingboxes_filename = $switches->get("keyframes_boundingboxes");
 my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $keyframes_boundingboxes_filename);
 my $msb_filename = $switches->get("msbfile");
@@ -103,7 +105,7 @@ foreach my $input_subdir (<$input_dir/*>) {
     my @entries = $filehandler->get("ENTRIES")->toarray();
     foreach my $entry(@entries) {
       my $signal_type = $entry->get("mediamention_signaltype");
-      if($signal_type eq "sound") {
+      if($signal_type && $signal_type eq "sound") {
         my $shot_num;
         my $mention_start_time = $entry->get("mediamention_starttime");
         my $doceid = $entry->get("child_uid");
@@ -117,7 +119,7 @@ foreach my $input_subdir (<$input_dir/*>) {
         my ($top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y)
           = map {$keyframe_boundary->get($_)} qw(TOP_LEFT_X TOP_LEFT_Y BOTTOM_RIGHT_X BOTTOM_RIGHT_Y);
         $entry->{MAP}{keyframe_id} = $keyframe_id;
-        $entry->{MAP}{mediamention_signaltype} = "picture";
+        $entry->{MAP}{mediamention_signaltype} = "picture" if $replace_flag;
         $entry->{MAP}{mediamention_coordinates} = "$top_left_x,$top_left_y,$bottom_right_x,$bottom_right_y";
       }
       
@@ -145,3 +147,8 @@ unless($switches->get('error_file') eq "STDERR") {
 print $error_output ($num_warnings || 'No'), " problem", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
 
 exit $validation_retval;
+
+# Revision history
+
+## 2019.0.0: original version
+## 2019.0.1: replace switch added to control replacing the string `sound` with `picture`

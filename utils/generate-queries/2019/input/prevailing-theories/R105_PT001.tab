@@ -1,10 +1,10 @@
-Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range															
-KE001	"signing of ceasefire agreement, Minsk agreement"	TBD	event	LDC_evt_061	government	agreements	acceptagreementcontractceasefire		Minsk Protocol signed		2014-09-05	2014-09-05	2014-09-05															
-KE001	Ukraine	TBD	evt061arg01participant	LDC_ent_053	gpe	country	country	690791	Ukraine																			
-KE001	Minsk	TBD	evt061arg03place	LDC_ent_057	gpe	urbanarea	city	TBD																				
-KE002	Ukraine did not violate the Minsk agreement	TBD	event	LDC_evt_063	government	agreements	violateagreement		Ukraine violates the Minsk Protocol	not	Start after 2014-08-31	2014-09-01	2014-12-01															
-KE002	Ukraine	TBD	evt063arg01violator	LDC_ent_053	gpe	country	country	690791	Ukraine																			
-KE002	Donetsk	TBD	evt063arg03place	LDC_ent_052	gpe	unspecified	unspecified	709716|TBD	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"																			
-KE003	Ukraine did not conduct military operations in Donetsk Fall 2014	TBD	event	LDC_evt_011	conflict	attack	selfdirectedbattle		Ukrainian military operations in Donetsk	not	Start after 2014-08-31	2014-09-01	2014-12-01															
-KE003	Ukraine	TBD	evt011arg01attacker	LDC_ent_053	gpe	country	country	690791	Ukraine																			
-KE003	Donetsk	TBD	evt011arg04place	LDC_ent_052	gpe	unspecified	unspecified	709716|TBD	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"																			
+Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range
+KE001	"signing of ceasefire agreement, Minsk agreement"	NILV80000236	event	LDC_evt_061	government	agreements	acceptagreementcontractceasefire		Minsk Protocol signed		2014-09-05	2014-09-05	2014-09-05
+KE001	Ukraine	NILV80000236	evt061arg01participant	LDC_ent_053	gpe	country	country	690791	Ukraine				
+KE001	Minsk	NILV80000236	evt061arg03place	LDC_ent_057	gpe	urbanarea	city	625144	Minsk				
+KE002	Ukraine did not violate the Minsk agreement	NILV80000335	event	LDC_evt_063	government	agreements	violateagreement		Ukraine violates the Minsk Protocol	not	Start after 2014-08-31	2014-09-01	2014-12-01
+KE002	Ukraine	NILV80000335	evt063arg01violator	LDC_ent_053	gpe	country	country	690791	Ukraine				
+KE002	Donetsk	NILV80000335	evt063arg03place	LDC_ent_052	gpe	unspecified	unspecified	709716|80000046	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"				
+KE003	Ukraine did not conduct military operations in Donetsk Fall 2014	NILV80000189	event	LDC_evt_011	conflict	attack	selfdirectedbattle		Ukrainian military operations in Donetsk	not	Start after 2014-08-31	2014-09-01	2014-12-01
+KE003	Ukraine	NILV80000189	evt011arg01attacker	LDC_ent_053	gpe	country	country	690791	Ukraine				
+KE003	Donetsk	NILV80000189	evt011arg04place	LDC_ent_052	gpe	unspecified	unspecified	709716|80000046	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"				

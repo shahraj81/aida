@@ -1,39 +1,39 @@
-Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range															
-KE001	"Ukraine sent its regular military troops to the Battle of Debatlseve in January-February, 2015"	TBD	event	LDC_evt_112	movement	transportperson	unspecified		Ukraine sends military troops to the Battle of Debatlseve		2015-0X-XX	2015-01-01	2015-02-28															
-KE001	Ukraine	TBD	evt112arg01transporter	LDC_ent_053	gpe	country	country	690791	Ukraine																			
-KE001	military troops	TBD	evt112arg02passenger	LDC_ent_109	per	militarypersonnel	unspecified	TBD																				
-KE001	Debaltseve	TBD	evt112arg05destination	LDC_ent_057	gpe	urbanarea	city	710229	Debaltseve																			
-KE002	"the fighting in Debaltseve, Ukraine with opponents"	TBD	event	LDC_evt_011	conflict	attack	selfdirectedbattle		Battle of Debaltseve		2015-0X-XX	2015-01-01	2015-02-28															
-KE002	Ukraine	TBD	evt011arg01attacker	LDC_ent_053	gpe	country	country	690791	Ukraine																			
-KE002	Russian-backed militants	TBD	evt011arg02target	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE002	separatists from Luhansk	TBD	evt011arg02target	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE002	separatists from Donetsk	TBD	evt011arg02target	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE002	Russian volunteers	TBD	evt011arg02target	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE002	Serbian mercenaries	TBD	evt011arg02target	LDC_ent_105	per	combatant	mercenary	TBD																				
-KE002	Debaltseve	TBD	evt011arg04place	LDC_ent_057	gpe	urbanarea	city	710229	Debaltseve																			
-KE003	"the fighting in Debaltseve, opponents with Ukraine"	TBD	event	LDC_evt_011	conflict	attack	selfdirectedbattle		Battle of Debaltseve		2015-0X-XX	2015-01-01	2015-02-28															
-KE003	Russian-backed militants	TBD	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE003	separatists from Luhansk	TBD	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE003	separatists from Donetsk	TBD	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE003	Russian volunteers	TBD	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE003	Serbian mercenaries	TBD	evt011arg01attacker	LDC_ent_105	per	combatant	mercenary	TBD																				
-KE003	Ukraine	TBD	evt011arg02target	LDC_ent_053	gpe	country	country	690791	Ukraine																			
-KE003	Debaltseve	TBD	evt011arg04place	LDC_ent_057	gpe	urbanarea	city	710229	Debaltseve																			
-KE004	affiliation of troops with Ukraine	TBD	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown																	
-KE004	troops	TBD	rel016arg01citizen	LDC_ent_109	per	militarypersonnel	unspecified	TBD																				
-KE004	Ukraine	TBD	rel016arg02nationality	LDC_ent_053	gpe	country	country	690791	Ukraine																			
-KE005	sponsorship of militants by Russia	TBD	relation	LDC_rel_014	generalaffiliation	memberoriginreligionethnicity	unspecified				Unknown																	
-KE005	militants	TBD	rel014arg01person	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE005	Russia	TBD	rel014arg02entityorfiller	LDC_ent_053	gpe	country	country	2017370	"Russia (a.k.a. Russian Federation, RF)"																			
-KE006	affiliation of separatists with Donetsk	TBD	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown																	
-KE006	separatists	TBD	rel016arg01citizen	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE006	Donestsk	TBD	rel016arg02nationality	LDC_ent_052	gpe	unspecified	unspecified	709716|TBD	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"																			
-KE007	affiliation of separatists with Luhansk	TBD	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown																	
-KE007	separatists	TBD	rel016arg01citizen	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE007	Luhansk	TBD	rel016arg02nationality	LDC_ent_052	gpe	unspecified	unspecified	702657|TBD	"Luhansk Oblast (a.k.a. Lugansk)|Luhansk People's Republic (a.k.a. LPR, LNR)"																			
-KE008	affiliation of volunteers with Russia	TBD	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown																	
-KE008	volunteers	TBD	rel016arg01citizen	LDC_ent_104	per	combatant	unspecified	TBD																				
-KE008	Russia	TBD	rel016arg02nationality	LDC_ent_053	gpe	country	country	2017370	"Russia (a.k.a. Russian Federation, RF)"																			
-KE009	affiliation of mercenaries with Serbia	TBD	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown																	
-KE009	mercenaries	TBD	rel016arg01citizen	LDC_ent_105	per	combatant	mercenary	TBD																				
-KE009	Serbia	TBD	rel016arg02nationality	LDC_ent_053	gpe	country	country	6290252																				
+Matrix KE Item Number	Natural Language KE Description	Event/Relation KB ID	Item KE	Ontology ID	Type	Subtype	Sub-subtype	Argument KB ID	Handle in KB	Attribute	Expected Date	Start Date Range	End Date Range
+KE001	"Ukraine sent its regular military troops to the Battle of Debatlseve in January-February, 2015"	NILV80000190	event	LDC_evt_112	movement	transportperson	unspecified		Ukraine sends military troops to the Battle of Debatlseve		2015-XX-XX	2015-01-01	2015-02-28
+KE001	Ukraine	NILV80000190	evt112arg01transporter	LDC_ent_053	gpe	country	country	690791	Ukraine				
+KE001	military troops	NILV80000190	evt112arg02passenger	LDC_ent_109	per	militarypersonnel	unspecified	PTE_R105_001					
+KE001	Debaltseve	NILV80000190	evt112arg05destination	LDC_ent_057	gpe	urbanarea	city	710229	Debaltseve				
+KE002	"the fighting in Debaltseve, Ukraine with opponents"	NILV80000202	event	LDC_evt_011	conflict	attack	selfdirectedbattle		Battle of Debaltseve		2015-XX-XX	2015-01-01	2015-02-28
+KE002	Ukraine	NILV80000202	evt011arg01attacker	LDC_ent_053	gpe	country	country	690791	Ukraine				
+KE002	Russian-backed militants	NILV80000202	evt011arg02target	LDC_ent_104	per	combatant	unspecified	PTE_R105_002					
+KE002	separatists from Luhansk	NILV80000202	evt011arg02target	LDC_ent_104	per	combatant	unspecified	PTE_R105_003					
+KE002	separatists from Donetsk	NILV80000202	evt011arg02target	LDC_ent_104	per	combatant	unspecified	PTE_R105_004					
+KE002	Russian volunteers	NILV80000202	evt011arg02target	LDC_ent_104	per	combatant	unspecified	PTE_R105_005					
+KE002	Serbian mercenaries	NILV80000202	evt011arg02target	LDC_ent_105	per	combatant	mercenary	PTE_R105_006					
+KE002	Debaltseve	NILV80000202	evt011arg04place	LDC_ent_057	gpe	urbanarea	city	710229	Debaltseve				
+KE003	"the fighting in Debaltseve, opponents with Ukraine"	NILV80000202	event	LDC_evt_011	conflict	attack	selfdirectedbattle		Battle of Debaltseve		2015-XX-XX	2015-01-01	2015-02-28
+KE003	Russian-backed militants	NILV80000202	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	PTE_R105_002					
+KE003	separatists from Luhansk	NILV80000202	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	PTE_R105_003					
+KE003	separatists from Donetsk	NILV80000202	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	PTE_R105_004					
+KE003	Russian volunteers	NILV80000202	evt011arg01attacker	LDC_ent_104	per	combatant	unspecified	PTE_R105_005					
+KE003	Serbian mercenaries	NILV80000202	evt011arg01attacker	LDC_ent_105	per	combatant	mercenary	PTE_R105_006					
+KE003	Ukraine	NILV80000202	evt011arg02target	LDC_ent_053	gpe	country	country	690791	Ukraine				
+KE003	Debaltseve	NILV80000202	evt011arg04place	LDC_ent_057	gpe	urbanarea	city	710229	Debaltseve				
+KE004	affiliation of troops with Ukraine	PTR_R105_001	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown		
+KE004	troops	PTR_R105_001	rel016arg01citizen	LDC_ent_109	per	militarypersonnel	unspecified	PTE_R105_001					
+KE004	Ukraine	PTR_R105_001	rel016arg02nationality	LDC_ent_053	gpe	country	country	690791	Ukraine				
+KE005	sponsorship of militants by Russia	PTR_R105_002	relation	LDC_rel_014	generalaffiliation	memberoriginreligionethnicity	unspecified				Unknown		
+KE005	militants	PTR_R105_002	rel014arg01person	LDC_ent_104	per	combatant	unspecified	PTE_R105_002					
+KE005	Russia	PTR_R105_002	rel014arg02entityorfiller	LDC_ent_053	gpe	country	country	2017370	"Russia (a.k.a. Russian Federation, RF)"				
+KE006	affiliation of separatists with Donetsk	PTR_R105_003	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown		
+KE006	separatists	PTR_R105_003	rel016arg01citizen	LDC_ent_104	per	combatant	unspecified	PTE_R105_004					
+KE006	Donestsk	PTR_R105_003	rel016arg02nationality	LDC_ent_052	gpe	unspecified	unspecified	709716|80000046	"Donetsk Oblast|Donetsk People's Republic (a.k.a. DPR, DNR)"				
+KE007	affiliation of separatists with Luhansk	PTR_R105_004	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown		
+KE007	separatists	PTR_R105_004	rel016arg01citizen	LDC_ent_104	per	combatant	unspecified	PTE_R105_003					
+KE007	Luhansk	PTR_R105_004	rel016arg02nationality	LDC_ent_052	gpe	unspecified	unspecified	702657|80000058	"Luhansk Oblast (a.k.a. Lugansk)|Luhansk People's Republic (a.k.a. LPR, LNR)"				
+KE008	affiliation of volunteers with Russia	PTR_R105_005	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown		
+KE008	volunteers	PTR_R105_005	rel016arg01citizen	LDC_ent_104	per	combatant	unspecified	PTE_R105_005					
+KE008	Russia	PTR_R105_005	rel016arg02nationality	LDC_ent_053	gpe	country	country	2017370	"Russia (a.k.a. Russian Federation, RF)"				
+KE009	affiliation of mercenaries with Serbia	PTR_R105_006	relation	LDC_rel_016	generalaffiliation	memberoriginreligionethnicity	nationalitycitizen				Unknown		
+KE009	mercenaries	PTR_R105_006	rel016arg01citizen	LDC_ent_105	per	combatant	mercenary	PTE_R105_006					
+KE009	Serbia	PTR_R105_006	rel016arg02nationality	LDC_ent_053	gpe	country	country	6290252					

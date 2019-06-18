@@ -173,6 +173,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
   UNEXPECTED_ENTTYPE                      WARNING        Unexpected enttype %s in response (expected %s)
+  UNEXPECTED_NUM_FIELDS                   FATAL_ERROR    Unexpected number of fields (expected %s, provided %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
   UNEXPECTED_PARAMETER_LINE               WARNING        Unexpected line in the parameters file
   UNEXPECTED_QUERY_TYPE                   FATAL_ERROR    Unexpected query type %s
@@ -641,6 +642,10 @@ sub add {
   my $field_separator = $self->get("FIELD_SEPARATOR");
   @{$self->{ELEMENTS}} = split( /$field_separator/, $line);
   my $end = pop @{$self->{ELEMENTS}};
+  my $num_fields_provided = scalar @{$self->{ELEMENTS}};
+  my $num_fields_expected = scalar @{$header->{ELEMENTS}};
+  $self->get("LOGGER")->record_problem("UNEXPECTED_NUM_FIELDS", $num_fields_expected, $num_fields_provided, $self->get("WHERE"))
+    unless $num_fields_provided == $num_fields_expected;
   %{$self->{MAP}} = map {$header->get("ELEMENT_AT",$_) => $self->get("ELEMENT_AT",$_)} (0..$header->get("NUM_OF_COLUMNS")-1);
 }
 
@@ -2688,15 +2693,59 @@ sub new {
 }
 
 #####################################################################################
+# ERESpec
+#####################################################################################
+
+package ERESpec;
+
+use parent -norequire, 'Super';
+
+sub get_FULL_TYPE {
+  my ($self) = @_;
+  my ($type, $subtype, $subsubtype) = map {$self->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
+  my $full_type = $type;
+  $full_type = "$type.$subtype" if $subtype ne "n/a";
+  $full_type = "$type.$subtype.$subsubtype" if $subtype ne "n/a" && $subsubtype ne "n/a";
+  $full_type;
+}
+
+sub get_PARENT_TYPE {
+  my ($self) = @_;
+  my ($type, $subtype, $subsubtype) = map {$self->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
+  my $parent_type;
+  $parent_type = "$type.$subtype" if $subsubtype ne "n/a";
+  $parent_type = "$type" if $subtype ne "n/a" && $subsubtype eq "n/a";
+  $parent_type;
+}
+
+sub get_PARENT {
+  my ($self) = @_;
+  my $parent_type = $self->get("PARENT_TYPE");
+  if($parent_type) {
+    my @parent_specs = $self->get("ONTOLOGY_CONTAINER")->get("SPEC_OF_TYPE", $parent_type);
+    $self->get("LOGGER")->NIST_die("Multiple specs found, expected no more than one")
+     if scalar @parent_specs > 1;
+    return $parent_specs[0];
+  }
+}
+
+sub get_CHILDREN {
+  my ($self) = @_;
+  my $full_type = $self->get("FULL_TYPE");
+  my @children_specs = $self->get("ONTOLOGY_CONTAINER")->get("SPEC_OF_CHILDREN_OF_TYPE", $full_type);
+  @children_specs;
+}
+
+#####################################################################################
 # EntitySpec
 #####################################################################################
 
 package EntitySpec;
 
-use parent -norequire, 'Super';
+use parent -norequire, 'Super', 'ERESpec';
 
 sub new {
-	my ($class, $logger, $entry) = @_;
+	my ($class, $logger, $entry, $ontology_container) = @_;
 	my $self = {
 		CLASS => 'EntitySpec',
 		ENTRY => $entry,
@@ -2707,6 +2756,7 @@ sub new {
 		TYPE_OV => $entry->get("Output Value for Type"),
 		SUBTYPE_OV => $entry->get("Output Value for Subtype"),
 		SUBSUBTYPE_OV => $entry->get("Output Value for Sub-subtype"),
+		ONTOLOGY_CONTAINER => $ontology_container,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -2719,10 +2769,10 @@ sub new {
 
 package EventSpec;
 
-use parent -norequire, 'Super';
+use parent -norequire, 'Super', 'ERESpec';
 
 sub new {
-	my ($class, $logger, $entry) = @_;
+	my ($class, $logger, $entry, $ontology_container) = @_;
 	my $self = {
 		CLASS => 'EventSpec',
 		ENTRY => $entry,
@@ -2734,6 +2784,7 @@ sub new {
 		TYPE_OV => $entry->get("Output Value for Type"),
 		SUBTYPE_OV => $entry->get("Output Value for Subtype"),
 		SUBSUBTYPE_OV => $entry->get("Output Value for Sub-subtype"),
+    ONTOLOGY_CONTAINER => $ontology_container,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -2746,25 +2797,16 @@ sub new {
 	$self;
 }
 
-sub get_FULL_TYPE {
-	my ($self) = @_;
-	my ($type, $subtype, $subsubtype) = map {$self->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
-	my $full_type = $type;
-	$full_type = "$type.$subtype" if $subtype ne "n/a";
-	$full_type = "$type.$subtype.$subsubtype" if $subtype ne "n/a" && $subsubtype ne "n/a";
-	$full_type;	
-}
-
 #####################################################################################
 # RelationSpec
 #####################################################################################
 
 package RelationSpec;
 
-use parent -norequire, 'Super';
+use parent -norequire, 'Super', 'ERESpec';
 
 sub new {
-	my ($class, $logger, $entry) = @_;
+	my ($class, $logger, $entry, $ontology_container) = @_;
 	my $self = {
 		CLASS => 'RelationSpec',
 		ENTRY => $entry,
@@ -2776,6 +2818,7 @@ sub new {
 		TYPE_OV => $entry->get("Output Value for Type"),
 		SUBTYPE_OV => $entry->get("Output Value for Subtype"),
 		SUBSUBTYPE_OV => $entry->get("Output Value for Sub-Subtype"),
+    ONTOLOGY_CONTAINER => $ontology_container,
 		LOGGER => $logger,
 	};
 	bless($self, $class);
@@ -2786,15 +2829,6 @@ sub new {
 		);
 	}
 	$self;
-}
-
-sub get_FULL_TYPE {
-	my ($self) = @_;
-	my ($type, $subtype, $subsubtype) = map {$self->get($_)} qw(TYPE SUBTYPE SUBSUBTYPE);
-	my $full_type = $type;
-	$full_type = "$type.$subtype" if $subtype ne "n/a";
-	$full_type = "$type.$subtype.$subsubtype" if $subtype ne "n/a" && $subsubtype ne "n/a";
-	$full_type;	
 }
 
 #####################################################################################
@@ -2823,9 +2857,10 @@ package OntologyContainer;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $logger) = @_;
+  my ($class, $logger, $container_name) = @_;
   my $self = $class->SUPER::new($logger);
   $self->{CLASS} = 'OntologyContainer';
+  $self->{NAME} = $container_name;
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -2856,6 +2891,21 @@ sub get_EVENT_WITH_ITEM_KE {
 	}
 }
 
+sub get_SPEC_OF_TYPE {
+  my ($self, $spec_type) = @_;
+  grep {$_->get("FULL_TYPE") eq $spec_type} $self->toarray();
+}
+
+sub get_SPEC_OF_CHILDREN_OF_TYPE {
+  my ($self, $parent_type) = @_;
+  my @children_specs;
+  foreach my $spec($self->toarray()) {
+    push(@children_specs, $spec)
+      if $spec->get("PARENT_TYPE") eq $parent_type;
+  }
+  @children_specs;
+}
+
 #####################################################################################
 # QueryGenerator
 #####################################################################################
@@ -2872,10 +2922,11 @@ sub new {
 		TA1_GRAPH_QUERIES => undef,
 		TA2_ZEROHOP_QUERIES => undef,
 		TA2_GRAPH_QUERIES => undef,
-		ENTITIES => OntologyContainer->new($logger),
-		RELATIONS => OntologyContainer->new($logger),
-		EVENTS => OntologyContainer->new($logger),
+		ENTITIES => OntologyContainer->new($logger, "ENTITIES"),
+		RELATIONS => OntologyContainer->new($logger, "RELATIONS"),
+		EVENTS => OntologyContainer->new($logger, "EVENTS"),
 		PREVAILING_THEORY_ENTRIES => PrevailingTheoryContainer->new($logger),
+		NAMED_REFKBIDS => Container->new($logger),
 		NEXT_TASK1_CLASS_QUERY_NUM => 1,
 		NEXT_TASK1_GRAPH_QUERY_NUM => 1,
 		NEXT_TASK2_ZEROHOP_QUERY_NUM => 1,
@@ -2902,14 +2953,15 @@ sub load {
 sub load_MAIN {
 	my ($self) = @_;
 	my $parameters = $self->get("PARAMETERS");
-	foreach my $key($parameters->get("ONTOLOGY_FILES")->get("ALL_KEYS")) {
+	foreach my $key(sort $parameters->get("ONTOLOGY_FILES")->get("ALL_KEYS")) {
 		my $filename = $parameters->get("ONTOLOGY_FILES")->get("BY_KEY", $key);
 		$self->load("ONTOLOGY", $key, $filename);
 	}
-	foreach my $key($parameters->get("PREVAILING_THEORY_FILES")->get("ALL_KEYS")) {
+	foreach my $key(sort $parameters->get("PREVAILING_THEORY_FILES")->get("ALL_KEYS")) {
 		my $filename = $parameters->get("PREVAILING_THEORY_FILES")->get("BY_KEY", $key);
 		$self->load("PREVAILING_THEORY", $key, $filename);
 	}
+	$self->load("NAMED_REFKBIDS");
 }
 
 sub load_ONTOLOGY {
@@ -2918,10 +2970,11 @@ sub load_ONTOLOGY {
 	my $ontology_container = $self->get(uc($ontology_type));
 	foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
 		my $ontology_id = $entry->get("AnnotIndexID");
+		next unless $ontology_id =~ /^LDC_/;
 		my $spec;
-		$spec = EntitySpec->new($self->get("LOGGER"), $entry) if $ontology_type eq "entities";
-		$spec = EventSpec->new($self->get("LOGGER"), $entry) if $ontology_type eq "events";
-		$spec = RelationSpec->new($self->get("LOGGER"), $entry) if $ontology_type eq "relations";
+		$spec = EntitySpec->new($self->get("LOGGER"), $entry, $ontology_container) if $ontology_type eq "entities";
+		$spec = EventSpec->new($self->get("LOGGER"), $entry, $ontology_container) if $ontology_type eq "events";
+		$spec = RelationSpec->new($self->get("LOGGER"), $entry, $ontology_container) if $ontology_type eq "relations";
 		$ontology_container->add($spec, $ontology_id);
 	}
 }
@@ -2938,6 +2991,27 @@ sub load_PREVAILING_THEORY {
 	}
 }
 
+sub load_NAMED_REFKBIDS {
+  my ($self) = @_;
+  my $filename = $self->get("PARAMETERS")->get("NAMED_REFKBIDS_FILENAME");
+  my $filehandler = FileHandler->new($self->get("LOGGER"), $filename);
+  foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
+    my $reference_kbid = $entry->get("reference_kbid");
+    $self->get("NAMED_REFKBIDS")->add("KEY", $reference_kbid);
+  }
+}
+
+sub filter_named_refkbids {
+  my ($self, $kbids_list) = @_;
+  my @filtered_kbids;
+  foreach my $kbid(split(/\|/, $kbids_list)) {
+    push (@filtered_kbids, $kbid)
+      if($self->get("NAMED_REFKBIDS")->exists($kbid));
+  }
+  my $filtered_kbids_list;
+  $filtered_kbids_list = join("|", @filtered_kbids) if scalar @filtered_kbids;
+  $filtered_kbids_list;
+}
 
 sub generate_queries {
 	my ($self, $year, $topic_id, $prevailing_theory_id) = @_;
@@ -2972,14 +3046,18 @@ sub generate_graph_queries {
 	my $used_query_keys = $self->get("USED_" . $task_short_name . "_GRAPH_QUERY_KEYS");
 	foreach my $pt_entry($subcontainer->toarray()) {
 		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
+		$argument_kbid = $self->filter_named_refkbids($pt_entry->get("ARGUMENT_KBID")) if $task_long_name eq "task2";
 		# For task1, we need only distict edge labels for queryids
 		$argument_kbid = 0 if $task_long_name eq "task1";
-		next unless $argument_kbid =~ /^\d+$/;
+		next if ($task_long_name eq "task2" && !$argument_kbid);
 		my $role;
 		if($pt_entry->get("ONTOLOGY_ID") =~ /^LDC_ent_/) {
 			my $item_ke = $pt_entry->get("ITEM_KE");
 			my $subject_spec;
 			if($item_ke =~ /^(evt|rel)\d/) {
+			  my $event_or_relation_kbid = $pt_entry->get("ENTRY")->get("Event/Relation KB ID");
+			  my $spec_metatype = "EVENT";
+			  $spec_metatype = "RELATION" if $item_ke =~ /^rel\d/;
 				my ($event_or_relation_spec, $argument_spec);
 				($event_or_relation_spec, $argument_spec)
 					= $self->get("EVENTS")->get("EVENT_WITH_ITEM_KE", $item_ke)
@@ -2989,37 +3067,51 @@ sub generate_graph_queries {
 						if $item_ke =~ /^rel\d/;
 				my $event_or_relation_type = $event_or_relation_spec->get("FULL_TYPE");
 				my $argument_label = $argument_spec->get("LABEL");
-				my $edge_label = $event_or_relation_type . "_" . $argument_label;
-				my $query_key = $edge_label;
-				$query_key = $edge_label . "_" . $argument_kbid if $task_long_name eq "task2";
-				next if $used_query_keys->exists($query_key);
-				my $i = $self->get("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
-				$i = $self->normalize_querynum($i);
-				my $query_id = "$query_id_prefix\_$i";
-				my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
-				my $sparql = $self->get($task_short_name . "_GRAPH_SPARQL_QUERY_TEMPLATE");
-				$sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
-				$sparql =~ s/\[__PREDICATE__\]/$edge_label/gs;
-				$sparql =~ s/\[__KBID__\]/$query_reference_kbid/gs if $task_long_name eq "task2";
-				my $query_attributes = XMLAttributes->new($logger);
-				$query_attributes->add("$query_id", "id");
-				my $xml_subject = XMLElement->new($logger, "?subject", "subject", 0);
-				my $xml_predicate = XMLElement->new($logger, $edge_label, "predicate", 0);
-				my $xml_object;
-				$xml_object = XMLElement->new($logger, "?object", "object", 0)
-					if $task_long_name eq "task1";
-				$xml_object = XMLElement->new($logger, $query_reference_kbid, "object", 0)
-					if $task_long_name eq "task2";
-				my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
-				my $xml_query = XMLElement->new($logger,
-							XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object, $xml_sparql),
-							"graph_query",
-							1,
-							$query_attributes);
-				my $query = GraphQuery->new($logger, $xml_query);
-				$queries->add($query);
-				$self->increment("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
-				$used_query_keys->add("KEY", $query_key);
+				foreach my $edge_label($self->get("EDGE_LABELS", $spec_metatype, $event_or_relation_type, $argument_label)) {
+				  my $query_key = $edge_label;
+				  $query_key = $edge_label . "-" . $argument_kbid if $task_long_name eq "task2";
+				  if ($used_query_keys->exists($query_key)) {
+				    if($task_long_name eq "task2") {
+  				    my @matching_queries = grep {$_->get("PREDICATE") eq $query_key} $queries->get("QUERIES")->toarray();
+  				    foreach my $matching_query(@matching_queries) {
+  				      $matching_query->get("EVENT_OR_RELATION_KBIDS")->add("KEY", $event_or_relation_kbid);
+  				    }
+				    }
+				    next;
+				  }
+				  my $i = $self->get("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
+				  $i = $self->normalize_querynum($i);
+				  my $query_id = "$query_id_prefix\_$i";
+				  my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
+          if($argument_kbid =~ /^\S+?|\S+?$/) {
+            $query_reference_kbid = join("|", map {"$reference_kbid_prefix:$_"} split(/\|/, $argument_kbid));
+          }
+				  my $sparql = $self->get($task_short_name . "_GRAPH_SPARQL_QUERY_TEMPLATE");
+				  $sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
+				  $sparql =~ s/\[__PREDICATE__\]/$edge_label/gs;
+				  $sparql =~ s/\[__KBID__\]/$query_reference_kbid/gs if $task_long_name eq "task2";
+				  my $query_attributes = XMLAttributes->new($logger);
+				  $query_attributes->add("$query_id", "id");
+				  my $xml_subject = XMLElement->new($logger, "?subject", "subject", 0);
+				  my $xml_predicate = XMLElement->new($logger, $edge_label, "predicate", 0);
+				  my $xml_object;
+				  $xml_object = XMLElement->new($logger, "?object", "object", 0)
+				  	if $task_long_name eq "task1";
+				  $xml_object = XMLElement->new($logger, $query_reference_kbid, "object", 0)
+				  	if $task_long_name eq "task2";
+				  my $xml_sparql = XMLElement->new($logger, $sparql, "sparql", 1);
+				  my $xml_query = XMLElement->new($logger,
+							 XMLContainer->new($logger, $xml_subject, $xml_predicate, $xml_object, $xml_sparql),
+							 "graph_query",
+							 1,
+							 $query_attributes);
+				  my $query = GraphQuery->new($logger, $xml_query);
+				  $query->get("EVENT_OR_RELATION_KBIDS")->add("KEY", $event_or_relation_kbid)
+				    if($task_long_name eq "task2");
+				  $queries->add($query);
+				  $self->increment("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
+				  $used_query_keys->add("KEY", $query_key);
+				}
 			}
 		}
 	}
@@ -3101,14 +3193,17 @@ sub generate_task2_zerohop_queries {
 	my $used_query_keys = $self->get("USED_TA2_ZEROHOP_QUERY_KEYS");
 	foreach my $pt_entry($subcontainer->toarray()) {
 		# Is this an entity involved in the prevailing theory?
-		my $argument_kbid = $pt_entry->get("ARGUMENT_KBID");
-		if($argument_kbid =~ /^\d+$/) {
+		my $argument_kbid = $self->filter_named_refkbids($pt_entry->get("ARGUMENT_KBID"));
+		if($argument_kbid) {
 			# If yes, generate the query
 			next if $used_query_keys->exists($argument_kbid);
 			my $i = $self->get("NEXT_TASK2_ZEROHOP_QUERY_NUM");
 			$i = $self->normalize_querynum($i);
 			my $query_id = "$query_id_prefix\_$i";
 			my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
+			if($argument_kbid =~ /^\S+\|\S+$/) {
+			  $query_reference_kbid = join("|", map {"$reference_kbid_prefix:$_"} split(/\|/, $argument_kbid));
+			}
 			# Generate the XML object corresponding to the query
 			my $sparql = $self->get("TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE");
 			$sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
@@ -3135,7 +3230,36 @@ sub generate_task2_graph_queries {
 	$self->generate_graph_queries($year, $topic_id, $prevailing_theory_id, "task2");
 }
 
+sub get_EDGE_LABELS {
+  my ($self, $spec_metatype, $event_or_relation_type, $argument_label) = @_;
+  # Add the label as it is
+  my @labels;
+  push(@labels, join("_",($event_or_relation_type,$argument_label)));
 
+  # Now check if the parent event or relation should also be used to generate query
+  my @event_or_relation_specs = $self->get($spec_metatype . "S")->get("SPEC_OF_TYPE", $event_or_relation_type);
+  $self->get("LOGGER")->NIST_die("Multiple specs found, expected no more than one")
+    if scalar @event_or_relation_specs > 1;
+  my $event_or_relation_spec = $event_or_relation_specs[0];
+  my $parent_event_or_relation_spec = $event_or_relation_spec->get("PARENT");
+  if($parent_event_or_relation_spec) {
+    my @siblings_event_or_relation_specs = $parent_event_or_relation_spec->get("CHILDREN");
+    my $check = 1;
+    foreach my $spec($parent_event_or_relation_spec, @siblings_event_or_relation_specs) {
+      my $found;
+      foreach my $argument_spec($spec->get("ARGUMENTS")->toarray()) {
+        $found = 1 if $argument_spec->get("LABEL") eq $argument_label;
+      }
+      $check = 0 unless $found;
+    }
+    if($check) {
+      my $parent_event_or_relation_type = $parent_event_or_relation_spec->get("FULL_TYPE");
+      push(@labels, join("_",($parent_event_or_relation_type,$argument_label)));
+    }
+  }
+
+  @labels;
+}
 
 sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
 	my ($self) = @_;
@@ -4162,6 +4286,7 @@ sub new {
   my $self = {
     CLASS => 'GraphQuery',
     XML_OBJECT => $xml_object,
+    EVENT_OR_RELATION_KBIDS => Container->new($logger),
     LOGGER => $logger,
   };
   bless($self, $class);
