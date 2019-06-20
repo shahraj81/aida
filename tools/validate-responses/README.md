@@ -1,6 +1,6 @@
 # Validate Responses
 
-Last updated: 6/17/2019
+Last updated: 6/20/2019
 
 This document describes:
 
@@ -111,6 +111,7 @@ In addition, if confidence or importance value is specified in scientific notati
 
 #### v2019.0.1:
 - Code modifed to validate if all members of a cluster in the output obtained by applying TA3 graph query against a KB (using NIST's SPARQL query application docker) have the same type.
+- Hotfix on 6/20/2019: (1) validation of edge type in response fixed, (2) response key changed to filename:linenum
 
 #### v2019.0.0:
 - First version of the validator to work on SPARQL output files for M18.
