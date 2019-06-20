@@ -1567,10 +1567,16 @@ my %validators = (
     VALIDATE => sub {
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $edgetype_in_query = $entry->get("QUERY")->get("PREDICATE");
-      my $edgetype_in_response = $entry->get("QUERY_EDGE_TYPE_IN_RESPONSE");
-      ($edgetype_in_response) = $edgetype_in_response =~ /\#(.*?)\>/;
-      unless ($edgetype_in_response eq $edgetype_in_query) {
-        $logger->record_problem("UNEXPECTED_EDGETYPE", $edgetype_in_response, $edgetype_in_query, $where);
+      my $matching_edgetype_in_response = $entry->get("MATCHING_EDGE_TYPE_IN_RESPONSE");
+      ($matching_edgetype_in_response) = $matching_edgetype_in_response =~ /\#(.*?)\>/;
+      my ($event_or_relation_type_in_query, $rolename_in_query) = split("_",$edgetype_in_query);
+      my ($matching_event_or_relation_type_in_response, $matching_rolename_in_response) = split("_",$matching_edgetype_in_response);
+      unless ($rolename_in_query eq $matching_rolename_in_response) {
+        $logger->record_problem("UNEXPECTED_ROLENAME", $matching_rolename_in_response, $rolename_in_query, $where);
+        return;
+      }
+      unless ($matching_event_or_relation_type_in_response eq $event_or_relation_type_in_query || $matching_event_or_relation_type_in_response =~ /^$event_or_relation_type_in_query\..*?$/) {
+        $logger->record_problem("UNEXPECTED_EVENTTYPE", $matching_event_or_relation_type_in_response, "$event_or_relation_type_in_query or $event_or_relation_type_in_query\.*", $where);
         return;
       }
       1;
@@ -2430,8 +2436,8 @@ sub load {
   }
   
   my @entries = $filehandler->get("ENTRIES")->toarray();
-  my $i = 0;
   foreach my $entry(@entries) {
+    my $linenum = $entry->get("LINENUM");
     my @provided_columns = split(/\t/, $entry->get("LINE"));
     if(@provided_columns != @expected_header) {
       $logger->record_problem("UNEXPECTED_COLUMN_NUM", $#expected_header, $#provided_columns, $entry->get("WHERE"));
@@ -2474,8 +2480,7 @@ sub load {
       }
     }
     $entry->set("VALID", $valid);
-    $i++;
-    $self->get("RESPONSES")->add($entry, $i);
+    $self->get("RESPONSES")->add($entry, "$filename:$linenum");
   }
 }
 
