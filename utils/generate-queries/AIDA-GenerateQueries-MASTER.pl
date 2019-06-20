@@ -42,7 +42,7 @@ $parameters->set("TA1_CLASS_QUERYID_PREFIX", "AIDA_TA1_CL_2019");
 $parameters->set("TA1_GRAPH_QUERYID_PREFIX", "AIDA_TA1_GR_2019");
 $parameters->set("TA2_ZEROHOP_QUERYID_PREFIX", "AIDA_TA2_ZH_2019");
 $parameters->set("TA2_GRAPH_QUERYID_PREFIX", "AIDA_TA2_GR_2019");
-$parameters->set("REFERENCE_KBID_PREFIX", "LDC2018E80");
+$parameters->set("REFERENCE_KBID_PREFIX", "LDC2019E44");
 $parameters->set("TA2_GRAPH_QUERY_MAPPINGS_FILENAME", "TA2_GraphQuery_mappings.txt");
 
 $logger->NIST_die("Output directory exists") if -d $parameters->get("OUTPUT_DIR");

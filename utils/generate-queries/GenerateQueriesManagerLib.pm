@@ -3308,7 +3308,7 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
                   ?statement2           aida:cluster                  ?cluster .
                   ?statement2           aida:clusterMember            ?member .
                   ?statement2           aida:confidence               ?cm_confidence .
-                  ?cm_confidence       aida:confidenceValue          ?cm_cv .
+                  ?cm_confidence        aida:confidenceValue          ?cm_cv .
 
                   ?inf_justification    aida:source          ?doceid .
                   ?inf_justification    aida:sourceDocument  ?docid .
