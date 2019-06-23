@@ -2715,13 +2715,13 @@ sub new {
   };
   bless($self, $class);
   my %keys_to_var = (
-    "MXC" => "MAX_NUM_OF_CLUSTERS",
-    "DPC" => "MAX_NUM_OF_ITEMS_PER_CLUSTER",
+    "CPD" => "MAX_NUM_OF_CLUSTERS_PER_DOCUMENT",
+    "IPC" => "MAX_NUM_OF_ITEMS_PER_CLUSTER",
   );
   my @elements = split(",", $policy_string);
   foreach my $element(@elements) {
     my ($key, $value) = split(":", $element);
-    $logger->NIST_die("unexpected key %s") unless $keys_to_var{$key};
+    $logger->NIST_die("unexpected key $key used as part of the policy: $policy_string") unless $keys_to_var{$key};
     $self->set($keys_to_var{$key}, $value);
   }
   $self;
@@ -2918,11 +2918,42 @@ sub generate_pool {
   # TODO: use depth and previous pool to generate differentail pool
   # 
   #
-  my $header_line = join("\t", qw(QUERY_ID ENTITY_TYPE_IN_QUERY ITEM_NUM MENTION_MODALITY DOCID MENTION_SPAN ASSESSMENT_COL_1 ASSESSMENT_COL_2));
+  my $policy = $self->get("POLICY");
+  my $max_num_of_clusters_per_document = $policy->get("MAX_NUM_OF_CLUSTERS_PER_DOCUMENT");
+  my $max_num_of_items_per_cluster = $policy->get("MAX_NUM_OF_ITEMS_PER_CLUSTER");
+  my $previous_pool = $self->get("PREVIOUS_POOL");
+  my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
   my $header = Header->new($logger, $header_line);
   $pool->set("HEADER", $header);
-  foreach my $response($responses->get("RESPONSES")) {
-    
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my $query_id = $response->get("QUERY_ID");
+    my $enttype_in_query = $response->get("QUERY")->get("ENTTYPE");
+    my $docid = $response->get("DOCUMENT_ID");
+    my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
+    my (undef, $doceid, $span) = split(":", $fq_mention_span);
+    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
+    my $mention_span = "$doceid:$span";
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    $kit_entry->set("QUERY_ID", $query_id);
+    $kit_entry->set("CLASS", $enttype_in_query);
+    $kit_entry->set("ID", "<ID>");
+    $kit_entry->set("MODALITY", $doce_modality);
+    $kit_entry->set("DOCID", $docid);
+    $kit_entry->set("SPAN", $mention_span);
+    $kit_entry->set("CORRECTNESS", "NIL");
+    $kit_entry->set("TYPE", "NIL");
+    my $key = &main::generate_uuid_from_string($kit_entry->tostring());
+    my $exists = 0;
+    if($previous_pool->exists($query_id)) {
+      my $pkit = $previous_pool->get("BY_KEY", $query_id);
+      $exists = 1 if $pkit->exists($key);
+    }
+    unless($exists) {
+      my $kit = $pool->get("BY_KEY", $query_id);
+      $exists = 1 if $kit->exists($key);
+      $kit->add($kit_entry, $key) unless $exists;
+    }
   }
   $self->set("DELTA_POOL", $pool);
 }
