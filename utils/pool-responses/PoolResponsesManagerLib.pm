@@ -2516,7 +2516,34 @@ sub load_aggregated_confidences {
 
 sub load_aggregated_confidences_TA1_CL {
   my ($self, $logger, $queries, $ca_filename, $schema, $run_id) = @_;
-  1;
+  my @elements = split(/\//, $ca_filename);
+  my $query_id = pop @elements;
+  $query_id =~ s/^(.*?\/)+//g;
+  $query_id =~ s/\.rq\.tsv//;
+  my $kb_docid = pop @elements;
+  $kb_docid =~ s/\.ttl$//;
+  my $run_id_from_filename = pop @elements;
+  foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
+    my $cluster_id = $entry->get("?cluster");
+    my $rank = $entry->get("?rank");
+    $self->add_cluster_rank_to_responses($logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $entry->get("WHERE"));
+  }
+}
+
+sub add_cluster_rank_to_responses {
+  my ($self, $logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where) = @_;
+  my @responses = grep {$_->get("CLUSTER_ID") eq $cluster_id &&
+                                 $_->get("DOCUMENT_ID") eq $kb_docid &&
+                                 $_->get("QUERY_ID") eq $query_id &&
+                                 $_->get("RUN_ID") eq $run_id} 
+                  $self->get("RESPONSES")->toarray();
+  $logger->NIST_die("No matching response available to add cluster rank")
+    unless @responses;
+  foreach my $response(@responses) {
+    $logger->NIST_die("Rank already exists for cluster in response: " . $response->get("LINE"))
+      if $response->get("CLUSTER_RANK");
+    $response->set("CLUSTER_RANK", $rank);
+  }
 }
 
 sub generate_slot {
