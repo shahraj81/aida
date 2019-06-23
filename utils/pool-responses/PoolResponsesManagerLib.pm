@@ -2388,7 +2388,7 @@ sub new {
   bless($self, $class);
   foreach my $run_id($runs_to_load->toarray()) {
     my $run_dir = "$runs_dir/$run_id";
-    my $ca_dir = "$cas_dir/$run_id";
+    my $ca_dir = "$cas_dir/$run_id" if $cas_dir;
     $logger->NIST_die("$run_dir does not exist") unless -e $run_dir;
     foreach my $input_subdir (<$run_dir/*>) {
       # skip if not a directory
@@ -2400,7 +2400,7 @@ sub new {
         my $query_id = $responses_filename;
         $query_id =~ s/^(.*?\/)+//g;
         $query_id =~ s/\.rq\.tsv//;
-        my $ca_filename = "$ca_dir/$input_subdir_name/$query_id.rq.tsv";
+        my $ca_filename = "$ca_dir/$input_subdir_name/$query_id.rq.tsv" if $ca_dir;
         # skip if the query is unexpected
         unless ($queries->exists($query_id)) {
           $logger->record_debug_information("SKIPPING_INPUT_FILE", $responses_filename, {FILENAME => __FILE__, LINENUM => __LINE__});
@@ -2416,7 +2416,7 @@ sub new {
           next;
         }
         $self->load_responses($logger, $queries, $responses_filename, $schema, $run_id);
-        $self->load_aggregated_confidences($logger, $queries, $ca_filename, $schema, $run_id);
+        $self->load_aggregated_confidences($logger, $queries, $ca_filename, $schema, $run_id) if $ca_filename;
       }
     }
   }
@@ -2506,7 +2506,17 @@ sub load_responses {
 }
 
 sub load_aggregated_confidences {
-  my ($logger, $queries, $ca_filename, $schema, $run_id) = @_;
+  my ($self, $logger, $queries, $ca_filename, $schema, $run_id) = @_;
+  my $code = $queries->get("TASK_AND_TYPE_CODE");
+  my $method = $self->can("load_aggregated_confidences_$code");
+  $logger->NIST_die("ResponseSet->load_aggregated_confidences_$code() not found")
+    unless $method;
+  $method->($self, $logger, $queries, $ca_filename, $schema, $run_id);
+}
+
+sub load_aggregated_confidences_TA1_CL {
+  my ($self, $logger, $queries, $ca_filename, $schema, $run_id) = @_;
+  1;
 }
 
 sub generate_slot {
@@ -2698,7 +2708,7 @@ sub load {
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $queries = $self->get("QUERIES");
   my $queries_to_load = $self->get("QUERIES_TO_LOAD");
-  my $queries_task_and_type = $queries->get("QUERIES_TASK_AND_TYPE_CODE");
+  my $queries_task_and_type = $queries->get("TASK_AND_TYPE_CODE");
   my $runs_to_load = $self->get("RUNS_TO_LOAD");
   my $runs_dir = $self->get("RUNS_DIR");
   my $text_document_boundaries = $self->get("TEXT_BOUNDARIES");
@@ -2759,7 +2769,7 @@ sub load {
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $queries = $self->get("QUERIES");
   my $queries_to_load = $self->get("QUERIES_TO_LOAD");
-  my $queries_task_and_type = $queries->get("QUERIES_TASK_AND_TYPE_CODE");
+  my $queries_task_and_type = $queries->get("TASK_AND_TYPE_CODE");
   my $runs_to_load = $self->get("RUNS_TO_LOAD");
   my $runs_dir = $self->get("RUNS_DIR");
   my $text_document_boundaries = $self->get("TEXT_BOUNDARIES");
@@ -2774,7 +2784,8 @@ sub load {
                       $keyframes_boundingboxes,
                       $runs_dir,
                       $runs_to_load,
-                      $queries_to_load, $cas_dir);
+                      $queries_to_load,
+                      $cas_dir);
                       
 #  my $responses = ResponseSet->new($logger,
 #                  $queries, 
@@ -4451,7 +4462,7 @@ sub get_QUERY {
   $query;
 }
 
-sub get_QUERIES_TASK_AND_TYPE_CODE {
+sub get_TASK_AND_TYPE_CODE {
   my ($self) = @_;
   my $code;
   foreach my $query($self->get("QUERIES")->toarray()) {
