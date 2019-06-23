@@ -2684,11 +2684,47 @@ sub tostring {
   return "nil";
 }
 
-sub tostring_zerohop_query {
+sub tostring_CLASS {
   my ($self) = @_;
-  my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
-    = map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
-  join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
+  my $string = "";
+  
+  $string;
+}
+
+#sub tostring_zerohop_query {
+#  my ($self) = @_;
+#  my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
+#    = map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
+#  join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
+#}
+
+#####################################################################################
+# PoolingPolicy
+#####################################################################################
+
+package PoolingPolicy;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $policy_string) = @_;
+  my $self = {
+    CLASS => 'PoolingPolicy',
+    POLICY_STRING => $policy_string,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  my %keys_to_var = (
+    "MXC" => "MAX_NUM_OF_CLUSTERS",
+    "DPC" => "MAX_NUM_OF_ITEMS_PER_CLUSTER",
+  );
+  my @elements = split(",", $policy_string);
+  foreach my $element(@elements) {
+    my ($key, $value) = split(":", $element);
+    $logger->NIST_die("unexpected key %s") unless $keys_to_var{$key};
+    $self->set($keys_to_var{$key}, $value);
+  }
+  $self;
 }
 
 #####################################################################################
@@ -2700,12 +2736,12 @@ package ResponsesPool;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $depth, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
+  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
     CLASS => 'ResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
-    DEPTH => $depth,
+    POLICY => $policy,
     DOCID_MAPPINGS => $docid_mappings,
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
@@ -2719,7 +2755,6 @@ sub new {
     LOGGER => $logger,
   };
   bless($self, $class);
-  shift;
   $self->load();
   $self;
 }
@@ -2728,7 +2763,7 @@ sub load {
   my ($self) = @_;
   my $cas_dir = $self->get("CONFIDENCE_AGGREGATION_DIR");
   my $coredocs = $self->get("COREDOCS");
-  my $depth = $self->get("DEPTH");
+  my $policy = $self->get("POLICY");
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
   my $images_boundingboxes = $self->get("IMAGE_BOUNDARIES");
   my $keyframes_boundingboxes = $self->get("KEYFRAME_BOUNDARIES");
@@ -2741,10 +2776,10 @@ sub load {
   my $text_document_boundaries = $self->get("TEXT_BOUNDARIES");
   my $logger = $self->get("LOGGER");
   my $responses_pool;
-  $responses_pool = TA1ClassResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $depth, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_CL");
-  $responses_pool = TA1GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $depth, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_GR");
-  $responses_pool = TA2ZeroHopResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $depth, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_ZH");
-  $responses_pool = TA2GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $depth, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_GR");
+  $responses_pool = TA1ClassResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_CL");
+  $responses_pool = TA1GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_GR");
+  $responses_pool = TA2ZeroHopResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_ZH");
+  $responses_pool = TA2GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_GR");
   $self->set("RESPONSES_POOL", $responses_pool);
 }
 
@@ -2762,12 +2797,12 @@ package TA1ClassResponsesPool;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $depth, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
+  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
     CLASS => 'TA1ClassResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
-    DEPTH => $depth,
+    POLICY => $policy,
     DOCID_MAPPINGS => $docid_mappings,
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
@@ -2789,11 +2824,9 @@ sub load {
   my ($self) = @_;
   my $cas_dir = $self->get("CONFIDENCE_AGGREGATION_DIR");
   my $coredocs = $self->get("COREDOCS");
-  my $depth = $self->get("DEPTH");
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
   my $images_boundingboxes = $self->get("IMAGE_BOUNDARIES");
   my $keyframes_boundingboxes = $self->get("KEYFRAME_BOUNDARIES");
-  my $previous_pool = $self->get("PREVIOUS_POOL");
   my $queries = $self->get("QUERIES");
   my $queries_to_load = $self->get("QUERIES_TO_LOAD");
   my $queries_task_and_type = $queries->get("TASK_AND_TYPE_CODE");
@@ -2813,67 +2846,11 @@ sub load {
                       $runs_to_load,
                       $queries_to_load,
                       $cas_dir);
-                      
-#  my $responses = ResponseSet->new($logger,
-#                  $queries, 
-#                  $docid_mappings, 
-#                  $text_document_boundaries, 
-#                  $images_boundingboxes, 
-#                  $keyframes_boundingboxes,
-#                  $runid,
-#                  @response_files);
-  
-#my $filehandler = FileHandler->new($logger, $switches->get("input"));
-#my $entries = $filehandler->get("ENTRIES");
-#foreach my $entry($entries->toarray()) {
-#  my @response_files;
-#  my @ca_files;
-#  my $runid = $entry->get("runid");
-#  my $rundir = "$rundir_root/$runid";
-#  $logger->NIST_die("$rundir does not exist") unless -e $rundir;
-#  foreach my $input_subdir (<$rundir/*>) {
-#    # skip if not a directory
-#    next unless -d $input_subdir;
-#    # iterate through all response files
-#    foreach my $input_file(<$input_subdir/*.rq.tsv>) {
-#      my $query_id = $input_file;
-#      $query_id =~ s/^(.*?\/)+//g;
-#      $query_id =~ s/\.rq\.tsv//;
-#      unless ($queries->exists($query_id)) {
-#        $logger->record_debug_information("SKIPPING_INPUT_FILE", $input_file, {FILENAME => __FILE__, LINENUM => __LINE__});
-#        next;
-#      }
-#      print STDERR "--file $input_file added to the process queue\n";
-#      push(@response_files, $input_file);
-#    }
-#  }
-#  my $cadir = "$cadir_root/$runid";
-#  $logger->NIST_die("$cadir does not exist") unless -e $cadir;
-#  foreach my $input_subdir (<$cadir/*>) {
-#    # skip if not a directory
-#    next unless -d $input_subdir;
-#    # iterate through all response files
-#    foreach my $input_file(<$input_subdir/*.rq.tsv>) {
-#      my $query_id = $input_file;
-#      $query_id =~ s/^(.*?\/)+//g;
-#      $query_id =~ s/\.rq\.tsv//;
-#      unless ($queries->exists($query_id)) {
-#        $logger->record_debug_information("SKIPPING_INPUT_FILE", $input_file, {FILENAME => __FILE__, LINENUM => __LINE__});
-#        next;
-#      }
-#      print STDERR "--file $input_file added to the process queue\n";
-#      push(@ca_files, $input_file);
-#    }
-#  }
-#  my $responses = ResponseSet->new($logger,
-#                  $queries, 
-#                  $docid_mappings, 
-#                  $text_document_boundaries, 
-#                  $images_boundingboxes, 
-#                  $keyframes_boundingboxes,
-#                  $runid,
-#                  @response_files);
-  
+
+  $self->generate_pool($responses);
+}
+
+
 #  my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
 #  my $entries = $filehandler->get("ENTRIES");
 #  foreach my $entry($entries->toarray()) {
@@ -2930,19 +2907,37 @@ sub load {
 #    }
 #  }
 #  $self->set("RESPONSES_POOL", $entire_pool);
+#}
+
+sub generate_pool {
+  my ($self, $responses) = @_;
+  my $logger = $self->get("LOGGER");
+  my $pool = Pool->new($logger);
+  #
+  #
+  # TODO: use depth and previous pool to generate differentail pool
+  # 
+  #
+  my $header_line = join("\t", qw(QUERY_ID ENTITY_TYPE_IN_QUERY ITEM_NUM MENTION_MODALITY DOCID MENTION_SPAN ASSESSMENT_COL_1 ASSESSMENT_COL_2));
+  my $header = Header->new($logger, $header_line);
+  $pool->set("HEADER", $header);
+  foreach my $response($responses->get("RESPONSES")) {
+    
+  }
+  $self->set("DELTA_POOL", $pool);
 }
 
 sub tostring {
   my ($self) = @_;
-#  my $pool = $self->get("RESPONSES_POOL");
-#  my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
-#  print "$header\n";
-#  foreach my $kb_id($pool->get("ALL_KEYS")) {
-#    my $kit = $pool->get("BY_KEY", $kb_id);
-#    foreach my $output_line($kit->toarray()) {
-#      print $program_output "$output_line\n";
-#    }
-#  }
+  my @lines;
+  my $pool_header = $self->get("DELTA_POOL")->get("HEADER")->get("LINE");
+  push(@lines, $pool_header);
+  foreach my $kits($self->get("POOL")->toarray()) {
+    foreach my $kit_entry($kits->toarray()) {
+      push(@lines, $kit_entry->tostring("CLASS"));
+    }
+  }
+  join("\n", @lines);
 }
 
 #####################################################################################

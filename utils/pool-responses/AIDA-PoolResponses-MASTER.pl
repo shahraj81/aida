@@ -36,7 +36,7 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
-$switches->addParam("depth", "required", "Parameter to control depth of responses to be included");
+$switches->addParam("policy", "required", "TASK_AND_QUERY specific pooling policy: comma separated list where each item contains parameter name and its value separated by colon");
 $switches->addParam("coredocs", "required", "List of core documents to be included in the pool");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("sentence_boundaries", "required", "File containing sentence boundaries");
@@ -78,7 +78,7 @@ $logger->NIST_die("$output_filename already exists") if -e $output_filename;
 open($program_output, ">:utf8", $output_filename)
 	or $logger->NIST_die("Could not open $output_filename: $!");
 
-my $depth = $switches->get("depth");
+my $policy_string = $switches->get("policy");
 my $coredocs_filename = $switches->get("coredocs");
 my $docid_mappings_filename = $switches->get("docid_mappings");
 my $sentence_boundaries_filename = $switches->get("sentence_boundaries");
@@ -99,6 +99,7 @@ map {$runs_to_pool->add("KEY", $_->get("runid"))}
       FileHandler->new($logger, $switches->get("input"))->get("ENTRIES")->toarray();
 my $rundir_root = $switches->get("rundir");
 my $cadir_root = $switches->get("cadir");
+my $policy = PoolingPolicy->new($logger, $policy_string);
 
 my $pool = ResponsesPool->new(
              $logger, 
@@ -107,7 +108,7 @@ my $pool = ResponsesPool->new(
              $images_boundingboxes, 
              $keyframes_boundingboxes,
              $previous_pool,
-             $depth,
+             $policy,
              $coredocs,
              $queries, 
              $queries_to_pool,
