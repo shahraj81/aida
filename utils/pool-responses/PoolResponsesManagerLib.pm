@@ -2803,7 +2803,7 @@ sub new {
     RUNS_TO_LOAD => $runs_to_load,
     RUNS_DIR => $runs_dir, 
     TEXT_BOUNDARIES => $text_document_boundaries,
-    RESPONSES_POOL => undef,
+    DELTA_POOL => undef,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -2841,74 +2841,10 @@ sub load {
   $self->generate_pool($responses);
 }
 
-
-#  my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
-#  my $entries = $filehandler->get("ENTRIES");
-#  foreach my $entry($entries->toarray()) {
-#    my $responses_xml_file = $entry->get("filename");
-#    print STDERR "--processing $responses_xml_file\n";
-#    my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
-#    foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
-#      my $query_id = $response->get("QUERYID");
-#      my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
-#        if $ldc_queries->get("QUERY", $query_id);
-#      next unless $kb_id;
-#      $kb_id =~ s/^\?//;
-#      my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
-#      my $enttype = $queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("ENTTYPE");
-#      # Making the enttype NIL as desired by LDC
-#      $enttype = "NIL";
-#      my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
-#      my $scope = $response->get("SCOPE");
-#      my %kit_entries_by_docids;
-#      foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
-#        my $mention_span = $justification->tostring();
-#        my $mention_modality = $justification->get("MODALITY");
-#        my $confidence = $justification->get("CONFIDENCE");
-#        my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
-#        @docids = grep {$_ eq $source_docid} @docids if $source_docid;
-#        foreach my $docid(@docids) {
-#          next unless $core_docs->exists($docid);
-#          my $kit_entry = KitEntry->new($logger);
-#          $kit_entry->set("TYPE", $query_type);
-#          $kit_entry->set("KB_ID", $kb_id);
-#          $kit_entry->set("ENTTYPE", $enttype);
-#          $kit_entry->set("ID", "<ID>");
-#          $kit_entry->set("MENTION_MODALITY", $mention_modality);
-#          $kit_entry->set("DOCID", $docid);
-#          $kit_entry->set("MENTION_SPAN", $mention_span);
-#          $kit_entry->set("LABEL_1", "NIL");
-#          $kit_entry->set("LABEL_2", "NIL");
-#          $kit_entry->set("CONFIDENCE", $confidence);
-#          my $key = &main::generate_uuid_from_string($kit_entry->tostring());
-#          $kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
-#        }
-#      }
-#      foreach my $docid_modality (keys %kit_entries_by_docids) {
-#        my $i = 0;
-#        foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
-#                    keys %{$kit_entries_by_docids{$docid_modality}}) {
-#          $i++;
-#          last if $i > $k;
-#          my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
-#          my $value = $kit_entry->tostring();
-#          $kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
-#        }
-#      }
-#    }
-#  }
-#  $self->set("RESPONSES_POOL", $entire_pool);
-#}
-
 sub generate_pool {
   my ($self, $responses) = @_;
   my $logger = $self->get("LOGGER");
   my $pool = Pool->new($logger);
-  #
-  #
-  # TODO: use depth and previous pool to generate differentail pool
-  # 
-  #
   my $policy = $self->get("POLICY");
   my $max_num_of_clusters_per_document = $policy->get("MAX_NUM_OF_CLUSTERS_PER_DOCUMENT");
   my $max_num_of_items_per_cluster = $policy->get("MAX_NUM_OF_ITEMS_PER_CLUSTER");

@@ -120,6 +120,7 @@ my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
   print $program_output $pool->tostring();
 }
+close($program_output);
 
 unless($switches->get('error_file') eq "STDERR") {
   print STDERR "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
