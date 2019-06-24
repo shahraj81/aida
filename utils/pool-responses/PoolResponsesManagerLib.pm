@@ -2851,6 +2851,21 @@ sub generate_pool {
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
   my $header = Header->new($logger, $header_line);
+  
+  
+  
+  
+  
+  TODO: INCORPORATE POOLING POLICY HERE
+  
+  
+  
+  
+  
+  
+  
+  
+  
   $pool->set("HEADER", $header);
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my $query_id = $response->get("QUERY_ID");
