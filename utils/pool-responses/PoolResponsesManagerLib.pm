@@ -2677,18 +2677,9 @@ sub new {
 
 sub tostring {
   my ($self) = @_;
-  my $type = $self->get("TYPE");
-  
-  my $method = $self->can("tostring_$type");
-  return $method->($self) if $method;
-  return "nil";
-}
-
-sub tostring_CLASS {
-  my ($self) = @_;
-  my $string = "";
-  
-  $string;
+  my @header = @{$self->get("HEADER")->get("ELEMENTS")};
+  my @values = map {$self->get($_)} @header;
+  join("\t", @values);
 }
 
 #sub tostring_zerohop_query {
@@ -2963,7 +2954,7 @@ sub tostring {
   my @lines;
   my $pool_header = $self->get("DELTA_POOL")->get("HEADER")->get("LINE");
   push(@lines, $pool_header);
-  foreach my $kits($self->get("POOL")->toarray()) {
+  foreach my $kits($self->get("DELTA_POOL")->toarray()) {
     foreach my $kit_entry($kits->toarray()) {
       push(@lines, $kit_entry->tostring("CLASS"));
     }
