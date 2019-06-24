@@ -2915,13 +2915,30 @@ sub generate_pool {
   $self->set("DELTA_POOL", $pool);
 }
 
+sub custom {
+  my $a_DOCID = $a->get("DOCID");
+  my $a_SPAN = $a->get("SPAN");
+  my $b_DOCID = $b->get("DOCID");
+  my $b_SPAN = $b->get("SPAN");
+  my ($a_DOCEID, $a_SX, $a_SY, $a_EX, $a_EY) = $a_SPAN =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+  my ($b_DOCEID, $b_SX, $b_SY, $b_EX, $b_EY) = $b_SPAN =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+
+  ($a_DOCID cmp $b_DOCID ||
+  $a_DOCEID cmp $b_DOCEID ||
+  $a_SX <=> $b_SX ||
+  $a_SY <=> $b_SY ||
+  $a_EX <=> $b_EX ||
+  $a_EY <=> $b_EY);
+}
+
 sub tostring {
   my ($self) = @_;
   my @lines;
   my $pool_header = $self->get("DELTA_POOL")->get("HEADER")->get("LINE");
   push(@lines, $pool_header);
-  foreach my $kits($self->get("DELTA_POOL")->toarray()) {
-    foreach my $kit_entry($kits->toarray()) {
+  foreach my $kit_key(sort {$a cmp $b} $self->get("DELTA_POOL")->get("ALL_KEYS")) {
+    my $kit = $self->get("DELTA_POOL")->get("BY_KEY", $kit_key);
+    foreach my $kit_entry(sort custom $kit->toarray()) {
       push(@lines, $kit_entry->tostring("CLASS"));
     }
   }
