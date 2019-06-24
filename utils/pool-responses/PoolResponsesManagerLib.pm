@@ -2706,8 +2706,7 @@ sub new {
   };
   bless($self, $class);
   my %keys_to_var = (
-    "CPD" => "MAX_NUM_OF_CLUSTERS_PER_DOCUMENT",
-    "IPC" => "MAX_NUM_OF_ITEMS_PER_CLUSTER",
+    "CQD" => "MAX_NUM_OF_CLUSTERS_PER_QUERY_PER_DOCUMENT",
   );
   my @elements = split(",", $policy_string);
   foreach my $element(@elements) {
@@ -2846,31 +2845,46 @@ sub generate_pool {
   my $logger = $self->get("LOGGER");
   my $pool = Pool->new($logger);
   my $policy = $self->get("POLICY");
-  my $max_num_of_clusters_per_document = $policy->get("MAX_NUM_OF_CLUSTERS_PER_DOCUMENT");
-  my $max_num_of_items_per_cluster = $policy->get("MAX_NUM_OF_ITEMS_PER_CLUSTER");
+  my $max_num_of_clusters_per_document = $policy->get("MAX_NUM_OF_CLUSTERS_PER_QUERY_PER_DOCUMENT");
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
   my $header = Header->new($logger, $header_line);
   
+    # select the clusters to be pooled
+  my %clusters;
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my $query_id = $response->get("QUERY_ID");
+    my $doc_id = $response->get("DOCUMENT_ID");
+    my $cluster_id = $response->get("CLUSTER_ID");
+    my $run_id = $response->get("RUNID");
+    my $cluster_rank = $response->get("CLUSTER_RANK");
+    $clusters{$run_id . "-" . $query_id . "-" . $doc_id}{$cluster_id} = $cluster_rank;
+  }
+  my %selected_clusters;
+  foreach my $run_and_query_and_document (keys %clusters) {
+    foreach my $cluster_id(sort {$clusters{$run_and_query_and_document}{$a}<=>$clusters{$run_and_query_and_document}{$b}}
+                            keys %{$clusters{$run_and_query_and_document}}) {
+      $selected_clusters{$run_and_query_and_document . "-" . $cluster_id} = 1
+        if scalar keys %{$selected_clusters{$run_and_query_and_document}} < $max_num_of_clusters_per_document;
+    }
+  }
   
-  
-  
-  
-  TODO: INCORPORATE POOLING POLICY HERE
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  # Each cluster has a single informative mention so no matter how many response items
+  # were present in sparql output, we need to just show one
+  my %included;
   $pool->set("HEADER", $header);
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my $query_id = $response->get("QUERY_ID");
     my $enttype_in_query = $response->get("QUERY")->get("ENTTYPE");
-    my $docid = $response->get("DOCUMENT_ID");
+    my $doc_id = $response->get("DOCUMENT_ID");
+    my $cluster_id = $response->get("CLUSTER_ID");
+    my $run_id = $response->get("RUNID");
+    my $key = join("-", ($run_id, $query_id, $doc_id, $cluster_id));
+    # skip this response if the cluster it contains is not one of those
+    # selected to be included in the pool
+    next unless $selected_clusters{$key};
+    # skip if we already inclided the response for this cluster in the pool
+    next if $included{$key};
     my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
     my (undef, $doceid, $span) = split(":", $fq_mention_span);
     my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
@@ -2881,20 +2895,21 @@ sub generate_pool {
     $kit_entry->set("CLASS", $enttype_in_query);
     $kit_entry->set("ID", "<ID>");
     $kit_entry->set("MODALITY", $doce_modality);
-    $kit_entry->set("DOCID", $docid);
+    $kit_entry->set("DOCID", $doc_id);
     $kit_entry->set("SPAN", $mention_span);
     $kit_entry->set("CORRECTNESS", "NIL");
     $kit_entry->set("TYPE", "NIL");
-    my $key = &main::generate_uuid_from_string($kit_entry->tostring());
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
     my $exists = 0;
     if($previous_pool->exists($query_id)) {
       my $pkit = $previous_pool->get("BY_KEY", $query_id);
-      $exists = 1 if $pkit->exists($key);
+      $exists = 1 if $pkit->exists($uuid);
     }
     unless($exists) {
       my $kit = $pool->get("BY_KEY", $query_id);
-      $exists = 1 if $kit->exists($key);
-      $kit->add($kit_entry, $key) unless $exists;
+      $exists = 1 if $kit->exists($uuid);
+      $kit->add($kit_entry, $uuid) unless $exists;
+      $included{$key} = 1;
     }
   }
   $self->set("DELTA_POOL", $pool);
