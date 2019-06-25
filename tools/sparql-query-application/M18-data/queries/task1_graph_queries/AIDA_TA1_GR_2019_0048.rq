@@ -6,7 +6,7 @@ PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
 # Query: AIDA_TA1_GR_2019_0048
-# Query description: Find all edges of type ldcOnt:Conflict.Attack.SelfDirectedBattle_Target
+# Query description: Find all edges of type ldcOnt:OrganizationAffiliation.Leadership.Government_GovernmentBodyOrGPE
 
 # By default, NIST will compute aggregate edge justification confidence (AEJC) as product of:
 #        ?oinf_j_cv    # confidence of object informativeJustification
@@ -28,7 +28,7 @@ SELECT DISTINCT
 
 WHERE {
 
-    BIND (ldcOnt:Conflict.Attack.SelfDirectedBattle_Target AS ?edge_type_q)
+    BIND (ldcOnt:OrganizationAffiliation.Leadership.Government_GovernmentBodyOrGPE AS ?edge_type_q)
 
     # Get the object informativeJustification
     ?objectmo             a                             aida:Entity .

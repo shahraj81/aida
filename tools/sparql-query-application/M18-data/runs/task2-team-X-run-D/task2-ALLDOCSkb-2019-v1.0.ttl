@@ -119,7 +119,7 @@ _:b11 a               aida:LinkAssertion ;
                         aida:confidenceValue  "0.498"^^xsd:double ;
                         aida:system           ldc:testSystem
                       ] ;
-      aida:linkTarget "LDC2018E80:NIL" ;
+      aida:linkTarget "LDC2019E44:NIL" ;
       aida:system     ldc:testSystem .
 
 _:b12 a                        aida:KeyFrameVideoJustification ;
@@ -241,7 +241,7 @@ _:b21 a               aida:LinkAssertion ;
                         aida:confidenceValue  "0.198"^^xsd:double ;
                         aida:system           ldc:testSystem
                       ] ;
-      aida:linkTarget "LDC2018E80:703448" ;
+      aida:linkTarget "LDC2019E44:703448" ;
       aida:system     ldc:testSystem .
 
 _:b22 a                        aida:KeyFrameVideoJustification ;

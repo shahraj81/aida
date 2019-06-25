@@ -6,7 +6,7 @@ PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
 # Query: AIDA_TA2_ZH_2019_0002
-# Query description: Find all informative mentions of entities linked to "LDC2018E80:2017370"
+# Query description: Find all informative mentions of entities linked to "LDC2019E44:80000020"
 # NIST default aggregate confidence of ?cluster is a function of
 #      ?link_cv      # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
 #      ?j_cv         # confidenceValue of informativeJustification
@@ -68,9 +68,9 @@ SELECT DISTINCT
        ?link_cv           # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
 
 WHERE {
-    BIND ("LDC2018E80:2017370" AS ?query_link_target)
+    BIND ("LDC2019E44:80000020" AS ?query_link_target)
 
-    # Find ?cluster linked to "LDC2018E80:2017370"
+    # Find ?cluster linked to "LDC2019E44:80000020"
     # Find the ?link_cv: confidenceValue of linking to external KB entity
     ?cluster              a                             aida:SameAsCluster .
     ?cluster              aida:informativeJustification ?inf_justification .

@@ -1,0 +1,34 @@
+Practice Queries from LDC2019E07 (AIDA Phase 1 Evaluation Practice Topic Annotations)
+(Generated on 6/17/2019)
+
+This package contains queries generated from prevailing theories found
+in LDC2019E07_AIDA_Phase_1_Evaluation_Practice_Topic_Annotations_V6.0.
+The entry point descriptors for TA2 queries are KB IDs from the
+partial reference KB in LDC2019E44 (AIDA Phase 1 Practice Topics
+Reference Knowledge Base) and therefore specify "LDC2019E44" as the
+prefix for the KB ID.
+
+TA1 and TA2 graph queries are generated using the event/relation types
+at the level of granularity in the prevailing theories.  In addition,
+if a query at the subsubtype level has a role that is defined for the
+subtype level as well as all of its subsubtypes, an additional query
+is generated at the subtype level. For example, given
+Conflict.Attack.FirearmAttack_Attacker in a prevailing theory, we also
+automatically generate a query for Conflict.Attack_Attacker; but given
+Government.Agreements.AcceptAgreementContractCeasefire_Participant in
+a prevailing theory, we do not automatically generate a query for
+Government.Agreements_Participant because the "Participant" role is
+not defined for Government.Agreements.ViolateAgreement.
+
+Following is the number of queries generated per query type:
+
+  TA1_class   52
+  TA1_graph   100
+  TA2_graph   118
+  TA2_zerohop 31
+
+N.B.: The TA2 queries have been generated even if the link target for
+the object is an entity that doesn't have a name. For evaluation, NIST
+will use only those objects whose link target is a named entity with
+type PER, ORG, GPE, FAC, LOC, WEA, VEH, or LAW.
+

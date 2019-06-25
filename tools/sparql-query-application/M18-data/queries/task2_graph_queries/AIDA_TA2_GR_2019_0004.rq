@@ -6,8 +6,8 @@ PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
 # Query: AIDA_TA2_GR_2019_0004
-# Query description: Find all edges of type ldcOnt:GeneralAffiliation.OrganizationPoliticalReligiousAffiliation.NationalityCitizen_Nationality such that the object
-#                    of the edge is linked to reference KB node LDC2018E80:690791
+# Query description: Find all edges of type ldcOnt:Conflict.Attack_Place such that the object
+#                    of the edge is linked to reference KB node LDC2019E44:80000020
 #
 # Edge: consists of a Subject (cluster) Id, a Predicate label and an Object (cluster) Id. Subject is an event
 # KE (cluster) or relation KE (cluster). Object is an entity KE (cluster), relation KE (cluster), or event KE (cluster).
@@ -42,10 +42,10 @@ SELECT DISTINCT
 
 WHERE {
 
-    BIND ("LDC2018E80:690791" AS ?olink_target_q)
-    BIND (ldcOnt:GeneralAffiliation.OrganizationPoliticalReligiousAffiliation.NationalityCitizen_Nationality AS ?edge_type_q)
+    BIND ("LDC2019E44:80000020" AS ?olink_target_q)
+    BIND (ldcOnt:Conflict.Attack_Place AS ?edge_type_q)
 
-    # Find ?objectmo linked to "LDC2018E80:690791"
+    # Find ?objectmo linked to "LDC2019E44:80000020"
     ?objectmo             a                             aida:Entity .
     ?objectmo             aida:link                     ?objectmo_rfkbl .
 
