@@ -83,7 +83,6 @@ my $sentence_boundaries_filename = $switches->get("sentence_boundaries");
 my $images_boundingboxes_filename = $switches->get("images_boundingboxes");
 my $keyframes_boundingboxes_filename = $switches->get("keyframes_boundingboxes");
 my $coredocs = CoreDocs->new($logger, $coredocs_filename);
-my $previous_pool = Pool->new($logger, $switches->get("previous_pool"));
 my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_filename, $coredocs);
 my $text_document_boundaries = TextDocumentBoundaries->new($logger, $sentence_boundaries_filename);
 my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $images_boundingboxes_filename);
@@ -97,6 +96,8 @@ map {$runs_to_pool->add("KEY", $_->get("runid"))}
       FileHandler->new($logger, $switches->get("input"))->get("ENTRIES")->toarray();
 my $rundir_root = $switches->get("rundir");
 my $cadir_root = $switches->get("cadir");
+my $task_and_type_code = $queries->get("TASK_AND_TYPE_CODE");
+my $previous_pool = Pool->new($logger, $task_and_type_code, $switches->get("previous_pool"));
 
 my $pool = ResponsesPool->new(
              $logger, 

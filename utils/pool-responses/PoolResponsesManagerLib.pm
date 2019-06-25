@@ -186,8 +186,10 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   PARENT_CHILD_RELATION_FAILURE           ERROR          %s is not a child of %s
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
-  RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
+  RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task
+  SKIPPING_CLUSTER_NOT_SELECTED           DEBUG_INFO     Skipping because cluster is not selected: %s
   SKIPPING_INPUT_FILE                     DEBUG_INFO     Skipping over file %s
+  SKIPPING_RESPONSE_CLUSTER_INCLUDED      DEBUG_INFO     Skipping because response from the cluster is already selected: %s
   SPAN_OFF_BOUNDARY                       ERROR          Provenance %s is outside the boundary %s of document element %s          
   START_LARGER_THAN_END                   ERROR          Start (%s) is larger than (%s) in provenance %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
@@ -2616,23 +2618,32 @@ package Pool;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $logger, $filename) = @_;
+  my ($class, $logger, $task_and_type_code, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'Kit');
   $self->{CLASS} = 'Pool';
+  $self->{TASK_AND_TYPE_CODE} = $task_and_type_code;
+  $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
-  $self->load($filename) if $filename;
+  $self->load($task_and_type_code, $filename) if $filename;
   $self;
 }
 
 sub load {
+  my ($self, $task_and_type_code, @arguments) = @_;
+  my $method = $self->can("load_$task_and_type_code");
+  $self->NIST_die($self->{CLASS}."->load_$task_and_type_code() not found") unless $method;
+  $method->($self, @arguments);
+}
+
+sub load_TA1_CL {
   my ($self, $filename) = @_;
   my $logger = $self->get("LOGGER");
   my $filehandler = FileHandler->new($logger, $filename);
   my $entries = $filehandler->get("ENTRIES");
   foreach my $entry($entries->toarray()) {
-    my $kb_id = $entry->get("KBID");
-    my $kbid_kit = $self->get("BY_KEY", $kb_id);
+    my $query_id = $entry->get("QUERY_ID");
+    my $kbid_kit = $self->get("BY_KEY", $query_id);
     my $value = $entry->get("LINE");
     my $key = &main::generate_uuid_from_string($value);
     $kbid_kit->add($value, $key) unless $self->exists($key);
@@ -2680,41 +2691,6 @@ sub tostring {
   my @header = @{$self->get("HEADER")->get("ELEMENTS")};
   my @values = map {$self->get($_)} @header;
   join("\t", @values);
-}
-
-#sub tostring_zerohop_query {
-#  my ($self) = @_;
-#  my ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2)
-#    = map {$self->get($_)} qw(KB_ID ENTTYPE ID MENTION_MODALITY DOCID MENTION_SPAN LABEL_1 LABEL_2);
-#  join("\t", ($query_id, $enttype, $id, $mention_modality, $docid, $mention_span, $label_1, $label_2));
-#}
-
-#####################################################################################
-# PoolingPolicy
-#####################################################################################
-
-package PoolingPolicy;
-
-use parent -norequire, 'Super';
-
-sub new {
-  my ($class, $logger, $policy_string) = @_;
-  my $self = {
-    CLASS => 'PoolingPolicy',
-    POLICY_STRING => $policy_string,
-    LOGGER => $logger,
-  };
-  bless($self, $class);
-  my %keys_to_var = (
-    "CQD" => "MAX_NUM_OF_CLUSTERS_PER_QUERY_PER_DOCUMENT",
-  );
-  my @elements = split(",", $policy_string);
-  foreach my $element(@elements) {
-    my ($key, $value) = split(":", $element);
-    $logger->NIST_die("unexpected key $key used as part of the policy: $policy_string") unless $keys_to_var{$key};
-    $self->set($keys_to_var{$key}, $value);
-  }
-  $self;
 }
 
 #####################################################################################
@@ -2840,29 +2816,30 @@ sub load {
 sub generate_pool {
   my ($self, $responses) = @_;
   my $logger = $self->get("LOGGER");
-  my $pool = Pool->new($logger);
+  my $pool = Pool->new($logger, "TA1_CL");
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
   my $header = Header->new($logger, $header_line);
+  my $concat_key = ":";
   
-    # select the clusters to be pooled
+  # select the clusters to be pooled
   my %clusters;
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my $query_id = $response->get("QUERY_ID");
     my $doc_id = $response->get("DOCUMENT_ID");
     my $cluster_id = $response->get("CLUSTER_ID");
-    my $run_id = $response->get("RUNID");
+    my $run_id = $response->get("RUN_ID");
     my $cluster_rank = $response->get("CLUSTER_RANK");
-    $clusters{$run_id . "-" . $query_id . "-" . $doc_id}{$cluster_id} = $cluster_rank;
+    my $run_and_query_and_document = join($concat_key, ($run_id, $query_id, $doc_id));
+    $clusters{$run_and_query_and_document}{RANKED}{$cluster_id} = $cluster_rank;
   }
-  my %selected_clusters;
   foreach my $run_and_query_and_document (keys %clusters) {
-    my (undef, $query_id, undef) = split("-", $run_and_query_and_document);
+    my (undef, $query_id, undef) = split($concat_key, $run_and_query_and_document);
     my $max_num_of_clusters_per_document = $self->get("QUERIES_TO_LOAD")->get("BY_KEY", $query_id)->get("max_num_clusters");
-    foreach my $cluster_id(sort {$clusters{$run_and_query_and_document}{$a}<=>$clusters{$run_and_query_and_document}{$b}}
-                            keys %{$clusters{$run_and_query_and_document}}) {
-      $selected_clusters{$run_and_query_and_document . "-" . $cluster_id} = 1
-        if scalar keys %{$selected_clusters{$run_and_query_and_document}} < $max_num_of_clusters_per_document;
+    foreach my $cluster_id(sort {$clusters{$run_and_query_and_document}{RANKED}{$a}<=>$clusters{$run_and_query_and_document}{RANKED}{$b}}
+                            keys %{$clusters{$run_and_query_and_document}{RANKED}}) {
+      $clusters{$run_and_query_and_document}{SELECTED}{$cluster_id} = 1
+        if scalar keys %{$clusters{$run_and_query_and_document}{SELECTED}} < $max_num_of_clusters_per_document;
     }
   }
   
@@ -2875,13 +2852,19 @@ sub generate_pool {
     my $enttype_in_query = $response->get("QUERY")->get("ENTTYPE");
     my $doc_id = $response->get("DOCUMENT_ID");
     my $cluster_id = $response->get("CLUSTER_ID");
-    my $run_id = $response->get("RUNID");
-    my $key = join("-", ($run_id, $query_id, $doc_id, $cluster_id));
+    my $run_id = $response->get("RUN_ID");
+    my $run_and_query_and_document = join($concat_key, ($run_id, $query_id, $doc_id));
     # skip this response if the cluster it contains is not one of those
     # selected to be included in the pool
-    next unless $selected_clusters{$key};
+    unless ($clusters{$run_and_query_and_document}{SELECTED}{$cluster_id}) {
+      $logger->record_debug_information("SKIPPING_CLUSTER_NOT_SELECTED", $response->get("LINE"), $response->get("WHERE"));
+      next;
+    }
     # skip if we already inclided the response for this cluster in the pool
-    next if $included{$key};
+    if ($clusters{$run_and_query_and_document}{INCLUDED}{$cluster_id}) {
+      $logger->record_debug_information("SKIPPING_RESPONSE_CLUSTER_INCLUDED", $response->get("LINE"), $response->get("WHERE"));
+      next;
+    }
     my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
     my (undef, $doceid, $span) = split(":", $fq_mention_span);
     my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
@@ -2906,7 +2889,7 @@ sub generate_pool {
       my $kit = $pool->get("BY_KEY", $query_id);
       $exists = 1 if $kit->exists($uuid);
       $kit->add($kit_entry, $uuid) unless $exists;
-      $included{$key} = 1;
+      $clusters{$run_and_query_and_document}{INCLUDED}{$cluster_id} = 1;
     }
   }
   $self->set("DELTA_POOL", $pool);
