@@ -36,7 +36,6 @@ $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
-$switches->addParam("policy", "required", "TASK_AND_QUERY specific pooling policy: comma separated list where each item contains parameter name and its value separated by colon");
 $switches->addParam("coredocs", "required", "List of core documents to be included in the pool");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("sentence_boundaries", "required", "File containing sentence boundaries");
@@ -78,7 +77,6 @@ $logger->NIST_die("$output_filename already exists") if -e $output_filename;
 open($program_output, ">:utf8", $output_filename)
 	or $logger->NIST_die("Could not open $output_filename: $!");
 
-my $policy_string = $switches->get("policy");
 my $coredocs_filename = $switches->get("coredocs");
 my $docid_mappings_filename = $switches->get("docid_mappings");
 my $sentence_boundaries_filename = $switches->get("sentence_boundaries");
@@ -92,14 +90,13 @@ my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $images_boundingbox
 my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $keyframes_boundingboxes_filename);
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
 my $queries_to_pool = Container->new($logger);
-map {$queries_to_pool->add("KEY", $_->get("query_id"))}
+map {$queries_to_pool->add($_, $_->get("query_id"))}
       FileHandler->new($logger, $switches->get("queries"))->get("ENTRIES")->toarray();
 my $runs_to_pool = Container->new($logger);
 map {$runs_to_pool->add("KEY", $_->get("runid"))}
       FileHandler->new($logger, $switches->get("input"))->get("ENTRIES")->toarray();
 my $rundir_root = $switches->get("rundir");
 my $cadir_root = $switches->get("cadir");
-my $policy = PoolingPolicy->new($logger, $policy_string);
 
 my $pool = ResponsesPool->new(
              $logger, 
@@ -108,7 +105,6 @@ my $pool = ResponsesPool->new(
              $images_boundingboxes, 
              $keyframes_boundingboxes,
              $previous_pool,
-             $policy,
              $coredocs,
              $queries, 
              $queries_to_pool,

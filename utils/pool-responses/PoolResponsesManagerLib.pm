@@ -2726,12 +2726,11 @@ package ResponsesPool;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
+  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
     CLASS => 'ResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
-    POLICY => $policy,
     DOCID_MAPPINGS => $docid_mappings,
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
@@ -2753,7 +2752,6 @@ sub load {
   my ($self) = @_;
   my $cas_dir = $self->get("CONFIDENCE_AGGREGATION_DIR");
   my $coredocs = $self->get("COREDOCS");
-  my $policy = $self->get("POLICY");
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
   my $images_boundingboxes = $self->get("IMAGE_BOUNDARIES");
   my $keyframes_boundingboxes = $self->get("KEYFRAME_BOUNDARIES");
@@ -2766,10 +2764,10 @@ sub load {
   my $text_document_boundaries = $self->get("TEXT_BOUNDARIES");
   my $logger = $self->get("LOGGER");
   my $responses_pool;
-  $responses_pool = TA1ClassResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_CL");
-  $responses_pool = TA1GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_GR");
-  $responses_pool = TA2ZeroHopResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_ZH");
-  $responses_pool = TA2GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_GR");
+  $responses_pool = TA1ClassResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_CL");
+  $responses_pool = TA1GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA1_GR");
+  $responses_pool = TA2ZeroHopResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_ZH");
+  $responses_pool = TA2GraphResponsesPool->new($logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) if($queries_task_and_type eq "TA2_GR");
   $self->set("RESPONSES_POOL", $responses_pool);
 }
 
@@ -2787,12 +2785,11 @@ package TA1ClassResponsesPool;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $policy, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
+  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
     CLASS => 'TA1ClassResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
-    POLICY => $policy,
     DOCID_MAPPINGS => $docid_mappings,
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
@@ -2844,8 +2841,6 @@ sub generate_pool {
   my ($self, $responses) = @_;
   my $logger = $self->get("LOGGER");
   my $pool = Pool->new($logger);
-  my $policy = $self->get("POLICY");
-  my $max_num_of_clusters_per_document = $policy->get("MAX_NUM_OF_CLUSTERS_PER_QUERY_PER_DOCUMENT");
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
   my $header = Header->new($logger, $header_line);
@@ -2862,6 +2857,8 @@ sub generate_pool {
   }
   my %selected_clusters;
   foreach my $run_and_query_and_document (keys %clusters) {
+    my (undef, $query_id, undef) = split("-", $run_and_query_and_document);
+    my $max_num_of_clusters_per_document = $self->get("QUERIES_TO_LOAD")->get("BY_KEY", $query_id)->get("max_num_clusters");
     foreach my $cluster_id(sort {$clusters{$run_and_query_and_document}{$a}<=>$clusters{$run_and_query_and_document}{$b}}
                             keys %{$clusters{$run_and_query_and_document}}) {
       $selected_clusters{$run_and_query_and_document . "-" . $cluster_id} = 1
