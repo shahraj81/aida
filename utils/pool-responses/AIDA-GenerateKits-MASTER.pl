@@ -30,6 +30,7 @@ my $error_output = *STDERR{IO};
 
 # Subroutines
 
+# TODO: Change this to support other task and types, in particular the TA2 zerohop responses
 sub custom_sort {
   my $a_docid = $a->get("DOCID");
   my $b_docid = $b->get("DOCID");
@@ -75,7 +76,9 @@ $switches->addVarSwitch('m', "How large can the kit be? This value is provided b
 $switches->put('m', "200");
 $switches->addParam("doc_lang_topic", "required", "doc_lang_topic.tab file from LDC");
 $switches->addParam("pool", "required", "File containing pool");
+$switches->addParam("nextline_input", "required", "Input file containing next line numbers (or empty file to begin)");
 $switches->addParam("kit_language_map", "required", "Output file containing kit to language mapping");
+$switches->addParam("nextline_output", "required", "Output file containing next line numbers");
 $switches->addParam("output", "required", "Kits output directory");
 
 $switches->process(@ARGV);
@@ -87,6 +90,21 @@ $error_output = $logger->get_error_output();
 
 my $pool_filename = $switches->get("pool");
 $logger->NIST_die("$pool_filename does not exist") unless -e $pool_filename;
+
+my $nextline_input_filename = $switches->get("nextline_input");
+$logger->NIST_die("$nextline_input_filename does not exist") unless -e $nextline_input_filename;
+
+my %next_linenums;
+foreach my $entry(FileHandler->new($logger, $nextline_input_filename)->get("ENTRIES")->toarray()) {
+  my $kit_id = $entry->get("kit_id");
+  my $next_linenum = $entry->get("next_linenum");
+  $next_linenums{$kit_id} = $next_linenum;
+}
+
+my $nextline_output_filename = $switches->get("nextline_output");
+$logger->NIST_die("$nextline_output_filename already exists") if -e $nextline_output_filename;
+open(my $nextline_output, ">:utf8", $nextline_output_filename)
+  or $logger->NIST_die("Could not open $nextline_output_filename: $!");
 
 my $output_dir = $switches->get("output");
 $logger->NIST_die("$output_dir already exists")
@@ -115,31 +133,21 @@ my $task_and_type_code = $switches->get("code");
 
 my $pool = Pool->new($logger, $task_and_type_code, $pool_filename);
 
-#my %last_number = (
-#      'AIDA_CL_2018_1'=>952, 
-#      'AIDA_CL_2018_2'=>1218, 
-#      'AIDA_CL_2018_3'=>780,
-#      'AIDA_CL_2018_4'=>1123,
-#      'AIDA_CL_2018_5'=>2173,
-#      'AIDA_CL_2018_6'=>1194,
-#      'AIDA_CL_2018_7'=>574
-#    );
-
 my ($num_errors, $num_warnings) = $logger->report_all_information();
-unless($num_errors+$num_warnings) {
+unless($num_errors) {
   my %languages_in_kit;
-  foreach my $key($pool->get("ALL_KEYS")) {
-    my $kit = $pool->get("BY_KEY", $key);
+  foreach my $kit_id($pool->get("ALL_KEYS")) {
+    my $kit = $pool->get("BY_KEY", $kit_id);
     my $total_entries = scalar($kit->toarray());
     my $total_kits = ceil($total_entries/$max_kit_size);
     my @kit_entries = sort custom_sort $kit->toarray();
-    my $linenum = 0;
-    # my $linenum = $last_number{$kb_id};
+    $next_linenums{$kit_id} = 1 unless($next_linenums{$kit_id});
     for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
-      my $output_filename = "$output_dir/$prefix\_$key\_$kit_num\_$total_kits\.tab";
+      my $output_filename = "$output_dir/$prefix\_$kit_id\_$kit_num\_$total_kits\.tab";
       open(my $program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
       for(my $i=($kit_num-1)*$max_kit_size; $i<$kit_num*$max_kit_size && $i<$total_entries; $i++) {
-        $linenum++;
+        my $linenum = $next_linenums{$kit_id};
+        $next_linenums{$kit_id}++;
         my $output_line = $kit_entries[$i]->tostring();
         $output_line =~ s/<ID>/$linenum/;
         print $program_output "$output_line\n";
@@ -161,6 +169,13 @@ unless($num_errors+$num_warnings) {
     print $kit_language_map_output "$output_filename\t$languages\n";
   }
   close($kit_language_map_output);
+
+  print $nextline_output "kit_id\tnext_linenum\n";
+  foreach my $kit_id(sort keys %next_linenums) {
+    my $next_linenum = $next_linenums{$kit_id};
+   print $nextline_output "$kit_id\t$next_linenum\n";
+  }
+  close($nextline_output);
 }
 
 unless($switches->get('error_file') eq "STDERR") {

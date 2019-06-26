@@ -159,6 +159,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   GROUND_TRUTH                            DEBUG_INFO     GROUND_TRUTH_INFO: %s     
   MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS    ERROR          Multiple incompatible assessments provided (node: %s, mention_span: %s)
+  EMPTY_FILE_TO_LOAD                      WARNING        Trying to load empty file %s
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
   ID_WITH_EXTENSION                       ERROR          File extension provided as part of %s %s
   ILLEGAL_CONFIDENCE_VALUE                ERROR          Illegal confidence value: %s
@@ -528,7 +529,9 @@ sub new {
     LOGGER => $logger,
   };
   bless($self, $class);
-  $self->load($filename);
+  $self->get("LOGGER")->record_problem("EMPTY_FILE_TO_LOAD", $filename, {FILENAME => __FILE__, LINENUM => __LINE__})
+    if -z $filename;
+  $self->load($filename) unless -z $filename;
   $self;
 }
 
@@ -537,7 +540,7 @@ sub load {
 
   my $linenum = 0;
 
-  open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
+  open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, {FILENAME => __FILE__, LINENUM => __LINE__});
   my $line = <FILE>; 
   $line =~ s/\r\n?//g;
   chomp $line;
