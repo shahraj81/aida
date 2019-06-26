@@ -64,9 +64,9 @@ This docker comes with the following:
 
    The docker comes with the following:
 
-   (a) Two runs (or submissions) -- `./M18-data/runs`
+   (a) Example runs (or submissions) -- `./M18-data/runs`. This includes example for all the tasks: task1, task2 and task3 runs.
 
-   (b) Four queries -- `./M18-data/queries`
+   (b) Example queries -- `./M18-data/queries`. Queries have been generated from prevailing theories found in LDC2019E07_AIDA_Phase_1_Evaluation_Practice_Topic_Annotations_V6.0. Please refer to M18-data/queries/README for details on changes to queries.
 
    (c) Example output -- `./M18-data/example-output`
 
