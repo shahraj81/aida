@@ -47,14 +47,14 @@ sub custom_sort {
 }
 
 sub get_span_fields {
-	my ($span) = @_;
-	$span =~ /^(.*?)\:\((\d+)\,(\d+)\)\-\((\d+)\,(\d+)\)$/;
-	my ($doceid, $x1, $y1, $x2, $y2) = ($1, $2, $3, $4, $5);
-	my $shot_num = 0;
-	if($doceid =~ /^(.*?)\_(\d+)$/) {
-		($doceid, $shot_num) = ($1, $2);
-	}
-	($doceid, $shot_num, $x1, $y1, $x2, $y2)
+  my ($span) = @_;
+  $span =~ /^(.*?)\:\((\d+)\,(\d+)\)\-\((\d+)\,(\d+)\)$/;
+  my ($doceid, $x1, $y1, $x2, $y2) = ($1, $2, $3, $4, $5);
+  my $shot_num = 0;
+  if($doceid =~ /^(.*?)\_(\d+)$/) {
+    ($doceid, $shot_num) = ($1, $2);
+  }
+  ($doceid, $shot_num, $x1, $y1, $x2, $y2)
 }
 
 ##################################################################################### 
@@ -63,7 +63,7 @@ sub get_span_fields {
 
 # Handle run-time switches
 my $switches = SwitchProcessor->new($0, "Generate kits from the single pool file for LDC",
-				    						"");
+                        "");
 $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
@@ -90,23 +90,23 @@ $logger->NIST_die("$pool_filename does not exist") unless -e $pool_filename;
 
 my $output_dir = $switches->get("output");
 $logger->NIST_die("$output_dir already exists")
-		if(-e $output_dir);
+    if(-e $output_dir);
 system("mkdir $output_dir");
 
 my $kit_language_map_filename = $switches->get("kit_language_map");
 $logger->NIST_die("$kit_language_map_filename already exists")
-	if(-e $kit_language_map_filename);
+  if(-e $kit_language_map_filename);
 open(my $kit_language_map_output, ">:utf8", $kit_language_map_filename)
-	or $logger->NIST_die("Could not open $kit_language_map_filename: $!");
+  or $logger->NIST_die("Could not open $kit_language_map_filename: $!");
 
 my %docid_to_languages;
 my $doc_lang_topic_filename = $switches->get("doc_lang_topic");
 $logger->NIST_die("$doc_lang_topic_filename does not exist") unless -e $doc_lang_topic_filename;
 my $filehandler = FileHandler->new($logger, $doc_lang_topic_filename);
 foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
-	my $docid = $entry->get("root_id");
-	my $language = $entry->get("language");
-	$docid_to_languages{$docid}{$language} = 1;
+  my $docid = $entry->get("root_id");
+  my $language = $entry->get("language");
+  $docid_to_languages{$docid}{$language} = 1;
 }
 
 my $max_kit_size = $switches->get("m");
@@ -115,56 +115,56 @@ my $prefix = $switches->get("prefix");
 my $pool = Pool->new($logger, $pool_filename);
 
 #my %last_number = (
-#			'AIDA_CL_2018_1'=>952, 
-#			'AIDA_CL_2018_2'=>1218, 
-#			'AIDA_CL_2018_3'=>780,
-#			'AIDA_CL_2018_4'=>1123,
-#			'AIDA_CL_2018_5'=>2173,
-#			'AIDA_CL_2018_6'=>1194,
-#			'AIDA_CL_2018_7'=>574
-#		);
+#      'AIDA_CL_2018_1'=>952, 
+#      'AIDA_CL_2018_2'=>1218, 
+#      'AIDA_CL_2018_3'=>780,
+#      'AIDA_CL_2018_4'=>1123,
+#      'AIDA_CL_2018_5'=>2173,
+#      'AIDA_CL_2018_6'=>1194,
+#      'AIDA_CL_2018_7'=>574
+#    );
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
-	my %languages_in_kit;
-	foreach my $kb_id($pool->get("ALL_KEYS")) {
- 		my $kit = $pool->get("BY_KEY", $kb_id);
- 		my $total_entries = scalar($kit->toarray());
- 		my $total_kits = ceil($total_entries/$max_kit_size);
-		my @kit_entries = sort custom_sort $kit->toarray();
-		my $linenum = 0;
- 		# my $linenum = $last_number{$kb_id};
- 		for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
- 			my $output_filename = "$output_dir/$prefix\_$kb_id\_$kit_num\_$total_kits\.tab";
- 			open(my $program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
- 			for(my $i=($kit_num-1)*$max_kit_size; $i<$kit_num*$max_kit_size && $i<$total_entries; $i++) {
- 				$linenum++;
- 				my $output_line = $kit_entries[$i];
- 				$output_line =~ s/<ID>/$linenum/;
- 				print $program_output "$output_line\n";
-				# collect the languages in this kit partition
-				my @entries = split(/\t/, $output_line);
-				my $docid = $entries[4];
-				foreach my $languages_in_doc(keys %{$docid_to_languages{$docid}}) {
-					foreach my $language_in_doc(split(/,/, $languages_in_doc)) {
-						$languages_in_kit{$output_filename}{$language_in_doc} = 1;
-					}
-				}
- 			}
- 			close($program_output);
- 		}
-	}
-	foreach my $output_filename(keys %languages_in_kit) {
-		my @languages = sort keys %{$languages_in_kit{$output_filename}};
-		my $languages = join(",", @languages);
-		print $kit_language_map_output "$output_filename\t$languages\n";
-	}
-	close($kit_language_map_output);
+  my %languages_in_kit;
+  foreach my $kb_id($pool->get("ALL_KEYS")) {
+    my $kit = $pool->get("BY_KEY", $kb_id);
+    my $total_entries = scalar($kit->toarray());
+    my $total_kits = ceil($total_entries/$max_kit_size);
+    my @kit_entries = sort custom_sort $kit->toarray();
+    my $linenum = 0;
+    # my $linenum = $last_number{$kb_id};
+    for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
+      my $output_filename = "$output_dir/$prefix\_$kb_id\_$kit_num\_$total_kits\.tab";
+      open(my $program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
+      for(my $i=($kit_num-1)*$max_kit_size; $i<$kit_num*$max_kit_size && $i<$total_entries; $i++) {
+        $linenum++;
+        my $output_line = $kit_entries[$i];
+        $output_line =~ s/<ID>/$linenum/;
+        print $program_output "$output_line\n";
+        # collect the languages in this kit partition
+        my @entries = split(/\t/, $output_line);
+        my $docid = $entries[4];
+        foreach my $languages_in_doc(keys %{$docid_to_languages{$docid}}) {
+          foreach my $language_in_doc(split(/,/, $languages_in_doc)) {
+            $languages_in_kit{$output_filename}{$language_in_doc} = 1;
+          }
+        }
+      }
+      close($program_output);
+    }
+  }
+  foreach my $output_filename(keys %languages_in_kit) {
+    my @languages = sort keys %{$languages_in_kit{$output_filename}};
+    my $languages = join(",", @languages);
+    print $kit_language_map_output "$output_filename\t$languages\n";
+  }
+  close($kit_language_map_output);
 }
 
 unless($switches->get('error_file') eq "STDERR") {
-	print STDERR "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
-	print STDERR "No warnings encountered.\n" unless ($num_errors || $num_warnings);
+  print STDERR "Problems encountered (warnings: $num_warnings, errors: $num_errors)\n" if ($num_errors || $num_warnings);
+  print STDERR "No warnings encountered.\n" unless ($num_errors || $num_warnings);
 }
 
 print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";

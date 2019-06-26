@@ -1,6 +1,6 @@
-# How to apply SPARQL queries against a KB using NIST-SPARQL-Evaluation docker (version 2.3.1)
+# How to apply SPARQL queries against a KB using NIST-SPARQL-Evaluation docker (version 2.4)
 
-(Last modified: Jun 11th, 2019)
+(Last modified: Jun 25th, 2019)
 
 ## Introduction
 
@@ -8,13 +8,13 @@ This document describes how to apply SPARQL queries against a KB using NIST-SPAR
 
 This docker does not come with the following but will be required:
 
-1. Free version of GraphDB (version 8.9.0) -- `./docker/AUX-data/graphdb-free-8.9.0-dist.zip`
+1. Free version of GraphDB (version 8.10.1) -- `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`
 
    NIST-SPARQL-Evaluation docker uses GraphDB as the triple-store for storing (and applying queries against) the KB represented in AIDA Interchange Format. NOTE that the free version comes with the limitation of being able to run no more than two queries in parallel.
 
-   In order to make use of one of GraphDBs paid version place the installer in AUX-data and by supplying the corresponding `GRAPHDB_VERSION` and `GRAPHDB_EDITION` to make when invoking `make build`.
+   In order to make use of one of GraphDBs paid version (or another free version) place the installer in AUX-data and supply the corresponding values for variables `GRAPHDB_VERSION` and `GRAPHDB_EDITION` to make when invoking `make build`.
 
-   In order to build the docker with the free version, make sure to download the installer from `https://www.ontotext.com/free-graphdb-download/` and place it at: `./docker/AUX-data/graphdb-free-8.9.0-dist.zip`
+   In order to build the docker with the free version, make sure to download the installer from `https://www.ontotext.com/free-graphdb-download/` and place it at: `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`
 
 This docker comes with the following:
 
@@ -74,9 +74,10 @@ This docker comes with the following:
 
 #### Using the default (free) version of GraphDB
 
-In order to build the docker using the default (free) version of GraphDB:
+As of the last modified date (see above), the latest free version of GraphDB is 8.10.1 which will be used by the docker by default. In order to build the docker using the default (free) version of GraphDB:
+
 1. download the installer from `https://www.ontotext.com/free-graphdb-download/`,
-2. place it at: `./docker/AUX-data/graphdb-free-8.9.0-dist.zip`, and
+2. place it at: `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`, and
 3. run the following command(s):
 
 ~~~
@@ -84,7 +85,7 @@ cd docker
 make build
 ~~~
 
-#### Using paid version of GraphDB
+#### Using paid version (or another free version) version of GraphDB
 
 In order to build the docker with either a paid version of GraphDB or a version different from the one used by default, you would need to
 
@@ -151,3 +152,8 @@ make run \
 #### version 2.3.1
   * Added a note that the docker does not come with the installer of the free version of GraphDB.
   * Added the docker and M18-data to the repository
+
+#### version 2.4
+  * Default free version used by the docker updated to `graphdb-free-8.10.1`.
+  * This version contains queries generated from prevailing theories found in LDC2019E07_AIDA_Phase_1_Evaluation_Practice_Topic_Annotations_V6.0.
+  * Refer to M18-data/queries/README for details on changes to queries.

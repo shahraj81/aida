@@ -6,7 +6,7 @@ PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
 # Query: AIDA_TA1_GR_2019_0047
-# Query description: Find all edges of type ldcOnt:Movement.TransportPerson_Destination
+# Query description: Find all edges of type ldcOnt:OrganizationAffiliation.Leadership_Leader
 
 # By default, NIST will compute aggregate edge justification confidence (AEJC) as product of:
 #        ?oinf_j_cv    # confidence of object informativeJustification
@@ -28,7 +28,7 @@ SELECT DISTINCT
 
 WHERE {
 
-    BIND (ldcOnt:Movement.TransportPerson_Destination AS ?edge_type_q)
+    BIND (ldcOnt:OrganizationAffiliation.Leadership_Leader AS ?edge_type_q)
 
     # Get the object informativeJustification
     ?objectmo             a                             aida:Entity .

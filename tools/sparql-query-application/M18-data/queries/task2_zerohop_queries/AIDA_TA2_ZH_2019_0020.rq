@@ -1,0 +1,136 @@
+
+PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
+PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+# Query: AIDA_TA2_ZH_2019_0020
+# Query description: Find all informative mentions of entities linked to "LDC2019E44:80000066"
+# NIST default aggregate confidence of ?cluster is a function of
+#      ?link_cv      # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
+#      ?j_cv         # confidenceValue of informativeJustification
+
+# ?j_cv is used to rank informative mentions within a cluster for purposes of pooling and AP scoring.
+
+# In M18, we use the ?j_cv (confidence in the justification, e.g., confidence of _:b02) and interpret that confidence
+# as the confidence of linking the justification to the cluster; _:b02 is used *only* to represent an informative
+# mention for some cluster, even though that cluster is not referenced in _:b02. Ideally (in future), there would be
+# an aida:InformativeJustificationAssertion construct (paralleling the structure of an aida:LinkAssertion) that
+# associates a confidence to each aida:informativeJustification, and could represent the confidence of linking an
+# InformativeJustification to a cluster.
+
+# _:b12 a                        aida:TextJustification ;
+#      aida:confidence          [ a                     aida:Confidence ;
+#                                 aida:confidenceValue  "1.0"^^<http://www.w3.org/2001/XMLSchema#double> ;
+#                                 aida:system           ldc:testSystem
+#                               ] ;
+#      aida:endOffsetInclusive  "286"^^<http://www.w3.org/2001/XMLSchema#int> ;
+#      aida:privateData         [ a                 aida:PrivateData ;
+#                                 aida:jsonContent  "{\"mention\":\"M000721\"}" ;
+#                                 aida:system       ldc:testSystem
+#                               ] ;
+#      aida:source              "DE005" ;
+#      aida:sourceDocument      "D0100" ;
+#      aida:startOffset         "260"^^<http://www.w3.org/2001/XMLSchema#int> ;
+#      aida:system              ldc:testSystem .
+#
+# _:b11 a              aida:LinkAssertion ;
+#      aida:confidence [ a                     aida:Confidence ;
+#                        aida:confidenceValue  "0.498"^^xsd:double ;
+#                        aida:system           ldc:testSystem
+#                      ] ;
+#      aida:linkTarget "ldc:E0137" ;
+#      aida:system     ldc:testSystem .
+#
+# _:c12 a               aida:InformativeJustificationAssertion ;
+#       aida:confidence [ a                     aida:Confidence ;
+#                         aida:confidenceValue  "0.498"^^xsd:double ;
+#                         aida:system           ldc:testSystem
+#                       ] ;
+#      aida:informativeJustification _:b12 ;
+#      aida:system     ldc:testSystem .
+#
+# ldc:cluster-E0137     a                             aida:SameAsCluster ;
+#                       aida:informativeJustification _:c12 ;
+#                       aida:link                     _:b11 ;
+#                       aida:system                   ldc:testSystem .
+
+
+SELECT DISTINCT
+       ?docid             # sourceDocument
+       ?query_link_target # link target as part of the query
+       ?link_target       # link target in the KB matching ?query_link_target
+       ?cluster           # the ?cluster linked to ?link_target
+       ?infj_span         # informativeJustification span taken from the ?cluster
+       ?j_cv              # confidenceValue of informativeJustification
+       ?link_target       # query reference KB node linked to a ?cluster
+       ?link_cv           # confidenceValue of asserting that ?cluster is the same as reference KB node ?link_target
+
+WHERE {
+    BIND ("LDC2019E44:80000066" AS ?query_link_target)
+
+    # Find ?cluster linked to "LDC2019E44:80000066"
+    # Find the ?link_cv: confidenceValue of linking to external KB entity
+    ?cluster              a                             aida:SameAsCluster .
+    ?cluster              aida:informativeJustification ?inf_justification .
+    ?cluster              aida:link                     ?ref_kb_link .
+    ?ref_kb_link          a                             aida:LinkAssertion .
+    ?ref_kb_link          aida:linkTarget               ?link_target .
+    ?ref_kb_link          aida:confidence               ?link_confidence .
+    ?link_confidence      aida:confidenceValue          ?link_cv .
+    
+    FILTER(cfn:memberOf(str(?link_target), str(?query_link_target))) .
+
+    # Find mention spans for ?inf_justification
+    ?inf_justification    aida:source          ?doceid .
+    ?inf_justification    aida:sourceDocument  ?docid .
+    ?inf_justification    aida:confidence      ?j_confidence .
+    ?j_confidence         aida:confidenceValue ?j_cv .
+
+    OPTIONAL {
+           ?inf_justification a                           aida:TextJustification .
+           ?inf_justification aida:startOffset            ?so .
+           ?inf_justification aida:endOffsetInclusive     ?eo
+    }
+    OPTIONAL {
+           ?inf_justification a                           aida:ImageJustification .
+           ?inf_justification aida:boundingBox            ?bb  .
+           ?bb                aida:boundingBoxUpperLeftX  ?ulx .
+           ?bb                aida:boundingBoxUpperLeftY  ?uly .
+           ?bb                aida:boundingBoxLowerRightX ?lrx .
+           ?bb                aida:boundingBoxLowerRightY ?lry
+    }
+    OPTIONAL {
+           ?inf_justification a                           aida:KeyFrameVideoJustification .
+           ?inf_justification aida:keyFrame               ?kfid .
+           ?inf_justification aida:boundingBox            ?bb  .
+           ?bb                aida:boundingBoxUpperLeftX  ?ulx .
+           ?bb                aida:boundingBoxUpperLeftY  ?uly .
+           ?bb                aida:boundingBoxLowerRightX ?lrx .
+           ?bb                aida:boundingBoxLowerRightY ?lry
+    }
+    OPTIONAL {
+           ?inf_justification a                           aida:ShotVideoJustification .
+           ?inf_justification aida:shot                   ?sid
+    }
+    OPTIONAL {
+           ?inf_justification a                           aida:AudioJustification .
+           ?inf_justification aida:startTimestamp         ?st .
+           ?inf_justification aida:endTimestamp           ?et
+    }
+
+    BIND( IF( BOUND(?sid), ?sid, "__NULL__") AS ?_sid) .
+    BIND( IF( BOUND(?kfid), ?kfid, "__NULL__") AS ?_kfid) .
+    BIND( IF( BOUND(?so), ?so, "__NULL__") AS ?_so) .
+    BIND( IF( BOUND(?eo), ?eo, "__NULL__") AS ?_eo) .
+    BIND( IF( BOUND(?st), ?st, "__NULL__") AS ?_st) .
+    BIND( IF( BOUND(?et), ?et, "__NULL__") AS ?_et) .
+    BIND( IF( BOUND(?ulx), ?ulx, "__NULL__") AS ?_ulx) .
+    BIND( IF( BOUND(?uly), ?uly, "__NULL__") AS ?_uly) .
+    BIND( IF( BOUND(?lrx), ?lrx, "__NULL__") AS ?_lrx) .
+    BIND( IF( BOUND(?lry), ?lry, "__NULL__") AS ?_lry) .
+
+    BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?infj_span ) .
+}
+	
