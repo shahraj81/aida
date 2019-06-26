@@ -1,1 +1,3 @@
 ?docid	?query_link_target	?link_target	?cluster	?infj_span	?j_cv	?link_cv
+D0100	LDC2019E44:703448	LDC2019E44:703448	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0124>	D0100:DE005_03:(220,70)-(320,220)	2.34E-1	1.98E-1
+D0101	LDC2019E44:703448	LDC2019E44:703448	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0124>	D0101:DE006:(320,0)-(346,0)	1.0E0	1.98E-1
