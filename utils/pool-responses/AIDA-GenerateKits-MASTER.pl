@@ -22,7 +22,7 @@ use POSIX;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2018.0.0";
+my $version = "2019.0.0";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};
@@ -30,13 +30,11 @@ my $error_output = *STDERR{IO};
 
 # Subroutines
 
-sub custom_sort {  
-  my @a_elements = split(/\t/, $a);
-  my @b_elements = split(/\t/, $b);
-  my $a_docid = $a_elements[4];
-  my $b_docid = $b_elements[4];
-  my ($a_doceid, $a_shot_num, $a_x1, $a_y1, $a_x2, $a_y2) = get_span_fields($a_elements[5]);
-  my ($b_doceid, $b_shot_num, $b_x1, $b_y1, $b_x2, $b_y2) = get_span_fields($b_elements[5]);
+sub custom_sort {
+  my $a_docid = $a->get("DOCID");
+  my $b_docid = $b->get("DOCID");
+  my ($a_doceid, $a_shot_num, $a_x1, $a_y1, $a_x2, $a_y2) = get_span_fields($a->get("SPAN"));
+  my ($b_doceid, $b_shot_num, $b_x1, $b_y1, $b_x2, $b_y2) = get_span_fields($b->get("SPAN"));
   ($a_docid cmp $b_docid ||
   $a_doceid cmp $b_doceid ||
   $a_shot_num <=> $b_shot_num ||
@@ -70,6 +68,8 @@ $switches->addVarSwitch('error_file', "Specify a file to which error output shou
 $switches->put('error_file', "STDERR");
 $switches->addVarSwitch('prefix', "Specify the prefix of the output kits");
 $switches->put('prefix', "kits");
+$switches->addVarSwitch('code', "TASK_AND_TYPE_CODE?");
+$switches->put('code', "TA1_CL");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addVarSwitch('m', "How large can the kit be? This value is provided by LDC.");
 $switches->put('m', "200");
@@ -111,8 +111,9 @@ foreach my $entry($filehandler->get("ENTRIES")->toarray()) {
 
 my $max_kit_size = $switches->get("m");
 my $prefix = $switches->get("prefix");
+my $task_and_type_code = $switches->get("code");
 
-my $pool = Pool->new($logger, $pool_filename);
+my $pool = Pool->new($logger, $task_and_type_code, $pool_filename);
 
 #my %last_number = (
 #      'AIDA_CL_2018_1'=>952, 
@@ -127,19 +128,19 @@ my $pool = Pool->new($logger, $pool_filename);
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors+$num_warnings) {
   my %languages_in_kit;
-  foreach my $kb_id($pool->get("ALL_KEYS")) {
-    my $kit = $pool->get("BY_KEY", $kb_id);
+  foreach my $key($pool->get("ALL_KEYS")) {
+    my $kit = $pool->get("BY_KEY", $key);
     my $total_entries = scalar($kit->toarray());
     my $total_kits = ceil($total_entries/$max_kit_size);
     my @kit_entries = sort custom_sort $kit->toarray();
     my $linenum = 0;
     # my $linenum = $last_number{$kb_id};
     for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
-      my $output_filename = "$output_dir/$prefix\_$kb_id\_$kit_num\_$total_kits\.tab";
+      my $output_filename = "$output_dir/$prefix\_$key\_$kit_num\_$total_kits\.tab";
       open(my $program_output, ">:utf8", $output_filename) or $logger->NIST_die("Could not open $output_filename: $!");
       for(my $i=($kit_num-1)*$max_kit_size; $i<$kit_num*$max_kit_size && $i<$total_entries; $i++) {
         $linenum++;
-        my $output_line = $kit_entries[$i];
+        my $output_line = $kit_entries[$i]->tostring();
         $output_line =~ s/<ID>/$linenum/;
         print $program_output "$output_line\n";
         # collect the languages in this kit partition

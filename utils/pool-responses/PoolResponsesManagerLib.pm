@@ -37,12 +37,12 @@ sub get {
 
 sub get_BY_INDEX {
   my ($self) = @_;
-  die "Abstract method 'get_BY_INDEX' not defined in derived class '", $self->get("CLASS") ,"'\n";
+  die "Abstract method 'get_BY_INDEX' not defined in derived class '", $self->get("__CLASS__") ,"'\n";
 }
 
 sub get_BY_KEY {
   my ($self) = @_;
-  die "Abstract method 'get_BY_KEY' not defined in derived class '", $self->get("CLASS") ,"'\n";
+  die "Abstract method 'get_BY_KEY' not defined in derived class '", $self->get("__CLASS__") ,"'\n";
 }
 
 sub increment {
@@ -124,7 +124,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'SuperObject',
+    __CLASS__ => 'SuperObject',
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -428,8 +428,8 @@ sub new {
   my ($class, $logger, $element_class) = @_;
   $element_class = "RAW" unless $element_class;
   my $self = {
-    CLASS => 'Container',
-    ELEMENT_CLASS => $element_class,
+    __CLASS__ => 'Container',
+    __ELEMENT_CLASS__ => $element_class,
     STORE => {},
     LOGGER => $logger,
   };
@@ -451,9 +451,9 @@ sub get_BY_KEY {
   }
   unless($self->{STORE}{TABLE}{$key}) {
   # Create an instance if not exists
-    $self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
-      if $self->get("ELEMENT_CLASS") eq "RAW";
-    my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
+    $self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("__ELEMENT_CLASS__"), $where)
+      if $self->get("__ELEMENT_CLASS__") eq "RAW";
+    my $element = $self->get("__ELEMENT_CLASS__")->new($self->get("LOGGER"));
     $self->add($element, $key);
   }
   $self->{STORE}{TABLE}{$key};
@@ -521,7 +521,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = {
-    CLASS => 'FileHandler',
+    __CLASS__ => 'FileHandler',
     FILENAME => $filename,
     HEADER => undef,
     ENTRIES => Container->new($logger),
@@ -599,7 +599,7 @@ sub new {
   my ($class, $logger, $line, $field_separator) = @_;
   $field_separator = "\t" unless $field_separator;
   my $self = {
-    CLASS => 'Header',
+    __CLASS__ => 'Header',
     ELEMENTS => [],
     FIELD_SEPARATOR => $field_separator,
     LINE => $line,
@@ -654,7 +654,7 @@ sub new {
   my ($class, $logger, $linenum, $line, $header, $where, $field_separator) = @_;
   $field_separator = "\t" unless $field_separator;
   my $self = {
-    CLASS => 'Entry',
+    __CLASS__ => 'Entry',
     LINENUM => $linenum,
     LINE => $line,
     HEADER => $header,
@@ -768,7 +768,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = {
-    CLASS => 'Parameters',
+    __CLASS__ => 'Parameters',
     FILENAME => $filename,
     LOGGER => $logger,
   };
@@ -835,7 +835,7 @@ sub new {
   my ($class, $logger, $filename) = @_;
   
   my $self = {
-    CLASS => 'DTD',
+    __CLASS__ => 'DTD',
     LOGGER => $logger,
     FILENAME => $filename,
     TREE => Tree->new($logger, $filename),
@@ -906,7 +906,7 @@ sub new {
   my ($class, $logger, $filename) = @_;
   
   my $self = {
-    CLASS => 'Tree',
+    __CLASS__ => 'Tree',
     LOGGER => $logger,
     FILENAME => $filename,
     ROOT => undef,
@@ -981,7 +981,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'Node');
-  $self->{CLASS} = 'Nodes';
+  $self->{__CLASS__} = 'Nodes';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -998,7 +998,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $node_id) = @_;
   my $self = {
-    CLASS => 'Node',
+    __CLASS__ => 'Node',
     NODEID => $node_id,
     PARENTS => Nodes->new($logger),
     CHILDNUM_TYPES_MAPPING => {},
@@ -1107,7 +1107,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $dtd_filename, $xml_filename) = @_;
   my $self = {
-    CLASS => "XMLFileHandler",
+    __CLASS__ => "XMLFileHandler",
     DTD => DTD->new($logger, $dtd_filename),
     DTD_FILENAME => $dtd_filename,
     XML_FILENAME => $xml_filename,
@@ -1317,7 +1317,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'XMLAttributes',
+    __CLASS__ => 'XMLAttributes',
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1341,7 +1341,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $element, $name, $newline, $attributes, $where) = @_;
   my $self = {
-    CLASS => 'XMLElement',
+    __CLASS__ => 'XMLElement',
     NAME => $name,
     NEWLINE => $newline,
     ATTRIBUTES => $attributes,
@@ -1403,7 +1403,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, @xml_elements) = @_;
   my $self = $class->SUPER::new($logger, 'XMLElement');
-  $self->{CLASS} = 'XMLContainer';
+  $self->{__CLASS__} = 'XMLContainer';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   foreach my $xml_element(@xml_elements) {
@@ -2373,7 +2373,7 @@ sub new {
   my ($class, $logger, $queries, $docid_mappings, $text_document_boundaries, 
     $images_boundingboxes, $keyframes_boundingboxes, $runs_dir, $runs_to_load, $queries_to_load, $cas_dir) = @_;
   my $self = {
-    CLASS => 'ResponseSet',
+    __CLASS__ => 'ResponseSet',
     QUERIES => $queries,
     DOCID_MAPPINGS => $docid_mappings,
     TEXT_BOUNDARIES => $text_document_boundaries,
@@ -2620,7 +2620,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $task_and_type_code, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'Kit');
-  $self->{CLASS} = 'Pool';
+  $self->{__CLASS__} = 'Pool';
   $self->{TASK_AND_TYPE_CODE} = $task_and_type_code;
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
@@ -2632,7 +2632,7 @@ sub new {
 sub load {
   my ($self, $task_and_type_code, @arguments) = @_;
   my $method = $self->can("load_$task_and_type_code");
-  $self->NIST_die($self->{CLASS}."->load_$task_and_type_code() not found") unless $method;
+  $self->NIST_die($self->{__CLASS__}."->load_$task_and_type_code() not found") unless $method;
   $method->($self, @arguments);
 }
 
@@ -2640,13 +2640,18 @@ sub load_TA1_CL {
   my ($self, $filename) = @_;
   my $logger = $self->get("LOGGER");
   my $filehandler = FileHandler->new($logger, $filename);
+  my $header = $filehandler->get("HEADER");
   my $entries = $filehandler->get("ENTRIES");
   foreach my $entry($entries->toarray()) {
     my $query_id = $entry->get("QUERY_ID");
     my $kbid_kit = $self->get("BY_KEY", $query_id);
-    my $value = $entry->get("LINE");
-    my $key = &main::generate_uuid_from_string($value);
-    $kbid_kit->add($value, $key) unless $self->exists($key);
+
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+    
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
   }
 }
 
@@ -2661,7 +2666,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'KitEntry');
-  $self->{CLASS} = 'Pool';
+  $self->{__CLASS__} = 'Pool';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -2678,7 +2683,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'KitEntry',
+    __CLASS__ => 'KitEntry',
     TYPE => undef,
     LOGGER => $logger,
   };
@@ -2704,7 +2709,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
-    CLASS => 'ResponsesPool',
+    __CLASS__ => 'ResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
     DOCID_MAPPINGS => $docid_mappings,
@@ -2763,7 +2768,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
-    CLASS => 'TA1ClassResponsesPool',
+    __CLASS__ => 'TA1ClassResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
     DOCID_MAPPINGS => $docid_mappings,
@@ -2936,7 +2941,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
   my $self = {
-    CLASS => 'ZeroHopResponsesPool',
+    __CLASS__ => 'ZeroHopResponsesPool',
     CORE_DOCS => $core_docs,
     DOCID_MAPPINGS => $docid_mappings,
     ENTIRE_POOL => $entire_pool,
@@ -3050,7 +3055,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'PrevailingTheoryEntry',
+    __CLASS__ => 'PrevailingTheoryEntry',
     ENTRY => $entry,
     MATRIX_KE_ITEM_NUM => $entry->get("Matrix KE Item Number"),
     ONTOLOGY_ID => $entry->get("Ontology ID"),
@@ -3076,7 +3081,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry, $argnum) = @_;
   my $self = {
-    CLASS => 'ArgumentSpec',
+    __CLASS__ => 'ArgumentSpec',
     ENTRY => $entry,
     ARGUMENT_NUM => $argnum,
     LABEL => $entry->get("arg" . $argnum . " " . "label"),
@@ -3098,7 +3103,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'EntitySpec',
+    __CLASS__ => 'EntitySpec',
     ENTRY => $entry,
     ANNOTATION_ID => $entry->get("AnnotIndexID"),
     TYPE => $entry->get("Type"),
@@ -3124,7 +3129,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'EventSpec',
+    __CLASS__ => 'EventSpec',
     ENTRY => $entry,
     ARGUMENTS => Container->new($logger),
     ANNOTATION_ID => $entry->get("AnnotIndexID"),
@@ -3166,7 +3171,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'RelationSpec',
+    __CLASS__ => 'RelationSpec',
     ENTRY => $entry,
     ARGUMENTS => Container->new($logger),
     ANNOTATION_ID => $entry->get("AnnotIndexID"),
@@ -3208,7 +3213,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, "Container");
-  $self->{CLASS} = 'PrevailingTheoryContainer';
+  $self->{__CLASS__} = 'PrevailingTheoryContainer';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -3225,7 +3230,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger);
-  $self->{CLASS} = 'OntologyContainer';
+  $self->{__CLASS__} = 'OntologyContainer';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -3267,7 +3272,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $parameters) = @_;
   my $self = {
-    CLASS => 'QueryGenerator',
+    __CLASS__ => 'QueryGenerator',
     TA1_CLASS_QUERIES => undef,
     TA1_GRAPH_QUERIES => undef,
     TA2_ZEROHOP_QUERIES => undef,
@@ -4408,7 +4413,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $dtd_filename, $xml_filename) = @_;
   my $self = {
-    CLASS => 'QuerySet',
+    __CLASS__ => 'QuerySet',
     DTD_FILENAME => $dtd_filename,
     XML_FILENAME => $xml_filename,
     QUERIES => Container->new($logger, "Query"),
@@ -4507,7 +4512,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
-    CLASS => 'ClassQuery',
+    __CLASS__ => 'ClassQuery',
     QUERYID => undef,
     QUERYTYPE => undef,
     ENTTYPE => undef,
@@ -4548,7 +4553,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
-    CLASS => 'ZeroHopQuery',
+    __CLASS__ => 'ZeroHopQuery',
     XML_OBJECT => $xml_object,
     LOGGER => $logger,
   };
@@ -4585,7 +4590,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
-    CLASS => 'GraphQuery',
+    __CLASS__ => 'GraphQuery',
     XML_OBJECT => $xml_object,
     LOGGER => $logger,
   };
@@ -4623,7 +4628,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $edge_num, $subject_id, $predicate, $object_id, $where) = @_;
   my $self = {
-    CLASS => 'Edge',
+    __CLASS__ => 'Edge',
     EDGENUM => $edge_num,
     SUBJECT => $subject_id,
     PREDICATE => $predicate,
@@ -4647,7 +4652,7 @@ sub new {
   my ($class, $logger, $justification_type, $doceid, $keyframeid, $start, $end, 
       $enttype, $confidence, $xml_object, $where) = @_;
   my $self = {
-    CLASS => 'Justification',
+    __CLASS__ => 'Justification',
     TYPE => $justification_type,
     DOCEID => $doceid,
     KEYFRAMEID => $keyframeid,
@@ -4772,7 +4777,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $name_string) = @_;
   my $self = {
-    CLASS => 'StringDescriptor',
+    __CLASS__ => 'StringDescriptor',
     TYPE => "STRING_DESCRIPTOR",
     NAMESTRING => $name_string,
     LOGGER => $logger,
@@ -4797,7 +4802,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $type, $doceid, $keyframeid, $start, $end) = @_;
   my $self = {
-    CLASS => 'NonStringDescriptor',
+    __CLASS__ => 'NonStringDescriptor',
     TYPE => $type,
     DOCEID => $doceid,
     KEYFRAMEID => $keyframeid,
@@ -4833,7 +4838,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $filename, $coredocs) = @_;
   my $self = {
-    CLASS => "DocumentIDsMappings",
+    __CLASS__ => "DocumentIDsMappings",
     FILENAME => $filename,
     DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTS => DocumentElements->new($logger),
@@ -4895,7 +4900,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'Document');
-  $self->{CLASS} = 'Documents';
+  $self->{__CLASS__} = 'Documents';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -4913,7 +4918,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'DocumentElement');
-  $self->{CLASS} = 'DocumentElements';
+  $self->{__CLASS__} = 'DocumentElements';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -4930,7 +4935,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $document_id) = @_;
   my $self = {
-    CLASS => 'Document',
+    __CLASS__ => 'Document',
     DOCUMENTID => $document_id,
     DOCUMENTELEMENTS => DocumentElements->new($logger),
     LOGGER => $logger,
@@ -4955,7 +4960,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'DocumentElement',
+    __CLASS__ => 'DocumentElement',
     DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTID => undef,
     TYPE => undef,
@@ -4986,7 +4991,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = {
-    CLASS => 'CoreDocs',
+    __CLASS__ => 'CoreDocs',
     FILENAME => $filename,
     LOGGER => $logger,
   };
@@ -5018,7 +5023,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename, $query_type) = @_;
   my $self = {
-    CLASS => 'QREL',
+    __CLASS__ => 'QREL',
     FILENAME => $filename,
     QUERY_TYPE => $query_type,
     LOGGER => $logger,
@@ -5067,7 +5072,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $runid, $docid_mappings, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
   my $self = {
-    CLASS => 'ScoresManager',
+    __CLASS__ => 'ScoresManager',
     DOCID_MAPPINGS => $docid_mappings,
     LDC_QUERIES => $ldc_queries,
     RESPONSES => $responses,
@@ -5109,7 +5114,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
   my $self = {
-    CLASS => 'ZeroHopScores',
+    __CLASS__ => 'ZeroHopScores',
     DOCID_MAPPINGS => $docid_mappings,
     LDC_QUERIES => $ldc_queries,
     RESPONSES => $responses,
@@ -5266,7 +5271,7 @@ my @fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{CLASS} = 'ScoresPrinter';
+  $self->{__CLASS__} = 'ScoresPrinter';
   $self->{PROGRAM_OUTPUT} = $program_output;
   $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @fields_to_print};
   $self->{LOGGER} = $logger;
@@ -5355,7 +5360,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
   my $self = {
-    CLASS => 'Scores',
+    __CLASS__ => 'Scores',
     EC => $query_id,
     MODALITY => $modality,
     NODEID => $node_id,
@@ -5427,7 +5432,7 @@ END_ENCODING_MODALITY_MAPPING
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'EncodingFormatToModalityMappings',
+    __CLASS__ => 'EncodingFormatToModalityMappings',
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -5466,7 +5471,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
-  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{__CLASS__} = 'ImagesBoundingBoxes';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5500,7 +5505,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
   my $self = {
-    CLASS => 'ImageBoundingBox',
+    __CLASS__ => 'ImageBoundingBox',
     DOCEID => $doceid,
     TYPE => $type,
     TOP_LEFT_X => $top_left_x,
@@ -5553,7 +5558,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
-  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{__CLASS__} = 'KeyFramesBoundingBoxes';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5593,7 +5598,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
   my $self = {
-    CLASS => 'KeyFrameBoundingBox',
+    __CLASS__ => 'KeyFrameBoundingBox',
     KEYFRAMEID => $keyframeid,
     TOP_LEFT_X => $top_left_x,
     TOP_LEFT_Y => $top_left_y,
@@ -5651,7 +5656,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'TextDocumentBoundary');
-  $self->{CLASS} = 'TextDocumentBoundaries';
+  $self->{__CLASS__} = 'TextDocumentBoundaries';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5707,7 +5712,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $start_char, $end_char) = @_;
   my $self = {
-    CLASS => 'TextDocumentBoundary',
+    __CLASS__ => 'TextDocumentBoundary',
     START_CHAR => $start_char,
     END_CHAR => $end_char,
     LOGGER => $logger,
@@ -5758,7 +5763,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'Segments');
-  $self->{CLASS} = 'SentenceBoundaries';
+  $self->{__CLASS__} = 'SentenceBoundaries';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5806,7 +5811,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'SentenceBoundary');
-  $self->{CLASS} = 'Segments';
+  $self->{__CLASS__} = 'Segments';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5824,7 +5829,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'SentenceBoundary',
+    __CLASS__ => 'SentenceBoundary',
     LOGGER => $logger,
   };
   bless($self, $class);
