@@ -114,7 +114,7 @@ my $pool = ResponsesPool->new(
              $cadir_root);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
-unless($num_errors+$num_warnings) {
+unless($num_errors) {
   print $program_output $pool->tostring();
 }
 close($program_output);
