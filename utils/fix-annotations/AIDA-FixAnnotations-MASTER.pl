@@ -42,6 +42,8 @@ $switches->put('error_file', "STDERR");
 $switches->addConstantSwitch("replace", "true", "Replace `sound` to `picture`");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("msbfile", "required", "masterShotBoundary.msb");
+$switches->addParam("docid_mappings", "required", "LDC2019*.parent_children.tsv file containing DocumentID to DocumentElementID mappings");
+$switches->addParam("images_boundingboxes", "required", "File containing image bounding boxes");
 $switches->addParam("keyframes_boundingboxes", "required", "File containing keyframe bounding boxes");
 $switches->addParam("input", "required", "Input annotations directory");
 $switches->addParam("output", "required", "Output directory");
@@ -54,6 +56,8 @@ $logger->set_error_output($error_filename);
 $error_output = $logger->get_error_output();
 
 foreach my $path(($switches->get("msbfile"), 
+          $switches->get("docid_mappings"),
+          $switches->get("images_boundingboxes"),
           $switches->get("keyframes_boundingboxes"),
           $switches->get("input"))) {
   $logger->NIST_die("$path does not exist") unless -e $path;
@@ -70,6 +74,10 @@ system("mkdir -p $output_dir");
 my $replace_flag = $switches->get("replace");
 my $keyframes_boundingboxes_filename = $switches->get("keyframes_boundingboxes");
 my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $keyframes_boundingboxes_filename);
+my $images_boundingboxes_filename = $switches->get("images_boundingboxes");
+my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $images_boundingboxes_filename);
+my $docid_mappings_filename = $switches->get("docid_mappings");
+my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_filename);
 my $msb_filename = $switches->get("msbfile");
 my %msb_map;
 my %keyframenum_to_keyframeid;
@@ -105,6 +113,7 @@ foreach my $input_subdir (<$input_dir/*>) {
     my @entries = $filehandler->get("ENTRIES")->toarray();
     foreach my $entry(@entries) {
       my $signal_type = $entry->get("mediamention_signaltype");
+      # Add keyframe bounding box for audio mentions if not provided
       if($signal_type && $signal_type eq "sound") {
         my $shot_num;
         my $mention_start_time = $entry->get("mediamention_starttime");
@@ -122,7 +131,7 @@ foreach my $input_subdir (<$input_dir/*>) {
         $entry->{MAP}{mediamention_signaltype} = "picture" if $replace_flag;
         $entry->{MAP}{mediamention_coordinates} = "$top_left_x,$top_left_y,$bottom_right_x,$bottom_right_y";
       }
-      
+      # Add image size if not provided
       my @values;
       foreach my $key(@{$header->get("ELEMENTS")}) {
         my $value = $entry->get($key);
