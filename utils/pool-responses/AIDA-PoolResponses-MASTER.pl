@@ -115,7 +115,7 @@ my $pool = ResponsesPool->new(
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
-  print $program_output $pool->tostring();
+  print $program_output $pool->tostring(), "\n";
 }
 close($program_output);
 

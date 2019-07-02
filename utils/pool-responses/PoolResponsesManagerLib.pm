@@ -2531,16 +2531,55 @@ sub load_aggregated_confidences_TA1_CL {
   foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
     my $cluster_id = $entry->get("?cluster");
     my $rank = $entry->get("?rank");
-    $self->add_cluster_rank_to_responses($logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $entry->get("WHERE"));
+    $self->add_cluster_rank_to_responses($logger, "TA1_CL", $cluster_id, $rank, $query_id, $kb_docid, $run_id, $entry->get("WHERE"));
+  }
+}
+
+sub load_aggregated_confidences_TA2_ZH {
+  my ($self, $logger, $queries, $ca_filename, $schema, $run_id) = @_;
+  my @elements = split(/\//, $ca_filename);
+  my $query_id = pop @elements;
+  $query_id =~ s/^(.*?\/)+//g;
+  $query_id =~ s/\.rq\.tsv//;
+  my $kb_docid = pop @elements;
+  $kb_docid =~ s/\.ttl$//;
+  my $run_id_from_filename = pop @elements;
+  foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
+    my $cluster_id = $entry->get("?cluster");
+    my $rank = $entry->get("?rank");
+    $self->add_cluster_rank_to_responses($logger, "TA2_ZH", $cluster_id, $rank, $query_id, undef, $run_id, $entry->get("WHERE"));
   }
 }
 
 sub add_cluster_rank_to_responses {
+  my ($self, $logger, $code, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where) = @_;
+  my $method = $self->can("add_cluster_rank_to_responses_$code");
+  $logger->NIST_die("ResponseSet->add_cluster_rank_to_responses_$code() not found")
+    unless $method;
+  $method->($self, $logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where);
+}
+
+sub add_cluster_rank_to_responses_TA1_CL {
   my ($self, $logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where) = @_;
   my @responses = grep {$_->get("CLUSTER_ID") eq $cluster_id &&
                                  $_->get("DOCUMENT_ID") eq $kb_docid &&
                                  $_->get("QUERY_ID") eq $query_id &&
                                  $_->get("RUN_ID") eq $run_id} 
+                  $self->get("RESPONSES")->toarray();
+  $logger->NIST_die("No matching response available to add cluster rank")
+    unless @responses;
+  foreach my $response(@responses) {
+    $logger->NIST_die("Rank already exists for cluster in response: " . $response->get("LINE"))
+      if $response->get("CLUSTER_RANK");
+    $response->set("CLUSTER_RANK", $rank);
+  }
+}
+
+sub add_cluster_rank_to_responses_TA2_ZH {
+  my ($self, $logger, $cluster_id, $rank, $query_id, $undef0, $run_id, $where) = @_;
+  my @responses = grep {$_->get("CLUSTER_ID") eq $cluster_id &&
+                                 $_->get("QUERY_ID") eq $query_id &&
+                                 $_->get("RUN_ID") eq $run_id}
                   $self->get("RESPONSES")->toarray();
   $logger->NIST_die("No matching response available to add cluster rank")
     unless @responses;
@@ -2566,6 +2605,15 @@ sub generate_slot {
   if (defined $generator) {
     &{$generator}($self, $logger, $where, $queries, $schema, $entry);
   }
+}
+
+sub get_AG_CV {
+  my ($self, $response, @ac_fields) = @_;
+  my $ag_cv = 1.0;
+  foreach my $ac_field(@ac_fields) {
+    $ag_cv *= $response->get($ac_field);
+  }
+  $ag_cv;
 }
 
 sub column_required {
@@ -2635,8 +2683,27 @@ sub new {
 sub load {
   my ($self, $task_and_type_code, @arguments) = @_;
   my $method = $self->can("load_$task_and_type_code");
-  $self->NIST_die($self->{__CLASS__}."->load_$task_and_type_code() not found") unless $method;
+  $self->get("LOGGER")->NIST_die($self->{__CLASS__}."->load_$task_and_type_code() not found") unless $method;
   $method->($self, @arguments);
+}
+
+sub load_TA2_ZH {
+  my ($self, $filename) = @_;
+  my $logger = $self->get("LOGGER");
+  my $filehandler = FileHandler->new($logger, $filename);
+  my $header = $filehandler->get("HEADER");
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry($entries->toarray()) {
+    my $query_id = $entry->get("KBID");
+    my $kbid_kit = $self->get("BY_KEY", $query_id);
+
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+  }
 }
 
 sub load_TA1_CL {
@@ -2868,7 +2935,7 @@ sub generate_pool {
       $logger->record_debug_information("SKIPPING_CLUSTER_NOT_SELECTED", $response->get("LINE"), $response->get("WHERE"));
       next;
     }
-    # skip if we already inclided the response for this cluster in the pool
+    # skip if we already included the response for this cluster in the pool
     if ($clusters{$run_and_query_and_document}{INCLUDED}{$cluster_id}) {
       $logger->record_debug_information("SKIPPING_RESPONSE_CLUSTER_INCLUDED", $response->get("LINE"), $response->get("WHERE"));
       next;
@@ -2927,34 +2994,37 @@ sub tostring {
   foreach my $kit_key(sort {$a cmp $b} $self->get("DELTA_POOL")->get("ALL_KEYS")) {
     my $kit = $self->get("DELTA_POOL")->get("BY_KEY", $kit_key);
     foreach my $kit_entry(sort custom $kit->toarray()) {
-      push(@lines, $kit_entry->tostring("CLASS"));
+      push(@lines, $kit_entry->tostring());
     }
   }
   join("\n", @lines);
 }
 
 #####################################################################################
-# ZeroHopResponsesPool
+# TA2ZeroHopResponsesPool
 #####################################################################################
 
-package ZeroHopResponsesPool;
+package TA2ZeroHopResponsesPool;
 
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
+  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
-    __CLASS__ => 'ZeroHopResponsesPool',
-    CORE_DOCS => $core_docs,
+    __CLASS__ => 'TA2ZeroHopResponsesPool',
+    AG_CV_FIELDS => qw(?link_cv),
+    CONFIDENCE_AGGREGATION_DIR => $cas_dir,
+    COREDOCS => $coredocs,
     DOCID_MAPPINGS => $docid_mappings,
-    ENTIRE_POOL => $entire_pool,
-    K => $k,
-    LDC_QUERIES => $ldc_queries,
+    IMAGE_BOUNDARIES => $images_boundingboxes,
+    KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
+    PREVIOUS_POOL => $previous_pool,
     QUERIES => $queries,
-    QUERYTYPE => $queries->get("QUERYTYPE"),
-    RESPONSES_DTD_FILENAME => $responses_dtd_file,
-    RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
-    RESPONSES_POOL => undef,
+    QUERIES_TO_LOAD => $queries_to_load,
+    RUNS_TO_LOAD => $runs_to_load,
+    RUNS_DIR => $runs_dir,
+    TEXT_BOUNDARIES => $text_document_boundaries,
+    DELTA_POOL => undef,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -2964,87 +3034,158 @@ sub new {
 
 sub load {
   my ($self) = @_;
-  my $logger = $self->get("LOGGER");
-  my $core_docs = $self->get("CORE_DOCS");
+  my $cas_dir = $self->get("CONFIDENCE_AGGREGATION_DIR");
+  my $coredocs = $self->get("COREDOCS");
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
-  my $k = $self->get("K");
+  my $images_boundingboxes = $self->get("IMAGE_BOUNDARIES");
+  my $keyframes_boundingboxes = $self->get("KEYFRAME_BOUNDARIES");
   my $queries = $self->get("QUERIES");
-  my $ldc_queries = $self->get("LDC_QUERIES");
-  my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
-  my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
-  my $query_type = $self->get("QUERYTYPE");
-  my $entire_pool = $self->get("ENTIRE_POOL");
-  $entire_pool = Pool->new($logger) if $entire_pool eq "nil";
-  
-  my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
-  my $entries = $filehandler->get("ENTRIES");
-  foreach my $entry($entries->toarray()) {
-    my $responses_xml_file = $entry->get("filename");
-    print STDERR "--processing $responses_xml_file\n";
-    my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
-    foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
-      my $query_id = $response->get("QUERYID");
-      my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
-        if $ldc_queries->get("QUERY", $query_id);
-      next unless $kb_id;
-      $kb_id =~ s/^\?//;
-      my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
-      my $enttype = $queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("ENTTYPE");
-      # Making the enttype NIL as desired by LDC
-      $enttype = "NIL";
-      my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
-      my $scope = $response->get("SCOPE");
-      my %kit_entries_by_docids;
-      foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
-        my $mention_span = $justification->tostring();
-        my $mention_modality = $justification->get("MODALITY");
-        my $confidence = $justification->get("CONFIDENCE");
-        my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
-        @docids = grep {$_ eq $source_docid} @docids if $source_docid;
-        foreach my $docid(@docids) {
-          next unless $core_docs->exists($docid);
-          my $kit_entry = KitEntry->new($logger);
-          $kit_entry->set("TYPE", $query_type);
-          $kit_entry->set("KB_ID", $kb_id);
-          $kit_entry->set("ENTTYPE", $enttype);
-          $kit_entry->set("ID", "<ID>");
-          $kit_entry->set("MENTION_MODALITY", $mention_modality);
-          $kit_entry->set("DOCID", $docid);
-          $kit_entry->set("MENTION_SPAN", $mention_span);
-          $kit_entry->set("LABEL_1", "NIL");
-          $kit_entry->set("LABEL_2", "NIL");
-          $kit_entry->set("CONFIDENCE", $confidence);
-          my $key = &main::generate_uuid_from_string($kit_entry->tostring());
-          $kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
-        }
-      }
-      foreach my $docid_modality (keys %kit_entries_by_docids) {
-        my $i = 0;
-        foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
-                    keys %{$kit_entries_by_docids{$docid_modality}}) {
-          $i++;
-          last if $i > $k;
-          my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
-          my $value = $kit_entry->tostring();
-          $kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
-        }
-      }
-    }
-  }
-  $self->set("RESPONSES_POOL", $entire_pool);
+  my $queries_to_load = $self->get("QUERIES_TO_LOAD");
+  my $queries_task_and_type = $queries->get("TASK_AND_TYPE_CODE");
+  my $runs_to_load = $self->get("RUNS_TO_LOAD");
+  my $runs_dir = $self->get("RUNS_DIR");
+  my $text_document_boundaries = $self->get("TEXT_BOUNDARIES");
+  my $logger = $self->get("LOGGER");
+  my $responses_pool;
+
+  my $responses = ResponseSet->new($logger,
+                      $queries,
+                      $docid_mappings,
+                      $text_document_boundaries,
+                      $images_boundingboxes,
+                      $keyframes_boundingboxes,
+                      $runs_dir,
+                      $runs_to_load,
+                      $queries_to_load,
+                      $cas_dir);
+
+  $self->generate_pool($responses);
 }
 
-sub write_output {
-  my ($self, $program_output) = @_;
-  my $pool = $self->get("RESPONSES_POOL");
-  my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
-  print "$header\n";
-  foreach my $kb_id($pool->get("ALL_KEYS")) {
-    my $kit = $pool->get("BY_KEY", $kb_id);
-    foreach my $output_line($kit->toarray()) {
-      print $program_output "$output_line\n";
+sub generate_pool {
+  my ($self, $responses) = @_;
+  my $logger = $self->get("LOGGER");
+  my $pool = Pool->new($logger, "TA2_ZH");
+  my $previous_pool = $self->get("PREVIOUS_POOL");
+  my $header_line = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+  my $header = Header->new($logger, $header_line);
+  my $concat_key = ":";
+  
+  # select the clusters to be pooled
+  my %clusters;
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my $query_id = $response->get("QUERY_ID");
+    my $doc_id = $response->get("DOCUMENT_ID");
+    my $cluster_id = $response->get("CLUSTER_ID");
+    my $run_id = $response->get("RUN_ID");
+    my $cluster_rank = $response->get("CLUSTER_RANK");
+    my $run_and_query = join($concat_key, ($run_id, $query_id));
+    $clusters{$run_and_query}{RANKED}{$cluster_id} = $cluster_rank;
+  }
+  foreach my $run_and_query (keys %clusters) {
+    my (undef, $query_id) = split($concat_key, $run_and_query);
+    my $max_num_of_clusters = $self->get("QUERIES_TO_LOAD")->get("BY_KEY", $query_id)->get("max_num_clusters");
+    foreach my $cluster_id(sort {$clusters{$run_and_query}{RANKED}{$a}<=>$clusters{$run_and_query}{RANKED}{$b}}
+                            keys %{$clusters{$run_and_query}{RANKED}}) {
+      $clusters{$run_and_query}{SELECTED}{$cluster_id} = 1
+        if scalar keys %{$clusters{$run_and_query}{SELECTED}} < $max_num_of_clusters;
     }
   }
+  # Select the top k informative mentions for selected clusters
+  my @selected_responses;
+  foreach my $run_and_query (keys %clusters) {
+    my ($run_id, $query_id) = split($concat_key, $run_and_query);
+    # iterate over selected clusters only
+    foreach my $cluster_id(keys %{$clusters{$run_and_query}{SELECTED}}) {
+      # selected responses that belong to a soecific run, query and cluster
+      my @responses = grep {$_->get("RUN_ID") eq $run_id &&
+                              $_->get("QUERY_ID") eq $query_id &&
+                              $_->get("CLUSTER_ID") eq $cluster_id}
+                      $responses->get("RESPONSES")->toarray();
+      my $max_num_informative_mentions = $self->get("QUERIES_TO_LOAD")->get("BY_KEY", $query_id)->get("max_num_informative_mentions");
+      my $i = 0;
+      foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))}
+                            @responses) {
+        last if $i == $max_num_informative_mentions;
+        push(@selected_responses, $response);
+        $i++;
+      }
+    }
+  }
+
+  # build pool from selected informative mentions
+  my %included;
+  $pool->set("HEADER", $header);
+  foreach my $response(@selected_responses) {
+    my $query_id = $response->get("QUERY_ID");
+    my $refkbid_in_query = $response->get("QUERY")->get("REFERENCE_KBID");
+    my $doc_id = $response->get("DOCUMENT_ID");
+    my $cluster_id = $response->get("CLUSTER_ID");
+    my $run_id = $response->get("RUN_ID");
+    my $run_and_query = join($concat_key, ($run_id, $query_id));
+    # skip this response if the cluster it contains is not one of those
+    # selected to be included in the pool
+    unless ($clusters{$run_and_query}{SELECTED}{$cluster_id}) {
+      $logger->record_debug_information("SKIPPING_CLUSTER_NOT_SELECTED", $response->get("LINE"), $response->get("WHERE"));
+      next;
+    }
+    my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
+    my (undef, $doceid, $span) = split(":", $fq_mention_span);
+    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
+    my $mention_span = "$doceid:$span";
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    $kit_entry->set("KBID", $refkbid_in_query);
+    $kit_entry->set("CLASS", "NIL");
+    $kit_entry->set("ID", "<ID>");
+    $kit_entry->set("MODALITY", $doce_modality);
+    $kit_entry->set("DOCID", $doc_id);
+    $kit_entry->set("SPAN", $mention_span);
+    $kit_entry->set("CORRECTNESS", "NIL");
+    $kit_entry->set("TYPE", "NIL");
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    my $exists = 0;
+    if($previous_pool->exists($refkbid_in_query)) {
+      my $pkit = $previous_pool->get("BY_KEY", $refkbid_in_query);
+      $exists = 1 if $pkit->exists($uuid);
+    }
+    unless($exists) {
+      my $kit = $pool->get("BY_KEY", $query_id);
+      $exists = 1 if $kit->exists($uuid);
+      $kit->add($kit_entry, $uuid) unless $exists;
+    }
+  }
+  $self->set("DELTA_POOL", $pool);
+}
+
+sub custom {
+  my $a_DOCID = $a->get("DOCID");
+  my $a_SPAN = $a->get("SPAN");
+  my $b_DOCID = $b->get("DOCID");
+  my $b_SPAN = $b->get("SPAN");
+  my ($a_DOCEID, $a_SX, $a_SY, $a_EX, $a_EY) = $a_SPAN =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+  my ($b_DOCEID, $b_SX, $b_SY, $b_EX, $b_EY) = $b_SPAN =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+
+  ($a_DOCID cmp $b_DOCID ||
+  $a_DOCEID cmp $b_DOCEID ||
+  $a_SX <=> $b_SX ||
+  $a_SY <=> $b_SY ||
+  $a_EX <=> $b_EX ||
+  $a_EY <=> $b_EY);
+}
+
+sub tostring {
+  my ($self) = @_;
+  my @lines;
+  my $pool_header = $self->get("DELTA_POOL")->get("HEADER")->get("LINE");
+  push(@lines, $pool_header);
+  foreach my $kit_key(sort {$a cmp $b} $self->get("DELTA_POOL")->get("ALL_KEYS")) {
+    my $kit = $self->get("DELTA_POOL")->get("BY_KEY", $kit_key);
+    foreach my $kit_entry(sort custom $kit->toarray()) {
+      push(@lines, $kit_entry->tostring());
+    }
+  }
+  join("\n", @lines);
 }
 
 #####################################################################################
