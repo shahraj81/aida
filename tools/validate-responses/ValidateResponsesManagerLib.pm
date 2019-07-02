@@ -1641,7 +1641,11 @@ my %validators = (
       my $provenance = $entry->get($column_name);
       return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       return 1 if $optional && !$provenance;
-      unless($provenance =~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))$/) {
+      unless(split(":", $provenance) == 3) {
+        $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
+        return;
+      }
+      unless($provenance =~ /^.*?:.*?:\(\d+,\d+\)-\(\d+,\d+\)$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
         return;
       }
@@ -1728,11 +1732,11 @@ my %validators = (
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $provenances = $entry->get($column_name);
       return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenances eq "NULL");
-      if($provenances !~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))(,(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\)))*?$/) {
+      if($provenances =~ /^;/ || $provenances =~ /;$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenances, $where);
         return;
       }
-      my $num_provenances = split(",", $provenances) / 3;
+      my $num_provenances = split(";", $provenances);
       unless($num_provenances == 1 or $num_provenances == 2) {
         $logger->record_problem("UNEXPECTED_NUM_SPANS", $provenances, "1 or 2", $num_provenances, $where);
         return;
@@ -2011,12 +2015,7 @@ my %columns = (
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
       my $triples = $entry->get("EDGE_PROVENANCE_TRIPLES");
-      my @triples = split(/\),/, $triples);
-      my $i = 0;
-      foreach my $triple(@triples) {
-        $i++;
-        $triple .= ")" if $triple !~ /\)$/;
-      }
+      my @triples = split(/;/, $triples);
       $entry->set("EDGE_PROVENANCE_TRIPLES_ARRAY", \@triples);
     },
     OPTIONAL => 1,
