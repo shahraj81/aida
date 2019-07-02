@@ -3645,7 +3645,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
                   BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
-                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
 	]]>
 END_SPARQL_QUERY
@@ -4099,7 +4099,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
                   BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
-                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
 	]]>
 END_SPARQL_QUERY
