@@ -2892,7 +2892,7 @@ sub generate_pool {
   my $logger = $self->get("LOGGER");
   my $pool = Pool->new($logger, "TA1_CL");
   my $previous_pool = $self->get("PREVIOUS_POOL");
-  my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+  my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE FQEC));
   my $header = Header->new($logger, $header_line);
   my $concat_key = ":";
   
@@ -2953,6 +2953,7 @@ sub generate_pool {
     $kit_entry->set("SPAN", $mention_span);
     $kit_entry->set("CORRECTNESS", "NIL");
     $kit_entry->set("TYPE", "NIL");
+    $kit_entry->set("FQEC", "NIL");
     my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
     my $exists = 0;
     if($previous_pool->exists($query_id)) {
