@@ -19,15 +19,15 @@ $ontology_files->add("2019/input/ontology/LDC_AIDAAnnotationOntologyWithMapping_
 $ontology_files->add("2019/input/ontology/LDC_AIDAAnnotationOntologyWithMapping_V8_relations.tab", "relations");
 
 my $prevailingtheory_files = Container->new("String");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R103_PT001.tab", "R103_PT001");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R103_PT002.tab", "R103_PT002");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R103_PT003.tab", "R103_PT003");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R103_PT004.tab", "R103_PT004");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R103_PT005.tab", "R103_PT005");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R105_PT001.tab", "R105_PT001");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R105_PT002.tab", "R105_PT002");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R107_PT001.tab", "R107_PT001");
-$prevailingtheory_files->add("2019/input/prevailing-theories/R107_PT002.tab", "R107_PT002");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R103_PT001.tab", "R103_PT001");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R103_PT002.tab", "R103_PT002");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R103_PT003.tab", "R103_PT003");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R103_PT004.tab", "R103_PT004");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R103_PT005.tab", "R103_PT005");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R105_PT001.tab", "R105_PT001");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R105_PT002.tab", "R105_PT002");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R107_PT001.tab", "R107_PT001");
+$prevailingtheory_files->add("2019/input/prevailing-theories-practice/R107_PT002.tab", "R107_PT002");
 
 my $named_refkbids_file = "2019/input/named_reference_kb_nodes.txt";
 
