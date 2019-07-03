@@ -312,7 +312,7 @@ WHERE {
 
     BIND( IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
     FILTER(?ej1_span > ?ej2_span)
-    BIND( IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
+    BIND( IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
     BIND( IF( BOUND(?ej_span), ?ej_span, "NULL") AS ?ej_span)
     BIND( IF( BOUND(?_edge_cj_cv), ?_edge_cj_cv, "NULL") AS ?edge_cj_cv)
 }
