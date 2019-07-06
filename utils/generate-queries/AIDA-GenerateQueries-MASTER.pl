@@ -36,7 +36,7 @@ my $prevailingtheory_files = Container->new("String");
 map {$prevailingtheory_files->add("2019/input/prevailing-theories-$data_type/$_.tab", $_)}
   @topic_and_pt_ids;
 
-my $named_refkbids_file = "2019/input/named_reference_kb_nodes.txt";
+my $named_refkbids_file = "2019/input/prevailing-theories-$data_type/named_refkb_nodes.txt";
 
 my $parameters = Parameters->new($logger);
 $parameters->set("ONTOLOGY_FILES", $ontology_files);
