@@ -18,6 +18,20 @@ RUN \
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 #-------------------------------------------------------------
+# Add user
+#-------------------------------------------------------------
+ARG userid
+RUN addgroup --gid ${userid} ubuntu
+RUN useradd -rm -d /home/ubuntu -s /bin/bash -g ${userid} -u ${userid} ubuntu
+USER ubuntu
+WORKDIR /home/ubuntu
+
+#-------------------------------------------------------------
+# Copy required scripts
+#-------------------------------------------------------------
+COPY --chown=ubuntu:ubuntu ./scripts /scripts
+
+#-------------------------------------------------------------
 #  Install GraphDB
 #  Taken from the Dockerfile for GraphDB docker available at:
 #  https://github.com/Ontotext-AD/graphdb-docker
@@ -27,12 +41,12 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ARG version=8.10.1
 ARG edition=free
 
-ENV GRAPHDB_PARENT_DIR=/opt/graphdb
+ENV GRAPHDB_PARENT_DIR=/scripts/graphdb
 ENV GRAPHDB_HOME=${GRAPHDB_PARENT_DIR}/home
 
 ENV GRAPHDB_INSTALL_DIR=${GRAPHDB_PARENT_DIR}/dist
 
-COPY ./AUX-data/graphdb-${edition}-${version}-dist.zip /tmp/
+COPY --chown=ubuntu:ubuntu ./AUX-data/graphdb-${edition}-${version}-dist.zip /tmp/
 
 WORKDIR /tmp
 
@@ -48,21 +62,21 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 #-------------------------------------------------------------
 #  Setup entrypoint
 #-------------------------------------------------------------
-# Copy required scripts
-COPY ./scripts /scripts
+
 ENTRYPOINT ["make", "-f" , "/scripts/Makefile"]
 
 #-------------------------------------------------------------
 # Install SPARQL Evaluation Tool
 #-------------------------------------------------------------
+
 # Create directory structure
-ENV SPARQL_EVAL_HOME /opt/sparql-evaluation
-WORKDIR $SPARQL_EVAL_HOME
-RUN mkdir -p config /
+ENV SPARQL_EVAL_HOME=/scripts/sparql-evaluation
+ENV SPARQL_EVAL_CONFIG=${SPARQL_EVAL_HOME}/config
+RUN mkdir -p $SPARQL_EVAL_CONFIG
 
 # Copy shadow jar and example configuration to sparql-evaluation directory
-COPY ./AUX-data/sparql-evaluation-*-all.jar $SPARQL_EVAL_HOME
-COPY ./AUX-data/Local-config.* $SPARQL_EVAL_HOME/config/
+COPY --chown=ubuntu:ubuntu ./AUX-data/sparql-evaluation-*-all.jar $SPARQL_EVAL_HOME/
+COPY --chown=ubuntu:ubuntu ./AUX-data/Local-config.* $SPARQL_EVAL_CONFIG/
 
 # Copy the custom function jar files to inside GraphDB lib
-COPY ./AUX-data/rdf4j-function-* ${GRAPHDB_INSTALL_DIR}/lib/
+COPY --chown=ubuntu:ubuntu ./AUX-data/rdf4j-function-* ${GRAPHDB_INSTALL_DIR}/lib/

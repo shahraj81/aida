@@ -1,6 +1,6 @@
-GRAPHDB_BIN=/opt/graphdb/dist/bin/
+GRAPHDB_BIN=/scripts/graphdb/dist/bin/
 LOADRDF=$(GRAPHDB_BIN)/loadrdf
-VERDI_SPARQL_EVAL_HOME=/opt/sparql-evaluation/
+VERDI_SPARQL_EVAL_HOME=/scripts/sparql-evaluation/
 VERDI_SPARQL_EVAL_JAR=$(VERDI_SPARQL_EVAL_HOME)/sparql-evaluation-1.0.0-SNAPSHOT-all.jar
 REPOSITORY_CONFIG=$(VERDI_SPARQL_EVAL_HOME)/config/Local-config.properties
 RUN=/mnt/run
