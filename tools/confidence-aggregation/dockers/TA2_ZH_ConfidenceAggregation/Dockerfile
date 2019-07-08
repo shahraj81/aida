@@ -10,7 +10,13 @@ RUN apt-get update && apt-get install -y \
     perlbrew \
     unzip
 
-ENV HOME /root
+# Add user
+ARG userid
+RUN addgroup --gid ${userid} ubuntu
+RUN useradd -rm -d /home/ubuntu -s /bin/bash -g ${userid} -u ${userid} ubuntu
+
+ENV HOME /home/ubuntu
+
 ENV PERLBREW_PATH=$HOME/perl5/perlbrew/bin
 
 # Install cpanm
@@ -22,8 +28,10 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Install Encode
 RUN $PERLBREW_PATH/cpanm install Encode
 
+USER ubuntu
+
 #Create directory structure
-ENV SCRIPTS /opt/scripts
+ENV SCRIPTS=$HOME/scripts
 RUN mkdir -p $SCRIPTS
 WORKDIR $SCRIPTS
 
