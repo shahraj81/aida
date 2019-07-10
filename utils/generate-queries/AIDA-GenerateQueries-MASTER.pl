@@ -33,7 +33,7 @@ $ontology_files->add("2019/input/ontology/LDC_AIDAAnnotationOntologyWithMapping_
 $ontology_files->add("2019/input/ontology/LDC_AIDAAnnotationOntologyWithMapping_V8_relations.tab", "relations");
 
 my $prevailingtheory_files = Container->new("String");
-map {$prevailingtheory_files->add("2019/input/prevailing-theories-$data_type/$_.tab", $_)}
+map {$prevailingtheory_files->add("2019/input/prevailing-theories-$data_type/corrected/$_.tab", $_)}
   @topic_and_pt_ids;
 
 my $named_refkbids_file = "2019/input/prevailing-theories-$data_type/named_refkb_nodes.txt";
@@ -66,12 +66,12 @@ foreach my $topic_and_pt_id(@topic_and_pt_ids) {
 my $output_mapping_filename = $parameters->get("OUTPUT_DIR") . "/" . $parameters->get("TA2_GRAPH_QUERY_MAPPINGS_FILENAME");
 open(my $mapping_output, ">:utf8", $output_mapping_filename)
         or $logger->NIST_die("Could not open $output_mapping_filename: $!");
-print $mapping_output "query_id\tevent_or_relation_kbid\n";
+print $mapping_output "query_id\tframe_id\n";
 my @queries = $query_generator->get("TA2_GRAPH_QUERIES")->get("QUERIES")->toarray();
 foreach my $query(@queries) {
   my $query_id = $query->get("QUERYID");
-  foreach my $event_or_relation_kbid($query->get("EVENT_OR_RELATION_KBIDS")->toarray()) {
-    print $mapping_output "$query_id\t$event_or_relation_kbid\n";
+  foreach my $frame_id($query->get("FRAMEIDS")->toarray()) {
+    print $mapping_output "$query_id\t$frame_id\n";
   }
 }
 close($mapping_output);
