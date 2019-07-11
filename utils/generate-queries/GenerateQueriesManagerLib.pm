@@ -3406,7 +3406,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND (ldcOnt:[__PREDICATE__] AS ?edge_type_q)
               
                   # Get the object informativeJustification
-                  ?objectmo             a                             aida:Entity .
+                  # ?objectmo             a                             aida:Entity .
                   ?objectmo             aida:informativeJustification ?oinf_justification .
                   ?oinf_justification   aida:sourceDocument           ?docid .
                   ?oinf_justification   aida:source                   ?oinf_j_doceid .
