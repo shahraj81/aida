@@ -2389,6 +2389,8 @@ sub new {
     LOGGER => $logger,
   };
   bless($self, $class);
+  my $num_files = scalar @filenames;
+  my $i = 0;
   foreach my $filename(@filenames) {
     my $schema_name = &identify_file_schema($logger, $filename);
     my $schema = $schemas{$schema_name};
@@ -2396,6 +2398,8 @@ sub new {
       $logger->record_problem('UNKNOWN_RESPONSE_FILE_TYPE', $filename, 'NO_SOURCE');
       next;
     }
+    $i++;
+    print STDERR "--loading file ($i\/$num_files): $filename\n";
     $self->load($logger, $queries, $filename, $schema);
   }
   $self;
@@ -2516,6 +2520,8 @@ sub write_valid_output {
   my ($self, $output_dir) = @_;
   my $logger = $self->get("LOGGER");
   my %responses;
+  my %created;
+  print STDERR "--preparing output...\n";
   foreach my $response($self->get("RESPONSES")->toarray()) {
     next unless $response->get("VALID");
     my $response_file = $response->get("FILENAME");
@@ -2523,13 +2529,19 @@ sub write_valid_output {
     my $filename = pop(@elements);
     my $kb_filename = pop(@elements);
     my $input_dir = join("/", @elements);
-    my $output_file = "$output_dir/$kb_filename/$filename";
-    system("mkdir -p $output_dir/$kb_filename");
+    my $subdir = "$output_dir/$kb_filename";
+    my $output_file = "$subdir/$filename";
+    system("mkdir -p $subdir") unless $created{$subdir};
+    $created{$subdir} = 1;
     $responses{$output_file}{$response->get("LINENUM")} = $response;
   }
+  my $num_output_files = scalar keys %responses;
+  my $i = 0;
   foreach my $output_file(keys %responses) {
     $logger->NIST_die("$output_file already exists") if -e $output_file;
     my $header = 0;
+    $i++;
+    print STDERR "--writing output file ($i\/$num_output_files): $output_file\n";
     open(my $program_output, ">:utf8", $output_file) or $logger->NIST_die("Could not open $output_file: $!");
     foreach my $line_num(sort {$a<=>$b} keys %{$responses{$output_file}}) {
       my $response = $responses{$output_file}{$line_num};
