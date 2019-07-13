@@ -2899,6 +2899,7 @@ sub load {
 sub generate_pool {
   my ($self, $responses) = @_;
   my $logger = $self->get("LOGGER");
+  my $coredocs = $self->get("COREDOCS");
   my $pool = Pool->new($logger, "TA1_CL");
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE FQEC));
@@ -2910,6 +2911,7 @@ sub generate_pool {
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my $query_id = $response->get("QUERY_ID");
     my $doc_id = $response->get("DOCUMENT_ID");
+    next unless $coredocs->exists($doc_id);
     my $cluster_id = $response->get("CLUSTER_ID");
     my $run_id = $response->get("RUN_ID");
     my $cluster_rank = $response->get("CLUSTER_RANK");
@@ -2934,6 +2936,7 @@ sub generate_pool {
     my $query_id = $response->get("QUERY_ID");
     my $enttype_in_query = $response->get("QUERY")->get("ENTTYPE");
     my $doc_id = $response->get("DOCUMENT_ID");
+    next unless $coredocs->exists($doc_id);
     my $cluster_id = $response->get("CLUSTER_ID");
     my $run_id = $response->get("RUN_ID");
     my $run_and_query_and_document = join($concat_key, ($run_id, $query_id, $doc_id));
