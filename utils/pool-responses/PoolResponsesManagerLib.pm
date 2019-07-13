@@ -2382,6 +2382,7 @@ sub new {
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
     RESPONSES => Container->new($logger, "Response"),
+    CATEGORIZED_RESPONSES => Container->new($logger, "Container"),
     CLUSTER_TYPES => Container->new($logger),
     RUNS_DIR => $runs_dir,
     CAS_DIR => $cas_dir,
@@ -2391,6 +2392,7 @@ sub new {
   };
   bless($self, $class);
   foreach my $run_id($runs_to_load->toarray()) {
+    print STDERR "--loading run: $run_id\n";
     my $run_dir = "$runs_dir/$run_id";
     my $ca_dir = "$cas_dir/$run_id" if $cas_dir;
     $logger->NIST_die("$run_dir does not exist") unless -e $run_dir;
@@ -2506,6 +2508,14 @@ sub load_responses {
     }
     $entry->set("VALID", $valid);
     $self->get("RESPONSES")->add($entry, "$filename:$linenum");
+    my $code = $queries->get("TASK_AND_TYPE_CODE");
+    if($code eq "TA1_CL") {
+      my $query_id = $entry->get("QUERY_ID");
+      my $kb_documentid = $entry->get("KB_DOCUMENT_ID");
+      my $cluster_id = $entry->get("CLUSTER_ID");
+      my $response_category = join("::", ($runid, $query_id, $kb_documentid, $cluster_id));
+      $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $response_category)->add($entry, "$filename:$linenum");
+    }
   }
 }
 
@@ -2546,7 +2556,9 @@ sub load_aggregated_confidences_TA2_ZH {
   foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
     my $cluster_id = $entry->get("?cluster");
     my $rank = $entry->get("?rank");
+    print STDERR "--calling add_cluster_rank_to_responses - entering\n";
     $self->add_cluster_rank_to_responses($logger, "TA2_ZH", $cluster_id, $rank, $query_id, undef, $run_id, $entry->get("WHERE"));
+    print STDERR "--calling add_cluster_rank_to_responses - exiting\n";
   }
 }
 
@@ -2560,11 +2572,8 @@ sub add_cluster_rank_to_responses {
 
 sub add_cluster_rank_to_responses_TA1_CL {
   my ($self, $logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where) = @_;
-  my @responses = grep {$_->get("CLUSTER_ID") eq $cluster_id &&
-                                 $_->get("DOCUMENT_ID") eq $kb_docid &&
-                                 $_->get("QUERY_ID") eq $query_id &&
-                                 $_->get("RUN_ID") eq $run_id} 
-                  $self->get("RESPONSES")->toarray();
+  my $response_category = join("::", ($run_id, $query_id, $kb_docid, $cluster_id));
+  my @responses = $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $response_category)->toarray();
   $logger->NIST_die("No matching response available to add cluster rank")
     unless @responses;
   foreach my $response(@responses) {
