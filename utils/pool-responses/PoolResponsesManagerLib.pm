@@ -2953,8 +2953,11 @@ sub generate_pool {
     }
     my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
     my (undef, $doceid, $span) = split(":", $fq_mention_span);
-    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
     my $mention_span = "$doceid:$span";
+    if($fq_mention_span =~ /^(.*?):(.*?)\_/) {
+      $doceid = $2;
+    }
+    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
     my $kit_entry = KitEntry->new($logger);
     $kit_entry->set("HEADER", $header);
     $kit_entry->set("QUERY_ID", $query_id);
