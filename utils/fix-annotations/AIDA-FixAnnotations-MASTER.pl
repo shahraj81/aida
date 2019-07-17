@@ -106,7 +106,7 @@ foreach my $input_subdir (<$input_dir/*>) {
   my $subdir_name = pop @elements;
   my $output_dir = "$output_dir/$subdir_name";
   system("mkdir -p $output_dir");
-  foreach my $input_file(<$input_subdir/R*.tab>) {
+  foreach my $input_file(<$input_subdir/E*.tab>) {
     my $filename = $input_file;
     $filename =~ s/^(.*?\/)+//g;
     my $output_file = "$output_dir/$filename";
