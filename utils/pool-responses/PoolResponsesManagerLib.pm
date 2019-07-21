@@ -2556,9 +2556,7 @@ sub load_aggregated_confidences_TA2_ZH {
   foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
     my $cluster_id = $entry->get("?cluster");
     my $rank = $entry->get("?rank");
-    print STDERR "--calling add_cluster_rank_to_responses - entering\n";
     $self->add_cluster_rank_to_responses($logger, "TA2_ZH", $cluster_id, $rank, $query_id, undef, $run_id, $entry->get("WHERE"));
-    print STDERR "--calling add_cluster_rank_to_responses - exiting\n";
   }
 }
 
@@ -3146,8 +3144,11 @@ sub generate_pool {
     }
     my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
     my (undef, $doceid, $span) = split(":", $fq_mention_span);
-    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
     my $mention_span = "$doceid:$span";
+    if($fq_mention_span =~ /^(.*?):(.*?)\_/) {
+        $doceid = $2;
+    }
+    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
     my $kit_entry = KitEntry->new($logger);
     $kit_entry->set("HEADER", $header);
     $kit_entry->set("KBID", $refkbid_in_query);
