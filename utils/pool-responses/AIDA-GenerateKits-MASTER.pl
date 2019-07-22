@@ -140,6 +140,7 @@ unless($num_errors) {
     # $kit_id normalized to be part of the output filename
     my $kit_id_normalized = $kit_id;
     $kit_id_normalized =~ s/:/_/g;
+    $kit_id_normalized =~ s/\|/_/g;
     my $kit = $pool->get("BY_KEY", $kit_id);
     my $total_entries = scalar($kit->toarray());
     my $total_kits = ceil($total_entries/$max_kit_size);
@@ -167,8 +168,10 @@ unless($num_errors) {
     }
   }
   foreach my $output_filename(keys %languages_in_kit) {
-    my @languages = sort keys %{$languages_in_kit{$output_filename}};
-    my $languages = join(",", @languages);
+    my @languages;
+    @languages = sort keys %{$languages_in_kit{$output_filename}} if $languages_in_kit{$output_filename};
+    my $languages = "UND";
+    $languages = join(",", @languages) if scalar @languages > 0;
     print $kit_language_map_output "$output_filename\t$languages\n";
   }
   close($kit_language_map_output);
