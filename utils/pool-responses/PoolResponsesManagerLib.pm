@@ -178,6 +178,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_KEYFRAMEID                      ERROR          Missing keyframeid in video provenance %s (expecting %s, provided %s)
   MULTIPLE_DOCUMENTS                      ERROR          Multiple documents used in response: %s, %s (expected exactly one)
   MULTIPLE_ENTRIES_IN_A_CLUSTER           ERROR          Multiple response entries in the cluster %s (expected no more than one)
+  MULTIPLE_INFORMATIVE_JUSTIFICATIONS_PER_DOCUMENT WARNING Multiple informative justification for run_and_query %s, cluster %s and document %s
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   MULTIPLE_TASK_AND_TYPE_IN_QUERIES       FATAL_ERROR    Queries with mixed task and type found in query set, for e.g. %s and %s
@@ -3078,6 +3079,7 @@ sub load {
 sub generate_pool {
   my ($self, $responses) = @_;
   my $logger = $self->get("LOGGER");
+  my $coredocs = $self->get("COREDOCS");
   my $pool = Pool->new($logger, "TA2_ZH");
   my $previous_pool = $self->get("PREVIOUS_POOL");
   my $header_line = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
@@ -3111,15 +3113,29 @@ sub generate_pool {
     # iterate over selected clusters only
     foreach my $cluster_id(keys %{$clusters{$run_and_query}{SELECTED}}) {
       # selected responses that belong to a soecific run, query and cluster
-      my @responses = grep {$_->get("RUN_ID") eq $run_id &&
+      my @all_responses = grep {$_->get("RUN_ID") eq $run_id &&
                               $_->get("QUERY_ID") eq $query_id &&
                               $_->get("CLUSTER_ID") eq $cluster_id}
                       $responses->get("RESPONSES")->toarray();
+      my %responses_per_document;
+      foreach my $response(@all_responses) {
+        if(exists $responses_per_document{$response->get("DOCUMENT_ID")}) {
+          $logger->record_problem("MULTIPLE_INFORMATIVE_JUSTIFICATIONS_PER_DOCUMENT", $run_and_query, $cluster_id, $response->get("DOCUMENT_ID"), $response->get("WHERE"));
+          $responses_per_document{$response->get("DOCUMENT_ID")} = $response
+            if($response->get("JUSTIFICATION_CONFIDENCE") > $responses_per_document{$response->get("DOCUMENT_ID")}->get("JUSTIFICATION_CONFIDENCE"));
+        }
+        else {
+          $responses_per_document{$response->get("DOCUMENT_ID")} = $response;
+        }
+      }
+      my @responses = map {$responses_per_document{$_}} keys %responses_per_document;
       my $max_num_informative_mentions = $self->get("QUERIES_TO_LOAD")->get("BY_KEY", $query_id)->get("max_num_informative_mentions");
       my $i = 0;
-      foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))}
+      foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
+                                  || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
                             @responses) {
         last if $i == $max_num_informative_mentions;
+        next unless $coredocs->exists($response->get("DOCUMENT_ID"));
         push(@selected_responses, $response);
         $i++;
       }
