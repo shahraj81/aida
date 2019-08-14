@@ -3057,8 +3057,8 @@ sub generate_graph_queries {
     }
 
 		my $role;
-		if($pt_entry->get("ONTOLOGY_ID") =~ /^LDC_ent_/) {
-			my $item_ke = $pt_entry->get("ITEM_KE");
+		my $item_ke = $pt_entry->get("ITEM_KE");
+		unless($item_ke eq "relation" || $item_ke eq "event") {
 			my $subject_spec;
 			if($item_ke =~ /^(evt|rel)\d/) {
 			  my $matrix_ke_item_num = $pt_entry->get("ENTRY")->get("Matrix KE Item Number");
