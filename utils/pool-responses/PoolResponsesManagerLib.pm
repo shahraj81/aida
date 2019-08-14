@@ -2732,6 +2732,30 @@ sub load_TA1_CL {
   }
 }
 
+sub load_TA1_GR {
+  my ($self, $filename) = @_;
+  my $logger = $self->get("LOGGER");
+  my $filehandler = FileHandler->new($logger, $filename);
+  my $header = $filehandler->get("HEADER");
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry($entries->toarray()) {
+    my $kit_id = $entry->get("KIT_ID");
+    my $kit = $self->get("BY_KEY", $kit_id);
+
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+    
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    $kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+  }
+}
+
+sub load_TA2_GR {
+  my ($self, $filename) = @_;
+  $self->load_TA1_GR($filename);
+}
+
 #####################################################################################
 # Kit
 #####################################################################################

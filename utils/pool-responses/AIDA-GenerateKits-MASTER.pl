@@ -45,6 +45,24 @@ sub custom_sort {
   $a_y2 <=> $b_y2);
 }
 
+sub custom_sort2 {
+  my $a_docid = $a->get("DOC_ID");
+  my $b_docid = $b->get("DOC_ID");
+  my $a_span = $a->get("PREDICATE_JUSTIFICATION");
+  my $b_span = $b->get("PREDICATE_JUSTIFICATION");
+  $a_span =~ s/;.*?$//;
+  $b_span =~ s/;.*?$//;
+  my ($a_doceid, $a_shot_num, $a_x1, $a_y1, $a_x2, $a_y2) = get_span_fields($a_span);
+  my ($b_doceid, $b_shot_num, $b_x1, $b_y1, $b_x2, $b_y2) = get_span_fields($b_span);
+  ($a_docid cmp $b_docid ||
+  $a_doceid cmp $b_doceid ||
+  $a_shot_num <=> $b_shot_num ||
+  $a_x1 <=> $b_x1 ||
+  $a_y1 <=> $b_y1 ||
+  $a_x2 <=> $b_x2 ||
+  $a_y2 <=> $b_y2);
+}
+
 sub get_span_fields {
   my ($span) = @_;
   $span =~ /^(.*?)\:\((\d+)\,(\d+)\)\-\((\d+)\,(\d+)\)$/;
@@ -144,7 +162,9 @@ unless($num_errors) {
     my $kit = $pool->get("BY_KEY", $kit_id);
     my $total_entries = scalar($kit->toarray());
     my $total_kits = ceil($total_entries/$max_kit_size);
-    my @kit_entries = sort custom_sort $kit->toarray();
+    my @kit_entries;
+    @kit_entries = sort custom_sort $kit->toarray() if($task_and_type_code eq "TA1_CL" || $task_and_type_code eq "TA2_ZH");
+    @kit_entries = sort custom_sort2 $kit->toarray() if($task_and_type_code eq "TA1_GR" || $task_and_type_code eq "TA2_GR");
     $next_linenums{$kit_id} = 1 unless($next_linenums{$kit_id});
     for(my $kit_num = 1; $kit_num <=$total_kits; $kit_num++){
       my $output_filename = "$output_dir/$prefix\_$kit_id_normalized\_$kit_num\_$total_kits\.tab";
@@ -157,7 +177,9 @@ unless($num_errors) {
         print $program_output "$output_line\n";
         # collect the languages in this kit partition
         my @entries = split(/\t/, $output_line);
-        my $docid = $entries[4];
+        my $docid;
+        $docid = $entries[4] if($task_and_type_code eq "TA1_CL" || $task_and_type_code eq "TA2_ZH");
+        $docid = $entries[3] if($task_and_type_code eq "TA1_GR" || $task_and_type_code eq "TA2_GR");
         foreach my $languages_in_doc(keys %{$docid_to_languages{$docid}}) {
           foreach my $language_in_doc(split(/,/, $languages_in_doc)) {
             $languages_in_kit{$output_filename}{$language_in_doc} = 1;
