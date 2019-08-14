@@ -1860,8 +1860,8 @@ my %schemas = (
     TASK => "task3",
     QUERY_TYPE => 'GRAPH',
     FILE_TYPE => 'SUBMISSION',
-    SAMPLES => ["IC0011UQQ <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Attacker> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0137-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0159> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0159-D0100> NULL  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack>  IC0011UQQ:HC000Q7P6:(45,0)-(55,0),IC0011UQQ:IC0011UQU:(200,100)-(400,300) 9.05E1  7.55E1  1.105E2 Sniper  5.43E-1"],
-    HEADER => [qw(?docid ?edge_type ?object_cluster ?objectmo ?oinf_j_span ?object_type ?subject_cluster ?subjectmo ?sinf_j_span ?subject_type ?ej_span ?hypothesis_iv ?subjectc_iv ?edge_iv ?objectc_handle ?edge_cj_cv)],
+    SAMPLES => ["IC0011UQQ <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Attacker> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0137-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0159> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0159-D0100> NULL  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack>  IC0011UQQ:HC000Q7P6:(45,0)-(55,0),IC0011UQQ:IC0011UQU:(200,100)-(400,300) 9.05E1  7.55E1  1.105E2 Sniper  5.43E-1  1.0 1.0 1.0 1.0"],
+    HEADER => [qw(?docid ?edge_type ?object_cluster ?objectmo ?oinf_j_span ?object_type ?subject_cluster ?subjectmo ?sinf_j_span ?subject_type ?ej_span ?hypothesis_iv ?subjectc_iv ?edge_iv ?objectc_handle ?edge_cj_cv ?oinf_j_cv ?obcm_cv ?sinf_j_cv ?sbcm_cv)],
     COLUMNS => [qw(
       DOCUMENT_ID
       EDGE_TYPE_IN_RESPONSE
@@ -1879,6 +1879,10 @@ my %schemas = (
       EDGE_IMPORTANCE_VALUE
       OBJECT_HANDLE
       EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE
+      OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE
+      OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
+      SUBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE
+      SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
     )],
   },
 
@@ -2132,7 +2136,7 @@ my %columns = (
     NAME => 'OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2153,7 +2157,7 @@ my %columns = (
     NAME => 'OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2', 'task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2299,7 +2303,7 @@ my %columns = (
     NAME => 'SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2324,6 +2328,18 @@ my %columns = (
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     VALIDATE => 'SUBJECT_TYPE',
+  },
+
+  SUBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE => {
+    NAME => 'SUBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE',
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
   },
 
   SUBJECT_VALUE_PROVENANCE_TRIPLE => {
