@@ -32,6 +32,10 @@
                      ?edge_iv         # the importance value of edge
                      ?objectc_handle  # the handle of object cluster
                      ?edge_cj_cv      # confidence of a compound justification for the argument assertion
+                     ?oinf_j_cv       # confidence of object informativeJustification
+                     ?obcm_cv         # cluster membership confidence of the object
+                     ?sinf_j_cv       # confidence of subject informativeJustification
+                     ?sbcm_cv         # cluster membership confidence of the subject
               
               WHERE {
                   # informativeJustification of ?subjectmo is not needed by LDC; will be NILL
@@ -319,7 +323,7 @@
               
                   BIND( IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
-                  BIND( IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
+                  BIND( IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
                   BIND( IF( BOUND(?ej_span), ?ej_span, "NULL") AS ?ej_span)
                   BIND( IF( BOUND(?_edge_cj_cv), ?_edge_cj_cv, "NULL") AS ?edge_cj_cv)
               }

@@ -1641,7 +1641,11 @@ my %validators = (
       my $provenance = $entry->get($column_name);
       return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       return 1 if $optional && !$provenance;
-      unless($provenance =~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))$/) {
+      unless(split(":", $provenance) == 3) {
+        $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
+        return;
+      }
+      unless($provenance =~ /^.*?:.*?:\(\d+,\d+\)-\(\d+,\d+\)$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
         return;
       }
@@ -1728,11 +1732,11 @@ my %validators = (
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $provenances = $entry->get($column_name);
       return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenances eq "NULL");
-      if($provenances !~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))(,(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\)))*?$/) {
+      if($provenances =~ /^;/ || $provenances =~ /;$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenances, $where);
         return;
       }
-      my $num_provenances = split(",", $provenances) / 3;
+      my $num_provenances = split(";", $provenances);
       unless($num_provenances == 1 or $num_provenances == 2) {
         $logger->record_problem("UNEXPECTED_NUM_SPANS", $provenances, "1 or 2", $num_provenances, $where);
         return;
@@ -1856,8 +1860,8 @@ my %schemas = (
     TASK => "task3",
     QUERY_TYPE => 'GRAPH',
     FILE_TYPE => 'SUBMISSION',
-    SAMPLES => ["IC0011UQQ <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Attacker> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0137-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0159> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0159-D0100> NULL  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack>  IC0011UQQ:HC000Q7P6:(45,0)-(55,0),IC0011UQQ:IC0011UQU:(200,100)-(400,300) 9.05E1  7.55E1  1.105E2 Sniper  5.43E-1"],
-    HEADER => [qw(?docid ?edge_type ?object_cluster ?objectmo ?oinf_j_span ?object_type ?subject_cluster ?subjectmo ?sinf_j_span ?subject_type ?ej_span ?hypothesis_iv ?subjectc_iv ?edge_iv ?objectc_handle ?edge_cj_cv)],
+    SAMPLES => ["IC0011UQQ <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack_Attacker> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0137> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0137-D0100> IC0011UQQ:HC000Q7P6:(45,0)-(55,0) <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#PER.Combatant.Sniper> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-E0159> <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#E0159-D0100> NULL  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#Conflict.Attack.FirearmAttack>  IC0011UQQ:HC000Q7P6:(45,0)-(55,0),IC0011UQQ:IC0011UQU:(200,100)-(400,300) 9.05E1  7.55E1  1.105E2 Sniper  5.43E-1  1.0 1.0 1.0 1.0"],
+    HEADER => [qw(?docid ?edge_type ?object_cluster ?objectmo ?oinf_j_span ?object_type ?subject_cluster ?subjectmo ?sinf_j_span ?subject_type ?ej_span ?hypothesis_iv ?subjectc_iv ?edge_iv ?objectc_handle ?edge_cj_cv ?oinf_j_cv ?obcm_cv ?sinf_j_cv ?sbcm_cv)],
     COLUMNS => [qw(
       DOCUMENT_ID
       EDGE_TYPE_IN_RESPONSE
@@ -1875,6 +1879,10 @@ my %schemas = (
       EDGE_IMPORTANCE_VALUE
       OBJECT_HANDLE
       EDGE_COMPOUND_JUSTIFICATION_CONFIDENCE
+      OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE
+      OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
+      SUBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE
+      SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE
     )],
   },
 
@@ -2011,12 +2019,7 @@ my %columns = (
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
       my $triples = $entry->get("EDGE_PROVENANCE_TRIPLES");
-      my @triples = split(/\),/, $triples);
-      my $i = 0;
-      foreach my $triple(@triples) {
-        $i++;
-        $triple .= ")" if $triple !~ /\)$/;
-      }
+      my @triples = split(/;/, $triples);
       $entry->set("EDGE_PROVENANCE_TRIPLES_ARRAY", \@triples);
     },
     OPTIONAL => 1,
@@ -2133,7 +2136,7 @@ my %columns = (
     NAME => 'OBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2154,7 +2157,7 @@ my %columns = (
     NAME => 'OBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2', 'task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2300,7 +2303,7 @@ my %columns = (
     NAME => 'SUBJECT_CLUSTER_MEMBERSHIP_CONFIDENCE',
     DESCRIPTION => "System confidence in entry, taken from submission",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
@@ -2325,6 +2328,18 @@ my %columns = (
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     VALIDATE => 'SUBJECT_TYPE',
+  },
+
+  SUBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE => {
+    NAME => 'SUBJECT_INFORMATIVE_JUSTIFICATION_CONFIDENCE',
+    DESCRIPTION => "System confidence in entry, taken from submission",
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
+    NORMALIZE => 'CONFIDENCE',
+    VALIDATE => 'CONFIDENCE',
   },
 
   SUBJECT_VALUE_PROVENANCE_TRIPLE => {
@@ -2390,6 +2405,8 @@ sub new {
     LOGGER => $logger,
   };
   bless($self, $class);
+  my $num_files = scalar @filenames;
+  my $i = 0;
   foreach my $filename(@filenames) {
     my $schema_name = &identify_file_schema($logger, $filename);
     my $schema = $schemas{$schema_name};
@@ -2397,6 +2414,8 @@ sub new {
       $logger->record_problem('UNKNOWN_RESPONSE_FILE_TYPE', $filename, 'NO_SOURCE');
       next;
     }
+    $i++;
+    print STDERR "--loading file ($i\/$num_files): $filename\n";
     $self->load($logger, $queries, $filename, $schema);
   }
   $self;
@@ -2517,6 +2536,8 @@ sub write_valid_output {
   my ($self, $output_dir) = @_;
   my $logger = $self->get("LOGGER");
   my %responses;
+  my %created;
+  print STDERR "--preparing output...\n";
   foreach my $response($self->get("RESPONSES")->toarray()) {
     next unless $response->get("VALID");
     my $response_file = $response->get("FILENAME");
@@ -2524,13 +2545,19 @@ sub write_valid_output {
     my $filename = pop(@elements);
     my $kb_filename = pop(@elements);
     my $input_dir = join("/", @elements);
-    my $output_file = "$output_dir/$kb_filename/$filename";
-    system("mkdir -p $output_dir/$kb_filename");
+    my $subdir = "$output_dir/$kb_filename";
+    my $output_file = "$subdir/$filename";
+    system("mkdir -p $subdir") unless $created{$subdir};
+    $created{$subdir} = 1;
     $responses{$output_file}{$response->get("LINENUM")} = $response;
   }
+  my $num_output_files = scalar keys %responses;
+  my $i = 0;
   foreach my $output_file(keys %responses) {
     $logger->NIST_die("$output_file already exists") if -e $output_file;
     my $header = 0;
+    $i++;
+    print STDERR "--writing output file ($i\/$num_output_files): $output_file\n";
     open(my $program_output, ">:utf8", $output_file) or $logger->NIST_die("Could not open $output_file: $!");
     foreach my $line_num(sort {$a<=>$b} keys %{$responses{$output_file}}) {
       my $response = $responses{$output_file}{$line_num};

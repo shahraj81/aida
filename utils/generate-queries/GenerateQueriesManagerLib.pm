@@ -3050,12 +3050,19 @@ sub generate_graph_queries {
 		# For task1, we need only distict edge labels for queryids
 		$argument_kbid = 0 if $task_long_name eq "task1";
 		next if ($task_long_name eq "task2" && !$argument_kbid);
+    # generate the fully-qualified reference kbid for task2
+		my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
+    if($argument_kbid =~ /^\S+?|\S+?$/) {
+      $query_reference_kbid = join("|", map {"$reference_kbid_prefix:$_"} split(/\|/, $argument_kbid));
+    }
+
 		my $role;
-		if($pt_entry->get("ONTOLOGY_ID") =~ /^LDC_ent_/) {
-			my $item_ke = $pt_entry->get("ITEM_KE");
+		my $item_ke = $pt_entry->get("ITEM_KE");
+		unless($item_ke eq "relation" || $item_ke eq "event") {
 			my $subject_spec;
 			if($item_ke =~ /^(evt|rel)\d/) {
-			  my $event_or_relation_kbid = $pt_entry->get("ENTRY")->get("Event/Relation KB ID");
+			  my $matrix_ke_item_num = $pt_entry->get("ENTRY")->get("Matrix KE Item Number");
+			  my $frame_id = join("_", ($topic_id, $prevailing_theory_id, $matrix_ke_item_num));
 			  my $spec_metatype = "EVENT";
 			  $spec_metatype = "RELATION" if $item_ke =~ /^rel\d/;
 				my ($event_or_relation_spec, $argument_spec);
@@ -3069,23 +3076,21 @@ sub generate_graph_queries {
 				my $argument_label = $argument_spec->get("LABEL");
 				foreach my $edge_label($self->get("EDGE_LABELS", $spec_metatype, $event_or_relation_type, $argument_label)) {
 				  my $query_key = $edge_label;
-				  $query_key = $edge_label . "-" . $argument_kbid if $task_long_name eq "task2";
+				  $query_key = $edge_label . "-" . $query_reference_kbid if $task_long_name eq "task2";
 				  if ($used_query_keys->exists($query_key)) {
 				    if($task_long_name eq "task2") {
-  				    my @matching_queries = grep {$_->get("PREDICATE") eq $query_key} $queries->get("QUERIES")->toarray();
-  				    foreach my $matching_query(@matching_queries) {
-  				      $matching_query->get("EVENT_OR_RELATION_KBIDS")->add("KEY", $event_or_relation_kbid);
-  				    }
+              my @matching_queries
+                = grep {$_->get("PREDICATE") eq $edge_label && $_->get("OBJECT") eq $query_reference_kbid} 
+                    $queries->get("QUERIES")->toarray();
+              foreach my $matching_query(@matching_queries) {
+                $matching_query->get("FRAMEIDS")->add("KEY", $frame_id);
+              }
 				    }
 				    next;
 				  }
 				  my $i = $self->get("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
 				  $i = $self->normalize_querynum($i);
 				  my $query_id = "$query_id_prefix\_$i";
-				  my $query_reference_kbid = $reference_kbid_prefix . ":" . $argument_kbid;
-          if($argument_kbid =~ /^\S+?|\S+?$/) {
-            $query_reference_kbid = join("|", map {"$reference_kbid_prefix:$_"} split(/\|/, $argument_kbid));
-          }
 				  my $sparql = $self->get($task_short_name . "_GRAPH_SPARQL_QUERY_TEMPLATE");
 				  $sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
 				  $sparql =~ s/\[__PREDICATE__\]/$edge_label/gs;
@@ -3106,7 +3111,7 @@ sub generate_graph_queries {
 							 1,
 							 $query_attributes);
 				  my $query = GraphQuery->new($logger, $xml_query);
-				  $query->get("EVENT_OR_RELATION_KBIDS")->add("KEY", $event_or_relation_kbid)
+				  $query->get("FRAMEIDS")->add("KEY", $frame_id)
 				    if($task_long_name eq "task2");
 				  $queries->add($query);
 				  $self->increment("NEXT_" . uc($task_long_name) . "_GRAPH_QUERY_NUM");
@@ -3401,7 +3406,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND (ldcOnt:[__PREDICATE__] AS ?edge_type_q)
               
                   # Get the object informativeJustification
-                  ?objectmo             a                             aida:Entity .
+                  # ?objectmo             a                             aida:Entity .
                   ?objectmo             aida:informativeJustification ?oinf_justification .
                   ?oinf_justification   aida:sourceDocument           ?docid .
                   ?oinf_justification   aida:source                   ?oinf_j_doceid .
@@ -3645,7 +3650,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
                   BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
-                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
 	]]>
 END_SPARQL_QUERY
@@ -4099,7 +4104,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
                   BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
-                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,","),?ej1_span)) AS ?ej_span)
+                  BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
 	]]>
 END_SPARQL_QUERY
@@ -4286,7 +4291,7 @@ sub new {
   my $self = {
     CLASS => 'GraphQuery',
     XML_OBJECT => $xml_object,
-    EVENT_OR_RELATION_KBIDS => Container->new($logger),
+    FRAMEIDS => Container->new($logger),
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -4302,7 +4307,9 @@ sub load {
 		if $self->get("XML_OBJECT")->get("NAME") ne $query_type;
 	$self->set("QUERYID", $query_id);
 	$self->set("QUERYTYPE", $query_type);
-	$self->set("PREDICATE", $self->get("XML_OBJECT")->get("CHILD", "predicate")->get("ELEMENT"));
+  $self->set("PREDICATE", $self->get("XML_OBJECT")->get("CHILD", "predicate")->get("ELEMENT"));
+  $self->set("SUBJECT", $self->get("XML_OBJECT")->get("CHILD", "subject")->get("ELEMENT"));
+  $self->set("OBJECT", $self->get("XML_OBJECT")->get("CHILD", "object")->get("ELEMENT"));
 	$self->set("SPARQL", $self->get("XML_OBJECT")->get("CHILD", "sparql")->get("ELEMENT"));
 }
 

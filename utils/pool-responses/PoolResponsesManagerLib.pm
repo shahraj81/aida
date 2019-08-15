@@ -37,12 +37,12 @@ sub get {
 
 sub get_BY_INDEX {
   my ($self) = @_;
-  die "Abstract method 'get_BY_INDEX' not defined in derived class '", $self->get("CLASS") ,"'\n";
+  die "Abstract method 'get_BY_INDEX' not defined in derived class '", $self->get("__CLASS__") ,"'\n";
 }
 
 sub get_BY_KEY {
   my ($self) = @_;
-  die "Abstract method 'get_BY_KEY' not defined in derived class '", $self->get("CLASS") ,"'\n";
+  die "Abstract method 'get_BY_KEY' not defined in derived class '", $self->get("__CLASS__") ,"'\n";
 }
 
 sub increment {
@@ -124,7 +124,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'SuperObject',
+    __CLASS__ => 'SuperObject',
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -159,6 +159,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   GROUND_TRUTH                            DEBUG_INFO     GROUND_TRUTH_INFO: %s     
   MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS    ERROR          Multiple incompatible assessments provided (node: %s, mention_span: %s)
+  EMPTY_FILE_TO_LOAD                      WARNING        Trying to load empty file %s
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
   ID_WITH_EXTENSION                       ERROR          File extension provided as part of %s %s
   ILLEGAL_CONFIDENCE_VALUE                ERROR          Illegal confidence value: %s
@@ -177,6 +178,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MISSING_KEYFRAMEID                      ERROR          Missing keyframeid in video provenance %s (expecting %s, provided %s)
   MULTIPLE_DOCUMENTS                      ERROR          Multiple documents used in response: %s, %s (expected exactly one)
   MULTIPLE_ENTRIES_IN_A_CLUSTER           ERROR          Multiple response entries in the cluster %s (expected no more than one)
+  MULTIPLE_INFORMATIVE_JUSTIFICATIONS_PER_DOCUMENT WARNING Multiple informative justification for run_and_query %s, cluster %s and document %s
   MULTIPLE_JUSTIFYING_DOCS                ERROR          Multiple justifying documents: %s (expected only one)
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   MULTIPLE_TASK_AND_TYPE_IN_QUERIES       FATAL_ERROR    Queries with mixed task and type found in query set, for e.g. %s and %s
@@ -428,8 +430,8 @@ sub new {
   my ($class, $logger, $element_class) = @_;
   $element_class = "RAW" unless $element_class;
   my $self = {
-    CLASS => 'Container',
-    ELEMENT_CLASS => $element_class,
+    __CLASS__ => 'Container',
+    __ELEMENT_CLASS__ => $element_class,
     STORE => {},
     LOGGER => $logger,
   };
@@ -451,9 +453,9 @@ sub get_BY_KEY {
   }
   unless($self->{STORE}{TABLE}{$key}) {
   # Create an instance if not exists
-    $self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("ELEMENT_CLASS"), $where)
-      if $self->get("ELEMENT_CLASS") eq "RAW";
-    my $element = $self->get("ELEMENT_CLASS")->new($self->get("LOGGER"));
+    $self->get("LOGGER")->record_problem("MISSING_RAW_KEY", $key, $self->get("__ELEMENT_CLASS__"), $where)
+      if $self->get("__ELEMENT_CLASS__") eq "RAW";
+    my $element = $self->get("__ELEMENT_CLASS__")->new($self->get("LOGGER"));
     $self->add($element, $key);
   }
   $self->{STORE}{TABLE}{$key};
@@ -521,14 +523,16 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = {
-    CLASS => 'FileHandler',
+    __CLASS__ => 'FileHandler',
     FILENAME => $filename,
     HEADER => undef,
     ENTRIES => Container->new($logger),
     LOGGER => $logger,
   };
   bless($self, $class);
-  $self->load($filename);
+  $self->get("LOGGER")->record_problem("EMPTY_FILE_TO_LOAD", $filename, {FILENAME => __FILE__, LINENUM => __LINE__})
+    if -z $filename;
+  $self->load($filename) unless -z $filename;
   $self;
 }
 
@@ -537,7 +541,7 @@ sub load {
 
   my $linenum = 0;
 
-  open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, $!);
+  open(FILE, "<:utf8", $filename) or $self->get("LOGGER")->record_problem('MISSING_FILE', $filename, {FILENAME => __FILE__, LINENUM => __LINE__});
   my $line = <FILE>; 
   $line =~ s/\r\n?//g;
   chomp $line;
@@ -599,7 +603,7 @@ sub new {
   my ($class, $logger, $line, $field_separator) = @_;
   $field_separator = "\t" unless $field_separator;
   my $self = {
-    CLASS => 'Header',
+    __CLASS__ => 'Header',
     ELEMENTS => [],
     FIELD_SEPARATOR => $field_separator,
     LINE => $line,
@@ -654,7 +658,7 @@ sub new {
   my ($class, $logger, $linenum, $line, $header, $where, $field_separator) = @_;
   $field_separator = "\t" unless $field_separator;
   my $self = {
-    CLASS => 'Entry',
+    __CLASS__ => 'Entry',
     LINENUM => $linenum,
     LINE => $line,
     HEADER => $header,
@@ -768,7 +772,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = {
-    CLASS => 'Parameters',
+    __CLASS__ => 'Parameters',
     FILENAME => $filename,
     LOGGER => $logger,
   };
@@ -835,7 +839,7 @@ sub new {
   my ($class, $logger, $filename) = @_;
   
   my $self = {
-    CLASS => 'DTD',
+    __CLASS__ => 'DTD',
     LOGGER => $logger,
     FILENAME => $filename,
     TREE => Tree->new($logger, $filename),
@@ -906,7 +910,7 @@ sub new {
   my ($class, $logger, $filename) = @_;
   
   my $self = {
-    CLASS => 'Tree',
+    __CLASS__ => 'Tree',
     LOGGER => $logger,
     FILENAME => $filename,
     ROOT => undef,
@@ -981,7 +985,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'Node');
-  $self->{CLASS} = 'Nodes';
+  $self->{__CLASS__} = 'Nodes';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -998,7 +1002,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $node_id) = @_;
   my $self = {
-    CLASS => 'Node',
+    __CLASS__ => 'Node',
     NODEID => $node_id,
     PARENTS => Nodes->new($logger),
     CHILDNUM_TYPES_MAPPING => {},
@@ -1107,7 +1111,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $dtd_filename, $xml_filename) = @_;
   my $self = {
-    CLASS => "XMLFileHandler",
+    __CLASS__ => "XMLFileHandler",
     DTD => DTD->new($logger, $dtd_filename),
     DTD_FILENAME => $dtd_filename,
     XML_FILENAME => $xml_filename,
@@ -1317,7 +1321,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'XMLAttributes',
+    __CLASS__ => 'XMLAttributes',
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -1341,7 +1345,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $element, $name, $newline, $attributes, $where) = @_;
   my $self = {
-    CLASS => 'XMLElement',
+    __CLASS__ => 'XMLElement',
     NAME => $name,
     NEWLINE => $newline,
     ATTRIBUTES => $attributes,
@@ -1403,7 +1407,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, @xml_elements) = @_;
   my $self = $class->SUPER::new($logger, 'XMLElement');
-  $self->{CLASS} = 'XMLContainer';
+  $self->{__CLASS__} = 'XMLContainer';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   foreach my $xml_element(@xml_elements) {
@@ -1638,7 +1642,11 @@ my %validators = (
       my $provenance = $entry->get($column_name);
       return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       return 1 if $optional && !$provenance;
-      unless($provenance =~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))$/) {
+      unless(split(":", $provenance) == 3) {
+        $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
+        return;
+      }
+      unless($provenance =~ /^.*?:.*?:\(\d+,\d+\)-\(\d+,\d+\)$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
         return;
       }
@@ -1725,11 +1733,11 @@ my %validators = (
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       my $provenances = $entry->get($column_name);
       return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenances eq "NULL");
-      if($provenances !~ /^(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\))(,(.*?):(.*?):(\((\d+?),(\d+?)\)-\((\d+?),(\d+?)\)))*?$/) {
+      if($provenances =~ /^;/ || $provenances =~ /;$/) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenances, $where);
         return;
       }
-      my $num_provenances = split(",", $provenances) / 3;
+      my $num_provenances = split(";", $provenances);
       unless($num_provenances == 1 or $num_provenances == 2) {
         $logger->record_problem("UNEXPECTED_NUM_SPANS", $provenances, "1 or 2", $num_provenances, $where);
         return;
@@ -2008,12 +2016,7 @@ my %columns = (
     GENERATOR => sub {
       my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
       my $triples = $entry->get("EDGE_PROVENANCE_TRIPLES");
-      my @triples = split(/\),/, $triples);
-      my $i = 0;
-      foreach my $triple(@triples) {
-        $i++;
-        $triple .= ")" if $triple !~ /\)$/;
-      }
+      my @triples = split(/;/, $triples);
       $entry->set("EDGE_PROVENANCE_TRIPLES_ARRAY", \@triples);
     },
     OPTIONAL => 1,
@@ -2373,13 +2376,14 @@ sub new {
   my ($class, $logger, $queries, $docid_mappings, $text_document_boundaries, 
     $images_boundingboxes, $keyframes_boundingboxes, $runs_dir, $runs_to_load, $queries_to_load, $cas_dir) = @_;
   my $self = {
-    CLASS => 'ResponseSet',
+    __CLASS__ => 'ResponseSet',
     QUERIES => $queries,
     DOCID_MAPPINGS => $docid_mappings,
     TEXT_BOUNDARIES => $text_document_boundaries,
     IMAGE_BOUNDARIES => $images_boundingboxes, 
     KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
     RESPONSES => Container->new($logger, "Response"),
+    CATEGORIZED_RESPONSES => Container->new($logger, "Container"),
     CLUSTER_TYPES => Container->new($logger),
     RUNS_DIR => $runs_dir,
     CAS_DIR => $cas_dir,
@@ -2389,6 +2393,7 @@ sub new {
   };
   bless($self, $class);
   foreach my $run_id($runs_to_load->toarray()) {
+    print STDERR "--loading run: $run_id\n";
     my $run_dir = "$runs_dir/$run_id";
     my $ca_dir = "$cas_dir/$run_id" if $cas_dir;
     $logger->NIST_die("$run_dir does not exist") unless -e $run_dir;
@@ -2504,6 +2509,14 @@ sub load_responses {
     }
     $entry->set("VALID", $valid);
     $self->get("RESPONSES")->add($entry, "$filename:$linenum");
+    my $code = $queries->get("TASK_AND_TYPE_CODE");
+    if($code eq "TA1_CL") {
+      my $query_id = $entry->get("QUERY_ID");
+      my $kb_documentid = $entry->get("KB_DOCUMENT_ID");
+      my $cluster_id = $entry->get("CLUSTER_ID");
+      my $response_category = join("::", ($runid, $query_id, $kb_documentid, $cluster_id));
+      $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $response_category)->add($entry, "$filename:$linenum");
+    }
   }
 }
 
@@ -2528,16 +2541,52 @@ sub load_aggregated_confidences_TA1_CL {
   foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
     my $cluster_id = $entry->get("?cluster");
     my $rank = $entry->get("?rank");
-    $self->add_cluster_rank_to_responses($logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $entry->get("WHERE"));
+    $self->add_cluster_rank_to_responses($logger, "TA1_CL", $cluster_id, $rank, $query_id, $kb_docid, $run_id, $entry->get("WHERE"));
+  }
+}
+
+sub load_aggregated_confidences_TA2_ZH {
+  my ($self, $logger, $queries, $ca_filename, $schema, $run_id) = @_;
+  my @elements = split(/\//, $ca_filename);
+  my $query_id = pop @elements;
+  $query_id =~ s/^(.*?\/)+//g;
+  $query_id =~ s/\.rq\.tsv//;
+  my $kb_docid = pop @elements;
+  $kb_docid =~ s/\.ttl$//;
+  my $run_id_from_filename = pop @elements;
+  foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
+    my $cluster_id = $entry->get("?cluster");
+    my $rank = $entry->get("?rank");
+    $self->add_cluster_rank_to_responses($logger, "TA2_ZH", $cluster_id, $rank, $query_id, undef, $run_id, $entry->get("WHERE"));
   }
 }
 
 sub add_cluster_rank_to_responses {
+  my ($self, $logger, $code, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where) = @_;
+  my $method = $self->can("add_cluster_rank_to_responses_$code");
+  $logger->NIST_die("ResponseSet->add_cluster_rank_to_responses_$code() not found")
+    unless $method;
+  $method->($self, $logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where);
+}
+
+sub add_cluster_rank_to_responses_TA1_CL {
   my ($self, $logger, $cluster_id, $rank, $query_id, $kb_docid, $run_id, $where) = @_;
+  my $response_category = join("::", ($run_id, $query_id, $kb_docid, $cluster_id));
+  my @responses = $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $response_category)->toarray();
+  $logger->NIST_die("No matching response available to add cluster rank")
+    unless @responses;
+  foreach my $response(@responses) {
+    $logger->NIST_die("Rank already exists for cluster in response: " . $response->get("LINE"))
+      if $response->get("CLUSTER_RANK");
+    $response->set("CLUSTER_RANK", $rank);
+  }
+}
+
+sub add_cluster_rank_to_responses_TA2_ZH {
+  my ($self, $logger, $cluster_id, $rank, $query_id, $undef0, $run_id, $where) = @_;
   my @responses = grep {$_->get("CLUSTER_ID") eq $cluster_id &&
-                                 $_->get("DOCUMENT_ID") eq $kb_docid &&
                                  $_->get("QUERY_ID") eq $query_id &&
-                                 $_->get("RUN_ID") eq $run_id} 
+                                 $_->get("RUN_ID") eq $run_id}
                   $self->get("RESPONSES")->toarray();
   $logger->NIST_die("No matching response available to add cluster rank")
     unless @responses;
@@ -2563,6 +2612,15 @@ sub generate_slot {
   if (defined $generator) {
     &{$generator}($self, $logger, $where, $queries, $schema, $entry);
   }
+}
+
+sub get_AG_CV {
+  my ($self, $response, @ac_fields) = @_;
+  my $ag_cv = 1.0;
+  foreach my $ac_field(@ac_fields) {
+    $ag_cv *= $response->get($ac_field);
+  }
+  $ag_cv;
 }
 
 sub column_required {
@@ -2620,7 +2678,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $task_and_type_code, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'Kit');
-  $self->{CLASS} = 'Pool';
+  $self->{__CLASS__} = 'Pool';
   $self->{TASK_AND_TYPE_CODE} = $task_and_type_code;
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
@@ -2632,22 +2690,70 @@ sub new {
 sub load {
   my ($self, $task_and_type_code, @arguments) = @_;
   my $method = $self->can("load_$task_and_type_code");
-  $self->NIST_die($self->{CLASS}."->load_$task_and_type_code() not found") unless $method;
+  $self->get("LOGGER")->NIST_die($self->{__CLASS__}."->load_$task_and_type_code() not found") unless $method;
   $method->($self, @arguments);
+}
+
+sub load_TA2_ZH {
+  my ($self, $filename) = @_;
+  my $logger = $self->get("LOGGER");
+  my $filehandler = FileHandler->new($logger, $filename);
+  my $header = $filehandler->get("HEADER");
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry($entries->toarray()) {
+    my $query_id = $entry->get("KBID");
+    my $kbid_kit = $self->get("BY_KEY", $query_id);
+
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+  }
 }
 
 sub load_TA1_CL {
   my ($self, $filename) = @_;
   my $logger = $self->get("LOGGER");
   my $filehandler = FileHandler->new($logger, $filename);
+  my $header = $filehandler->get("HEADER");
   my $entries = $filehandler->get("ENTRIES");
   foreach my $entry($entries->toarray()) {
     my $query_id = $entry->get("QUERY_ID");
     my $kbid_kit = $self->get("BY_KEY", $query_id);
-    my $value = $entry->get("LINE");
-    my $key = &main::generate_uuid_from_string($value);
-    $kbid_kit->add($value, $key) unless $self->exists($key);
+
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+    
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
   }
+}
+
+sub load_TA1_GR {
+  my ($self, $filename) = @_;
+  my $logger = $self->get("LOGGER");
+  my $filehandler = FileHandler->new($logger, $filename);
+  my $header = $filehandler->get("HEADER");
+  my $entries = $filehandler->get("ENTRIES");
+  foreach my $entry($entries->toarray()) {
+    my $kit_id = $entry->get("KIT_ID");
+    my $kit = $self->get("BY_KEY", $kit_id);
+
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+    
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    $kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+  }
+}
+
+sub load_TA2_GR {
+  my ($self, $filename) = @_;
+  $self->load_TA1_GR($filename);
 }
 
 #####################################################################################
@@ -2661,7 +2767,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'KitEntry');
-  $self->{CLASS} = 'Pool';
+  $self->{__CLASS__} = 'Pool';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -2678,7 +2784,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'KitEntry',
+    __CLASS__ => 'KitEntry',
     TYPE => undef,
     LOGGER => $logger,
   };
@@ -2704,7 +2810,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
-    CLASS => 'ResponsesPool',
+    __CLASS__ => 'ResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
     DOCID_MAPPINGS => $docid_mappings,
@@ -2763,7 +2869,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
-    CLASS => 'TA1ClassResponsesPool',
+    __CLASS__ => 'TA1ClassResponsesPool',
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
     DOCID_MAPPINGS => $docid_mappings,
@@ -2816,9 +2922,10 @@ sub load {
 sub generate_pool {
   my ($self, $responses) = @_;
   my $logger = $self->get("LOGGER");
+  my $coredocs = $self->get("COREDOCS");
   my $pool = Pool->new($logger, "TA1_CL");
   my $previous_pool = $self->get("PREVIOUS_POOL");
-  my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+  my $header_line = join("\t", qw(QUERY_ID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE FQEC));
   my $header = Header->new($logger, $header_line);
   my $concat_key = ":";
   
@@ -2827,6 +2934,7 @@ sub generate_pool {
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my $query_id = $response->get("QUERY_ID");
     my $doc_id = $response->get("DOCUMENT_ID");
+    next unless $coredocs->exists($doc_id);
     my $cluster_id = $response->get("CLUSTER_ID");
     my $run_id = $response->get("RUN_ID");
     my $cluster_rank = $response->get("CLUSTER_RANK");
@@ -2851,6 +2959,7 @@ sub generate_pool {
     my $query_id = $response->get("QUERY_ID");
     my $enttype_in_query = $response->get("QUERY")->get("ENTTYPE");
     my $doc_id = $response->get("DOCUMENT_ID");
+    next unless $coredocs->exists($doc_id);
     my $cluster_id = $response->get("CLUSTER_ID");
     my $run_id = $response->get("RUN_ID");
     my $run_and_query_and_document = join($concat_key, ($run_id, $query_id, $doc_id));
@@ -2860,15 +2969,18 @@ sub generate_pool {
       $logger->record_debug_information("SKIPPING_CLUSTER_NOT_SELECTED", $response->get("LINE"), $response->get("WHERE"));
       next;
     }
-    # skip if we already inclided the response for this cluster in the pool
+    # skip if we already included the response for this cluster in the pool
     if ($clusters{$run_and_query_and_document}{INCLUDED}{$cluster_id}) {
       $logger->record_debug_information("SKIPPING_RESPONSE_CLUSTER_INCLUDED", $response->get("LINE"), $response->get("WHERE"));
       next;
     }
     my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
     my (undef, $doceid, $span) = split(":", $fq_mention_span);
-    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
     my $mention_span = "$doceid:$span";
+    if($fq_mention_span =~ /^(.*?):(.*?)\_/) {
+      $doceid = $2;
+    }
+    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
     my $kit_entry = KitEntry->new($logger);
     $kit_entry->set("HEADER", $header);
     $kit_entry->set("QUERY_ID", $query_id);
@@ -2879,6 +2991,7 @@ sub generate_pool {
     $kit_entry->set("SPAN", $mention_span);
     $kit_entry->set("CORRECTNESS", "NIL");
     $kit_entry->set("TYPE", "NIL");
+    $kit_entry->set("FQEC", "NIL");
     my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
     my $exists = 0;
     if($previous_pool->exists($query_id)) {
@@ -2919,34 +3032,37 @@ sub tostring {
   foreach my $kit_key(sort {$a cmp $b} $self->get("DELTA_POOL")->get("ALL_KEYS")) {
     my $kit = $self->get("DELTA_POOL")->get("BY_KEY", $kit_key);
     foreach my $kit_entry(sort custom $kit->toarray()) {
-      push(@lines, $kit_entry->tostring("CLASS"));
+      push(@lines, $kit_entry->tostring());
     }
   }
   join("\n", @lines);
 }
 
 #####################################################################################
-# ZeroHopResponsesPool
+# TA2ZeroHopResponsesPool
 #####################################################################################
 
-package ZeroHopResponsesPool;
+package TA2ZeroHopResponsesPool;
 
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $k, $core_docs, $docid_mappings, $queries, $ldc_queries, $responses_dtd_file, $responses_xml_pathfile, $entire_pool) = @_;
+  my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
-    CLASS => 'ZeroHopResponsesPool',
-    CORE_DOCS => $core_docs,
+    __CLASS__ => 'TA2ZeroHopResponsesPool',
+    AG_CV_FIELDS => qw(?link_cv),
+    CONFIDENCE_AGGREGATION_DIR => $cas_dir,
+    COREDOCS => $coredocs,
     DOCID_MAPPINGS => $docid_mappings,
-    ENTIRE_POOL => $entire_pool,
-    K => $k,
-    LDC_QUERIES => $ldc_queries,
+    IMAGE_BOUNDARIES => $images_boundingboxes,
+    KEYFRAME_BOUNDARIES => $keyframes_boundingboxes,
+    PREVIOUS_POOL => $previous_pool,
     QUERIES => $queries,
-    QUERYTYPE => $queries->get("QUERYTYPE"),
-    RESPONSES_DTD_FILENAME => $responses_dtd_file,
-    RESPONSES_XML_PATHFILE => $responses_xml_pathfile,
-    RESPONSES_POOL => undef,
+    QUERIES_TO_LOAD => $queries_to_load,
+    RUNS_TO_LOAD => $runs_to_load,
+    RUNS_DIR => $runs_dir,
+    TEXT_BOUNDARIES => $text_document_boundaries,
+    DELTA_POOL => undef,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -2956,87 +3072,176 @@ sub new {
 
 sub load {
   my ($self) = @_;
-  my $logger = $self->get("LOGGER");
-  my $core_docs = $self->get("CORE_DOCS");
+  my $cas_dir = $self->get("CONFIDENCE_AGGREGATION_DIR");
+  my $coredocs = $self->get("COREDOCS");
   my $docid_mappings = $self->get("DOCID_MAPPINGS");
-  my $k = $self->get("K");
+  my $images_boundingboxes = $self->get("IMAGE_BOUNDARIES");
+  my $keyframes_boundingboxes = $self->get("KEYFRAME_BOUNDARIES");
   my $queries = $self->get("QUERIES");
-  my $ldc_queries = $self->get("LDC_QUERIES");
-  my $responses_dtd_file = $self->get("RESPONSES_DTD_FILENAME");
-  my $responses_xml_pathfile = $self->get("RESPONSES_XML_PATHFILE");
-  my $query_type = $self->get("QUERYTYPE");
-  my $entire_pool = $self->get("ENTIRE_POOL");
-  $entire_pool = Pool->new($logger) if $entire_pool eq "nil";
-  
-  my $filehandler = FileHandler->new($logger, $responses_xml_pathfile);
-  my $entries = $filehandler->get("ENTRIES");
-  foreach my $entry($entries->toarray()) {
-    my $responses_xml_file = $entry->get("filename");
-    print STDERR "--processing $responses_xml_file\n";
-    my $validated_responses = ResponseSet->new($logger, $queries, $docid_mappings, $responses_dtd_file, $responses_xml_file);
-    foreach my $response($validated_responses->get("RESPONSES")->toarray()) {
-      my $query_id = $response->get("QUERYID");
-      my $kb_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE")
-        if $ldc_queries->get("QUERY", $query_id);
-      next unless $kb_id;
-      $kb_id =~ s/^\?//;
-      my $kbid_kit = $entire_pool->get("BY_KEY", $kb_id);
-      my $enttype = $queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("ENTTYPE");
-      # Making the enttype NIL as desired by LDC
-      $enttype = "NIL";
-      my $source_docid = $response->get("RESPONSE_DOCID_FROM_FILENAME");
-      my $scope = $response->get("SCOPE");
-      my %kit_entries_by_docids;
-      foreach my $justification(sort {$b->get("CONFIDENCE") <=> $a->get("CONFIDENCE")} $response->get("JUSTIFICATIONS")->toarray()) {
-        my $mention_span = $justification->tostring();
-        my $mention_modality = $justification->get("MODALITY");
-        my $confidence = $justification->get("CONFIDENCE");
-        my @docids = $justification->get("DOCIDS", $docid_mappings, $scope);
-        @docids = grep {$_ eq $source_docid} @docids if $source_docid;
-        foreach my $docid(@docids) {
-          next unless $core_docs->exists($docid);
-          my $kit_entry = KitEntry->new($logger);
-          $kit_entry->set("TYPE", $query_type);
-          $kit_entry->set("KB_ID", $kb_id);
-          $kit_entry->set("ENTTYPE", $enttype);
-          $kit_entry->set("ID", "<ID>");
-          $kit_entry->set("MENTION_MODALITY", $mention_modality);
-          $kit_entry->set("DOCID", $docid);
-          $kit_entry->set("MENTION_SPAN", $mention_span);
-          $kit_entry->set("LABEL_1", "NIL");
-          $kit_entry->set("LABEL_2", "NIL");
-          $kit_entry->set("CONFIDENCE", $confidence);
-          my $key = &main::generate_uuid_from_string($kit_entry->tostring());
-          $kit_entries_by_docids{"$docid-$mention_modality"}{$key} = $kit_entry;
-        }
-      }
-      foreach my $docid_modality (keys %kit_entries_by_docids) {
-        my $i = 0;
-        foreach my $key(sort {$kit_entries_by_docids{$docid_modality}{$b}->get("CONFIDENCE") <=> $kit_entries_by_docids{$docid_modality}{$a}->get("CONFIDENCE")} 
-                    keys %{$kit_entries_by_docids{$docid_modality}}) {
-          $i++;
-          last if $i > $k;
-          my $kit_entry = $kit_entries_by_docids{$docid_modality}{$key};
-          my $value = $kit_entry->tostring();
-          $kbid_kit->add($value, $key) unless $kbid_kit->exists($key);
-        }
-      }
-    }
-  }
-  $self->set("RESPONSES_POOL", $entire_pool);
+  my $queries_to_load = $self->get("QUERIES_TO_LOAD");
+  my $queries_task_and_type = $queries->get("TASK_AND_TYPE_CODE");
+  my $runs_to_load = $self->get("RUNS_TO_LOAD");
+  my $runs_dir = $self->get("RUNS_DIR");
+  my $text_document_boundaries = $self->get("TEXT_BOUNDARIES");
+  my $logger = $self->get("LOGGER");
+  my $responses_pool;
+
+  my $responses = ResponseSet->new($logger,
+                      $queries,
+                      $docid_mappings,
+                      $text_document_boundaries,
+                      $images_boundingboxes,
+                      $keyframes_boundingboxes,
+                      $runs_dir,
+                      $runs_to_load,
+                      $queries_to_load,
+                      $cas_dir);
+
+  $self->generate_pool($responses);
 }
 
-sub write_output {
-  my ($self, $program_output) = @_;
-  my $pool = $self->get("RESPONSES_POOL");
-  my $header = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
-  print "$header\n";
-  foreach my $kb_id($pool->get("ALL_KEYS")) {
-    my $kit = $pool->get("BY_KEY", $kb_id);
-    foreach my $output_line($kit->toarray()) {
-      print $program_output "$output_line\n";
+sub generate_pool {
+  my ($self, $responses) = @_;
+  my $logger = $self->get("LOGGER");
+  my $coredocs = $self->get("COREDOCS");
+  my $pool = Pool->new($logger, "TA2_ZH");
+  my $previous_pool = $self->get("PREVIOUS_POOL");
+  my $header_line = join("\t", qw(KBID CLASS ID MODALITY DOCID SPAN CORRECTNESS TYPE));
+  my $header = Header->new($logger, $header_line);
+  my $concat_key = ":";
+  
+  # select the clusters to be pooled
+  my %clusters;
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my $query_id = $response->get("QUERY_ID");
+    my $doc_id = $response->get("DOCUMENT_ID");
+    my $cluster_id = $response->get("CLUSTER_ID");
+    my $run_id = $response->get("RUN_ID");
+    my $cluster_rank = $response->get("CLUSTER_RANK");
+    my $run_and_query = join($concat_key, ($run_id, $query_id));
+    $clusters{$run_and_query}{RANKED}{$cluster_id} = $cluster_rank;
+  }
+  foreach my $run_and_query (keys %clusters) {
+    my (undef, $query_id) = split($concat_key, $run_and_query);
+    my $max_num_of_clusters = $self->get("QUERIES_TO_LOAD")->get("BY_KEY", $query_id)->get("max_num_clusters");
+    foreach my $cluster_id(sort {$clusters{$run_and_query}{RANKED}{$a}<=>$clusters{$run_and_query}{RANKED}{$b}}
+                            keys %{$clusters{$run_and_query}{RANKED}}) {
+      $clusters{$run_and_query}{SELECTED}{$cluster_id} = 1
+        if scalar keys %{$clusters{$run_and_query}{SELECTED}} < $max_num_of_clusters;
     }
   }
+  # Select the top k informative mentions for selected clusters
+  my @selected_responses;
+  foreach my $run_and_query (keys %clusters) {
+    my ($run_id, $query_id) = split($concat_key, $run_and_query);
+    # iterate over selected clusters only
+    foreach my $cluster_id(keys %{$clusters{$run_and_query}{SELECTED}}) {
+      # selected responses that belong to a soecific run, query and cluster
+      my @all_responses = grep {$_->get("RUN_ID") eq $run_id &&
+                              $_->get("QUERY_ID") eq $query_id &&
+                              $_->get("CLUSTER_ID") eq $cluster_id}
+                      $responses->get("RESPONSES")->toarray();
+      my %responses_per_document;
+      foreach my $response(@all_responses) {
+        if(exists $responses_per_document{$response->get("DOCUMENT_ID")}) {
+          $logger->record_problem("MULTIPLE_INFORMATIVE_JUSTIFICATIONS_PER_DOCUMENT", $run_and_query, $cluster_id, $response->get("DOCUMENT_ID"), $response->get("WHERE"));
+          $responses_per_document{$response->get("DOCUMENT_ID")} = $response
+            if($response->get("JUSTIFICATION_CONFIDENCE") > $responses_per_document{$response->get("DOCUMENT_ID")}->get("JUSTIFICATION_CONFIDENCE"));
+        }
+        else {
+          $responses_per_document{$response->get("DOCUMENT_ID")} = $response;
+        }
+      }
+      my @responses = map {$responses_per_document{$_}} keys %responses_per_document;
+      my $max_num_informative_mentions = $self->get("QUERIES_TO_LOAD")->get("BY_KEY", $query_id)->get("max_num_informative_mentions");
+      my $i = 0;
+      foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
+                                  || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
+                            @responses) {
+        last if $i == $max_num_informative_mentions;
+        next unless $coredocs->exists($response->get("DOCUMENT_ID"));
+        push(@selected_responses, $response);
+        $i++;
+      }
+    }
+  }
+
+  # build pool from selected informative mentions
+  my %included;
+  $pool->set("HEADER", $header);
+  foreach my $response(@selected_responses) {
+    my $query_id = $response->get("QUERY_ID");
+    my $refkbid_in_query = $response->get("QUERY")->get("REFERENCE_KBID");
+    my $doc_id = $response->get("DOCUMENT_ID");
+    my $cluster_id = $response->get("CLUSTER_ID");
+    my $run_id = $response->get("RUN_ID");
+    my $run_and_query = join($concat_key, ($run_id, $query_id));
+    # skip this response if the cluster it contains is not one of those
+    # selected to be included in the pool
+    unless ($clusters{$run_and_query}{SELECTED}{$cluster_id}) {
+      $logger->record_debug_information("SKIPPING_CLUSTER_NOT_SELECTED", $response->get("LINE"), $response->get("WHERE"));
+      next;
+    }
+    my $fq_mention_span = $response->get("VALUE_PROVENANCE_TRIPLE");
+    my (undef, $doceid, $span) = split(":", $fq_mention_span);
+    my $mention_span = "$doceid:$span";
+    if($fq_mention_span =~ /^(.*?):(.*?)\_/) {
+        $doceid = $2;
+    }
+    my $doce_modality = $self->get("DOCID_MAPPINGS")->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("MODALITY");
+    my $kit_entry = KitEntry->new($logger);
+    $kit_entry->set("HEADER", $header);
+    $kit_entry->set("KBID", $refkbid_in_query);
+    $kit_entry->set("CLASS", "NIL");
+    $kit_entry->set("ID", "<ID>");
+    $kit_entry->set("MODALITY", $doce_modality);
+    $kit_entry->set("DOCID", $doc_id);
+    $kit_entry->set("SPAN", $mention_span);
+    $kit_entry->set("CORRECTNESS", "NIL");
+    $kit_entry->set("TYPE", "NIL");
+    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+    my $exists = 0;
+    if($previous_pool->exists($refkbid_in_query)) {
+      my $pkit = $previous_pool->get("BY_KEY", $refkbid_in_query);
+      $exists = 1 if $pkit->exists($uuid);
+    }
+    unless($exists) {
+      my $kit = $pool->get("BY_KEY", $query_id);
+      $exists = 1 if $kit->exists($uuid);
+      $kit->add($kit_entry, $uuid) unless $exists;
+    }
+  }
+  $self->set("DELTA_POOL", $pool);
+}
+
+sub custom {
+  my $a_DOCID = $a->get("DOCID");
+  my $a_SPAN = $a->get("SPAN");
+  my $b_DOCID = $b->get("DOCID");
+  my $b_SPAN = $b->get("SPAN");
+  my ($a_DOCEID, $a_SX, $a_SY, $a_EX, $a_EY) = $a_SPAN =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+  my ($b_DOCEID, $b_SX, $b_SY, $b_EX, $b_EY) = $b_SPAN =~ /^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$/;
+
+  ($a_DOCID cmp $b_DOCID ||
+  $a_DOCEID cmp $b_DOCEID ||
+  $a_SX <=> $b_SX ||
+  $a_SY <=> $b_SY ||
+  $a_EX <=> $b_EX ||
+  $a_EY <=> $b_EY);
+}
+
+sub tostring {
+  my ($self) = @_;
+  my @lines;
+  my $pool_header = $self->get("DELTA_POOL")->get("HEADER")->get("LINE");
+  push(@lines, $pool_header);
+  foreach my $kit_key(sort {$a cmp $b} $self->get("DELTA_POOL")->get("ALL_KEYS")) {
+    my $kit = $self->get("DELTA_POOL")->get("BY_KEY", $kit_key);
+    foreach my $kit_entry(sort custom $kit->toarray()) {
+      push(@lines, $kit_entry->tostring());
+    }
+  }
+  join("\n", @lines);
 }
 
 #####################################################################################
@@ -3050,7 +3255,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'PrevailingTheoryEntry',
+    __CLASS__ => 'PrevailingTheoryEntry',
     ENTRY => $entry,
     MATRIX_KE_ITEM_NUM => $entry->get("Matrix KE Item Number"),
     ONTOLOGY_ID => $entry->get("Ontology ID"),
@@ -3076,7 +3281,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry, $argnum) = @_;
   my $self = {
-    CLASS => 'ArgumentSpec',
+    __CLASS__ => 'ArgumentSpec',
     ENTRY => $entry,
     ARGUMENT_NUM => $argnum,
     LABEL => $entry->get("arg" . $argnum . " " . "label"),
@@ -3098,7 +3303,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'EntitySpec',
+    __CLASS__ => 'EntitySpec',
     ENTRY => $entry,
     ANNOTATION_ID => $entry->get("AnnotIndexID"),
     TYPE => $entry->get("Type"),
@@ -3124,7 +3329,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'EventSpec',
+    __CLASS__ => 'EventSpec',
     ENTRY => $entry,
     ARGUMENTS => Container->new($logger),
     ANNOTATION_ID => $entry->get("AnnotIndexID"),
@@ -3166,7 +3371,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $entry) = @_;
   my $self = {
-    CLASS => 'RelationSpec',
+    __CLASS__ => 'RelationSpec',
     ENTRY => $entry,
     ARGUMENTS => Container->new($logger),
     ANNOTATION_ID => $entry->get("AnnotIndexID"),
@@ -3208,7 +3413,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, "Container");
-  $self->{CLASS} = 'PrevailingTheoryContainer';
+  $self->{__CLASS__} = 'PrevailingTheoryContainer';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -3225,7 +3430,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger);
-  $self->{CLASS} = 'OntologyContainer';
+  $self->{__CLASS__} = 'OntologyContainer';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -3267,7 +3472,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $parameters) = @_;
   my $self = {
-    CLASS => 'QueryGenerator',
+    __CLASS__ => 'QueryGenerator',
     TA1_CLASS_QUERIES => undef,
     TA1_GRAPH_QUERIES => undef,
     TA2_ZEROHOP_QUERIES => undef,
@@ -4408,7 +4613,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $dtd_filename, $xml_filename) = @_;
   my $self = {
-    CLASS => 'QuerySet',
+    __CLASS__ => 'QuerySet',
     DTD_FILENAME => $dtd_filename,
     XML_FILENAME => $xml_filename,
     QUERIES => Container->new($logger, "Query"),
@@ -4507,7 +4712,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
-    CLASS => 'ClassQuery',
+    __CLASS__ => 'ClassQuery',
     QUERYID => undef,
     QUERYTYPE => undef,
     ENTTYPE => undef,
@@ -4548,7 +4753,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
-    CLASS => 'ZeroHopQuery',
+    __CLASS__ => 'ZeroHopQuery',
     XML_OBJECT => $xml_object,
     LOGGER => $logger,
   };
@@ -4585,7 +4790,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $xml_object) = @_;
   my $self = {
-    CLASS => 'GraphQuery',
+    __CLASS__ => 'GraphQuery',
     XML_OBJECT => $xml_object,
     LOGGER => $logger,
   };
@@ -4623,7 +4828,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $edge_num, $subject_id, $predicate, $object_id, $where) = @_;
   my $self = {
-    CLASS => 'Edge',
+    __CLASS__ => 'Edge',
     EDGENUM => $edge_num,
     SUBJECT => $subject_id,
     PREDICATE => $predicate,
@@ -4647,7 +4852,7 @@ sub new {
   my ($class, $logger, $justification_type, $doceid, $keyframeid, $start, $end, 
       $enttype, $confidence, $xml_object, $where) = @_;
   my $self = {
-    CLASS => 'Justification',
+    __CLASS__ => 'Justification',
     TYPE => $justification_type,
     DOCEID => $doceid,
     KEYFRAMEID => $keyframeid,
@@ -4772,7 +4977,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $name_string) = @_;
   my $self = {
-    CLASS => 'StringDescriptor',
+    __CLASS__ => 'StringDescriptor',
     TYPE => "STRING_DESCRIPTOR",
     NAMESTRING => $name_string,
     LOGGER => $logger,
@@ -4797,7 +5002,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $type, $doceid, $keyframeid, $start, $end) = @_;
   my $self = {
-    CLASS => 'NonStringDescriptor',
+    __CLASS__ => 'NonStringDescriptor',
     TYPE => $type,
     DOCEID => $doceid,
     KEYFRAMEID => $keyframeid,
@@ -4833,7 +5038,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $filename, $coredocs) = @_;
   my $self = {
-    CLASS => "DocumentIDsMappings",
+    __CLASS__ => "DocumentIDsMappings",
     FILENAME => $filename,
     DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTS => DocumentElements->new($logger),
@@ -4895,7 +5100,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'Document');
-  $self->{CLASS} = 'Documents';
+  $self->{__CLASS__} = 'Documents';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -4913,7 +5118,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = $class->SUPER::new($logger, 'DocumentElement');
-  $self->{CLASS} = 'DocumentElements';
+  $self->{__CLASS__} = 'DocumentElements';
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self;
@@ -4930,7 +5135,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $document_id) = @_;
   my $self = {
-    CLASS => 'Document',
+    __CLASS__ => 'Document',
     DOCUMENTID => $document_id,
     DOCUMENTELEMENTS => DocumentElements->new($logger),
     LOGGER => $logger,
@@ -4955,7 +5160,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'DocumentElement',
+    __CLASS__ => 'DocumentElement',
     DOCUMENTS => Documents->new($logger),
     DOCUMENTELEMENTID => undef,
     TYPE => undef,
@@ -4986,7 +5191,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = {
-    CLASS => 'CoreDocs',
+    __CLASS__ => 'CoreDocs',
     FILENAME => $filename,
     LOGGER => $logger,
   };
@@ -5018,7 +5223,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename, $query_type) = @_;
   my $self = {
-    CLASS => 'QREL',
+    __CLASS__ => 'QREL',
     FILENAME => $filename,
     QUERY_TYPE => $query_type,
     LOGGER => $logger,
@@ -5067,7 +5272,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $runid, $docid_mappings, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
   my $self = {
-    CLASS => 'ScoresManager',
+    __CLASS__ => 'ScoresManager',
     DOCID_MAPPINGS => $docid_mappings,
     LDC_QUERIES => $ldc_queries,
     RESPONSES => $responses,
@@ -5109,7 +5314,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
   my $self = {
-    CLASS => 'ZeroHopScores',
+    __CLASS__ => 'ZeroHopScores',
     DOCID_MAPPINGS => $docid_mappings,
     LDC_QUERIES => $ldc_queries,
     RESPONSES => $responses,
@@ -5266,7 +5471,7 @@ my @fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{CLASS} = 'ScoresPrinter';
+  $self->{__CLASS__} = 'ScoresPrinter';
   $self->{PROGRAM_OUTPUT} = $program_output;
   $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @fields_to_print};
   $self->{LOGGER} = $logger;
@@ -5355,7 +5560,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
   my $self = {
-    CLASS => 'Scores',
+    __CLASS__ => 'Scores',
     EC => $query_id,
     MODALITY => $modality,
     NODEID => $node_id,
@@ -5427,7 +5632,7 @@ END_ENCODING_MODALITY_MAPPING
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'EncodingFormatToModalityMappings',
+    __CLASS__ => 'EncodingFormatToModalityMappings',
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -5466,7 +5671,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'ImageBoundingBox');
-  $self->{CLASS} = 'ImagesBoundingBoxes';
+  $self->{__CLASS__} = 'ImagesBoundingBoxes';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5500,7 +5705,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $doceid, $type, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
   my $self = {
-    CLASS => 'ImageBoundingBox',
+    __CLASS__ => 'ImageBoundingBox',
     DOCEID => $doceid,
     TYPE => $type,
     TOP_LEFT_X => $top_left_x,
@@ -5553,7 +5758,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'KeyFrameBoundingBox');
-  $self->{CLASS} = 'KeyFramesBoundingBoxes';
+  $self->{__CLASS__} = 'KeyFramesBoundingBoxes';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5593,7 +5798,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $keyframeid, $top_left_x, $top_left_y, $bottom_right_x, $bottom_right_y) = @_;
   my $self = {
-    CLASS => 'KeyFrameBoundingBox',
+    __CLASS__ => 'KeyFrameBoundingBox',
     KEYFRAMEID => $keyframeid,
     TOP_LEFT_X => $top_left_x,
     TOP_LEFT_Y => $top_left_y,
@@ -5651,7 +5856,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'TextDocumentBoundary');
-  $self->{CLASS} = 'TextDocumentBoundaries';
+  $self->{__CLASS__} = 'TextDocumentBoundaries';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5707,7 +5912,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger, $start_char, $end_char) = @_;
   my $self = {
-    CLASS => 'TextDocumentBoundary',
+    __CLASS__ => 'TextDocumentBoundary',
     START_CHAR => $start_char,
     END_CHAR => $end_char,
     LOGGER => $logger,
@@ -5758,7 +5963,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'Segments');
-  $self->{CLASS} = 'SentenceBoundaries';
+  $self->{__CLASS__} = 'SentenceBoundaries';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5806,7 +6011,7 @@ use parent -norequire, 'Container', 'Super';
 sub new {
   my ($class, $logger, $filename) = @_;
   my $self = $class->SUPER::new($logger, 'SentenceBoundary');
-  $self->{CLASS} = 'Segments';
+  $self->{__CLASS__} = 'Segments';
   $self->{FILENAME} = $filename;
   $self->{LOGGER} = $logger;
   bless($self, $class);
@@ -5824,7 +6029,7 @@ use parent -norequire, 'Super';
 sub new {
   my ($class, $logger) = @_;
   my $self = {
-    CLASS => 'SentenceBoundary',
+    __CLASS__ => 'SentenceBoundary',
     LOGGER => $logger,
   };
   bless($self, $class);
