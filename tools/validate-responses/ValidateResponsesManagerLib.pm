@@ -197,6 +197,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   UNEXPECTED_EDGETYPE                     ERROR          Unexpected edge %s in response (expected %s)
   UNEXPECTED_ENTTYPE                      ERROR          Unexpected enttype %s in response (expected %s)
   UNEXPECTED_EVENTTYPE                    ERROR          Unexpected event type %s in response (expected %s)
+  UNEXPECTED_HYPOTHESIS_ID                WARNING        Unexpected hypothesis KB ID %s (expected name of the form 'TA1.TA2.TA3.SIN.FRAME.HYPOTHESIS')
   UNEXPECTED_LINK_TARGET                  ERROR          Unexpected link target %s in response (expected %s)
   UNEXPECTED_NUM_SPANS                    ERROR          Unexpected number of spans in provenance %s (expected %s, provided %s)
   UNEXPECTED_OUTPUT_TYPE                  FATAL_ERROR    Unknown output type %s
@@ -1478,6 +1479,24 @@ my %validators = (
       1;
     },
   },
+
+  # Check if for TA1 system all responses come from the same (parent) document
+  'FQ_HYPOTHESIS_ID' => {
+    NAME => 'FQ_HYPOTHESIS_ID',
+    VALIDATE => sub {
+      my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
+      my $fq_hypothesisid = $entry->get($column_name);
+      my $task = $schema->{TASK};
+      if($task eq "task3") {
+        unless (scalar split(/\./, $fq_hypothesisid) == 6) {
+          $logger->record_problem("UNEXPECTED_HYPOTHESIS_ID", $fq_hypothesisid, $where);
+          return;
+        }
+      }
+      1;
+    },
+  },
+  
   # Check if importance value is valid
   'IMPORTANCE' => {
     NAME => 'IMPORTANCE',
@@ -1618,11 +1637,13 @@ my %validators = (
     VALIDATE => sub {
       my ($responses, $logger, $where, $queries, $schema, $column, $entry, $column_name) = @_;
       if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH") {
+        my $hypothesis_id = $entry->get("FQ_HYPOTHESIS_ID");
         my $subject_type = $entry->get($column_name);
         my $subject_cluster_id = $entry->get("SUBJECT_CLUSTER_ID");
-        $responses->get("CLUSTER_TYPES")->add($subject_type, $subject_cluster_id)
-          unless($responses->get("CLUSTER_TYPES")->exists($subject_cluster_id));
-        my $cluster_type = $responses->get("CLUSTER_TYPES")->get("BY_KEY", $subject_cluster_id);
+        my $hypothesis_and_subject = "$hypothesis_id-$subject_cluster_id";
+        $responses->get("CLUSTER_TYPES")->add($subject_type, $hypothesis_and_subject)
+          unless($responses->get("CLUSTER_TYPES")->exists($hypothesis_and_subject));
+        my $cluster_type = $responses->get("CLUSTER_TYPES")->get("BY_KEY", $hypothesis_and_subject);
         $logger->record_problem("UNEXPECTED_CLUSTER_MEMBER_TYPE", $cluster_type, $subject_type, $where)
           if $subject_type ne $cluster_type;
       }
@@ -2042,6 +2063,25 @@ my %columns = (
     FILE_TYPES => ['SUBMISSION'],
     DESCRIPTION => "The name of the file from which the description of the entry was read; added by load",
   },
+
+  FQ_HYPOTHESIS_ID => {
+    NAME => 'FQ_HYPOTHESIS_ID',
+    DESCRIPTION => "FQ_HYPOTHESIS_ID from which the KB was build; required for task1 systems",
+    YEARS => [2019],
+    TASKS => ['task3'],
+    QUERY_TYPES => ['GRAPH'],
+    FILE_TYPES => ['SUBMISSION'],
+    GENERATOR => sub {
+      my ($responses, $logger, $where, $queries, $schema, $entry) = @_;
+      my $filename = $entry->get("FILENAME");
+      my ($directory) = $filename =~ /\/(.*?)\.ttl\//;
+      my @elements = split(/\//, $directory);
+      my $fq_hypothesisid = pop(@elements);
+      $entry->set("FQ_HYPOTHESIS_ID", $fq_hypothesisid);
+    },
+    VALIDATE => 'FQ_HYPOTHESIS_ID',
+  },
+
 
   HYPOTHESIS_IMPORTANCE_VALUE => {
     NAME => 'HYPOTHESIS_IMPORTANCE_VALUE',
