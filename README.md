@@ -14,8 +14,8 @@ Tools and utilities for supporting AIDA evaluations.
 
 | Name | Description | Location | Latest release branch |
 |---|---|---|---|
-| SPAQRL Query Application Docker | The tool for applying SPARQL queries to KBs | tools/sparql-query-application | AIDAQA-v2019.2.4 |
-| AIDA-ValidateResponses | Tool for validating responses obtained after applying SPARQL queries to KBs | tools/validate-responses | AIDAVR-v2019.0.1 |
+| SPAQRL Query Application Docker | The tool for applying SPARQL queries to KBs | tools/sparql-query-application | AIDAQA-v2019.2.5 |
+| AIDA-ValidateResponses | Tool for validating responses obtained after applying SPARQL queries to KBs | tools/validate-responses | AIDAVR-v2019.0.2 |
 | AIDA-ConfidenceAggregation | Tool (and docker) for aggregating confidences | tools/confidence-aggregation | AIDACA-v2019.0.2 |
 
 Please refer to tool/utility specific README file(s) for more details.
