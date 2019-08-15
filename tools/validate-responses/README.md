@@ -1,6 +1,6 @@
 # Validate Responses
 
-Last updated: 6/20/2019
+Last updated: 8/14/2019
 
 This document describes:
 
@@ -19,7 +19,7 @@ This tool validates the output of SPARQL queries when applied using the NIST SPA
 
 The following scripts and packages are provided for running the validator:
 
-	1. AIDA-ValidateResponse-MASTER.pl (v2019.0.1)
+	1. AIDA-ValidateResponse-MASTER.pl (v2019.0.2)
 	2. ValidateResponsesManagerLib.pm
 	
 You would also need to install the following Perl modules in order to run the above script(s):
@@ -108,6 +108,9 @@ The validator is checking if:
 In addition, if confidence or importance value is specified in scientific notation, the value will be converted to standard notation with a warning.
 
 ### Revision history
+
+#### v2019.0.2:
+- Code modified to validate the output of recently updated TA3 graph query included in NIST's SPARQL query application docker version 2.5.
 
 #### v2019.0.1:
 - Code modifed to validate if all members of a cluster in the output obtained by applying TA3 graph query against a KB (using NIST's SPARQL query application docker) have the same type.

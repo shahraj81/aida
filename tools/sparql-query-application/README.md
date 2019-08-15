@@ -1,6 +1,6 @@
-# How to apply SPARQL queries against a KB using NIST-SPARQL-Evaluation docker (version 2.4)
+# How to apply SPARQL queries against a KB using NIST-SPARQL-Evaluation docker (version 2.5)
 
-(Last modified: Jun 25th, 2019)
+(Last modified: Aug 14th, 2019)
 
 ## Introduction
 
@@ -157,3 +157,6 @@ make run \
   * Default free version used by the docker updated to `graphdb-free-8.10.1`.
   * This version contains queries generated from prevailing theories found in LDC2019E07_AIDA_Phase_1_Evaluation_Practice_Topic_Annotations_V6.0.
   * Refer to M18-data/queries/README for details on changes to queries.
+
+#### version 2.5
+  * TA3 graph query has been changed. The change is local to SELECT statement which has been modified to bring four additional columns (?oinf_j_cv, ?obcm_cv, ?sinf_j_cv, and ?sbcm_cv) in the output. These additional columns have been appended to the right of the output. Remaining query construct remains unchanged.
