@@ -42,7 +42,9 @@ run:
 	     -it resolve-queries
 	@echo "--running docker ends"
 
-run-all:
+run-all: run-task1 run-task2 run-task3
+
+run-task1:
 	##############################
 	# RUN_ID = task1-team-X-run-A
 	##############################
@@ -58,6 +60,7 @@ run-all:
 	 HOST_QUERIES_DIR=$(ROOT)/$(M18DATA)/queries/task1_graph_queries \
 	 HOST_OUTPUT_DIR=$(ROOT)/$(M18DATA)/output/task1-team-X-run-A
 
+run-task2:
 	##############################
 	# RUN_ID = task2-team-X-run-D
 	##############################
@@ -73,6 +76,7 @@ run-all:
 	 HOST_QUERIES_DIR=$(ROOT)/$(M18DATA)/queries/task2_graph_queries \
 	 HOST_OUTPUT_DIR=$(ROOT)/$(M18DATA)/output/task2-team-X-run-D
 
+run-task3:
 	##############################
         # RUN_ID = task3-team-X-run-B
         ##############################
