@@ -77,8 +77,9 @@ This docker comes with the following:
 As of the last modified date (see above), the latest free version of GraphDB is 8.10.1 which will be used by the docker by default. In order to build the docker using the default (free) version of GraphDB:
 
 1. download the installer from `https://www.ontotext.com/free-graphdb-download/`,
-2. place it at: `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`, and
-3. run the following command(s):
+2. place it at: `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`,
+3. open docker/Makefile and update the value of variable named ROOT to make it point to your system specific location of sparql-query-application, and
+4. run the following command(s):
 
 ~~~
 cd docker
@@ -89,9 +90,11 @@ make build
 
 In order to build the docker with either a paid version of GraphDB or a version different from the one used by default, you would need to
 
-1. Download the paid version of GraphDB `graphdb-[otheredition]-[otherversion]-dist.zip` and place it inside `docker/AUX-data/`, and
+1. Download the paid version of GraphDB `graphdb-[otheredition]-[otherversion]-dist.zip` and place it inside `docker/AUX-data/`,
 
-2. Run the following command(s):
+2. open docker/Makefile and update the value of variable named ROOT to make it point to your system specific location of sparql-query-application, and
+
+3. Run the following command(s):
 
 ~~~
 cd docker
