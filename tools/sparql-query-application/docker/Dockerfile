@@ -24,7 +24,7 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=8.10.1
+ARG version=8.11.0
 ARG edition=free
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb

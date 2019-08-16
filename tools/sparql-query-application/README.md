@@ -1,6 +1,6 @@
 # How to apply SPARQL queries against a KB using NIST-SPARQL-Evaluation docker (version 2.5)
 
-(Last modified: Aug 14th, 2019)
+(Last modified: Aug 16th, 2019)
 
 ## Introduction
 
@@ -8,7 +8,7 @@ This document describes how to apply SPARQL queries against a KB using NIST-SPAR
 
 This docker does not come with the following but will be required:
 
-1. Free version of GraphDB (version 8.10.1) -- `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`
+1. Free version of GraphDB (version 8.11.0) -- `./docker/AUX-data/graphdb-free-8.11.0-dist.zip`
 
    NIST-SPARQL-Evaluation docker uses GraphDB as the triple-store for storing (and applying queries against) the KB represented in AIDA Interchange Format. NOTE that the free version comes with the limitation of being able to run no more than two queries in parallel.
 
@@ -163,3 +163,6 @@ make run \
 
 #### version 2.5
   * TA3 graph query has been changed. The change is local to SELECT statement which has been modified to bring four additional columns (?oinf_j_cv, ?obcm_cv, ?sinf_j_cv, and ?sbcm_cv) in the output. These additional columns have been appended to the right of the output. Remaining query construct remains unchanged.
+  * Reverted Dockerfile to what it was like in version 2.4
+  * Reverted docker/scripts/Makefile to that it was like in version 2.4
+  * Ontotext released a new version of GraphDB (version 8.11.0); docker modified to work with this version of GraphDB
