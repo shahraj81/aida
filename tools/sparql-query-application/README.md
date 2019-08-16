@@ -14,7 +14,7 @@ This docker does not come with the following but will be required:
 
    In order to make use of one of GraphDBs paid version (or another free version) place the installer in AUX-data and supply the corresponding values for variables `GRAPHDB_VERSION` and `GRAPHDB_EDITION` to make when invoking `make build`.
 
-   In order to build the docker with the free version, make sure to download the installer from `https://www.ontotext.com/free-graphdb-download/` and place it at: `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`
+   In order to build the docker with the free version, make sure to download the installer from `https://www.ontotext.com/free-graphdb-download/` and place it at: `./docker/AUX-data/graphdb-free-8.11.0-dist.zip`
 
 This docker comes with the following:
 
@@ -74,10 +74,10 @@ This docker comes with the following:
 
 #### Using the default (free) version of GraphDB
 
-As of the last modified date (see above), the latest free version of GraphDB is 8.10.1 which will be used by the docker by default. In order to build the docker using the default (free) version of GraphDB:
+As of the last modified date (see above), the latest free version of GraphDB is 8.11.0 which will be used by the docker by default. In order to build the docker using the default (free) version of GraphDB:
 
 1. download the installer from `https://www.ontotext.com/free-graphdb-download/`,
-2. place it at: `./docker/AUX-data/graphdb-free-8.10.1-dist.zip`,
+2. place it at: `./docker/AUX-data/graphdb-free-8.11.0-dist.zip`,
 3. open docker/Makefile and update the value of variable named ROOT to make it point to your system specific location of sparql-query-application, and
 4. run the following command(s):
 
@@ -163,6 +163,6 @@ make run \
 
 #### version 2.5
   * TA3 graph query has been changed. The change is local to SELECT statement which has been modified to bring four additional columns (?oinf_j_cv, ?obcm_cv, ?sinf_j_cv, and ?sbcm_cv) in the output. These additional columns have been appended to the right of the output. Remaining query construct remains unchanged.
-  * Reverted Dockerfile to what it was like in version 2.4
-  * Reverted docker/scripts/Makefile to that it was like in version 2.4
-  * Ontotext released a new version of GraphDB (version 8.11.0); docker modified to work with this version of GraphDB
+  * Reverted Dockerfile to what it was like in version 2.4.
+  * Reverted docker/scripts/Makefile to that it was like in version 2.4.
+  * Ontotext has released a new version of GraphDB (version 8.11.0); Default version of the docker has been updated to `graphdb-free-8.11.0`.
