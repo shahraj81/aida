@@ -1645,8 +1645,10 @@ my %validators = (
         $responses->get("CLUSTER_TYPES")->add($subject_type, $hypothesis_and_subject)
           unless($responses->get("CLUSTER_TYPES")->exists($hypothesis_and_subject));
         my $cluster_type = $responses->get("CLUSTER_TYPES")->get("BY_KEY", $hypothesis_and_subject);
-        $logger->record_problem("UNEXPECTED_CLUSTER_MEMBER_TYPE", $cluster_type, $subject_type, $where)
-          if $subject_type ne $cluster_type;
+        if($subject_type ne $cluster_type) {
+          $logger->record_problem("UNEXPECTED_CLUSTER_MEMBER_TYPE", $cluster_type, $subject_type, $where);
+          return;
+        }
       }
       1;
     },
