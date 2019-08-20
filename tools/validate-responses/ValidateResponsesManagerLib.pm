@@ -191,7 +191,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   SPAN_OFF_BOUNDARY_CORRECTED             WARNING        Provenance %s is outside the boundary %s of document element %s; corrected to %s
   START_LARGER_THAN_END                   ERROR          Start (%s) is larger than (%s) in provenance %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
-  UNEXPECTED_CLUSTER_MEMBER_TYPE          ERROR          Unexpected cluster member type (expected %s, provided %s)
+  HETEROGENEOUS_CLUSTER                   ERROR          Cluster %s has at least the following two types: %s, %s
   UNEXPECTED_COLUMN_HEADER                ERROR          Unexpected column # %s (expected %s, provided %s)
   UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
   UNEXPECTED_DOCUMENT_ID                  ERROR          Unexpected document %s (expected %s)
@@ -1646,7 +1646,17 @@ my %validators = (
           unless($responses->get("CLUSTER_TYPES")->exists($hypothesis_and_subject));
         my $cluster_type = $responses->get("CLUSTER_TYPES")->get("BY_KEY", $hypothesis_and_subject);
         if($subject_type ne $cluster_type) {
-          $logger->record_problem("UNEXPECTED_CLUSTER_MEMBER_TYPE", $cluster_type, $subject_type, $where);
+          $logger->record_problem("HETEROGENEOUS_CLUSTER", $subject_cluster_id, $cluster_type, $subject_type, $where);
+          # This cluster has multiple types
+          # Find other entries corresponding to this cluster, report error and set them invalid
+          foreach my $other_response(grep {$_->get("FQ_HYPOTHESIS_ID") eq $hypothesis_id &&
+                                      $_->get("SUBJECT_CLUSTER_ID") eq $subject_cluster_id}
+                               $responses->get("RESPONSES")->toarray()) {
+            my $other_response_where = $other_response->get("WHERE");
+            my $other_response_subject_type = $other_response->get($column_name);
+            $logger->record_problem("HETEROGENEOUS_CLUSTER", $subject_cluster_id, $other_response_subject_type, $subject_type, $other_response_where);
+            $other_response->{VALID} = 0;
+          }
           return;
         }
       }
