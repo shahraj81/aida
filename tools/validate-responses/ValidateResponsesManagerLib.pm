@@ -1661,8 +1661,8 @@ my %validators = (
       my $optional = 0;
       $optional = 1 if $column->{OPTIONAL};
       my $provenance = $entry->get($column_name);
-      return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       return 1 if $optional && !$provenance;
+      return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       unless(split(":", $provenance) == 3) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
         return;
