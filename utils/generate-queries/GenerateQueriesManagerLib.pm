@@ -3267,9 +3267,9 @@ sub get_EDGE_LABELS {
 }
 
 sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
-	my ($self) = @_;
-	my $sparql = <<'END_SPARQL_QUERY';
-	<![CDATA[
+  my ($self) = @_;
+  my $sparql = <<'END_SPARQL_QUERY';
+  <![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -3303,7 +3303,7 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
                   ?statement1           rdf:object                    ?type .
                   ?statement1           rdf:predicate                 rdf:type .
                   ?statement1           rdf:subject                   ?member .
-                  ?statement1           aida:justifiedBy              ?inf_justification .
+                  # ?statement1         aida:justifiedBy              ?inf_justification .
                   ?statement1           aida:confidence               ?t_confidence .
                   ?t_confidence         aida:confidenceValue          ?t_cv .
 
@@ -3327,20 +3327,20 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?inf_justification a                           aida:ImageJustification .
-                         ?inf_justification aida:boundingBox            ?bb  .
-                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
-                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
-                         ?bb                aida:boundingBoxLowerRightX ?lrx .
-                         ?bb                aida:boundingBoxLowerRightY ?lry
+                         ?inf_justification aida:boundingBox            ?bb1  .
+                         ?bb1               aida:boundingBoxUpperLeftX  ?ulx1 .
+                         ?bb1               aida:boundingBoxUpperLeftY  ?uly1 .
+                         ?bb1               aida:boundingBoxLowerRightX ?lrx1 .
+                         ?bb1               aida:boundingBoxLowerRightY ?lry1
                   }
                   OPTIONAL {
                          ?inf_justification a                           aida:KeyFrameVideoJustification .
                          ?inf_justification aida:keyFrame               ?kfid .
-                         ?inf_justification aida:boundingBox            ?bb  .
-                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
-                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
-                         ?bb                aida:boundingBoxLowerRightX ?lrx .
-                         ?bb                aida:boundingBoxLowerRightY ?lry
+                         ?inf_justification aida:boundingBox            ?bb2  .
+                         ?bb2               aida:boundingBoxUpperLeftX  ?ulx2 .
+                         ?bb2               aida:boundingBoxUpperLeftY  ?uly2 .
+                         ?bb2               aida:boundingBoxLowerRightX ?lrx2 .
+                         ?bb2               aida:boundingBoxLowerRightY ?lry2
                   }
                   OPTIONAL {
                          ?inf_justification a                           aida:ShotVideoJustification .
@@ -3358,22 +3358,22 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?eo), ?eo, "__NULL__") AS ?_eo) .
                   BIND( IF( BOUND(?st), ?st, "__NULL__") AS ?_st) .
                   BIND( IF( BOUND(?et), ?et, "__NULL__") AS ?_et) .
-                  BIND( IF( BOUND(?ulx), ?ulx, "__NULL__") AS ?_ulx) .
-                  BIND( IF( BOUND(?uly), ?uly, "__NULL__") AS ?_uly) .
-                  BIND( IF( BOUND(?lrx), ?lrx, "__NULL__") AS ?_lrx) .
-                  BIND( IF( BOUND(?lry), ?lry, "__NULL__") AS ?_lry) .
+                  BIND( COALESCE(?ulx1, ?ulx2, "__NULL__") AS ?_ulx) .
+                  BIND( COALESCE(?uly1, ?uly2, "__NULL__") AS ?_uly) .
+                  BIND( COALESCE(?lrx1, ?lrx2, "__NULL__") AS ?_lrx) .
+                  BIND( COALESCE(?lry1, ?lry2, "__NULL__") AS ?_lry) .
 
                   BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?infj_span ) .
               }
-	]]>
+  ]]>
 END_SPARQL_QUERY
-	$sparql;
+  $sparql;
 }
 
 sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
-	my ($self) = @_;
-	my $sparql = <<'END_SPARQL_QUERY';
-	<![CDATA[
+  my ($self) = @_;
+  my $sparql = <<'END_SPARQL_QUERY';
+  <![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -3406,7 +3406,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND (ldcOnt:[__PREDICATE__] AS ?edge_type_q)
               
                   # Get the object informativeJustification
-                  # ?objectmo             a                             aida:Entity .
+                  # ?objectmo           a                             aida:Entity .
                   ?objectmo             aida:informativeJustification ?oinf_justification .
                   ?oinf_justification   aida:sourceDocument           ?docid .
                   ?oinf_justification   aida:source                   ?oinf_j_doceid .
@@ -3441,11 +3441,11 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   ?edge_justification2  aida:source                   ?edgecj2_doceid .
               
                   # Get the subject informativeJustification
-                  ?subjectmo            aida:informativeJustification ?sinf_justification .
-                  ?sinf_justification   aida:sourceDocument           ?docid .
-                  ?sinf_justification   aida:source                   ?sinf_j_doceid .
-                  ?sinf_justification   aida:confidence               ?sinf_j_confidence .
-                  ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
+                  # ?subjectmo            aida:informativeJustification ?sinf_justification .
+                  # ?sinf_justification   aida:sourceDocument           ?docid .
+                  # ?sinf_justification   aida:source                   ?sinf_j_doceid .
+                  # ?sinf_justification   aida:confidence               ?sinf_j_confidence .
+                  # ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
               
                   # Get the subject cluster and cluster membership confidence
                   ?statement3           a                             aida:ClusterMembership .
@@ -3457,9 +3457,56 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   # Get the number of justifications (?edge_num_cjs) that are contained in
                   # the ?compoundedge_just
                   {
-                     SELECT ?compoundedge_just (count(?cj) as ?edge_num_cjs)
+                     SELECT ?compoundedge_just (count(DISTINCT ?_c_j_span) as ?edge_num_cjs)
                      WHERE {
-                         ?compoundedge_just aida:containedJustification ?cj .
+                         ?compoundedge_just aida:containedJustification ?c_justification .
+                         ?c_justification   aida:sourceDocument         ?cj_docid .
+                         ?c_justification   aida:source                 ?cj_doceid .
+
+                         OPTIONAL {
+                                ?c_justification a                           aida:TextJustification .
+                                ?c_justification aida:startOffset            ?cj_so .
+                                ?c_justification aida:endOffsetInclusive     ?cj_eo
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:ImageJustification .
+                                ?c_justification aida:boundingBox            ?cj_bb1  .
+                                ?cj_bb1          aida:boundingBoxUpperLeftX  ?cj_ulx1 .
+                                ?cj_bb1          aida:boundingBoxUpperLeftY  ?cj_uly1 .
+                                ?cj_bb1          aida:boundingBoxLowerRightX ?cj_lrx1 .
+                                ?cj_bb1          aida:boundingBoxLowerRightY ?cj_lry1
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:KeyFrameVideoJustification .
+                                ?c_justification aida:keyFrame               ?cj_kfid .
+                                ?c_justification aida:boundingBox            ?cj_bb2  .
+                                ?cj_bb2          aida:boundingBoxUpperLeftX  ?cj_ulx2 .
+                                ?cj_bb2          aida:boundingBoxUpperLeftY  ?cj_uly2 .
+                                ?cj_bb2          aida:boundingBoxLowerRightX ?cj_lrx2 .
+                                ?cj_bb2          aida:boundingBoxLowerRightY ?cj_lry2
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:ShotVideoJustification .
+                                ?c_justification aida:shot                   ?cj_sid
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:AudioJustification .
+                                ?c_justification aida:startTimestamp         ?cj_st .
+                                ?c_justification aida:endTimestamp           ?cj_et
+                         }
+
+                         BIND( IF( BOUND(?cj_sid), ?cj_sid, "__NULL__") AS ?_cj_sid) .
+                         BIND( IF( BOUND(?cj_kfid), ?cj_kfid, "__NULL__") AS ?_cj_kfid) .
+                         BIND( IF( BOUND(?cj_so), ?cj_so, "__NULL__") AS ?_cj_so) .
+                         BIND( IF( BOUND(?cj_eo), ?cj_eo, "__NULL__") AS ?_cj_eo) .
+                         BIND( IF( BOUND(?cj_st), ?cj_st, "__NULL__") AS ?_cj_st) .
+                         BIND( IF( BOUND(?cj_et), ?cj_et, "__NULL__") AS ?_cj_et) .
+                         BIND( COALESCE(?cj_ulx1, ?cj_ulx2, "__NULL__") AS ?_cj_ulx) .
+                         BIND( COALESCE(?cj_uly1, ?cj_uly2, "__NULL__") AS ?_cj_uly) .
+                         BIND( COALESCE(?cj_lrx1, ?cj_lrx2, "__NULL__") AS ?_cj_lrx) .
+                         BIND( COALESCE(?cj_lry1, ?cj_lry2, "__NULL__") AS ?_cj_lry) .
+
+                         BIND( cfn:getSpan(str(?cj_docid), str(?cj_doceid), str(?_cj_sid), str(?_cj_kfid), str(?_cj_so), str(?_cj_eo), str(?_cj_ulx), str(?_cj_uly), str(?_cj_lrx), str(?_cj_lry), str(?_cj_st), str(?_cj_et) ) AS ?_c_j_span ) .
                      }
                      GROUP BY ?compoundedge_just
                   }
@@ -3472,20 +3519,20 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?oinf_justification a                           aida:ImageJustification .
-                         ?oinf_justification aida:boundingBox            ?obb  .
-                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
-                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
-                         ?obb                aida:boundingBoxLowerRightX ?olrx .
-                         ?obb                aida:boundingBoxLowerRightY ?olry
+                         ?oinf_justification aida:boundingBox            ?obb1  .
+                         ?obb1               aida:boundingBoxUpperLeftX  ?oulx1 .
+                         ?obb1               aida:boundingBoxUpperLeftY  ?ouly1 .
+                         ?obb1               aida:boundingBoxLowerRightX ?olrx1 .
+                         ?obb1               aida:boundingBoxLowerRightY ?olry1
                   }
                   OPTIONAL {
                          ?oinf_justification a                           aida:KeyFrameVideoJustification .
                          ?oinf_justification aida:keyFrame               ?okfid .
-                         ?oinf_justification aida:boundingBox            ?obb  .
-                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
-                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
-                         ?obb                aida:boundingBoxLowerRightX ?olrx .
-                         ?obb                aida:boundingBoxLowerRightY ?olry
+                         ?oinf_justification aida:boundingBox            ?obb2  .
+                         ?obb2               aida:boundingBoxUpperLeftX  ?oulx2 .
+                         ?obb2               aida:boundingBoxUpperLeftY  ?ouly2 .
+                         ?obb2               aida:boundingBoxLowerRightX ?olrx2 .
+                         ?obb2               aida:boundingBoxLowerRightY ?olry2
                   }
                   OPTIONAL {
                          ?oinf_justification a                           aida:ShotVideoJustification .
@@ -3503,58 +3550,58 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?oeo), ?oeo, "__NULL__") AS ?_oeo) .
                   BIND( IF( BOUND(?ost), ?ost, "__NULL__") AS ?_ost) .
                   BIND( IF( BOUND(?oet), ?oet, "__NULL__") AS ?_oet) .
-                  BIND( IF( BOUND(?oulx), ?oulx, "__NULL__") AS ?_oulx) .
-                  BIND( IF( BOUND(?ouly), ?ouly, "__NULL__") AS ?_ouly) .
-                  BIND( IF( BOUND(?olrx), ?olrx, "__NULL__") AS ?_olrx) .
-                  BIND( IF( BOUND(?olry), ?olry, "__NULL__") AS ?_olry) .
+                  BIND( COALESCE(?oulx1, ?oulx2, "__NULL__") AS ?_oulx) .
+                  BIND( COALESCE(?ouly1, ?ouly2, "__NULL__") AS ?_ouly) .
+                  BIND( COALESCE(?olrx1, ?olrx2, "__NULL__") AS ?_olrx) .
+                  BIND( COALESCE(?olry1, ?olry2, "__NULL__") AS ?_olry) .
               
                   BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) AS ?oinf_j_span ) .
               
                   # Get subject's informative justification span
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:TextJustification .
-                         ?sinf_justification aida:startOffset            ?sso .
-                         ?sinf_justification aida:endOffsetInclusive     ?seo
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:ImageJustification .
-                         ?sinf_justification aida:boundingBox            ?sbb  .
-                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
-                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
-                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
-                         ?sbb                aida:boundingBoxLowerRightY ?slry
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:KeyFrameVideoJustification .
-                         ?sinf_justification aida:keyFrame               ?skfid .
-                         ?sinf_justification aida:boundingBox            ?sbb  .
-                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
-                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
-                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
-                         ?sbb                aida:boundingBoxLowerRightY ?slry
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:ShotVideoJustification .
-                         ?sinf_justification aida:shot                   ?ssid
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:AudioJustification .
-                         ?sinf_justification aida:startTimestamp         ?sst .
-                         ?sinf_justification aida:endTimestamp           ?set
-                  }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:TextJustification .
+                  #       ?sinf_justification aida:startOffset            ?sso .
+                  #       ?sinf_justification aida:endOffsetInclusive     ?seo
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:ImageJustification .
+                  #       ?sinf_justification aida:boundingBox            ?sbb1  .
+                  #       ?sbb1               aida:boundingBoxUpperLeftX  ?sulx1 .
+                  #       ?sbb1               aida:boundingBoxUpperLeftY  ?suly1 .
+                  #       ?sbb1               aida:boundingBoxLowerRightX ?slrx1 .
+                  #       ?sbb1               aida:boundingBoxLowerRightY ?slry1
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:KeyFrameVideoJustification .
+                  #       ?sinf_justification aida:keyFrame               ?skfid .
+                  #       ?sinf_justification aida:boundingBox            ?sbb2  .
+                  #       ?sbb2               aida:boundingBoxUpperLeftX  ?sulx2 .
+                  #       ?sbb2               aida:boundingBoxUpperLeftY  ?suly2 .
+                  #       ?sbb2               aida:boundingBoxLowerRightX ?slrx2 .
+                  #       ?sbb2               aida:boundingBoxLowerRightY ?slry2
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:ShotVideoJustification .
+                  #       ?sinf_justification aida:shot                   ?ssid
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:AudioJustification .
+                  #       ?sinf_justification aida:startTimestamp         ?sst .
+                  #       ?sinf_justification aida:endTimestamp           ?set
+                  # }
               
-                  BIND( IF( BOUND(?ssid), ?ssid, "__NULL__") AS ?_ssid) .
-                  BIND( IF( BOUND(?skfid), ?skfid, "__NULL__") AS ?_skfid) .
-                  BIND( IF( BOUND(?sso), ?sso, "__NULL__") AS ?_sso) .
-                  BIND( IF( BOUND(?seo), ?seo, "__NULL__") AS ?_seo) .
-                  BIND( IF( BOUND(?sst), ?sst, "__NULL__") AS ?_sst) .
-                  BIND( IF( BOUND(?set), ?set, "__NULL__") AS ?_set) .
-                  BIND( IF( BOUND(?sulx), ?sulx, "__NULL__") AS ?_sulx) .
-                  BIND( IF( BOUND(?suly), ?suly, "__NULL__") AS ?_suly) .
-                  BIND( IF( BOUND(?slrx), ?slrx, "__NULL__") AS ?_slrx) .
-                  BIND( IF( BOUND(?slry), ?slry, "__NULL__") AS ?_slry) .
+                  # BIND( IF( BOUND(?ssid), ?ssid, "__NULL__") AS ?_ssid) .
+                  # BIND( IF( BOUND(?skfid), ?skfid, "__NULL__") AS ?_skfid) .
+                  # BIND( IF( BOUND(?sso), ?sso, "__NULL__") AS ?_sso) .
+                  # BIND( IF( BOUND(?seo), ?seo, "__NULL__") AS ?_seo) .
+                  # BIND( IF( BOUND(?sst), ?sst, "__NULL__") AS ?_sst) .
+                  # BIND( IF( BOUND(?set), ?set, "__NULL__") AS ?_set) .
+                  # BIND( COALESCE(?sulx1, ?sulx2, "__NULL__") AS ?_sulx) .
+                  # BIND( COALESCE(?suly1, ?suly2, "__NULL__") AS ?_suly) .
+                  # BIND( COALESCE(?slrx1, ?slrx2, "__NULL__") AS ?_slrx) .
+                  # BIND( COALESCE(?slry1, ?slry2, "__NULL__") AS ?_slry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) AS ?sinf_j_span ) .
+                  # BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) AS ?sinf_j_span ) .
               
                   # Get edge's justification span # 1
                   OPTIONAL {
@@ -3564,20 +3611,20 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?edge_justification1 a                           aida:ImageJustification .
-                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
-                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
-                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
-                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
-                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                         ?edge_justification1 aida:boundingBox            ?ej1bb1  .
+                         ?ej1bb1              aida:boundingBoxUpperLeftX  ?ej1ulx1 .
+                         ?ej1bb1              aida:boundingBoxUpperLeftY  ?ej1uly1 .
+                         ?ej1bb1              aida:boundingBoxLowerRightX ?ej1lrx1 .
+                         ?ej1bb1              aida:boundingBoxLowerRightY ?ej1lry1
                   }
                   OPTIONAL {
                          ?edge_justification1 a                           aida:KeyFrameVideoJustification .
                          ?edge_justification1 aida:keyFrame               ?ej1kfid .
-                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
-                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
-                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
-                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
-                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                         ?edge_justification1 aida:boundingBox            ?ej1bb2  .
+                         ?ej1bb2              aida:boundingBoxUpperLeftX  ?ej1ulx2 .
+                         ?ej1bb2              aida:boundingBoxUpperLeftY  ?ej1uly2 .
+                         ?ej1bb2              aida:boundingBoxLowerRightX ?ej1lrx2 .
+                         ?ej1bb2              aida:boundingBoxLowerRightY ?ej1lry2
                   }
                   OPTIONAL {
                          ?edge_justification1 a                           aida:ShotVideoJustification .
@@ -3595,10 +3642,10 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej1eo), ?ej1eo, "__NULL__") AS ?_ej1eo) .
                   BIND( IF( BOUND(?ej1st), ?ej1st, "__NULL__") AS ?_ej1st) .
                   BIND( IF( BOUND(?ej1et), ?ej1et, "__NULL__") AS ?_ej1et) .
-                  BIND( IF( BOUND(?ej1ulx), ?ej1ulx, "__NULL__") AS ?_ej1ulx) .
-                  BIND( IF( BOUND(?ej1uly), ?ej1uly, "__NULL__") AS ?_ej1uly) .
-                  BIND( IF( BOUND(?ej1lrx), ?ej1lrx, "__NULL__") AS ?_ej1lrx) .
-                  BIND( IF( BOUND(?ej1lry), ?ej1lry, "__NULL__") AS ?_ej1lry) .
+                  BIND( COALESCE(?ej1ulx1, ?ej1ulx2, "__NULL__") AS ?_ej1ulx) .
+                  BIND( COALESCE(?ej1uly1, ?ej1uly2, "__NULL__") AS ?_ej1uly) .
+                  BIND( COALESCE(?ej1lrx1, ?ej1lrx2, "__NULL__") AS ?_ej1lrx) .
+                  BIND( COALESCE(?ej1lry1, ?ej1lry2, "__NULL__") AS ?_ej1lry) .
               
                   BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) AS ?ej1_span ) .
               
@@ -3611,20 +3658,20 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?edge_justification2 a                           aida:ImageJustification .
-                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
-                         ?ej2bb               aida:boundingBoxUpperLeftX  ?ej2ulx .
-                         ?ej2bb               aida:boundingBoxUpperLeftY  ?ej2uly .
-                         ?ej2bb               aida:boundingBoxLowerRightX ?ej2lrx .
-                         ?ej2bb               aida:boundingBoxLowerRightY ?ej2lry
+                         ?edge_justification2 aida:boundingBox            ?ej2bb1  .
+                         ?ej2bb1              aida:boundingBoxUpperLeftX  ?ej2ulx1 .
+                         ?ej2bb1              aida:boundingBoxUpperLeftY  ?ej2uly1 .
+                         ?ej2bb1              aida:boundingBoxLowerRightX ?ej2lrx1 .
+                         ?ej2bb1              aida:boundingBoxLowerRightY ?ej2lry1
                   }
                   OPTIONAL {
                          ?edge_justification2 a                           aida:KeyFrameVideoJustification .
                          ?edge_justification2 aida:keyFrame               ?ej2kfid .
-                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
-                         ?ej2bb               aida:boundingBoxUpperLeftX  ?ej2ulx .
-                         ?ej2bb               aida:boundingBoxUpperLeftY  ?ej2uly .
-                         ?ej2bb               aida:boundingBoxLowerRightX ?ej2lrx .
-                         ?ej2bb               aida:boundingBoxLowerRightY ?ej2lry
+                         ?edge_justification2 aida:boundingBox            ?ej2bb2  .
+                         ?ej2bb2              aida:boundingBoxUpperLeftX  ?ej2ulx2 .
+                         ?ej2bb2              aida:boundingBoxUpperLeftY  ?ej2uly2 .
+                         ?ej2bb2              aida:boundingBoxLowerRightX ?ej2lrx2 .
+                         ?ej2bb2              aida:boundingBoxLowerRightY ?ej2lry2
                   }
                   OPTIONAL {
                          ?edge_justification2 a                           aida:ShotVideoJustification .
@@ -3642,25 +3689,25 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej2eo), ?ej2eo, "__NULL__") AS ?_ej2eo) .
                   BIND( IF( BOUND(?ej2st), ?ej2st, "__NULL__") AS ?_ej2st) .
                   BIND( IF( BOUND(?ej2et), ?ej2et, "__NULL__") AS ?_ej2et) .
-                  BIND( IF( BOUND(?ej2ulx), ?ej2ulx, "__NULL__") AS ?_ej2ulx) .
-                  BIND( IF( BOUND(?ej2uly), ?ej2uly, "__NULL__") AS ?_ej2uly) .
-                  BIND( IF( BOUND(?ej2lrx), ?ej2lrx, "__NULL__") AS ?_ej2lrx) .
-                  BIND( IF( BOUND(?ej2lry), ?ej2lry, "__NULL__") AS ?_ej2lry) .
+                  BIND( COALESCE(?ej2ulx1, ?ej2ulx2, "__NULL__") AS ?_ej2ulx) .
+                  BIND( COALESCE(?ej2uly1, ?ej2uly2, "__NULL__") AS ?_ej2uly) .
+                  BIND( COALESCE(?ej2lrx1, ?ej2lrx2, "__NULL__") AS ?_ej2lrx) .
+                  BIND( COALESCE(?ej2lry1, ?ej2lry2, "__NULL__") AS ?_ej2lry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
-                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?_ej2_span ) .
+                  BIND(IF(?edge_num_cjs = 1, "", ?_ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
                   BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
-	]]>
+  ]]>
 END_SPARQL_QUERY
-	$sparql;
+  $sparql;
 }
 
 sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
-	my ($self) = @_;
-	my $sparql = <<'END_SPARQL_QUERY';
-	<![CDATA[
+  my ($self) = @_;
+  my $sparql = <<'END_SPARQL_QUERY';
+  <![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -3757,20 +3804,20 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?inf_justification a                           aida:ImageJustification .
-                         ?inf_justification aida:boundingBox            ?bb  .
-                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
-                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
-                         ?bb                aida:boundingBoxLowerRightX ?lrx .
-                         ?bb                aida:boundingBoxLowerRightY ?lry
+                         ?inf_justification aida:boundingBox            ?bb1  .
+                         ?bb1               aida:boundingBoxUpperLeftX  ?ulx1 .
+                         ?bb1               aida:boundingBoxUpperLeftY  ?uly1 .
+                         ?bb1               aida:boundingBoxLowerRightX ?lrx1 .
+                         ?bb1               aida:boundingBoxLowerRightY ?lry1
                   }
                   OPTIONAL {
                          ?inf_justification a                           aida:KeyFrameVideoJustification .
                          ?inf_justification aida:keyFrame               ?kfid .
-                         ?inf_justification aida:boundingBox            ?bb  .
-                         ?bb                aida:boundingBoxUpperLeftX  ?ulx .
-                         ?bb                aida:boundingBoxUpperLeftY  ?uly .
-                         ?bb                aida:boundingBoxLowerRightX ?lrx .
-                         ?bb                aida:boundingBoxLowerRightY ?lry
+                         ?inf_justification aida:boundingBox            ?bb2  .
+                         ?bb2               aida:boundingBoxUpperLeftX  ?ulx2 .
+                         ?bb2               aida:boundingBoxUpperLeftY  ?uly2 .
+                         ?bb2               aida:boundingBoxLowerRightX ?lrx2 .
+                         ?bb2               aida:boundingBoxLowerRightY ?lry2
                   }
                   OPTIONAL {
                          ?inf_justification a                           aida:ShotVideoJustification .
@@ -3788,22 +3835,22 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?eo), ?eo, "__NULL__") AS ?_eo) .
                   BIND( IF( BOUND(?st), ?st, "__NULL__") AS ?_st) .
                   BIND( IF( BOUND(?et), ?et, "__NULL__") AS ?_et) .
-                  BIND( IF( BOUND(?ulx), ?ulx, "__NULL__") AS ?_ulx) .
-                  BIND( IF( BOUND(?uly), ?uly, "__NULL__") AS ?_uly) .
-                  BIND( IF( BOUND(?lrx), ?lrx, "__NULL__") AS ?_lrx) .
-                  BIND( IF( BOUND(?lry), ?lry, "__NULL__") AS ?_lry) .
+                  BIND( COALESCE(?ulx1, ?ulx2, "__NULL__") AS ?_ulx) .
+                  BIND( COALESCE(?uly1, ?uly2, "__NULL__") AS ?_uly) .
+                  BIND( COALESCE(?lrx1, ?lrx2, "__NULL__") AS ?_lrx) .
+                  BIND( COALESCE(?lry1, ?lry2, "__NULL__") AS ?_lry) .
               
                   BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?infj_span ) .
               }
-	]]>
+  ]]>
 END_SPARQL_QUERY
-	$sparql;
+  $sparql;
 }
 
 sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
-	my ($self) = @_;
-	my $sparql = <<'END_SPARQL_QUERY';
-	<![CDATA[
+  my ($self) = @_;
+  my $sparql = <<'END_SPARQL_QUERY';
+  <![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -3896,11 +3943,11 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   ?edge_justification2  aida:source                   ?edgecj2_doceid .
               
                   # Get the subject informativeJustification
-                  ?subjectmo            aida:informativeJustification ?sinf_justification .
-                  ?sinf_justification   aida:sourceDocument           ?docid .
-                  ?sinf_justification   aida:source                   ?sinf_j_doceid .
-                  ?sinf_justification   aida:confidence               ?sinf_j_confidence .
-                  ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
+                  # ?subjectmo            aida:informativeJustification ?sinf_justification .
+                  # ?sinf_justification   aida:sourceDocument           ?docid .
+                  # ?sinf_justification   aida:source                   ?sinf_j_doceid .
+                  # ?sinf_justification   aida:confidence               ?sinf_j_confidence .
+                  # ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
               
                   # Get the subject cluster and cluster membership confidence
                   ?statement3           a                             aida:ClusterMembership .
@@ -3912,9 +3959,56 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   # Get the number of justifications (?edge_num_cjs) that are contained in
                   # the ?compoundedge_just
                   {
-                     SELECT ?compoundedge_just (count(?cj) as ?edge_num_cjs)
+                     SELECT ?compoundedge_just (count(DISTINCT ?_c_j_span) as ?edge_num_cjs)
                      WHERE {
-                         ?compoundedge_just aida:containedJustification ?cj .
+                         ?compoundedge_just aida:containedJustification ?c_justification .
+                         ?c_justification   aida:sourceDocument         ?cj_docid .
+                         ?c_justification   aida:source                 ?cj_doceid .
+
+                         OPTIONAL {
+                                ?c_justification a                           aida:TextJustification .
+                                ?c_justification aida:startOffset            ?cj_so .
+                                ?c_justification aida:endOffsetInclusive     ?cj_eo
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:ImageJustification .
+                                ?c_justification aida:boundingBox            ?cj_bb1  .
+                                ?cj_bb1          aida:boundingBoxUpperLeftX  ?cj_ulx1 .
+                                ?cj_bb1          aida:boundingBoxUpperLeftY  ?cj_uly1 .
+                                ?cj_bb1          aida:boundingBoxLowerRightX ?cj_lrx1 .
+                                ?cj_bb1          aida:boundingBoxLowerRightY ?cj_lry1
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:KeyFrameVideoJustification .
+                                ?c_justification aida:keyFrame               ?cj_kfid .
+                                ?c_justification aida:boundingBox            ?cj_bb2  .
+                                ?cj_bb2          aida:boundingBoxUpperLeftX  ?cj_ulx2 .
+                                ?cj_bb2          aida:boundingBoxUpperLeftY  ?cj_uly2 .
+                                ?cj_bb2          aida:boundingBoxLowerRightX ?cj_lrx2 .
+                                ?cj_bb2          aida:boundingBoxLowerRightY ?cj_lry2
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:ShotVideoJustification .
+                                ?c_justification aida:shot                   ?cj_sid
+                         }
+                         OPTIONAL {
+                                ?c_justification a                           aida:AudioJustification .
+                                ?c_justification aida:startTimestamp         ?cj_st .
+                                ?c_justification aida:endTimestamp           ?cj_et
+                         }
+
+                         BIND( IF( BOUND(?cj_sid), ?cj_sid, "__NULL__") AS ?_cj_sid) .
+                         BIND( IF( BOUND(?cj_kfid), ?cj_kfid, "__NULL__") AS ?_cj_kfid) .
+                         BIND( IF( BOUND(?cj_so), ?cj_so, "__NULL__") AS ?_cj_so) .
+                         BIND( IF( BOUND(?cj_eo), ?cj_eo, "__NULL__") AS ?_cj_eo) .
+                         BIND( IF( BOUND(?cj_st), ?cj_st, "__NULL__") AS ?_cj_st) .
+                         BIND( IF( BOUND(?cj_et), ?cj_et, "__NULL__") AS ?_cj_et) .
+                         BIND( COALESCE(?cj_ulx1, ?cj_ulx2, "__NULL__") AS ?_cj_ulx) .
+                         BIND( COALESCE(?cj_uly1, ?cj_uly2, "__NULL__") AS ?_cj_uly) .
+                         BIND( COALESCE(?cj_lrx1, ?cj_lrx2, "__NULL__") AS ?_cj_lrx) .
+                         BIND( COALESCE(?cj_lry1, ?cj_lry2, "__NULL__") AS ?_cj_lry) .
+
+                         BIND( cfn:getSpan(str(?cj_docid), str(?cj_doceid), str(?_cj_sid), str(?_cj_kfid), str(?_cj_so), str(?_cj_eo), str(?_cj_ulx), str(?_cj_uly), str(?_cj_lrx), str(?_cj_lry), str(?_cj_st), str(?_cj_et) ) AS ?_c_j_span ) .
                      }
                      GROUP BY ?compoundedge_just
                   }
@@ -3927,20 +4021,20 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?oinf_justification a                           aida:ImageJustification .
-                         ?oinf_justification aida:boundingBox            ?obb  .
-                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
-                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
-                         ?obb                aida:boundingBoxLowerRightX ?olrx .
-                         ?obb                aida:boundingBoxLowerRightY ?olry
+                         ?oinf_justification aida:boundingBox            ?obb1  .
+                         ?obb1               aida:boundingBoxUpperLeftX  ?oulx1 .
+                         ?obb1               aida:boundingBoxUpperLeftY  ?ouly1 .
+                         ?obb1               aida:boundingBoxLowerRightX ?olrx1 .
+                         ?obb1               aida:boundingBoxLowerRightY ?olry1
                   }
                   OPTIONAL {
                          ?oinf_justification a                           aida:KeyFrameVideoJustification .
                          ?oinf_justification aida:keyFrame               ?okfid .
-                         ?oinf_justification aida:boundingBox            ?obb  .
-                         ?obb                aida:boundingBoxUpperLeftX  ?oulx .
-                         ?obb                aida:boundingBoxUpperLeftY  ?ouly .
-                         ?obb                aida:boundingBoxLowerRightX ?olrx .
-                         ?obb                aida:boundingBoxLowerRightY ?olry
+                         ?oinf_justification aida:boundingBox            ?obb2  .
+                         ?obb2               aida:boundingBoxUpperLeftX  ?oulx2 .
+                         ?obb2               aida:boundingBoxUpperLeftY  ?ouly2 .
+                         ?obb2               aida:boundingBoxLowerRightX ?olrx2 .
+                         ?obb2               aida:boundingBoxLowerRightY ?olry2
                   }
                   OPTIONAL {
                          ?oinf_justification a                           aida:ShotVideoJustification .
@@ -3958,58 +4052,58 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?oeo), ?oeo, "__NULL__") AS ?_oeo) .
                   BIND( IF( BOUND(?ost), ?ost, "__NULL__") AS ?_ost) .
                   BIND( IF( BOUND(?oet), ?oet, "__NULL__") AS ?_oet) .
-                  BIND( IF( BOUND(?oulx), ?oulx, "__NULL__") AS ?_oulx) .
-                  BIND( IF( BOUND(?ouly), ?ouly, "__NULL__") AS ?_ouly) .
-                  BIND( IF( BOUND(?olrx), ?olrx, "__NULL__") AS ?_olrx) .
-                  BIND( IF( BOUND(?olry), ?olry, "__NULL__") AS ?_olry) .
+                  BIND( COALESCE(?oulx1, ?oulx2, "__NULL__") AS ?_oulx) .
+                  BIND( COALESCE(?ouly1, ?ouly2, "__NULL__") AS ?_ouly) .
+                  BIND( COALESCE(?olrx1, ?olrx2, "__NULL__") AS ?_olrx) .
+                  BIND( COALESCE(?olry1, ?olry2, "__NULL__") AS ?_olry) .
               
                   BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) AS ?oinf_j_span ) .
               
                   # Get subject's informative justification span
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:TextJustification .
-                         ?sinf_justification aida:startOffset            ?sso .
-                         ?sinf_justification aida:endOffsetInclusive     ?seo
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:ImageJustification .
-                         ?sinf_justification aida:boundingBox            ?sbb  .
-                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
-                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
-                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
-                         ?sbb                aida:boundingBoxLowerRightY ?slry
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:KeyFrameVideoJustification .
-                         ?sinf_justification aida:keyFrame               ?skfid .
-                         ?sinf_justification aida:boundingBox            ?sbb  .
-                         ?sbb                aida:boundingBoxUpperLeftX  ?sulx .
-                         ?sbb                aida:boundingBoxUpperLeftY  ?suly .
-                         ?sbb                aida:boundingBoxLowerRightX ?slrx .
-                         ?sbb                aida:boundingBoxLowerRightY ?slry
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:ShotVideoJustification .
-                         ?sinf_justification aida:shot                   ?ssid
-                  }
-                  OPTIONAL {
-                         ?sinf_justification a                           aida:AudioJustification .
-                         ?sinf_justification aida:startTimestamp         ?sst .
-                         ?sinf_justification aida:endTimestamp           ?set
-                  }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:TextJustification .
+                  #       ?sinf_justification aida:startOffset            ?sso .
+                  #       ?sinf_justification aida:endOffsetInclusive     ?seo
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:ImageJustification .
+                  #       ?sinf_justification aida:boundingBox            ?sbb1  .
+                  #       ?sbb1               aida:boundingBoxUpperLeftX  ?sulx1 .
+                  #       ?sbb1               aida:boundingBoxUpperLeftY  ?suly1 .
+                  #       ?sbb1               aida:boundingBoxLowerRightX ?slrx1 .
+                  #       ?sbb1               aida:boundingBoxLowerRightY ?slry1
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:KeyFrameVideoJustification .
+                  #       ?sinf_justification aida:keyFrame               ?skfid .
+                  #       ?sinf_justification aida:boundingBox            ?sbb2  .
+                  #       ?sbb2               aida:boundingBoxUpperLeftX  ?sulx2 .
+                  #       ?sbb2               aida:boundingBoxUpperLeftY  ?suly2 .
+                  #       ?sbb2               aida:boundingBoxLowerRightX ?slrx2 .
+                  #       ?sbb2               aida:boundingBoxLowerRightY ?slry2
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:ShotVideoJustification .
+                  #       ?sinf_justification aida:shot                   ?ssid
+                  # }
+                  # OPTIONAL {
+                  #       ?sinf_justification a                           aida:AudioJustification .
+                  #       ?sinf_justification aida:startTimestamp         ?sst .
+                  #       ?sinf_justification aida:endTimestamp           ?set
+                  # }
               
-                  BIND( IF( BOUND(?ssid), ?ssid, "__NULL__") AS ?_ssid) .
-                  BIND( IF( BOUND(?skfid), ?skfid, "__NULL__") AS ?_skfid) .
-                  BIND( IF( BOUND(?sso), ?sso, "__NULL__") AS ?_sso) .
-                  BIND( IF( BOUND(?seo), ?seo, "__NULL__") AS ?_seo) .
-                  BIND( IF( BOUND(?sst), ?sst, "__NULL__") AS ?_sst) .
-                  BIND( IF( BOUND(?set), ?set, "__NULL__") AS ?_set) .
-                  BIND( IF( BOUND(?sulx), ?sulx, "__NULL__") AS ?_sulx) .
-                  BIND( IF( BOUND(?suly), ?suly, "__NULL__") AS ?_suly) .
-                  BIND( IF( BOUND(?slrx), ?slrx, "__NULL__") AS ?_slrx) .
-                  BIND( IF( BOUND(?slry), ?slry, "__NULL__") AS ?_slry) .
+                  # BIND( IF( BOUND(?ssid), ?ssid, "__NULL__") AS ?_ssid) .
+                  # BIND( IF( BOUND(?skfid), ?skfid, "__NULL__") AS ?_skfid) .
+                  # BIND( IF( BOUND(?sso), ?sso, "__NULL__") AS ?_sso) .
+                  # BIND( IF( BOUND(?seo), ?seo, "__NULL__") AS ?_seo) .
+                  # BIND( IF( BOUND(?sst), ?sst, "__NULL__") AS ?_sst) .
+                  # BIND( IF( BOUND(?set), ?set, "__NULL__") AS ?_set) .
+                  # BIND( COALESCE(?sulx1, ?sulx2, "__NULL__") AS ?_sulx) .
+                  # BIND( COALESCE(?suly1, ?suly2, "__NULL__") AS ?_suly) .
+                  # BIND( COALESCE(?slrx1, ?slrx2, "__NULL__") AS ?_slrx) .
+                  # BIND( COALESCE(?slry1, ?slry2, "__NULL__") AS ?_slry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) AS ?sinf_j_span ) .
+                  # BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) AS ?sinf_j_span ) .
               
                   # Get edge's justification span # 1
                   OPTIONAL {
@@ -4019,20 +4113,20 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?edge_justification1 a                           aida:ImageJustification .
-                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
-                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
-                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
-                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
-                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                         ?edge_justification1 aida:boundingBox            ?ej1bb1  .
+                         ?ej1bb1              aida:boundingBoxUpperLeftX  ?ej1ulx1 .
+                         ?ej1bb1              aida:boundingBoxUpperLeftY  ?ej1uly1 .
+                         ?ej1bb1              aida:boundingBoxLowerRightX ?ej1lrx1 .
+                         ?ej1bb1              aida:boundingBoxLowerRightY ?ej1lry1
                   }
                   OPTIONAL {
                          ?edge_justification1 a                           aida:KeyFrameVideoJustification .
                          ?edge_justification1 aida:keyFrame               ?ej1kfid .
-                         ?edge_justification1 aida:boundingBox            ?ej1bb  .
-                         ?ej1bb                aida:boundingBoxUpperLeftX  ?ej1ulx .
-                         ?ej1bb                aida:boundingBoxUpperLeftY  ?ej1uly .
-                         ?ej1bb                aida:boundingBoxLowerRightX ?ej1lrx .
-                         ?ej1bb                aida:boundingBoxLowerRightY ?ej1lry
+                         ?edge_justification1 aida:boundingBox            ?ej1bb2  .
+                         ?ej1bb2              aida:boundingBoxUpperLeftX  ?ej1ulx2 .
+                         ?ej1bb2              aida:boundingBoxUpperLeftY  ?ej1uly2 .
+                         ?ej1bb2              aida:boundingBoxLowerRightX ?ej1lrx2 .
+                         ?ej1bb2              aida:boundingBoxLowerRightY ?ej1lry2
                   }
                   OPTIONAL {
                          ?edge_justification1 a                           aida:ShotVideoJustification .
@@ -4050,10 +4144,10 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej1eo), ?ej1eo, "__NULL__") AS ?_ej1eo) .
                   BIND( IF( BOUND(?ej1st), ?ej1st, "__NULL__") AS ?_ej1st) .
                   BIND( IF( BOUND(?ej1et), ?ej1et, "__NULL__") AS ?_ej1et) .
-                  BIND( IF( BOUND(?ej1ulx), ?ej1ulx, "__NULL__") AS ?_ej1ulx) .
-                  BIND( IF( BOUND(?ej1uly), ?ej1uly, "__NULL__") AS ?_ej1uly) .
-                  BIND( IF( BOUND(?ej1lrx), ?ej1lrx, "__NULL__") AS ?_ej1lrx) .
-                  BIND( IF( BOUND(?ej1lry), ?ej1lry, "__NULL__") AS ?_ej1lry) .
+                  BIND( COALESCE(?ej1ulx1, ?ej1ulx2, "__NULL__") AS ?_ej1ulx) .
+                  BIND( COALESCE(?ej1uly1, ?ej1uly2, "__NULL__") AS ?_ej1uly) .
+                  BIND( COALESCE(?ej1lrx1, ?ej1lrx2, "__NULL__") AS ?_ej1lrx) .
+                  BIND( COALESCE(?ej1lry1, ?ej1lry2, "__NULL__") AS ?_ej1lry) .
               
                   BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) AS ?ej1_span ) .
               
@@ -4065,20 +4159,20 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   }
                   OPTIONAL {
                          ?edge_justification2 a                           aida:ImageJustification .
-                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
-                         ?ej2bb                aida:boundingBoxUpperLeftX  ?ej2ulx .
-                         ?ej2bb                aida:boundingBoxUpperLeftY  ?ej2uly .
-                         ?ej2bb                aida:boundingBoxLowerRightX ?ej2lrx .
-                         ?ej2bb                aida:boundingBoxLowerRightY ?ej2lry
+                         ?edge_justification2 aida:boundingBox            ?ej2bb1  .
+                         ?ej2bb1              aida:boundingBoxUpperLeftX  ?ej2ulx1 .
+                         ?ej2bb1              aida:boundingBoxUpperLeftY  ?ej2uly1 .
+                         ?ej2bb1              aida:boundingBoxLowerRightX ?ej2lrx1 .
+                         ?ej2bb1              aida:boundingBoxLowerRightY ?ej2lry1
                   }
                   OPTIONAL {
                          ?edge_justification2 a                           aida:KeyFrameVideoJustification .
                          ?edge_justification2 aida:keyFrame               ?ej2kfid .
-                         ?edge_justification2 aida:boundingBox            ?ej2bb  .
-                         ?ej2bb                aida:boundingBoxUpperLeftX  ?ej2ulx .
-                         ?ej2bb                aida:boundingBoxUpperLeftY  ?ej2uly .
-                         ?ej2bb                aida:boundingBoxLowerRightX ?ej2lrx .
-                         ?ej2bb                aida:boundingBoxLowerRightY ?ej2lry
+                         ?edge_justification2 aida:boundingBox            ?ej2bb2  .
+                         ?ej2bb2              aida:boundingBoxUpperLeftX  ?ej2ulx2 .
+                         ?ej2bb2              aida:boundingBoxUpperLeftY  ?ej2uly2 .
+                         ?ej2bb2              aida:boundingBoxLowerRightX ?ej2lrx2 .
+                         ?ej2bb2              aida:boundingBoxLowerRightY ?ej2lry2
                   }
                   OPTIONAL {
                          ?edge_justification2 a                           aida:ShotVideoJustification .
@@ -4096,19 +4190,19 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   BIND( IF( BOUND(?ej2eo), ?ej2eo, "__NULL__") AS ?_ej2eo) .
                   BIND( IF( BOUND(?ej2st), ?ej2st, "__NULL__") AS ?_ej2st) .
                   BIND( IF( BOUND(?ej2et), ?ej2et, "__NULL__") AS ?_ej2et) .
-                  BIND( IF( BOUND(?ej2ulx), ?ej2ulx, "__NULL__") AS ?_ej2ulx) .
-                  BIND( IF( BOUND(?ej2uly), ?ej2uly, "__NULL__") AS ?_ej2uly) .
-                  BIND( IF( BOUND(?ej2lrx), ?ej2lrx, "__NULL__") AS ?_ej2lrx) .
-                  BIND( IF( BOUND(?ej2lry), ?ej2lry, "__NULL__") AS ?_ej2lry) .
+                  BIND( COALESCE(?ej2ulx1, ?ej2ulx2, "__NULL__") AS ?_ej2ulx) .
+                  BIND( COALESCE(?ej2uly1, ?ej2uly2, "__NULL__") AS ?_ej2uly) .
+                  BIND( COALESCE(?ej2lrx1, ?ej2lrx2, "__NULL__") AS ?_ej2lrx) .
+                  BIND( COALESCE(?ej2lry1, ?ej2lry2, "__NULL__") AS ?_ej2lry) .
               
-                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?ej2_span ) .
-                  BIND(IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
+                  BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?_ej2_span ) .
+                  BIND(IF(?edge_num_cjs = 1, "", ?_ej2_span) AS ?ej2_span)
                   FILTER(?ej1_span > ?ej2_span)
                   BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
-	]]>
+  ]]>
 END_SPARQL_QUERY
-	$sparql;
+  $sparql;
 }
 
 sub normalize_querynum {
