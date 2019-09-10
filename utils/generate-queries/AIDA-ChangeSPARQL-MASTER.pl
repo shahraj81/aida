@@ -97,7 +97,7 @@ my %instances = (
               my ($query) = @_;
               my $query_id = $query->get("QUERYID");
               my $edge_label = $query->get("PREDICATE");
-              my $query_reference_kbid = $query->get("REFERENCE_KBID");
+              my $query_reference_kbid = $query->get("OBJECT");
               my $sparql = &{$templates{TA2_GR}}();
               $sparql =~ s/\[__QUERY_ID__\]/$query_id/gs;
               $sparql =~ s/\[__PREDICATE__\]/$edge_label/gs;
@@ -115,7 +115,14 @@ foreach my $query($queries->get("QUERIES")->toarray()) {
   $query->get("XML_OBJECT")->get("CHILD", "sparql")->set("ELEMENT", $new_sparql);
 }
 
-print $program_output $queries->tostring();
+my $query_type = $switches->get("queries_dtd");
+$query_type =~ s/^(.*?\/)+//g;
+$query_type =~ s/.dtd//;
+$query_type =~ s/query/queries/;
+print $program_output "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+print $program_output "<$query_type>\n";
+print $program_output $queries->tostring(2);
+print $program_output "<\/$query_type>\n";
 close($program_output); 
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
