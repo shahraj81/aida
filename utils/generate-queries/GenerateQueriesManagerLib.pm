@@ -3269,7 +3269,7 @@ sub get_EDGE_LABELS {
 sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
   my ($self) = @_;
   my $sparql = <<'END_SPARQL_QUERY';
-  <![CDATA[
+	<![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -3365,7 +3365,7 @@ sub get_TA1_CLASS_SPARQL_QUERY_TEMPLATE {
 
                   BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?infj_span ) .
               }
-  ]]>
+	]]>
 END_SPARQL_QUERY
   $sparql;
 }
@@ -3373,7 +3373,7 @@ END_SPARQL_QUERY
 sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
   my ($self) = @_;
   my $sparql = <<'END_SPARQL_QUERY';
-  <![CDATA[
+	<![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -3699,7 +3699,7 @@ sub get_TA1_GRAPH_SPARQL_QUERY_TEMPLATE {
                   FILTER(?ej1_span > ?ej2_span)
                   BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
-  ]]>
+	]]>
 END_SPARQL_QUERY
   $sparql;
 }
@@ -3707,7 +3707,7 @@ END_SPARQL_QUERY
 sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
   my ($self) = @_;
   my $sparql = <<'END_SPARQL_QUERY';
-  <![CDATA[
+	<![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -3842,7 +3842,7 @@ sub get_TA2_ZEROHOP_SPARQL_QUERY_TEMPLATE {
               
                   BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?infj_span ) .
               }
-  ]]>
+	]]>
 END_SPARQL_QUERY
   $sparql;
 }
@@ -3850,7 +3850,7 @@ END_SPARQL_QUERY
 sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
   my ($self) = @_;
   my $sparql = <<'END_SPARQL_QUERY';
-  <![CDATA[
+	<![CDATA[
               PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
               PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
               PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
@@ -4200,7 +4200,7 @@ sub get_TA2_GRAPH_SPARQL_QUERY_TEMPLATE {
                   FILTER(?ej1_span > ?ej2_span)
                   BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
               }
-  ]]>
+	]]>
 END_SPARQL_QUERY
   $sparql;
 }
