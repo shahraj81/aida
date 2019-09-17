@@ -5215,10 +5215,10 @@ sub load {
 }
 
 #####################################################################################
-# QREL
+# Assessments
 #####################################################################################
 
-package QREL;
+package Assessments;
 
 use parent -norequire, 'Container', 'Super';
 
@@ -5237,6 +5237,7 @@ sub new {
 
 sub load {
   my ($self) = @_;
+  my %normalize = (correct => "CORRECT", wrong => "INCORRECT");
   my $assessments_dir = $self->get("ASSESSMENTS_DIR");
   my $query_type = $self->get("QUERY_TYPE");
   my %subdirs = (class_query => "class", zerohop_query => "zero-hop", graph_query => "graph");
@@ -5248,11 +5249,9 @@ sub load {
     my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
     my $entries = $filehandler->get("ENTRIES");
     foreach my $entry($entries->toarray()) {
-      my ($nodeid, $docid, $mention_span, $assessment, $fqec, $where)
+      my ($nodeid, $docid, $mention_span, $assessment, $where)
         = map {$entry->get($_)} qw(NODEID DOCID MENTION_SPAN ASSESSMENT WHERE);
-      $self->{LOGGER}->record_problem("NO_FQEC_FOR_CORRECT_ENTRY", $where)
-        if $assessment eq "Correct" && !$fqec;
-      my $key = "$nodeid:$mention_span";
+      my $key = "$nodeid:$docid:$mention_span";
       if($self->exists($key)) {
         my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
         my $existing_linenum = $self->get("BY_KEY", $key)->{WHERE}{LINENUM};
@@ -5264,8 +5263,13 @@ sub load {
                             {FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});  
         }
       }
-      $self->add({ASSESSMENT=>$assessment, DOCID => $docid, NODE => $nodeid, MENTION_SPAN => $mention_span, WHERE=>$where}, $key)
-        unless $self->exists($key);
+      my $assessment_entry = SuperObject->new();
+      $assessment_entry->set("ASSESSMENT", $normalize{$assessment});
+      $assessment_entry->set("DOCUMENT_ID", $docid);
+      $assessment_entry->set("REFERENCE_KBID", $nodeid);
+      $assessment_entry->set("MENTION_SPAN", $mention_span);
+      $assessment_entry->set("WHERE", $where);
+      $self->add($assessment_entry, $key) unless $self->exists($key);
     }
     $filehandler->cleanup();
   }
@@ -5280,15 +5284,15 @@ package ScoresManager;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $docid_mappings, $ldc_queries, $responses, $qrel, $query_type, @queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) = @_;
   my $self = {
     __CLASS__ => 'ScoresManager',
     DOCID_MAPPINGS => $docid_mappings,
-    LDC_QUERIES => $ldc_queries,
+    QUERIES => $queries,
     RESPONSES => $responses,
-    QREL => $qrel,
-    QUERY_TYPE => $query_type,
-    QUERIES_TO_SCORE => [@queries_to_score],
+    ASSESSMENTS => $assessments,
+    QUERY_TYPE => $queries->get("QUERYTYPE"),
+    QUERIES_TO_SCORE => $queries_to_score,
     RUNID => $runid,
     LOGGER => $logger,
   };
@@ -5299,12 +5303,12 @@ sub new {
 
 sub score_responses {
   my ($self) = @_;
-  my ($docid_mappings, $responses, $qrel, $query_type, $queries_to_score, $ldc_queries, $runid, $logger)
-    = map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES QREL QUERY_TYPE QUERIES_TO_SCORE LDC_QUERIES RUNID LOGGER);
+  my ($docid_mappings, $responses, $assessments, $query_type, $queries_to_score, $queries, $runid, $logger)
+    = map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES ASSESSMENTS QUERY_TYPE QUERIES_TO_SCORE QUERIES RUNID LOGGER);
   my $scores;
-  $scores = ClassScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "class_query");
-  $scores = ZeroHopScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "zerohop_query");
-  $scores = GraphScores->new($logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) if($query_type eq "graph_query");
+  $scores = ClassScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "class_query");
+  $scores = ZeroHopScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "zerohop_query");
+  $scores = GraphScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "graph_query");
   $self->set("SCORES", $scores);
 }
 
@@ -5322,14 +5326,15 @@ package ZeroHopScores;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $docid_mappings, $responses, $qrel, $ldc_queries, $queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) = @_;
   my $self = {
     __CLASS__ => 'ZeroHopScores',
+    AG_CV_FIELDS => qw(?link_cv),
+    ASSESSMENTS => $assessments,
     DOCID_MAPPINGS => $docid_mappings,
-    LDC_QUERIES => $ldc_queries,
-    RESPONSES => $responses,
-    QREL => $qrel,
+    QUERIES => $queries,
     QUERIES_TO_SCORE => $queries_to_score,
+    RESPONSES => $responses,
     RUNID => $runid,
     LOGGER => $logger,
   };
@@ -5340,96 +5345,93 @@ sub new {
 
 sub score_responses {
   my ($self) = @_;
-  my ($runid, $docid_mappings, $responses, $qrel, $queries_to_score, $ldc_queries, $logger)
-    = map {$self->get($_)} qw(RUNID DOCID_MAPPINGS RESPONSES QREL QUERIES_TO_SCORE LDC_QUERIES LOGGER);
+  my ($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score)
+    = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
   my $scores = ScoresPrinter->new($logger);
-  my %categorized_submissions;
-  my %category_store;
-  foreach my $key($qrel->get("ALL_KEYS")) {
-    my ($node_id, $doceid, $start_and_end) = split(":", $key);
-    if($doceid =~ /^(.*?)\_(\d+)$/){
-      $doceid = $1;
-    }
-    my $mention_span = "$doceid:$start_and_end";
-    my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
-    my $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
-    my $docid = $qrel->get("BY_KEY", $key)->{DOCID};
-    my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
-      if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
-    if ($assessment eq "Correct" && $is_core) {
-      $category_store{GROUND_TRUTH}{$node_id}{$docid}{$fqec} = 1;      
-      $category_store{GROUND_TRUTH}{$node_id}{"all"}{$fqec} = 1;
-      $logger->record_debug_information("GROUND_TRUTH", 
-                "NODEID=$node_id MENTION=$mention_span FQEC=$fqec CORRECT\n", 
-                $qrel->get("BY_KEY", $key)->{WHERE});
-    }
-    elsif($assessment eq "Wrong" && $is_core) {
-      $logger->record_debug_information("GROUND_TRUTH", 
-                "NODEID=$node_id MENTION=$mention_span FQEC=$fqec INCORRECT\n", 
-                $qrel->get("BY_KEY", $key)->{WHERE});
-    }
+  my %ground_truth;
+  foreach my $assessment_entry($assessments->toarray()) {
+    my ($assessment, $docid, $mention_span, $reference_kbid) = 
+      map {$assessment_entry->get($_)} qw(ASSESSMENT DOCUMENT_ID MENTION_SPAN REFERENCE_KBID);
+    $mention_span = "$docid:$mention_span";
+    $ground_truth{$reference_kbid}{$docid} = 1;
   }
+  my @candidate_responses;
   foreach my $response($responses->get("RESPONSES")->toarray()) {
-    my $query_id = $response->get("QUERYID");
-    next unless grep {$query_id eq $_} @$queries_to_score;
-    my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
-    $node_id =~ s/^\?//;
-    foreach my $justification($response->get("JUSTIFICATIONS")->toarray()) {
-      my $doceid = $justification->get("DOCEID");
-      my $is_core = $docid_mappings->get("DOCUMENTELEMENTS")->get("BY_KEY", $doceid)->get("IS_CORE")
-        if($docid_mappings->get("DOCUMENTELEMENTS")->exists($doceid));
-      my $mention_span = $justification->tostring();
-      my $key = "$node_id:$mention_span";
-      push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $mention_span);
-      my $fqec = "UNASSESSED";
-      my %pre_policy = (SUBMITTED=>1);
-      my %post_policy;
-      if($qrel->exists($key) && $is_core) {
-        my $assessment = $qrel->get("BY_KEY", $key)->{ASSESSMENT};
-        $fqec = $qrel->get("BY_KEY", $key)->{FQEC};
-        if($assessment eq "Correct") {
-          push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $mention_span);
-          $pre_policy{CORRECT} = 1;
-          if(exists $category_store{CORRECT_FOUND}{$query_id}{$fqec}) {
-            push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $mention_span);
-            push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
-            $pre_policy{REDUNDANT} = 1;
-            $post_policy{IGNORED} = 1;
-          }
-          else {
-            $category_store{CORRECT_FOUND}{$query_id}{$fqec} = 1;
-            push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $mention_span);
-            $post_policy{RIGHT} = 1;
-          }
-        }
-        elsif($assessment eq "Wrong") {
-          push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $mention_span);
-          push(@{$categorized_submissions{$query_id}{"WRONG"}}, $mention_span);
-          $pre_policy{INCORRECT} = 1;
-          $post_policy{WRONG} = 1;
-        }
+    my ($query_id, $cluster_rank, $docid, $mention_span, $reference_kbid)
+      = map {$response->get($_)} qw(QUERY_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
+    my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
+    next if ($cluster_rank > $max_cluster_rank);
+    push(@candidate_responses, $response);
+  }
+  my @selected_responses;
+  my $i = 0;
+  foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
+                                  || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
+                            @candidate_responses) {
+    my $max_num_informative_mentions = $queries_to_score->get("BY_KEY", $response->get("QUERY_ID"))->get("max_num_informative_mentions");
+    last if $i == $max_num_informative_mentions;
+    next unless $docid_mappings->get("COREDOCS")->exists($response->get("DOCUMENT_ID"));
+    $response->set("POOLED", 1);
+    push(@selected_responses, $response);
+    $i++;
+  }
+  my %categorized_submissions;
+  my %correct_found;
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my ($query_id, $docid, $mention_span, $reference_kbid)
+      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
+    push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $response);
+    push(@{$categorized_submissions{$query_id}{"POOLED"}}, $response) if $response->get("POOLED");
+    push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response) unless $response->get("POOLED");
+    $response->{ASSESSMENT}{"PRE-POLICY"}{SUBMITTED} = 1;
+    if($response->get("POOLED")) {
+      # This response has been pooled and therefore should have been assessed
+      # Find the corresponding assessment structure and bind it to this response
+      my $assessment = $assessments->get("BY_KEY", "$reference_kbid:$mention_span");
+      unless($assessment) {
+        my $filename = $response->get("WHERE")->{FILENAME};
+        my $linenum = $response->get("WHERE")->{LINENUM};
+        my $line = $response->get("LINE");
+        die "No assessment found for response\n $line\nat $filename (line#$linenum)\n";
+      }
+      $response->{ASSESSMENT_ENTRY} = $assessment;
+      if($assessment->get("ASSESSMENT") eq "CORRECT") {
+        push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $response);
+        $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
+      }
+      if($assessment->get("ASSESSMENT") eq "INCORRECT") {
+        push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $response);
+        $response->{ASSESSMENT}{"PRE-POLICY"}{INCORRECT} = 1;
+        push(@{$categorized_submissions{$query_id}{"WRONG"}}, $response);
+        $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+      }
+      if($correct_found{$query_id}{$mention_span}) {
+        push(@{$categorized_submissions{$query_id}{"WRONG"}}, $response);
+        push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $response);
+        $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+        $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
       }
       else {
-        push(@{$categorized_submissions{$query_id}{"NOT_IN_POOL"}}, $mention_span);
-        push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $mention_span);
-        $pre_policy{NOT_IN_POOL} = 1;
-        $post_policy{IGNORED} = 1;
+        push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $response);
+        $correct_found{$query_id}{$mention_span} = 1;
+        $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
       }
-      my $pre_policy = join(",", sort keys %pre_policy);
-      my $post_policy = join(",", sort keys %post_policy);
-      my $line = "NODEID=$node_id " .
+    }
+    else {
+      push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
+      $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+    }
+    my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
+    my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
+    my $line = "KBID=$reference_kbid " .
                  "QUERYID=$query_id " .
                  "MENTION=$mention_span " .
                  "PRE_POLICY_ASSESSMENT=$pre_policy " .
-                 "POST_POLICY_ASSESSMENT=$post_policy " .
-                 "FQEC=$fqec\n";
-      $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $justification->get("WHERE"));
-    }
+                 "POST_POLICY_ASSESSMENT=$post_policy\n";
+    $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
   }
   foreach my $query_id(@$queries_to_score) {
-    my $node_id = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("NODE");
-    my $modality = $ldc_queries->get("QUERY", $query_id)->get("ENTRYPOINT")->get("DESCRIPTOR")->get("MODALITY");
-    $node_id =~ s/^\?//;
+    my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
     my $num_submitted = @{$categorized_submissions{$query_id}{"SUBMITTED"} || []};
     my $num_correct = @{$categorized_submissions{$query_id}{"CORRECT"} || []};
     my $num_incorrect = @{$categorized_submissions{$query_id}{"INCORRECT"} || []};
@@ -5438,8 +5440,8 @@ sub score_responses {
     my $num_redundant = @{$categorized_submissions{$query_id}{"REDUNDANT"} || []};
     my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
     my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOT_IN_POOL"} || []};
-    my $num_ground_truth = keys %{$category_store{GROUND_TRUTH}{$node_id}};
-    my $score = Score->new($logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
+    my $num_ground_truth = keys %{$ground_truth{$node_id}};
+    my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
     $scores->add($score, $query_id);
   }
   $self->set("SCORES", $scores);
@@ -5461,7 +5463,6 @@ use parent -norequire, 'Container', 'Super';
 my @fields_to_print = (
   {NAME => 'EC',               HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NODEID',           HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'MODALITY',         HEADER => 'Mode',     FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',            HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
@@ -5568,11 +5569,10 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $query_id, $node_id, $modality, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $runid, $query_id, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
   my $self = {
     __CLASS__ => 'Scores',
     EC => $query_id,
-    MODALITY => $modality,
     NODEID => $node_id,
     NUM_CORRECT => $num_correct,
     NUM_GROUND_TRUTH => $num_ground_truth,

@@ -73,16 +73,6 @@ foreach my $path(($switches->get("coredocs"),
   $logger->NIST_die("$path does not exist") unless -e $path;
 }
 
-
-
-
-
-##
-my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
-my $assessments = QREL->new($logger, $switches->get("assessments"), $queries->get("QUERYTYPE"));
-##
-
-
 my $output_filename;
 my $intermediate_dir = $switches->get("intermediate");
 my $rundir_root = "$intermediate_dir/SPARQL-VALID-output";
@@ -103,25 +93,19 @@ $logger->NIST_die("$output_filename already exists") if -e $output_filename;
 open($program_output, ">:utf8", $output_filename)
   or $logger->NIST_die("Could not open $output_filename: $!");
 
-my $coredocs_filename = $switches->get("coredocs");
-my $docid_mappings_filename = $switches->get("docid_mappings");
-my $sentence_boundaries_filename = $switches->get("sentence_boundaries");
-my $images_boundingboxes_filename = $switches->get("images_boundingboxes");
-my $keyframes_boundingboxes_filename = $switches->get("keyframes_boundingboxes");
-my $coredocs = CoreDocs->new($logger, $coredocs_filename);
-my $docid_mappings = DocumentIDsMappings->new($logger, $docid_mappings_filename, $coredocs);
-my $text_document_boundaries = TextDocumentBoundaries->new($logger, $sentence_boundaries_filename);
-my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $images_boundingboxes_filename);
-my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $keyframes_boundingboxes_filename);
+my $docid_mappings = DocumentIDsMappings->new($logger, $switches->get("docid_mappings"), CoreDocs->new($logger, $switches->get("coredocs")));
+my $text_document_boundaries = TextDocumentBoundaries->new($logger, $switches->get("sentence_boundaries"));
+my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $switches->get("images_boundingboxes"));
+my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $switches->get("keyframes_boundingboxes"));
 my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
-my $queries_to_load = Container->new($logger);
-map {$queries_to_load->add($_, $_->get("query_id"))}
+my $queries_to_score = Container->new($logger);
+map {$queries_to_score->add($_, $_->get("query_id"))}
       FileHandler->new($logger, $switches->get("queries"))->get("ENTRIES")->toarray();
 my $runs_to_score = Container->new($logger);
 map {$runs_to_score->add("KEY", $_->get("run_id"))}
       FileHandler->new($logger, $runs_to_score_filename)->get("ENTRIES")->toarray();
 my $task_and_type_code = $queries->get("TASK_AND_TYPE_CODE");
-my $assessments = QREL->new($logger, $switches->get("assessments"), $queries->get("QUERYTYPE"));
+my $assessments = Assessments->new($logger, $switches->get("assessments"), $queries->get("QUERYTYPE"));
 
 my $responses = ResponseSet->new($logger,
                       $queries,
@@ -131,13 +115,15 @@ my $responses = ResponseSet->new($logger,
                       $keyframes_boundingboxes,
                       $rundir_root,
                       $runs_to_score,
-                      $queries_to_load,
+                      $queries_to_score,
                       $cadir_root);
 
+my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score);
+
 my ($num_errors, $num_warnings) = $logger->report_all_information();
-#unless($num_errors) {
-#  print $program_output $responses->tostring(), "\n";
-#}
+unless($num_errors+$num_warnings) {
+  print $program_output $scorer->print_lines($program_output);
+}
 close($program_output);
 
 unless($switches->get('error_file') eq "STDERR") {
