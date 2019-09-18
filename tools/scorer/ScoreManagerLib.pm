@@ -5243,7 +5243,6 @@ sub load {
   my %subdirs = (class_query => "class", zerohop_query => "zero-hop", graph_query => "graph");
   my $query_type_specifice_assessments_dir = $assessments_dir . "/data/" . $subdirs{$query_type};
   foreach my $filename(<$query_type_specifice_assessments_dir/*/*.tab>) {
-    print "--loading assessment file $filename\n";
     my $header_line = join("\t", qw(NODEID CLASS ID MODALITY DOCID MENTION_SPAN ASSESSMENT TYPE));
     my $header = Header->new($self->get("LOGGER"), $header_line);
     my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
@@ -5377,17 +5376,18 @@ sub score_responses {
   }
   my %categorized_submissions;
   my %correct_found;
+  my %incorrect_found;
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my ($query_id, $docid, $mention_span, $reference_kbid)
       = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
     push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $response);
-    push(@{$categorized_submissions{$query_id}{"POOLED"}}, $response) if $response->get("POOLED");
-    push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response) unless $response->get("POOLED");
     $response->{ASSESSMENT}{"PRE-POLICY"}{SUBMITTED} = 1;
     if($response->get("POOLED")) {
       # This response has been pooled and therefore should have been assessed
       # Find the corresponding assessment structure and bind it to this response
-      my $assessment = $assessments->get("BY_KEY", "$reference_kbid:$mention_span");
+      push(@{$categorized_submissions{$query_id}{"POOLED"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{POOLED} = 1;
+      my $assessment = $assessments->get("BY_KEY", "$reference_kbid:$mention_span") if $assessments->exists("$reference_kbid:$mention_span");
       unless($assessment) {
         my $filename = $response->get("WHERE")->{FILENAME};
         my $linenum = $response->get("WHERE")->{LINENUM};
@@ -5398,39 +5398,51 @@ sub score_responses {
       if($assessment->get("ASSESSMENT") eq "CORRECT") {
         push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
+        if($correct_found{$query_id}{$mention_span}) {
+          push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
+          push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $response);
+          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+          $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
+        }
+        else {
+          push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $response);
+          $correct_found{$query_id}{$mention_span} = 1;
+          $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
+        }
       }
-      if($assessment->get("ASSESSMENT") eq "INCORRECT") {
+      elsif($assessment->get("ASSESSMENT") eq "INCORRECT") {
         push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{INCORRECT} = 1;
-        push(@{$categorized_submissions{$query_id}{"WRONG"}}, $response);
-        $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+        if($incorrect_found{$query_id}{$mention_span}) {
+          push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
+          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+        }
+        else {
+          push(@{$categorized_submissions{$query_id}{"WRONG"}}, $response);
+          $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+        }
       }
-      if($correct_found{$query_id}{$mention_span}) {
-        push(@{$categorized_submissions{$query_id}{"WRONG"}}, $response);
-        push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $response);
-        $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
-        $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
-      }
-      else {
-        push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $response);
-        $correct_found{$query_id}{$mention_span} = 1;
-        $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
+      else{
+        push(@{$categorized_submissions{$query_id}{"UNKNOWN"}}, $response);
+        $response->{ASSESSMENT}{"PRE-POLICY"}{UNKNOWN} = 1;
+        $response->{ASSESSMENT}{"POST-POLICY"}{UNKNOWN} = 1;
       }
     }
     else {
       push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
       $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+      $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
     }
     my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
     my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
-    my $line = "KBID=$reference_kbid " .
-                 "QUERYID=$query_id " .
+    my $line = "QUERYID=$query_id " .
+                 "KBID=$reference_kbid " .
                  "MENTION=$mention_span " .
                  "PRE_POLICY_ASSESSMENT=$pre_policy " .
                  "POST_POLICY_ASSESSMENT=$post_policy\n";
     $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
   }
-  foreach my $query_id(@$queries_to_score) {
+  foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
     my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
     my $num_submitted = @{$categorized_submissions{$query_id}{"SUBMITTED"} || []};
     my $num_correct = @{$categorized_submissions{$query_id}{"CORRECT"} || []};
@@ -5439,7 +5451,7 @@ sub score_responses {
     my $num_wrong = @{$categorized_submissions{$query_id}{"WRONG"} || []};
     my $num_redundant = @{$categorized_submissions{$query_id}{"REDUNDANT"} || []};
     my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
-    my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOT_IN_POOL"} || []};
+    my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOTPOOLED"} || []};
     my $num_ground_truth = keys %{$ground_truth{$node_id}};
     my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
     $scores->add($score, $query_id);
@@ -5510,7 +5522,7 @@ sub get_MICRO_AVERAGE {
     $total_num_ignored += $num_ignored;
     $total_num_ground_truth += $num_ground_truth;
   }
-  Score->new($logger, $runid, "ALL-Micro", "", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+  Score->new($logger, $runid, "ALL-Micro", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
 }
 
 sub print_line {
@@ -5542,6 +5554,7 @@ sub prepare_lines {
     my %elements_to_print;
     foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
       my $value = $score->get($field->{NAME});
+      my $field_name = $field->{NAME};
       my $text = sprintf($field->{FORMAT}, $value);
       $elements_to_print{$field->{NAME}} = $text;
       $self->{WIDTHS}{$field->{NAME}} = length($text) if length($text) > $self->{WIDTHS}{$field->{NAME}};
