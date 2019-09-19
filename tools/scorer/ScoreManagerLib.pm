@@ -5262,7 +5262,7 @@ sub load {
                             {FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});  
         }
       }
-      my $assessment_entry = SuperObject->new();
+      my $assessment_entry = SuperObject->new($self->get("LOGGER"));
       $assessment_entry->set("ASSESSMENT", $normalize{$assessment});
       $assessment_entry->set("DOCUMENT_ID", $docid);
       $assessment_entry->set("REFERENCE_KBID", $nodeid);
@@ -5352,28 +5352,30 @@ sub score_responses {
     my ($assessment, $docid, $mention_span, $reference_kbid) = 
       map {$assessment_entry->get($_)} qw(ASSESSMENT DOCUMENT_ID MENTION_SPAN REFERENCE_KBID);
     $mention_span = "$docid:$mention_span";
-    $ground_truth{$reference_kbid}{$docid} = 1;
+    $ground_truth{$reference_kbid}{$docid}{$mention_span} = 1 if $assessment eq "CORRECT";
   }
-  my @candidate_responses;
+  my %candidate_responses;
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my ($query_id, $cluster_rank, $docid, $mention_span, $reference_kbid)
       = map {$response->get($_)} qw(QUERY_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
     my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
     next if ($cluster_rank > $max_cluster_rank);
-    push(@candidate_responses, $response);
+    push(@{$candidate_responses{$query_id}}, $response);
   }
-  my @selected_responses;
-  my $i = 0;
-  foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
-                                  || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
-                            @candidate_responses) {
-    my $max_num_informative_mentions = $queries_to_score->get("BY_KEY", $response->get("QUERY_ID"))->get("max_num_informative_mentions");
-    last if $i == $max_num_informative_mentions;
-    next unless $docid_mappings->get("COREDOCS")->exists($response->get("DOCUMENT_ID"));
-    $response->set("POOLED", 1);
-    push(@selected_responses, $response);
-    $i++;
+
+  foreach my $query_id(keys %candidate_responses) {
+    my $i = 0;
+    foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
+                                    || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
+                              @{$candidate_responses{$query_id}}) {
+      my $max_num_informative_mentions = $queries_to_score->get("BY_KEY", $response->get("QUERY_ID"))->get("max_num_informative_mentions");
+      last if $i == $max_num_informative_mentions;
+      next unless $docid_mappings->get("COREDOCS")->exists($response->get("DOCUMENT_ID"));
+      $response->set("POOLED", 1);
+      $i++;
+    }
   }
+
   my %categorized_submissions;
   my %correct_found;
   my %incorrect_found;
@@ -5430,8 +5432,9 @@ sub score_responses {
     }
     else {
       push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
-      $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
       $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
+      push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
+      $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
     }
     my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
     my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
