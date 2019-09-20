@@ -5311,6 +5311,11 @@ sub score_responses {
   $self->set("SCORES", $scores);
 }
 
+sub compute_ap {
+  my ($self, $num_ground_truth, @responses) = @_;
+  rand();
+}
+
 sub print_lines {
   my ($self, $program_output) = @_;
   $self->get("SCORES")->print_lines($program_output);
@@ -5367,6 +5372,7 @@ sub score_responses {
     push(@{$candidate_responses{$query_id}}, $response);
   }
 
+  my %selected_responses;
   foreach my $query_id(keys %candidate_responses) {
     my %responses_per_document;
     foreach my $response(@{$candidate_responses{$query_id}}) {
@@ -5390,9 +5396,17 @@ sub score_responses {
       $response->set("SUBMITTED", 1);
       next if $i == $max_num_informative_mentions;
       next unless $docid_mappings->get("COREDOCS")->exists($response->get("DOCUMENT_ID"));
+      push(@{$selected_responses{$query_id}}, $response);
       $response->set("POOLED", 1);
       $i++;
     }
+  }
+
+  my %average_precision;
+  foreach my $query_id(keys %selected_responses) {
+    my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
+    my $num_ground_truth = keys %{$ground_truth{$node_id}};
+    $average_precision{$query_id} = ScoresManager::compute_ap($self, $num_ground_truth, @{$selected_responses{$query_id}});
   }
 
   my %categorized_submissions;
@@ -5476,6 +5490,7 @@ sub score_responses {
                  "POST_POLICY_ASSESSMENT=$post_policy\n";
     $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
   }
+
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
     my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
     my $num_submitted_a = @{$categorized_submissions{$query_id}{"SUBMITTED-A"} || []};
@@ -5489,7 +5504,8 @@ sub score_responses {
     my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
     my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOTPOOLED"} || []};
     my $num_ground_truth = keys %{$ground_truth{$node_id}};
-    my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
+    my $average_precision = $average_precision{$query_id} || 0;
+    my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $average_precision);
     $scores->add($score, $query_id);
   }
   $self->set("SCORES", $scores);
@@ -5509,24 +5525,25 @@ package ScoresPrinter;
 use parent -norequire, 'Container', 'Super';
 
 my @fields_to_print = (
-  {NAME => 'EC',               HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'NODEID',           HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'RUNID',            HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_SUBMITTED_A',  HEADER => 'SubA',     FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_SUBMITTED_B',  HEADER => 'SubB',     FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_NOT_IN_POOL',  HEADER => 'NtAssd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_CORRECT',      HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_REDUNDANT',    HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_INCORRECT',    HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_COUNTED',      HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_RIGHT',        HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_WRONG',        HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_IGNORED',      HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'PRECISION',        HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'RECALL',           HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'F1',               HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'EC',                 HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NODEID',             HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',              HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH',   HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED_A',    HEADER => 'SubA',     FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_SUBMITTED_B',    HEADER => 'SubB',     FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_SUBMITTED',      HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_NOT_IN_POOL',    HEADER => 'NtAssd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_CORRECT',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_REDUNDANT',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED',        HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT',          HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG',          HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED',        HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'PRECISION',          HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL',             HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'F1',                 HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'AVERAGE_PRECISION',  HEADER => 'AP/MAP',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
 );
 
 sub new {
@@ -5542,13 +5559,14 @@ sub new {
   $self;
 }
 
-sub get_MICRO_AVERAGE {
+sub get_SUMMARY {
   my ($self) = @_;
   my $logger = $self->get("LOGGER");
-  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth, $mean_average_precision);
+  my $total_num_counted_queries = 0;
   foreach my $score($self->toarray()) {
-    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth)
-      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH);
+    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $average_precision)
+      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH AVERAGE_PRECISION);
     $runid = $score->get("RUNID") unless $runid;
     $total_num_submitted += $num_submitted;
     $total_num_submitted_a += $num_submitted_a;
@@ -5561,8 +5579,11 @@ sub get_MICRO_AVERAGE {
     $total_num_not_in_pool += $num_not_in_pool;
     $total_num_ignored += $num_ignored;
     $total_num_ground_truth += $num_ground_truth;
+    $mean_average_precision += $average_precision;
+    $total_num_counted_queries++ if $num_ground_truth;
   }
-  Score->new($logger, $runid, "ALL-Micro", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+  $mean_average_precision /= $total_num_counted_queries;
+  Score->new($logger, $runid, "Summary", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth, $mean_average_precision);
 }
 
 sub print_line {
@@ -5589,7 +5610,7 @@ sub print_headers {
 sub prepare_lines {
   my ($self) = @_;
   my @scores = $self->toarray();
-  push(@scores, $self->get("MICRO_AVERAGE"));
+  push(@scores, $self->get("SUMMARY"));
   foreach my $score (@scores) {
     my %elements_to_print;
     foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
@@ -5622,9 +5643,10 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $average_precision) = @_;
   my $self = {
     __CLASS__ => 'Scores',
+    AVERAGE_PRECISION => $average_precision,
     EC => $query_id,
     NODEID => $node_id,
     NUM_CORRECT => $num_correct,
