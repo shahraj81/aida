@@ -121,7 +121,7 @@ my $responses = ResponseSet->new($logger,
 my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
-unless($num_errors+$num_warnings) {
+unless($num_errors) {
   print $program_output $scorer->print_lines($program_output);
 }
 close($program_output);

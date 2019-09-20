@@ -5347,6 +5347,7 @@ sub score_responses {
   my ($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
   my $scores = ScoresPrinter->new($logger);
+
   my %ground_truth;
   foreach my $assessment_entry($assessments->toarray()) {
     my ($assessment, $docid, $mention_span, $reference_kbid) = 
@@ -5354,22 +5355,40 @@ sub score_responses {
     $mention_span = "$docid:$mention_span";
     $ground_truth{$reference_kbid}{$docid}{$mention_span} = 1 if $assessment eq "CORRECT";
   }
+
   my %candidate_responses;
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my ($query_id, $cluster_rank, $docid, $mention_span, $reference_kbid)
       = map {$response->get($_)} qw(QUERY_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
     my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
+    $response->set("SUBMITTED-A", 1);
     next if ($cluster_rank > $max_cluster_rank);
+    $response->set("SUBMITTED-B", 1);
     push(@{$candidate_responses{$query_id}}, $response);
   }
 
   foreach my $query_id(keys %candidate_responses) {
+    my %responses_per_document;
+    foreach my $response(@{$candidate_responses{$query_id}}) {
+      if(exists $responses_per_document{$response->get("DOCUMENT_ID")}) {
+        my $runid = $response->get("RUN_ID");
+        my $run_and_query = "$runid:$query_id";
+        my $cluster_id = $response->get("CLUSTER_ID");
+        $logger->record_problem("MULTIPLE_INFORMATIVE_JUSTIFICATIONS_PER_DOCUMENT", $run_and_query, $cluster_id, $response->get("DOCUMENT_ID"), $response->get("WHERE"));
+        $responses_per_document{$response->get("DOCUMENT_ID")} = $response
+          if($response->get("JUSTIFICATION_CONFIDENCE") > $responses_per_document{$response->get("DOCUMENT_ID")}->get("JUSTIFICATION_CONFIDENCE"));
+      }
+      else {
+        $responses_per_document{$response->get("DOCUMENT_ID")} = $response;
+      }
+    }
     my $i = 0;
     foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
                                     || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
-                              @{$candidate_responses{$query_id}}) {
+                              values %responses_per_document) {
       my $max_num_informative_mentions = $queries_to_score->get("BY_KEY", $response->get("QUERY_ID"))->get("max_num_informative_mentions");
-      last if $i == $max_num_informative_mentions;
+      $response->set("SUBMITTED", 1);
+      next if $i == $max_num_informative_mentions;
       next unless $docid_mappings->get("COREDOCS")->exists($response->get("DOCUMENT_ID"));
       $response->set("POOLED", 1);
       $i++;
@@ -5382,8 +5401,18 @@ sub score_responses {
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my ($query_id, $docid, $mention_span, $reference_kbid)
       = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
-    push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $response);
-    $response->{ASSESSMENT}{"PRE-POLICY"}{SUBMITTED} = 1;
+    if($response->get("SUBMITTED-A")) {
+      push(@{$categorized_submissions{$query_id}{"SUBMITTED-A"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-A"} = 1;
+    }
+    if($response->get("SUBMITTED-B")) {
+      push(@{$categorized_submissions{$query_id}{"SUBMITTED-B"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-B"} = 1;
+    }
+    if($response->get("SUBMITTED")) {
+      push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{SUBMITTED} = 1;
+    }
     if($response->get("POOLED")) {
       # This response has been pooled and therefore should have been assessed
       # Find the corresponding assessment structure and bind it to this response
@@ -5431,8 +5460,10 @@ sub score_responses {
       }
     }
     else {
-      push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
-      $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
+      if($response->get("SUBMITTED")) {
+        push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
+        $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
+      }
       push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
       $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
     }
@@ -5447,6 +5478,8 @@ sub score_responses {
   }
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
     my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
+    my $num_submitted_a = @{$categorized_submissions{$query_id}{"SUBMITTED-A"} || []};
+    my $num_submitted_b = @{$categorized_submissions{$query_id}{"SUBMITTED-B"} || []};
     my $num_submitted = @{$categorized_submissions{$query_id}{"SUBMITTED"} || []};
     my $num_correct = @{$categorized_submissions{$query_id}{"CORRECT"} || []};
     my $num_incorrect = @{$categorized_submissions{$query_id}{"INCORRECT"} || []};
@@ -5456,7 +5489,7 @@ sub score_responses {
     my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
     my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOTPOOLED"} || []};
     my $num_ground_truth = keys %{$ground_truth{$node_id}};
-    my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
+    my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth);
     $scores->add($score, $query_id);
   }
   $self->set("SCORES", $scores);
@@ -5480,6 +5513,8 @@ my @fields_to_print = (
   {NAME => 'NODEID',           HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',            HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH', HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED_A',  HEADER => 'SubA',     FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_SUBMITTED_B',  HEADER => 'SubB',     FORMAT => '%4d',    JUSTIFY => 'R'},
   {NAME => 'NUM_SUBMITTED',    HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
   {NAME => 'NUM_NOT_IN_POOL',  HEADER => 'NtAssd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_CORRECT',      HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -5510,12 +5545,14 @@ sub new {
 sub get_MICRO_AVERAGE {
   my ($self) = @_;
   my $logger = $self->get("LOGGER");
-  my ($runid, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
   foreach my $score($self->toarray()) {
-    my ($num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth)
-      = map {$score->get($_)} qw(NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH);
+    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth)
+      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH);
     $runid = $score->get("RUNID") unless $runid;
     $total_num_submitted += $num_submitted;
+    $total_num_submitted_a += $num_submitted_a;
+    $total_num_submitted_b += $num_submitted_b;
     $total_num_correct += $num_correct;
     $total_num_incorrect += $num_incorrect;
     $total_num_right += $num_right;
@@ -5525,7 +5562,7 @@ sub get_MICRO_AVERAGE {
     $total_num_ignored += $num_ignored;
     $total_num_ground_truth += $num_ground_truth;
   }
-  Score->new($logger, $runid, "ALL-Micro", "", $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
+  Score->new($logger, $runid, "ALL-Micro", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth);
 }
 
 sub print_line {
@@ -5585,7 +5622,7 @@ package Score;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $query_id, $node_id, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
+  my ($class, $logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth) = @_;
   my $self = {
     __CLASS__ => 'Scores',
     EC => $query_id,
@@ -5598,6 +5635,8 @@ sub new {
     NUM_REDUNDANT => $num_redundant,
     NUM_RIGHT => $num_right,
     NUM_SUBMITTED => $num_submitted,
+    NUM_SUBMITTED_A => $num_submitted_a,
+    NUM_SUBMITTED_B => $num_submitted_b,
     NUM_WRONG => $num_wrong,
     RUNID => $runid,
     LOGGER => $logger,
