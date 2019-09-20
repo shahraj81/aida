@@ -5463,9 +5463,9 @@ sub score_responses {
       if($response->get("SUBMITTED")) {
         push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
+        push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
+        $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
       }
-      push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
-      $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
     }
     my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
     my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
