@@ -5398,7 +5398,7 @@ sub score_responses {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
-  my $scores = ScoresPrinter->new($logger);
+  my $scores = ZeroHopScoresPrinter->new($logger);
 
   my %ground_truth;
   foreach my $assessment_entry($assessments->toarray()) {
@@ -5579,10 +5579,10 @@ sub print_lines {
 }
 
 #####################################################################################
-# ScoresPrinter
+# ZeroHopScoresPrinter
 #####################################################################################
 
-package ScoresPrinter;
+package ZeroHopScoresPrinter;
 
 use parent -norequire, 'Container', 'Super';
 
@@ -5613,7 +5613,7 @@ my @fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{__CLASS__} = 'ScoresPrinter';
+  $self->{__CLASS__} = 'ZeroHopScoresPrinter';
   $self->{PROGRAM_OUTPUT} = $program_output;
   $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @fields_to_print};
   $self->{LOGGER} = $logger;
@@ -5742,22 +5742,22 @@ sub get_NUM_COUNTED {
   $self->get("NUM_RIGHT") + $self->get("NUM_WRONG");
 }
 
-sub get_PRECISION {
-  my ($self) = @_;
-  $self->get("NUM_COUNTED") ? $self->get("NUM_RIGHT")/($self->get("NUM_COUNTED")) : 0;
-}
-
-sub get_RECALL {
-  my ($self) = @_;
-  $self->get("NUM_GROUND_TRUTH") ? $self->get("NUM_RIGHT")/($self->get("NUM_GROUND_TRUTH")) : 0;
-}
-
-sub get_F1 {
-  my ($self) = @_;
-  my $precision = $self->get("PRECISION");
-  my $recall = $self->get("RECALL");
-  ($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
-}
+#sub get_PRECISION {
+#  my ($self) = @_;
+#  $self->get("NUM_COUNTED") ? $self->get("NUM_RIGHT")/($self->get("NUM_COUNTED")) : 0;
+#}
+#
+#sub get_RECALL {
+#  my ($self) = @_;
+#  $self->get("NUM_GROUND_TRUTH") ? $self->get("NUM_RIGHT")/($self->get("NUM_GROUND_TRUTH")) : 0;
+#}
+#
+#sub get_F1 {
+#  my ($self) = @_;
+#  my $precision = $self->get("PRECISION");
+#  my $recall = $self->get("RECALL");
+#  ($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
+#}
 
 #####################################################################################
 # EncodingFormatToModalityMappings
