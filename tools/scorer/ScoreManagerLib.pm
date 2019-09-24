@@ -155,7 +155,6 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 ########## General Errors
   ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
   AP_SUBMISSION_LINE                      DEBUG_INFO     AP_SUBMISSION_LINE: %s
-  AP_QREL_LINE                            DEBUG_INFO     AP_QREL_LINE: %s
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
@@ -5436,7 +5435,6 @@ sub score_responses {
     }
   }
   
-  my %added;
   my %categorized_submissions;
   my %correct_found;
   my %incorrect_found;
@@ -5483,7 +5481,6 @@ sub score_responses {
           $correct_found{$query_id}{$mention_span} = 1;
           $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
           $document_based_assessments_assigned{$query_id}{$mention_span} = 1;
-          $added{$query_id}{$docid} = 1;
         }
       }
       elsif($assessment->get("ASSESSMENT") eq "INCORRECT") {
@@ -5529,30 +5526,6 @@ sub score_responses {
                  "PRE_POLICY_ASSESSMENT=$pre_policy " .
                  "POST_POLICY_ASSESSMENT=$post_policy\n";
     $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
-  }
-  my %qrel;
-  foreach my $assessment_entry($assessments->toarray()) {
-    my ($assessment, $docid, $mention_span, $reference_kbid) = 
-      map {$assessment_entry->get($_)} qw(ASSESSMENT DOCUMENT_ID MENTION_SPAN REFERENCE_KBID);
-    $mention_span = "$docid:$mention_span";
-    my ($query_id) = map {$_->get("QUERYID")} grep {$_->get("REFERENCE_KBID") eq $reference_kbid} $queries->toarray();
-    if(exists $document_based_assessments_assigned{$query_id}{$mention_span} && not exists $qrel{$query_id}{$mention_span}) {
-      $qrel{$query_id}{$mention_span} = $document_based_assessments_assigned{$query_id}{$mention_span};
-      next;
-    }
-    if ($assessment eq "CORRECT") {
-      unless($added{$query_id}{$docid}) {
-        $qrel{$query_id}{$mention_span} = 1;
-        $added{$query_id}{$docid} = 1;
-      }
-    }
-  }
-  foreach my $query_id(sort keys %qrel) {
-    foreach my $mention_span(sort keys %{$qrel{$query_id}}) {
-      my $correctness = $qrel{$query_id}{$mention_span};
-      my $line = "$query_id 0 $mention_span $correctness";
-      $self->get("LOGGER")->record_debug_information("AP_QREL_LINE", $line, "NO_SOURCE");
-    }
   }
 
   my %average_precision;
