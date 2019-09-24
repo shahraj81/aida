@@ -154,6 +154,8 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 
 ########## General Errors
   ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
+  AP_SUBMISSION_LINE                      DEBUG_INFO     AP_SUBMISSION_LINE: %s
+  AP_QREL_LINE                            DEBUG_INFO     AP_QREL_LINE: %s
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
@@ -2616,9 +2618,9 @@ sub generate_slot {
 }
 
 sub get_AG_CV {
-  my ($self, $response, @ac_fields) = @_;
+  my ($self, $response, $ac_fields) = @_;
   my $ag_cv = 1.0;
-  foreach my $ac_field(@ac_fields) {
+  foreach my $ac_field(@$ac_fields) {
     $ag_cv *= $response->get($ac_field);
   }
   $ag_cv;
@@ -3051,7 +3053,7 @@ sub new {
   my ($class, $logger, $docid_mappings, $text_document_boundaries, $images_boundingboxes, $keyframes_boundingboxes, $previous_pool, $coredocs, $queries, $queries_to_load, $runs_to_load, $runs_dir, $cas_dir) = @_;
   my $self = {
     __CLASS__ => 'TA2ZeroHopResponsesPool',
-    AG_CV_FIELDS => qw(?link_cv),
+    AG_CV_FIELDS => ["?link_cv"],
     CONFIDENCE_AGGREGATION_DIR => $cas_dir,
     COREDOCS => $coredocs,
     DOCID_MAPPINGS => $docid_mappings,
@@ -4694,6 +4696,11 @@ sub exists {
   $self->get("QUERIES")->exists($query_id);
 }
 
+sub toarray {
+  my ($self) = @_;
+  $self->get("QUERIES")->toarray();
+}
+
 sub tostring {
   my ($self, $indent) = @_;
   my $retVal = "";
@@ -5311,11 +5318,6 @@ sub score_responses {
   $self->set("SCORES", $scores);
 }
 
-sub compute_ap {
-  my ($self, $num_ground_truth, @responses) = @_;
-  rand();
-}
-
 sub print_lines {
   my ($self, $program_output) = @_;
   $self->get("SCORES")->print_lines($program_output);
@@ -5333,7 +5335,8 @@ sub new {
   my ($class, $logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) = @_;
   my $self = {
     __CLASS__ => 'ZeroHopScores',
-    AG_CV_FIELDS => qw(?link_cv),
+    AG_CV_FIELDS => ["?link_cv"],
+    AP_RANKING_SCORE_FIELDS => ["?j_cv", "?link_cv"],
     ASSESSMENTS => $assessments,
     DOCID_MAPPINGS => $docid_mappings,
     QUERIES => $queries,
@@ -5345,6 +5348,37 @@ sub new {
   bless($self, $class);
   $self->score_responses();
   $self;
+}
+
+sub get_AP_RANKING_SCORE {
+  my ($self, $response) = @_;
+  $self->get("RESPONSES")->get("AG_CV", $response, $self->get("AP_RANKING_SCORE_FIELDS"));
+}
+
+sub compute_ap {
+  my ($self, $num_ground_truth, @responses) = @_;
+  return 0 unless $num_ground_truth;
+  my %ranked_responses;
+  my $rank = 1;
+  my $correct_at_rank = 0;
+  my $sum_precision = 0;
+  foreach my $response(sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) || 
+                              $b->get("VALUE_PROVENANCE_TRIPLE") cmp $a->get("VALUE_PROVENANCE_TRIPLE")} @responses) {
+    $ranked_responses{$rank} = $response;
+    if($response->{"ASSESSMENT"}{"POST-POLICY"}{"RIGHT"}) {
+      $correct_at_rank++;
+      $sum_precision += $correct_at_rank/$rank;
+    }
+    my ($query_id, $docid, $mention_span, $run_id)
+      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE RUN_ID);
+    my $correctness = $response->get("CORRECTNESS");
+    my $score = $self->get("AP_RANKING_SCORE", $response);
+    my $line = "$query_id $docid $mention_span $rank $score $run_id $correctness";
+    $self->get("LOGGER")->record_debug_information("AP_SUBMISSION_LINE", $line, $response->get("WHERE"));
+    $rank++;
+  }
+
+  $sum_precision / (($num_ground_truth <= 1000) ? $num_ground_truth : 1000);
 }
 
 sub score_responses {
@@ -5401,17 +5435,12 @@ sub score_responses {
       $i++;
     }
   }
-
-  my %average_precision;
-  foreach my $query_id(keys %selected_responses) {
-    my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
-    my $num_ground_truth = keys %{$ground_truth{$node_id}};
-    $average_precision{$query_id} = ScoresManager::compute_ap($self, $num_ground_truth, @{$selected_responses{$query_id}});
-  }
-
+  
+  my %added;
   my %categorized_submissions;
   my %correct_found;
   my %incorrect_found;
+  my %document_based_assessments_assigned;
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my ($query_id, $docid, $mention_span, $reference_kbid)
       = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
@@ -5444,27 +5473,30 @@ sub score_responses {
         push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
         if($correct_found{$query_id}{$mention_span}) {
-          push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
+          push(@{$categorized_submissions{$query_id}{"IGNORE"}}, $response);
           push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $response);
-          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE} = 1;
           $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
         }
         else {
           push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $response);
           $correct_found{$query_id}{$mention_span} = 1;
           $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
+          $document_based_assessments_assigned{$query_id}{$mention_span} = 1;
+          $added{$query_id}{$docid} = 1;
         }
       }
       elsif($assessment->get("ASSESSMENT") eq "INCORRECT") {
         push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{INCORRECT} = 1;
         if($incorrect_found{$query_id}{$mention_span}) {
-          push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
-          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+          push(@{$categorized_submissions{$query_id}{"IGNORE"}}, $response);
+          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE} = 1;
         }
         else {
           push(@{$categorized_submissions{$query_id}{"WRONG"}}, $response);
           $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+          $document_based_assessments_assigned{$query_id}{$mention_span} = 0 unless $document_based_assessments_assigned{$query_id}{$mention_span};
         }
       }
       else{
@@ -5477,10 +5509,18 @@ sub score_responses {
       if($response->get("SUBMITTED")) {
         push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
-        push(@{$categorized_submissions{$query_id}{"IGNORED"}}, $response);
-        $response->{ASSESSMENT}{"POST-POLICY"}{IGNORED} = 1;
+        push(@{$categorized_submissions{$query_id}{"IGNORE"}}, $response);
+        $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE} = 1;
+      }
+      else {
+        $response->{ASSESSMENT}{"POST-POLICY"}{NOT_CONSIDERED} = 1;
       }
     }
+
+    $response->set("CORRECTNESS", "RIGHT") if $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT};
+    $response->set("CORRECTNESS", "WRONG") if $response->{ASSESSMENT}{"POST-POLICY"}{WRONG};
+    $response->set("CORRECTNESS", "IGNORE") if $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE};
+
     my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
     my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
     my $line = "QUERYID=$query_id " .
@@ -5489,6 +5529,37 @@ sub score_responses {
                  "PRE_POLICY_ASSESSMENT=$pre_policy " .
                  "POST_POLICY_ASSESSMENT=$post_policy\n";
     $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
+  }
+  my %qrel;
+  foreach my $assessment_entry($assessments->toarray()) {
+    my ($assessment, $docid, $mention_span, $reference_kbid) = 
+      map {$assessment_entry->get($_)} qw(ASSESSMENT DOCUMENT_ID MENTION_SPAN REFERENCE_KBID);
+    $mention_span = "$docid:$mention_span";
+    my ($query_id) = map {$_->get("QUERYID")} grep {$_->get("REFERENCE_KBID") eq $reference_kbid} $queries->toarray();
+    if(exists $document_based_assessments_assigned{$query_id}{$mention_span} && not exists $qrel{$query_id}{$mention_span}) {
+      $qrel{$query_id}{$mention_span} = $document_based_assessments_assigned{$query_id}{$mention_span};
+      next;
+    }
+    if ($assessment eq "CORRECT") {
+      unless($added{$query_id}{$docid}) {
+        $qrel{$query_id}{$mention_span} = 1;
+        $added{$query_id}{$docid} = 1;
+      }
+    }
+  }
+  foreach my $query_id(sort keys %qrel) {
+    foreach my $mention_span(sort keys %{$qrel{$query_id}}) {
+      my $correctness = $qrel{$query_id}{$mention_span};
+      my $line = "$query_id 0 $mention_span $correctness";
+      $self->get("LOGGER")->record_debug_information("AP_QREL_LINE", $line, "NO_SOURCE");
+    }
+  }
+
+  my %average_precision;
+  foreach my $query_id(keys %selected_responses) {
+    my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
+    my $num_ground_truth = keys %{$ground_truth{$node_id}};
+    $average_precision{$query_id} = $self->compute_ap($num_ground_truth, @{$selected_responses{$query_id}});
   }
 
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
@@ -5501,7 +5572,7 @@ sub score_responses {
     my $num_right = @{$categorized_submissions{$query_id}{"RIGHT"} || []};
     my $num_wrong = @{$categorized_submissions{$query_id}{"WRONG"} || []};
     my $num_redundant = @{$categorized_submissions{$query_id}{"REDUNDANT"} || []};
-    my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORED"} || []};
+    my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORE"} || []};
     my $num_not_in_pool = @{$categorized_submissions{$query_id}{"NOTPOOLED"} || []};
     my $num_ground_truth = keys %{$ground_truth{$node_id}};
     my $average_precision = $average_precision{$query_id} || 0;
