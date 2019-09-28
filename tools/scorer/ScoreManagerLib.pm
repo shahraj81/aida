@@ -5870,7 +5870,7 @@ sub get_AP {
     $rank++;
   }
 
-  $sum_precision / (($num_ground_truth <= 1000) ? $num_ground_truth : 1000);
+  $sum_precision / (($num_ground_truth <= 200) ? $num_ground_truth : 200);
 }
 
 sub score_responses {
