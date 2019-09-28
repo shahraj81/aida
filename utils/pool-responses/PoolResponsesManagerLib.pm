@@ -2676,14 +2676,14 @@ package Pool;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $logger, $task_and_type_code, $filename) = @_;
+  my ($class, $logger, $task_and_type_code, $filenames) = @_;
   my $self = $class->SUPER::new($logger, 'Kit');
   $self->{__CLASS__} = 'Pool';
   $self->{TASK_AND_TYPE_CODE} = $task_and_type_code;
-  $self->{FILENAME} = $filename;
+  $self->{FILENAMES} = $filenames;
   $self->{LOGGER} = $logger;
   bless($self, $class);
-  $self->load($task_and_type_code, $filename) if $filename;
+  $self->load($task_and_type_code, $filenames) if $filenames;
   $self;
 }
 
@@ -2695,40 +2695,44 @@ sub load {
 }
 
 sub load_TA2_ZH {
-  my ($self, $filename) = @_;
+  my ($self, $filenames) = @_;
   my $logger = $self->get("LOGGER");
-  my $filehandler = FileHandler->new($logger, $filename);
-  my $header = $filehandler->get("HEADER");
-  my $entries = $filehandler->get("ENTRIES");
-  foreach my $entry($entries->toarray()) {
-    my $query_id = $entry->get("KBID");
-    my $kbid_kit = $self->get("BY_KEY", $query_id);
+  foreach my $filename(split(",", $filenames)) {
+    my $filehandler = FileHandler->new($logger, $filename);
+    my $header = $filehandler->get("HEADER");
+    my $entries = $filehandler->get("ENTRIES");
+    foreach my $entry($entries->toarray()) {
+      my $query_id = $entry->get("KBID");
+      my $kbid_kit = $self->get("BY_KEY", $query_id);
 
-    my $kit_entry = KitEntry->new($logger);
-    $kit_entry->set("HEADER", $header);
-    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+      my $kit_entry = KitEntry->new($logger);
+      $kit_entry->set("HEADER", $header);
+      map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
 
-    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
-    $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+      my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+      $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+    }
   }
 }
 
 sub load_TA1_CL {
-  my ($self, $filename) = @_;
+  my ($self, $filenames) = @_;
   my $logger = $self->get("LOGGER");
-  my $filehandler = FileHandler->new($logger, $filename);
-  my $header = $filehandler->get("HEADER");
-  my $entries = $filehandler->get("ENTRIES");
-  foreach my $entry($entries->toarray()) {
-    my $query_id = $entry->get("QUERY_ID");
-    my $kbid_kit = $self->get("BY_KEY", $query_id);
+  foreach my $filename(split(",", $filenames)) {
+    my $filehandler = FileHandler->new($logger, $filename);
+    my $header = $filehandler->get("HEADER");
+    my $entries = $filehandler->get("ENTRIES");
+    foreach my $entry($entries->toarray()) {
+      my $query_id = $entry->get("QUERY_ID");
+      my $kbid_kit = $self->get("BY_KEY", $query_id);
 
-    my $kit_entry = KitEntry->new($logger);
-    $kit_entry->set("HEADER", $header);
-    map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
-    
-    my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
-    $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+      my $kit_entry = KitEntry->new($logger);
+      $kit_entry->set("HEADER", $header);
+      map {$kit_entry->set($_, $entry->get($_))} @{$header->get("ELEMENTS")};
+
+      my $uuid = &main::generate_uuid_from_string($kit_entry->tostring());
+      $kbid_kit->add($kit_entry, $uuid) unless $self->exists($uuid);
+    }
   }
 }
 
