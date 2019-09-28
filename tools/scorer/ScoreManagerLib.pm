@@ -5402,7 +5402,7 @@ sub get_AP_RANKING_SCORE {
 }
 
 sub get_AP {
-  my ($self, $tie_breaking_criteria, $num_ground_truth, @responses) = @_;
+  my ($self, $tie_breaking_criteria, $num_ground_truth, $max_num_ground_truth, @responses) = @_;
   return 0 unless $num_ground_truth;
   my %ranked_responses;
   my $rank = 1;
@@ -5428,7 +5428,7 @@ sub get_AP {
     next if $correctness eq "IGNORE";
     $ranked_responses{$rank} = $response;
     my $fqec = $response->get("ASSESSMENT_ENTRY")->get("FQEC") || "N/A";
-    if($correctness eq "RIGHT") {
+    if($correctness eq "RIGHT" && $correct_at_rank < $max_num_ground_truth) {
       $correct_at_rank++;
       $sum_precision += $correct_at_rank/$rank;
     }
@@ -5440,7 +5440,7 @@ sub get_AP {
     $rank++;
   }
 
-  $sum_precision / (($num_ground_truth <= 1000) ? $num_ground_truth : 1000);
+  $sum_precision / (($num_ground_truth <= $max_num_ground_truth) ? $num_ground_truth : $max_num_ground_truth);
 }
 
 sub score_responses {
@@ -5602,10 +5602,12 @@ sub score_responses {
 
   my %average_precision;
   foreach my $query_and_document(keys %selected_responses) {
+    my ($query_id, $docid) = split(":", $query_and_document);
     my $num_ground_truth = scalar keys %{$ground_truth{$query_and_document}{FQEC_TO_MENTIONS}};
-    $average_precision{BESTCASE}{$query_and_document} = $self->get("AP", "BESTCASE", $num_ground_truth, @{$selected_responses{$query_and_document}});
-    $average_precision{WORSTCASE}{$query_and_document} = $self->get("AP", "WORSTCASE", $num_ground_truth, @{$selected_responses{$query_and_document}});
-    $average_precision{TRECEVAL}{$query_and_document} = $self->get("AP", "TRECEVAL", $num_ground_truth, @{$selected_responses{$query_and_document}});
+    my $max_num_ground_truth = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_informative_mentions");
+    $average_precision{BESTCASE}{$query_and_document} = $self->get("AP", "BESTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_and_document}});
+    $average_precision{WORSTCASE}{$query_and_document} = $self->get("AP", "WORSTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_and_document}});
+    $average_precision{TRECEVAL}{$query_and_document} = $self->get("AP", "TRECEVAL", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_and_document}});
   }
 
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
@@ -5834,7 +5836,7 @@ sub get_AP_RANKING_SCORE {
 }
 
 sub get_AP {
-  my ($self, $tie_breaking_criteria, $num_ground_truth, @responses) = @_;
+  my ($self, $tie_breaking_criteria, $num_ground_truth, $max_num_ground_truth, @responses) = @_;
   return 0 unless $num_ground_truth;
   my %ranked_responses;
   my $rank = 1;
@@ -5856,9 +5858,10 @@ sub get_AP {
     $self->get("LOGGER")->NIST_die("Unknown tie breaking criteria: $tie_breaking_criteria");
   }
   foreach my $response(@responses) {
-    $ranked_responses{$rank} = $response;
     my $correctness = $response->get("CORRECTNESS");
-    if($correctness eq "RIGHT") {
+    next if $correctness eq "IGNORE";
+    $ranked_responses{$rank} = $response;
+    if($correctness eq "RIGHT" && $correct_at_rank < $max_num_ground_truth) {
       $correct_at_rank++;
       $sum_precision += $correct_at_rank/$rank;
     }
@@ -5870,7 +5873,7 @@ sub get_AP {
     $rank++;
   }
 
-  $sum_precision / (($num_ground_truth <= 200) ? $num_ground_truth : 200);
+  $sum_precision / (($num_ground_truth <= $max_num_ground_truth) ? $num_ground_truth : $max_num_ground_truth);
 }
 
 sub score_responses {
@@ -6026,9 +6029,10 @@ sub score_responses {
   foreach my $query_id(keys %selected_responses) {
     my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
     my $num_ground_truth = keys %{$ground_truth{$node_id}};
-    $average_precision{BESTCASE}{$query_id} = $self->get("AP", "BESTCASE", $num_ground_truth, @{$selected_responses{$query_id}});
-    $average_precision{WORSTCASE}{$query_id} = $self->get("AP", "WORSTCASE", $num_ground_truth, @{$selected_responses{$query_id}});
-    $average_precision{TRECEVAL}{$query_id} = $self->get("AP", "TRECEVAL", $num_ground_truth, @{$selected_responses{$query_id}});
+    my $max_num_ground_truth = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_informative_mentions");
+    $average_precision{BESTCASE}{$query_id} = $self->get("AP", "BESTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_id}});
+    $average_precision{WORSTCASE}{$query_id} = $self->get("AP", "WORSTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_id}});
+    $average_precision{TRECEVAL}{$query_id} = $self->get("AP", "TRECEVAL", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_id}});
   }
 
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
