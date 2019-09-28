@@ -79,6 +79,7 @@ my $rundir_root = "$intermediate_dir/SPARQL-VALID-output";
 my $cadir_root = "$intermediate_dir/SPARQL-CA-output";
 my $runs_to_score_filename = "$intermediate_dir/runid.txt";
 my $runid = $switches->get("runid");
+
 $logger->NIST_die("$intermediate_dir already exists") if -e $intermediate_dir;
 system("mkdir -p $rundir_root");
 system("mkdir -p $cadir_root");

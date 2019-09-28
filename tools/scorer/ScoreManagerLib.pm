@@ -5243,14 +5243,61 @@ sub new {
 
 sub load {
   my ($self) = @_;
+  my $query_type = $self->get("QUERY_TYPE");
+  $query_type =~ s/_query$//;
+  my $method = $self->can("load_$query_type");
+  return $method->($self) if $method;
+  $self->get("LOGGER")->NIST_die("No matching load function for $query_type");
+}
+
+sub load_class {
+  my ($self) = @_;
   my %normalize = (correct => "CORRECT", wrong => "INCORRECT");
   my $assessments_dir = $self->get("ASSESSMENTS_DIR");
   my $query_type = $self->get("QUERY_TYPE");
-  my %subdirs = (class_query => "class", zerohop_query => "zero-hop", graph_query => "graph");
-  my $query_type_specifice_assessments_dir = $assessments_dir . "/data/" . $subdirs{$query_type};
+  my $query_type_specifice_assessments_dir = $assessments_dir . "/data/class";
+  my $header_line = join("\t", qw(QUERYID CLASS ID MODALITY DOCID MENTION_SPAN ASSESSMENT TYPE FQEC));
+  my $header = Header->new($self->get("LOGGER"), $header_line);
   foreach my $filename(<$query_type_specifice_assessments_dir/*/*.tab>) {
-    my $header_line = join("\t", qw(NODEID CLASS ID MODALITY DOCID MENTION_SPAN ASSESSMENT TYPE));
-    my $header = Header->new($self->get("LOGGER"), $header_line);
+    my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
+    my $entries = $filehandler->get("ENTRIES");
+    foreach my $entry($entries->toarray()) {
+      my ($queryid, $docid, $mention_span, $assessment, $fqec, $where)
+        = map {$entry->get($_)} qw(QUERYID DOCID MENTION_SPAN ASSESSMENT FQEC WHERE);
+      my $key = "$queryid:$docid:$mention_span";
+      if($self->exists($key)) {
+        my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
+        my $existing_linenum = $self->get("BY_KEY", $key)->{WHERE}{LINENUM};
+        if($existing_assessment ne $assessment) {
+          my $filename = $where->{FILENAME};
+          $self->{LOGGER}->record_problem("MULTIPLE_INCOMPATIBLE_ZH_ASSESSMENTS",
+                            $queryid,
+                            $mention_span,
+                            {FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});
+        }
+      }
+      my $assessment_entry = SuperObject->new($self->get("LOGGER"));
+      $assessment_entry->set("ASSESSMENT", $normalize{$assessment});
+      $assessment_entry->set("DOCUMENT_ID", $docid);
+      $assessment_entry->set("QUERYID", $queryid);
+      $assessment_entry->set("MENTION_SPAN", $mention_span);
+      $assessment_entry->set("FQEC", $fqec);
+      $assessment_entry->set("WHERE", $where);
+      $self->add($assessment_entry, $key) unless $self->exists($key);
+    }
+    $filehandler->cleanup();
+  }
+}
+
+sub load_zerohop {
+  my ($self) = @_;
+  my %normalize = (correct => "CORRECT", wrong => "INCORRECT");
+  my $assessments_dir = $self->get("ASSESSMENTS_DIR");
+  my $query_type = $self->get("QUERY_TYPE");
+  my $query_type_specifice_assessments_dir = $assessments_dir . "/data/zero-hop";
+  my $header_line = join("\t", qw(NODEID CLASS ID MODALITY DOCID MENTION_SPAN ASSESSMENT TYPE));
+  my $header = Header->new($self->get("LOGGER"), $header_line);
+  foreach my $filename(<$query_type_specifice_assessments_dir/*/*.tab>) {
     my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
     my $entries = $filehandler->get("ENTRIES");
     foreach my $entry($entries->toarray()) {
@@ -5323,6 +5370,438 @@ sub print_lines {
 }
 
 #####################################################################################
+# ClassScores
+#####################################################################################
+
+package ClassScores;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) = @_;
+  my $self = {
+    __CLASS__ => 'ClassScores',
+    AG_CV_FIELDS => [qw(?t_cv ?j_cv ?cm_cv)],
+    AP_RANKING_SCORE_FIELDS => [qw(?t_cv ?j_cv ?cm_cv)],
+    ASSESSMENTS => $assessments,
+    DOCID_MAPPINGS => $docid_mappings,
+    QUERIES => $queries,
+    QUERIES_TO_SCORE => $queries_to_score,
+    RESPONSES => $responses,
+    RUNID => $runid,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self->score_responses();
+  $self;
+}
+
+sub get_AP_RANKING_SCORE {
+  my ($self, $response) = @_;
+  $self->get("RESPONSES")->get("AG_CV", $response, $self->get("AP_RANKING_SCORE_FIELDS"));
+}
+
+sub get_AP {
+  my ($self, $tie_breaking_criteria, $num_ground_truth, @responses) = @_;
+  return 0 unless $num_ground_truth;
+  my %ranked_responses;
+  my $rank = 1;
+  my $correct_at_rank = 0;
+  my $sum_precision = 0;
+  if($tie_breaking_criteria eq "BESTCASE") {
+    @responses = sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) ||
+                              $b->get("CORRECTNESS_CODE") <=> $a->get("CORRECTNESS_CODE")} @responses;
+  }
+  elsif($tie_breaking_criteria eq "WORSTCASE") {
+    @responses = sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) ||
+                              $a->get("CORRECTNESS_CODE") <=> $b->get("CORRECTNESS_CODE")} @responses;
+  }
+  elsif($tie_breaking_criteria eq "TRECEVAL") {
+    @responses = sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) ||
+                              $b->get("VALUE_PROVENANCE_TRIPLE") cmp $a->get("VALUE_PROVENANCE_TRIPLE")} @responses;
+  }
+  else {
+    $self->get("LOGGER")->NIST_die("Unknown tie breaking criteria: $tie_breaking_criteria");
+  }
+  foreach my $response(@responses) {
+    my $correctness = $response->get("CORRECTNESS");
+    next if $correctness eq "IGNORE";
+    $ranked_responses{$rank} = $response;
+    my $fqec = $response->get("ASSESSMENT_ENTRY")->get("FQEC") || "N/A";
+    if($correctness eq "RIGHT") {
+      $correct_at_rank++;
+      $sum_precision += $correct_at_rank/$rank;
+    }
+    my ($query_id, $docid, $mention_span, $run_id)
+      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE RUN_ID);
+    my $score = $self->get("AP_RANKING_SCORE", $response);
+    my $line = "$tie_breaking_criteria $query_id $docid $mention_span $rank $score $run_id $correctness $fqec";
+    $self->get("LOGGER")->record_debug_information("AP_SUBMISSION_LINE", $line, $response->get("WHERE"));
+    $rank++;
+  }
+
+  $sum_precision / (($num_ground_truth <= 1000) ? $num_ground_truth : 1000);
+}
+
+sub score_responses {
+  my ($self) = @_;
+  my ($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score)
+    = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
+  my $scores = ClassScoresPrinter->new($logger);
+
+  my %ground_truth;
+  my $next_generated_fqec_num = 1001;
+  my %generated_fqecs;
+  foreach my $assessment_entry($assessments->toarray()) {
+    my ($query_id, $docid, $mention_span, $assessment, $fqec) =
+      map {$assessment_entry->get($_)} qw(QUERYID DOCUMENT_ID MENTION_SPAN ASSESSMENT FQEC);
+    $mention_span = "$docid:$mention_span";
+    my $query_and_document = "$query_id:$docid";
+    if($assessment eq "CORRECT") {
+      if($fqec eq "NIL") {
+        # the entity is singleton therefore it needs a generated FQEC
+        unless($generated_fqecs{$query_and_document}{$mention_span}) {
+          $fqec = "NILG$next_generated_fqec_num";
+          $next_generated_fqec_num++;
+          $generated_fqecs{$query_and_document}{$mention_span} = $fqec;
+        }
+        $fqec = $generated_fqecs{$query_and_document}{$mention_span};
+        $assessment_entry->set("FQEC", $fqec);
+      }
+      $ground_truth{$query_and_document}{MENTION_TO_FQECS}{$mention_span}{$fqec} = 1;
+      $ground_truth{$query_and_document}{FQEC_TO_MENTIONS}{$fqec}{$mention_span} = 1;
+    }
+  }
+
+  my %candidate_responses;
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my ($query_id, $cluster_id, $cluster_rank, $docid, $mention_span)
+      = map {$response->get($_)} qw(QUERY_ID CLUSTER_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE);
+    my $query_and_document = "$query_id:$docid";
+    my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
+    # All responses get considered as SUBMITTED-A
+    $response->set("SUBMITTED-A", 1);
+    next if ($cluster_rank > $max_cluster_rank);
+    next unless $docid_mappings->get("COREDOCS")->exists($docid);
+    $response->set("SUBMITTED-B", 1);
+    my $informative_justification = $response->get("VALUE_PROVENANCE_TRIPLE");
+    push(@{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}}, $response);
+  }
+
+  my %selected_responses;
+  foreach my $query_and_document(keys %candidate_responses) {
+    foreach my $cluster_id(keys %{$candidate_responses{$query_and_document}}) {
+      my ($informative_justification, $error) = keys %{$candidate_responses{$query_and_document}{$cluster_id}};
+      # SANITY CHECK: Were multiple informative justifications provided for a this run-query-document-cluster?
+      $logger->NIST_die("Multiple informative justifications provided for $runid:$query_and_document:$cluster_id")
+        if $error;
+      # The response with the highest AG_CV is selected as submitted
+      my ($response) = sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
+                                  || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
+                           @{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}};
+        $response->set("SUBMITTED", 1);
+      # In the case of class responses, SUBMITTED is the same as POOLED
+      $response->set("POOLED", 1);
+      push(@{$selected_responses{$query_and_document}}, $response);
+    }
+  }
+
+  my %categorized_submissions;
+  my %correct_found;
+  foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
+                                  || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
+                          $responses->get("RESPONSES")->toarray()) {
+    my ($query_id, $docid, $mention_span)
+      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE);
+    my $query_and_document = "$query_id:$docid";
+    # don't collect any more stats unless there is ground truth for this query-document
+    next unless $ground_truth{$query_and_document}{FQEC_TO_MENTIONS};
+    my $fqec = "N/A";
+    if($response->get("SUBMITTED-A")) {
+      push(@{$categorized_submissions{$query_and_document}{"SUBMITTED-A"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-A"} = 1;
+    }
+    if($response->get("SUBMITTED-B")) {
+      push(@{$categorized_submissions{$query_and_document}{"SUBMITTED-B"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-B"} = 1;
+    }
+    if($response->get("SUBMITTED")) {
+      push(@{$categorized_submissions{$query_and_document}{"SUBMITTED"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{SUBMITTED} = 1;
+    }
+    if($response->get("POOLED")) {
+      # This response has been pooled and therefore should have been assessed
+      # Find the corresponding assessment structure and bind it to this response
+      push(@{$categorized_submissions{$query_and_document}{"POOLED"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{POOLED} = 1;
+      my $assessment = $assessments->get("BY_KEY", "$query_id:$mention_span")
+                         if $assessments->exists("$query_id:$mention_span");
+      unless($assessment) {
+        my $filename = $response->get("WHERE")->{FILENAME};
+        my $linenum = $response->get("WHERE")->{LINENUM};
+        my $line = $response->get("LINE");
+        $logger->NIST_die("No assessment found for response\n $line\n in $filename (line#$linenum)\n");
+      }
+      $response->{ASSESSMENT_ENTRY} = $assessment;
+      $fqec = $assessment->get("FQEC");
+      if($assessment->get("ASSESSMENT") eq "CORRECT") {
+        push(@{$categorized_submissions{$query_and_document}{"CORRECT"}}, $response);
+        $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
+        if($correct_found{$query_and_document}{$fqec}) {
+          push(@{$categorized_submissions{$query_and_document}{"REDUNDANT"}}, $response);
+          push(@{$categorized_submissions{$query_and_document}{"WRONG"}}, $response);
+          $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
+          $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+        }
+        else {
+          push(@{$categorized_submissions{$query_and_document}{"RIGHT"}}, $response);
+          $correct_found{$query_and_document}{$fqec} = 1;
+          $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
+        }
+      }
+      elsif($assessment->get("ASSESSMENT") eq "INCORRECT") {
+        push(@{$categorized_submissions{$query_and_document}{"INCORRECT"}}, $response);
+        $response->{ASSESSMENT}{"PRE-POLICY"}{INCORRECT} = 1;
+        push(@{$categorized_submissions{$query_and_document}{"WRONG"}}, $response);
+        $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+      }
+      else{
+        my $filename = $response->get("WHERE")->{FILENAME};
+        my $linenum = $response->get("WHERE")->{LINENUM};
+        my $line = $response->get("LINE");
+        $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
+      }
+    }
+    else {
+      $response->{ASSESSMENT}{"POST-POLICY"}{NOT_CONSIDERED} = 1;
+    }
+
+    if ($response->{ASSESSMENT}{"POST-POLICY"}{RIGHT}) {
+      $response->set("CORRECTNESS", "RIGHT");
+      $response->set("CORRECTNESS_CODE", 1);
+    }
+    if ($response->{ASSESSMENT}{"POST-POLICY"}{WRONG}) {
+      $response->set("CORRECTNESS", "WRONG");
+      $response->set("CORRECTNESS_CODE", 0);
+    }
+    if ($response->{ASSESSMENT}{"POST-POLICY"}{IGNORE}) {
+      $response->set("CORRECTNESS", "IGNORE");
+      $response->set("CORRECTNESS_CODE", -1);
+    }
+
+    my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
+    my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
+    my $line = "QUERYID=$query_id " .
+                 "DOCUMENT_ID=$docid " .
+                 "MENTION=$mention_span " .
+                 "FQEC=$fqec " .
+                 "PRE_POLICY_ASSESSMENT=$pre_policy " .
+                 "POST_POLICY_ASSESSMENT=$post_policy\n";
+    $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
+  }
+
+  my %average_precision;
+  foreach my $query_and_document(keys %selected_responses) {
+    my $num_ground_truth = scalar keys %{$ground_truth{$query_and_document}{FQEC_TO_MENTIONS}};
+    $average_precision{BESTCASE}{$query_and_document} = $self->get("AP", "BESTCASE", $num_ground_truth, @{$selected_responses{$query_and_document}});
+    $average_precision{WORSTCASE}{$query_and_document} = $self->get("AP", "WORSTCASE", $num_ground_truth, @{$selected_responses{$query_and_document}});
+    $average_precision{TRECEVAL}{$query_and_document} = $self->get("AP", "TRECEVAL", $num_ground_truth, @{$selected_responses{$query_and_document}});
+  }
+
+  foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
+    foreach my $docid(sort $docid_mappings->get("COREDOCS")->toarray()) {
+      my $query_and_document = "$query_id:$docid";
+      my $num_submitted_a = @{$categorized_submissions{$query_and_document}{"SUBMITTED-A"} || []};
+      my $num_submitted_b = @{$categorized_submissions{$query_and_document}{"SUBMITTED-B"} || []};
+      my $num_submitted = @{$categorized_submissions{$query_and_document}{"SUBMITTED"} || []};
+      my $num_correct = @{$categorized_submissions{$query_and_document}{"CORRECT"} || []};
+      my $num_incorrect = @{$categorized_submissions{$query_and_document}{"INCORRECT"} || []};
+      my $num_right = @{$categorized_submissions{$query_and_document}{"RIGHT"} || []};
+      my $num_wrong = @{$categorized_submissions{$query_and_document}{"WRONG"} || []};
+      my $num_redundant = @{$categorized_submissions{$query_and_document}{"REDUNDANT"} || []};
+      my $num_ignored = @{$categorized_submissions{$query_and_document}{"IGNORE"} || []};
+      my $num_not_in_pool = @{$categorized_submissions{$query_and_document}{"NOTPOOLED"} || []};
+      my $num_ground_truth = scalar keys %{$ground_truth{$query_and_document}{FQEC_TO_MENTIONS}};
+      my $ap_treceval = $average_precision{TRECEVAL}{$query_and_document} || 0;
+      my $ap_bestcase = $average_precision{BESTCASE}{$query_and_document} || 0;
+      my $ap_worstcase = $average_precision{WORSTCASE}{$query_and_document} || 0;
+      my $score = ClassScore->new($logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
+      $scores->add($score, $query_and_document);
+    }
+  }
+  $self->set("SCORES", $scores);
+}
+
+sub print_lines {
+  my ($self, $program_output) = @_;
+  $self->get("SCORES")->print_lines($program_output);
+}
+
+#####################################################################################
+# ClassScoresPrinter
+#####################################################################################
+
+package ClassScoresPrinter;
+
+use parent -norequire, 'Container', 'Super';
+
+my @class_scorer_fields_to_print = (
+  {NAME => 'EC',                 HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'DOCUMENT_ID',        HEADER => 'DocID',    FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',              HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH',   HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED_A',    HEADER => 'SubA',     FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_SUBMITTED_B',    HEADER => 'SubB',     FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_SUBMITTED',      HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_NOT_IN_POOL',    HEADER => 'NtAssd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_CORRECT',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_REDUNDANT',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED',        HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT',          HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG',          HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED',        HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+#  {NAME => 'PRECISION',          HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+#  {NAME => 'RECALL',             HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+#  {NAME => 'F1',                 HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'AVERAGE_PRECISION_BESTCASE',  HEADER => 'AP-B',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'AVERAGE_PRECISION_WORSTCASE',  HEADER => 'AP-W',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'AVERAGE_PRECISION_TRECEVAL',  HEADER => 'AP-T',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+);
+
+sub new {
+  my ($class, $logger, $program_output) = @_;
+  my $self = $class->SUPER::new($logger, 'ClassScore');
+  $self->{__CLASS__} = 'ClassScoresPrinter';
+  $self->{PROGRAM_OUTPUT} = $program_output;
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @class_scorer_fields_to_print};
+  $self->{LOGGER} = $logger;
+  $self->{LINES} = [];
+  @{$self->{FIELDS_TO_PRINT}} = @class_scorer_fields_to_print;
+  bless($self, $class);
+  $self;
+}
+
+sub get_SUMMARY {
+  my ($self) = @_;
+  my $logger = $self->get("LOGGER");
+  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+  my $total_num_counted_queries = 0;
+  foreach my $score($self->toarray()) {
+    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval)
+      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH AVERAGE_PRECISION_BESTCASE AVERAGE_PRECISION_WORSTCASE AVERAGE_PRECISION_TRECEVAL);
+    $runid = $score->get("RUNID") unless $runid;
+    $total_num_submitted += $num_submitted;
+    $total_num_submitted_a += $num_submitted_a;
+    $total_num_submitted_b += $num_submitted_b;
+    $total_num_correct += $num_correct;
+    $total_num_incorrect += $num_incorrect;
+    $total_num_right += $num_right;
+    $total_num_wrong += $num_wrong;
+    $total_num_redundant += $num_redundant;
+    $total_num_not_in_pool += $num_not_in_pool;
+    $total_num_ignored += $num_ignored;
+    $total_num_ground_truth += $num_ground_truth;
+    $map_bestcase += $ap_bestcase;
+    $map_worstcase += $ap_worstcase;
+    $map_treceval += $ap_treceval;
+    $total_num_counted_queries++ if $num_ground_truth;
+  }
+  $map_bestcase /= $total_num_counted_queries;
+  $map_worstcase /= $total_num_counted_queries;
+  $map_treceval /= $total_num_counted_queries;
+  ClassScore->new($logger, $runid, "Summary", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+}
+
+sub print_line {
+  my ($self, $line) = @_;
+  my $program_output = $self->get("PROGRAM_OUTPUT");
+  my $separator = "";
+  foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+    my $value = (defined $line ? $line->{$field->{NAME}} : $field->{HEADER});
+    print $program_output $separator;
+    my $numspaces = defined $self->{SEPARATOR} ? 0 : $self->{WIDTHS}{$field->{NAME}} - length($value);
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'R' && !defined $self->{SEPARATOR};
+    print $program_output $value;
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'L' && !defined $self->{SEPARATOR};
+    $separator = defined $self->{SEPARATOR} ? $self->{SEPARATOR} : ' ';
+  }
+  print $program_output "\n";
+}
+
+sub print_headers {
+  my ($self) = @_;
+  $self->print_line();
+}
+
+sub prepare_lines {
+  my ($self) = @_;
+  my @scores = $self->toarray();
+  push(@scores, $self->get("SUMMARY"));
+  foreach my $score (@scores) {
+    my %elements_to_print;
+    foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+      my $value = $score->get($field->{NAME});
+      my $field_name = $field->{NAME};
+      my $text = sprintf($field->{FORMAT}, $value);
+      $elements_to_print{$field->{NAME}} = $text;
+      $self->{WIDTHS}{$field->{NAME}} = length($text) if length($text) > $self->{WIDTHS}{$field->{NAME}};
+    }
+    push(@{$self->{LINES}}, \%elements_to_print);
+  }
+}
+
+sub print_lines {
+  my ($self, $program_output) = @_;
+  $self->set("PROGRAM_OUTPUT", $program_output);
+  $self->prepare_lines();
+  $self->print_headers();
+  foreach my $line (@{$self->{LINES}}) {
+    $self->print_line($line);
+  }
+}
+
+#####################################################################################
+# ClassScore
+#####################################################################################
+
+package ClassScore;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, $logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval) = @_;
+  my $self = {
+    __CLASS__ => 'ClassScore',
+    AVERAGE_PRECISION_BESTCASE => $ap_bestcase,
+    AVERAGE_PRECISION_WORSTCASE => $ap_worstcase,
+    AVERAGE_PRECISION_TRECEVAL => $ap_treceval,
+    EC => $query_id,
+    DOCUMENT_ID => $docid,
+    NUM_CORRECT => $num_correct,
+    NUM_GROUND_TRUTH => $num_ground_truth,
+    NUM_IGNORED => $num_ignored,
+    NUM_INCORRECT => $num_incorrect,
+    NUM_NOT_IN_POOL => $num_not_in_pool,
+    NUM_REDUNDANT => $num_redundant,
+    NUM_RIGHT => $num_right,
+    NUM_SUBMITTED => $num_submitted,
+    NUM_SUBMITTED_A => $num_submitted_a,
+    NUM_SUBMITTED_B => $num_submitted_b,
+    NUM_WRONG => $num_wrong,
+    RUNID => $runid,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_NUM_COUNTED {
+  my ($self) = @_;
+  $self->get("NUM_RIGHT") + $self->get("NUM_WRONG");
+}
+
+#####################################################################################
 # ZeroHopScores
 #####################################################################################
 
@@ -5378,13 +5857,13 @@ sub get_AP {
   }
   foreach my $response(@responses) {
     $ranked_responses{$rank} = $response;
-    if($response->{"ASSESSMENT"}{"POST-POLICY"}{"RIGHT"}) {
+    my $correctness = $response->get("CORRECTNESS");
+    if($correctness eq "RIGHT") {
       $correct_at_rank++;
       $sum_precision += $correct_at_rank/$rank;
     }
     my ($query_id, $docid, $mention_span, $run_id)
       = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE RUN_ID);
-    my $correctness = $response->get("CORRECTNESS");
     my $score = $self->get("AP_RANKING_SCORE", $response);
     my $line = "$tie_breaking_criteria $query_id $docid $mention_span $rank $score $run_id $correctness";
     $self->get("LOGGER")->record_debug_information("AP_SUBMISSION_LINE", $line, $response->get("WHERE"));
@@ -5478,7 +5957,7 @@ sub score_responses {
         my $filename = $response->get("WHERE")->{FILENAME};
         my $linenum = $response->get("WHERE")->{LINENUM};
         my $line = $response->get("LINE");
-        die "No assessment found for response\n $line\nat $filename (line#$linenum)\n";
+        die "No assessment found for response\n $line\n in $filename (line#$linenum)\n";
       }
       $response->{ASSESSMENT_ENTRY} = $assessment;
       if($assessment->get("ASSESSMENT") eq "CORRECT") {
@@ -5511,9 +5990,10 @@ sub score_responses {
         }
       }
       else{
-        push(@{$categorized_submissions{$query_id}{"UNKNOWN"}}, $response);
-        $response->{ASSESSMENT}{"PRE-POLICY"}{UNKNOWN} = 1;
-        $response->{ASSESSMENT}{"POST-POLICY"}{UNKNOWN} = 1;
+        my $filename = $response->get("WHERE")->{FILENAME};
+        my $linenum = $response->get("WHERE")->{LINENUM};
+        my $line = $response->get("LINE");
+        $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
       }
     }
     else {
@@ -5567,7 +6047,7 @@ sub score_responses {
     my $ap_treceval = $average_precision{TRECEVAL}{$query_id} || 0;
     my $ap_bestcase = $average_precision{BESTCASE}{$query_id} || 0;
     my $ap_worstcase = $average_precision{WORSTCASE}{$query_id} || 0;
-    my $score = Score->new($logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
+    my $score = ZeroHopScore->new($logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
     $scores->add($score, $query_id);
   }
   $self->set("SCORES", $scores);
@@ -5586,7 +6066,7 @@ package ZeroHopScoresPrinter;
 
 use parent -norequire, 'Container', 'Super';
 
-my @fields_to_print = (
+my @zerohop_scorer_fields_to_print = (
   {NAME => 'EC',                 HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
 #  {NAME => 'NODEID',             HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',              HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
@@ -5615,10 +6095,10 @@ sub new {
   my $self = $class->SUPER::new($logger, 'Score');
   $self->{__CLASS__} = 'ZeroHopScoresPrinter';
   $self->{PROGRAM_OUTPUT} = $program_output;
-  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @fields_to_print};
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @zerohop_scorer_fields_to_print};
   $self->{LOGGER} = $logger;
   $self->{LINES} = [];
-  @{$self->{FIELDS_TO_PRINT}} = @fields_to_print;
+  @{$self->{FIELDS_TO_PRINT}} = @zerohop_scorer_fields_to_print;
   bless($self, $class);
   $self;
 }
@@ -5703,17 +6183,17 @@ sub print_lines {
 }
 
 #####################################################################################
-# Score
+# ZeroHopScore
 #####################################################################################
 
-package Score;
+package ZeroHopScore;
 
 use parent -norequire, 'Super';
 
 sub new {
   my ($class, $logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval) = @_;
   my $self = {
-    __CLASS__ => 'Scores',
+    __CLASS__ => 'ZeroHopScore',
     AVERAGE_PRECISION_BESTCASE => $ap_bestcase,
     AVERAGE_PRECISION_WORSTCASE => $ap_worstcase,
     AVERAGE_PRECISION_TRECEVAL => $ap_treceval,
