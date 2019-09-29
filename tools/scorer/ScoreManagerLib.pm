@@ -5258,12 +5258,15 @@ sub load_class {
   my $query_type_specifice_assessments_dir = $assessments_dir . "/data/class";
   my $header_line = join("\t", qw(QUERYID CLASS ID MODALITY DOCID MENTION_SPAN ASSESSMENT TYPE FQEC));
   my $header = Header->new($self->get("LOGGER"), $header_line);
+  my $next_generated_fqec_num = 1001;
+  my %generated_fqecs;
   foreach my $filename(<$query_type_specifice_assessments_dir/*/*.tab>) {
     my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
     my $entries = $filehandler->get("ENTRIES");
     foreach my $entry($entries->toarray()) {
-      my ($queryid, $docid, $mention_span, $assessment, $fqec, $where)
+      my ($queryid, $docid, $mention_span, $assessment, $fqec_read, $where)
         = map {$entry->get($_)} qw(QUERYID DOCID MENTION_SPAN ASSESSMENT FQEC WHERE);
+      my $query_and_document = "$queryid:$docid";
       my $key = "$queryid:$docid:$mention_span";
       if($self->exists($key)) {
         my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
@@ -5276,6 +5279,16 @@ sub load_class {
                             {FILENAME => $filename, LINENUM => "$existing_linenum, $where->{LINENUM}"});
         }
       }
+      my $fqec = $fqec_read;
+      if($normalize{$assessment} eq "CORRECT" && ($fqec eq "NIL" || !$fqec) ) {
+        # the entity is singleton therefore it needs a generated FQEC
+        unless($generated_fqecs{$query_and_document}{$mention_span}) {
+          $fqec = "NILG$next_generated_fqec_num";
+          $next_generated_fqec_num++;
+          $generated_fqecs{$query_and_document}{$mention_span} = $fqec;
+        }
+        $fqec = $generated_fqecs{$query_and_document}{$mention_span};
+      }
       my $assessment_entry = SuperObject->new($self->get("LOGGER"));
       $assessment_entry->set("ASSESSMENT", $normalize{$assessment});
       $assessment_entry->set("DOCUMENT_ID", $docid);
@@ -5284,6 +5297,13 @@ sub load_class {
       $assessment_entry->set("FQEC", $fqec);
       $assessment_entry->set("WHERE", $where);
       $self->add($assessment_entry, $key) unless $self->exists($key);
+      my $line = "QUERYID=$queryid " .
+                 "DOCUMENT_ID=$docid " .
+                 "MENTION=$mention_span " .
+                 "ASSESSMENT=$normalize{$assessment} " .
+                 "FQEC_READ=$fqec_read " .
+                 "FQEC=$fqec ";
+      $self->get("LOGGER")->record_debug_information("GROUND_TRUTH", $line, $assessment_entry->get("WHERE"));
     }
     $filehandler->cleanup();
   }
@@ -5440,7 +5460,9 @@ sub get_AP {
     $rank++;
   }
 
-  $sum_precision / (($num_ground_truth <= $max_num_ground_truth) ? $num_ground_truth : $max_num_ground_truth);
+  my $ap = $sum_precision / (($num_ground_truth <= $max_num_ground_truth) ? $num_ground_truth : $max_num_ground_truth);
+  $self->get("LOGGER")->NIST_die("AP > 1") if $ap > 1;
+  $ap;
 }
 
 sub score_responses {
@@ -5448,26 +5470,13 @@ sub score_responses {
   my ($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
   my $scores = ClassScoresPrinter->new($logger);
-
   my %ground_truth;
-  my $next_generated_fqec_num = 1001;
-  my %generated_fqecs;
   foreach my $assessment_entry($assessments->toarray()) {
     my ($query_id, $docid, $mention_span, $assessment, $fqec) =
       map {$assessment_entry->get($_)} qw(QUERYID DOCUMENT_ID MENTION_SPAN ASSESSMENT FQEC);
     $mention_span = "$docid:$mention_span";
     my $query_and_document = "$query_id:$docid";
     if($assessment eq "CORRECT") {
-      if($fqec eq "NIL") {
-        # the entity is singleton therefore it needs a generated FQEC
-        unless($generated_fqecs{$query_and_document}{$mention_span}) {
-          $fqec = "NILG$next_generated_fqec_num";
-          $next_generated_fqec_num++;
-          $generated_fqecs{$query_and_document}{$mention_span} = $fqec;
-        }
-        $fqec = $generated_fqecs{$query_and_document}{$mention_span};
-        $assessment_entry->set("FQEC", $fqec);
-      }
       $ground_truth{$query_and_document}{MENTION_TO_FQECS}{$mention_span}{$fqec} = 1;
       $ground_truth{$query_and_document}{FQEC_TO_MENTIONS}{$fqec}{$mention_span} = 1;
     }
@@ -5890,7 +5899,9 @@ sub get_AP {
     $rank++;
   }
 
-  $sum_precision / (($num_ground_truth <= $max_num_ground_truth) ? $num_ground_truth : $max_num_ground_truth);
+  my $ap = $sum_precision / (($num_ground_truth <= $max_num_ground_truth) ? $num_ground_truth : $max_num_ground_truth);
+  $self->get("LOGGER")->NIST_die("AP > 1") if $ap > 1;
+  $ap;
 }
 
 sub score_responses {
