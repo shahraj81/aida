@@ -5479,13 +5479,21 @@ sub score_responses {
       = map {$response->get($_)} qw(QUERY_ID CLUSTER_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE);
     my $query_and_document = "$query_id:$docid";
     my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
-    # All responses get considered as SUBMITTED-A
+    # all the responses get considered as SUBMITTED-A
     $response->set("SUBMITTED-A", 1);
-    next if ($cluster_rank > $max_cluster_rank);
-    next unless $docid_mappings->get("COREDOCS")->exists($docid);
-    $response->set("SUBMITTED-B", 1);
-    my $informative_justification = $response->get("VALUE_PROVENANCE_TRIPLE");
-    push(@{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}}, $response);
+    # response that are at rank higher than max_cluster_rank are tagged as SUBMITTED-B
+    $response->set("SUBMITTED-B", 1) if $cluster_rank <= $max_cluster_rank;
+    # responses from coredocs get tagged as SUBMITTED-C
+    $response->set("SUBMITTED-C", 1) if $docid_mappings->get("COREDOCS")->exists($docid);
+    # responses from coredocs are candidate responses
+    if($docid_mappings->get("COREDOCS")->exists($docid)) {
+      my $informative_justification = $response->get("VALUE_PROVENANCE_TRIPLE");
+      push(@{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}}, $response);
+    }
+    # otherwise, the response is not considered
+    else {
+      $response->set("NOT_CONSIDERED", 1);
+    }
   }
 
   my %selected_responses;
@@ -5495,14 +5503,16 @@ sub score_responses {
       # SANITY CHECK: Were multiple informative justifications provided for a this run-query-document-cluster?
       $logger->NIST_die("Multiple informative justifications provided for $runid:$query_and_document:$cluster_id")
         if $error;
-      # The response with the highest AG_CV is selected as submitted
-      my ($response) = sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
+      # The response with the highest AG_CV is selected as submitted; other responses are not considered
+      my ($response, @other_responses) = sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
                                   || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
                            @{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}};
-        $response->set("SUBMITTED", 1);
+
+      map {$_->set("NOT_CONSIDERED", 1)} @other_responses;
       # In the case of class responses, SUBMITTED is the same as POOLED
-      $response->set("POOLED", 1);
-      push(@{$selected_responses{$query_and_document}}, $response);
+      $response->set("SUBMITTED", 1);
+      $response->set("POOLED", 1) if $response->get("SUBMITTED-B");
+      push(@{$selected_responses{$query_and_document}}, $response) if $response->get("POOLED");
     }
   }
 
@@ -5511,8 +5521,8 @@ sub score_responses {
   foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
                                   || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
                           $responses->get("RESPONSES")->toarray()) {
-    my ($query_id, $docid, $mention_span)
-      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE);
+    my ($query_id, $docid, $mention_span, $cluster_id)
+      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE CLUSTER_ID);
     my $query_and_document = "$query_id:$docid";
     # don't collect any more stats unless there is ground truth for this query-document
     next unless $ground_truth{$query_and_document}{FQEC_TO_MENTIONS};
@@ -5524,6 +5534,10 @@ sub score_responses {
     if($response->get("SUBMITTED-B")) {
       push(@{$categorized_submissions{$query_and_document}{"SUBMITTED-B"}}, $response);
       $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-B"} = 1;
+    }
+    if($response->get("SUBMITTED-C")) {
+      push(@{$categorized_submissions{$query_and_document}{"SUBMITTED-C"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-C"} = 1;
     }
     if($response->get("SUBMITTED")) {
       push(@{$categorized_submissions{$query_and_document}{"SUBMITTED"}}, $response);
@@ -5543,7 +5557,7 @@ sub score_responses {
         $logger->NIST_die("No assessment found for response\n $line\n in $filename (line#$linenum)\n");
       }
       $response->{ASSESSMENT_ENTRY} = $assessment;
-      $fqec = $assessment->get("FQEC");
+      $fqec = $assessment->get("FQEC") || "N/A";
       if($assessment->get("ASSESSMENT") eq "CORRECT") {
         push(@{$categorized_submissions{$query_and_document}{"CORRECT"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
@@ -5591,9 +5605,12 @@ sub score_responses {
 
     my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
     my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
+    my $ag_cv = $responses->get("AG_CV", $response, $self->get("AG_CV_FIELDS"));
     my $line = "QUERYID=$query_id " .
                  "DOCUMENT_ID=$docid " .
                  "MENTION=$mention_span " .
+                 "CLUSTER_ID=$cluster_id " .
+                 "AG_CV=$ag_cv " .
                  "FQEC=$fqec " .
                  "PRE_POLICY_ASSESSMENT=$pre_policy " .
                  "POST_POLICY_ASSESSMENT=$post_policy\n";
