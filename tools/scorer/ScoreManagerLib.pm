@@ -5622,12 +5622,12 @@ sub score_responses {
       my $num_wrong = @{$categorized_submissions{$query_and_document}{"WRONG"} || []};
       my $num_redundant = @{$categorized_submissions{$query_and_document}{"REDUNDANT"} || []};
       my $num_ignored = @{$categorized_submissions{$query_and_document}{"IGNORE"} || []};
-      my $num_not_in_pool = @{$categorized_submissions{$query_and_document}{"NOTPOOLED"} || []};
+      my $num_pooled = @{$categorized_submissions{$query_and_document}{"POOLED"} || []};
       my $num_ground_truth = scalar keys %{$ground_truth{$query_and_document}{FQEC_TO_MENTIONS}};
       my $ap_treceval = $average_precision{TRECEVAL}{$query_and_document} || 0;
       my $ap_bestcase = $average_precision{BESTCASE}{$query_and_document} || 0;
       my $ap_worstcase = $average_precision{WORSTCASE}{$query_and_document} || 0;
-      my $score = ClassScore->new($logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
+      my $score = ClassScore->new($logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
       $scores->add($score, $query_and_document);
     }
   }
@@ -5655,7 +5655,7 @@ my @class_scorer_fields_to_print = (
 #  {NAME => 'NUM_SUBMITTED_A',    HEADER => 'SubA',     FORMAT => '%4d',    JUSTIFY => 'R'},
 #  {NAME => 'NUM_SUBMITTED_B',    HEADER => 'SubB',     FORMAT => '%4d',    JUSTIFY => 'R'},
   {NAME => 'NUM_SUBMITTED',      HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_NOT_IN_POOL',    HEADER => 'NtAssd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_POOLED',         HEADER => 'Pooled',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_CORRECT',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_REDUNDANT',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_INCORRECT',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -5687,11 +5687,11 @@ sub new {
 sub get_SUMMARY {
   my ($self) = @_;
   my $logger = $self->get("LOGGER");
-  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
   my $total_num_counted_queries = 0;
   foreach my $score($self->toarray()) {
-    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval)
-      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_NOT_IN_POOL NUM_IGNORED NUM_GROUND_TRUTH AVERAGE_PRECISION_BESTCASE AVERAGE_PRECISION_WORSTCASE AVERAGE_PRECISION_TRECEVAL);
+    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval)
+      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_POOLED NUM_IGNORED NUM_GROUND_TRUTH AVERAGE_PRECISION_BESTCASE AVERAGE_PRECISION_WORSTCASE AVERAGE_PRECISION_TRECEVAL);
     $runid = $score->get("RUNID") unless $runid;
     $total_num_submitted += $num_submitted;
     $total_num_submitted_a += $num_submitted_a;
@@ -5701,7 +5701,7 @@ sub get_SUMMARY {
     $total_num_right += $num_right;
     $total_num_wrong += $num_wrong;
     $total_num_redundant += $num_redundant;
-    $total_num_not_in_pool += $num_not_in_pool;
+    $total_num_pooled += $num_pooled;
     $total_num_ignored += $num_ignored;
     $total_num_ground_truth += $num_ground_truth;
     $map_bestcase += $ap_bestcase;
@@ -5712,7 +5712,7 @@ sub get_SUMMARY {
   $map_bestcase /= $total_num_counted_queries;
   $map_worstcase /= $total_num_counted_queries;
   $map_treceval /= $total_num_counted_queries;
-  ClassScore->new($logger, $runid, "Summary", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_not_in_pool, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+  ClassScore->new($logger, $runid, "Summary", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
 }
 
 sub print_line {
@@ -5772,7 +5772,7 @@ package ClassScore;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_not_in_pool, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval) = @_;
+  my ($class, $logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval) = @_;
   my $self = {
     __CLASS__ => 'ClassScore',
     AVERAGE_PRECISION_BESTCASE => $ap_bestcase,
@@ -5784,7 +5784,7 @@ sub new {
     NUM_GROUND_TRUTH => $num_ground_truth,
     NUM_IGNORED => $num_ignored,
     NUM_INCORRECT => $num_incorrect,
-    NUM_NOT_IN_POOL => $num_not_in_pool,
+    NUM_POOLED => $num_pooled,
     NUM_REDUNDANT => $num_redundant,
     NUM_RIGHT => $num_right,
     NUM_SUBMITTED => $num_submitted,
