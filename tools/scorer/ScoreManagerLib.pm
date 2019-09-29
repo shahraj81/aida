@@ -5604,7 +5604,7 @@ sub score_responses {
   foreach my $query_and_document(keys %selected_responses) {
     my ($query_id, $docid) = split(":", $query_and_document);
     my $num_ground_truth = scalar keys %{$ground_truth{$query_and_document}{FQEC_TO_MENTIONS}};
-    my $max_num_ground_truth = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_informative_mentions");
+    my $max_num_ground_truth = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
     $average_precision{BESTCASE}{$query_and_document} = $self->get("AP", "BESTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_and_document}});
     $average_precision{WORSTCASE}{$query_and_document} = $self->get("AP", "WORSTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_and_document}});
     $average_precision{TRECEVAL}{$query_and_document} = $self->get("AP", "TRECEVAL", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_and_document}});
