@@ -5501,7 +5501,7 @@ sub score_responses {
     }
     # otherwise, the response is not considered
     else {
-      $response->set("NOT_CONSIDERED", 1);
+      $response->set("NOT-CONSIDERED", 1);
     }
   }
 
@@ -5517,8 +5517,8 @@ sub score_responses {
                                   || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
                            @{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}};
 
-      map {$_->set("NOT_CONSIDERED", 1)} @other_responses;
-      $response->set("SUBMITTED", 1);
+      map {$_->set("NOT-CONSIDERED", 1)} @other_responses;
+      $response->set("SUBMITTED", 1) if $response->get("SUBMITTED-B");
       $response->set("POOLED", 1) if $response->get("SUBMITTED-B");
       push(@{$selected_responses{$query_and_document}}, $response) if $response->get("POOLED");
     }
@@ -5535,6 +5535,11 @@ sub score_responses {
     # don't collect any more stats unless there is ground truth for this query-document
     next unless $ground_truth{$query_and_document}{FQEC_TO_MENTIONS};
     my $fqec = "N/A";
+    if($response->get("NOT-CONSIDERED")) {
+      push(@{$categorized_submissions{$query_and_document}{"NOT-CONSIDERED"}}, $response);
+      $response->{ASSESSMENT}{"PRE-POLICY"}{"NOT-CONSIDERED"} = 1;
+      $response->{ASSESSMENT}{"POST-POLICY"}{"NOT-CONSIDERED"} = 1;
+    }
     if($response->get("SUBMITTED-A")) {
       push(@{$categorized_submissions{$query_and_document}{"SUBMITTED-A"}}, $response);
       $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-A"} = 1;
@@ -5595,7 +5600,7 @@ sub score_responses {
       }
     }
     else {
-      $response->{ASSESSMENT}{"POST-POLICY"}{NOT_CONSIDERED} = 1;
+      $response->{ASSESSMENT}{"POST-POLICY"}{"NOT-CONSIDERED"} = 1;
     }
 
     if ($response->{ASSESSMENT}{"POST-POLICY"}{RIGHT}) {
@@ -6031,7 +6036,7 @@ sub score_responses {
         push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
         $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
       }
-      $response->{ASSESSMENT}{"POST-POLICY"}{NOT_CONSIDERED} = 1;
+      $response->{ASSESSMENT}{"POST-POLICY"}{"NOT-CONSIDERED"} = 1;
     }
 
     $response->set("CORRECTNESS", "RIGHT") if $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT};
