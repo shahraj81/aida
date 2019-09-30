@@ -5438,7 +5438,8 @@ sub get_AP {
   }
   elsif($tie_breaking_criteria eq "TRECEVAL") {
     @responses = sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) ||
-                              $b->get("VALUE_PROVENANCE_TRIPLE") cmp $a->get("VALUE_PROVENANCE_TRIPLE")} @responses;
+                              $b->get("VALUE_PROVENANCE_TRIPLE") cmp $a->get("VALUE_PROVENANCE_TRIPLE") ||
+                              $b->get("CLUSTER_ID") cmp $a->get("CLUSTER_ID") } @responses;
   }
   else {
     $self->get("LOGGER")->NIST_die("Unknown tie breaking criteria: $tie_breaking_criteria");
@@ -5518,8 +5519,13 @@ sub score_responses {
                            @{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}};
 
       map {$_->set("NOT-CONSIDERED", 1)} @other_responses;
-      $response->set("SUBMITTED", 1) if $response->get("SUBMITTED-B");
-      $response->set("POOLED", 1) if $response->get("SUBMITTED-B");
+      $response->set("SUBMITTED", 1);
+      if ($response->get("SUBMITTED-B")) {
+        $response->set("POOLED", 1);
+      }
+      else {
+        $response->set("NOT-CONSIDERED", 1)
+      }
       push(@{$selected_responses{$query_and_document}}, $response) if $response->get("POOLED");
     }
   }
