@@ -5518,7 +5518,6 @@ sub score_responses {
                            @{$candidate_responses{$query_and_document}{$cluster_id}{$informative_justification}};
 
       map {$_->set("NOT_CONSIDERED", 1)} @other_responses;
-      # In the case of class responses, SUBMITTED is the same as POOLED
       $response->set("SUBMITTED", 1);
       $response->set("POOLED", 1) if $response->get("SUBMITTED-B");
       push(@{$selected_responses{$query_and_document}}, $response) if $response->get("POOLED");
