@@ -5452,10 +5452,10 @@ sub get_AP {
       $correct_at_rank++;
       $sum_precision += $correct_at_rank/$rank;
     }
-    my ($query_id, $docid, $mention_span, $run_id)
-      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE RUN_ID);
+    my ($query_id, $docid, $mention_span, $cluster_id, $run_id)
+      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID VALUE_PROVENANCE_TRIPLE CLUSTER_ID RUN_ID);
     my $score = $self->get("AP_RANKING_SCORE", $response);
-    my $line = "$tie_breaking_criteria $query_id $docid $mention_span $rank $score $run_id $correctness $fqec";
+    my $line = "$tie_breaking_criteria $query_id $docid $mention_span $rank $score $run_id $correctness $fqec $cluster_id";
     $self->get("LOGGER")->record_debug_information("AP_SUBMISSION_LINE", $line, $response->get("WHERE"));
     $rank++;
   }
