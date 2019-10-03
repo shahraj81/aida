@@ -6408,7 +6408,7 @@ sub score_responses {
            OBJECT_LINKABILITY
            PREDICATE_JUSTIFICATION
            OBJECT_JUSTIFICATION);
-    $object = "LDC2019E43:$object";
+    $object = join("|", map {"LDC2019E43:".$_} split("|", $object));
     $predicate_justification = join(";", map {"$docid:".$_} split(";", $predicate_justification));
     $object_justification = "$docid:$object_justification";
     my $key = "$predicate:$predicate_justification:$object_justification";
