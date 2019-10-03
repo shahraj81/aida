@@ -6522,6 +6522,8 @@ sub score_responses {
     my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
     my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
+    my $depth_1a = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
+    $num_ground_truth_1a = $num_ground_truth_1a > $depth_1a ? $depth_1a : $num_ground_truth_1a;
     my $score = GraphScore->new($logger,
                                   $runid,
                                   $query_id,
@@ -6596,7 +6598,6 @@ sub get_SUMMARY {
       $total_num_pooled_1a, 
       $total_num_ignored_1a, 
       $total_num_ground_truth_1a);
-  my $total_num_counted_queries = 0;
   foreach my $score($self->toarray()) {
     my ($num_submitted_1a,
         $num_correct_1a,
@@ -6628,7 +6629,6 @@ sub get_SUMMARY {
     $total_num_pooled_1a += $num_pooled_1a;
     $total_num_ignored_1a += $num_ignored_1a;
     $total_num_ground_truth_1a += $num_ground_truth_1a;
-    $total_num_counted_queries++ if $num_ground_truth_1a;
   }
 
   GraphScore->new($logger, 
