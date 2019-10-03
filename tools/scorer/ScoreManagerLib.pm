@@ -185,6 +185,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   MULTIPLE_POTENTIAL_ROOTS                FATAL_ERROR    Multiple potential roots "%s" in query DTD file: %s
   MULTIPLE_TASK_AND_TYPE_IN_QUERIES       FATAL_ERROR    Queries with mixed task and type found in query set, for e.g. %s and %s
   NO_FQEC_FOR_CORRECT_ENTRY               ERROR          No FQEC found for a correct entry
+  NO_QUERY_FOR_ASSESSNENT_ITEM            DEBUG_INFO     No query found for assessment entry: %s
   NON_NUMERIC_VAL                         ERROR          Value %s is not numeric
   NONNUMERIC_START                        WARNING        Start %s is not numeric
   PARENT_CHILD_RELATION_FAILURE           ERROR          %s is not a child of %s
@@ -5272,9 +5273,8 @@ sub new {
 sub normalize {
   my ($key, $value) = @_;
   my %normalize = (correct => "CORRECT", wrong => "INCORRECT", yes => "YES", no => "NO");
-  if($key eq "PREDICATE_JUSTIFICATION_CORRECTNESS" || $key eq "ASSESSMENT") {
-    $value = $normalize{$value} if $normalize{$value};
-  }
+  my %keys_to_normalize = map {$_=>1} qw(ASSESSMENT OBJECT_LINKABILITY PREDICATE_JUSTIFICATION_CORRECTNESS);
+  $value = $normalize{$value} if $keys_to_normalize{$key} && $normalize{$value};
   $value;
 }
 
@@ -5566,6 +5566,7 @@ sub score_responses {
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my ($query_id, $cluster_id, $cluster_rank, $docid, $mention_span)
       = map {$response->get($_)} qw(QUERY_ID CLUSTER_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE);
+    next unless $queries_to_score->exists($query_id);
     my $query_and_document = "$query_id:$docid";
     my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
     # all the responses get considered as SUBMITTED-A
@@ -6011,6 +6012,7 @@ sub score_responses {
   foreach my $response($responses->get("RESPONSES")->toarray()) {
     my ($query_id, $cluster_rank, $docid, $mention_span, $reference_kbid)
       = map {$response->get($_)} qw(QUERY_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
+    next unless $queries_to_score->exists($query_id);
     my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
     $response->set("SUBMITTED-A", 1);
     next if ($cluster_rank > $max_cluster_rank);
@@ -6371,8 +6373,6 @@ sub new {
   my ($class, $logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) = @_;
   my $self = {
     __CLASS__ => 'GraphScores',
-    AG_CV_FIELDS => ["?link_cv"],
-    AP_RANKING_SCORE_FIELDS => ["?j_cv"],
     ASSESSMENTS => $assessments,
     DOCID_MAPPINGS => $docid_mappings,
     QUERIES => $queries,
@@ -6392,175 +6392,148 @@ sub score_responses {
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
   my $scores = GraphScoresPrinter->new($logger);
 
+  # Gather ground truth for Strategy 1A
+  # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
+  # edges were correct? 
   my %ground_truth;
-  foreach my $assessment_entry($assessments->toarray()) {
-    my ($assessment, $docid, $mention_span, $reference_kbid) =
-      map {$assessment_entry->get($_)} qw(ASSESSMENT DOCUMENT_ID MENTION_SPAN REFERENCE_KBID);
-    $mention_span = "$docid:$mention_span";
-    $ground_truth{$reference_kbid}{$docid}{$mention_span} = 1 if $assessment eq "CORRECT";
+  foreach my $entry($assessments->toarray()) {
+    my ($subject, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
+          $object_justification) =
+      map {$entry->get($_)}
+        qw(SUBJECT_FQEC
+           PREDICATE
+           OBJECT_FQEC
+           DOCUMENT_ID
+           PREDICATE_JUSTIFICATION_CORRECTNESS
+           OBJECT_LINKABILITY
+           PREDICATE_JUSTIFICATION
+           OBJECT_JUSTIFICATION);
+    $object = "LDC2019E43:$object";
+    $predicate_justification = join(";", map {"$docid:".$_} split(";", $predicate_justification));
+    $object_justification = "$docid:$object_justification";
+    my $key = "$predicate:$predicate_justification:$object_justification";
+    $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
+    $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
+    my ($query, $error) = grep {$_->get("PREDICATE") eq $predicate && $_->get("OBJECT") eq $object}
+                     $queries->get("QUERIES")->toarray();
+    $logger->NIST_die("Multiple queries matched the assessment entry:\n ", $entry->get("LINE")) if $error;
+    $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"))
+      if $correctness eq "CORRECT" && $linkability eq "YES" && !$query;
+    next unless ($correctness eq "CORRECT" && $linkability eq "YES" && $query);
+    my $query_id = $query->get("QUERYID");
+    $entry->set("QUERY_ID", $query_id);
+    $entry->set("QUERY", $query);
+    push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
   }
 
   my %candidate_responses;
   foreach my $response($responses->get("RESPONSES")->toarray()) {
-    my ($query_id, $cluster_rank, $docid, $mention_span, $reference_kbid)
-      = map {$response->get($_)} qw(QUERY_ID CLUSTER_RANK DOCUMENT_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
-    my $max_cluster_rank = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_clusters");
-    $response->set("SUBMITTED-A", 1);
-    next if ($cluster_rank > $max_cluster_rank);
-    $response->set("SUBMITTED-B", 1);
+    my ($query_id, $docid, $predicate_justification, $object_justification, $rank) =
+      map {$response->get($_)}
+        qw(QUERY_ID
+           DOCUMENT_ID
+           EDGE_PROVENANCE_TRIPLES
+           OBJECT_VALUE_PROVENANCE_TRIPLE
+           RANK);
+    next unless $queries_to_score->exists($query_id);
+    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id};
+    my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
+    $response->set("STRATEGY-1A-SUBMITTED", 1);
+    $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
     push(@{$candidate_responses{$query_id}}, $response);
-  }
-
-  my %selected_responses;
-  foreach my $query_id(keys %candidate_responses) {
-    my %responses_per_document;
-    foreach my $response(@{$candidate_responses{$query_id}}) {
-      if(exists $responses_per_document{$response->get("DOCUMENT_ID")}) {
-        my $runid = $response->get("RUN_ID");
-        my $run_and_query = "$runid:$query_id";
-        my $cluster_id = $response->get("CLUSTER_ID");
-        $logger->record_problem("MULTIPLE_INFORMATIVE_JUSTIFICATIONS_PER_DOCUMENT", $run_and_query, $cluster_id, $response->get("DOCUMENT_ID"), $response->get("WHERE"));
-        $responses_per_document{$response->get("DOCUMENT_ID")} = $response
-          if($response->get("JUSTIFICATION_CONFIDENCE") > $responses_per_document{$response->get("DOCUMENT_ID")}->get("JUSTIFICATION_CONFIDENCE"));
-      }
-      else {
-        $responses_per_document{$response->get("DOCUMENT_ID")} = $response;
-      }
-    }
-    my $i = 0;
-    foreach my $response(sort {$responses->get("AG_CV", $b, $self->get("AG_CV_FIELDS")) <=> $responses->get("AG_CV", $a, $self->get("AG_CV_FIELDS"))
-                                    || $a->get("VALUE_PROVENANCE_TRIPLE") cmp $b->get("VALUE_PROVENANCE_TRIPLE")}
-                              values %responses_per_document) {
-      my $max_num_informative_mentions = $queries_to_score->get("BY_KEY", $response->get("QUERY_ID"))->get("max_num_informative_mentions");
-      $response->set("SUBMITTED", 1);
-      next if $i == $max_num_informative_mentions;
-      next unless $docid_mappings->get("COREDOCS")->exists($response->get("DOCUMENT_ID"));
-      push(@{$selected_responses{$query_id}}, $response);
-      $response->set("POOLED", 1);
-      $i++;
-    }
   }
 
   my %categorized_submissions;
   my %correct_found;
-  my %incorrect_found;
-  my %document_based_assessments_assigned;
-  foreach my $response($responses->get("RESPONSES")->toarray()) {
-    my ($query_id, $docid, $cluster_id, $mention_span, $reference_kbid)
-      = map {$response->get($_)} qw(QUERY_ID DOCUMENT_ID CLUSTER_ID VALUE_PROVENANCE_TRIPLE QUERY_LINK_TARGET_IN_RESPONSE);
-    if($response->get("SUBMITTED-A")) {
-      push(@{$categorized_submissions{$query_id}{"SUBMITTED-A"}}, $response);
-      $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-A"} = 1;
-    }
-    if($response->get("SUBMITTED-B")) {
-      push(@{$categorized_submissions{$query_id}{"SUBMITTED-B"}}, $response);
-      $response->{ASSESSMENT}{"PRE-POLICY"}{"SUBMITTED-B"} = 1;
-    }
-    if($response->get("SUBMITTED")) {
-      push(@{$categorized_submissions{$query_id}{"SUBMITTED"}}, $response);
-      $response->{ASSESSMENT}{"PRE-POLICY"}{SUBMITTED} = 1;
-    }
-    if($response->get("POOLED")) {
-      # This response has been pooled and therefore should have been assessed
-      # Find the corresponding assessment structure and bind it to this response
-      push(@{$categorized_submissions{$query_id}{"POOLED"}}, $response);
-      $response->{ASSESSMENT}{"PRE-POLICY"}{POOLED} = 1;
-      my $assessment = $assessments->get("BY_KEY", "$reference_kbid:$mention_span") if $assessments->exists("$reference_kbid:$mention_span");
-      unless($assessment) {
-        my $filename = $response->get("WHERE")->{FILENAME};
-        my $linenum = $response->get("WHERE")->{LINENUM};
-        my $line = $response->get("LINE");
-        die "No assessment found for response\n $line\n in $filename (line#$linenum)\n";
+  foreach my $query_id(sort keys %candidate_responses) {
+    foreach my $response(@{$candidate_responses{$query_id}}) {
+      my ($query_id, $docid, $predicate_justification, $object_justification) =
+        map {$response->get($_)}
+          qw(QUERY_ID
+             DOCUMENT_ID
+             EDGE_PROVENANCE_TRIPLES
+             OBJECT_VALUE_PROVENANCE_TRIPLE);
+      my $predicate = $response->get("QUERY")->get("PREDICATE");
+      if($response->get("STRATEGY-1A-SUBMITTED")) {
+        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED}}, $response);
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{SUBMITTED} = 1;
       }
-      $response->{ASSESSMENT_ENTRY} = $assessment;
-      if($assessment->get("ASSESSMENT") eq "CORRECT") {
-        push(@{$categorized_submissions{$query_id}{"CORRECT"}}, $response);
-        $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
-        if($correct_found{$query_id}{$mention_span}) {
-          push(@{$categorized_submissions{$query_id}{"IGNORE"}}, $response);
-          push(@{$categorized_submissions{$query_id}{"REDUNDANT"}}, $response);
-          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE} = 1;
-          $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
+      if($response->get("STRATEGY-1A-POOLED")) {
+        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{POOLED}}, $response);
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{POOLED} = 1;
+        my $key = "$predicate:$predicate_justification:$object_justification";
+        my $assessment = $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
+        $logger->NIST_die("Assessment not found for key $key") unless $assessment;
+        $response->set("ASSESSMENT_ENTRY", $assessment);
+        if($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT") {
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{CORRECT}}, $response);
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
+          if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
+            my $subject = $assessment->get("SUBJECT_FQEC");
+            if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+            }
+            else{
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{RIGHT} = 1;
+              $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
+            }
+          }
+          else {
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{WRONG} = 1;
+          }
         }
-        else {
-          push(@{$categorized_submissions{$query_id}{"RIGHT"}}, $response);
-          $correct_found{$query_id}{$mention_span} = 1;
-          $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
-          $document_based_assessments_assigned{$query_id}{$mention_span} = 1;
+        elsif($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "INCORRECT") {
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{INCORRECT}}, $response);
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{INCORRECT} = 1;
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
         }
-      }
-      elsif($assessment->get("ASSESSMENT") eq "INCORRECT") {
-        push(@{$categorized_submissions{$query_id}{"INCORRECT"}}, $response);
-        $response->{ASSESSMENT}{"PRE-POLICY"}{INCORRECT} = 1;
-        if($incorrect_found{$query_id}{$mention_span}) {
-          push(@{$categorized_submissions{$query_id}{"IGNORE"}}, $response);
-          $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE} = 1;
-        }
-        else {
-          push(@{$categorized_submissions{$query_id}{"WRONG"}}, $response);
-          $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
-          $document_based_assessments_assigned{$query_id}{$mention_span} = 0 unless $document_based_assessments_assigned{$query_id}{$mention_span};
+        else{
+          my $filename = $response->get("WHERE")->{FILENAME};
+          my $linenum = $response->get("WHERE")->{LINENUM};
+          my $line = $response->get("LINE");
+          $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
         }
       }
-      else{
-        my $filename = $response->get("WHERE")->{FILENAME};
-        my $linenum = $response->get("WHERE")->{LINENUM};
-        my $line = $response->get("LINE");
-        $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
-      }
+      my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
+      my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
+      my $line = "QUERYID=$query_id " .
+                   "DOCID=$docid " .
+                   "PREDICATE_JUSTIFICATION=$predicate_justification " .
+                   "OBJECT_JUSTIFICATION=$object_justification " .
+                   "PRE_POLICY_ASSESSMENT=$pre_policy " .
+                   "POST_POLICY_ASSESSMENT=$post_policy\n";
+      $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
     }
-    else {
-      if($response->get("SUBMITTED")) {
-        push(@{$categorized_submissions{$query_id}{"NOTPOOLED"}}, $response);
-        $response->{ASSESSMENT}{"PRE-POLICY"}{NOTPOOLED} = 1;
-      }
-      $response->{ASSESSMENT}{"POST-POLICY"}{"NOT-CONSIDERED"} = 1;
-    }
-
-    $response->set("CORRECTNESS", "RIGHT") if $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT};
-    $response->set("CORRECTNESS", "WRONG") if $response->{ASSESSMENT}{"POST-POLICY"}{WRONG};
-    $response->set("CORRECTNESS", "IGNORE") if $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE};
-
-    my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
-    my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
-    my $ag_cv = $responses->get("AG_CV", $response, $self->get("AG_CV_FIELDS"));
-    my $line = "QUERYID=$query_id " .
-                 "KBID=$reference_kbid " .
-                 "MENTION=$mention_span " .
-                 "CLUSTER_ID=$cluster_id " .
-                 "AG_CV=$ag_cv " .
-                 "PRE_POLICY_ASSESSMENT=$pre_policy " .
-                 "POST_POLICY_ASSESSMENT=$post_policy\n";
-    $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
-  }
-
-  my %average_precision;
-  foreach my $query_id(keys %selected_responses) {
-    my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
-    my $num_ground_truth = keys %{$ground_truth{$node_id}};
-    my $max_num_ground_truth = $queries_to_score->get("BY_KEY", $query_id)->get("max_num_informative_mentions");
-    $average_precision{BESTCASE}{$query_id} = $self->get("AP", "BESTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_id}});
-    $average_precision{WORSTCASE}{$query_id} = $self->get("AP", "WORSTCASE", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_id}});
-    $average_precision{TRECEVAL}{$query_id} = $self->get("AP", "TRECEVAL", $num_ground_truth, $max_num_ground_truth, @{$selected_responses{$query_id}});
   }
 
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
-    my $node_id = $queries->get("QUERY", $query_id)->get("REFERENCE_KBID");
-    my $num_submitted_a = @{$categorized_submissions{$query_id}{"SUBMITTED-A"} || []};
-    my $num_submitted_b = @{$categorized_submissions{$query_id}{"SUBMITTED-B"} || []};
-    my $num_submitted = @{$categorized_submissions{$query_id}{"SUBMITTED"} || []};
-    my $num_correct = @{$categorized_submissions{$query_id}{"CORRECT"} || []};
-    my $num_incorrect = @{$categorized_submissions{$query_id}{"INCORRECT"} || []};
-    my $num_right = @{$categorized_submissions{$query_id}{"RIGHT"} || []};
-    my $num_wrong = @{$categorized_submissions{$query_id}{"WRONG"} || []};
-    my $num_redundant = @{$categorized_submissions{$query_id}{"REDUNDANT"} || []};
-    my $num_ignored = @{$categorized_submissions{$query_id}{"IGNORE"} || []};
-    my $num_pooled = @{$categorized_submissions{$query_id}{"POOLED"} || []};
-    my $num_ground_truth = keys %{$ground_truth{$node_id}};
-    my $ap_treceval = $average_precision{TRECEVAL}{$query_id} || 0;
-    my $ap_bestcase = $average_precision{BESTCASE}{$query_id} || 0;
-    my $ap_worstcase = $average_precision{WORSTCASE}{$query_id} || 0;
-    my $score = GraphScore->new($logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
+    my $num_submitted_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED} || []};
+    my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"CORRECT"} || []};
+    my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"INCORRECT"} || []};
+    my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"RIGHT"} || []};
+    my $num_wrong_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"WRONG"} || []};
+    my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"REDUNDANT"} || []};
+    my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
+    my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
+    my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
+    my $score = GraphScore->new($logger,
+                                  $runid,
+                                  $query_id,
+                                  $num_submitted_1a,
+                                  $num_correct_1a,
+                                  $num_incorrect_1a,
+                                  $num_right_1a,
+                                  $num_wrong_1a,
+                                  $num_redundant_1a,
+                                  $num_pooled_1a,
+                                  $num_ignored_1a,
+                                  $num_ground_truth_1a);
     $scores->add($score, $query_id);
   }
   $self->set("SCORES", $scores);
@@ -6580,27 +6553,21 @@ package GraphScoresPrinter;
 use parent -norequire, 'Container', 'Super';
 
 my @graph_scorer_fields_to_print = (
-  {NAME => 'EC',                 HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
-#  {NAME => 'NODEID',             HEADER => 'Node',     FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'RUNID',              HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'NUM_GROUND_TRUTH',   HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-#  {NAME => 'NUM_SUBMITTED_A',    HEADER => 'SubA',     FORMAT => '%4d',    JUSTIFY => 'R'},
-#  {NAME => 'NUM_SUBMITTED_B',    HEADER => 'SubB',     FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_SUBMITTED',      HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_POOLED',         HEADER => 'Pooled',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_CORRECT',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_REDUNDANT',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_INCORRECT',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_COUNTED',        HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_RIGHT',          HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_WRONG',          HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_IGNORED',        HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-#  {NAME => 'PRECISION',          HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
-#  {NAME => 'RECALL',             HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
-#  {NAME => 'F1',                 HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'AVERAGE_PRECISION_BESTCASE',  HEADER => 'AP-B',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'AVERAGE_PRECISION_WORSTCASE',  HEADER => 'AP-W',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'AVERAGE_PRECISION_TRECEVAL',  HEADER => 'AP-T',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'EC',                    HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',                 HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH_1A',   HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED_1A',      HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_POOLED_1A',         HEADER => 'Pooled',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_CORRECT_1A',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_REDUNDANT_1A',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT_1A',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED_1A',        HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT_1A',          HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG_1A',          HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED_1A',        HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'PRECISION_1A',          HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL_1A',             HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'F1_1A',                 HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
 );
 
 sub new {
@@ -6619,32 +6586,63 @@ sub new {
 sub get_SUMMARY {
   my ($self) = @_;
   my $logger = $self->get("LOGGER");
-  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+  my ($runid, 
+      $total_num_submitted_1a, 
+      $total_num_correct_1a, 
+      $total_num_incorrect_1a, 
+      $total_num_right_1a, 
+      $total_num_wrong_1a, 
+      $total_num_redundant_1a, 
+      $total_num_pooled_1a, 
+      $total_num_ignored_1a, 
+      $total_num_ground_truth_1a);
   my $total_num_counted_queries = 0;
   foreach my $score($self->toarray()) {
-    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval)
-      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_POOLED NUM_IGNORED NUM_GROUND_TRUTH AVERAGE_PRECISION_BESTCASE AVERAGE_PRECISION_WORSTCASE AVERAGE_PRECISION_TRECEVAL);
+    my ($num_submitted_1a,
+        $num_correct_1a,
+        $num_incorrect_1a,
+        $num_right_1a,
+        $num_wrong_1a,
+        $num_redundant_1a,
+        $num_pooled_1a,
+        $num_ignored_1a,
+        $num_ground_truth_1a)
+      = map {$score->get($_)} qw(
+                                  NUM_SUBMITTED_1A
+                                  NUM_CORRECT_1A
+                                  NUM_INCORRECT_1A
+                                  NUM_RIGHT_1A
+                                  NUM_WRONG_1A
+                                  NUM_REDUNDANT_1A
+                                  NUM_POOLED_1A
+                                  NUM_IGNORED_1A
+                                  NUM_GROUND_TRUTH_1A
+                              );
     $runid = $score->get("RUNID") unless $runid;
-    $total_num_submitted += $num_submitted;
-    $total_num_submitted_a += $num_submitted_a;
-    $total_num_submitted_b += $num_submitted_b;
-    $total_num_correct += $num_correct;
-    $total_num_incorrect += $num_incorrect;
-    $total_num_right += $num_right;
-    $total_num_wrong += $num_wrong;
-    $total_num_redundant += $num_redundant;
-    $total_num_pooled += $num_pooled;
-    $total_num_ignored += $num_ignored;
-    $total_num_ground_truth += $num_ground_truth;
-    $map_bestcase += $ap_bestcase;
-    $map_worstcase += $ap_worstcase;
-    $map_treceval += $ap_treceval;
-    $total_num_counted_queries++ if $num_ground_truth;
+    $total_num_submitted_1a += $num_submitted_1a;
+    $total_num_correct_1a += $num_correct_1a;
+    $total_num_incorrect_1a += $num_incorrect_1a;
+    $total_num_right_1a += $num_right_1a;
+    $total_num_wrong_1a += $num_wrong_1a;
+    $total_num_redundant_1a += $num_redundant_1a;
+    $total_num_pooled_1a += $num_pooled_1a;
+    $total_num_ignored_1a += $num_ignored_1a;
+    $total_num_ground_truth_1a += $num_ground_truth_1a;
+    $total_num_counted_queries++ if $num_ground_truth_1a;
   }
-  $map_bestcase /= $total_num_counted_queries;
-  $map_worstcase /= $total_num_counted_queries;
-  $map_treceval /= $total_num_counted_queries;
-  GraphScore->new($logger, $runid, "Summary", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+
+  GraphScore->new($logger, 
+                    $runid, 
+                    "Summary", 
+                    $total_num_submitted_1a,
+                    $total_num_correct_1a,
+                    $total_num_incorrect_1a,
+                    $total_num_right_1a,
+                    $total_num_wrong_1a,
+                    $total_num_redundant_1a,
+                    $total_num_pooled_1a,
+                    $total_num_ignored_1a,
+                    $total_num_ground_truth_1a);
 }
 
 sub print_line {
@@ -6704,25 +6702,32 @@ package GraphScore;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $query_id, $node_id, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval) = @_;
+  my ($class, 
+      $logger,
+      $runid,
+      $query_id,
+      $num_submitted_1a,
+      $num_correct_1a,
+      $num_incorrect_1a,
+      $num_right_1a,
+      $num_wrong_1a,
+      $num_redundant_1a,
+      $num_pooled_1a,
+      $num_ignored_1a,
+      $num_ground_truth_1a) = @_;
+      
   my $self = {
     __CLASS__ => 'GraphScore',
-    AVERAGE_PRECISION_BESTCASE => $ap_bestcase,
-    AVERAGE_PRECISION_WORSTCASE => $ap_worstcase,
-    AVERAGE_PRECISION_TRECEVAL => $ap_treceval,
     EC => $query_id,
-    NODEID => $node_id,
-    NUM_CORRECT => $num_correct,
-    NUM_GROUND_TRUTH => $num_ground_truth,
-    NUM_IGNORED => $num_ignored,
-    NUM_INCORRECT => $num_incorrect,
-    NUM_POOLED => $num_pooled,
-    NUM_REDUNDANT => $num_redundant,
-    NUM_RIGHT => $num_right,
-    NUM_SUBMITTED => $num_submitted,
-    NUM_SUBMITTED_A => $num_submitted_a,
-    NUM_SUBMITTED_B => $num_submitted_b,
-    NUM_WRONG => $num_wrong,
+    NUM_CORRECT_1A => $num_correct_1a,
+    NUM_GROUND_TRUTH_1A => $num_ground_truth_1a,
+    NUM_IGNORED_1A => $num_ignored_1a,
+    NUM_INCORRECT_1A => $num_incorrect_1a,
+    NUM_POOLED_1A => $num_pooled_1a,
+    NUM_REDUNDANT_1A => $num_redundant_1a,
+    NUM_RIGHT_1A => $num_right_1a,
+    NUM_SUBMITTED_1A => $num_submitted_1a,
+    NUM_WRONG_1A => $num_wrong_1a,
     RUNID => $runid,
     LOGGER => $logger,
   };
@@ -6730,27 +6735,27 @@ sub new {
   $self;
 }
 
-sub get_NUM_COUNTED {
+sub get_NUM_COUNTED_1A {
   my ($self) = @_;
-  $self->get("NUM_RIGHT") + $self->get("NUM_WRONG");
+  $self->get("NUM_RIGHT_1A") + $self->get("NUM_WRONG_1A");
 }
 
-#sub get_PRECISION {
-#  my ($self) = @_;
-#  $self->get("NUM_COUNTED") ? $self->get("NUM_RIGHT")/($self->get("NUM_COUNTED")) : 0;
-#}
-#
-#sub get_RECALL {
-#  my ($self) = @_;
-#  $self->get("NUM_GROUND_TRUTH") ? $self->get("NUM_RIGHT")/($self->get("NUM_GROUND_TRUTH")) : 0;
-#}
-#
-#sub get_F1 {
-#  my ($self) = @_;
-#  my $precision = $self->get("PRECISION");
-#  my $recall = $self->get("RECALL");
-#  ($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
-#}
+sub get_PRECISION_1A {
+  my ($self) = @_;
+  $self->get("NUM_COUNTED_1A") ? $self->get("NUM_RIGHT_1A")/($self->get("NUM_COUNTED_1A")) : 0;
+}
+
+sub get_RECALL_1A {
+  my ($self) = @_;
+  $self->get("NUM_GROUND_TRUTH_1A") ? $self->get("NUM_RIGHT_1A")/($self->get("NUM_GROUND_TRUTH_1A")) : 0;
+}
+
+sub get_F1_1A {
+  my ($self) = @_;
+  my $precision = $self->get("PRECISION_1A");
+  my $recall = $self->get("RECALL_1A");
+  ($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
+}
 
 #####################################################################################
 # EncodingFormatToModalityMappings
