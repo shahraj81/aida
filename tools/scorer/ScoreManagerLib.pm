@@ -4697,6 +4697,22 @@ sub write_to_file {
   close($program_output_xml);
 }
 
+sub get_MATCHING_QUERIES {
+  my ($self, %criteria) = @_;
+  my @candidate_queries = grep {$_->get("PREDICATE") eq $criteria{PREDICATE}} $self->get("QUERIES")->toarray();
+  if($criteria{OBJECT}) {
+    my @matched_queries;
+    foreach my $query(@candidate_queries) {
+      my %query_objects = map {$_=>1} split(/\|/, $query->get("OBJECT"));
+      push (@matched_queries, $query) if $query_objects{$criteria{OBJECT}};
+    }
+    return @matched_queries;
+  }
+  else {
+    return @candidate_queries;
+  }
+}
+
 sub get_QUERY {
   my ($self, $query_id) = @_;
   my $query;
@@ -6408,18 +6424,20 @@ sub score_responses {
            OBJECT_LINKABILITY
            PREDICATE_JUSTIFICATION
            OBJECT_JUSTIFICATION);
-    $object = join("|", map {"LDC2019E43:".$_} split("|", $object));
+    $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
     $predicate_justification = join(";", map {"$docid:".$_} split(";", $predicate_justification));
     $object_justification = "$docid:$object_justification";
     my $key = "$predicate:$predicate_justification:$object_justification";
     $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
     $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
-    my ($query, $error) = grep {$_->get("PREDICATE") eq $predicate && $_->get("OBJECT") eq $object}
-                     $queries->get("QUERIES")->toarray();
+
+    next unless ($correctness eq "CORRECT" && $linkability eq "YES");
+    my ($query, $error) = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
     $logger->NIST_die("Multiple queries matched the assessment entry:\n ", $entry->get("LINE")) if $error;
-    $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"))
-      if $correctness eq "CORRECT" && $linkability eq "YES" && !$query;
-    next unless ($correctness eq "CORRECT" && $linkability eq "YES" && $query);
+    unless ($query) {
+      $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
+      next;
+    }
     my $query_id = $query->get("QUERYID");
     $entry->set("QUERY_ID", $query_id);
     $entry->set("QUERY", $query);
@@ -6469,6 +6487,8 @@ sub score_responses {
           push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{CORRECT}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
           if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{LINKABLE}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{LINKABLE} = 1;
             my $subject = $assessment->get("SUBJECT_FQEC");
             if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
@@ -6515,6 +6535,7 @@ sub score_responses {
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
     my $num_submitted_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED} || []};
     my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"CORRECT"} || []};
+    my $num_linkable_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"LINKABLE"} || []};
     my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"INCORRECT"} || []};
     my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"RIGHT"} || []};
     my $num_wrong_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"WRONG"} || []};
@@ -6529,6 +6550,7 @@ sub score_responses {
                                   $query_id,
                                   $num_submitted_1a,
                                   $num_correct_1a,
+                                  $num_linkable_1a,
                                   $num_incorrect_1a,
                                   $num_right_1a,
                                   $num_wrong_1a,
@@ -6563,6 +6585,7 @@ my @graph_scorer_fields_to_print = (
   {NAME => 'NUM_SUBMITTED_1A',      HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
   {NAME => 'NUM_POOLED_1A',         HEADER => 'Pooled',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_CORRECT_1A',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_LINKABLE_1A',       HEADER => 'Linkable', FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_REDUNDANT_1A',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_INCORRECT_1A',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_COUNTED_1A',        HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -6593,6 +6616,7 @@ sub get_SUMMARY {
   my ($runid, 
       $total_num_submitted_1a, 
       $total_num_correct_1a, 
+      $total_num_linkable_1a,
       $total_num_incorrect_1a, 
       $total_num_right_1a, 
       $total_num_wrong_1a, 
@@ -6604,6 +6628,7 @@ sub get_SUMMARY {
   foreach my $score($self->toarray()) {
     my ($num_submitted_1a,
         $num_correct_1a,
+        $num_linkable_1a,
         $num_incorrect_1a,
         $num_right_1a,
         $num_wrong_1a,
@@ -6615,6 +6640,7 @@ sub get_SUMMARY {
       = map {$score->get($_)} qw(
                                   NUM_SUBMITTED_1A
                                   NUM_CORRECT_1A
+                                  NUM_LINKABLE_1A
                                   NUM_INCORRECT_1A
                                   NUM_RIGHT_1A
                                   NUM_WRONG_1A
@@ -6627,6 +6653,7 @@ sub get_SUMMARY {
     $runid = $score->get("RUNID") unless $runid;
     $total_num_submitted_1a += $num_submitted_1a;
     $total_num_correct_1a += $num_correct_1a;
+    $total_num_linkable_1a += $num_linkable_1a;
     $total_num_incorrect_1a += $num_incorrect_1a;
     $total_num_right_1a += $num_right_1a;
     $total_num_wrong_1a += $num_wrong_1a;
@@ -6642,6 +6669,7 @@ sub get_SUMMARY {
                     "Summary", 
                     $total_num_submitted_1a,
                     $total_num_correct_1a,
+                    $total_num_linkable_1a,
                     $total_num_incorrect_1a,
                     $total_num_right_1a,
                     $total_num_wrong_1a,
@@ -6715,6 +6743,7 @@ sub new {
       $query_id,
       $num_submitted_1a,
       $num_correct_1a,
+      $num_linkable_1a,
       $num_incorrect_1a,
       $num_right_1a,
       $num_wrong_1a,
@@ -6728,6 +6757,7 @@ sub new {
     __CLASS__ => 'GraphScore',
     EC => $query_id,
     NUM_CORRECT_1A => $num_correct_1a,
+    NUM_LINKABLE_1A => $num_linkable_1a,
     NUM_GROUND_TRUTH_1A => $num_ground_truth_1a,
     NUM_GROUND_TRUTH_1A_COUNTED => $num_ground_truth_1a_counted,
     NUM_IGNORED_1A => $num_ignored_1a,
