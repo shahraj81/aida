@@ -80,14 +80,14 @@ my $cadir_root = "$intermediate_dir/SPARQL-CA-output";
 my $runs_to_score_filename = "$intermediate_dir/runid.txt";
 my $runid = $switches->get("runid");
 
-$logger->NIST_die("$intermediate_dir already exists") if -e $intermediate_dir;
-system("mkdir -p $rundir_root");
-system("mkdir -p $cadir_root");
-system("cp -r " . $switches->get("rundir") . " $rundir_root/$runid");
-system("cp -r " . $switches->get("cadir") . " $cadir_root/$runid");
-open($output_filename, ">$runs_to_score_filename");
-print $output_filename "run_id\n$runid\n";
-close($output_filename);
+#$logger->NIST_die("$intermediate_dir already exists") if -e $intermediate_dir;
+#system("mkdir -p $rundir_root");
+#system("mkdir -p $cadir_root");
+#system("cp -r " . $switches->get("rundir") . " $rundir_root/$runid");
+#system("cp -r " . $switches->get("cadir") . " $cadir_root/$runid");
+#open($output_filename, ">$runs_to_score_filename");
+#print $output_filename "run_id\n$runid\n";
+#close($output_filename);
 
 $output_filename = $switches->get("output");
 $logger->NIST_die("$output_filename already exists") if -e $output_filename;
@@ -105,7 +105,6 @@ map {$queries_to_score->add($_, $_->get("query_id"))}
 my $runs_to_score = Container->new($logger);
 map {$runs_to_score->add("KEY", $_->get("run_id"))}
       FileHandler->new($logger, $runs_to_score_filename)->get("ENTRIES")->toarray();
-my $task_and_type_code = $queries->get("TASK_AND_TYPE_CODE");
 my $assessments = Assessments->new($logger, $switches->get("assessments"), $queries->get("QUERYTYPE"));
 
 my $responses = ResponseSet->new($logger,

@@ -5409,6 +5409,7 @@ sub load_graph {
   my $query_type_specifice_assessments_dir = $assessments_dir . "/data/graph";
   my $header_line = join("\t", qw(KIT_ID RESPONSE_ID PREDICATE DOCUMENT_ID SUBJECT_TYPE SUBJECT_JUSTIFICATION OBJECT_TYPE OBJECT_JUSTIFICATION PREDICATE_JUSTIFICATION PREDICATE_JUSTIFICATION_CORRECTNESS OBJECT_LINKABILITY OBJECT_FQEC SUBJECT_FQEC));
   my $header = Header->new($self->get("LOGGER"), $header_line);
+  my $next_generated_fqec_num = 1001;
   foreach my $filename(<$query_type_specifice_assessments_dir/*/*.tab>) {
     my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
     my $entries = $filehandler->get("ENTRIES");
@@ -5436,7 +5437,27 @@ sub load_graph {
            SUBJECT_FQEC
            LINE
            WHERE);
+      $assessment_entry->set("SUBJECT_FQEC_READ", $assessment_entry->get("SUBJECT_FQEC"));
+      if($assessment_entry->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT" &&
+          $assessment_entry->get("OBJECT_LINKABILITY") eq "YES" &&
+          $assessment_entry->get("SUBJECT_FQEC") eq "NIL") {
+        my $generated_fqec = "NILG$next_generated_fqec_num";
+        $assessment_entry->set("SUBJECT_FQEC", $generated_fqec);
+        $next_generated_fqec_num++;
+      }
       $self->add($assessment_entry, $key) unless $self->exists($key);
+      my $line = join(" ",
+                      map {$_ . "=" . $assessment_entry->get($_)}
+                        qw(PREDICATE
+                           DOCUMENT_ID
+                           OBJECT_JUSTIFICATION
+                           PREDICATE_JUSTIFICATION_CORRECTNESS
+                           PREDICATE_JUSTIFICATION
+                           OBJECT_LINKABILITY
+                           OBJECT_FQEC
+                           SUBJECT_FQEC_READ
+                           SUBJECT_FQEC));
+      $self->get("LOGGER")->record_debug_information("GROUND_TRUTH", $line, $assessment_entry->get("WHERE"));
     }
     $filehandler->cleanup();
   }
