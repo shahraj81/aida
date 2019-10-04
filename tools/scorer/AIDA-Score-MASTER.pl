@@ -85,7 +85,6 @@ my $rundir_root = "$intermediate_dir/SPARQL-VALID-output";
 my $cadir_root = "$intermediate_dir/SPARQL-CA-output";
 my $runs_to_score_filename = "$intermediate_dir/runid.txt";
 my $runid = $switches->get("runid");
-my $salient_edges_filename = $switches->get("salient_edges");
 
 $logger->NIST_die("$intermediate_dir already exists") if -e $intermediate_dir;
 system("mkdir -p $rundir_root");
@@ -113,6 +112,7 @@ my $runs_to_score = Container->new($logger);
 map {$runs_to_score->add("KEY", $_->get("run_id"))}
       FileHandler->new($logger, $runs_to_score_filename)->get("ENTRIES")->toarray();
 my $assessments = Assessments->new($logger, $switches->get("assessments"), $queries->get("QUERYTYPE"));
+my $salient_edges = SalientEdges->new($logger, $switches->get("salient_edges_filename"));
 
 my $responses = ResponseSet->new($logger,
                       $queries,
@@ -125,7 +125,7 @@ my $responses = ResponseSet->new($logger,
                       $queries_to_score,
                       $cadir_root);
 
-my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $salient_edges_filename, $responses, $assessments, $queries_to_score);
+my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
