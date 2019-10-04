@@ -4701,12 +4701,15 @@ sub get_MATCHING_QUERIES {
   my ($self, %criteria) = @_;
   my @candidate_queries = grep {$_->get("PREDICATE") eq $criteria{PREDICATE}} $self->get("QUERIES")->toarray();
   if($criteria{OBJECT}) {
-    my @matched_queries;
+    my @criteria_objects = split(/\|/, $criteria{OBJECT});
+    my %matched_queries;
     foreach my $query(@candidate_queries) {
       my %query_objects = map {$_=>1} split(/\|/, $query->get("OBJECT"));
-      push (@matched_queries, $query) if $query_objects{$criteria{OBJECT}};
+      foreach my $criteria_object(@criteria_objects) {
+        $matched_queries{$query->get("QUERYID")} = $query if $query_objects{$criteria_object};
+      }
     }
-    return @matched_queries;
+    return values %matched_queries;
   }
   else {
     return @candidate_queries;
@@ -6453,16 +6456,16 @@ sub score_responses {
     $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
 
     next unless ($correctness eq "CORRECT" && $linkability eq "YES");
-    my ($query, $error) = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
-    $logger->NIST_die("Multiple queries matched the assessment entry:\n ", $entry->get("LINE")) if $error;
-    unless ($query) {
+    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
+    unless (@queries) {
       $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
       next;
     }
-    my $query_id = $query->get("QUERYID");
-    $entry->set("QUERY_ID", $query_id);
-    $entry->set("QUERY", $query);
-    push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
+    foreach my $query(@queries) {
+      my $query_id = $query->get("QUERYID");
+      $entry->set("QUERIES", @queries);
+      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
+    }
   }
 
   my %candidate_responses;
@@ -6477,9 +6480,9 @@ sub score_responses {
     next unless $queries_to_score->exists($query_id);
     next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id};
     my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
-    $response->set("STRATEGY-1A-SUBMITTED", 1);
+    $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
     $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
-    push(@{$candidate_responses{$query_id}}, $response);
+    push(@{$candidate_responses{$query_id}}, $response) if $rank;
   }
 
   my %categorized_submissions;
