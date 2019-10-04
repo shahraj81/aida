@@ -6519,13 +6519,13 @@ sub score_responses {
             }
             else{
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{RIGHT} = 1;
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
               $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
             }
           }
           else {
             push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
-            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{WRONG} = 1;
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
           }
         }
         elsif($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "INCORRECT") {
@@ -6541,9 +6541,13 @@ sub score_responses {
           $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
         }
       }
-      my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"PRE-POLICY"}});
-      my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"POST-POLICY"}});
-      my $line = "QUERYID=$query_id " .
+      else {
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{NOTPOOLED} = 1;
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{"NOT-CONSIDERED"} = 1;
+      }
+      my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}});
+      my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}});
+      my $line = "STRATEGY-1A QUERYID=$query_id " .
                    "DOCID=$docid " .
                    "PREDICATE_JUSTIFICATION=$predicate_justification " .
                    "OBJECT_JUSTIFICATION=$object_justification " .
