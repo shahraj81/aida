@@ -5475,11 +5475,12 @@ package ScoresManager;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $queries, $salient_edges_filename, $responses, $assessments, $queries_to_score) = @_;
   my $self = {
     __CLASS__ => 'ScoresManager',
     DOCID_MAPPINGS => $docid_mappings,
     QUERIES => $queries,
+    SALIENT_EDGES_FILENAME => $salient_edges_filename,
     RESPONSES => $responses,
     ASSESSMENTS => $assessments,
     QUERY_TYPE => $queries->get("QUERYTYPE"),
@@ -5494,12 +5495,12 @@ sub new {
 
 sub score_responses {
   my ($self) = @_;
-  my ($docid_mappings, $responses, $assessments, $query_type, $queries_to_score, $queries, $runid, $logger)
-    = map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES ASSESSMENTS QUERY_TYPE QUERIES_TO_SCORE QUERIES RUNID LOGGER);
+  my ($docid_mappings, $responses, $assessments, $query_type, $queries_to_score, $queries, $salient_edges_filename, $runid, $logger)
+    = map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES ASSESSMENTS QUERY_TYPE QUERIES_TO_SCORE QUERIES SALIENT_EDGES_FILENAME RUNID LOGGER);
   my $scores;
   $scores = ClassScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "class_query");
   $scores = ZeroHopScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "zerohop_query");
-  $scores = GraphScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "graph_query");
+  $scores = GraphScores->new($logger, $runid, $docid_mappings, $queries, $salient_edges_filename, $responses, $assessments, $queries_to_score) if($query_type eq "graph_query");
   $self->set("SCORES", $scores);
 }
 
@@ -6410,12 +6411,13 @@ package GraphScores;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $queries, $salient_edges_filename, $responses, $assessments, $queries_to_score) = @_;
   my $self = {
     __CLASS__ => 'GraphScores',
     ASSESSMENTS => $assessments,
     DOCID_MAPPINGS => $docid_mappings,
     QUERIES => $queries,
+    SALIENT_EDGES_FILENAME => $salient_edges_filename,
     QUERIES_TO_SCORE => $queries_to_score,
     RESPONSES => $responses,
     RUNID => $runid,
@@ -6428,8 +6430,8 @@ sub new {
 
 sub score_responses {
   my ($self) = @_;
-  my ($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score)
-    = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
+  my ($logger, $runid, $docid_mappings, $queries, $salient_edges_filename, $responses, $assessments, $queries_to_score)
+    = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES_FILENAME RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
   my $scores = GraphScoresPrinter->new($logger);
 
   # Gather ground truth for Strategy 1A

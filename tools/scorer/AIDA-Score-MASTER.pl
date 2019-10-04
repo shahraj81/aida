@@ -46,6 +46,7 @@ $switches->addParam("keyframes_boundingboxes", "required", "File containing keyf
 $switches->addParam("queries", "required", "File containing queryids to be pooled.");
 $switches->addParam("queries_dtd", "required", "DTD file corresponding to the XML file containing queries");
 $switches->addParam("queries_xml", "required", "XML file containing queries");
+$switches->addParam("salient_edges", "required", "File containing edges sailent to prevailing theories or 'none'");
 $switches->addParam("assessments", "required", "Assessment package as receieved from LDC");
 $switches->addParam("rundir", "required", "Run directory containing validated SPARQL output files");
 $switches->addParam("cadir", "required", "Directory containing confidence aggregation output");
@@ -73,12 +74,18 @@ foreach my $path(($switches->get("coredocs"),
   $logger->NIST_die("$path does not exist") unless -e $path;
 }
 
+foreach my $path(($switches->get("salient_edges"))) {
+  next if $path eq "none";
+  $logger->NIST_die("$path does not exist") unless -e $path;
+}
+
 my $output_filename;
 my $intermediate_dir = $switches->get("intermediate");
 my $rundir_root = "$intermediate_dir/SPARQL-VALID-output";
 my $cadir_root = "$intermediate_dir/SPARQL-CA-output";
 my $runs_to_score_filename = "$intermediate_dir/runid.txt";
 my $runid = $switches->get("runid");
+my $salient_edges_filename = $switches->get("salient_edges");
 
 $logger->NIST_die("$intermediate_dir already exists") if -e $intermediate_dir;
 system("mkdir -p $rundir_root");
@@ -118,7 +125,7 @@ my $responses = ResponseSet->new($logger,
                       $queries_to_score,
                       $cadir_root);
 
-my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score);
+my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $salient_edges_filename, $responses, $assessments, $queries_to_score);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
