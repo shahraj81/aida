@@ -5495,8 +5495,9 @@ sub load {
   foreach my $entry($entries->toarray()) {
     my $subject = $entry->get("subject");
     my $role = $entry->get("role");
-    my $object = $entry->get("object");
-    $self->add($entry, "$subject:$role:$object");
+    foreach my $object(split/\|/, $entry->get("object")) {
+      $self->add($entry, "$subject:$role:LDC2019E43:$object");
+    }
   }
   $filehandler->cleanup();
 }
@@ -6561,6 +6562,14 @@ sub score_responses {
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
               $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
+              foreach my $object(split(/\|/, $response->get("ASSESSMENT_ENTRY")->get("OBJECT_FQEC"))) {
+                if($salient_edges->exists("$subject:$predicate:LDC2019E43:$object")) {
+                  $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                  push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+                  # the same response needs not to be salient more than once
+                  last;
+                }
+              }
             }
           }
           else {
@@ -6603,6 +6612,7 @@ sub score_responses {
     my $num_linkable_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"LINKABLE"} || []};
     my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"INCORRECT"} || []};
     my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"RIGHT"} || []};
+    my $num_salient_1b = @{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT} || []};
     my $num_wrong_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"WRONG"} || []};
     my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"REDUNDANT"} || []};
     my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
@@ -6618,6 +6628,7 @@ sub score_responses {
                                   $num_linkable_1a,
                                   $num_incorrect_1a,
                                   $num_right_1a,
+                                  $num_salient_1b,
                                   $num_wrong_1a,
                                   $num_redundant_1a,
                                   $num_pooled_1a,
@@ -6657,6 +6668,7 @@ my @graph_scorer_fields_to_print = (
   {NAME => 'NUM_RIGHT_1A',          HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_WRONG_1A',          HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_IGNORED_1A',        HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SALIENT_1B',        HEADER => 'Salient',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'PRECISION_1A',          HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
   {NAME => 'RECALL_1A',             HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
   {NAME => 'F1_1A',                 HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
@@ -6683,7 +6695,8 @@ sub get_SUMMARY {
       $total_num_correct_1a, 
       $total_num_linkable_1a,
       $total_num_incorrect_1a, 
-      $total_num_right_1a, 
+      $total_num_right_1a,
+      $total_num_salient_1b,
       $total_num_wrong_1a, 
       $total_num_redundant_1a, 
       $total_num_pooled_1a, 
@@ -6696,6 +6709,7 @@ sub get_SUMMARY {
         $num_linkable_1a,
         $num_incorrect_1a,
         $num_right_1a,
+        $num_salient_1b,
         $num_wrong_1a,
         $num_redundant_1a,
         $num_pooled_1a,
@@ -6708,6 +6722,7 @@ sub get_SUMMARY {
                                   NUM_LINKABLE_1A
                                   NUM_INCORRECT_1A
                                   NUM_RIGHT_1A
+                                  NUM_SALIENT_1B
                                   NUM_WRONG_1A
                                   NUM_REDUNDANT_1A
                                   NUM_POOLED_1A
@@ -6721,6 +6736,7 @@ sub get_SUMMARY {
     $total_num_linkable_1a += $num_linkable_1a;
     $total_num_incorrect_1a += $num_incorrect_1a;
     $total_num_right_1a += $num_right_1a;
+    $total_num_salient_1b += $num_salient_1b;
     $total_num_wrong_1a += $num_wrong_1a;
     $total_num_redundant_1a += $num_redundant_1a;
     $total_num_pooled_1a += $num_pooled_1a;
@@ -6737,6 +6753,7 @@ sub get_SUMMARY {
                     $total_num_linkable_1a,
                     $total_num_incorrect_1a,
                     $total_num_right_1a,
+                    $total_num_salient_1b,
                     $total_num_wrong_1a,
                     $total_num_redundant_1a,
                     $total_num_pooled_1a,
@@ -6811,6 +6828,7 @@ sub new {
       $num_linkable_1a,
       $num_incorrect_1a,
       $num_right_1a,
+      $num_salient_1b,
       $num_wrong_1a,
       $num_redundant_1a,
       $num_pooled_1a,
@@ -6830,6 +6848,7 @@ sub new {
     NUM_POOLED_1A => $num_pooled_1a,
     NUM_REDUNDANT_1A => $num_redundant_1a,
     NUM_RIGHT_1A => $num_right_1a,
+    NUM_SALIENT_1B => $num_salient_1b,
     NUM_SUBMITTED_1A => $num_submitted_1a,
     NUM_WRONG_1A => $num_wrong_1a,
     RUNID => $runid,

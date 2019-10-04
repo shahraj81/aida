@@ -112,7 +112,7 @@ my $runs_to_score = Container->new($logger);
 map {$runs_to_score->add("KEY", $_->get("run_id"))}
       FileHandler->new($logger, $runs_to_score_filename)->get("ENTRIES")->toarray();
 my $assessments = Assessments->new($logger, $switches->get("assessments"), $queries->get("QUERYTYPE"));
-my $salient_edges = SalientEdges->new($logger, $switches->get("salient_edges_filename"));
+my $salient_edges = SalientEdges->new($logger, $switches->get("salient_edges"));
 
 my $responses = ResponseSet->new($logger,
                       $queries,
