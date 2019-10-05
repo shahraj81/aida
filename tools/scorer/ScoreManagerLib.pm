@@ -6503,6 +6503,11 @@ sub score_responses {
       my $query_id = $query->get("QUERYID");
       $entry->set("QUERIES", @queries);
       push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
+      foreach my $object_element(split(/\|/, $object)){
+        if($salient_edges->exists("$subject:$predicate:$object_element")) {
+          push(@{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{"$subject:$predicate:$object_element"}}, $entry);
+        }
+      }
     }
   }
 
@@ -6618,8 +6623,10 @@ sub score_responses {
     my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
     my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
-    my $depth_1a = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
-    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth_1a ? $depth_1a : $num_ground_truth_1a;
+    my $num_ground_truth_1b = keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}};
+    my $depth_1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
+    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth_1 ? $depth_1 : $num_ground_truth_1a;
+    my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth_1 ? $depth_1 : $num_ground_truth_1b;
     my $score = GraphScore->new($logger,
                                   $runid,
                                   $query_id,
@@ -6634,7 +6641,9 @@ sub score_responses {
                                   $num_pooled_1a,
                                   $num_ignored_1a,
                                   $num_ground_truth_1a,
-                                  $num_ground_truth_1a_counted);
+                                  $num_ground_truth_1b,
+                                  $num_ground_truth_1a_counted,
+                                  $num_ground_truth_1b_counted);
     $scores->add($score, $query_id);
   }
   $self->set("SCORES", $scores);
@@ -6654,24 +6663,27 @@ package GraphScoresPrinter;
 use parent -norequire, 'Container', 'Super';
 
 my @graph_scorer_fields_to_print = (
-  {NAME => 'EC',                    HEADER => 'QID/EC',   FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'RUNID',                 HEADER => 'RunID',    FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'NUM_GROUND_TRUTH_1A',   HEADER => 'GTA',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_GROUND_TRUTH_1A_COUNTED',   HEADER => 'GT',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_SUBMITTED_1A',      HEADER => 'Sub',      FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_POOLED_1A',         HEADER => 'Pooled',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_CORRECT_1A',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_LINKABLE_1A',       HEADER => 'Linkable', FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_REDUNDANT_1A',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_INCORRECT_1A',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_COUNTED_1A',        HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_RIGHT_1A',          HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_WRONG_1A',          HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_IGNORED_1A',        HEADER => 'Ignrd',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_SALIENT_1B',        HEADER => 'Salient',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'PRECISION_1A',          HEADER => 'Prec',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'RECALL_1A',             HEADER => 'Recall',   FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'F1_1A',                 HEADER => 'F1',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'EC',                            HEADER => 'QID/EC',         FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',                         HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH_1A',           HEADER => 'GTA(1a)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_GROUND_TRUTH_1A_COUNTED',   HEADER => 'GT(1a)',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_GROUND_TRUTH_1B',           HEADER => 'GTA(1b)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_GROUND_TRUTH_1B_COUNTED',   HEADER => 'GT(1b)',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED_1A',              HEADER => 'Sub',            FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_POOLED_1A',                 HEADER => 'Pooled',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_CORRECT_1A',                HEADER => 'Correct',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_LINKABLE_1A',               HEADER => 'Linkable',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_REDUNDANT_1A',              HEADER => 'Dup',            FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT_1A',              HEADER => 'Incrct',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED_1A',                HEADER => 'Cntd',           FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT_1A',                  HEADER => 'Right',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG_1A',                  HEADER => 'Wrong',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED_1A',                HEADER => 'Ignrd',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SALIENT_1B',                HEADER => 'Salient',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'PRECISION_1A',                  HEADER => 'Prec(1a)',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL_1A',                     HEADER => 'Recall(1a)',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'F1_1A',                         HEADER => 'F1(1a)',         FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL_1B',                     HEADER => 'Recall(1b)',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
 );
 
 sub new {
@@ -6702,7 +6714,9 @@ sub get_SUMMARY {
       $total_num_pooled_1a, 
       $total_num_ignored_1a, 
       $total_num_ground_truth_1a,
-      $total_num_ground_truth_1a_counted);
+      $total_num_ground_truth_1b,
+      $total_num_ground_truth_1a_counted,
+      $total_num_ground_truth_1b_counted);
   foreach my $score($self->toarray()) {
     my ($num_submitted_1a,
         $num_correct_1a,
@@ -6715,7 +6729,9 @@ sub get_SUMMARY {
         $num_pooled_1a,
         $num_ignored_1a,
         $num_ground_truth_1a,
-        $num_ground_truth_1a_counted)
+        $num_ground_truth_1b,
+        $num_ground_truth_1a_counted,
+        $num_ground_truth_1b_counted)
       = map {$score->get($_)} qw(
                                   NUM_SUBMITTED_1A
                                   NUM_CORRECT_1A
@@ -6728,7 +6744,9 @@ sub get_SUMMARY {
                                   NUM_POOLED_1A
                                   NUM_IGNORED_1A
                                   NUM_GROUND_TRUTH_1A
+                                  NUM_GROUND_TRUTH_1B
                                   NUM_GROUND_TRUTH_1A_COUNTED
+                                  NUM_GROUND_TRUTH_1B_COUNTED
                               );
     $runid = $score->get("RUNID") unless $runid;
     $total_num_submitted_1a += $num_submitted_1a;
@@ -6742,7 +6760,9 @@ sub get_SUMMARY {
     $total_num_pooled_1a += $num_pooled_1a;
     $total_num_ignored_1a += $num_ignored_1a;
     $total_num_ground_truth_1a += $num_ground_truth_1a;
+    $total_num_ground_truth_1b += $num_ground_truth_1b;
     $total_num_ground_truth_1a_counted += $num_ground_truth_1a_counted;
+    $total_num_ground_truth_1b_counted += $num_ground_truth_1b_counted;
   }
 
   GraphScore->new($logger, 
@@ -6759,7 +6779,9 @@ sub get_SUMMARY {
                     $total_num_pooled_1a,
                     $total_num_ignored_1a,
                     $total_num_ground_truth_1a,
-                    $total_num_ground_truth_1a_counted);
+                    $total_num_ground_truth_1b,
+                    $total_num_ground_truth_1a_counted,
+                    $total_num_ground_truth_1b_counted);
 }
 
 sub print_line {
@@ -6834,7 +6856,9 @@ sub new {
       $num_pooled_1a,
       $num_ignored_1a,
       $num_ground_truth_1a,
-      $num_ground_truth_1a_counted) = @_;
+      $num_ground_truth_1b,
+      $num_ground_truth_1a_counted,
+      $num_ground_truth_1b_counted) = @_;
       
   my $self = {
     __CLASS__ => 'GraphScore',
@@ -6843,6 +6867,8 @@ sub new {
     NUM_LINKABLE_1A => $num_linkable_1a,
     NUM_GROUND_TRUTH_1A => $num_ground_truth_1a,
     NUM_GROUND_TRUTH_1A_COUNTED => $num_ground_truth_1a_counted,
+    NUM_GROUND_TRUTH_1B => $num_ground_truth_1b,
+    NUM_GROUND_TRUTH_1B_COUNTED => $num_ground_truth_1b_counted,
     NUM_IGNORED_1A => $num_ignored_1a,
     NUM_INCORRECT_1A => $num_incorrect_1a,
     NUM_POOLED_1A => $num_pooled_1a,
@@ -6871,6 +6897,11 @@ sub get_PRECISION_1A {
 sub get_RECALL_1A {
   my ($self) = @_;
   $self->get("NUM_GROUND_TRUTH_1A") ? $self->get("NUM_RIGHT_1A")/($self->get("NUM_GROUND_TRUTH_1A_COUNTED")) : 0;
+}
+
+sub get_RECALL_1B {
+  my ($self) = @_;
+  $self->get("NUM_GROUND_TRUTH_1B") ? $self->get("NUM_SALIENT_1B")/($self->get("NUM_GROUND_TRUTH_1B_COUNTED")) : 0;
 }
 
 sub get_F1_1A {
