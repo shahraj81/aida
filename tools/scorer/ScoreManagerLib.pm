@@ -6502,16 +6502,22 @@ sub score_responses {
       $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
       next;
     }
+    $entry->set("QUERIES", @queries);
     foreach my $query(@queries) {
       my $query_id = $query->get("QUERYID");
-      $entry->set("QUERIES", @queries);
       push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
-      foreach my $object_element(split(/\|/, $object)){
-        if($salient_edges->exists("$subject:$predicate:$object_element")) {
-          push(@{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{"$subject:$predicate:$object_element"}}, $entry);
-          $self->get("LOGGER")->record_debug_information("SALIENT_FOR_QUERY", "SUBJECT=$subject PREDICATE=$predicate OBJECT=$object_element QUERY=$query_id", $entry->get("WHERE"));
-        }
-      }
+    }
+  }
+
+  # Gather ground truth for Strategy 1B
+  foreach my $edge($salient_edges->toarray()) {
+    my ($subject, $predicate, $object) = map {$edge->get($_)} qw(subject role object);
+    $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
+    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
+    foreach my $query(@queries) {
+      my $query_id = $query->get("QUERYID");
+      push(@{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}}, $edge);
+      $self->get("LOGGER")->record_debug_information("SALIENT_FOR_QUERY", "SUBJECT=$subject QUERY=$query_id", $edge->get("WHERE"));
     }
   }
 
@@ -6571,13 +6577,9 @@ sub score_responses {
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
               $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
-              foreach my $object(split(/\|/, $response->get("ASSESSMENT_ENTRY")->get("OBJECT_FQEC"))) {
-                if($salient_edges->exists("$subject:$predicate:LDC2019E43:$object")) {
-                  $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
-                  push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
-                  # the same response needs not to be salient more than once
-                  last;
-                }
+              if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
+                $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
               }
             }
           }
