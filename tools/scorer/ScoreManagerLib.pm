@@ -192,6 +192,8 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task
+  SALIENT_READ                            DEBUG_INFO     SALIENT_READ: %s
+  SALIENT_FOR_QUERY                       DEBUG_INFO     SALIENT_FOR_QUERY: %s
   SKIPPING_CLUSTER_NOT_SELECTED           DEBUG_INFO     Skipping because cluster is not selected: %s
   SKIPPING_INPUT_FILE                     DEBUG_INFO     Skipping over file %s
   SKIPPING_RESPONSE_CLUSTER_INCLUDED      DEBUG_INFO     Skipping because response from the cluster is already selected: %s
@@ -5479,7 +5481,6 @@ sub new {
   my $self = {
     __CLASS__ => 'SalientEdges',
     FILENAME => $filename,
-    EDGES => Container->new($logger),
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -5495,8 +5496,10 @@ sub load {
   foreach my $entry($entries->toarray()) {
     my $subject = $entry->get("subject");
     my $role = $entry->get("role");
+    $self->get("LOGGER")->record_debug_information("SALIENT_READ", "LINE=" . $entry->get("LINE"), $entry->get("WHERE"));
     foreach my $object(split/\|/, $entry->get("object")) {
       $self->add($entry, "$subject:$role:LDC2019E43:$object");
+      $self->get("LOGGER")->record_debug_information("SALIENT_READ", "RECORDED SUBJECT=$subject ROLE=$role OBJECT=LDC2019E43:$object", $entry->get("WHERE"));
     }
   }
   $filehandler->cleanup();
@@ -6506,6 +6509,7 @@ sub score_responses {
       foreach my $object_element(split(/\|/, $object)){
         if($salient_edges->exists("$subject:$predicate:$object_element")) {
           push(@{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{"$subject:$predicate:$object_element"}}, $entry);
+          $self->get("LOGGER")->record_debug_information("SALIENT_FOR_QUERY", "SUBJECT=$subject PREDICATE=$predicate OBJECT=$object_element QUERY=$query_id", $entry->get("WHERE"));
         }
       }
     }
