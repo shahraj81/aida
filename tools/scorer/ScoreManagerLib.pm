@@ -5469,6 +5469,52 @@ sub load_graph {
 }
 
 #####################################################################################
+# Frames
+#####################################################################################
+
+package Frames;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $queries_to_score) = @_;
+  my $self = $class->SUPER::new($logger, 'Frame');
+  $self->{__CLASS__} = 'Frames';
+  $self->{QUERIES_TO_SCORE} = $queries_to_score;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self->load();
+  $self;
+}
+
+sub load {
+  my ($self) = @_;
+  foreach my $entry($self->get("QUERIES_TO_SCORE")->toarray()){
+    foreach my $frame_id(split(",", $entry->get("frame_ids"))) {
+      $self->get("BY_KEY", $frame_id)->add("KEY", $entry->get("query_id"));
+    }
+  }
+}
+
+#####################################################################################
+# Frame
+#####################################################################################
+
+package Frame;
+
+use parent -norequire, 'Container', 'Super';
+
+sub new {
+  my ($class, $logger, $filename) = @_;
+  my $self = $class->SUPER::new($logger, 'SuperObject');
+  $self->{__CLASS__} = 'Frame';
+  $self->{FILENAME} = $filename;
+  $self->{LOGGER} = $logger;
+  bless($self, $class);
+  $self;
+}
+
+#####################################################################################
 # SalientEdges
 #####################################################################################
 
@@ -6472,7 +6518,7 @@ sub score_responses {
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
   my $scores = GraphScoresPrinter->new($logger);
-
+  my $frames = Frames->new($logger, $queries_to_score);
   # Gather ground truth for Strategy 1A
   # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
   # edges were correct? 
@@ -6532,7 +6578,7 @@ sub score_responses {
            RANK);
     next unless $queries_to_score->exists($query_id);
     next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id};
-    my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
+    my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
     $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
     $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
     push(@{$candidate_responses{$query_id}}, $response) if $rank;
