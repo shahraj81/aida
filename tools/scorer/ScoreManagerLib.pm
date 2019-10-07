@@ -5481,16 +5481,30 @@ sub new {
   my $self = $class->SUPER::new($logger, 'Frame');
   $self->{__CLASS__} = 'Frames';
   $self->{QUERIES_TO_SCORE} = $queries_to_score;
+  $self->{FRAMEIDS_BY_QUERYID} = ();
+  $self->{QUERYIDS_BY_FRAMEID} = ();
   $self->{LOGGER} = $logger;
   bless($self, $class);
   $self->load();
   $self;
 }
 
+sub get_FRAMEIDS_FOR_QUERY {
+  my ($self, $query_id) = @_;
+  keys %{$self->{FRAMEIDS_BY_QUERYID}{$query_id}};
+}
+
+sub get_QUERYIDS_FOR_FRAME {
+  my ($self, $frame_id) = @_;
+  keys %{$self->{QUERYIDS_BY_FRAMEID}{$frame_id}};
+}
+
 sub load {
   my ($self) = @_;
   foreach my $entry($self->get("QUERIES_TO_SCORE")->toarray()){
     foreach my $frame_id(split(",", $entry->get("frame_ids"))) {
+      $self->{FRAMEIDS_BY_QUERYID}{$entry->get("query_id")}{$frame_id} = 1;
+      $self->{QUERYIDS_BY_FRAMEID}{$frame_id}{$entry->get("query_id")} = 1;
       $self->get("BY_KEY", $frame_id)->add("KEY", $entry->get("query_id"));
     }
   }
@@ -6504,6 +6518,7 @@ sub new {
     QUERIES => $queries,
     SALIENT_EDGES => $salient_edges,
     QUERIES_TO_SCORE => $queries_to_score,
+    FRAMES => Frames->new($logger, $queries_to_score),
     RESPONSES => $responses,
     RUNID => $runid,
     LOGGER => $logger,
@@ -6518,7 +6533,7 @@ sub score_responses {
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
   my $scores = GraphScoresPrinter->new($logger);
-  my $frames = Frames->new($logger, $queries_to_score);
+
   # Gather ground truth for Strategy 1A
   # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
   # edges were correct? 
@@ -6584,6 +6599,7 @@ sub score_responses {
     push(@{$candidate_responses{$query_id}}, $response) if $rank;
   }
 
+  # categorize submissions for strategy # 1(a) and 1(b)
   my %categorized_submissions;
   my %correct_found;
   foreach my $query_id(sort keys %candidate_responses) {
@@ -6663,6 +6679,55 @@ sub score_responses {
     }
   }
 
+  # categorize submissions for strategy#2 based scoring
+  my %response_by_frame_and_subject_cluster;
+  my %subject_importance;
+  foreach my $query_id(sort keys %candidate_responses) {
+    foreach my $response(@{$candidate_responses{$query_id}}) {
+      my ($query_id, $docid, $predicate_justification, $object_justification) =
+        map {$response->get($_)}
+          qw(QUERY_ID
+             DOCUMENT_ID
+             EDGE_PROVENANCE_TRIPLES
+             OBJECT_VALUE_PROVENANCE_TRIPLE);
+      my $predicate = $response->get("QUERY")->get("PREDICATE");
+      my $subject_cluster = $response->get("SUBJECT_CLUSTER_ID");
+      my $ag_cv = $response->get("AG_CV");
+      foreach my $frame_id($self->get("FRAMES")->get("FRAMEIDS_FOR_QUERY", $query_id)) {
+        $logger->NIST_die("Subject cluster already exists")
+          if $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id} = $response;
+        $subject_importance{$frame_id}{$subject_cluster} += $ag_cv;
+      }
+    }
+  }
+  foreach my $frame_id(sort keys %subject_importance) {
+    my $K = 0;
+    foreach my $query_id($self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id)) {
+      $K += $self->get("QUERIES_TO_SCORE")->get("BY_KEY", $query_id)->get("depth2");
+    }
+    my $i = 0;
+    foreach my $subject_cluster(sort
+                  {$subject_importance{$frame_id}{$b}<=>$subject_importance{$frame_id}{$a} || $a cmp $b}
+                    keys %{$subject_importance{$frame_id}}) {
+      foreach my $query_id( sort {
+                                   $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$b}->get("AG_CV") <=> $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$a}->get("AG_CV")
+                                   || $a cmp $b
+                            }
+                            keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
+        my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        my $predicate = $response->get("QUERY")->get("PREDICATE");
+        my $doc_id = $response->get("DOCUMENT_ID");
+        my $object_justification = $response->get("OBJECT_VALUE_PROVENANCE_TRIPLE");
+        my $predicate_justification = $response->get("EDGE_PROVENANCE_TRIPLES");
+        $response->set("STRATEGY-2-POOLED", 1);
+        $i++;
+        last if $i == $K;
+      }
+      last if $i == $K;
+    }
+  }
+
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
     my $num_submitted_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED} || []};
     my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"CORRECT"} || []};
@@ -6676,9 +6741,9 @@ sub score_responses {
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
     my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
     my $num_ground_truth_1b = keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}};
-    my $depth_1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
-    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth_1 ? $depth_1 : $num_ground_truth_1a;
-    my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth_1 ? $depth_1 : $num_ground_truth_1b;
+    my $depth1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
+    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
+    my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
     my $score = GraphScore->new($logger,
                                   $runid,
                                   $query_id,
