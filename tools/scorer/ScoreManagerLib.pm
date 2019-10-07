@@ -6599,6 +6599,56 @@ sub score_responses {
     push(@{$candidate_responses{$query_id}}, $response) if $rank;
   }
 
+  # categorize submissions for strategy#2 based scoring
+  my %response_by_frame_and_subject_cluster;
+  my %subject_importance;
+  foreach my $query_id(sort keys %candidate_responses) {
+    foreach my $response(@{$candidate_responses{$query_id}}) {
+      my ($query_id, $docid, $predicate_justification, $object_justification) =
+        map {$response->get($_)}
+          qw(QUERY_ID
+             DOCUMENT_ID
+             EDGE_PROVENANCE_TRIPLES
+             OBJECT_VALUE_PROVENANCE_TRIPLE);
+      my $predicate = $response->get("QUERY")->get("PREDICATE");
+      my $subject_cluster = $response->get("SUBJECT_CLUSTER_ID");
+      my $ag_cv = $response->get("AG_CV");
+      foreach my $frame_id($self->get("FRAMES")->get("FRAMEIDS_FOR_QUERY", $query_id)) {
+        $logger->NIST_die("Subject cluster already exists")
+          if $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id} = $response;
+        $subject_importance{$frame_id}{$subject_cluster} += $ag_cv;
+      }
+    }
+  }
+
+  foreach my $frame_id(sort keys %subject_importance) {
+    my $K = 0;
+    foreach my $query_id($self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id)) {
+      $K += $self->get("QUERIES_TO_SCORE")->get("BY_KEY", $query_id)->get("depth2");
+    }
+    my $i = 0;
+    foreach my $subject_cluster(sort
+                  {$subject_importance{$frame_id}{$b}<=>$subject_importance{$frame_id}{$a} || $a cmp $b}
+                    keys %{$subject_importance{$frame_id}}) {
+      foreach my $query_id( sort {
+                                   $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$b}->get("AG_CV") <=> $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$a}->get("AG_CV")
+                                   || $a cmp $b
+                            }
+                            keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
+        my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        my $predicate = $response->get("QUERY")->get("PREDICATE");
+        my $doc_id = $response->get("DOCUMENT_ID");
+        my $object_justification = $response->get("OBJECT_VALUE_PROVENANCE_TRIPLE");
+        my $predicate_justification = $response->get("EDGE_PROVENANCE_TRIPLES");
+        $response->set("STRATEGY-2-POOLED", 1);
+        $i++;
+        last if $i == $K;
+      }
+      last if $i == $K;
+    }
+  }
+
   # categorize submissions for strategy # 1(a) and 1(b)
   my %categorized_submissions;
   my %correct_found;
@@ -6676,55 +6726,6 @@ sub score_responses {
                    "PRE_POLICY_ASSESSMENT=$pre_policy " .
                    "POST_POLICY_ASSESSMENT=$post_policy\n";
       $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
-    }
-  }
-
-  # categorize submissions for strategy#2 based scoring
-  my %response_by_frame_and_subject_cluster;
-  my %subject_importance;
-  foreach my $query_id(sort keys %candidate_responses) {
-    foreach my $response(@{$candidate_responses{$query_id}}) {
-      my ($query_id, $docid, $predicate_justification, $object_justification) =
-        map {$response->get($_)}
-          qw(QUERY_ID
-             DOCUMENT_ID
-             EDGE_PROVENANCE_TRIPLES
-             OBJECT_VALUE_PROVENANCE_TRIPLE);
-      my $predicate = $response->get("QUERY")->get("PREDICATE");
-      my $subject_cluster = $response->get("SUBJECT_CLUSTER_ID");
-      my $ag_cv = $response->get("AG_CV");
-      foreach my $frame_id($self->get("FRAMES")->get("FRAMEIDS_FOR_QUERY", $query_id)) {
-        $logger->NIST_die("Subject cluster already exists")
-          if $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
-        $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id} = $response;
-        $subject_importance{$frame_id}{$subject_cluster} += $ag_cv;
-      }
-    }
-  }
-  foreach my $frame_id(sort keys %subject_importance) {
-    my $K = 0;
-    foreach my $query_id($self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id)) {
-      $K += $self->get("QUERIES_TO_SCORE")->get("BY_KEY", $query_id)->get("depth2");
-    }
-    my $i = 0;
-    foreach my $subject_cluster(sort
-                  {$subject_importance{$frame_id}{$b}<=>$subject_importance{$frame_id}{$a} || $a cmp $b}
-                    keys %{$subject_importance{$frame_id}}) {
-      foreach my $query_id( sort {
-                                   $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$b}->get("AG_CV") <=> $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$a}->get("AG_CV")
-                                   || $a cmp $b
-                            }
-                            keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
-        my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
-        my $predicate = $response->get("QUERY")->get("PREDICATE");
-        my $doc_id = $response->get("DOCUMENT_ID");
-        my $object_justification = $response->get("OBJECT_VALUE_PROVENANCE_TRIPLE");
-        my $predicate_justification = $response->get("EDGE_PROVENANCE_TRIPLES");
-        $response->set("STRATEGY-2-POOLED", 1);
-        $i++;
-        last if $i == $K;
-      }
-      last if $i == $K;
     }
   }
 
