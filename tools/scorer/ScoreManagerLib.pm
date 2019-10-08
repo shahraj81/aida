@@ -5574,7 +5574,7 @@ package ScoresManager;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score, $strategy) = @_;
   my $self = {
     __CLASS__ => 'ScoresManager',
     DOCID_MAPPINGS => $docid_mappings,
@@ -5585,6 +5585,7 @@ sub new {
     QUERY_TYPE => $queries->get("QUERYTYPE"),
     QUERIES_TO_SCORE => $queries_to_score,
     RUNID => $runid,
+    STRATEGY => $strategy,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -5594,12 +5595,12 @@ sub new {
 
 sub score_responses {
   my ($self) = @_;
-  my ($docid_mappings, $responses, $assessments, $query_type, $queries_to_score, $queries, $salient_edges, $runid, $logger)
-    = map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES ASSESSMENTS QUERY_TYPE QUERIES_TO_SCORE QUERIES SALIENT_EDGES RUNID LOGGER);
+  my ($docid_mappings, $responses, $assessments, $query_type, $queries_to_score, $queries, $salient_edges, $runid, $strategy, $logger)
+    = map {$self->get($_)} qw(DOCID_MAPPINGS RESPONSES ASSESSMENTS QUERY_TYPE QUERIES_TO_SCORE QUERIES SALIENT_EDGES RUNID STRATEGY LOGGER);
   my $scores;
   $scores = ClassScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "class_query");
   $scores = ZeroHopScores->new($logger, $runid, $docid_mappings, $queries, $responses, $assessments, $queries_to_score) if($query_type eq "zerohop_query");
-  $scores = GraphScores->new($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score) if($query_type eq "graph_query");
+  $scores = GraphScores->new($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score, $strategy) if($query_type eq "graph_query");
   $self->set("SCORES", $scores);
 }
 
@@ -6510,7 +6511,7 @@ package GraphScores;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score) = @_;
+  my ($class, $logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score, $strategy) = @_;
   my $self = {
     __CLASS__ => 'GraphScores',
     ASSESSMENTS => $assessments,
@@ -6521,6 +6522,7 @@ sub new {
     FRAMES => Frames->new($logger, $queries_to_score),
     RESPONSES => $responses,
     RUNID => $runid,
+    STRATEGY => $strategy,
     LOGGER => $logger,
   };
   bless($self, $class);
@@ -6529,6 +6531,19 @@ sub new {
 }
 
 sub score_responses {
+  my ($self) = @_;
+  my $strategy = uc($self->get("STRATEGY"));
+  my $method = $self->can("score_responses_$strategy");
+  $self->get("LOGGER")->NIST_die("Unexpected value of scoring strategy $strategy") unless $method;
+  $method->($self);
+}
+
+sub score_responses_DEFAULT {
+  my ($self) = @_;
+  $self->score_responses_STRATEGY1();
+}
+
+sub score_responses_STRATEGY1 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
@@ -6649,7 +6664,7 @@ sub score_responses {
     }
   }
 
-  # categorize submissions for strategy # 1(a) and 1(b)
+  # categorize submissions
   my %categorized_submissions;
   my %correct_found;
   foreach my $query_id(sort keys %candidate_responses) {

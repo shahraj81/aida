@@ -38,6 +38,8 @@ $switches->put('error_file', "STDERR");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addVarSwitch('runid', "Run ID of the system being scored");
 $switches->put('runid', "system");
+$switches->addVarSwitch('strategy', "Scoring strategy?");
+$switches->put('strategy', "default");
 $switches->addParam("coredocs", "required", "List of core documents to be included in the pool");
 $switches->addParam("docid_mappings", "required", "DocumentID to DocumentElementID mappings");
 $switches->addParam("sentence_boundaries", "required", "File containing sentence boundaries");
@@ -85,6 +87,7 @@ my $rundir_root = "$intermediate_dir/SPARQL-VALID-output";
 my $cadir_root = "$intermediate_dir/SPARQL-CA-output";
 my $runs_to_score_filename = "$intermediate_dir/runid.txt";
 my $runid = $switches->get("runid");
+my $strategy = $switches->get("strategy");
 
 $logger->NIST_die("$intermediate_dir already exists") if -e $intermediate_dir;
 system("mkdir -p $rundir_root");
@@ -125,7 +128,7 @@ my $responses = ResponseSet->new($logger,
                       $queries_to_score,
                       $cadir_root);
 
-my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score);
+my $scorer = ScoresManager->new($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score, $strategy);
 
 my ($num_errors, $num_warnings) = $logger->report_all_information();
 unless($num_errors) {
