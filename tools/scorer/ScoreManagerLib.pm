@@ -6535,17 +6535,20 @@ sub new {
 sub score_responses {
   my ($self) = @_;
   my $strategy = uc($self->get("STRATEGY"));
-  my $method = $self->can("score_responses_$strategy");
+  my $code = $self->get("QUERIES")->get("TASK_AND_TYPE_CODE");
+  my $task = "TASK1" if $code eq "TA1_GR";
+  $task = "TASK2" if $code eq "TA2_GR";
+  my $method = $self->can("score_responses_$task\_$strategy");
   $self->get("LOGGER")->NIST_die("Unexpected value of scoring strategy $strategy") unless $method;
   $method->($self);
 }
 
-sub score_responses_DEFAULT {
+sub score_responses_TASK2_DEFAULT {
   my ($self) = @_;
   $self->score_responses_STRATEGY1();
 }
 
-sub score_responses_STRATEGY1 {
+sub score_responses_TASK2_STRATEGY1 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
@@ -6722,7 +6725,7 @@ sub score_responses_STRATEGY1 {
     my $depth1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
     my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
     my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
-    my $score = Task2GraphScoreStrategy1->new($logger,
+    my $score = GraphScoreStrategy1->new($logger,
                                   $runid,
                                   $query_id,
                                   $num_submitted_1a,
@@ -6746,11 +6749,11 @@ sub score_responses_STRATEGY1 {
 }
 
 
-sub score_responses_STRATEGY2 {
+sub score_responses_TASK2_STRATEGY2 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
-  my $scores = Task2GraphScoresStrategy2Printer->new($logger);
+  my $scores = GraphScoresStrategy2Printer->new($logger);
 
   # Gather ground truth
   my %ground_truth;
@@ -6965,7 +6968,7 @@ sub score_responses_STRATEGY2 {
     my $num_queries_in_frame = scalar $self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id);
     my $frame_recall = $frame_value/$num_queries_in_frame;
 
-    my $score = Task2GraphScoreStrategy2->new($logger,
+    my $score = GraphScoreStrategy2->new($logger,
                                   $runid,
                                   $frame_id,
                                   $num_queries_in_frame,
@@ -6982,14 +6985,14 @@ sub print_lines {
 }
 
 #####################################################################################
-# Task2GraphScoresStrategy1Printer
+# GraphScoresStrategy1Printer
 #####################################################################################
 
-package Task2GraphScoresStrategy1Printer;
+package GraphScoresStrategy1Printer;
 
 use parent -norequire, 'Container', 'Super';
 
-my @task2_graph_scorer_strategy1_fields_to_print = (
+my @graph_scorer_strategy1_fields_to_print = (
   {NAME => 'EC',                                             HEADER => 'QID/EC',         FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',                                          HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH_1A',                            HEADER => 'GTA(1a)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -7017,12 +7020,12 @@ my @task2_graph_scorer_strategy1_fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{__CLASS__} = 'Task2GraphScoresStrategy1Printer';
+  $self->{__CLASS__} = 'GraphScoresStrategy1Printer';
   $self->{PROGRAM_OUTPUT} = $program_output;
-  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @task2_graph_scorer_strategy1_fields_to_print};
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @graph_scorer_strategy1_fields_to_print};
   $self->{LOGGER} = $logger;
   $self->{LINES} = [];
-  @{$self->{FIELDS_TO_PRINT}} = @task2_graph_scorer_strategy1_fields_to_print;
+  @{$self->{FIELDS_TO_PRINT}} = @graph_scorer_strategy1_fields_to_print;
   bless($self, $class);
   $self;
 }
@@ -7097,7 +7100,7 @@ sub get_SUMMARY {
     $total_num_ground_truth_1b_counted += $num_ground_truth_1b_counted;
   }
 
-  Task2GraphScoreStrategy1->new($logger,
+  GraphScoreStrategy1->new($logger,
                     $runid, 
                     "Summary", 
                     $total_num_submitted_1a,
@@ -7166,10 +7169,10 @@ sub print_lines {
 }
 
 #####################################################################################
-# Task2GraphScoreStrategy1
+# GraphScoreStrategy1
 #####################################################################################
 
-package Task2GraphScoreStrategy1;
+package GraphScoreStrategy1;
 
 use parent -norequire, 'Super';
 
@@ -7195,7 +7198,7 @@ sub new {
       $num_ground_truth_1b_counted) = @_;
       
   my $self = {
-    __CLASS__ => 'Task2GraphScoreStrategy1',
+    __CLASS__ => 'GraphScoreStrategy1',
     EC => $query_id,
     NUM_CORRECT_1A => $num_correct_1a,
     NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT => $num_predicate_justification_linkable_to_object_1a,
@@ -7247,14 +7250,14 @@ sub get_F1_1A {
 }
 
 #####################################################################################
-# Task2GraphScoresStrategy1Printer
+# GraphScoresStrategy1Printer
 #####################################################################################
 
-package Task2GraphScoresStrategy2Printer;
+package GraphScoresStrategy2Printer;
 
 use parent -norequire, 'Container', 'Super';
 
-my @task2_graph_scorer_strategy2_fields_to_print = (
+my @graph_scorer_strategy2_fields_to_print = (
   {NAME => 'EC',                            HEADER => 'FrameID',        FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',                         HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_QUERIES_IN_FRAME',          HEADER => 'NumQueries',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -7265,12 +7268,12 @@ my @task2_graph_scorer_strategy2_fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{__CLASS__} = 'Task2GraphScoresStrategy2Printer';
+  $self->{__CLASS__} = 'GraphScoresStrategy2Printer';
   $self->{PROGRAM_OUTPUT} = $program_output;
-  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @task2_graph_scorer_strategy2_fields_to_print};
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @graph_scorer_strategy2_fields_to_print};
   $self->{LOGGER} = $logger;
   $self->{LINES} = [];
-  @{$self->{FIELDS_TO_PRINT}} = @task2_graph_scorer_strategy2_fields_to_print;
+  @{$self->{FIELDS_TO_PRINT}} = @graph_scorer_strategy2_fields_to_print;
   bless($self, $class);
   $self;
 }
@@ -7301,7 +7304,7 @@ sub get_SUMMARY {
 
   my $mean_frame_recall = $total_frame_recall / $num_frames;
 
-  Task2GraphScoreStrategy2->new($logger,
+  GraphScoreStrategy2->new($logger,
                                   $runid,
                                   "Summary",
                                   $total_num_queries_in_frame,
@@ -7358,10 +7361,10 @@ sub print_lines {
 }
 
 #####################################################################################
-# Task2GraphScoreStrategy2
+# GraphScoreStrategy2
 #####################################################################################
 
-package Task2GraphScoreStrategy2;
+package GraphScoreStrategy2;
 use parent -norequire, 'Super';
 sub new {
   my ($class,
@@ -7373,7 +7376,7 @@ sub new {
       $frame_recall) = @_;
 
   my $self = {
-    __CLASS__ => 'Task2GraphScoreStrategy2',
+    __CLASS__ => 'GraphScoreStrategy2',
     EC => $frame_id,
     FRAME_VALUE => $frame_value,
     FRAME_RECALL => $frame_recall,
