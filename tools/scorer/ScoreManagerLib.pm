@@ -6787,6 +6787,20 @@ sub score_responses_STRATEGY2 {
     if($rank) {
       $response->set("STRATEGY-2-SUBMITTED", 1);
       $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{SUBMITTED} = 1;
+      my $predicate = $response->get("QUERY")->get("PREDICATE");
+      my $key = "$predicate:$predicate_justification:$object_justification";
+      my $assessment = $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key};
+      if($assessment) {
+        $response->set("ASSESSMENT_ENTRY", $assessment);
+        my ($subject, $object, $correctness, $linkability)
+          = map {$response->get("ASSESSMENT_ENTRY")->get($_)}
+            qw(SUBJECT_FQEC
+                OBJECT_FQEC
+                PREDICATE_JUSTIFICATION_CORRECTNESS
+                OBJECT_LINKABILITY);
+        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{$correctness} = 1;
+        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{LINKABLE} = 1 if $linkability eq "YES";
+      }
       push(@{$responses_by_query{$query_id}}, $response);
     }
   }
@@ -6828,21 +6842,49 @@ sub score_responses_STRATEGY2 {
                             }
                             keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
         my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
-        my $predicate = $response->get("QUERY")->get("PREDICATE");
-        my $doc_id = $response->get("DOCUMENT_ID");
-        my $object_justification = $response->get("OBJECT_VALUE_PROVENANCE_TRIPLE");
-        my $predicate_justification = $response->get("EDGE_PROVENANCE_TRIPLES");
         $response->set("STRATEGY-2-POOLED", 1);
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{POOLED} = 1;
-        my $key = "$predicate:$predicate_justification:$object_justification";
-        my $assessment = $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key};
-        $logger->NIST_die("Assessment not found for key $key") unless $assessment;
-        $response->set("ASSESSMENT_ENTRY", $assessment);
+        my $where_string = $response->get("WHERE")->{FILENAME} . " (line " . $response->get("WHERE")->{FILENAME} . " )";
+        $logger->NIST_die("Assessment not found for response in " . $where_string) unless $response->get("ASSESSMENT_ENTRY");
         $i++;
         last if $i == $K;
       }
       last if $i == $K;
     }
+  }
+
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my ($query_id, $docid, $predicate_justification, $object_justification, $rank) =
+      map {$response->get($_)}
+        qw(QUERY_ID
+           DOCUMENT_ID
+           EDGE_PROVENANCE_TRIPLES
+           OBJECT_VALUE_PROVENANCE_TRIPLE
+           RANK);
+    next unless $rank;
+    if($response->get("STRATEGY-2-POOLED")) {
+      my ($correctness, $linkability)
+          = map {$response->get("ASSESSMENT_ENTRY")->get($_)}
+            qw(PREDICATE_JUSTIFICATION_CORRECTNESS
+                OBJECT_LINKABILITY);
+      $response->{ASSESSMENT}{"STRATEGY-2"}{"POST-POLICY"}{RIGHT} = 1
+        if($correctness eq "CORRECT" && $linkability eq "YES");
+      $response->{ASSESSMENT}{"STRATEGY-2"}{"POST-POLICY"}{WRONG} = 1
+        unless($correctness eq "CORRECT" && $linkability eq "YES");
+    }
+    else {
+      $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{NOTPOOLED} = 1;
+      $response->{ASSESSMENT}{"STRATEGY-2"}{"POST-POLICY"}{"NOT-CONSIDERED"} = 1;
+    }
+    my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}});
+    my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-2"}{"POST-POLICY"}});
+    my $line = "STRATEGY-2 QUERYID=$query_id " .
+                   "DOCID=$docid " .
+                   "PREDICATE_JUSTIFICATION=$predicate_justification " .
+                   "OBJECT_JUSTIFICATION=$object_justification " .
+                   "PRE_POLICY_ASSESSMENT=$pre_policy " .
+                   "POST_POLICY_ASSESSMENT=$post_policy\n";
+    $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
   }
 
   # For each query frame, compute the Value for each subject event/relation KE (i.e subject cluster)
