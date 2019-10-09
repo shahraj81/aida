@@ -6543,16 +6543,218 @@ sub score_responses {
   $method->($self);
 }
 
+
+sub score_responses_TASK1_DEFAULT {
+  my ($self) = @_;
+  $self->score_responses_TASK1_STRATEGY1();
+}
+
+sub score_responses_TASK1_STRATEGY1 {
+  my ($self) = @_;
+  my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
+    = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
+  my $scores = GraphScoresStrategy1Printer->new($logger);
+
+  # Gather ground truth for Strategy 1A
+  # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
+  # edges were correct?
+  my %ground_truth;
+  foreach my $entry($assessments->toarray()) {
+    my ($subject, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
+          $object_justification) =
+      map {$entry->get($_)}
+        qw(SUBJECT_FQEC
+           PREDICATE
+           OBJECT_FQEC
+           DOCUMENT_ID
+           PREDICATE_JUSTIFICATION_CORRECTNESS
+           OBJECT_LINKABILITY
+           PREDICATE_JUSTIFICATION
+           OBJECT_JUSTIFICATION);
+    $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
+    $predicate_justification = join(";", map {"$docid:".$_} split(";", $predicate_justification));
+    $object_justification = "$docid:$object_justification";
+    my $key = "$predicate:$predicate_justification:$object_justification";
+    $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
+    $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
+
+    next unless ($correctness eq "CORRECT" && $linkability eq "YES");
+    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
+    unless (@queries) {
+      $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
+      next;
+    }
+    $entry->set("QUERIES", @queries);
+    foreach my $query(@queries) {
+      my $query_id = $query->get("QUERYID");
+      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
+    }
+  }
+
+  # Gather ground truth for Strategy 1B
+  foreach my $edge($salient_edges->toarray()) {
+    my ($subject, $predicate, $object) = map {$edge->get($_)} qw(subject role object);
+    $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
+    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
+    foreach my $query(@queries) {
+      my $query_id = $query->get("QUERYID");
+      my $edge_string = join("\t", ($subject, $predicate, $object));
+      push(@{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}}, $edge);
+      $self->get("LOGGER")->record_debug_information("SALIENT_FOR_QUERY", "QUERY=$query_id SUBJECT=$subject PREDICATE=$predicate OBJECT=$object", $edge->get("WHERE"));
+    }
+  }
+
+  my %candidate_responses;
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my ($query_id, $docid, $predicate_justification, $object_justification, $rank) =
+      map {$response->get($_)}
+        qw(QUERY_ID
+           DOCUMENT_ID
+           EDGE_PROVENANCE_TRIPLES
+           OBJECT_VALUE_PROVENANCE_TRIPLE
+           RANK);
+    next unless $queries_to_score->exists($query_id);
+    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id};
+    my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
+    $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
+    $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
+    push(@{$candidate_responses{$query_id}}, $response) if $rank;
+  }
+
+  # categorize submissions
+  my %categorized_submissions;
+  my %correct_found;
+  foreach my $query_id(sort keys %candidate_responses) {
+    foreach my $response(@{$candidate_responses{$query_id}}) {
+      my ($query_id, $docid, $predicate_justification, $object_justification) =
+        map {$response->get($_)}
+          qw(QUERY_ID
+             DOCUMENT_ID
+             EDGE_PROVENANCE_TRIPLES
+             OBJECT_VALUE_PROVENANCE_TRIPLE);
+      my $predicate = $response->get("QUERY")->get("PREDICATE");
+      if($response->get("STRATEGY-1A-SUBMITTED")) {
+        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED}}, $response);
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{SUBMITTED} = 1;
+      }
+      if($response->get("STRATEGY-1A-POOLED")) {
+        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{POOLED}}, $response);
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{POOLED} = 1;
+        my $key = "$predicate:$predicate_justification:$object_justification";
+        my $assessment = $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
+        $logger->NIST_die("Assessment not found for key $key") unless $assessment;
+        $response->set("ASSESSMENT_ENTRY", $assessment);
+        if($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT") {
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{CORRECT}}, $response);
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
+          if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
+            # response is either RIGHT or REDUNDANT because it met both the conditions given below:
+            #  (1) correct predicate justification, and
+            #  (2) predicate justification is linkable to object justification
+            my ($subject, $predicate, $object) = map {$assessment->get($_)} qw(SUBJECT_FQEC PREDICATE OBJECT_FQEC);
+            my $edge_string = join("\t", ($subject, $predicate, $object));
+            if($correct_found{"STRATEGY-1A"}{$query_id}{$edge_string}) {
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+            }
+            else{
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
+              $correct_found{"STRATEGY-1A"}{$query_id}{$edge_string} = 1;
+              if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
+                $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+              }
+            }
+          }
+          else {
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
+          }
+        }
+        elsif($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "INCORRECT") {
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{INCORRECT}}, $response);
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{INCORRECT} = 1;
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
+        }
+        else{
+          my $filename = $response->get("WHERE")->{FILENAME};
+          my $linenum = $response->get("WHERE")->{LINENUM};
+          my $line = $response->get("LINE");
+          $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
+        }
+      }
+      else {
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{NOTPOOLED} = 1;
+        $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{"NOT-CONSIDERED"} = 1;
+      }
+      my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}});
+      my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}});
+      my $line = "STRATEGY-1A QUERYID=$query_id " .
+                   "DOCID=$docid " .
+                   "PREDICATE_JUSTIFICATION=$predicate_justification " .
+                   "OBJECT_JUSTIFICATION=$object_justification " .
+                   "PRE_POLICY_ASSESSMENT=$pre_policy " .
+                   "POST_POLICY_ASSESSMENT=$post_policy\n";
+      $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
+    }
+  }
+
+  foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
+    my $num_submitted_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED} || []};
+    my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"CORRECT"} || []};
+    my $num_predicate_justification_linkable_to_object_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT"} || []};
+    my $num_object_linkable_to_query_entity_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"OBJECT_LINKABLE_TO_QUERY_ENTITY"} || []};
+    my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"INCORRECT"} || []};
+    my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"RIGHT"} || []};
+    my $num_salient_1b = @{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT} || []};
+    my $num_wrong_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"WRONG"} || []};
+    my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"REDUNDANT"} || []};
+    my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
+    my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
+    my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
+    my $num_ground_truth_1b = keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}};
+    my $depth1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
+    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
+    my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
+    my $score = GraphScoreStrategy1->new($logger,
+                                  $runid,
+                                  $query_id,
+                                  $num_submitted_1a,
+                                  $num_correct_1a,
+                                  $num_predicate_justification_linkable_to_object_1a,
+                                  $num_object_linkable_to_query_entity_1a,
+                                  $num_incorrect_1a,
+                                  $num_right_1a,
+                                  $num_salient_1b,
+                                  $num_wrong_1a,
+                                  $num_redundant_1a,
+                                  $num_pooled_1a,
+                                  $num_ignored_1a,
+                                  $num_ground_truth_1a,
+                                  $num_ground_truth_1b,
+                                  $num_ground_truth_1a_counted,
+                                  $num_ground_truth_1b_counted);
+    $scores->add($score, $query_id);
+  }
+  $self->set("SCORES", $scores);
+}
+
 sub score_responses_TASK2_DEFAULT {
   my ($self) = @_;
-  $self->score_responses_STRATEGY1();
+  $self->score_responses_TASK2_STRATEGY1();
 }
 
 sub score_responses_TASK2_STRATEGY1 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
-  my $scores = Task2GraphScoresStrategy1Printer->new($logger);
+  my $scores = GraphScoresStrategy1Printer->new($logger);
 
   # Gather ground truth for Strategy 1A
   # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
@@ -6650,7 +6852,7 @@ sub score_responses_TASK2_STRATEGY1 {
             $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
             my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
             if($query_objects{"LDC2019E43:".$assessment->get("OBJECT_FQEC")}) {
-              # response is either RIGHT or REDUNDANT
+              # response is either RIGHT or REDUNDANT because it met all the conditions given below:
               #  (1) correct predicate justification,
               #  (2) predicate justification is linkable to object justification, and
               #  (3) object justification is linkable to the query entity
@@ -6672,6 +6874,10 @@ sub score_responses_TASK2_STRATEGY1 {
                   push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
                 }
               }
+            }
+            else{
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
             }
           }
           else {
@@ -6747,7 +6953,6 @@ sub score_responses_TASK2_STRATEGY1 {
   }
   $self->set("SCORES", $scores);
 }
-
 
 sub score_responses_TASK2_STRATEGY2 {
   my ($self) = @_;
