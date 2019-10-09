@@ -6792,6 +6792,8 @@ sub score_responses_STRATEGY2 {
       my $predicate = $response->get("QUERY")->get("PREDICATE");
       my $key = "$predicate:$predicate_justification:$object_justification";
       my $assessment = $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key};
+      my %query_objects = map {$_=>1}
+                              split(/\|/, $response->get("QUERY")->get("OBJECT"));
       if($assessment) {
         $response->set("ASSESSMENT_ENTRY", $assessment);
         my ($subject, $object, $correctness, $linkability)
@@ -6802,6 +6804,8 @@ sub score_responses_STRATEGY2 {
                 OBJECT_LINKABILITY);
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{$correctness} = 1;
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{LINKABLE} = 1 if $linkability eq "YES";
+        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1
+          if($query_objects{"LDC2019E43:".$object});
       }
       push(@{$responses_by_query{$query_id}}, $response);
     }
@@ -6856,12 +6860,14 @@ sub score_responses_STRATEGY2 {
   }
 
   foreach my $response($responses->get("RESPONSES")->toarray()) {
-    my ($query_id, $docid, $predicate_justification, $object_justification, $rank) =
+    my ($query_id, $docid, $predicate_justification, $object_justification, $subject_cluster_id, $object_cluster_id, $rank) =
       map {$response->get($_)}
         qw(QUERY_ID
            DOCUMENT_ID
            EDGE_PROVENANCE_TRIPLES
            OBJECT_VALUE_PROVENANCE_TRIPLE
+           SUBJECT_CLUSTER_ID
+           OBJECT_CLUSTER_ID
            RANK);
     next unless $rank;
     if($response->get("STRATEGY-2-POOLED")) {
@@ -6870,9 +6876,9 @@ sub score_responses_STRATEGY2 {
             qw(PREDICATE_JUSTIFICATION_CORRECTNESS
                 OBJECT_LINKABILITY);
       $response->{ASSESSMENT}{"STRATEGY-2"}{"POST-POLICY"}{RIGHT} = 1
-        if($correctness eq "CORRECT" && $linkability eq "YES");
+        if($correctness eq "CORRECT" && $linkability eq "YES" && $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY});
       $response->{ASSESSMENT}{"STRATEGY-2"}{"POST-POLICY"}{WRONG} = 1
-        unless($correctness eq "CORRECT" && $linkability eq "YES");
+        unless($correctness eq "CORRECT" && $linkability eq "YES" && $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY});
     }
     else {
       $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{NOTPOOLED} = 1;
@@ -6884,6 +6890,8 @@ sub score_responses_STRATEGY2 {
                    "DOCID=$docid " .
                    "PREDICATE_JUSTIFICATION=$predicate_justification " .
                    "OBJECT_JUSTIFICATION=$object_justification " .
+                   "SUBJECT_CLUSTER_ID=$subject_cluster_id " .
+                   "OBJECT_CLUSTER_ID=$object_cluster_id " .
                    "PRE_POLICY_ASSESSMENT=$pre_policy " .
                    "POST_POLICY_ASSESSMENT=$post_policy\n";
     $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
@@ -6902,7 +6910,7 @@ sub score_responses_STRATEGY2 {
       # each query has a single response
       # each query-response pair defines a unique edge
       my %correct_edges;
-      foreach my $query_id(keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
+      foreach my $query_id(sort keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
         my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
         my ($docid, $predicate_justification, $object_justification, $rank) =
           map {$response->get($_)}
@@ -6920,14 +6928,12 @@ sub score_responses_STRATEGY2 {
                 OBJECT_LINKABILITY);
         my %query_objects = map {$_=>1}
                               split(/\|/, $response->get("QUERY")->get("OBJECT"));
-        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{$correctness} = 1;
-        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{LINKABLE} = 1 if $linkability eq "YES";
         if($correctness eq "CORRECT" && $linkability eq "YES" && $query_objects{"LDC2019E43:".$object}) {
           $logger->NIST_die("duplicate edge $subject:$predicate:$object found in response to FRAME_ID=$frame_id SUBJECT_CLUSTER=$subject_cluster and QUERY=$query_id")
             if($correct_edges{"$subject:$predicate:$object"});
           $correct_edges{"$subject:$predicate:$object"} = 1;
           my $line = "STRATEGY-2 FRAMEID=$frame_id " .
-                         "SUBJECT_CLUSTER=$subject_cluster" . 
+                         "SUBJECT_CLUSTER=$subject_cluster " .
                          "QUERYID=$query_id " .
                          "DOCID=$docid " .
                          "PREDICATE_JUSTIFICATION=$predicate_justification " .
