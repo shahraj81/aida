@@ -6643,22 +6643,31 @@ sub score_responses_STRATEGY1 {
           push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{CORRECT}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
           if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
-            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{LINKABLE}}, $response);
-            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{LINKABLE} = 1;
-            my $subject = $assessment->get("SUBJECT_FQEC");
-            if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
-            }
-            else{
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
-              $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
-              if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
-                $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
-                push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
+            my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
+            if($query_objects{"LDC2019E43:".$assessment->get("OBJECT_FQEC")}) {
+              # response is either RIGHT or REDUNDANT
+              #  (1) correct predicate justification,
+              #  (2) predicate justification is linkable to object justification, and
+              #  (3) object justification is linkable to the query entity
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{OBJECT_LINKABLE_TO_QUERY_ENTITY}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1;
+              my $subject = $assessment->get("SUBJECT_FQEC");
+              if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+              }
+              else{
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
+                $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
+                if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
+                  $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                  push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+                }
               }
             }
           }
@@ -6699,7 +6708,8 @@ sub score_responses_STRATEGY1 {
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
     my $num_submitted_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED} || []};
     my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"CORRECT"} || []};
-    my $num_linkable_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"LINKABLE"} || []};
+    my $num_predicate_justification_linkable_to_object_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT"} || []};
+    my $num_object_linkable_to_query_entity_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"OBJECT_LINKABLE_TO_QUERY_ENTITY"} || []};
     my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"INCORRECT"} || []};
     my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"RIGHT"} || []};
     my $num_salient_1b = @{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT} || []};
@@ -6712,12 +6722,13 @@ sub score_responses_STRATEGY1 {
     my $depth1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
     my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
     my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
-    my $score = GraphScore->new($logger,
+    my $score = Task2GraphScoreStrategy1->new($logger,
                                   $runid,
                                   $query_id,
                                   $num_submitted_1a,
                                   $num_correct_1a,
-                                  $num_linkable_1a,
+                                  $num_predicate_justification_linkable_to_object_1a,
+                                  $num_object_linkable_to_query_entity_1a,
                                   $num_incorrect_1a,
                                   $num_right_1a,
                                   $num_salient_1b,
@@ -6979,27 +6990,28 @@ package Task2GraphScoresStrategy1Printer;
 use parent -norequire, 'Container', 'Super';
 
 my @task2_graph_scorer_strategy1_fields_to_print = (
-  {NAME => 'EC',                            HEADER => 'QID/EC',         FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'RUNID',                         HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'NUM_GROUND_TRUTH_1A',           HEADER => 'GTA(1a)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_GROUND_TRUTH_1A_COUNTED',   HEADER => 'GT(1a)',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_GROUND_TRUTH_1B',           HEADER => 'GTA(1b)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_GROUND_TRUTH_1B_COUNTED',   HEADER => 'GT(1b)',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_SUBMITTED_1A',              HEADER => 'Sub',            FORMAT => '%4d',    JUSTIFY => 'R'},
-  {NAME => 'NUM_POOLED_1A',                 HEADER => 'Pooled',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_CORRECT_1A',                HEADER => 'Correct',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_LINKABLE_1A',               HEADER => 'Linkable',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_REDUNDANT_1A',              HEADER => 'Dup',            FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_INCORRECT_1A',              HEADER => 'Incrct',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_COUNTED_1A',                HEADER => 'Cntd',           FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_RIGHT_1A',                  HEADER => 'Right',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_WRONG_1A',                  HEADER => 'Wrong',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_IGNORED_1A',                HEADER => 'Ignrd',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'NUM_SALIENT_1B',                HEADER => 'Salient',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
-  {NAME => 'PRECISION_1A',                  HEADER => 'Prec(1a)',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'RECALL_1A',                     HEADER => 'Recall(1a)',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'F1_1A',                         HEADER => 'F1(1a)',         FORMAT => '%6.4f',  JUSTIFY => 'L'},
-  {NAME => 'RECALL_1B',                     HEADER => 'Recall(1b)',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'EC',                                             HEADER => 'QID/EC',         FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',                                          HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH_1A',                            HEADER => 'GTA(1a)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_GROUND_TRUTH_1A_COUNTED',                    HEADER => 'GT(1a)',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_GROUND_TRUTH_1B',                            HEADER => 'GTA(1b)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_GROUND_TRUTH_1B_COUNTED',                    HEADER => 'GT(1b)',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED_1A',                               HEADER => 'Sub',            FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_POOLED_1A',                                  HEADER => 'Pooled',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_CORRECT_1A',                                 HEADER => 'Correct',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT', HEADER => 'PJLnkabl2O',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_OBJECT_LINKABLE_TO_QUERY_ENTITY_1A',         HEADER => 'OLnkabl2QE',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_REDUNDANT_1A',                               HEADER => 'Dup',            FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT_1A',                               HEADER => 'Incrct',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED_1A',                                 HEADER => 'Cntd',           FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT_1A',                                   HEADER => 'Right',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG_1A',                                   HEADER => 'Wrong',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED_1A',                                 HEADER => 'Ignrd',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SALIENT_1B',                                 HEADER => 'Salient',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'PRECISION_1A',                                   HEADER => 'Prec(1a)',       FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL_1A',                                      HEADER => 'Recall(1a)',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'F1_1A',                                          HEADER => 'F1(1a)',         FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL_1B',                                      HEADER => 'Recall(1b)',     FORMAT => '%6.4f',  JUSTIFY => 'L'},
 );
 
 sub new {
@@ -7021,7 +7033,8 @@ sub get_SUMMARY {
   my ($runid, 
       $total_num_submitted_1a, 
       $total_num_correct_1a, 
-      $total_num_linkable_1a,
+      $total_num_predicate_justification_linkable_to_object_1a,
+      $total_num_object_linkable_to_query_entity_1a,
       $total_num_incorrect_1a, 
       $total_num_right_1a,
       $total_num_salient_1b,
@@ -7036,7 +7049,8 @@ sub get_SUMMARY {
   foreach my $score($self->toarray()) {
     my ($num_submitted_1a,
         $num_correct_1a,
-        $num_linkable_1a,
+        $num_predicate_justification_linkable_to_object_1a,
+        $num_object_linkable_to_query_entity_1a,
         $num_incorrect_1a,
         $num_right_1a,
         $num_salient_1b,
@@ -7051,7 +7065,8 @@ sub get_SUMMARY {
       = map {$score->get($_)} qw(
                                   NUM_SUBMITTED_1A
                                   NUM_CORRECT_1A
-                                  NUM_LINKABLE_1A
+                                  NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT
+                                  NUM_OBJECT_LINKABLE_TO_QUERY_ENTITY_1A
                                   NUM_INCORRECT_1A
                                   NUM_RIGHT_1A
                                   NUM_SALIENT_1B
@@ -7067,7 +7082,8 @@ sub get_SUMMARY {
     $runid = $score->get("RUNID") unless $runid;
     $total_num_submitted_1a += $num_submitted_1a;
     $total_num_correct_1a += $num_correct_1a;
-    $total_num_linkable_1a += $num_linkable_1a;
+    $total_num_predicate_justification_linkable_to_object_1a += $num_predicate_justification_linkable_to_object_1a;
+    $total_num_object_linkable_to_query_entity_1a += $num_object_linkable_to_query_entity_1a;
     $total_num_incorrect_1a += $num_incorrect_1a;
     $total_num_right_1a += $num_right_1a;
     $total_num_salient_1b += $num_salient_1b;
@@ -7086,7 +7102,8 @@ sub get_SUMMARY {
                     "Summary", 
                     $total_num_submitted_1a,
                     $total_num_correct_1a,
-                    $total_num_linkable_1a,
+                    $total_num_predicate_justification_linkable_to_object_1a,
+                    $total_num_object_linkable_to_query_entity_1a,
                     $total_num_incorrect_1a,
                     $total_num_right_1a,
                     $total_num_salient_1b,
@@ -7163,7 +7180,8 @@ sub new {
       $query_id,
       $num_submitted_1a,
       $num_correct_1a,
-      $num_linkable_1a,
+      $num_predicate_justification_linkable_to_object_1a,
+      $num_object_linkable_to_query_entity_1a,
       $num_incorrect_1a,
       $num_right_1a,
       $num_salient_1b,
@@ -7180,13 +7198,14 @@ sub new {
     __CLASS__ => 'Task2GraphScoreStrategy1',
     EC => $query_id,
     NUM_CORRECT_1A => $num_correct_1a,
-    NUM_LINKABLE_1A => $num_linkable_1a,
+    NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT => $num_predicate_justification_linkable_to_object_1a,
     NUM_GROUND_TRUTH_1A => $num_ground_truth_1a,
     NUM_GROUND_TRUTH_1A_COUNTED => $num_ground_truth_1a_counted,
     NUM_GROUND_TRUTH_1B => $num_ground_truth_1b,
     NUM_GROUND_TRUTH_1B_COUNTED => $num_ground_truth_1b_counted,
     NUM_IGNORED_1A => $num_ignored_1a,
     NUM_INCORRECT_1A => $num_incorrect_1a,
+    NUM_OBJECT_LINKABLE_TO_QUERY_ENTITY_1A => $num_object_linkable_to_query_entity_1a,
     NUM_POOLED_1A => $num_pooled_1a,
     NUM_REDUNDANT_1A => $num_redundant_1a,
     NUM_RIGHT_1A => $num_right_1a,
