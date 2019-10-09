@@ -155,12 +155,14 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
 ########## General Errors
   ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
   AP_SUBMISSION_LINE                      DEBUG_INFO     AP_SUBMISSION_LINE: %s
+  CORRECT_EDGE                            DEBUG_INFO     CORRECT_EDGE: %s
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
   GROUND_TRUTH                            DEBUG_INFO     GROUND_TRUTH_INFO: %s     
   EMPTY_FILE_TO_LOAD                      WARNING        Trying to load empty file %s
   EXTRA_EDGE_JUSTIFICATIONS               WARNING        Extra edge justifications (expected <= %s; provided %s)
+  FRAME_QUERY                             DEBUG_INFO     FRAME_QUERY: %s
   ID_WITH_EXTENSION                       ERROR          File extension provided as part of %s %s
   ILLEGAL_CONFIDENCE_VALUE                ERROR          Illegal confidence value: %s
   ILLEGAL_IMPORTANCE_VALUE                ERROR          Illegal importance value: %s
@@ -6891,6 +6893,10 @@ sub score_responses_STRATEGY2 {
   # that was submitted and pooled for the query frame; the Value is the maximum number of unique edges
   # in the submitted event/relation KE that are correct and that have the same global KB ID for the subject.
   foreach my $frame_id(sort $self->get("FRAMES")->get("ALL_KEYS")) {
+    foreach my $query_id($self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id)) {
+      my $line = "FRAMEID=$frame_id QUERYID=$query_id\n";
+      $logger->record_debug_information("FRAME_QUERY", $line, "NO_SOURCE");
+    }
     my %cluster_value;
     foreach my $subject_cluster(keys %{$response_by_frame_and_subject_cluster{$frame_id}}) {
       # each query has a single response
@@ -6898,6 +6904,12 @@ sub score_responses_STRATEGY2 {
       my %correct_edges;
       foreach my $query_id(keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
         my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        my ($docid, $predicate_justification, $object_justification, $rank) =
+          map {$response->get($_)}
+            qw(DOCUMENT_ID
+            EDGE_PROVENANCE_TRIPLES
+            OBJECT_VALUE_PROVENANCE_TRIPLE
+            RANK);
         next unless $response->get("STRATEGY-2-POOLED");
         my ($subject, $predicate, $object, $correctness, $linkability)
           = map {$response->get("ASSESSMENT_ENTRY")->get($_)}
@@ -6914,6 +6926,17 @@ sub score_responses_STRATEGY2 {
           $logger->NIST_die("duplicate edge $subject:$predicate:$object found in response to FRAME_ID=$frame_id SUBJECT_CLUSTER=$subject_cluster and QUERY=$query_id")
             if($correct_edges{"$subject:$predicate:$object"});
           $correct_edges{"$subject:$predicate:$object"} = 1;
+          my $line = "STRATEGY-2 FRAMEID=$frame_id " .
+                         "SUBJECT_CLUSTER=$subject_cluster" . 
+                         "QUERYID=$query_id " .
+                         "DOCID=$docid " .
+                         "PREDICATE_JUSTIFICATION=$predicate_justification " .
+                         "OBJECT_JUSTIFICATION=$object_justification " .
+                         "RANK=$rank " .
+                         "SUBJECT_FQEC=$subject " .
+                         "PREDICATE=$predicate " .
+                         "OBJECT_FQEC=$object";
+          $logger->record_debug_information("CORRECT_EDGE", $line, $response->get("WHERE"));
         }
       }
       $cluster_value{$subject_cluster} = scalar keys %correct_edges;
