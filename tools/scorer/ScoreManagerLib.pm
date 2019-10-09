@@ -6547,7 +6547,7 @@ sub score_responses_STRATEGY1 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
-  my $scores = GraphScoresPrinter->new($logger);
+  my $scores = Task2GraphScoresStrategy1Printer->new($logger);
 
   # Gather ground truth for Strategy 1A
   # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
@@ -6612,56 +6612,6 @@ sub score_responses_STRATEGY1 {
     $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
     $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
     push(@{$candidate_responses{$query_id}}, $response) if $rank;
-  }
-
-  # categorize submissions for strategy#2 based scoring
-  my %response_by_frame_and_subject_cluster;
-  my %subject_importance;
-  foreach my $query_id(sort keys %candidate_responses) {
-    foreach my $response(@{$candidate_responses{$query_id}}) {
-      my ($query_id, $docid, $predicate_justification, $object_justification) =
-        map {$response->get($_)}
-          qw(QUERY_ID
-             DOCUMENT_ID
-             EDGE_PROVENANCE_TRIPLES
-             OBJECT_VALUE_PROVENANCE_TRIPLE);
-      my $predicate = $response->get("QUERY")->get("PREDICATE");
-      my $subject_cluster = $response->get("SUBJECT_CLUSTER_ID");
-      my $ag_cv = $response->get("AG_CV");
-      foreach my $frame_id($self->get("FRAMES")->get("FRAMEIDS_FOR_QUERY", $query_id)) {
-        $logger->NIST_die("Subject cluster already exists")
-          if $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
-        $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id} = $response;
-        $subject_importance{$frame_id}{$subject_cluster} += $ag_cv;
-      }
-    }
-  }
-
-  foreach my $frame_id(sort keys %subject_importance) {
-    my $K = 0;
-    foreach my $query_id($self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id)) {
-      $K += $self->get("QUERIES_TO_SCORE")->get("BY_KEY", $query_id)->get("depth2");
-    }
-    my $i = 0;
-    foreach my $subject_cluster(sort
-                  {$subject_importance{$frame_id}{$b}<=>$subject_importance{$frame_id}{$a} || $a cmp $b}
-                    keys %{$subject_importance{$frame_id}}) {
-      foreach my $query_id( sort {
-                                   $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$b}->get("AG_CV") <=> $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$a}->get("AG_CV")
-                                   || $a cmp $b
-                            }
-                            keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
-        my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
-        my $predicate = $response->get("QUERY")->get("PREDICATE");
-        my $doc_id = $response->get("DOCUMENT_ID");
-        my $object_justification = $response->get("OBJECT_VALUE_PROVENANCE_TRIPLE");
-        my $predicate_justification = $response->get("EDGE_PROVENANCE_TRIPLES");
-        $response->set("STRATEGY-2-POOLED", 1);
-        $i++;
-        last if $i == $K;
-      }
-      last if $i == $K;
-    }
   }
 
   # categorize submissions
@@ -6782,20 +6732,182 @@ sub score_responses_STRATEGY1 {
   $self->set("SCORES", $scores);
 }
 
+
+sub score_responses_STRATEGY2 {
+  my ($self) = @_;
+  my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
+    = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
+  my $scores = Task2GraphScoresStrategy2Printer->new($logger);
+
+  # Gather ground truth
+  my %ground_truth;
+  foreach my $entry($assessments->toarray()) {
+    my ($subject, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification,
+          $object_justification) =
+      map {$entry->get($_)}
+        qw(SUBJECT_FQEC
+           PREDICATE
+           OBJECT_FQEC
+           DOCUMENT_ID
+           PREDICATE_JUSTIFICATION_CORRECTNESS
+           OBJECT_LINKABILITY
+           PREDICATE_JUSTIFICATION
+           OBJECT_JUSTIFICATION);
+    $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
+    $predicate_justification = join(";", map {"$docid:".$_} split(";", $predicate_justification));
+    $object_justification = "$docid:$object_justification";
+    my $key = "$predicate:$predicate_justification:$object_justification";
+    $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key};
+    $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key} = $entry;
+
+    next unless ($correctness eq "CORRECT" && $linkability eq "YES");
+    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
+    unless (@queries) {
+      $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
+      next;
+    }
+    $entry->set("QUERIES", @queries);
+    foreach my $query(@queries) {
+      my $query_id = $query->get("QUERYID");
+      push(@{$ground_truth{"STRATEGY-2"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
+    }
+  }
+
+  my %responses_by_query;
+  foreach my $response($responses->get("RESPONSES")->toarray()) {
+    my ($query_id, $docid, $predicate_justification, $object_justification, $rank) =
+      map {$response->get($_)}
+        qw(QUERY_ID
+           DOCUMENT_ID
+           EDGE_PROVENANCE_TRIPLES
+           OBJECT_VALUE_PROVENANCE_TRIPLE
+           RANK);
+    next unless $queries_to_score->exists($query_id);
+    next unless $ground_truth{"STRATEGY-2"}{ENTRIES_BY_SUBJECT}{$query_id};
+    if($rank) {
+      $response->set("STRATEGY-2-SUBMITTED", 1);
+      $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{SUBMITTED} = 1;
+      push(@{$responses_by_query{$query_id}}, $response);
+    }
+  }
+
+  # determine what responses were pooled according to strategy#2
+  my %response_by_frame_and_subject_cluster;
+  my %subject_importance;
+  foreach my $query_id(sort keys %responses_by_query) {
+    foreach my $response(@{$responses_by_query{$query_id}}) {
+      my ($query_id, $docid, $predicate_justification, $object_justification) =
+        map {$response->get($_)}
+          qw(QUERY_ID
+             DOCUMENT_ID
+             EDGE_PROVENANCE_TRIPLES
+             OBJECT_VALUE_PROVENANCE_TRIPLE);
+      my $predicate = $response->get("QUERY")->get("PREDICATE");
+      my $subject_cluster = $response->get("SUBJECT_CLUSTER_ID");
+      my $ag_cv = $response->get("AG_CV");
+      foreach my $frame_id($self->get("FRAMES")->get("FRAMEIDS_FOR_QUERY", $query_id)) {
+        $logger->NIST_die("$query_id already exists for subject cluster $subject_cluster already exists")
+          if $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id} = $response;
+        $subject_importance{$frame_id}{$subject_cluster} += $ag_cv;
+      }
+    }
+  }
+  foreach my $frame_id(sort keys %subject_importance) {
+    my $K = 0;
+    foreach my $query_id($self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id)) {
+      $K += $self->get("QUERIES_TO_SCORE")->get("BY_KEY", $query_id)->get("depth2");
+    }
+    my $i = 0;
+    foreach my $subject_cluster(sort
+                  {$subject_importance{$frame_id}{$b}<=>$subject_importance{$frame_id}{$a} || $a cmp $b}
+                    keys %{$subject_importance{$frame_id}}) {
+      foreach my $query_id( sort {
+                                   $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$b}->get("AG_CV") <=> $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$a}->get("AG_CV")
+                                   || $a cmp $b
+                            }
+                            keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
+        my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        my $predicate = $response->get("QUERY")->get("PREDICATE");
+        my $doc_id = $response->get("DOCUMENT_ID");
+        my $object_justification = $response->get("OBJECT_VALUE_PROVENANCE_TRIPLE");
+        my $predicate_justification = $response->get("EDGE_PROVENANCE_TRIPLES");
+        $response->set("STRATEGY-2-POOLED", 1);
+        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{POOLED} = 1;
+        my $key = "$predicate:$predicate_justification:$object_justification";
+        my $assessment = $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key};
+        $logger->NIST_die("Assessment not found for key $key") unless $assessment;
+        $response->set("ASSESSMENT_ENTRY", $assessment);
+        $i++;
+        last if $i == $K;
+      }
+      last if $i == $K;
+    }
+  }
+
+  # For each query frame, compute the Value for each subject event/relation KE (i.e subject cluster)
+  # that was submitted and pooled for the query frame; the Value is the maximum number of unique edges
+  # in the submitted event/relation KE that are correct and that have the same global KB ID for the subject.
+  foreach my $frame_id(sort $self->get("FRAMES")->get("ALL_KEYS")) {
+    my %cluster_value;
+    foreach my $subject_cluster(keys %{$response_by_frame_and_subject_cluster{$frame_id}}) {
+      # each query has a single response
+      # each query-response pair defines a unique edge
+      my %correct_edges;
+      foreach my $query_id(keys %{$response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}}) {
+        my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
+        next unless $response->get("STRATEGY-2-POOLED");
+        my ($subject, $predicate, $object, $correctness, $linkability)
+          = map {$response->get("ASSESSMENT_ENTRY")->get($_)}
+            qw(SUBJECT_FQEC
+                PREDICATE
+                OBJECT_FQEC
+                PREDICATE_JUSTIFICATION_CORRECTNESS
+                OBJECT_LINKABILITY);
+        my %query_objects = map {$_=>1}
+                              split(/\|/, $response->get("QUERY")->get("OBJECT"));
+        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{$correctness} = 1;
+        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{LINKABLE} = 1 if $linkability eq "YES";
+        if($correctness eq "CORRECT" && $linkability eq "YES" && $query_objects{"LDC2019E43:".$object}) {
+          $logger->NIST_die("duplicate edge $subject:$predicate:$object found in response to FRAME_ID=$frame_id SUBJECT_CLUSTER=$subject_cluster and QUERY=$query_id")
+            if($correct_edges{"$subject:$predicate:$object"});
+          $correct_edges{"$subject:$predicate:$object"} = 1;
+        }
+      }
+      $cluster_value{$subject_cluster} = scalar keys %correct_edges;
+    }
+    my ($best_subject_cluster) = sort {$cluster_value{$b}<=>$cluster_value{$a}} keys %cluster_value;
+    my $frame_value = 0;
+    $frame_value = $cluster_value{$best_subject_cluster}
+      if $best_subject_cluster && exists $cluster_value{$best_subject_cluster};
+    my $num_queries_in_frame = scalar $self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id);
+    my $frame_recall = $frame_value/$num_queries_in_frame;
+
+    my $score = Task2GraphScoreStrategy2->new($logger,
+                                  $runid,
+                                  $frame_id,
+                                  $num_queries_in_frame,
+                                  $frame_value,
+                                  $frame_recall);
+    $scores->add($score, $frame_id);
+  }
+  $self->set("SCORES", $scores);
+}
+
 sub print_lines {
   my ($self, $program_output) = @_;
   $self->get("SCORES")->print_lines($program_output);
 }
 
 #####################################################################################
-# GraphScoresPrinter
+# Task2GraphScoresStrategy1Printer
 #####################################################################################
 
-package GraphScoresPrinter;
+package Task2GraphScoresStrategy1Printer;
 
 use parent -norequire, 'Container', 'Super';
 
-my @graph_scorer_fields_to_print = (
+my @task2_graph_scorer_strategy1_fields_to_print = (
   {NAME => 'EC',                            HEADER => 'QID/EC',         FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',                         HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH_1A',           HEADER => 'GTA(1a)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -6822,12 +6934,12 @@ my @graph_scorer_fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{__CLASS__} = 'GraphScoresPrinter';
+  $self->{__CLASS__} = 'Task2GraphScoresStrategy1Printer';
   $self->{PROGRAM_OUTPUT} = $program_output;
-  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @graph_scorer_fields_to_print};
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @task2_graph_scorer_strategy1_fields_to_print};
   $self->{LOGGER} = $logger;
   $self->{LINES} = [];
-  @{$self->{FIELDS_TO_PRINT}} = @graph_scorer_fields_to_print;
+  @{$self->{FIELDS_TO_PRINT}} = @task2_graph_scorer_strategy1_fields_to_print;
   bless($self, $class);
   $self;
 }
@@ -6898,7 +7010,7 @@ sub get_SUMMARY {
     $total_num_ground_truth_1b_counted += $num_ground_truth_1b_counted;
   }
 
-  GraphScore->new($logger, 
+  Task2GraphScoreStrategy1->new($logger,
                     $runid, 
                     "Summary", 
                     $total_num_submitted_1a,
@@ -6966,10 +7078,10 @@ sub print_lines {
 }
 
 #####################################################################################
-# GraphScore
+# Task2GraphScoreStrategy1
 #####################################################################################
 
-package GraphScore;
+package Task2GraphScoreStrategy1;
 
 use parent -norequire, 'Super';
 
@@ -6994,7 +7106,7 @@ sub new {
       $num_ground_truth_1b_counted) = @_;
       
   my $self = {
-    __CLASS__ => 'GraphScore',
+    __CLASS__ => 'Task2GraphScoreStrategy1',
     EC => $query_id,
     NUM_CORRECT_1A => $num_correct_1a,
     NUM_LINKABLE_1A => $num_linkable_1a,
@@ -7042,6 +7154,145 @@ sub get_F1_1A {
   my $precision = $self->get("PRECISION_1A");
   my $recall = $self->get("RECALL_1A");
   ($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
+}
+
+#####################################################################################
+# Task2GraphScoresStrategy1Printer
+#####################################################################################
+
+package Task2GraphScoresStrategy2Printer;
+
+use parent -norequire, 'Container', 'Super';
+
+my @task2_graph_scorer_strategy2_fields_to_print = (
+  {NAME => 'EC',                            HEADER => 'FrameID',        FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',                         HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_QUERIES_IN_FRAME',          HEADER => 'NumQueries',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'FRAME_VALUE',                   HEADER => 'FrameValue',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'FRAME_RECALL',                  HEADER => 'FrameRecall',    FORMAT => '%6.4f',  JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+);
+
+sub new {
+  my ($class, $logger, $program_output) = @_;
+  my $self = $class->SUPER::new($logger, 'Score');
+  $self->{__CLASS__} = 'Task2GraphScoresStrategy2Printer';
+  $self->{PROGRAM_OUTPUT} = $program_output;
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @task2_graph_scorer_strategy2_fields_to_print};
+  $self->{LOGGER} = $logger;
+  $self->{LINES} = [];
+  @{$self->{FIELDS_TO_PRINT}} = @task2_graph_scorer_strategy2_fields_to_print;
+  bless($self, $class);
+  $self;
+}
+
+sub get_SUMMARY {
+  my ($self) = @_;
+  my $logger = $self->get("LOGGER");
+  my ($runid,
+      $total_num_queries_in_frame,
+      $total_frame_value,
+      $total_frame_recall);
+  my $num_frames = 0;
+  foreach my $score($self->toarray()) {
+    $num_frames++;
+    my ($num_queries_in_frame,
+        $frame_value,
+        $frame_recall)
+      = map {$score->get($_)} qw(
+                                  NUM_QUERIES_IN_FRAME
+                                  FRAME_VALUE
+                                  FRAME_RECALL
+                              );
+    $runid = $score->get("RUNID") unless $runid;
+    $total_num_queries_in_frame += $num_queries_in_frame;
+    $total_frame_value += $frame_value;
+    $total_frame_recall += $frame_recall;
+  }
+
+  my $mean_frame_recall = $total_frame_recall / $num_frames;
+
+  Task2GraphScoreStrategy2->new($logger,
+                                  $runid,
+                                  "Summary",
+                                  $total_num_queries_in_frame,
+                                  $total_frame_value,
+                                  $mean_frame_recall);
+}
+
+sub print_line {
+  my ($self, $line) = @_;
+  my $program_output = $self->get("PROGRAM_OUTPUT");
+  my $separator = "";
+  foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+    my $value = (defined $line ? $line->{$field->{NAME}} : $field->{HEADER});
+    print $program_output $separator;
+    my $numspaces = defined $self->{SEPARATOR} ? 0 : $self->{WIDTHS}{$field->{NAME}} - length($value);
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'R' && !defined $self->{SEPARATOR};
+    print $program_output $value;
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'L' && !defined $self->{SEPARATOR};
+    $separator = defined $self->{SEPARATOR} ? $self->{SEPARATOR} : ' ';
+  }
+  print $program_output "\n";
+}
+
+sub print_headers {
+  my ($self) = @_;
+  $self->print_line();
+}
+
+sub prepare_lines {
+  my ($self) = @_;
+  my @scores = $self->toarray();
+  push(@scores, $self->get("SUMMARY"));
+  foreach my $score (@scores) {
+    my %elements_to_print;
+    foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+      my $value = $score->get($field->{NAME});
+      my $field_name = $field->{NAME};
+      my $text = sprintf($field->{FORMAT}, $value);
+      $elements_to_print{$field->{NAME}} = $text;
+      $self->{WIDTHS}{$field->{NAME}} = length($text) if length($text) > $self->{WIDTHS}{$field->{NAME}};
+    }
+    push(@{$self->{LINES}}, \%elements_to_print);
+  }
+}
+
+sub print_lines {
+  my ($self, $program_output) = @_;
+  $self->set("PROGRAM_OUTPUT", $program_output);
+  $self->prepare_lines();
+  $self->print_headers();
+  foreach my $line (@{$self->{LINES}}) {
+    $self->print_line($line);
+  }
+}
+
+#####################################################################################
+# Task2GraphScoreStrategy2
+#####################################################################################
+
+package Task2GraphScoreStrategy2;
+use parent -norequire, 'Super';
+sub new {
+  my ($class,
+      $logger,
+      $runid,
+      $frame_id,
+      $num_queries_in_frame,
+      $frame_value,
+      $frame_recall) = @_;
+
+  my $self = {
+    __CLASS__ => 'Task2GraphScoreStrategy2',
+    EC => $frame_id,
+    FRAME_VALUE => $frame_value,
+    FRAME_RECALL => $frame_recall,
+    NUM_QUERIES_IN_FRAME => $num_queries_in_frame,
+    RUNID => $runid,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
 }
 
 #####################################################################################
