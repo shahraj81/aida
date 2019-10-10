@@ -5457,9 +5457,9 @@ sub load_graph {
                       map {$_ . "=" . $assessment_entry->get($_)}
                         qw(PREDICATE
                            DOCUMENT_ID
+                           PREDICATE_JUSTIFICATION
                            OBJECT_JUSTIFICATION
                            PREDICATE_JUSTIFICATION_CORRECTNESS
-                           PREDICATE_JUSTIFICATION
                            OBJECT_LINKABILITY
                            OBJECT_FQEC
                            SUBJECT_FQEC_READ
@@ -5558,7 +5558,7 @@ sub load {
   foreach my $entry($entries->toarray()) {
     my $subject = $entry->get("subject");
     my $role = $entry->get("role");
-    $self->get("LOGGER")->record_debug_information("SALIENT_READ", "LINE=" . $entry->get("LINE"), $entry->get("WHERE"));
+    $self->get("LOGGER")->record_debug_information("SALIENT_READ", "LINE " . $entry->get("LINE"), $entry->get("WHERE"));
     foreach my $object(split/\|/, $entry->get("object")) {
       $self->add($entry, "$subject:$role:LDC2019E43:$object");
       $self->get("LOGGER")->record_debug_information("SALIENT_READ", "RECORDED SUBJECT=$subject ROLE=$role OBJECT=LDC2019E43:$object", $entry->get("WHERE"));
@@ -6718,10 +6718,11 @@ sub score_responses_TASK1_STRATEGY1 {
     my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
     my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
-    my $num_ground_truth_1b = keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}};
+    my $num_ground_truth_1b = $num_ground_truth_1a ? keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}} : 0;
     my $depth1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
     my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
     my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
+    $num_ground_truth_1b_counted = $num_ground_truth_1a ? $num_ground_truth_1b_counted : 0;
     my $score = GraphScoreStrategy1->new($logger,
                                   $runid,
                                   $query_id,
@@ -6927,10 +6928,11 @@ sub score_responses_TASK2_STRATEGY1 {
     my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
     my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
-    my $num_ground_truth_1b = keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}};
+    my $num_ground_truth_1b = $num_ground_truth_1a ? keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}} : 0;
     my $depth1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
     my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
     my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
+    $num_ground_truth_1b_counted = $num_ground_truth_1a ? $num_ground_truth_1b_counted : 0;
     my $score = GraphScoreStrategy1->new($logger,
                                   $runid,
                                   $query_id,
