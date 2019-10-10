@@ -5693,7 +5693,7 @@ sub get_AP {
     next if $correctness eq "IGNORE";
     $ranked_responses{$rank} = $response;
     my $fqec = $response->get("ASSESSMENT_ENTRY")->get("FQEC") || "N/A";
-    if($correctness eq "RIGHT" && $correct_at_rank < $max_num_ground_truth) {
+    if($correctness eq "RIGHT" && $rank < $max_num_ground_truth) {
       $correct_at_rank++;
       $sum_precision += $correct_at_rank/$rank;
     }
@@ -6142,7 +6142,7 @@ sub get_AP {
     my $correctness = $response->get("CORRECTNESS");
     next if $correctness eq "IGNORE";
     $ranked_responses{$rank} = $response;
-    if($correctness eq "RIGHT" && $correct_at_rank < $max_num_ground_truth) {
+    if($correctness eq "RIGHT" && $rank < $max_num_ground_truth) {
       $correct_at_rank++;
       $sum_precision += $correct_at_rank/$rank;
     }
