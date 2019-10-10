@@ -6904,7 +6904,7 @@ sub score_responses_TASK2_STRATEGY1 {
       }
       my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}});
       my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}});
-      my $line = "STRATEGY-1A QUERYID=$query_id " .
+      my $line = "QUERYID=$query_id " .
                    "DOCID=$docid " .
                    "PREDICATE_JUSTIFICATION=$predicate_justification " .
                    "OBJECT_JUSTIFICATION=$object_justification " .
