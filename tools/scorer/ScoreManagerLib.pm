@@ -6857,7 +6857,7 @@ sub score_responses_TASK2_STRATEGY1 {
               #  (2) predicate justification is linkable to object justification, and
               #  (3) object justification is linkable to the query entity
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{OBJECT_LINKABLE_TO_QUERY_ENTITY}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1;
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1;
               my $subject = $assessment->get("SUBJECT_FQEC");
               if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
                 push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
