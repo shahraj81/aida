@@ -2574,6 +2574,28 @@ sub load_aggregated_confidences_TA2_ZH {
   }
 }
 
+sub load_aggregated_confidences_TA1_GR {
+  my ($self, $logger, $queries, $ca_filename, $schema, $run_id) = @_;
+  my @elements = split(/\//, $ca_filename);
+  my $query_id = pop @elements;
+  $query_id =~ s/^(.*?\/)+//g;
+  $query_id =~ s/\.rq\.tsv//;
+  my $kb_docid = pop @elements;
+  $kb_docid =~ s/\.ttl$//;
+  my $run_id_from_filename = pop @elements;
+  foreach my $entry(FileHandler->new($logger, $ca_filename)->get("ENTRIES")->toarray()) {
+    my @elements = split(/\t/, $entry->get("LINE"));
+    my $rank = pop @elements;
+    my $ag_cv = pop @elements;
+    my $uuid = main::generate_uuid_from_string(join("\t", @elements));
+    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE"))
+      unless($self->get("CATEGORIZED_RESPONSES")->exists($uuid));
+    my $response = $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $uuid);
+    $response->set("RANK", $rank);
+    $response->set("AG_CV", $ag_cv);
+  }
+}
+
 sub load_aggregated_confidences_TA2_GR {
   my ($self, $logger, $queries, $ca_filename, $schema, $run_id) = @_;
   my @elements = split(/\//, $ca_filename);
@@ -5479,7 +5501,7 @@ package Frames;
 use parent -norequire, 'Container', 'Super';
 
 sub new {
-  my ($class, $logger, $queries_to_score) = @_;
+  my ($class, $logger, $queries_to_score, $code) = @_;
   my $self = $class->SUPER::new($logger, 'Frame');
   $self->{__CLASS__} = 'Frames';
   $self->{QUERIES_TO_SCORE} = $queries_to_score;
@@ -5487,7 +5509,7 @@ sub new {
   $self->{QUERYIDS_BY_FRAMEID} = ();
   $self->{LOGGER} = $logger;
   bless($self, $class);
-  $self->load();
+  $self->load() if $code eq "TA2_GR";
   $self;
 }
 
@@ -6521,7 +6543,7 @@ sub new {
     QUERIES => $queries,
     SALIENT_EDGES => $salient_edges,
     QUERIES_TO_SCORE => $queries_to_score,
-    FRAMES => Frames->new($logger, $queries_to_score),
+    FRAMES => Frames->new($logger, $queries_to_score, $queries->get("TASK_AND_TYPE_CODE")),
     RESPONSES => $responses,
     RUNID => $runid,
     STRATEGY => $strategy,
@@ -6579,7 +6601,7 @@ sub score_responses_TASK1_STRATEGY1 {
     $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
 
     next unless ($correctness eq "CORRECT" && $linkability eq "YES");
-    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
+    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate));
     unless (@queries) {
       $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
       next;
@@ -6595,7 +6617,7 @@ sub score_responses_TASK1_STRATEGY1 {
   foreach my $edge($salient_edges->toarray()) {
     my ($subject, $predicate, $object) = map {$edge->get($_)} qw(subject role object);
     $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
-    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
+    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate));
     foreach my $query(@queries) {
       my $query_id = $query->get("QUERYID");
       my $edge_string = join("\t", ($subject, $predicate, $object));
@@ -6613,9 +6635,10 @@ sub score_responses_TASK1_STRATEGY1 {
            EDGE_PROVENANCE_TRIPLES
            OBJECT_VALUE_PROVENANCE_TRIPLE
            RANK);
+    next unless $docid_mappings->get("COREDOCS")->exists($docid);
     next unless $queries_to_score->exists($query_id);
     next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id};
-    my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
+    my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
     $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
     $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
     push(@{$candidate_responses{$query_id}}, $response) if $rank;
@@ -6719,9 +6742,9 @@ sub score_responses_TASK1_STRATEGY1 {
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
     my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
     my $num_ground_truth_1b = $num_ground_truth_1a ? keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}} : 0;
-    my $depth1 = $queries_to_score->get("BY_KEY", $query_id)->get("depth1");
-    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
-    my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
+    my $depth = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
+    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth ? $depth : $num_ground_truth_1a;
+    my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth ? $depth : $num_ground_truth_1b;
     $num_ground_truth_1b_counted = $num_ground_truth_1a ? $num_ground_truth_1b_counted : 0;
     my $score = GraphScoreStrategy1->new($logger,
                                   $runid,
@@ -7024,7 +7047,7 @@ sub score_responses_TASK2_STRATEGY2 {
                 PREDICATE_JUSTIFICATION_CORRECTNESS
                 OBJECT_LINKABILITY);
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{$correctness} = 1;
-        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{LINKABLE} = 1 if $linkability eq "YES";
+        $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1 if $linkability eq "YES";
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1
           if($query_objects{"LDC2019E43:".$object});
       }
@@ -7107,7 +7130,7 @@ sub score_responses_TASK2_STRATEGY2 {
     }
     my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}});
     my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-2"}{"POST-POLICY"}});
-    my $line = "STRATEGY-2 QUERYID=$query_id " .
+    my $line = "QUERYID=$query_id " .
                    "DOCID=$docid " .
                    "PREDICATE_JUSTIFICATION=$predicate_justification " .
                    "OBJECT_JUSTIFICATION=$object_justification " .
@@ -7153,10 +7176,10 @@ sub score_responses_TASK2_STRATEGY2 {
           $logger->NIST_die("duplicate edge $subject:$predicate:$object found in response to FRAME_ID=$frame_id SUBJECT_CLUSTER=$subject_cluster and QUERY=$query_id")
             if($correct_edges{"$subject:$predicate:$object"});
           $correct_edges{"$subject:$predicate:$object"} = 1;
-          my $line = "STRATEGY-2 FRAMEID=$frame_id " .
-                         "SUBJECT_CLUSTER=$subject_cluster " .
+          my $line = "FRAMEID=$frame_id " .
                          "QUERYID=$query_id " .
                          "DOCID=$docid " .
+                         "SUBJECT_CLUSTER=$subject_cluster " .
                          "PREDICATE_JUSTIFICATION=$predicate_justification " .
                          "OBJECT_JUSTIFICATION=$object_justification " .
                          "RANK=$rank " .
