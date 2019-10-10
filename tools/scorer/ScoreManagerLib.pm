@@ -6677,7 +6677,7 @@ sub score_responses_TASK1_STRATEGY1 {
             #  (1) correct predicate justification, and
             #  (2) predicate justification is linkable to object justification
             my ($subject, $predicate, $object) = map {$assessment->get($_)} qw(SUBJECT_FQEC PREDICATE OBJECT_FQEC);
-            my $edge_string = join("\t", ($subject, $predicate, $object));
+            my $edge_string = join("\t", ($subject, $predicate, "LDC2019E43:".$object));
             if($correct_found{"STRATEGY-1A"}{$query_id}{$edge_string}) {
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
@@ -6688,7 +6688,7 @@ sub score_responses_TASK1_STRATEGY1 {
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
               $correct_found{"STRATEGY-1A"}{$query_id}{$edge_string} = 1;
-              if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
+              if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}) {
                 $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
                 push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
               }
