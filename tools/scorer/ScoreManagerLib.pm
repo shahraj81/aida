@@ -6609,7 +6609,7 @@ sub score_responses_TASK1_STRATEGY1 {
     $entry->set("QUERIES", @queries);
     foreach my $query(@queries) {
       my $query_id = $query->get("QUERYID");
-      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}{$subject}}, $entry);
+      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY}{$query_id}{$key}}, $entry);
     }
   }
 
@@ -6637,7 +6637,7 @@ sub score_responses_TASK1_STRATEGY1 {
            RANK);
     next unless $docid_mappings->get("COREDOCS")->exists($docid);
     next unless $queries_to_score->exists($query_id);
-    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id};
+    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY}{$query_id};
     my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
     $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
     $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
@@ -6740,7 +6740,7 @@ sub score_responses_TASK1_STRATEGY1 {
     my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"REDUNDANT"} || []};
     my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
-    my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_SUBJECT}{$query_id}};
+    my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY}{$query_id}};
     my $num_ground_truth_1b = $num_ground_truth_1a ? keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}} : 0;
     my $depth = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
     my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth ? $depth : $num_ground_truth_1a;
