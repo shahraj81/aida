@@ -7720,7 +7720,7 @@ use parent -norequire, 'Container', 'Super';
 my @task2_graph_scorer_strategy2_fields_to_print = (
   {NAME => 'EC',                            HEADER => 'FrameID',        FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',                         HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
-  {NAME => 'NUM_QUERIES_IN_FRAME',          HEADER => 'NumQueries',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_QUERIES_IN_FRAME',          HEADER => 'NumEdges',       FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'FRAME_VALUE',                   HEADER => 'FrameValue',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'FRAME_RECALL',                  HEADER => 'FrameRecall',    FORMAT => '%6.4f',  JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
 );
