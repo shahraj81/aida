@@ -5362,7 +5362,7 @@ sub load_class {
         }
       }
       my $fqec = $fqec_read;
-      if($normalize{$assessment} eq "CORRECT" && ($fqec eq "NIL" || !$fqec) ) {
+      if($normalize{$assessment} eq "CORRECT" && ($fqec eq "NIL" || $fqec eq "" || !$fqec) ) {
         # the entity is singleton therefore it needs a generated FQEC
         unless($generated_fqecs{$query_and_document}{$mention_span}) {
           $fqec = "NILG$next_generated_fqec_num";
@@ -5470,12 +5470,12 @@ sub load_graph {
       $assessment_entry->set("OBJECT_FQEC_READ", $assessment_entry->get("OBJECT_FQEC"));
       if($assessment_entry->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT" &&
           $assessment_entry->get("OBJECT_LINKABILITY") eq "YES") {
-        if($assessment_entry->get("SUBJECT_FQEC") eq "NIL") {
+        if($assessment_entry->get("SUBJECT_FQEC") eq "NIL" || $assessment_entry->get("SUBJECT_FQEC") eq "" || !$assessment_entry->get("SUBJECT_FQEC")) {
           my $generated_fqec = "NILG$next_generated_fqec_num";
           $assessment_entry->set("SUBJECT_FQEC", $generated_fqec);
           $next_generated_fqec_num++;
         }
-        if($assessment_entry->get("OBJECT_FQEC") eq "NIL") {
+        if($assessment_entry->get("OBJECT_FQEC") eq "NIL" || $assessment_entry->get("OBJECT_FQEC") eq "" || !$assessment_entry->get("OBJECT_FQEC")) {
           my $generated_fqec = "NILG$next_generated_fqec_num";
           $assessment_entry->set("OBJECT_FQEC", $generated_fqec);
           $next_generated_fqec_num++;
@@ -6583,7 +6583,7 @@ sub score_responses_TASK1_STRATEGY1 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
-  my $scores = GraphScoresStrategy1Printer->new($logger);
+  my $scores = Task1GraphScoresStrategy1Printer->new($logger);
 
   # Gather ground truth for Strategy 1A
   # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
@@ -6616,26 +6616,15 @@ sub score_responses_TASK1_STRATEGY1 {
     $entry->set("QUERIES", @queries);
     foreach my $query(@queries) {
       my $query_id = $query->get("QUERYID");
-      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY_AND_EDGEFQEC}{$query_id}{$edge_fqec}}, $entry);
+      my $query_and_document = "$query_id:$docid";
+      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERYDOC_AND_EDGEFQEC}{$query_and_document}{$edge_fqec}}, $entry);
       my $line = "DETAIL QUERYID=$query_id " .
+                   "DOCUMENT=$docid " .
                    "EDGE_FQEC=$edge_fqec " .
                    "SUBJECT=$subject " .
                    "PREDICATE=$predicate " .
                    "OBJECT=$object";
       $logger->record_debug_information("GROUND_TRUTH", $line, $entry->get("WHERE"));
-    }
-  }
-
-  # Gather ground truth for Strategy 1B
-  foreach my $edge($salient_edges->toarray()) {
-    my ($subject, $predicate, $object) = map {$edge->get($_)} qw(subject role object);
-    $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
-    my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate));
-    foreach my $query(@queries) {
-      my $query_id = $query->get("QUERYID");
-      my $edge_string = join("\t", ($subject, $predicate, $object));
-      push(@{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}}, $edge);
-      $self->get("LOGGER")->record_debug_information("SALIENT_FOR_QUERY", "QUERY=$query_id SUBJECT=$subject PREDICATE=$predicate OBJECT=$object", $edge->get("WHERE"));
     }
   }
 
@@ -6648,20 +6637,21 @@ sub score_responses_TASK1_STRATEGY1 {
            EDGE_PROVENANCE_TRIPLES
            OBJECT_VALUE_PROVENANCE_TRIPLE
            RANK);
+    my $query_and_document = "$query_id:$docid";
     next unless $docid_mappings->get("COREDOCS")->exists($docid);
     next unless $queries_to_score->exists($query_id);
-    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY_AND_EDGEFQEC}{$query_id};
+    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERYDOC_AND_EDGEFQEC}{$query_and_document};
     my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
     $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
     $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
-    push(@{$candidate_responses{$query_id}}, $response) if $rank;
+    push(@{$candidate_responses{$query_and_document}}, $response) if $rank;
   }
 
   # categorize submissions
   my %categorized_submissions;
   my %correct_found;
-  foreach my $query_id(sort keys %candidate_responses) {
-    foreach my $response(@{$candidate_responses{$query_id}}) {
+  foreach my $query_and_document(sort keys %candidate_responses) {
+    foreach my $response(@{$candidate_responses{$query_and_document}}) {
       my ($query_id, $docid, $predicate_justification, $object_justification) =
         map {$response->get($_)}
           qw(QUERY_ID
@@ -6670,52 +6660,52 @@ sub score_responses_TASK1_STRATEGY1 {
              OBJECT_VALUE_PROVENANCE_TRIPLE);
       my $predicate = $response->get("QUERY")->get("PREDICATE");
       if($response->get("STRATEGY-1A-SUBMITTED")) {
-        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED}}, $response);
+        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{SUBMITTED}}, $response);
         $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{SUBMITTED} = 1;
       }
       if($response->get("STRATEGY-1A-POOLED")) {
-        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{POOLED}}, $response);
+        push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{POOLED}}, $response);
         $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{POOLED} = 1;
         my $key = "$predicate:$predicate_justification:$object_justification";
         my $assessment = $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
         $logger->NIST_die("Assessment not found for key $key") unless $assessment;
         $response->set("ASSESSMENT_ENTRY", $assessment);
         if($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT") {
-          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{CORRECT}}, $response);
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{CORRECT}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
           if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
-            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
             $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
             # response is either RIGHT or REDUNDANT because it met both the conditions given below:
             #  (1) correct predicate justification, and
             #  (2) predicate justification is linkable to object justification
             my ($subject, $predicate, $object) = map {$assessment->get($_)} qw(SUBJECT_FQEC PREDICATE OBJECT_FQEC);
             my $edge_string = join("\t", ($subject, $predicate, "LDC2019E43:".$object));
-            if($correct_found{"STRATEGY-1A"}{$query_id}{$edge_string}) {
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
+            if($correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string}) {
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{REDUNDANT}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{IGNORE}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
             }
             else{
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RIGHT}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
-              $correct_found{"STRATEGY-1A"}{$query_id}{$edge_string} = 1;
+              $correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string} = 1;
               if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}) {
                 $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
-                push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+                push(@{$categorized_submissions{"STRATEGY-1B"}{$query_and_document}{SALIENT}}, $response);
               }
             }
           }
           else {
-            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{WRONG}}, $response);
             $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
           }
         }
         elsif($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "INCORRECT") {
-          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{INCORRECT}}, $response);
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{INCORRECT}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{INCORRECT} = 1;
-          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{WRONG}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
         }
         else{
@@ -6742,44 +6732,39 @@ sub score_responses_TASK1_STRATEGY1 {
   }
 
   foreach my $query_id(sort $queries_to_score->get("ALL_KEYS")) {
-    my $num_submitted_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{SUBMITTED} || []};
-    my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"CORRECT"} || []};
-    my $num_predicate_justification_linkable_to_object_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT"} || []};
-    my $num_object_linkable_to_query_entity_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"OBJECT_LINKABLE_TO_QUERY_ENTITY"} || []};
-    my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"INCORRECT"} || []};
-    my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"RIGHT"} || []};
-    my $num_salient_1b = @{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT} || []};
-    my $num_wrong_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"WRONG"} || []};
-    my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"REDUNDANT"} || []};
-    my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
-    my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
-    my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY_AND_EDGEFQEC}{$query_id}};
-    my $num_ground_truth_1b = $num_ground_truth_1a ? keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}} : 0;
-    my $depth = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
-    my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth ? $depth : $num_ground_truth_1a;
-    my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth ? $depth : $num_ground_truth_1b;
-    $num_ground_truth_1b_counted = $num_ground_truth_1a ? $num_ground_truth_1b_counted : 0;
-    my $score = GraphScoreStrategy1->new($logger,
-                                  $runid,
-                                  $query_id,
-                                  $num_submitted_1a,
-                                  $num_correct_1a,
-                                  $num_predicate_justification_linkable_to_object_1a,
-                                  $num_object_linkable_to_query_entity_1a,
-                                  $num_incorrect_1a,
-                                  $num_right_1a,
-                                  $num_salient_1b,
-                                  $num_wrong_1a,
-                                  $num_redundant_1a,
-                                  $num_pooled_1a,
-                                  $num_ignored_1a,
-                                  $num_ground_truth_1a,
-                                  $num_ground_truth_1b,
-                                  $num_ground_truth_1a_counted,
-                                  $num_ground_truth_1b_counted);
-    $scores->add($score, $query_id);
+    foreach my $docid(sort $docid_mappings->get("COREDOCS")->toarray()) {
+      my $query_and_document = "$query_id:$docid";
+      my $num_submitted_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{SUBMITTED} || []};
+      my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"CORRECT"} || []};
+      my $num_predicate_justification_linkable_to_object_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT"} || []};
+      my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"INCORRECT"} || []};
+      my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"RIGHT"} || []};
+      my $num_wrong_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"WRONG"} || []};
+      my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"REDUNDANT"} || []};
+      my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"IGNORE"} || []};
+      my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"POOLED"} || []};
+      my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERYDOC_AND_EDGEFQEC}{$query_and_document}};
+      my $depth = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
+      my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth ? $depth : $num_ground_truth_1a;
+      my $score = Task1GraphScoreStrategy1->new($logger,
+                                    $runid,
+                                    $query_id,
+                                    $docid,
+                                    $num_submitted_1a,
+                                    $num_correct_1a,
+                                    $num_predicate_justification_linkable_to_object_1a,
+                                    $num_incorrect_1a,
+                                    $num_right_1a,
+                                    $num_wrong_1a,
+                                    $num_redundant_1a,
+                                    $num_pooled_1a,
+                                    $num_ignored_1a,
+                                    $num_ground_truth_1a,
+                                    $num_ground_truth_1a_counted);
+      $scores->add($score, $query_and_document);
+    }
+    $self->set("SCORES", $scores);
   }
-  $self->set("SCORES", $scores);
 }
 
 sub score_responses_TASK2_DEFAULT {
@@ -6791,7 +6776,7 @@ sub score_responses_TASK2_STRATEGY1 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
-  my $scores = GraphScoresStrategy1Printer->new($logger);
+  my $scores = Task2GraphScoresStrategy1Printer->new($logger);
 
   # Gather ground truth for Strategy 1A
   # For each single edge query, how many unique (real-world - as determined by LDC's equivalence classes)
@@ -6969,7 +6954,7 @@ sub score_responses_TASK2_STRATEGY1 {
     my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth1 ? $depth1 : $num_ground_truth_1a;
     my $num_ground_truth_1b_counted = $num_ground_truth_1b > $depth1 ? $depth1 : $num_ground_truth_1b;
     $num_ground_truth_1b_counted = $num_ground_truth_1a ? $num_ground_truth_1b_counted : 0;
-    my $score = GraphScoreStrategy1->new($logger,
+    my $score = Task2GraphScoreStrategy1->new($logger,
                                   $runid,
                                   $query_id,
                                   $num_submitted_1a,
@@ -6996,7 +6981,7 @@ sub score_responses_TASK2_STRATEGY2 {
   my ($self) = @_;
   my ($logger, $runid, $docid_mappings, $queries, $salient_edges, $responses, $assessments, $queries_to_score)
     = map {$self->get($_)} qw(LOGGER RUNID DOCID_MAPPINGS QUERIES SALIENT_EDGES RESPONSES ASSESSMENTS QUERIES_TO_SCORE);
-  my $scores = GraphScoresStrategy2Printer->new($logger);
+  my $scores = Task2GraphScoresStrategy2Printer->new($logger);
 
   # Gather ground truth
   my %ground_truth;
@@ -7211,7 +7196,7 @@ sub score_responses_TASK2_STRATEGY2 {
     my $num_queries_in_frame = scalar $self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id);
     my $frame_recall = $frame_value/$num_queries_in_frame;
 
-    my $score = GraphScoreStrategy2->new($logger,
+    my $score = Task2GraphScoreStrategy2->new($logger,
                                   $runid,
                                   $frame_id,
                                   $num_queries_in_frame,
@@ -7228,14 +7213,245 @@ sub print_lines {
 }
 
 #####################################################################################
-# GraphScoresStrategy1Printer
+# Task1GraphScoresStrategy1Printer
 #####################################################################################
 
-package GraphScoresStrategy1Printer;
+package Task1GraphScoresStrategy1Printer;
 
 use parent -norequire, 'Container', 'Super';
 
-my @graph_scorer_strategy1_fields_to_print = (
+my @task1_graph_scorer_strategy1_fields_to_print = (
+  {NAME => 'EC',                                             HEADER => 'QID/EC',         FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'DOCUMENT_ID',                                    HEADER => 'DocID',          FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'RUNID',                                          HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
+  {NAME => 'NUM_GROUND_TRUTH_1A',                            HEADER => 'GTA',            FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_GROUND_TRUTH_1A_COUNTED',                    HEADER => 'GT',             FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_SUBMITTED_1A',                               HEADER => 'Sub',            FORMAT => '%4d',    JUSTIFY => 'R'},
+  {NAME => 'NUM_POOLED_1A',                                  HEADER => 'Pooled',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_CORRECT_1A',                                 HEADER => 'Correct',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT', HEADER => 'PJLnkabl2O',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_REDUNDANT_1A',                               HEADER => 'Dup',            FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_INCORRECT_1A',                               HEADER => 'Incrct',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_COUNTED_1A',                                 HEADER => 'Cntd',           FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_RIGHT_1A',                                   HEADER => 'Right',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_WRONG_1A',                                   HEADER => 'Wrong',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_IGNORED_1A',                                 HEADER => 'Ignrd',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'PRECISION_1A',                                   HEADER => 'Prec',           FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'RECALL_1A',                                      HEADER => 'Recall',         FORMAT => '%6.4f',  JUSTIFY => 'L'},
+  {NAME => 'F1_1A',                                          HEADER => 'F1',             FORMAT => '%6.4f',  JUSTIFY => 'L'},
+);
+
+sub new {
+  my ($class, $logger, $program_output) = @_;
+  my $self = $class->SUPER::new($logger, 'Score');
+  $self->{__CLASS__} = 'Task1GraphScoresStrategy1Printer';
+  $self->{PROGRAM_OUTPUT} = $program_output;
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @task1_graph_scorer_strategy1_fields_to_print};
+  $self->{LOGGER} = $logger;
+  $self->{LINES} = [];
+  @{$self->{FIELDS_TO_PRINT}} = @task1_graph_scorer_strategy1_fields_to_print;
+  bless($self, $class);
+  $self;
+}
+
+sub get_SUMMARY {
+  my ($self) = @_;
+  my $logger = $self->get("LOGGER");
+  my ($runid, 
+      $total_num_submitted_1a, 
+      $total_num_correct_1a, 
+      $total_num_predicate_justification_linkable_to_object_1a,
+      $total_num_incorrect_1a, 
+      $total_num_right_1a,
+      $total_num_wrong_1a, 
+      $total_num_redundant_1a, 
+      $total_num_pooled_1a, 
+      $total_num_ignored_1a, 
+      $total_num_ground_truth_1a,
+      $total_num_ground_truth_1a_counted);
+  foreach my $score($self->toarray()) {
+    my ($num_submitted_1a,
+        $num_correct_1a,
+        $num_predicate_justification_linkable_to_object_1a,
+        $num_incorrect_1a,
+        $num_right_1a,
+        $num_wrong_1a,
+        $num_redundant_1a,
+        $num_pooled_1a,
+        $num_ignored_1a,
+        $num_ground_truth_1a,
+        $num_ground_truth_1a_counted)
+      = map {$score->get($_)} qw(
+                                  NUM_SUBMITTED_1A
+                                  NUM_CORRECT_1A
+                                  NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT
+                                  NUM_INCORRECT_1A
+                                  NUM_RIGHT_1A
+                                  NUM_WRONG_1A
+                                  NUM_REDUNDANT_1A
+                                  NUM_POOLED_1A
+                                  NUM_IGNORED_1A
+                                  NUM_GROUND_TRUTH_1A
+                                  NUM_GROUND_TRUTH_1A_COUNTED
+                              );
+    $runid = $score->get("RUNID") unless $runid;
+    $total_num_submitted_1a += $num_submitted_1a;
+    $total_num_correct_1a += $num_correct_1a;
+    $total_num_predicate_justification_linkable_to_object_1a += $num_predicate_justification_linkable_to_object_1a;
+    $total_num_incorrect_1a += $num_incorrect_1a;
+    $total_num_right_1a += $num_right_1a;
+    $total_num_wrong_1a += $num_wrong_1a;
+    $total_num_redundant_1a += $num_redundant_1a;
+    $total_num_pooled_1a += $num_pooled_1a;
+    $total_num_ignored_1a += $num_ignored_1a;
+    $total_num_ground_truth_1a += $num_ground_truth_1a;
+    $total_num_ground_truth_1a_counted += $num_ground_truth_1a_counted;
+  }
+
+  Task1GraphScoreStrategy1->new($logger,
+                    $runid, 
+                    "Summary",
+                    "",
+                    $total_num_submitted_1a,
+                    $total_num_correct_1a,
+                    $total_num_predicate_justification_linkable_to_object_1a,
+                    $total_num_incorrect_1a,
+                    $total_num_right_1a,
+                    $total_num_wrong_1a,
+                    $total_num_redundant_1a,
+                    $total_num_pooled_1a,
+                    $total_num_ignored_1a,
+                    $total_num_ground_truth_1a,
+                    $total_num_ground_truth_1a_counted);
+}
+
+sub print_line {
+  my ($self, $line) = @_;
+  my $program_output = $self->get("PROGRAM_OUTPUT");
+  my $separator = "";
+  foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+    my $value = (defined $line ? $line->{$field->{NAME}} : $field->{HEADER});
+    print $program_output $separator;
+    my $numspaces = defined $self->{SEPARATOR} ? 0 : $self->{WIDTHS}{$field->{NAME}} - length($value);
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'R' && !defined $self->{SEPARATOR};
+    print $program_output $value;
+    print $program_output ' ' x $numspaces if $field->{JUSTIFY} eq 'L' && !defined $self->{SEPARATOR};
+    $separator = defined $self->{SEPARATOR} ? $self->{SEPARATOR} : ' ';
+  }
+  print $program_output "\n";
+}
+
+sub print_headers {
+  my ($self) = @_;
+  $self->print_line();
+}
+
+sub prepare_lines {
+  my ($self) = @_;
+  my @scores = $self->toarray();
+  push(@scores, $self->get("SUMMARY"));
+  foreach my $score (@scores) {
+    my %elements_to_print;
+    foreach my $field (@{$self->{FIELDS_TO_PRINT}}) {
+      my $value = $score->get($field->{NAME});
+      my $field_name = $field->{NAME};
+      my $text = sprintf($field->{FORMAT}, $value);
+      $elements_to_print{$field->{NAME}} = $text;
+      $self->{WIDTHS}{$field->{NAME}} = length($text) if length($text) > $self->{WIDTHS}{$field->{NAME}};
+    }
+    push(@{$self->{LINES}}, \%elements_to_print);
+  }
+}
+
+sub print_lines {
+  my ($self, $program_output) = @_;
+  $self->set("PROGRAM_OUTPUT", $program_output);
+  $self->prepare_lines();
+  $self->print_headers();
+  foreach my $line (@{$self->{LINES}}) {
+    $self->print_line($line);
+  }
+}
+
+#####################################################################################
+# Task1GraphScoreStrategy1
+#####################################################################################
+
+package Task1GraphScoreStrategy1;
+
+use parent -norequire, 'Super';
+
+sub new {
+  my ($class, 
+      $logger,
+      $runid,
+      $query_id,
+      $docid,
+      $num_submitted_1a,
+      $num_correct_1a,
+      $num_predicate_justification_linkable_to_object_1a,
+      $num_incorrect_1a,
+      $num_right_1a,
+      $num_wrong_1a,
+      $num_redundant_1a,
+      $num_pooled_1a,
+      $num_ignored_1a,
+      $num_ground_truth_1a,
+      $num_ground_truth_1a_counted) = @_;
+
+  my $self = {
+    __CLASS__ => 'Task1GraphScoreStrategy1',
+    EC => $query_id,
+    DOCUMENT_ID => $docid,
+    NUM_CORRECT_1A => $num_correct_1a,
+    NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT => $num_predicate_justification_linkable_to_object_1a,
+    NUM_GROUND_TRUTH_1A => $num_ground_truth_1a,
+    NUM_GROUND_TRUTH_1A_COUNTED => $num_ground_truth_1a_counted,
+    NUM_IGNORED_1A => $num_ignored_1a,
+    NUM_INCORRECT_1A => $num_incorrect_1a,
+    NUM_POOLED_1A => $num_pooled_1a,
+    NUM_REDUNDANT_1A => $num_redundant_1a,
+    NUM_RIGHT_1A => $num_right_1a,
+    NUM_SUBMITTED_1A => $num_submitted_1a,
+    NUM_WRONG_1A => $num_wrong_1a,
+    RUNID => $runid,
+    LOGGER => $logger,
+  };
+  bless($self, $class);
+  $self;
+}
+
+sub get_NUM_COUNTED_1A {
+  my ($self) = @_;
+  $self->get("NUM_RIGHT_1A") + $self->get("NUM_WRONG_1A");
+}
+
+sub get_PRECISION_1A {
+  my ($self) = @_;
+  $self->get("NUM_COUNTED_1A") ? $self->get("NUM_RIGHT_1A")/($self->get("NUM_COUNTED_1A")) : 0;
+}
+
+sub get_RECALL_1A {
+  my ($self) = @_;
+  $self->get("NUM_GROUND_TRUTH_1A") ? $self->get("NUM_RIGHT_1A")/($self->get("NUM_GROUND_TRUTH_1A_COUNTED")) : 0;
+}
+
+sub get_F1_1A {
+  my ($self) = @_;
+  my $precision = $self->get("PRECISION_1A");
+  my $recall = $self->get("RECALL_1A");
+  ($precision + $recall) ? 2*$precision*$recall/($precision + $recall) : 0;
+}
+
+#####################################################################################
+# Task2GraphScoresStrategy1Printer
+#####################################################################################
+
+package Task2GraphScoresStrategy1Printer;
+
+use parent -norequire, 'Container', 'Super';
+
+my @task2_graph_scorer_strategy1_fields_to_print = (
   {NAME => 'EC',                                             HEADER => 'QID/EC',         FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',                                          HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_GROUND_TRUTH_1A',                            HEADER => 'GTA(1a)',        FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -7263,12 +7479,12 @@ my @graph_scorer_strategy1_fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{__CLASS__} = 'GraphScoresStrategy1Printer';
+  $self->{__CLASS__} = 'Task2GraphScoresStrategy1Printer';
   $self->{PROGRAM_OUTPUT} = $program_output;
-  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @graph_scorer_strategy1_fields_to_print};
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @task2_graph_scorer_strategy1_fields_to_print};
   $self->{LOGGER} = $logger;
   $self->{LINES} = [];
-  @{$self->{FIELDS_TO_PRINT}} = @graph_scorer_strategy1_fields_to_print;
+  @{$self->{FIELDS_TO_PRINT}} = @task2_graph_scorer_strategy1_fields_to_print;
   bless($self, $class);
   $self;
 }
@@ -7343,7 +7559,7 @@ sub get_SUMMARY {
     $total_num_ground_truth_1b_counted += $num_ground_truth_1b_counted;
   }
 
-  GraphScoreStrategy1->new($logger,
+  Task2GraphScoreStrategy1->new($logger,
                     $runid, 
                     "Summary", 
                     $total_num_submitted_1a,
@@ -7412,10 +7628,10 @@ sub print_lines {
 }
 
 #####################################################################################
-# GraphScoreStrategy1
+# Task2GraphScoreStrategy1
 #####################################################################################
 
-package GraphScoreStrategy1;
+package Task2GraphScoreStrategy1;
 
 use parent -norequire, 'Super';
 
@@ -7441,7 +7657,7 @@ sub new {
       $num_ground_truth_1b_counted) = @_;
       
   my $self = {
-    __CLASS__ => 'GraphScoreStrategy1',
+    __CLASS__ => 'Task2GraphScoreStrategy1',
     EC => $query_id,
     NUM_CORRECT_1A => $num_correct_1a,
     NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT => $num_predicate_justification_linkable_to_object_1a,
@@ -7493,14 +7709,14 @@ sub get_F1_1A {
 }
 
 #####################################################################################
-# GraphScoresStrategy1Printer
+# Task2GraphScoresStrategy2Printer
 #####################################################################################
 
-package GraphScoresStrategy2Printer;
+package Task2GraphScoresStrategy2Printer;
 
 use parent -norequire, 'Container', 'Super';
 
-my @graph_scorer_strategy2_fields_to_print = (
+my @task2_graph_scorer_strategy2_fields_to_print = (
   {NAME => 'EC',                            HEADER => 'FrameID',        FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'RUNID',                         HEADER => 'RunID',          FORMAT => '%s',     JUSTIFY => 'L'},
   {NAME => 'NUM_QUERIES_IN_FRAME',          HEADER => 'NumQueries',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -7511,12 +7727,12 @@ my @graph_scorer_strategy2_fields_to_print = (
 sub new {
   my ($class, $logger, $program_output) = @_;
   my $self = $class->SUPER::new($logger, 'Score');
-  $self->{__CLASS__} = 'GraphScoresStrategy2Printer';
+  $self->{__CLASS__} = 'Task2GraphScoresStrategy2Printer';
   $self->{PROGRAM_OUTPUT} = $program_output;
-  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @graph_scorer_strategy2_fields_to_print};
+  $self->{WIDTHS} = {map {$_->{NAME} => length($_->{HEADER})} @task2_graph_scorer_strategy2_fields_to_print};
   $self->{LOGGER} = $logger;
   $self->{LINES} = [];
-  @{$self->{FIELDS_TO_PRINT}} = @graph_scorer_strategy2_fields_to_print;
+  @{$self->{FIELDS_TO_PRINT}} = @task2_graph_scorer_strategy2_fields_to_print;
   bless($self, $class);
   $self;
 }
@@ -7547,7 +7763,7 @@ sub get_SUMMARY {
 
   my $mean_frame_recall = $total_frame_recall / $num_frames;
 
-  GraphScoreStrategy2->new($logger,
+  Task2GraphScoreStrategy2->new($logger,
                                   $runid,
                                   "Summary",
                                   $total_num_queries_in_frame,
@@ -7604,10 +7820,10 @@ sub print_lines {
 }
 
 #####################################################################################
-# GraphScoreStrategy2
+# Task2GraphScoreStrategy2
 #####################################################################################
 
-package GraphScoreStrategy2;
+package Task2GraphScoreStrategy2;
 use parent -norequire, 'Super';
 sub new {
   my ($class,
@@ -7619,7 +7835,7 @@ sub new {
       $frame_recall) = @_;
 
   my $self = {
-    __CLASS__ => 'GraphScoreStrategy2',
+    __CLASS__ => 'Task2GraphScoreStrategy2',
     EC => $frame_id,
     FRAME_VALUE => $frame_value,
     FRAME_RECALL => $frame_recall,
