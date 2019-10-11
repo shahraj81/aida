@@ -7143,6 +7143,7 @@ sub score_responses_TASK2_STRATEGY2 {
   # that was submitted and pooled for the query frame; the Value is the maximum number of unique edges
   # in the submitted event/relation KE that are correct and that have the same global KB ID for the subject.
   foreach my $frame_id(sort $self->get("FRAMES")->get("ALL_KEYS")) {
+    next if scalar $self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id) < 2;
     foreach my $query_id($self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id)) {
       my $line = "FRAMEID=$frame_id QUERYID=$query_id\n";
       $logger->record_debug_information("FRAME_QUERY", $line, "NO_SOURCE");
