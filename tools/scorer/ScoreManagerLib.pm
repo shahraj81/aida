@@ -5467,15 +5467,22 @@ sub load_graph {
            LINE
            WHERE);
       $assessment_entry->set("SUBJECT_FQEC_READ", $assessment_entry->get("SUBJECT_FQEC"));
+      $assessment_entry->set("OBJECT_FQEC_READ", $assessment_entry->get("OBJECT_FQEC"));
       if($assessment_entry->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT" &&
-          $assessment_entry->get("OBJECT_LINKABILITY") eq "YES" &&
-          $assessment_entry->get("SUBJECT_FQEC") eq "NIL") {
-        my $generated_fqec = "NILG$next_generated_fqec_num";
-        $assessment_entry->set("SUBJECT_FQEC", $generated_fqec);
-        $next_generated_fqec_num++;
+          $assessment_entry->get("OBJECT_LINKABILITY") eq "YES") {
+        if($assessment_entry->get("SUBJECT_FQEC") eq "NIL") {
+          my $generated_fqec = "NILG$next_generated_fqec_num";
+          $assessment_entry->set("SUBJECT_FQEC", $generated_fqec);
+          $next_generated_fqec_num++;
+        }
+        if($assessment_entry->get("OBJECT_FQEC") eq "NIL") {
+          my $generated_fqec = "NILG$next_generated_fqec_num";
+          $assessment_entry->set("OBJECT_FQEC", $generated_fqec);
+          $next_generated_fqec_num++;
+        }
       }
       $self->add($assessment_entry, $key) unless $self->exists($key);
-      my $line = join(" ",
+      my $line = "RAW " . join(" ",
                       map {$_ . "=" . $assessment_entry->get($_)}
                         qw(PREDICATE
                            DOCUMENT_ID
@@ -5483,6 +5490,7 @@ sub load_graph {
                            OBJECT_JUSTIFICATION
                            PREDICATE_JUSTIFICATION_CORRECTNESS
                            OBJECT_LINKABILITY
+                           OBJECT_FQEC_READ
                            OBJECT_FQEC
                            SUBJECT_FQEC_READ
                            SUBJECT_FQEC));
@@ -6593,13 +6601,12 @@ sub score_responses_TASK1_STRATEGY1 {
            OBJECT_LINKABILITY
            PREDICATE_JUSTIFICATION
            OBJECT_JUSTIFICATION);
-    $object = join("|", map {"LDC2019E43:".$_} split(/\|/, $object));
     $predicate_justification = join(";", map {"$docid:".$_} split(";", $predicate_justification));
     $object_justification = "$docid:$object_justification";
     my $key = "$predicate:$predicate_justification:$object_justification";
+    my $edge_fqec = "$subject:$predicate:$object";
     $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
     $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
-
     next unless ($correctness eq "CORRECT" && $linkability eq "YES");
     my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate));
     unless (@queries) {
@@ -6609,7 +6616,13 @@ sub score_responses_TASK1_STRATEGY1 {
     $entry->set("QUERIES", @queries);
     foreach my $query(@queries) {
       my $query_id = $query->get("QUERYID");
-      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY}{$query_id}{$key}}, $entry);
+      push(@{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY_AND_EDGEFQEC}{$query_id}{$edge_fqec}}, $entry);
+      my $line = "DETAIL QUERYID=$query_id " .
+                   "EDGE_FQEC=$edge_fqec " .
+                   "SUBJECT=$subject " .
+                   "PREDICATE=$predicate " .
+                   "OBJECT=$object";
+      $logger->record_debug_information("GROUND_TRUTH", $line, $entry->get("WHERE"));
     }
   }
 
@@ -6637,7 +6650,7 @@ sub score_responses_TASK1_STRATEGY1 {
            RANK);
     next unless $docid_mappings->get("COREDOCS")->exists($docid);
     next unless $queries_to_score->exists($query_id);
-    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY}{$query_id};
+    next unless $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY_AND_EDGEFQEC}{$query_id};
     my $max_rank = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
     $response->set("STRATEGY-1A-SUBMITTED", 1) if $rank;
     $response->set("STRATEGY-1A-POOLED", 1) if ($rank && $rank <= $max_rank);
@@ -6718,12 +6731,12 @@ sub score_responses_TASK1_STRATEGY1 {
       }
       my $pre_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}});
       my $post_policy = join(",", sort keys %{$response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}});
-      my $line = "STRATEGY-1A QUERYID=$query_id " .
+      my $line = "QUERYID=$query_id " .
                    "DOCID=$docid " .
                    "PREDICATE_JUSTIFICATION=$predicate_justification " .
                    "OBJECT_JUSTIFICATION=$object_justification " .
                    "PRE_POLICY_ASSESSMENT=$pre_policy " .
-                   "POST_POLICY_ASSESSMENT=$post_policy\n";
+                   "POST_POLICY_ASSESSMENT=$post_policy";
       $logger->record_debug_information("RESPONSE_ASSESSMENT", $line, $response->get("WHERE"));
     }
   }
@@ -6740,7 +6753,7 @@ sub score_responses_TASK1_STRATEGY1 {
     my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"REDUNDANT"} || []};
     my $num_ignored_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"IGNORE"} || []};
     my $num_pooled_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_id}{"POOLED"} || []};
-    my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY}{$query_id}};
+    my $num_ground_truth_1a = keys %{$ground_truth{"STRATEGY-1A"}{ENTRIES_BY_QUERY_AND_EDGEFQEC}{$query_id}};
     my $num_ground_truth_1b = $num_ground_truth_1a ? keys %{$ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}} : 0;
     my $depth = $queries_to_score->get("BY_KEY", $query_id)->get("depth");
     my $num_ground_truth_1a_counted = $num_ground_truth_1a > $depth ? $depth : $num_ground_truth_1a;
