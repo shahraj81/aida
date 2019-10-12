@@ -7196,6 +7196,7 @@ sub score_responses_TASK2_STRATEGY2 {
       if $best_subject_cluster && exists $cluster_value{$best_subject_cluster};
     my $num_queries_in_frame = scalar $self->get("FRAMES")->get("QUERYIDS_FOR_FRAME", $frame_id);
     my $frame_recall = $frame_value/$num_queries_in_frame;
+    $frame_recall = 0 if $frame_value < 2;
 
     my $score = Task2GraphScoreStrategy2->new($logger,
                                   $runid,
