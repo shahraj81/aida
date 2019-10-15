@@ -5312,6 +5312,7 @@ sub new {
   };
   bless($self, $class);
   $self->load();
+  $self->fix();
   $self;
 }
 
@@ -5497,6 +5498,110 @@ sub load_graph {
       $self->get("LOGGER")->record_debug_information("GROUND_TRUTH", $line, $assessment_entry->get("WHERE"));
     }
     $filehandler->cleanup();
+  }
+}
+
+sub fix {
+  my ($self) = @_;
+  my $query_type = $self->get("QUERY_TYPE");
+  $query_type =~ s/_query$//;
+  my $method = $self->can("fix_$query_type");
+  return $method->($self) if $method;
+}
+
+sub fix_graph {
+  my ($self) = @_;
+  my %entries;
+  my %equals;
+  foreach my $entry($self->toarray()) {
+    my ($filename, $linenum) = map {$entry->get("WHERE")->{$_}} qw(FILENAME LINENUM);
+    $entries{$filename}{$linenum} = $entry;
+    my @ecs = sort split(/\|/, $entry->get("OBJECT_FQEC"));
+    foreach my $ec1(@ecs) {
+      foreach my $ec2(@ecs) {
+        $equals{$ec1}{$ec2} = 1 if($ec1 ne $ec2);
+      }
+    }
+  }
+restart:
+  foreach my $k1(keys %equals) {
+    foreach my $k2(keys %{$equals{$k1}}) {
+      foreach my $k3(keys %{$equals{$k1}}) {
+        next if $k2 eq $k3;
+        unless(exists $equals{$k2}{$k3}) {
+          $equals{$k2}{$k3} = 1;
+          goto restart;
+        }
+      }
+    }
+  }
+  
+  my $next_id = 1;
+  my %ids;
+  foreach my $ec1(sort keys %equals) {
+    my $id;
+    if(exists $ids{EC_TO_ID}{$ec1}) {
+      $id = $ids{EC_TO_ID}{$ec1};
+    }
+    foreach my $ec2(sort keys %{$equals{$ec1}}) {
+      $self->get("LOGGER")->NIST_die("Multiple IDs")
+        if ($id &&
+            exists $ids{EC_TO_ID}{$ec2} &&
+            $id != $ids{EC_TO_ID}{$ec2});
+      $id = $ids{EC_TO_ID}{$ec2}
+        if(exists $ids{EC_TO_ID}{$ec2} && !$id);
+      if($id && not exists $ids{EC_TO_ID}{$ec1}) {
+        $ids{EC_TO_ID}{$ec1} = $id;
+      }
+      if($id && not exists $ids{EC_TO_ID}{$ec2}) {
+        $ids{EC_TO_ID}{$ec2} = $id;
+      }
+    }
+    unless($id) {
+      $id = $next_id;
+      $ids{EC_TO_ID}{$ec1} = $id;
+      $next_id++;
+      foreach my $ec2(sort keys %{$equals{$ec1}}) {
+        unless(exists $ids{EC_TO_ID}{$ec2}) {
+          $ids{EC_TO_ID}{$ec2} = $id;
+        }
+      }
+    }
+  }
+
+  foreach my $ec(keys %{$ids{EC_TO_ID}}) {
+    my $id = $ids{EC_TO_ID}{$ec};
+    $ids{ID_TO_ECS}{$id}{$ec} = 1;
+  }
+
+  foreach my $entry($self->toarray()) {
+    my $id;
+    foreach my $ec(sort split(/\|/, $entry->get("OBJECT_FQEC"))) {
+      $id = $ids{EC_TO_ID}{$ec} unless $id;
+      # sanity check
+      $self->get("LOGGER")->NIST_die("Multiple IDs")
+        if ($id &&
+            exists $ids{EC_TO_ID}{$ec} &&
+            $id != $ids{EC_TO_ID}{$ec});
+    }
+    if($id) {
+      # apply correction only if $id is defined
+      my $new_fqec = join("|", sort keys %{$ids{ID_TO_ECS}{$id}});
+      $entry->set("OBJECT_FQEC", $new_fqec);
+      my $line = "CORRECTED " . join(" ",
+                      map {$_ . "=" . $entry->get($_)}
+                        qw(PREDICATE
+                           DOCUMENT_ID
+                           PREDICATE_JUSTIFICATION
+                           OBJECT_JUSTIFICATION
+                           PREDICATE_JUSTIFICATION_CORRECTNESS
+                           OBJECT_LINKABILITY
+                           OBJECT_FQEC_READ
+                           OBJECT_FQEC
+                           SUBJECT_FQEC_READ
+                           SUBJECT_FQEC));
+      $self->get("LOGGER")->record_debug_information("GROUND_TRUTH", $line, $entry->get("WHERE"));
+    }
   }
 }
 
