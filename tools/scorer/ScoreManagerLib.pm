@@ -5398,14 +5398,14 @@ sub load_zerohop {
   my $assessments_dir = $self->get("ASSESSMENTS_DIR");
   my $query_type = $self->get("QUERY_TYPE");
   my $query_type_specifice_assessments_dir = $assessments_dir . "/data/zero-hop";
-  my $header_line = join("\t", qw(NODEID CLASS ID MODALITY DOCUMENT_ID MENTION_SPAN ASSESSMENT TYPE));
+  my $header_line = join("\t", qw(REFERENCE_KBID CLASS ID MODALITY DOCUMENT_ID MENTION_SPAN ASSESSMENT TYPE));
   my $header = Header->new($self->get("LOGGER"), $header_line);
   foreach my $filename(<$query_type_specifice_assessments_dir/*/*.tab>) {
     my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
     my $entries = $filehandler->get("ENTRIES");
     foreach my $entry($entries->toarray()) {
       my ($nodeid, $docid, $mention_span, $assessment, $where)
-        = map {$entry->get($_)} qw(NODEID DOCUMENT_ID MENTION_SPAN ASSESSMENT WHERE);
+        = map {$entry->get($_)} qw(REFERENCE_KBID DOCUMENT_ID MENTION_SPAN ASSESSMENT WHERE);
       my $key = "$nodeid:$docid:$mention_span";
       if($self->exists($key)) {
         my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
