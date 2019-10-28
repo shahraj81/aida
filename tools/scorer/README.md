@@ -183,16 +183,13 @@ In order to score task2 graph responses, you may run the following commands:
 
 | Column header | Description   |
 | ------------- | ------------- |
-| GT            | Number of distict KB ID or NIL ID (Column 9 in assessment file) |
-|               | - each correct NIL singleton is counted as distinct |
+| GT            | Number of distict KB ID or NIL ID (Column 9 in assessment file) <br>- each correct NIL singleton is counted as distinct |
 | Sub           | Number of clusters submitted |
 | Pooled        | Number of clusters pooled |
 | Correct       | Number of correct pooled clusters (Pre-policy) |
-| Dup           | Number of correct pooled clusters that had the same KB ID or NIL ID as of another correct pooled cluster (Pre-policy) |
-|               | - each duplicate response was considered Wrong as Post-policy assessment |
+| Dup           | Number of correct pooled clusters that had the same KB ID or NIL ID as of another correct pooled cluster (Pre-policy) <br>- each duplicate response was considered Wrong as Post-policy assessment |
 | Incrct        | Number of pooled clusters that were assessed to be incorrect (Pre-policy) |
-| Cntd          | Number of pooled clusters counted towards scores |
-|               | - Cntd = Right + Wrong |
+| Cntd          | Number of pooled clusters counted towards scores <br>- Cntd = Right + Wrong |
 | Right         | Number of pooled clusters that were assessed correct and were not duplicate (Post-policy) |
 | Wrong         | Number of pooled clusters that were either assessed as incorrect, or were duplicate (Post-policy) |
 | Ignrd         | Number of pooled clusters that were ignored (Post-policy) |
