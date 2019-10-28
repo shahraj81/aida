@@ -187,10 +187,11 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task 
   SKIPPING_INPUT_FILE                     DEBUG_INFO     Skipping over file %s
-  SPAN_OFF_BOUNDARY                       ERROR          Provenance %s is outside the boundary %s of document element %s          
+  SPAN_OFF_BOUNDARY_NOT_CORRECTED         ERROR          Provenance %s is outside the boundary %s of document element %s
+  SPAN_OFF_BOUNDARY_CORRECTED             WARNING        Provenance %s is outside the boundary %s of document element %s; corrected to %s
   START_LARGER_THAN_END                   ERROR          Start (%s) is larger than (%s) in provenance %s
   UNDEFINED_FUNCTION                      FATAL_ERROR    Function %s not defined in package %s
-  UNEXPECTED_CLUSTER_MEMBER_TYPE          ERROR          Unexpected cluster member type (expected %s, provided %s)
+  HETEROGENEOUS_CLUSTER                   ERROR          Cluster %s has at least the following two types: %s, %s
   UNEXPECTED_COLUMN_HEADER                ERROR          Unexpected column # %s (expected %s, provided %s)
   UNEXPECTED_COLUMN_NUM                   ERROR          Unexpected number of columns (expected %s, provided %s)
   UNEXPECTED_DOCUMENT_ID                  ERROR          Unexpected document %s (expected %s)
@@ -1644,8 +1645,20 @@ my %validators = (
         $responses->get("CLUSTER_TYPES")->add($subject_type, $hypothesis_and_subject)
           unless($responses->get("CLUSTER_TYPES")->exists($hypothesis_and_subject));
         my $cluster_type = $responses->get("CLUSTER_TYPES")->get("BY_KEY", $hypothesis_and_subject);
-        $logger->record_problem("UNEXPECTED_CLUSTER_MEMBER_TYPE", $cluster_type, $subject_type, $where)
-          if $subject_type ne $cluster_type;
+        if($subject_type ne $cluster_type) {
+          $logger->record_problem("HETEROGENEOUS_CLUSTER", $subject_cluster_id, $cluster_type, $subject_type, $where);
+          # This cluster has multiple types
+          # Find other entries corresponding to this cluster, report error and set them invalid
+          foreach my $other_response(grep {$_->get("FQ_HYPOTHESIS_ID") eq $hypothesis_id &&
+                                      $_->get("SUBJECT_CLUSTER_ID") eq $subject_cluster_id}
+                               $responses->get("RESPONSES")->toarray()) {
+            my $other_response_where = $other_response->get("WHERE");
+            my $other_response_subject_type = $other_response->get($column_name);
+            $logger->record_problem("HETEROGENEOUS_CLUSTER", $subject_cluster_id, $other_response_subject_type, $subject_type, $other_response_where);
+            $other_response->{VALID} = 0;
+          }
+          return;
+        }
       }
       1;
     },
@@ -1660,8 +1673,8 @@ my %validators = (
       my $optional = 0;
       $optional = 1 if $column->{OPTIONAL};
       my $provenance = $entry->get($column_name);
-      return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       return 1 if $optional && !$provenance;
+      return 1 if($schema->{TASK} eq "task3" && $schema->{QUERY_TYPE} eq "GRAPH" && $provenance eq "NULL");
       unless(split(":", $provenance) == 3) {
         $logger->record_problem("INCORRECT_PROVENANCE_FORMAT", $provenance, $where);
         return;
@@ -1740,8 +1753,25 @@ my %validators = (
       $document_element_boundary = $responses->get("IMAGE_BOUNDARIES")->get("BY_KEY", $document_element_id) if($modality eq "IMAGE");
       $document_element_boundary = $responses->get("KEYFRAME_BOUNDARIES")->get("BY_KEY", $keyframe_id) if($modality eq "VIDEO");
       unless($document_element_boundary->validate($provenance)) {
-        $logger->record_problem("SPAN_OFF_BOUNDARY", $provenance, $document_element_boundary->tostring(), $document_element_id, $where);
-        return;
+        if($modality eq "TEXT") {
+          $logger->record_problem("SPAN_OFF_BOUNDARY_NOT_CORRECTED", $provenance, $document_element_boundary->tostring(), $document_element_id, $where);
+          return;
+        }
+        else {
+          my $corrected_span = "$document_id" . ":" . "$document_element_id" . ":" . $document_element_boundary->tostring();
+          $logger->record_problem("SPAN_OFF_BOUNDARY_CORRECTED", $provenance, $document_element_boundary->tostring(), $document_element_id, $corrected_span, $where);
+          $entry->{$column_name} = $corrected_span;
+          if($column_name eq "EDGE_PROVENANCE_TRIPLES_1") {
+            @{$entry->{EDGE_PROVENANCE_TRIPLES_ARRAY}}[0] = $corrected_span;
+            $entry->{EDGE_PROVENANCE_TRIPLES} = $corrected_span;
+            $entry->{EDGE_PROVENANCE_TRIPLES} = $entry->{EDGE_PROVENANCE_TRIPLES} . ";" . $entry->{EDGE_PROVENANCE_TRIPLES_2}
+              if $entry->{EDGE_PROVENANCE_TRIPLES_2} && $entry->{EDGE_PROVENANCE_TRIPLES_2} ne "NULL";
+          }
+          elsif($column_name eq "EDGE_PROVENANCE_TRIPLES_2") {
+            @{$entry->{EDGE_PROVENANCE_TRIPLES_ARRAY}}[1] = $corrected_span;
+            $entry->{EDGE_PROVENANCE_TRIPLES} = $entry->{EDGE_PROVENANCE_TRIPLES_1} . ";" . $corrected_span;
+          }
+        }
       }
       1;
     },
@@ -1998,7 +2028,7 @@ my %columns = (
     NAME => 'EDGE_PROVENANCE_TRIPLES_1',
     DESCRIPTION => "Original string representation of the edge justification",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,
@@ -2015,7 +2045,7 @@ my %columns = (
     NAME => 'EDGE_PROVENANCE_TRIPLES_2',
     DESCRIPTION => "Original string representation of the edge justification",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,
@@ -2033,7 +2063,7 @@ my %columns = (
     NAME => 'EDGE_PROVENANCE_TRIPLES_ARRAY',
     DESCRIPTION => "Original string representation of the edge justification",
     YEARS => [2019],
-    TASKS => ['task1','task2'],
+    TASKS => ['task1','task2','task3'],
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => $provenance_triples_pattern,

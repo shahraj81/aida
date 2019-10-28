@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-#binmode(STDOUT, ":utf8");
+binmode(STDOUT, ":utf8");
 
 ### DO NOT INCLUDE
 use ExtractTextFromSpanManagerLib;

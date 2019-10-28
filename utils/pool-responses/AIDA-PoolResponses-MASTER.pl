@@ -47,7 +47,7 @@ $switches->addParam("queries_xml", "required", "XML file containing queries");
 $switches->addParam("rundir", "required", "Run directory containing SPARQL output files");
 $switches->addParam("cadir", "required", "Directory containing confidence aggregation output");
 $switches->addParam("input", "required", "File containing runs to be included in the pool");
-$switches->addParam("previous_pool", "required", "Previous pooler output file (or an empty file)");
+$switches->addParam("previous_pools", "required", "Comma-separated list of previous pooler output files (or an empty file)");
 $switches->addParam("output", "required", "Output file");
 
 $switches->process(@ARGV);
@@ -67,8 +67,11 @@ foreach my $path(($switches->get("coredocs"),
           $switches->get("queries_xml"),
           $switches->get("rundir"),
           $switches->get("cadir"),
-          $switches->get("input"),
-          $switches->get("previous_pool"))) {
+          $switches->get("input"))) {
+  $logger->NIST_die("$path does not exist") unless -e $path;
+}
+
+foreach my $path(split(",", $switches->get("previous_pools"))) {
   $logger->NIST_die("$path does not exist") unless -e $path;
 }
 
@@ -97,7 +100,7 @@ map {$runs_to_pool->add("KEY", $_->get("runid"))}
 my $rundir_root = $switches->get("rundir");
 my $cadir_root = $switches->get("cadir");
 my $task_and_type_code = $queries->get("TASK_AND_TYPE_CODE");
-my $previous_pool = Pool->new($logger, $task_and_type_code, $switches->get("previous_pool"));
+my $previous_pool = Pool->new($logger, $task_and_type_code, $switches->get("previous_pools"));
 
 my $pool = ResponsesPool->new(
              $logger, 
