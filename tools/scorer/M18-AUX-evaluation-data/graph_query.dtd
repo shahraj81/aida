@@ -1,0 +1,7 @@
+<!ELEMENT graph_queries (graph_query+)>
+<!ELEMENT graph_query (subject,predicate,object,sparql)>
+<!ELEMENT subject (#PCDATA)>
+<!ELEMENT predicate (#PCDATA)>
+<!ELEMENT object (#PCDATA)>
+<!ELEMENT sparql (#PCDATA)>
+<!ATTLIST graph_query id CDATA #REQUIRED>

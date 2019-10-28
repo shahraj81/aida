@@ -48,6 +48,31 @@ parameters are:
   output                   Output file (Required).
 ~~~
 
+Following are the files needed to run the scorer along with the corresponding parameter and a pointer to where these can be found:
+
+| Parameter     | Filename      | Notes         |
+| ------------- | ------------- | ------------- |
+| coredocs      | M18-AUX-evaluation-data/LDC2019E42.coredocs-18.txt | Used for scoring task1 class responses |
+| coredocs      | M18-AUX-evaluation-data/LDC2019E42.coredocs-26.txt | Used for scoring task1 graph responses |
+| coredocs      | M18-AUX-evaluation-data/LDC2019E42.coredocs-all.txt | Used for scoring task2 responses |
+| docid_mappings | M18-AUX-evaluation-data/LDC2019E42.parent_children.tsv | - |
+| sentence_boundaries | M18-AUX-evaluation-data/LDC2019E42.sentence_boundaries.txt | - | 
+| images_boundingboxes | M18-AUX-evaluation-data/LDC2019E42.image_boundaries.txt | - |
+| keyframes_boundingboxes | M18-AUX-evaluation-data/LDC2019E42.keyframe_boundaries.txt | - |
+| queries       | M18-AUX-evaluation-data/task1_class_queryids.txt | Used for scoring task1 class responses |
+| queries       | M18-AUX-evaluation-data/task1_graph_queryids.txt | Used for scoring task1 graph responses |
+| queries       | M18-AUX-evaluation-data/task2_graph_queryids.txt | Used for scoring task2 graph responses |
+| queries       | M18-AUX-evaluation-data/task2_zerohop_queryids.txt | Used for scoring task2 zerohop responses |
+| queries_dtd   | M18-AUX-evaluation-data/class_query.dtd | Used for scoring task1 class responses |
+| queries_dtd   | M18-AUX-evaluation-data/graph_query.dtd | Used for scoring task1 and task2 graph responses |
+| queries_dtd   | M18-AUX-evaluation-data/zerohop_query.dtd | Used for scoring task2 zerohop responses |
+| queries_xml   | M18-AUX-evaluation-data/task1_class_queries.xml | Used for scoring task1 class responses |
+| queries_xml   | M18-AUX-evaluation-data/task1_graph_queries.xml | Used for scoring task1 graph responses |
+| queries_xml   | M18-AUX-evaluation-data/task2_graph_queries.xml | Used for scoring task2 graph responses |
+| queries_xml   | M18-AUX-evaluation-data/task2_zerohop_queries.xml | Used for scoring task2 zerohop responses |
+| salient_edges | M18-AUX-evaluation-data/salient_edges.txt | Used for scoring task2 graph responses; Edges salient in LDC's previailing theories (derived from LDC2019E77: AIDA Phase 1 Evaluation Topic Annotations - Unsequestered V2.0); Download from LDC |
+| assessments   | LDC2019R30_AIDA_Phase_1_Assessment_Results_V5.0 | Download from LDC |
+
 # How to generate the official scores
 
 #### Scoring task1 class responses
@@ -659,6 +684,10 @@ These log entries show ground truth information as read from assessment package 
 # Example submission files and scores
 
 In order to demonstrate the usage, the scorer comes with example submission files and corresponding scores.
+
+## Scoring examples for M18
+
+To be added.
 
 ## Scoring example ZeroHop responses for M9
 
