@@ -181,7 +181,7 @@ In order to score task2 graph responses, you may run the following commands:
 
 ## Task1 class scores
 
-| Column header | Description   |
+| Column        | Description   |
 | ------------- | ------------- |
 | GT            | Number of distict KB ID or NIL ID (Column 9 in assessment file) <br>- each correct NIL singleton is counted as distinct |
 | Sub           | Number of clusters submitted |
@@ -199,17 +199,15 @@ In order to score task2 graph responses, you may run the following commands:
 
 ## Task2 zerohop scores
 
-| Column header | Description   |
+| Column        | Description   |
 | ------------- | ------------- |
 | GT            | Number of distinct documents containing a mention of the entity in query  |
 | Sub           | Number of distinct documents submitted (response with the highest JUSTIFICATION_CONFIDENCE is selected if multiple responses were provided from the document; if KBs were validated this would be unnecessary; also in case of a tie one response is selected arbitrarily) |
 | Pooled        | Number of responses pooled |
 | Correct       | Number of correct responses (Pre-policy) |
-| Dup           | Number of correct responses that appeared twice for some reason (Pre-policy) |
-|               | - we anticipate this to be zero all the time, under the current scoring paradigm |
+| Dup           | Number of correct responses that appeared twice for some reason (Pre-policy) <br>- we anticipate this to be zero all the time, under the current scoring paradigm |
 | Incrct        | Number of responses assessed to be incorrect (Pre-policy) |
-| Cntd          | Number of responses counted towards scores |
-|               | - Cntd = Right + Wrong |
+| Cntd          | Number of responses counted towards scores <br>- Cntd = Right + Wrong |
 | Right         | Number of pooled responses assessed as correct (Post-policy) |
 | Wrong         | Number of pooled responses assessed as incorrect (Post-policy) |
 | Ignrd         | Number of pooled responses that were ignored (Post-policy) |
@@ -221,7 +219,7 @@ In order to score task2 graph responses, you may run the following commands:
 
 ### Strategy 1
 
-| Column header | Description   |
+| Column | Description   |
 | ------------- | ------------- |
 | GTA           | Number of distinct edge equivalence classes in ground truth (Note: every instance of NIL subject or object equivalence class is considered to be distinct as it represents a singleton class) |
 | GT            | Number of distinct edge equivalence classes in ground truth counted towards score (GT = min(GTA,depth)) |
@@ -231,20 +229,10 @@ In order to score task2 graph responses, you may run the following commands:
 | PJLnkabl2O    | Number of responses where the predicate justification is correct AND the object in predicate justification is linkable to the object justification (Pre-policy) |
 | Dup           | Number of responses where the predicate justification is correct AND the object in predicate justification is linkable to the object justification  AND the object is linkable to query entity, but credit was already given for the real world edge in another pooled response; these will be ignored for the purpose of computing precision (system failed to cluster multiple mentions of the same real-world subject and object) |
 | Incrct        | Number of responses where the predicate justifiation is incorrect (Pre-policy) |
-| Cntd          | Number of responses counted towards scores |
-|               | - Cntd = Right + Wrong |
-| Right         | Number of pooled responses counted as correct (Post-policy) |
-|               | - These included responses that met all of the following properties: |
-|               |     - predicate justification is judged to be correct by assessors, |
-|               |     - the mention of object in predicate justification was linkable to the object justification, and |
-|               |     - credit for correct edge equivalence class was not already given earlier (i.e. not duplicate) |
-| Wrong         | Number of pooled responses counted as incorrect (Post-policy) |
-|               | - These included responses that failed to meet all of the following properties: |
-|               |     - predicate justification is judged to be correct by assessors, and |
-|               |     - the mention of object in predicate justification was linkable to the object justification |
-| Ignrd         | Number of pooled responses that were ignored (Post-policy) |
-|               | - Ignrd = Dup |
-|               | - Ignrd = Pooled - Cntd |
+| Cntd          | Number of responses counted towards scores <br>- Cntd = Right + Wrong |
+| Right         | Number of pooled responses counted as correct (Post-policy) <br>- These included responses that met all of the following properties:<br>    - predicate justification is judged to be correct by assessors,<br>    - the mention of object in predicate justification was linkable to the object justification, and<br>    - credit for correct edge equivalence class was not already given earlier (i.e. not duplicate) |
+| Wrong         | Number of pooled responses counted as incorrect (Post-policy) <br>- These included responses that failed to meet all of the following properties:<br>    - predicate justification is judged to be correct by assessors, and<br>    - the mention of object in predicate justification was linkable to the object justification |
+| Ignrd         | Number of pooled responses that were ignored (Post-policy) <br>- Ignrd = Dup<br>- Ignrd = Pooled - Cntd |
 | Prec          | Precision of responses that were Right (Prec = Right/Cntd)|
 | Recall        | Recall of responses that were Right (Recall = Right/GT) |
 | F1            | F1 of Prec and Recall |
@@ -266,45 +254,24 @@ In order to score task2 graph responses, you may run the following commands:
 | OLnkabl2QE    | Number of responses where the predicate justification is correct AND the object in predicate justification is linkable to the object justification  AND the object is linkable to query entity |
 | Dup           | Number of responses where the predicate justification is correct AND the object in predicate justification is linkable to the object justification  AND the object is linkable to query entity, but credit was already given for the real world subject entity in another pooled response; these will be ignored for the purpose of computing precision (system failed to cluster multiple mentions of the same real-world subject) |
 | Incrct        | Number of responses where the predicate justifiation is incorrect (Pre-policy) |
-| Cntd          | Number of responses counted towards scores |
-|               | - Cntd = Right + Wrong |
-| Right         | Number of pooled responses counted as correct (Post-policy) |
-|               | - These included responses that met all of the following properties: |
-|               |     - predicate justification is judged to be correct by assessors, |
-|               |     - the mention of object in predicate justification was linkable to the object justification, |
-|               |     - the object was linkable to query entity, and |
-|               |     - credit for correct edge equivalence class was not already given earlier (i.e. not duplicate) |
-| Wrong         | Number of pooled responses counted as incorrect (Post-policy) |
-|               | - These included responses that failed to meet all of the following properties: |
-|               |     - predicate justification is judged to be correct by assessors, |
-|               |     - the mention of object in predicate justification was linkable to the object justification, and |
-|               |     - the object was linkable to query entity |
-| Ignrd         | Number of pooled responses that were ignored (Post-policy) |
-|               | - Ignrd = Dup |
-|               | - Ignrd = Pooled - Cntd |
-| Salient       | Number of Right responses (edges) that are salient to LDC's prevailing theories |
-|               | - the edge (subject equivalence class, predicate, object equivalence class) is in one of the prevailing theories (and object is linkable to the query entity) |
+| Cntd          | Number of responses counted towards scores<br>- Cntd = Right + Wrong |
+| Right         | Number of pooled responses counted as correct (Post-policy)<br>- These included responses that met all of the following properties:<br>    - predicate justification is judged to be correct by assessors,<br>    - the mention of object in predicate justification was linkable to the object justification,<br>    - the object was linkable to query entity, and<br>    - credit for correct edge equivalence class was not already given earlier (i.e. not duplicate) |
+| Wrong         | Number of pooled responses counted as incorrect (Post-policy)<br>- These included responses that failed to meet all of the following properties:<br>    - predicate justification is judged to be correct by assessors,<br>    - the mention of object in predicate justification was linkable to the object justification, and<br>    - the object was linkable to query entity |
+| Ignrd         | Number of pooled responses that were ignored (Post-policy)<br>- Ignrd = Dup<br>- Ignrd = Pooled - Cntd |
+| Salient       | Number of Right responses (edges) that are salient to LDC's prevailing theories<br>- the edge (subject equivalence class, predicate, object equivalence class) is in one of the prevailing theories (and object is linkable to the query entity) |
 | Prec(1a)      | Precision of responses that were Right (Prec(1a) = Right/Cntd) |
 | Recall(1a)    | Recall of responses that were Right (Recall(1a) = Right/GT(1a)) |
 | F1(1a)        | F1 of Prec(1a) and Recall(1a) |
 | Recall(1b)    | Recall of salient edges (Recall(1b)=Salient/GT(1b)) |
 
-### Strategy 1
+### Strategy 2
 
 | Column header | Description   |
 | ------------- | ------------- |
-| FrameID       | Frame ID |
-|               | - event (or relation) KE in a particular prevailing theory |
-|               | - granularity of the event or relation |
-|               |     - FG = Fine grained (type.subtype.subsubtype) |
-|               |     - CG = Coarse grained (type.subtype) |
+| FrameID       | Frame ID<br>- event (or relation) KE in a particular prevailing theory<br>- granularity of the event or relation<br>    - FG = Fine grained (type.subtype.subsubtype)<br>    - CG = Coarse grained (type.subtype) |
 | RunID         | Run ID |
 | NumQueries    | Number of edges in the frame (where each argument is linkable to the reference KB); each edge in the frame is associated with exactly one TA2 edge query |
-| FrameValue    | the maximum number of unique edges in the submitted event/relation KEs that are Right AND that have the same global KB ID for the subject |
-|               | - an edge is Right if |
-|               |     - predicate justification is judged to be correct by assessors, |
-|               |     - the mention of object in predicate justification was linkable to the object justification, and |
-|               |     - the object was linkable to query entity |
+| FrameValue    | the maximum number of unique edges in the submitted event/relation KEs that are Right AND that have the same global KB ID for the subject<br>- an edge is Right if<br>    - predicate justification is judged to be correct by assessors, <br>    - the mention of object in predicate justification was linkable to the object justification, and<br>    - the object was linkable to query entity |
 | FrameRecall   | FrameValue/NumQueries (except if FrameValue is 0, then FrameRecall is 0) |
 
 # Understanding the debug/log file
