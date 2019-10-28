@@ -508,6 +508,7 @@ These entries contain the following eight values in different columns:
     - Column # 8: Post-policy assessment information and response categorization
 
 Pre-policy assessment information and response categorization:
+
     - SUBMITTED
     - POOLED
     - NOTPOOLED
@@ -518,6 +519,7 @@ Pre-policy assessment information and response categorization:
     - REDUNDANT
 
 Post-policy assessment information and response categorization:
+
     - RIGHT
     - WRONG
     - IGNORE
@@ -595,6 +597,7 @@ Each entry contains 10 values in the following columns:
     - Column # 10: Post-policy assessment information and response categorization
 
 Pre-policy assessment information and response categorization:
+
     - SUBMITTED
     - POOLED
     - NOTPOOLED
@@ -604,6 +607,7 @@ Pre-policy assessment information and response categorization:
     - OBJECT_LINKABLE_TO_QUERY_ENTITY
 
 Post-policy assessment information and response categorization:
+
     - RIGHT
     - WRONG
     - NOT-CONSIDERED
