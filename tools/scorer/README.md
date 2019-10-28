@@ -241,7 +241,7 @@ In order to score task2 graph responses, you may run the following commands:
 
 ### Strategy 1
 
-| Column header | Description   |
+| Column        | Description   |
 | ------------- | ------------- |
 | GTA(1a)       | Number of distinct equivalence classes of the subject in ground truth (Note: every instance of NIL subject equivalence class is considered to be distinct as it represents a singleton class) |
 | GT(1a)        | Number of distinct equivalence classes in ground truth counted towards score (GT(1a) = min(GTA(1a),depth)) |
@@ -266,7 +266,7 @@ In order to score task2 graph responses, you may run the following commands:
 
 ### Strategy 2
 
-| Column header | Description   |
+| Column        | Description   |
 | ------------- | ------------- |
 | FrameID       | Frame ID<br>- event (or relation) KE in a particular prevailing theory<br>- granularity of the event or relation<br>&nbsp;&nbsp;&nbsp;&nbsp;- FG = Fine grained (type.subtype.subsubtype)<br>&nbsp;&nbsp;&nbsp;&nbsp;- CG = Coarse grained (type.subtype) |
 | RunID         | Run ID |
