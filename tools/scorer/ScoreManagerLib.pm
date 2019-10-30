@@ -2588,7 +2588,8 @@ sub load_aggregated_confidences_TA1_GR {
     my $rank = pop @elements;
     my $ag_cv = pop @elements;
     my $uuid = main::generate_uuid_from_string(join("\t", @elements));
-    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE"))
+    my $where_string = $entry->get("WHERE")->{FILENAME} . ":" . $entry->get("WHERE")->{LINENUM};
+    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE") . "\n at ($where_string)\n")
       unless($self->get("CATEGORIZED_RESPONSES")->exists($uuid));
     my $response = $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $uuid);
     $response->set("RANK", $rank);
@@ -2610,7 +2611,8 @@ sub load_aggregated_confidences_TA2_GR {
     my $rank = pop @elements;
     my $ag_cv = pop @elements;
     my $uuid = main::generate_uuid_from_string(join("\t", @elements));
-    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE"))
+    my $where_string = $entry->get("WHERE")->{FILENAME} . ":" . $entry->get("WHERE")->{LINENUM};
+    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE") . "\n at ($where_string)\n")
       unless($self->get("CATEGORIZED_RESPONSES")->exists($uuid));
     my $response = $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $uuid);
     $response->set("RANK", $rank);
@@ -6978,7 +6980,8 @@ sub score_responses_TASK2_STRATEGY1 {
             push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
             $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
             my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
-            if($query_objects{"LDC2019E43:".$assessment->get("OBJECT_FQEC")}) {
+            my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $assessment->get("OBJECT_FQEC"));
+            if(grep {defined $_} map {$query_objects{$_}} keys %assessment_objects) {
               # response is either RIGHT or REDUNDANT because it met all the conditions given below:
               #  (1) correct predicate justification,
               #  (2) predicate justification is linkable to object justification, and
