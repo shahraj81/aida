@@ -141,5 +141,5 @@ unless($switches->get('error_file') eq "STDERR") {
   print STDERR "No warnings encountered.\n" unless ($num_errors || $num_warnings);
 }
 
-print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
+print $error_output ($num_errors || 'No'), " error", ($num_errors == 1 ? '' : 's'), " encountered.\n";
 exit 0;
