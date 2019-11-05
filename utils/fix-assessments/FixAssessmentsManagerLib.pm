@@ -193,7 +193,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   NONNUMERIC_START                        WARNING        Start %s is not numeric
   PARENT_CHILD_RELATION_FAILURE           ERROR          %s is not a child of %s
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
-  RELATION_EC                            DEBUG_INFO     KEY=%s VALUE=%s 
+  RELATION_EC                             DEBUG_INFO     RELATION_EC KEY=%s VALUE=%s 
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task
   SALIENT_READ                            DEBUG_INFO     SALIENT_READ: %s

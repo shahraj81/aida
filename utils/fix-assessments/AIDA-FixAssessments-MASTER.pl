@@ -12,7 +12,8 @@ use FixAssessmentsManagerLib;
 ##################################################################################### 
 # This program applies the following fixes to annotations of graph assessment items:
 #
-# (1) Go through annotation tab files and collect KBID from linking tab files for
+# (1a) Load global equals
+# (1b) Go through annotation tab files and collect KBID from linking tab files for
 # each entity span via entity mention span. 
 #    - then collapse it with assessment package by adding pipe to object ECs
 # (2) For each kit in assessment package merge ECs into expanded set
@@ -56,12 +57,12 @@ sub undo_normalize {
 }
 
 sub relation_entry_to_ec {
-  my ($entry) = @_;
+  my ($entry, $arg1_assessment_entry, $arg2_assessment_entry) = @_;
   my $relation_type = $entry->get("RELATION_TYPE");
   my $arg1_label = $entry->get("ARG1_LABEL");
   my $arg2_label = $entry->get("ARG2_LABEL");
-  my $arg1_ec = $entry->get("ARG1_EC");
-  my $arg2_ec = $entry->get("ARG2_EC");
+  my $arg1_ec = $arg1_assessment_entry->get("OBJECT_FQEC");
+  my $arg2_ec = $arg2_assessment_entry->get("OBJECT_FQEC");
   my $key;
   if($arg1_label eq $arg2_label) {
     $key = $arg1_ec . "=" . $arg1_label . "_" . $relation_type . "_" . $arg2_label . "=" . $arg2_ec;
@@ -83,6 +84,22 @@ sub relation_entry_to_ec {
   $ec;
 }
 
+sub get_global_equals_string {
+  my ($global_equals, $input_ec_set) = @_;
+  my %ecs;
+  foreach my $ec(split(/\|/, $input_ec_set)) {
+    $ecs{$ec} = 1;
+    if($global_equals->{$ec}) {
+      foreach my $set(keys %{$global_equals->{$ec}}) {
+        foreach my $member(split(/\|/, $set)) {
+          $ecs{$member} = 1;
+        }
+      }
+    }
+  }
+  join("|", sort keys %ecs);
+}
+
 sub entry_to_key {
   my ($entry, $fields) = @_;
   join("::", map {$entry->get($_)} @$fields);
@@ -101,6 +118,7 @@ $switches->addVarSwitch('error_file', "Specify a file to which error output shou
 $switches->put('error_file', "STDERR");
 $switches->addConstantSwitch('allow_existing_outputdir', 'true', "Output directory may exist and will not be overwritten");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
+$switches->addParam("ambiguous", "required", "tab version of duplicate_aug_entries_mapping.xlsx");
 $switches->addParam("annotations", "required", "Directory containing annotation tab files");
 $switches->addParam("input", "required", "Assessment package as receieved from LDC");
 $switches->addParam("output", "required", "Output directory");
@@ -112,11 +130,13 @@ my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
 $error_output = $logger->get_error_output();
 
-foreach my $path(($switches->get("annotations"),
+foreach my $path(($switches->get("ambiguous"),
+                  $switches->get("annotations"),
                   $switches->get("input"))) {
   $logger->NIST_die("$path does not exist") unless -e $path;
 }
 
+my $global_equals_filename = $switches->get("ambiguous");
 my $allow_existing_outputdir = $switches->get("allow_existing_outputdir");
 my $input_assessments_dir = $switches->get("input");
 my $output_assessments_dir = $switches->get("output");
@@ -125,9 +145,22 @@ $logger->NIST_die("$output_assessments_dir already exists") if(!$allow_existing_
 # copy input assessment package to output
 system("cp -r $input_assessments_dir $output_assessments_dir") unless -e $output_assessments_dir;
 
-# (1) Go through annotation tab files and collect KBID from linking tab files for
+# (1a) Load global equals
+my $global_equals;
+open(FILE, $global_equals_filename);
+while(my $line = <FILE>) {
+  chomp $line;
+  my @ecs = sort keys {map {$_=>1} split(/\|/, $line)};
+  foreach my $ec(@ecs) {
+    $global_equals->{$ec}{$line} = 1;
+  }
+}
+close(FILE);
+
+# (1b) Go through annotation tab files and collect KBID from linking tab files for
 # each entity span via entity mention span. 
 #    - then collapse it with assessment package by adding pipe to object ECs
+
 my %mentions;
 my $annotations_dir = $switches->get("annotations");
 foreach my $topic(<$annotations_dir/data/*>) {
@@ -175,6 +208,13 @@ foreach my $topic(<$annotations_dir/data/*>) {
     my $kb_id = $entry->get("kb_id");
     my $mention_id = $entry->get("mention_id");
     $mentions{MENTIONID_TO_KBID}{$mention_id} = $kb_id;
+    # if kb_id is a list, add update global equals
+    if($kb_id =~ /\|/) {
+      my @ecs = sort keys {map {$_=>1} split(/\|/, $kb_id)};
+      foreach my $ec(@ecs) {
+        $global_equals->{$ec}{$kb_id} = 1;
+      }
+    }
   }
 }
 
@@ -192,6 +232,7 @@ foreach my $entry($input_assessments->toarray()) {
     if $mentions{SPAN_TO_MENTIONID}{$object_justification};
   my $ecs_string = $entry->get("OBJECT_FQEC");
   $ecs_string = $ecs_string . "|" . $ecs_from_annotation if $ecs_from_annotation;
+  $ecs_string = get_global_equals_string($global_equals, $ecs_string);
   my @ecs = sort keys {map {$_=>1} split(/\|/, $ecs_string)};
   # If there is a generated ID as well as a manually assigned ID then prefer the manual one
   @ecs = grep {$_ !~ /^NILG\d+$/} @ecs
@@ -314,7 +355,6 @@ foreach my $entry(FileHandler->new($logger, $relation_pool_filename, $header)->g
   next if($assessment eq "no");
   my $arg1_key = entry_to_key($entry, $arg_key_fields->{"ARG1"});
   my $arg2_key = entry_to_key($entry, $arg_key_fields->{"ARG2"});
-  my $ec = relation_entry_to_ec($entry);
   my $arg1_assessment_entry = $store->{ENTRY_BY_KEY}{$arg1_key};
   my $arg1_assessment_entry_where = join(":", map {$arg1_assessment_entry->get("WHERE")->{$_}} qw(FILENAME LINENUM));
   my $arg2_assessment_entry = $store->{ENTRY_BY_KEY}{$arg2_key};
@@ -323,6 +363,7 @@ foreach my $entry(FileHandler->new($logger, $relation_pool_filename, $header)->g
     unless ($arg1_assessment_entry->get("SUBJECT_FQEC") eq "" || $arg1_assessment_entry->get("SUBJECT_FQEC") =~ /^NILR\d+$/);
   die "arg2 subject ec is not blank:\n" . $arg2_assessment_entry_where
     unless ($arg2_assessment_entry->get("SUBJECT_FQEC") eq "" || $arg2_assessment_entry->get("SUBJECT_FQEC") =~ /^NILR\d+$/);
+  my $ec = relation_entry_to_ec($entry, $arg1_assessment_entry, $arg2_assessment_entry);
   $arg1_assessment_entry->set("SUBJECT_FQEC", $ec);
   $arg2_assessment_entry->set("SUBJECT_FQEC", $ec);
 }
