@@ -100,6 +100,17 @@ sub get_global_equals_string {
   join("|", sort keys %ecs);
 }
 
+sub get_ecs_from_object_jusification {
+  my ($mentions, $object_justification) = @_;
+  my %ecs;
+  foreach my $mention_id(keys %{$mentions->{SPAN_TO_MENTIONIDS}{$object_justification}}) {
+    foreach my $kb_id(keys %{$mentions->{MENTIONID_TO_KBIDS}{$mention_id}}) {
+      $ecs{$kb_id} = 1;
+    }
+  }
+  join("|", sort keys %ecs);
+}
+
 sub entry_to_key {
   my ($entry, $fields) = @_;
   join("::", map {$entry->get($_)} @$fields);
@@ -161,7 +172,7 @@ close(FILE);
 # each entity span via entity mention span. 
 #    - then collapse it with assessment package by adding pipe to object ECs
 
-my %mentions;
+my $mentions;
 my $annotations_dir = $switches->get("annotations");
 foreach my $topic(<$annotations_dir/data/*>) {
   my (undef, $topic_id) = $topic =~ /(.*?\/)+(.*?)$/;
@@ -184,8 +195,8 @@ foreach my $topic(<$annotations_dir/data/*>) {
               "(" . $textoffset_startchar . "," . "0" . ")" .
               "-" .
               "(" . $textoffset_endchar . "," . "0" . ")";
-      $mentions{MENTIONID_TO_SPAN}{$mention_id} = $span;
-      $mentions{SPAN_TO_MENTIONID}{$span} = $mention_id;
+      $mentions->{MENTIONID_TO_SPANS}{$mention_id}{$span} = 1;
+      $mentions->{SPAN_TO_MENTIONIDS}{$span}{$mention_id} = 1;
     }
     else {
       $document_element_id = $keyframe_id if $keyframe_id ne "EMPTY_NA";
@@ -198,8 +209,8 @@ foreach my $topic(<$annotations_dir/data/*>) {
               "(" . $sx . "," . $sy . ")" .
               "-" .
               "(" . $ex . "," . $ey . ")";
-        $mentions{MENTIONID_TO_SPAN}{$mention_id} = $span;
-        $mentions{SPAN_TO_MENTIONID}{$span} = $mention_id;
+        $mentions->{MENTIONID_TO_SPANS}{$mention_id}{$span} = 1;
+        $mentions->{SPAN_TO_MENTIONIDS}{$span}{$mention_id} = 1;
       }
     }
   }
@@ -207,7 +218,7 @@ foreach my $topic(<$annotations_dir/data/*>) {
   foreach my $entry(FileHandler->new($logger, $kb_linking_filename)->get("ENTRIES")->toarray()) {
     my $kb_id = $entry->get("kb_id");
     my $mention_id = $entry->get("mention_id");
-    $mentions{MENTIONID_TO_KBID}{$mention_id} = $kb_id;
+    $mentions->{MENTIONID_TO_KBIDS}{$mention_id}{$kb_id} = 1;
     # if kb_id is a list, add update global equals
     if($kb_id =~ /\|/) {
       my @ecs = sort keys {map {$_=>1} split(/\|/, $kb_id)};
@@ -228,8 +239,7 @@ foreach my $entry($input_assessments->toarray()) {
   my $document_id = $entry->get("DOCUMENT_ID");
   my $object_justification = $entry->get("OBJECT_JUSTIFICATION");
   $object_justification = $document_id . ":" . $object_justification;
-  my $ecs_from_annotation = $mentions{MENTIONID_TO_KBID}{$mentions{SPAN_TO_MENTIONID}{$object_justification}}
-    if $mentions{SPAN_TO_MENTIONID}{$object_justification};
+  my $ecs_from_annotation = get_ecs_from_object_jusification($mentions, $object_justification);
   my $ecs_string = $entry->get("OBJECT_FQEC");
   $ecs_string = $ecs_string . "|" . $ecs_from_annotation if $ecs_from_annotation;
   $ecs_string = get_global_equals_string($global_equals, $ecs_string);
