@@ -5314,7 +5314,10 @@ sub new {
   };
   bless($self, $class);
   $self->load();
-  $self->fix();
+  # Don't expand ECs in assessments since the assessments have been fixed in
+  # the new assessments package
+  #
+  # $self->fix();
   $self;
 }
 
@@ -6890,10 +6893,11 @@ sub score_responses_TASK2_STRATEGY1 {
   # edges were correct? 
   my %ground_truth;
   foreach my $entry($assessments->toarray()) {
-    my ($subject, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
+    my ($subject, $subject_read, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
           $object_justification) =
       map {$entry->get($_)}
         qw(SUBJECT_FQEC
+           SUBJECT_FQEC_READ
            PREDICATE
            OBJECT_FQEC
            DOCUMENT_ID
@@ -6907,8 +6911,9 @@ sub score_responses_TASK2_STRATEGY1 {
     my $key = "$predicate:$predicate_justification:$object_justification";
     $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
     $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
-
     next unless ($correctness eq "CORRECT" && $linkability eq "YES");
+    # Don't include those relation subjects in ground truth that had no subject equivalence class assigned by LDC
+    next if $subject_read eq "";
     my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
     unless (@queries) {
       $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
@@ -6977,37 +6982,49 @@ sub score_responses_TASK2_STRATEGY1 {
           push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{CORRECT}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
           if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
-            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
-            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
-            my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
-            my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $assessment->get("OBJECT_FQEC"));
-            if(grep {defined $_} map {$query_objects{$_}} keys %assessment_objects) {
-              # response is either RIGHT or REDUNDANT because it met all the conditions given below:
-              #  (1) correct predicate justification,
-              #  (2) predicate justification is linkable to object justification, and
-              #  (3) object justification is linkable to the query entity
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{OBJECT_LINKABLE_TO_QUERY_ENTITY}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1;
-              my $subject = $assessment->get("SUBJECT_FQEC");
-              if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
-              }
-              else{
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
-                $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
-                if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
-                  $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
-                  push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+            unless($assessment->get("SUBJECT_FQEC_READ") eq "") {
+              # predicate justification is correct and linkable to object, as well as it is not a relation
+              # where the subject EC is blank (i.e. not grouped into EC by LDC)
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
+              my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
+              my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $assessment->get("OBJECT_FQEC"));
+              if(grep {defined $_} map {$query_objects{$_}} keys %assessment_objects) {
+                # response is either RIGHT or REDUNDANT because it met all the conditions given below:
+                #  (1) correct predicate justification,
+                #  (2) predicate justification is linkable to object justification, and
+                #  (3) object justification is linkable to the query entity
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{OBJECT_LINKABLE_TO_QUERY_ENTITY}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1;
+                my $subject = $assessment->get("SUBJECT_FQEC");
+                if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
+                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
+                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
+                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
+                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+                }
+                else{
+                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
+                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
+                  $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
+                  if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
+                    $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                    push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+                  }
                 }
               }
+              else{
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
+              }
             }
-            else{
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
+            else {
+              # predicate justification is correct and linkable to object, but it is a relation
+              # where the subject EC is blank (i.e. not grouped into EC by LDC)
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RELATION_WITHOUT_EC}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{RELATION_WITHOUT_EC} = 1;
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
             }
           }
           else {
