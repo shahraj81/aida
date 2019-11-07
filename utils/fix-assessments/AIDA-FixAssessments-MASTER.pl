@@ -127,6 +127,7 @@ $switches->addHelpSwitch("help", "Show help");
 $switches->addHelpSwitch("h", undef);
 $switches->addVarSwitch('error_file', "Specify a file to which error output should be redirected");
 $switches->put('error_file', "STDERR");
+$switches->addConstantSwitch('no_over_expansion', 'true', "Don't expand with annotations");
 $switches->addConstantSwitch('allow_existing_outputdir', 'true', "Output directory may exist and will not be overwritten");
 $switches->addImmediateSwitch('version', sub { print "$0 version $version\n"; exit 0; }, "Print version number and exit");
 $switches->addParam("ambiguous", "required", "tab version of duplicate_aug_entries_mapping.xlsx");
@@ -147,8 +148,9 @@ foreach my $path(($switches->get("ambiguous"),
   $logger->NIST_die("$path does not exist") unless -e $path;
 }
 
-my $global_equals_filename = $switches->get("ambiguous");
+my $no_over_expansion = $switches->get("no_over_expansion");
 my $allow_existing_outputdir = $switches->get("allow_existing_outputdir");
+my $global_equals_filename = $switches->get("ambiguous");
 my $input_assessments_dir = $switches->get("input");
 my $output_assessments_dir = $switches->get("output");
 $logger->NIST_die("$output_assessments_dir already exists") if(!$allow_existing_outputdir && -e $output_assessments_dir);
@@ -242,7 +244,9 @@ foreach my $entry($input_assessments->toarray()) {
   my $document_id = $entry->get("DOCUMENT_ID");
   my $object_justification = $entry->get("OBJECT_JUSTIFICATION");
   $object_justification = $document_id . ":" . $object_justification;
-  my $ecs_from_annotation = get_ecs_from_object_jusification($mentions, $object_justification);
+  my $ecs_from_annotation;
+  $ecs_from_annotation = get_ecs_from_object_jusification($mentions, $object_justification)
+    unless $no_over_expansion;
   my $ecs_string = $entry->get("OBJECT_FQEC");
   $ecs_string = $ecs_string . "|" . $ecs_from_annotation if $ecs_from_annotation;
   $ecs_string = get_global_equals_string($global_equals, $ecs_string);
