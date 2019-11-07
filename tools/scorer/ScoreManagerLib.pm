@@ -174,6 +174,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
   INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s
   INVALID_START                           WARNING        Invalid start %s in %s
+  INVOKED                                 DEBUG_INFO     Scorer was invoked with arguments: %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_DECIMAL_POINT                   WARNING        Decimal point missing in confidence value: %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s

@@ -58,6 +58,7 @@ $switches->addParam("output", "required", "Output file");
 $switches->process(@ARGV);
 
 my $logger = Logger->new();
+$logger->record_debug_information("INVOKED", join(" ", @ARGV), "NO_SOURCE");
 my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
 $error_output = $logger->get_error_output();
