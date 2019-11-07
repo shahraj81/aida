@@ -7174,8 +7174,7 @@ sub score_responses_TASK2_STRATEGY2 {
       my $predicate = $response->get("QUERY")->get("PREDICATE");
       my $key = "$predicate:$predicate_justification:$object_justification";
       my $assessment = $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key};
-      my %query_objects = map {$_=>1}
-                              split(/\|/, $response->get("QUERY")->get("OBJECT"));
+      my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
       if($assessment) {
         $response->set("ASSESSMENT_ENTRY", $assessment);
         my ($subject, $object, $correctness, $linkability)
@@ -7186,8 +7185,9 @@ sub score_responses_TASK2_STRATEGY2 {
                 OBJECT_LINKABILITY);
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{$correctness} = 1;
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1 if $linkability eq "YES";
+        my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $assessment->get("OBJECT_FQEC"));
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1
-          if($query_objects{"LDC2019E43:".$object});
+          if(grep {defined $_} map {$query_objects{$_}} keys %assessment_objects);
       }
       push(@{$responses_by_query{$query_id}}, $response);
     }
