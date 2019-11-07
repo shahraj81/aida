@@ -168,94 +168,69 @@ while(my $line = <FILE>) {
 }
 close(FILE);
 
-# No more desired due to unexpected merged ECs as a result of errors in annotations/assessments.
-#
-# For example the case where the object with span "IC001L3FF:IC001L4NY:(1191,0)-(1195,0)”
-# from annotation is in equivalence class 703448|80000027 but the assessment package
-# includes this in 80000373.
-#
-# AIDA_TA2_GR_2019_0011           Life.Die.DeathCausedByViolentEvents_Place                LDC2019E43:703448|LDC2019E43:80000027      GPE        Kiev,Kyiv (a.k.a. Kiev)
-# AIDA_TA2_GR_2019_0041           Life.Die.DeathCausedByViolentEvents_Place        LDC2019E43:80000373  FAC        Oles Buzyna's home
-#
-#--ASSSESSMENT_LINE = Life.Die.DeathCausedByViolentEvents_Place  202     Life.Die.DeathCausedByViolentEvents_Place       IC001L3FF       NIL     NIL
-#     NIL     IC001L4NY:(1191,0)-(1195,0)     IC001L4NY:(1140,0)-(1151,0);IC001L4NY:(1191,0)-(1195,0) correct yes     80000373        NILV80000261
-#--ECS_FROM_ANNOTAION = 703448|80000027
-#--FILENAME = input/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.0/data/graph/batch2/BATCH2_Life.Die.DeathCausedByViolentEvents_Place_1_1.tab
-#--LINENUM = 147
-#--MENTION_INFO_FROM_ANNOTATION =
-#     MENTION_ID=EMIC001L3FF.000063 KB_ID=703448|80000027
-#     MENTION_ID=EMIC001L3FF.000162 KB_ID=703448|80000027
-#     MENTION_ID=EMIC001L3FF.000321 KB_ID=703448|80000027
-#     MENTION_ID=EMIC001L3FF.000420 KB_ID=703448|80000027
-#     MENTION_ID=EMIC001L3FF.000493 KB_ID=703448|80000027
-#--MERGED_ECS_STRING = 703448|80000027|80000373
-#--OBJECT_FQEC_FROM_ASSESSMENT = 80000373
-#--OBJECT_JUSTIFICATION = IC001L3FF:IC001L4NY:(1191,0)-(1195,0)
+# (1b) Go through annotation tab files and collect KBID from linking tab files for
+# each entity span via entity mention span.
+#    - then collapse it with assessment package by adding pipe to object ECs
 
-
-## (1b) Go through annotation tab files and collect KBID from linking tab files for
-## each entity span via entity mention span.
-##    - then collapse it with assessment package by adding pipe to object ECs
+my $mentions;
+my $annotations_dir = $switches->get("annotations");
+foreach my $topic(<$annotations_dir/data/*>) {
+  my (undef, $topic_id) = $topic =~ /(.*?\/)+(.*?)$/;
+  my $arg_mentions_filename = "$annotations_dir/data/$topic_id/$topic_id\_arg_mentions.tab";
+  foreach my $entry(FileHandler->new($logger, $arg_mentions_filename)->get("ENTRIES")->toarray()) {
+    my $mention_id = $entry->get("argmention_id");
+    my $document_id = $entry->get("root_uid");
+    my $document_element_id = $entry->get("child_uid");
+    my $textoffset_startchar = $entry->get("textoffset_startchar");
+    my $textoffset_endchar = $entry->get("textoffset_endchar");
+    my $keyframe_id = $entry->get("keyframe_id");
+    my $mediamention_coordinates = $entry->get("mediamention_coordinates");
+    next if $document_element_id eq "EMPTY_TBD";
+    my $span;
+    if($textoffset_startchar && $textoffset_endchar && $textoffset_startchar =~ /^\d+$/ && $textoffset_endchar =~ /^\d+$/ ) {
+      $span = $document_id .
+              ":" .
+              $document_element_id .
+              ":" .
+              "(" . $textoffset_startchar . "," . "0" . ")" .
+              "-" .
+              "(" . $textoffset_endchar . "," . "0" . ")";
+      $mentions->{MENTIONID_TO_SPANS}{$mention_id}{$span} = 1;
+      $mentions->{SPAN_TO_MENTIONIDS}{$span}{$mention_id} = 1;
+    }
+    else {
+      $document_element_id = $keyframe_id if $keyframe_id ne "EMPTY_NA";
+      if($mediamention_coordinates =~ /^\d+,\d+,\d+,\d+$/) {
+        my ($sx, $sy, $ex, $ey) = split(",", $mediamention_coordinates);
+        $span = $document_id .
+              ":" .
+              $document_element_id .
+              ":" .
+              "(" . $sx . "," . $sy . ")" .
+              "-" .
+              "(" . $ex . "," . $ey . ")";
+        $mentions->{MENTIONID_TO_SPANS}{$mention_id}{$span} = 1;
+        $mentions->{SPAN_TO_MENTIONIDS}{$span}{$mention_id} = 1;
+      }
+    }
+  }
+  my $kb_linking_filename = "$annotations_dir/data/$topic_id/$topic_id\_kb_linking.tab";
+  foreach my $entry(FileHandler->new($logger, $kb_linking_filename)->get("ENTRIES")->toarray()) {
+    my $kb_id = $entry->get("kb_id");
+    my $mention_id = $entry->get("mention_id");
+    $mentions->{MENTIONID_TO_KBIDS}{$mention_id}{$kb_id} = 1;
+#    The following is not desired, because in the context of the mention KB-IDs
+#    are confusable but its not true globally
 #
-#my $mentions;
-#my $annotations_dir = $switches->get("annotations");
-#foreach my $topic(<$annotations_dir/data/*>) {
-#  my (undef, $topic_id) = $topic =~ /(.*?\/)+(.*?)$/;
-#  my $arg_mentions_filename = "$annotations_dir/data/$topic_id/$topic_id\_arg_mentions.tab";
-#  foreach my $entry(FileHandler->new($logger, $arg_mentions_filename)->get("ENTRIES")->toarray()) {
-#    my $mention_id = $entry->get("argmention_id");
-#    my $document_id = $entry->get("root_uid");
-#    my $document_element_id = $entry->get("child_uid");
-#    my $textoffset_startchar = $entry->get("textoffset_startchar");
-#    my $textoffset_endchar = $entry->get("textoffset_endchar");
-#    my $keyframe_id = $entry->get("keyframe_id");
-#    my $mediamention_coordinates = $entry->get("mediamention_coordinates");
-#    next if $document_element_id eq "EMPTY_TBD";
-#    my $span;
-#    if($textoffset_startchar && $textoffset_endchar && $textoffset_startchar =~ /^\d+$/ && $textoffset_endchar =~ /^\d+$/ ) {
-#      $span = $document_id .
-#              ":" .
-#              $document_element_id .
-#              ":" .
-#              "(" . $textoffset_startchar . "," . "0" . ")" .
-#              "-" .
-#              "(" . $textoffset_endchar . "," . "0" . ")";
-#      $mentions->{MENTIONID_TO_SPANS}{$mention_id}{$span} = 1;
-#      $mentions->{SPAN_TO_MENTIONIDS}{$span}{$mention_id} = 1;
-#    }
-#    else {
-#      $document_element_id = $keyframe_id if $keyframe_id ne "EMPTY_NA";
-#      if($mediamention_coordinates =~ /^\d+,\d+,\d+,\d+$/) {
-#        my ($sx, $sy, $ex, $ey) = split(",", $mediamention_coordinates);
-#        $span = $document_id .
-#              ":" .
-#              $document_element_id .
-#              ":" .
-#              "(" . $sx . "," . $sy . ")" .
-#              "-" .
-#              "(" . $ex . "," . $ey . ")";
-#        $mentions->{MENTIONID_TO_SPANS}{$mention_id}{$span} = 1;
-#        $mentions->{SPAN_TO_MENTIONIDS}{$span}{$mention_id} = 1;
+#    # if kb_id is a list, add update global equals
+#    if($kb_id =~ /\|/) {
+#      my @ecs = sort keys {map {$_=>1} split(/\|/, $kb_id)};
+#      foreach my $ec(@ecs) {
+#        $global_equals->{$ec}{$kb_id} = 1;
 #      }
 #    }
-#  }
-#  my $kb_linking_filename = "$annotations_dir/data/$topic_id/$topic_id\_kb_linking.tab";
-#  foreach my $entry(FileHandler->new($logger, $kb_linking_filename)->get("ENTRIES")->toarray()) {
-#    my $kb_id = $entry->get("kb_id");
-#    my $mention_id = $entry->get("mention_id");
-#    $mentions->{MENTIONID_TO_KBIDS}{$mention_id}{$kb_id} = 1;
-##    The following is not desired, because in the context of the mention KB-IDs
-##    are confusable but its not true globally
-##
-##    # if kb_id is a list, add update global equals
-##    if($kb_id =~ /\|/) {
-##      my @ecs = sort keys {map {$_=>1} split(/\|/, $kb_id)};
-##      foreach my $ec(@ecs) {
-##        $global_equals->{$ec}{$kb_id} = 1;
-##      }
-##    }
-#  }
-#}
+  }
+}
 
 # (2) For each kit in assessment package merge ECs
 my $input_assessments = Assessments->new($logger, $input_assessments_dir, "graph");
@@ -267,9 +242,9 @@ foreach my $entry($input_assessments->toarray()) {
   my $document_id = $entry->get("DOCUMENT_ID");
   my $object_justification = $entry->get("OBJECT_JUSTIFICATION");
   $object_justification = $document_id . ":" . $object_justification;
-  # my $ecs_from_annotation = get_ecs_from_object_jusification($mentions, $object_justification);
+  my $ecs_from_annotation = get_ecs_from_object_jusification($mentions, $object_justification);
   my $ecs_string = $entry->get("OBJECT_FQEC");
-  # $ecs_string = $ecs_string . "|" . $ecs_from_annotation if $ecs_from_annotation;
+  $ecs_string = $ecs_string . "|" . $ecs_from_annotation if $ecs_from_annotation;
   $ecs_string = get_global_equals_string($global_equals, $ecs_string);
   my @ecs = sort keys {map {$_=>1} split(/\|/, $ecs_string)};
   # If there is a generated ID as well as a manually assigned ID then prefer the manual one
