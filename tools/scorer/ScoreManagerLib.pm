@@ -7233,7 +7233,7 @@ sub score_responses_TASK2_STRATEGY2 {
         my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
         $response->set("STRATEGY-2-POOLED", 1);
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{POOLED} = 1;
-        my $where_string = $response->get("WHERE")->{FILENAME} . " (line " . $response->get("WHERE")->{FILENAME} . " )";
+        my $where_string = $response->get("WHERE")->{FILENAME} . ":" . $response->get("WHERE")->{LINENUM};
         $logger->NIST_die("Assessment not found for response in " . $where_string) unless $response->get("ASSESSMENT_ENTRY");
         $i++;
         last if $i == $K;
@@ -7312,7 +7312,10 @@ sub score_responses_TASK2_STRATEGY2 {
                 OBJECT_LINKABILITY);
         my %query_objects = map {$_=>1}
                               split(/\|/, $response->get("QUERY")->get("OBJECT"));
-        if($correctness eq "CORRECT" && $linkability eq "YES" && $query_objects{"LDC2019E43:".$object}) {
+        my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $object);
+        if($correctness eq "CORRECT" &&
+            $linkability eq "YES" &&
+            grep {defined $_} map {$query_objects{$_}} keys %assessment_objects) {
           $logger->NIST_die("duplicate edge $subject:$predicate:$object found in response to FRAME_ID=$frame_id SUBJECT_CLUSTER=$subject_cluster and QUERY=$query_id")
             if($correct_edges{"$subject:$predicate:$object"});
           $correct_edges{"$subject:$predicate:$object"} = 1;
