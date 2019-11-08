@@ -7339,8 +7339,11 @@ sub score_responses_TASK2_STRATEGY2 {
                    "SUBJECT_VALUE=" . keys %{$correct_edges{$subject}};
         $logger->record_debug_information("SUBJECT_SCORES", $line, "NO_SOURCE");
       }
-      my ($best_subject) = sort {$subject_cluster_scores{$b}<=>$subject_cluster_scores{$a}} keys %subject_cluster_scores;
-      my $best_value = $subject_cluster_scores{$best_subject};
+      my $best_subject;
+      ($best_subject) = sort {$subject_cluster_scores{$b}<=>$subject_cluster_scores{$a}} keys %subject_cluster_scores
+        if keys %subject_cluster_scores;
+      my $best_value = 0;
+      $best_value = $subject_cluster_scores{$best_subject} || 0 if $best_subject;
       $cluster_value{$subject_cluster} = $best_value;
       my $line = "FRAMEID=$frame_id " .
                  "SUBJECT_CLUSTER=$subject_cluster " .
