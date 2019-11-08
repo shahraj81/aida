@@ -7316,9 +7316,7 @@ sub score_responses_TASK2_STRATEGY2 {
         if($correctness eq "CORRECT" &&
             $linkability eq "YES" &&
             grep {defined $_} map {$query_objects{$_}} keys %assessment_objects) {
-          $logger->NIST_die("duplicate edge $subject:$predicate:$object found in response to FRAME_ID=$frame_id SUBJECT_CLUSTER=$subject_cluster and QUERY=$query_id")
-            if($correct_edges{"$subject:$predicate:$object"});
-          $correct_edges{"$subject:$predicate:$object"} = 1;
+          $correct_edges{$subject}{"$subject:$predicate:$object"} = 1;
           my $line = "FRAMEID=$frame_id " .
                          "QUERYID=$query_id " .
                          "DOCID=$docid " .
@@ -7332,7 +7330,22 @@ sub score_responses_TASK2_STRATEGY2 {
           $logger->record_debug_information("CORRECT_EDGE", $line, $response->get("WHERE"));
         }
       }
-      $cluster_value{$subject_cluster} = scalar keys %correct_edges;
+      my %subject_cluster_scores;
+      foreach my $subject(keys %correct_edges) {
+        $subject_cluster_scores{$subject} = keys %{$correct_edges{$subject}};
+        my $line = "FRAMEID=$frame_id " .
+                   "SUBJECT_CLUSTER=$subject_cluster " .
+                   "SUBJECT_FQEC=$subject " .
+                   "SUBJECT_VALUE=" . keys %{$correct_edges{$subject}};
+        $logger->record_debug_information("SUBJECT_SCORES", $line, "NO_SOURCE");
+      }
+      my ($best_subject) = sort {$subject_cluster_scores{$b}<=>$subject_cluster_scores{$a}} keys %subject_cluster_scores;
+      my $best_value = $subject_cluster_scores{$best_subject};
+      $cluster_value{$subject_cluster} = $best_value;
+      my $line = "FRAMEID=$frame_id " .
+                 "SUBJECT_CLUSTER=$subject_cluster " .
+                 "CLUSTER_VALUE=$best_value";
+      $logger->record_debug_information("CLUSTER_VALUE", $line, "NO_SOURCE");
     }
     my ($best_subject_cluster) = sort {$cluster_value{$b}<=>$cluster_value{$a}} keys %cluster_value;
     my $frame_value = 0;
