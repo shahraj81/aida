@@ -156,6 +156,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   ACROSS_DOCUMENT_JUSTIFICATION           WARNING        Justification spans come from multiple documents (expected to be from document %s)
   AP_SUBMISSION_LINE                      DEBUG_INFO     AP_SUBMISSION_LINE: %s
   CORRECT_EDGE                            DEBUG_INFO     CORRECT_EDGE: %s
+  CORRECTED_ENTRY                         DEBUG_INFO     CORRECTED_ENTRY: %s %s
   DUPLICATE_IN_POOLED_RESPONSE            DEBUG_INFO     Response: %s already in pool therefore skipping
   DUPLICATE_QUERY                         DEBUG_INFO     Query %s (file: %s) is a duplicate of %s (file: %s) therefore skipping it
   DISCONNECTED_VALID_GRAPH                WARNING        Considering only valid edges, the graph in submission is not fully connected
@@ -174,7 +175,6 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   INVALID_JUSTIFICATION_TYPE              ERROR          Invalid justification type %s
   INVALID_KEYFRAMEID                      WARNING        Invalid keyframeid %s
   INVALID_START                           WARNING        Invalid start %s in %s
-  INVOKED                                 DEBUG_INFO     Scorer was invoked with arguments: %s
   MISMATCHING_COLUMNS                     FATAL_ERROR    Mismatching columns (header:%s, entry:%s) %s %s
   MISSING_DECIMAL_POINT                   WARNING        Decimal point missing in confidence value: %s
   MISSING_FILE                            FATAL_ERROR    Could not open %s: %s
@@ -193,6 +193,7 @@ my $problem_formats = <<'END_PROBLEM_FORMATS';
   NONNUMERIC_START                        WARNING        Start %s is not numeric
   PARENT_CHILD_RELATION_FAILURE           ERROR          %s is not a child of %s
   PARAMETER_KEY_EXISTS                    WARNING        Key %s used multiple times
+  RELATION_EC                             DEBUG_INFO     RELATION_EC KEY=%s VALUE=%s 
   RESPONSE_ASSESSMENT                     DEBUG_INFO     ASSESSMENT_INFO: %s
   RUNS_HAVE_MULTIPLE_TASKS                ERROR          Response files in the pathfile include task1 and task2 responses; expected responses files corresponding to exactly one task
   SALIENT_READ                            DEBUG_INFO     SALIENT_READ: %s
@@ -2589,8 +2590,7 @@ sub load_aggregated_confidences_TA1_GR {
     my $rank = pop @elements;
     my $ag_cv = pop @elements;
     my $uuid = main::generate_uuid_from_string(join("\t", @elements));
-    my $where_string = $entry->get("WHERE")->{FILENAME} . ":" . $entry->get("WHERE")->{LINENUM};
-    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE") . "\n at ($where_string)\n")
+    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE"))
       unless($self->get("CATEGORIZED_RESPONSES")->exists($uuid));
     my $response = $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $uuid);
     $response->set("RANK", $rank);
@@ -2612,8 +2612,7 @@ sub load_aggregated_confidences_TA2_GR {
     my $rank = pop @elements;
     my $ag_cv = pop @elements;
     my $uuid = main::generate_uuid_from_string(join("\t", @elements));
-    my $where_string = $entry->get("WHERE")->{FILENAME} . ":" . $entry->get("WHERE")->{LINENUM};
-    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE") . "\n at ($where_string)\n")
+    $logger->NIST_die("Following line in confidence aggregation file does not have a corresponding line in response file: \n" . $entry->get("LINE"))
       unless($self->get("CATEGORIZED_RESPONSES")->exists($uuid));
     my $response = $self->get("CATEGORIZED_RESPONSES")->get("BY_KEY", $uuid);
     $response->set("RANK", $rank);
@@ -5315,10 +5314,6 @@ sub new {
   };
   bless($self, $class);
   $self->load();
-  # Don't expand ECs in assessments since the assessments have been fixed in
-  # the new assessments package
-  #
-  # $self->fix();
   $self;
 }
 
@@ -5404,14 +5399,14 @@ sub load_zerohop {
   my $assessments_dir = $self->get("ASSESSMENTS_DIR");
   my $query_type = $self->get("QUERY_TYPE");
   my $query_type_specifice_assessments_dir = $assessments_dir . "/data/zero-hop";
-  my $header_line = join("\t", qw(REFERENCE_KBID CLASS ID MODALITY DOCUMENT_ID MENTION_SPAN ASSESSMENT TYPE));
+  my $header_line = join("\t", qw(NODEID CLASS ID MODALITY DOCUMENT_ID MENTION_SPAN ASSESSMENT TYPE));
   my $header = Header->new($self->get("LOGGER"), $header_line);
   foreach my $filename(<$query_type_specifice_assessments_dir/*/*.tab>) {
     my $filehandler = FileHandler->new($self->get("LOGGER"), $filename, $header);
     my $entries = $filehandler->get("ENTRIES");
     foreach my $entry($entries->toarray()) {
       my ($nodeid, $docid, $mention_span, $assessment, $where)
-        = map {$entry->get($_)} qw(REFERENCE_KBID DOCUMENT_ID MENTION_SPAN ASSESSMENT WHERE);
+        = map {$entry->get($_)} qw(NODEID DOCUMENT_ID MENTION_SPAN ASSESSMENT WHERE);
       my $key = "$nodeid:$docid:$mention_span";
       if($self->exists($key)) {
         my $existing_assessment = $self->get("BY_KEY", $key)->{"ASSESSMENT"};
@@ -5463,14 +5458,20 @@ sub load_graph {
       }
       my $assessment_entry = SuperObject->new($self->get("LOGGER"));
       map {$assessment_entry->set($_, &normalize($_, $entry->get($_)))}
-        qw(PREDICATE
+        qw(KIT_ID
+           RESPONSE_ID
+           PREDICATE
            DOCUMENT_ID
+           SUBJECT_TYPE
+           SUBJECT_JUSTIFICATION
+           OBJECT_TYPE
            OBJECT_JUSTIFICATION
            PREDICATE_JUSTIFICATION_CORRECTNESS
            PREDICATE_JUSTIFICATION
            OBJECT_LINKABILITY
            OBJECT_FQEC
            SUBJECT_FQEC
+           HEADER
            LINE
            WHERE);
       $assessment_entry->set("SUBJECT_FQEC_READ", $assessment_entry->get("SUBJECT_FQEC"));
@@ -5504,110 +5505,6 @@ sub load_graph {
       $self->get("LOGGER")->record_debug_information("GROUND_TRUTH", $line, $assessment_entry->get("WHERE"));
     }
     $filehandler->cleanup();
-  }
-}
-
-sub fix {
-  my ($self) = @_;
-  my $query_type = $self->get("QUERY_TYPE");
-  $query_type =~ s/_query$//;
-  my $method = $self->can("fix_$query_type");
-  return $method->($self) if $method;
-}
-
-sub fix_graph {
-  my ($self) = @_;
-  my %entries;
-  my %equals;
-  foreach my $entry($self->toarray()) {
-    my ($filename, $linenum) = map {$entry->get("WHERE")->{$_}} qw(FILENAME LINENUM);
-    $entries{$filename}{$linenum} = $entry;
-    my @ecs = sort split(/\|/, $entry->get("OBJECT_FQEC"));
-    foreach my $ec1(@ecs) {
-      foreach my $ec2(@ecs) {
-        $equals{$ec1}{$ec2} = 1 if($ec1 ne $ec2);
-      }
-    }
-  }
-restart:
-  foreach my $k1(keys %equals) {
-    foreach my $k2(keys %{$equals{$k1}}) {
-      foreach my $k3(keys %{$equals{$k1}}) {
-        next if $k2 eq $k3;
-        unless(exists $equals{$k2}{$k3}) {
-          $equals{$k2}{$k3} = 1;
-          goto restart;
-        }
-      }
-    }
-  }
-  
-  my $next_id = 1;
-  my %ids;
-  foreach my $ec1(sort keys %equals) {
-    my $id;
-    if(exists $ids{EC_TO_ID}{$ec1}) {
-      $id = $ids{EC_TO_ID}{$ec1};
-    }
-    foreach my $ec2(sort keys %{$equals{$ec1}}) {
-      $self->get("LOGGER")->NIST_die("Multiple IDs")
-        if ($id &&
-            exists $ids{EC_TO_ID}{$ec2} &&
-            $id != $ids{EC_TO_ID}{$ec2});
-      $id = $ids{EC_TO_ID}{$ec2}
-        if(exists $ids{EC_TO_ID}{$ec2} && !$id);
-      if($id && not exists $ids{EC_TO_ID}{$ec1}) {
-        $ids{EC_TO_ID}{$ec1} = $id;
-      }
-      if($id && not exists $ids{EC_TO_ID}{$ec2}) {
-        $ids{EC_TO_ID}{$ec2} = $id;
-      }
-    }
-    unless($id) {
-      $id = $next_id;
-      $ids{EC_TO_ID}{$ec1} = $id;
-      $next_id++;
-      foreach my $ec2(sort keys %{$equals{$ec1}}) {
-        unless(exists $ids{EC_TO_ID}{$ec2}) {
-          $ids{EC_TO_ID}{$ec2} = $id;
-        }
-      }
-    }
-  }
-
-  foreach my $ec(keys %{$ids{EC_TO_ID}}) {
-    my $id = $ids{EC_TO_ID}{$ec};
-    $ids{ID_TO_ECS}{$id}{$ec} = 1;
-  }
-
-  foreach my $entry($self->toarray()) {
-    my $id;
-    foreach my $ec(sort split(/\|/, $entry->get("OBJECT_FQEC"))) {
-      $id = $ids{EC_TO_ID}{$ec} unless $id;
-      # sanity check
-      $self->get("LOGGER")->NIST_die("Multiple IDs")
-        if ($id &&
-            exists $ids{EC_TO_ID}{$ec} &&
-            $id != $ids{EC_TO_ID}{$ec});
-    }
-    if($id) {
-      # apply correction only if $id is defined
-      my $new_fqec = join("|", sort keys %{$ids{ID_TO_ECS}{$id}});
-      $entry->set("OBJECT_FQEC", $new_fqec);
-      my $line = "CORRECTED " . join(" ",
-                      map {$_ . "=" . $entry->get($_)}
-                        qw(PREDICATE
-                           DOCUMENT_ID
-                           PREDICATE_JUSTIFICATION
-                           OBJECT_JUSTIFICATION
-                           PREDICATE_JUSTIFICATION_CORRECTNESS
-                           OBJECT_LINKABILITY
-                           OBJECT_FQEC_READ
-                           OBJECT_FQEC
-                           SUBJECT_FQEC_READ
-                           SUBJECT_FQEC));
-      $self->get("LOGGER")->record_debug_information("GROUND_TRUTH", $line, $entry->get("WHERE"));
-    }
   }
 }
 
@@ -6701,11 +6598,10 @@ sub score_responses_TASK1_STRATEGY1 {
   # edges were correct?
   my %ground_truth;
   foreach my $entry($assessments->toarray()) {
-    my ($subject, $subject_read, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
+    my ($subject, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
           $object_justification) =
       map {$entry->get($_)}
         qw(SUBJECT_FQEC
-           SUBJECT_FQEC_READ
            PREDICATE
            OBJECT_FQEC
            DOCUMENT_ID
@@ -6720,8 +6616,6 @@ sub score_responses_TASK1_STRATEGY1 {
     $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
     $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
     next unless ($correctness eq "CORRECT" && $linkability eq "YES");
-    # Don't include those relation subjects in ground truth for which LDC had not assigned subject equivalence class
-    next if $subject_read eq "";
     my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate));
     unless (@queries) {
       $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
@@ -6788,39 +6682,27 @@ sub score_responses_TASK1_STRATEGY1 {
           push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{CORRECT}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
           if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
-            unless($assessment->get("SUBJECT_FQEC_READ") eq "") {
-              # predicate justification is correct and linkable to object, as well as it is not a relation
-              # where the subject EC is blank (i.e. not grouped into EC by LDC)
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
-              # response is either RIGHT or REDUNDANT because it met both the conditions given below:
-              #  (1) correct predicate justification, and
-              #  (2) predicate justification is linkable to object justification
-              my ($subject, $predicate, $object) = map {$assessment->get($_)} qw(SUBJECT_FQEC PREDICATE OBJECT_FQEC);
-              my $edge_string = join("\t", ($subject, $predicate, "LDC2019E43:".$object));
-              if($correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string}) {
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{REDUNDANT}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{IGNORE}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
-              }
-              else{
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RIGHT}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
-                $correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string} = 1;
-                if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}) {
-                  $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
-                  push(@{$categorized_submissions{"STRATEGY-1B"}{$query_and_document}{SALIENT}}, $response);
-                }
-              }
-            }
-            else {
-              # predicate justification is correct and linkable to object, but it is a relation
-              # where the subject EC is blank (i.e. not grouped into EC by LDC)
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RELATION_WITHOUT_EC}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{RELATION_WITHOUT_EC} = 1;
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
+            # response is either RIGHT or REDUNDANT because it met both the conditions given below:
+            #  (1) correct predicate justification, and
+            #  (2) predicate justification is linkable to object justification
+            my ($subject, $predicate, $object) = map {$assessment->get($_)} qw(SUBJECT_FQEC PREDICATE OBJECT_FQEC);
+            my $edge_string = join("\t", ($subject, $predicate, "LDC2019E43:".$object));
+            if($correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string}) {
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{REDUNDANT}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
               push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{IGNORE}}, $response);
               $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+            }
+            else{
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RIGHT}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
+              $correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string} = 1;
+              if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}) {
+                $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                push(@{$categorized_submissions{"STRATEGY-1B"}{$query_and_document}{SALIENT}}, $response);
+              }
             }
           }
           else {
@@ -6909,11 +6791,10 @@ sub score_responses_TASK2_STRATEGY1 {
   # edges were correct? 
   my %ground_truth;
   foreach my $entry($assessments->toarray()) {
-    my ($subject, $subject_read, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
+    my ($subject, $predicate, $object, $docid, $correctness, $linkability, $predicate_justification, 
           $object_justification) =
       map {$entry->get($_)}
         qw(SUBJECT_FQEC
-           SUBJECT_FQEC_READ
            PREDICATE
            OBJECT_FQEC
            DOCUMENT_ID
@@ -6927,9 +6808,8 @@ sub score_responses_TASK2_STRATEGY1 {
     my $key = "$predicate:$predicate_justification:$object_justification";
     $logger->NIST_die("Duplicate assessment for key $key") if $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
     $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key} = $entry;
+
     next unless ($correctness eq "CORRECT" && $linkability eq "YES");
-    # Don't include those relation subjects in ground truth that had no subject equivalence class assigned by LDC
-    next if $subject_read eq "";
     my @queries = $queries->get("MATCHING_QUERIES", (PREDICATE=>$predicate, OBJECT=>$object));
     unless (@queries) {
       $logger->record_debug_information("NO_QUERY_FOR_ASSESSNENT_ITEM", $entry->get("LINE"), $entry->get("WHERE"));
@@ -6998,49 +6878,36 @@ sub score_responses_TASK2_STRATEGY1 {
           push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{CORRECT}}, $response);
           $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
           if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
-            unless($assessment->get("SUBJECT_FQEC_READ") eq "") {
-              # predicate justification is correct and linkable to object, as well as it is not a relation
-              # where the subject EC is blank (i.e. not grouped into EC by LDC)
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
-              my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
-              my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $assessment->get("OBJECT_FQEC"));
-              if(grep {defined $_} map {$query_objects{$_}} keys %assessment_objects) {
-                # response is either RIGHT or REDUNDANT because it met all the conditions given below:
-                #  (1) correct predicate justification,
-                #  (2) predicate justification is linkable to object justification, and
-                #  (3) object justification is linkable to the query entity
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{OBJECT_LINKABLE_TO_QUERY_ENTITY}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1;
-                my $subject = $assessment->get("SUBJECT_FQEC");
-                if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
-                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
-                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
-                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
-                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
-                }
-                else{
-                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
-                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
-                  $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
-                  if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
-                    $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
-                    push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
-                  }
-                }
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
+            my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
+            if($query_objects{"LDC2019E43:".$assessment->get("OBJECT_FQEC")}) {
+              # response is either RIGHT or REDUNDANT because it met all the conditions given below:
+              #  (1) correct predicate justification,
+              #  (2) predicate justification is linkable to object justification, and
+              #  (3) object justification is linkable to the query entity
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{OBJECT_LINKABLE_TO_QUERY_ENTITY}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1;
+              my $subject = $assessment->get("SUBJECT_FQEC");
+              if($correct_found{"STRATEGY-1A"}{$query_id}{$subject}) {
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{REDUNDANT}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
               }
               else{
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RIGHT}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
+                $correct_found{"STRATEGY-1A"}{$query_id}{$subject} = 1;
+                if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$subject}) {
+                  $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                  push(@{$categorized_submissions{"STRATEGY-1B"}{$query_id}{SALIENT}}, $response);
+                }
               }
             }
-            else {
-              # predicate justification is correct and linkable to object, but it is a relation
-              # where the subject EC is blank (i.e. not grouped into EC by LDC)
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{RELATION_WITHOUT_EC}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{RELATION_WITHOUT_EC} = 1;
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{IGNORE}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+            else{
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_id}{WRONG}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
             }
           }
           else {
@@ -7175,7 +7042,8 @@ sub score_responses_TASK2_STRATEGY2 {
       my $predicate = $response->get("QUERY")->get("PREDICATE");
       my $key = "$predicate:$predicate_justification:$object_justification";
       my $assessment = $ground_truth{"STRATEGY-2"}{ENTRIES_BY_KEY}{$key};
-      my %query_objects = map {$_=>1} split(/\|/, $response->get("QUERY")->get("OBJECT"));
+      my %query_objects = map {$_=>1}
+                              split(/\|/, $response->get("QUERY")->get("OBJECT"));
       if($assessment) {
         $response->set("ASSESSMENT_ENTRY", $assessment);
         my ($subject, $object, $correctness, $linkability)
@@ -7186,9 +7054,8 @@ sub score_responses_TASK2_STRATEGY2 {
                 OBJECT_LINKABILITY);
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{$correctness} = 1;
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1 if $linkability eq "YES";
-        my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $assessment->get("OBJECT_FQEC"));
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{OBJECT_LINKABLE_TO_QUERY_ENTITY} = 1
-          if(grep {defined $_} map {$query_objects{$_}} keys %assessment_objects);
+          if($query_objects{"LDC2019E43:".$object});
       }
       push(@{$responses_by_query{$query_id}}, $response);
     }
@@ -7233,7 +7100,7 @@ sub score_responses_TASK2_STRATEGY2 {
         my $response = $response_by_frame_and_subject_cluster{$frame_id}{$subject_cluster}{$query_id};
         $response->set("STRATEGY-2-POOLED", 1);
         $response->{ASSESSMENT}{"STRATEGY-2"}{"PRE-POLICY"}{POOLED} = 1;
-        my $where_string = $response->get("WHERE")->{FILENAME} . ":" . $response->get("WHERE")->{LINENUM};
+        my $where_string = $response->get("WHERE")->{FILENAME} . " (line " . $response->get("WHERE")->{FILENAME} . " )";
         $logger->NIST_die("Assessment not found for response in " . $where_string) unless $response->get("ASSESSMENT_ENTRY");
         $i++;
         last if $i == $K;
@@ -7312,11 +7179,10 @@ sub score_responses_TASK2_STRATEGY2 {
                 OBJECT_LINKABILITY);
         my %query_objects = map {$_=>1}
                               split(/\|/, $response->get("QUERY")->get("OBJECT"));
-        my %assessment_objects = map {"LDC2019E43:" . $_=> 1} split(/\|/, $object);
-        if($correctness eq "CORRECT" &&
-            $linkability eq "YES" &&
-            grep {defined $_} map {$query_objects{$_}} keys %assessment_objects) {
-          $correct_edges{$subject}{"$subject:$predicate:$object"} = 1;
+        if($correctness eq "CORRECT" && $linkability eq "YES" && $query_objects{"LDC2019E43:".$object}) {
+          $logger->NIST_die("duplicate edge $subject:$predicate:$object found in response to FRAME_ID=$frame_id SUBJECT_CLUSTER=$subject_cluster and QUERY=$query_id")
+            if($correct_edges{"$subject:$predicate:$object"});
+          $correct_edges{"$subject:$predicate:$object"} = 1;
           my $line = "FRAMEID=$frame_id " .
                          "QUERYID=$query_id " .
                          "DOCID=$docid " .
@@ -7330,25 +7196,7 @@ sub score_responses_TASK2_STRATEGY2 {
           $logger->record_debug_information("CORRECT_EDGE", $line, $response->get("WHERE"));
         }
       }
-      my %subject_cluster_scores;
-      foreach my $subject(keys %correct_edges) {
-        $subject_cluster_scores{$subject} = keys %{$correct_edges{$subject}};
-        my $line = "FRAMEID=$frame_id " .
-                   "SUBJECT_CLUSTER=$subject_cluster " .
-                   "SUBJECT_FQEC=$subject " .
-                   "SUBJECT_VALUE=" . keys %{$correct_edges{$subject}};
-        $logger->record_debug_information("SUBJECT_SCORES", $line, "NO_SOURCE");
-      }
-      my $best_subject;
-      ($best_subject) = sort {$subject_cluster_scores{$b}<=>$subject_cluster_scores{$a}} keys %subject_cluster_scores
-        if keys %subject_cluster_scores;
-      my $best_value = 0;
-      $best_value = $subject_cluster_scores{$best_subject} || 0 if $best_subject;
-      $cluster_value{$subject_cluster} = $best_value;
-      my $line = "FRAMEID=$frame_id " .
-                 "SUBJECT_CLUSTER=$subject_cluster " .
-                 "CLUSTER_VALUE=$best_value";
-      $logger->record_debug_information("CLUSTER_VALUE", $line, "NO_SOURCE");
+      $cluster_value{$subject_cluster} = scalar keys %correct_edges;
     }
     my ($best_subject_cluster) = sort {$cluster_value{$b}<=>$cluster_value{$a}} keys %cluster_value;
     my $frame_value = 0;

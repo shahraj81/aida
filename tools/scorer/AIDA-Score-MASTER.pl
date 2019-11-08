@@ -18,7 +18,7 @@ use ScoreManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2019.1.0";
+my $version = "2019.2.0";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};
@@ -58,6 +58,7 @@ $switches->addParam("output", "required", "Output file");
 $switches->process(@ARGV);
 
 my $logger = Logger->new();
+$logger->record_debug_information("INVOKED", join(" ", @ARGV), "NO_SOURCE");
 my $error_filename = $switches->get("error_file");
 $logger->set_error_output($error_filename);
 $error_output = $logger->get_error_output();
@@ -141,5 +142,5 @@ unless($switches->get('error_file') eq "STDERR") {
   print STDERR "No warnings encountered.\n" unless ($num_errors || $num_warnings);
 }
 
-print $error_output ($num_warnings || 'No'), " warning", ($num_warnings == 1 ? '' : 's'), " encountered.\n";
+print $error_output ($num_errors || 'No'), " error", ($num_errors == 1 ? '' : 's'), " encountered.\n";
 exit 0;

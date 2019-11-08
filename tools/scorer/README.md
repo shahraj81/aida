@@ -1,6 +1,6 @@
 # Introduction
 
-October 28, 2019
+November 8, 2019
 
 This document describes:
 
@@ -708,7 +708,13 @@ The score and debug files will be produced in `examples/M9/zerohop_response/outp
 Note: The scorer does not overwrite score and debug file, and therefore, it is necessary to remove these files if they already exist. Also, note that the input to scorer is a pathfile containing paths of all the input xml response files.
 
 # Revision history
-## 10/28/2019
+## 11/8/2019 - AIDASR-v2019.2.0:
+	- Fixed the following bug(s) in task2 graph scoring based on strategy2:
+		- Computation of frame value was not taking maximum of the maximum number of unique edges in the submitted event/relation KE that are correct and that have the same global KB ID for the subject
+	- Fixed the following bug(s) in task1 and task2 graph scoring:
+		- Object linkability to query entity was corrected to be based on overlap
+	- Modified the task1 and task2 graph scorer based on strategy1 to ignore responses that were assessed to be correct and linkable but the subject event/relation was not put in to equivalence classes
+## 10/28/2019 - AIDASR-v2019.1.0:
 	- First version for M18
 ## 2/25/2019
 	- Minor edits
