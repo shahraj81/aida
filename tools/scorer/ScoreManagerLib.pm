@@ -1930,7 +1930,6 @@ my %columns = (
     QUERY_TYPES => ['CLASS'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
@@ -1953,7 +1952,6 @@ my %columns = (
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
@@ -2067,7 +2065,6 @@ my %columns = (
     QUERY_TYPES => ['CLASS', 'ZEROHOP'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
@@ -2146,7 +2143,6 @@ my %columns = (
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
@@ -2167,7 +2163,6 @@ my %columns = (
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
@@ -2272,7 +2267,6 @@ my %columns = (
     QUERY_TYPES => ['ZEROHOP','GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
@@ -2313,7 +2307,6 @@ my %columns = (
     QUERY_TYPES => ['GRAPH'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
@@ -2355,7 +2348,6 @@ my %columns = (
     QUERY_TYPES => ['CLASS'],
     FILE_TYPES => ['SUBMISSION'],
     PATTERN => qr/\d+(?:\.\d+(e[-+]?\d\d)?)?/,
-    NORMALIZE => 'CONFIDENCE',
     VALIDATE => 'CONFIDENCE',
   },
 
