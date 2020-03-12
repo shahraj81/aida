@@ -386,8 +386,8 @@ def generate_video_justification_triples(document_span, channel, generate_option
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTime '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTime '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
+        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
         _:b{md5} aida:confidence _:b{md5}_confidence .
         _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
         _:b{md5}_confidence a aida:Confidence .
@@ -416,8 +416,8 @@ def generate_picture_justification_triples(document_span):
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTime '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTime '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
+        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
         _:b{md5} aida:confidence _:b{md5}_confidence .
         _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
         _:b{md5}_confidence a aida:Confidence .
@@ -436,8 +436,8 @@ def generate_sound_justification_triples(document_span):
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTime '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTime '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
+        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
         _:b{md5} aida:confidence _:b{md5}_confidence .
         _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
         _:b{md5}_confidence a aida:Confidence .
@@ -569,8 +569,8 @@ def generate_audio_justification_triples(document_span):
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTime '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTime '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
+        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
         _:b{md5} aida:confidence _:b{md5}_confidence .
         _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
         _:b{md5}_confidence a aida:Confidence .
