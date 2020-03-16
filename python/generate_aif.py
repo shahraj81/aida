@@ -59,8 +59,8 @@ def main(args):
     for entry in FileHandler(logger, args.type_mappings_filename):
         type_mappings.add(key=entry.get('full_type_ov'), value=entry.get('full_type'))
     slot_mappings = SlotMappings(logger, args.slot_mappings_filename)
-    annotations = Annotations(logger, slot_mappings, document_mappings, text_boundaries, image_boundaries, video_boundaries, keyframe_boundaries, type_mappings, args.annotations_dir)
-    generator = AIFGenerator(logger, annotations)
+    annotations = Annotations(logger, slot_mappings, document_mappings, text_boundaries, image_boundaries, video_boundaries, keyframe_boundaries, type_mappings, args.annotations_dir, load_video_time_offsets_flag=args.notime)
+    generator = AIFGenerator(logger, annotations, args.nochannel, args.reference_kb_id)
     generator.write_output(args.output_dir)
     exit(ALLOK_EXIT_CODE)
 
@@ -70,6 +70,12 @@ if __name__ == '__main__':
                         help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
                         help='Print version number and exit')
+    parser.add_argument('-r', '--reference_kb_id', default='LDC2019E44',
+                        help='Specify the reference KB ID (default: %(default)s)')
+    parser.add_argument('-t', '--notime', action='store_false', default=True,
+                        help='Do not read time-offset based spans from video annotations (default: %(default)s)')
+    parser.add_argument('-n', '--nochannel', action='store_false', default=True,
+                        help='Omit generating optional channel attribute in video justification? (default: %(default)s)')
     parser.add_argument('log_specifications_filename', type=str,
                         help='File containing error specifications')
     parser.add_argument('encodings_filename', type=str,

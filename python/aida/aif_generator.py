@@ -14,9 +14,9 @@ __date__    = "7 February 2019"
 # TODO # 1: add a switch to allow/disallow reading picture/sound channel
 #    - based time frame spans
 #
-# STATUS: Pending
+# STATUS: Complete
 #    - handled via annotations
-#    - switch not currently being read via command-line
+#    - switch added
 # ---------------------------------------------------------------------------
 # TODO # 2: add LDCTime
 #
@@ -33,7 +33,8 @@ __date__    = "7 February 2019"
 # lehigh:aida-python skr1$ grep 80000032 -A 1 example-data/example-m18-kb/LDC_2.LDC_2.ttl | grep informativeJustification
 #         aida:informativeJustification  _:b163 , _:b1692 , _:b1977 , _:b1987 , _:b2078 , _:b2095 , _:b2290 , _:b2345 , _:b2501 , _:b2756 , _:b3014 , _:b33 , _:b3764 , _:b378 , _:b3891 , _:b4060 , _:b5639 , _:b6160 , _:b6429 , _:b674 , _:b6760 , _:b6832 , _:b6916 , _:b7028 , _:b729 , _:b7422 , _:b7545 , _:b7560 , _:b7613 , _:b7641 , _:b7674 , _:b7739 , _:b8531 , _:b858 , _:b8733 , _:b8781 , _:b8920 , _:b9189 , _:b9541 , _:b9774 , _:b9905 ;
 #
-# STATUS: This issue does not appear in the NIST output
+# STATUS: Complete
+#     - This issue does not appear in the NIST output
 # ---------------------------------------------------------------------------
 # TODO # 4: Following entity is not a member of any cluster, why?
 #     ldc:EMIC00160R8.002266 a aida:Entity ;
@@ -48,31 +49,47 @@ __date__    = "7 February 2019"
 # ---------------------------------------------------------------------------
 # TODO # 6: Equivalent cluster in LDC's confusable node list not to be split
 #
-# STATUS: Ignored as this should not appear in LDC's annotation data in M36, 
-# (decided by Hoa)
+# STATUS: Complete
+#     Ignored as this should not appear in LDC's annotation data in M36,
+#     (decided by Hoa)
 # ---------------------------------------------------------------------------
 # TODO # 7: Change the Picture/Sound channel justification to VideoJustification
 # with an optional attribute, say, 'channel' with three values 'picture', 'sound'
 # or 'both'. Also add a switch to turn on/off generation of the optional attribute.
 #
-# STATUS: Pending
+# STATUS: Complete
 #     - Justifications updated
-#     - Switch pending
+#     - Switch added
 # ---------------------------------------------------------------------------
 # TODO # 8: Tests on informative justifications are failing
 #
 # STATUS: Pending
+# ---------------------------------------------------------------------------
+# TODO # 9: Fix doubles to xsd:double
+#
+# STATUS: Complete
 
 from aida.object import Object
 from aida.utility import get_md5_from_string
 from rdflib import Graph
 from re import compile
+from re import findall
 
 SYSTEM_NAME = 'ldc:LDCModelGenerator'
 
 def patch(serialized_output):
     print('--patching output')
+    # apply patch to year in the output
     patched_output = serialized_output.replace('-01-01"^^xsd:gYear', '"^^xsd:gYear')
+    # apply patch to xsd:double in the output
+    pattern = compile('XSD_DOUBLE\((.*?)\)')
+    double_values = {}
+    for (double_val) in findall(pattern, patched_output):
+        double_values[double_val] = 1
+    for double_val in double_values:
+        str_to_replace = '"XSD_DOUBLE({double_val})"'.format(double_val=double_val)
+        str_to_replace_by = '"{double_val}"^^xsd:double'.format(double_val=double_val)
+        patched_output = patched_output.replace(str_to_replace, str_to_replace_by)
     return patched_output
 
 def generate_cluster_membership_triples(node):
@@ -86,7 +103,7 @@ def generate_cluster_membership_triples(node):
             _:bcm-{cluster_membership_md5} aida:clusterMember ldc:{mention_id} .
             _:bcm-{cluster_membership_md5} aida:confidence _:bcm-{cluster_membership_md5}-confidence .
             _:bcm-{cluster_membership_md5}-confidence a aida:Confidence .
-            _:bcm-{cluster_membership_md5}-confidence aida:confidenceValue '1.0'^^xsd:double .
+            _:bcm-{cluster_membership_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
             _:bcm-{cluster_membership_md5}-confidence aida:system {system} .
             _:bcm-{cluster_membership_md5} aida:system {system} .
         """.format(cluster_membership_md5 = cluster_membership_md5,
@@ -111,7 +128,7 @@ def generate_cluster_triples(reference_kb_id, node):
             _:blinkassertion{node_id} aida:system {system} .
             _:blinkassertion{node_id} aida:confidence _:blinkassertion{node_id}-confidence .
             _:blinkassertion{node_id}-confidence a aida:Confidence .
-            _:blinkassertion{node_id}-confidence aida:confidenceValue '1.0'^^xsd:double .
+            _:blinkassertion{node_id}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
             _:blinkassertion{node_id}-confidence aida:system {system} .
         """.format(node_name = node.get('name'),
                    reference_kb_id = reference_kb_id,
@@ -266,7 +283,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             _:blinkassertion{node_id} aida:system {system} .
             _:blinkassertion{node_id} aida:confidence _:blinkassertion{node_id}-confidence .
             _:blinkassertion{node_id}-confidence a aida:Confidence .
-            _:blinkassertion{node_id}-confidence aida:confidenceValue '1.0'^^xsd:double .
+            _:blinkassertion{node_id}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
             _:blinkassertion{node_id}-confidence aida:system {system} .
         """.format(ere_object_id = ere_object.get('id'),
                    reference_kb_id = reference_kb_id,
@@ -301,7 +318,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                )
     return triples    
 
-def generate_text_justification_triples(document_span):
+def generate_text_justification_triples(document_span, generate_optional_channel_attribute_flag):
     triples = """\
         _:b{md5} a aida:TextJustification .
         _:b{md5} aida:system {system} .
@@ -310,7 +327,7 @@ def generate_text_justification_triples(document_span):
         _:b{md5} aida:startOffset '{start_x}'^^xsd:int .
         _:b{md5} aida:endOffsetInclusive '{end_x}'^^xsd:int .
         _:b{md5} aida:confidence _:b{md5}_confidence .
-        _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:b{md5}_confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:b{md5}_confidence a aida:Confidence .
         _:b{md5}_confidence aida:system {system} .""".format(md5 = document_span.get('md5'),
                                                              system = SYSTEM_NAME,
@@ -321,7 +338,7 @@ def generate_text_justification_triples(document_span):
                                                              )
     return triples
 
-def generate_image_justification_triples(document_span):
+def generate_image_justification_triples(document_span, generate_optional_channel_attribute_flag):
     triples = """\
         _:b{md5} a aida:ImageJustification .
         _:b{md5} aida:system {system} .
@@ -334,7 +351,7 @@ def generate_image_justification_triples(document_span):
         _:b{md5}_boundingbox aida:boundingBoxLowerRightX '{end_x}'^^xsd:int .
         _:b{md5}_boundingbox aida:boundingBoxLowerRightY '{end_y}'^^xsd:int .
         _:b{md5} aida:confidence _:b{md5}_confidence .
-        _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:b{md5}_confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:b{md5}_confidence a aida:Confidence .
         _:b{md5}_confidence aida:system {system} .""".format(md5 = document_span.get('md5'),
                                                              system = SYSTEM_NAME,
@@ -347,7 +364,7 @@ def generate_image_justification_triples(document_span):
                                                              )
     return triples
 
-def generate_keyframe_justification_triples(document_span):
+def generate_keyframe_justification_triples(document_span, generate_optional_channel_attribute_flag):
     triples = """\
         _:b{md5} a aida:KeyFrameVideoJustification .
         _:b{md5} aida:system {system} .
@@ -361,7 +378,7 @@ def generate_keyframe_justification_triples(document_span):
         _:b{md5}_boundingbox aida:boundingBoxLowerRightX '{end_x}'^^xsd:int .
         _:b{md5}_boundingbox aida:boundingBoxLowerRightY '{end_y}'^^xsd:int .
         _:b{md5} aida:confidence _:b{md5}_confidence .
-        _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:b{md5}_confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:b{md5}_confidence a aida:Confidence .
         _:b{md5}_confidence aida:system {system} .""".format(md5 = document_span.get('md5'),
                                                              system = SYSTEM_NAME,
@@ -386,10 +403,10 @@ def generate_video_justification_triples(document_span, channel, generate_option
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp "XSD_DOUBLE({start_x})" .
+        _:b{md5} aida:endTimestamp "XSD_DOUBLE({end_x})" .
         _:b{md5} aida:confidence _:b{md5}_confidence .
-        _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:b{md5}_confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:b{md5}_confidence a aida:Confidence .
         _:b{md5}_confidence aida:system {system} .""".format(md5 = document_span.get('md5'),
                                                              channel_attribute_triple = channel_attribute_triple,
@@ -401,13 +418,13 @@ def generate_video_justification_triples(document_span, channel, generate_option
                                                              )
     return triples
 
-def generate_picture_channel_video_justification_triples(document_span, generate_optional_channel_attribute_flag=True):
+def generate_picture_channel_video_justification_triples(document_span, generate_optional_channel_attribute_flag):
     return generate_video_justification_triples(document_span, 'picture', generate_optional_channel_attribute_flag)
 
-def generate_sound_channel_video_justification_triples(document_span, generate_optional_channel_attribute_flag=True):
+def generate_sound_channel_video_justification_triples(document_span, generate_optional_channel_attribute_flag):
     return generate_video_justification_triples(document_span, 'sound', generate_optional_channel_attribute_flag)
 
-def generate_both_channels_video_justification_triples(document_span, generate_optional_channel_attribute_flag=True):
+def generate_both_channels_video_justification_triples(document_span, generate_optional_channel_attribute_flag):
     return generate_video_justification_triples(document_span, 'both', generate_optional_channel_attribute_flag)
 
 def generate_picture_justification_triples(document_span):
@@ -416,10 +433,10 @@ def generate_picture_justification_triples(document_span):
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp "XSD_DOUBLE({start_x})" .
+        _:b{md5} aida:endTimestamp "XSD_DOUBLE({end_x})" .
         _:b{md5} aida:confidence _:b{md5}_confidence .
-        _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:b{md5}_confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:b{md5}_confidence a aida:Confidence .
         _:b{md5}_confidence aida:system {system} .""".format(md5 = document_span.get('md5'),
                                                              system = SYSTEM_NAME,
@@ -436,10 +453,10 @@ def generate_sound_justification_triples(document_span):
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp "XSD_DOUBLE({start_x})" .
+        _:b{md5} aida:endTimestamp "XSD_DOUBLE({end_x})" .
         _:b{md5} aida:confidence _:b{md5}_confidence .
-        _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:b{md5}_confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:b{md5}_confidence a aida:Confidence .
         _:b{md5}_confidence aida:system {system} .""".format(md5 = document_span.get('md5'),
                                                              system = SYSTEM_NAME,
@@ -469,7 +486,7 @@ def generate_type_assertion_triples(mention):
         ldc:assertion-{type_assertion_md5} rdf:subject ldc:{subject} .
         ldc:assertion-{type_assertion_md5} aida:confidence _:bta{type_assertion_md5}-confidence .
         _:bta{type_assertion_md5}-confidence a aida:Confidence .
-        _:bta{type_assertion_md5}-confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:bta{type_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:bta{type_assertion_md5}-confidence aida:system {system} .
         {justified_by_triples}
         ldc:assertion-{type_assertion_md5} aida:system {system} .
@@ -500,14 +517,14 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
         ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
         ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
         _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
-        _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
         ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
         _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
         _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{subject_informative_justification_md5} .
         _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
         _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
-        _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
         _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
         ldc:assertion-{slot_assertion_md5} aida:system {system} .
@@ -541,7 +558,7 @@ def generate_argument_assertions_with_two_contained_justifications_triple(slot):
         ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
         ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
         _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
-        _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
         ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
         _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
@@ -549,7 +566,7 @@ def generate_argument_assertions_with_two_contained_justifications_triple(slot):
         _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{argument_informative_justification_md5} .
         _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
         _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
-        _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
         _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
         ldc:assertion-{slot_assertion_md5} aida:system {system} .
@@ -563,16 +580,16 @@ def generate_argument_assertions_with_two_contained_justifications_triple(slot):
                    )
     return triples
 
-def generate_audio_justification_triples(document_span):
+def generate_audio_justification_triples(document_span, generate_optional_channel_attribute_flag):
     triples = """\
         _:b{md5} a aida:AudioJustification .
         _:b{md5} aida:system {system} .
         _:b{md5} aida:source '{document_element_id}' .
         _:b{md5} aida:sourceDocument '{document_id}' .
-        _:b{md5} aida:startTimestamp '{start_x}'^^xsd:double .
-        _:b{md5} aida:endTimestamp '{end_x}'^^xsd:double .
+        _:b{md5} aida:startTimestamp "XSD_DOUBLE({start_x})" .
+        _:b{md5} aida:endTimestamp "XSD_DOUBLE({end_x})" .
         _:b{md5} aida:confidence _:b{md5}_confidence .
-        _:b{md5}_confidence aida:confidenceValue '1.0'^^xsd:double .
+        _:b{md5}_confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
         _:b{md5}_confidence a aida:Confidence .
         _:b{md5}_confidence aida:system {system} .""".format(md5 = document_span.get('md5'),
                                                              system = SYSTEM_NAME,
@@ -587,13 +604,14 @@ class AIFGenerator(Object):
     """
     AIDA AIF Generator
     """    
-    def __init__(self, logger, annotations, reference_kb_id='LDC2019E44'):
+    def __init__(self, logger, annotations, generate_optional_channel_attribute_flag, reference_kb_id):
         super().__init__(logger)
         self.annotations = annotations
         self.reference_kb_id = reference_kb_id
+        self.generate_optional_channel_attribute_flag = generate_optional_channel_attribute_flag
         self.triple_blocks = []
         self.generate_aif()
-        
+
     def generate_aif(self):
         self.add_prefixes()
         print('--generating justifications ...')
@@ -662,6 +680,7 @@ class AIFGenerator(Object):
             self.get('triple_blocks').append(triple_block)
     
     def generate_justifications(self):
+        generate_optional_channel_attribute_flag = self.get('generate_optional_channel_attribute_flag')
         for mention in self.get('annotations').get('mentions').values():
             for document_span in mention.get('document_spans').values():
                 span_type = document_span.get('span_type')
@@ -669,7 +688,7 @@ class AIFGenerator(Object):
                 method_name = 'generate_{}_justification_triples'.format(span_type)
                 generator = globals().get(method_name)
                 if generator:
-                    triple_block = generator(document_span)
+                    triple_block = generator(document_span, generate_optional_channel_attribute_flag)
                 else:
                     self.get('logger').record_event('UNDEFINED_METHOD', method_name)
                 self.get('triple_blocks').append(triple_block)
