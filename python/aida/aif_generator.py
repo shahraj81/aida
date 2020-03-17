@@ -475,7 +475,7 @@ def generate_type_assertion_triples(mention):
     subject = mention.get('id')
     justified_by_triples = []
     for document_span in mention.get('document_spans').values():
-        justified_by_triple = 'ldc:assertion-{type_assertion_md5} aida:justfiedBy _:b{document_span_md5} .'.format(type_assertion_md5=type_assertion_md5,
+        justified_by_triple = 'ldc:assertion-{type_assertion_md5} aida:justifiedBy _:b{document_span_md5} .'.format(type_assertion_md5=type_assertion_md5,
                                                                                                          document_span_md5=document_span.get('md5'))
         justified_by_triples.append(justified_by_triple)
 
