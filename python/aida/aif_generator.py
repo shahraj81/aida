@@ -614,6 +614,7 @@ class AIFGenerator(Object):
 
     def generate_aif(self):
         self.add_prefixes()
+        self.add_system()
         print('--generating justifications ...')
         self.generate_justifications()
         print('--generating clusters ...')
@@ -646,6 +647,10 @@ class AIFGenerator(Object):
             g.parse(data=raw_graph, format="turtle")
             return g.serialize(format="turtle").decode('utf-8')
         
+    def add_system(self):
+        system_triple = "ldc:LDCModelGenerator a aida:System ."
+        self.get('triple_blocks').append(system_triple)
+
     def add_prefixes(self):
         prefixes = """\
             @prefix aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#> .
@@ -654,7 +659,7 @@ class AIFGenerator(Object):
             @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
             @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
         """
-        self.get('triple_blocks').append(prefixes)        
+        self.get('triple_blocks').append(prefixes)
     
     def generate_argument_assertions(self):
         for slot in self.get('annotations').get('slots').values():
