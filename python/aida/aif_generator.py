@@ -146,6 +146,7 @@ def generate_cluster_triples(reference_kb_id, node):
     triples = """\
         ldc:cluster-{node_name} a aida:SameAsCluster .
         ldc:cluster-{node_name} aida:prototype _:b{prototype_span_md5} .
+        ldc:cluster-{node_name} aida:system {system} .
         {informative_justification_triples}
         {link_assertion_triples}
     """.format(node_name = node.get('name'),
