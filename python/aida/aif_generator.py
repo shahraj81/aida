@@ -145,14 +145,14 @@ def generate_cluster_triples(reference_kb_id, node):
         informative_justification_triples.append(triple)
     triples = """\
         ldc:cluster-{node_name} a aida:SameAsCluster .
-        ldc:cluster-{node_name} aida:prototype _:b{prototype_span_md5} .
+        ldc:cluster-{node_name} aida:prototype ldc:{prototype_object_id} .
         ldc:cluster-{node_name} aida:system {system} .
         {informative_justification_triples}
         {link_assertion_triples}
     """.format(node_name = node.get('name'),
                informative_justification_triples = '\n'.join(informative_justification_triples),
                link_assertion_triples = '\n'.join(link_assertion_triples),
-               prototype_span_md5 = node.get('prototype').get('md5'),
+               prototype_object_id = node.get('prototype').get('id'),
                system = SYSTEM_NAME,
                node_id = node.get('id'),
                reference_kb_id = reference_kb_id)

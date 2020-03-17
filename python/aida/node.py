@@ -22,12 +22,12 @@ class Node(Object):
         self.mentions = {}
         self.metatype = metatype
         if mention is not None:
-            self.prototype = list(mention.get('document_spans').values())[0]
             self.add_mention(mention)
 
+    def get_prototype(self):
+        return list(self.get('mentions').values())[0]
+
     def add_mention(self, mention):
-        if len(self.get('mentions')) == 0:
-            self.prototype = list(mention.get('document_spans').values())[0]
         node_metatype_from_mention = mention.get('node_metatype')
         if node_metatype_from_mention != self.metatype:
             self.logger.record_event('METATYPE_MISMATCH',
