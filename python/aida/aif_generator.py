@@ -631,7 +631,7 @@ class AIFGenerator(Object):
         print('--aif generation finished ...')
 
     def write_output(self, output_dir):
-        filename = '{}/aif.txt'.format(output_dir)
+        filename = '{}/output.ttl'.format(output_dir)
         program_output = open(filename, 'w')
         aif = patch(self.get_aif())
         print('--writing output to file')
