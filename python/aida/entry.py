@@ -22,7 +22,7 @@ class Entry(Object):
             logger.record_event('UNEXPECTED_NUM_COLUMNS', len(keys), len(values), where)
         self.where = where
         for i in range(len(keys)):
-            self.set(keys[i], values[i])
+            self.set(keys[i], values[i].strip())
 
     def get_filename(self):
         return self.get('where').get('filename')
