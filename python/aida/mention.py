@@ -204,7 +204,7 @@ class Mention(Object):
                                              entry.get('where'))
 
         if len(self.document_spans) == 0:
-            self.get('logger').record_event('NO_SPAN_TYPE', self.get('id'), entry.get('where'))
+            self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Span type for mention', self.get('id'), entry.get('where'))
     
     def add_node(self, node):
         self.nodes[node.get('id')] = node

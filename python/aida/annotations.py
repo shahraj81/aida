@@ -94,10 +94,10 @@ class Annotations(Object):
             subject = self.get('mentions').get(subjectmention_id, None)
             argument = self.get('mentions').get(argmention_id, None)
             if subject is None:
-                self.get('logger').record_event('MISSING_MENTION', subjectmention_id, entry.get('where'))
+                self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Mention', subjectmention_id, entry.get('where'))
                 continue
             if argument is None:
-                self.get('logger').record_event('MISSING_MENTION', argmention_id, entry.get('where'))
+                self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Mention', argmention_id, entry.get('where'))
                 continue
             slot = Slot(self.logger, subject, slot_code, slot_type, argument, entry.get('where'))
             self.get('slots').add_slot(slot)
@@ -111,7 +111,7 @@ class Annotations(Object):
                 self.record_event('MISSING_ITEM_WITH_KEY', 'Mention', mention_id, entry.get('where'))
                 continue
             node_metatype = mention.get('node_metatype')
-            for kb_id in kb_id_or_kb_ids.split('|'): 
+            for kb_id in kb_id_or_kb_ids.split('|'):
                 node = self.get('nodes').get(kb_id, None)
                 if node is None:
                     node = Node(self.logger, kb_id, node_metatype, mention)
