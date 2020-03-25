@@ -111,6 +111,10 @@ class Mention(Object):
     def is_relation(self):
         return self.get('entry').get('relationmention_id') is not None
     
+    def is_negated(self):
+        attributes = self.get('entry').get('attribute')
+        return attributes is not None and 'not' in attributes.split(',')
+
     def load_node_metatype(self):
         node_metatype = None
         if self.is_event():
