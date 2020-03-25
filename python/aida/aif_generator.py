@@ -95,6 +95,10 @@ def patch(serialized_output):
 def generate_cluster_membership_triples(node):
     cluster_membership_triples = []
     for mention_id in node.get('mentions'):
+        attributes = node.get('mentions').get(mention_id).get('entry').get('attribute')
+        if attributes is not None and 'not' in attributes.split(','):
+            node.get('logger').record_event('SKIPPING', 'Cluster membership', '{}:{}'.format(node.get('name'), mention_id), "because value of 'attribute' is '{}'".format(attributes))
+            continue
         cluster_membership_md5 = get_md5_from_string('{node_name}:{mention_id}'.format(node_name = node.get('name'),
                                                                                      mention_id = mention_id))
         triples = """\
