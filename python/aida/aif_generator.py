@@ -711,7 +711,7 @@ class AIFGenerator(Object):
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
-                    self.get('logger').record_event('SKIPPING', 'Cluster membership', '{}:{}'.format(node.get('name'), mention.get('id')), "because the mention is negated")
+                    self.get('logger').record_event('SKIPPING', 'Type assertion for mention', '{}'.format(mention.get('id')), "because the mention is negated")
                     continue
                 triple_block = generate_type_assertion_triples(mention)
                 self.get('triple_blocks').append(triple_block)
