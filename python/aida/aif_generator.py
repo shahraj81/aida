@@ -695,17 +695,21 @@ class AIFGenerator(Object):
     
     def generate_justifications(self):
         generate_optional_channel_attribute_flag = self.get('generate_optional_channel_attribute_flag')
-        for mention in self.get('annotations').get('mentions').values():
-            for document_span in mention.get('document_spans').values():
-                span_type = document_span.get('span_type')
-                triple_block = None
-                method_name = 'generate_{}_justification_triples'.format(span_type)
-                generator = globals().get(method_name)
-                if generator:
-                    triple_block = generator(document_span, generate_optional_channel_attribute_flag)
-                else:
-                    self.get('logger').record_event('UNDEFINED_METHOD', method_name)
-                self.get('triple_blocks').append(triple_block)
+        for node in self.get('annotations').get('nodes').values():
+            for mention in node.get('mentions').values():
+                if mention.is_negated():
+                    self.get('logger').record_event('SKIPPING', 'Justification triples for mention', '{}'.format(mention.get('id')), "because the mention is negated")
+                    continue
+                for document_span in mention.get('document_spans').values():
+                    span_type = document_span.get('span_type')
+                    triple_block = None
+                    method_name = 'generate_{}_justification_triples'.format(span_type)
+                    generator = globals().get(method_name)
+                    if generator:
+                        triple_block = generator(document_span, generate_optional_channel_attribute_flag)
+                    else:
+                        self.get('logger').record_event('UNDEFINED_METHOD', method_name)
+                    self.get('triple_blocks').append(triple_block)
     
     def generate_type_assertions(self):
         for node in self.get('annotations').get('nodes').values():
