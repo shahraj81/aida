@@ -675,9 +675,13 @@ class AIFGenerator(Object):
             self.get('triple_blocks').append(triple_block)
     
     def generate_ere_objects(self):
-        for ere_object in self.get('annotations').get('mentions').values():
-            triple_block = generate_ere_object_triples(self.get('reference_kb_id'), ere_object)
-            self.get('triple_blocks').append(triple_block)
+        for node in self.get('annotations').get('nodes').values():
+            for ere_object in node.get('mentions').values():
+                if ere_object.is_negated():
+                    self.get('logger').record_event('SKIPPING', 'ERE object corresponding to mention', '{}'.format(ere_object.get('id')), "because the mention is negated")
+                    continue
+                triple_block = generate_ere_object_triples(self.get('reference_kb_id'), ere_object)
+                self.get('triple_blocks').append(triple_block)
     
     def generate_clusters(self):
         for node in self.get('annotations').get('nodes').values():
