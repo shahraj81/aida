@@ -14,10 +14,15 @@ class Slot(Object):
     AIDA slot class.
     """
     
-    def __init__(self, logger, subject, slot_code, slot_type, argument, where):
+    def __init__(self, logger, subject, slot_code, slot_type, argument, attribute, where):
         super().__init__(logger)
         self.subject = subject
         self.slot_code = slot_code
         self.slot_type = slot_type
         self.argument = argument
+        self.attribute = attribute
         self.where = where
+
+    def is_negated(self):
+        attributes = self.get('attribute')
+        return attributes is not None and 'not' in attributes.split(',')

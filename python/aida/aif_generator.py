@@ -671,6 +671,15 @@ class AIFGenerator(Object):
             # change generate_argument_assertions_with_single_contained_justification_triple 
             # to generate_argument_assertions_with_two_contained_justifications_triple
             # if two contained justifications were needed
+            if slot.is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the slot is negated")
+                continue
+            if slot.get('subject').is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the subject is negated")
+                continue
+            if slot.get('argument').is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the object is negated")
+                continue
             triple_block = generate_argument_assertions_with_single_contained_justification_triple(slot)
             self.get('triple_blocks').append(triple_block)
     
