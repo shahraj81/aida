@@ -71,6 +71,7 @@ __date__    = "7 February 2019"
 
 from aida.object import Object
 from aida.utility import get_md5_from_string
+from collections import defaultdict
 from rdflib import Graph
 from re import compile
 from re import findall
@@ -92,30 +93,30 @@ def patch(serialized_output):
         patched_output = patched_output.replace(str_to_replace, str_to_replace_by)
     return patched_output
 
-def generate_cluster_membership_triples(node):
-    cluster_membership_triples = []
-    for mention_id in node.get('mentions'):
-        mention = node.get('mentions').get(mention_id)
-        if mention.is_negated():
-            node.get('logger').record_event('SKIPPING', 'Cluster membership', '{}:{}'.format(node.get('name'), mention_id), "because the mention is negated")
-            continue
-        cluster_membership_md5 = get_md5_from_string('{node_name}:{mention_id}'.format(node_name = node.get('name'),
+def generate_cluster_membership_triples(node, mention):
+    mention_id = mention.get('id')
+    cluster_membership_md5 = get_md5_from_string('{node_name}:{mention_id}'.format(node_name = node.get('name'),
                                                                                      mention_id = mention_id))
-        triples = """\
-            _:bcm-{cluster_membership_md5} a aida:ClusterMembership .
-            _:bcm-{cluster_membership_md5} aida:cluster ldc:cluster-{node_name} .
-            _:bcm-{cluster_membership_md5} aida:clusterMember ldc:{mention_id} .
-            _:bcm-{cluster_membership_md5} aida:confidence _:bcm-{cluster_membership_md5}-confidence .
-            _:bcm-{cluster_membership_md5}-confidence a aida:Confidence .
-            _:bcm-{cluster_membership_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-            _:bcm-{cluster_membership_md5}-confidence aida:system {system} .
-            _:bcm-{cluster_membership_md5} aida:system {system} .
-        """.format(cluster_membership_md5 = cluster_membership_md5,
-                   node_name = node.get('name'),
-                   mention_id = mention_id,
-                   system = SYSTEM_NAME)
-        cluster_membership_triples.append(triples)
-    return '\n'.join(cluster_membership_triples)
+    triples = """\
+        _:bcm-{cluster_membership_md5} a aida:ClusterMembership .
+        _:bcm-{cluster_membership_md5} aida:cluster ldc:cluster-{node_name} .
+        _:bcm-{cluster_membership_md5} aida:clusterMember ldc:{mention_id} .
+        _:bcm-{cluster_membership_md5} aida:confidence _:bcm-{cluster_membership_md5}-confidence .
+        _:bcm-{cluster_membership_md5}-confidence a aida:Confidence .
+        _:bcm-{cluster_membership_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+        _:bcm-{cluster_membership_md5}-confidence aida:system {system} .
+        _:bcm-{cluster_membership_md5} aida:system {system} .
+    """.format(cluster_membership_md5 = cluster_membership_md5,
+               node_name = node.get('name'),
+               mention_id = mention_id,
+               system = SYSTEM_NAME)
+
+    triple_block_dict = {}
+    triple_block_dict['all_docs'] = triples
+    document_ids = {document_span.get('document_id'):1 for document_span in mention.get('document_spans').values()}
+    for document_id in document_ids:
+        triple_block_dict[document_id] = triples
+    return triple_block_dict
 
 def generate_cluster_triples(reference_kb_id, node):
     node_ids = []
@@ -141,26 +142,32 @@ def generate_cluster_triples(reference_kb_id, node):
                    )
         link_assertion_triples.append(triples)
     
+    # generate cluster informative justifications
     informative_justification_spans = node.get('informative_justification_spans')
-    informative_justification_triples = []
+    informative_justification_triples_by_document = defaultdict(list)
     for span in informative_justification_spans.values():
         triple = 'ldc:cluster-{node_name} aida:informativeJustification _:b{span_md5} .'.format(node_name=node.get('name'),
                                                                                                span_md5=span.get('md5'))
-        informative_justification_triples.append(triple)
-    triples = """\
-        ldc:cluster-{node_name} a aida:SameAsCluster .
-        ldc:cluster-{node_name} aida:prototype ldc:{prototype_object_id} .
-        ldc:cluster-{node_name} aida:system {system} .
-        {informative_justification_triples}
-        {link_assertion_triples}
-    """.format(node_name = node.get('name'),
-               informative_justification_triples = '\n'.join(informative_justification_triples),
-               link_assertion_triples = '\n'.join(link_assertion_triples),
-               prototype_object_id = node.get('prototype').get('id'),
-               system = SYSTEM_NAME,
-               node_id = node.get('id'),
-               reference_kb_id = reference_kb_id)
-    return triples
+        informative_justification_triples_by_document['all_docs'].append(triple)
+        informative_justification_triples_by_document[span.get('document_id')].append(triple)
+
+    triple_block_dict = {}
+    for key in informative_justification_triples_by_document:
+        triples = """\
+            ldc:cluster-{node_name} a aida:SameAsCluster .
+            ldc:cluster-{node_name} aida:prototype ldc:{prototype_object_id} .
+            ldc:cluster-{node_name} aida:system {system} .
+            {informative_justification_triples}
+            {link_assertion_triples}
+        """.format(node_name = node.get('name'),
+                   informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
+                   link_assertion_triples = '\n'.join(link_assertion_triples),
+                   prototype_object_id = node.get('prototype').get('id'),
+                   system = SYSTEM_NAME,
+                   node_id = node.get('id'),
+                   reference_kb_id = reference_kb_id)
+        triple_block_dict[key] = triples
+    return triple_block_dict
 
 def generate_ere_object_triples(reference_kb_id, ere_object):
     def get_ldc_time_triples(logger, date_iri, date_string, date_type, where):
@@ -299,31 +306,37 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     
     # generate informative justification triples
     informative_justification_spans = ere_object.get('informative_justification_spans')
-    informative_justification_triples = []
+    informative_justification_triples_by_document = defaultdict(list)
     for span in informative_justification_spans.values():
         if span is None:
             print('check this')
         triple = 'ldc:{ere_object_id} aida:informativeJustification _:b{span_md5} .'.format(ere_object_id=ere_object.get('id'),
                                                                                                span_md5=span.get('md5'))
-        informative_justification_triples.append(triple)
-    triples = """\
-        ldc:{ere_object_id} a aida:{ere_type} .
-        {informative_justification_triples}
-        {ldc_time_assertion_triples}
-        {link_assertion_triples}
-        {has_name_triple}
-        ldc:{ere_object_id} aida:system {system} .
-    """.format(ere_object_id=ere_object.get('id'),
-               ere_type = ere_type,
-               ldc_time_assertion_triples = ldc_time_assertion_triples,
-               informative_justification_triples = '\n'.join(informative_justification_triples),
-               link_assertion_triples = '\n'.join(link_assertion_triples),
-               has_name_triple = has_name_triple,
-               system = SYSTEM_NAME,
-               )
-    return triples    
+        informative_justification_triples_by_document['all_docs'].append(triple)
+        informative_justification_triples_by_document[span.get('document_id')].append(triple)
+
+    triple_block_dict = {}
+    for key in informative_justification_triples_by_document:
+        triples = """\
+            ldc:{ere_object_id} a aida:{ere_type} .
+            {informative_justification_triples}
+            {ldc_time_assertion_triples}
+            {link_assertion_triples}
+            {has_name_triple}
+            ldc:{ere_object_id} aida:system {system} .
+        """.format(ere_object_id=ere_object.get('id'),
+                   ere_type = ere_type,
+                   ldc_time_assertion_triples = ldc_time_assertion_triples,
+                   informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
+                   link_assertion_triples = '\n'.join(link_assertion_triples),
+                   has_name_triple = has_name_triple,
+                   system = SYSTEM_NAME,
+                   )
+        triple_block_dict[key] = triples
+    return triple_block_dict
 
 def generate_text_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:TextJustification .
         _:b{md5} aida:system {system} .
@@ -341,9 +354,12 @@ def generate_text_justification_triples(document_span, generate_optional_channel
                                                              start_x = document_span.get('span').get('start_x'),
                                                              end_x = document_span.get('span').get('end_x')
                                                              )
-    return triples
+    triple_block_dict['all_docs'] = triples
+    triple_block_dict[document_span.get('document_id')] = triples
+    return triple_block_dict
 
 def generate_image_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:ImageJustification .
         _:b{md5} aida:system {system} .
@@ -367,9 +383,12 @@ def generate_image_justification_triples(document_span, generate_optional_channe
                                                              end_x = document_span.get('span').get('end_x'),
                                                              end_y = document_span.get('span').get('end_y')
                                                              )
-    return triples
+    triple_block_dict['all_docs'] = triples
+    triple_block_dict[document_span.get('document_id')] = triples
+    return triple_block_dict
 
 def generate_keyframe_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:KeyFrameVideoJustification .
         _:b{md5} aida:system {system} .
@@ -395,9 +414,12 @@ def generate_keyframe_justification_triples(document_span, generate_optional_cha
                                                              end_x = document_span.get('span').get('end_x'),
                                                              end_y = document_span.get('span').get('end_y')
                                                              )
-    return triples
+    triple_block_dict['all_docs'] = triples
+    triple_block_dict[document_span.get('document_id')] = triples
+    return triple_block_dict
 
 def generate_video_justification_triples(document_span, channel, generate_optional_channel_attribute_flag):
+    triple_block_dict = {}
     channel_attribute_triple = ''
     if generate_optional_channel_attribute_flag:
         channel_attribute_triple = "_:b{md5} aida:channel '{channel}' .".format(md5 = document_span.get('md5'),
@@ -421,7 +443,9 @@ def generate_video_justification_triples(document_span, channel, generate_option
                                                              start_x = document_span.get('span').get('start_x'),
                                                              end_x = document_span.get('span').get('end_x')
                                                              )
-    return triples
+    triple_block_dict['all_docs'] = triples
+    triple_block_dict[document_span.get('document_id')] = triples
+    return triple_block_dict
 
 def generate_picture_channel_video_justification_triples(document_span, generate_optional_channel_attribute_flag):
     return generate_video_justification_triples(document_span, 'picture', generate_optional_channel_attribute_flag)
@@ -433,6 +457,7 @@ def generate_both_channels_video_justification_triples(document_span, generate_o
     return generate_video_justification_triples(document_span, 'both', generate_optional_channel_attribute_flag)
 
 def generate_picture_justification_triples(document_span):
+    triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:PictureChannelVideoJustification .
         _:b{md5} aida:system {system} .
@@ -450,9 +475,12 @@ def generate_picture_justification_triples(document_span):
                                                              start_x = document_span.get('span').get('start_x'),
                                                              end_x = document_span.get('span').get('end_x')
                                                              )
-    return triples
+    triple_block_dict['all_docs'] = triples
+    triple_block_dict[document_span.get('document_id')] = triples
+    return triple_block_dict
 
 def generate_sound_justification_triples(document_span):
+    triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:SoundChannelVideoJustification .
         _:b{md5} aida:system {system} .
@@ -470,7 +498,9 @@ def generate_sound_justification_triples(document_span):
                                                              start_x = document_span.get('span').get('start_x'),
                                                              end_x = document_span.get('span').get('end_x')
                                                              )
-    return triples
+    triple_block_dict['all_docs'] = triples
+    triple_block_dict[document_span.get('document_id')] = triples
+    return triple_block_dict
 
 def generate_type_assertion_triples(mention):
     full_type = mention.get('full_type')
@@ -478,11 +508,17 @@ def generate_type_assertion_triples(mention):
                                                                   full_type=full_type
                                                                   ))
     subject = mention.get('id')
+
+    triple_block_dict = {}
+
+    # all_docs triple block
     justified_by_triples = []
+    justified_by_triples_by_document = defaultdict(list)
     for document_span in mention.get('document_spans').values():
         justified_by_triple = 'ldc:assertion-{type_assertion_md5} aida:justifiedBy _:b{document_span_md5} .'.format(type_assertion_md5=type_assertion_md5,
                                                                                                          document_span_md5=document_span.get('md5'))
         justified_by_triples.append(justified_by_triple)
+        justified_by_triples_by_document[document_span.get('document_id')].append(justified_by_triple)
 
     triples = """\
         ldc:assertion-{type_assertion_md5} a rdf:Statement .
@@ -501,7 +537,30 @@ def generate_type_assertion_triples(mention):
                    system = SYSTEM_NAME,
                    justified_by_triples = '\n'.join(justified_by_triples)
                    )
-    return triples
+    triple_block_dict['all_docs'] = triples
+
+    # document specific triple block
+    for document_id in justified_by_triples_by_document:
+        justified_by_triples = justified_by_triples_by_document[document_id]
+        triples = """\
+            ldc:assertion-{type_assertion_md5} a rdf:Statement .
+            ldc:assertion-{type_assertion_md5} rdf:object ldcOnt:{full_type} .
+            ldc:assertion-{type_assertion_md5} rdf:predicate rdf:type .
+            ldc:assertion-{type_assertion_md5} rdf:subject ldc:{subject} .
+            ldc:assertion-{type_assertion_md5} aida:confidence _:bta{type_assertion_md5}-confidence .
+            _:bta{type_assertion_md5}-confidence a aida:Confidence .
+            _:bta{type_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+            _:bta{type_assertion_md5}-confidence aida:system {system} .
+            {justified_by_triples}
+            ldc:assertion-{type_assertion_md5} aida:system {system} .
+            """.format(type_assertion_md5 = type_assertion_md5,
+                       full_type = full_type,
+                       subject = subject,
+                       system = SYSTEM_NAME,
+                       justified_by_triples = '\n'.join(justified_by_triples)
+                       )
+        triple_block_dict[document_id] = triples
+    return triple_block_dict
 
 def generate_argument_assertions_with_single_contained_justification_triple(slot):
     subject = slot.get('subject')
@@ -515,32 +574,43 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
         if len(informative_justifications) != 1:
             slot.get('logger').record_event('UNEXPECTED_NUM_INF_JUSTIFICATIONS', slot.get_code_location())
     subject_informative_justification = list(subject_informative_justifications.values())[0]
-    triples = """\
-        ldc:assertion-{slot_assertion_md5} a rdf:Statement .
-        ldc:assertion-{slot_assertion_md5} rdf:object ldc:{argument_mention_id} .
-        ldc:assertion-{slot_assertion_md5} rdf:predicate ldcOnt:{slot_type} .
-        ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
-        ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
-        _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
-        _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-        _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
-        ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
-        _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
-        _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{subject_informative_justification_md5} .
-        _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
-        _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
-        _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-        _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
-        _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
-        ldc:assertion-{slot_assertion_md5} aida:system {system} .
-        """.format(slot_assertion_md5 = slot_assertion_md5,
-                   subject_mention_id = subject_mention_id,
-                   argument_mention_id = argument_mention_id,
-                   slot_type = slot_type,
-                   subject_informative_justification_md5 = subject_informative_justification.get('md5'),
-                   system = SYSTEM_NAME
-                   )
-    return triples
+
+    subject_document_ids = {document_span.get('document_id'):1 for document_span in subject.get('document_spans').values()}
+    argument_document_ids = {document_span.get('document_id'):1 for document_span in argument.get('document_spans').values()}
+    common_document_ids = {'all_docs':1}
+    for document_id in subject_document_ids:
+        if document_id in argument_document_ids:
+            common_document_ids[document_id] = 1
+
+    triple_block_dict = {}
+    for key in common_document_ids:
+        triples = """\
+            ldc:assertion-{slot_assertion_md5} a rdf:Statement .
+            ldc:assertion-{slot_assertion_md5} rdf:object ldc:{argument_mention_id} .
+            ldc:assertion-{slot_assertion_md5} rdf:predicate ldcOnt:{slot_type} .
+            ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
+            ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
+            _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
+            _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+            _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
+            ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
+            _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
+            _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{subject_informative_justification_md5} .
+            _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
+            _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
+            _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+            _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
+            _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
+            ldc:assertion-{slot_assertion_md5} aida:system {system} .
+            """.format(slot_assertion_md5 = slot_assertion_md5,
+                       subject_mention_id = subject_mention_id,
+                       argument_mention_id = argument_mention_id,
+                       slot_type = slot_type,
+                       subject_informative_justification_md5 = subject_informative_justification.get('md5'),
+                       system = SYSTEM_NAME
+                       )
+        triple_block_dict[key] = triples
+    return triple_block_dict
 
 def generate_argument_assertions_with_two_contained_justifications_triple(slot):
     subject = slot.get('subject')
@@ -586,6 +656,7 @@ def generate_argument_assertions_with_two_contained_justifications_triple(slot):
     return triples
 
 def generate_audio_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:AudioJustification .
         _:b{md5} aida:system {system} .
@@ -603,7 +674,9 @@ def generate_audio_justification_triples(document_span, generate_optional_channe
                                                              start_x = document_span.get('span').get('start_x'),
                                                              end_x = document_span.get('span').get('end_x')
                                                              )
-    return triples
+    triple_block_dict['all_docs'] = triples
+    triple_block_dict[document_span.get('document_id')] = triples
+    return triple_block_dict
 
 class AIFGenerator(Object):
     """
@@ -614,12 +687,10 @@ class AIFGenerator(Object):
         self.annotations = annotations
         self.reference_kb_id = reference_kb_id
         self.generate_optional_channel_attribute_flag = generate_optional_channel_attribute_flag
-        self.triple_blocks = []
+        self.triple_blocks = defaultdict(list)
         self.generate_aif()
 
     def generate_aif(self):
-        self.add_prefixes()
-        self.add_system()
         print('--generating justifications ...')
         self.generate_justifications()
         print('--generating clusters ...')
@@ -634,37 +705,45 @@ class AIFGenerator(Object):
         self.generate_argument_assertions()
         print('--aif generation finished ...')
 
-    def write_output(self, output_dir):
-        filename = '{}/output.ttl'.format(output_dir)
-        program_output = open(filename, 'w')
-        aif = patch(self.get_aif())
-        print('--writing output to file')
-        program_output.write(aif)
-        program_output.close()
-
-    def get_aif(self, raw=False):
-        raw_graph = '\n'.join(self.get('triple_blocks'))
-        if raw:
-            return raw_graph
-        else:
-            print("--parsing raw graph ...")
-            g = Graph()
-            g.parse(data=raw_graph, format="turtle")
-            return g.serialize(format="turtle").decode('utf-8')
+    def write_output(self, output_dir, raw=False):
+        system_triples = self.get('system_triples')
+        prefix_triples = self.get('prefix_triples')
+        for key in self.get('triple_blocks'):
+            self.get('triple_blocks')[key].insert(0, system_triples)
+            self.get('triple_blocks')[key].insert(0, prefix_triples)
+            graph = '\n'.join(self.get('triple_blocks')[key])
+            if raw:
+                print('--using raw graph for output')
+            else:
+                print('--using rdflib for output')
+                print("--parsing raw graph ...")
+                g = Graph()
+                g.parse(data=graph, format="turtle")
+                graph = patch(g.serialize(format="turtle").decode('utf-8'))
+            filename = '{}/{}.ttl'.format(output_dir, key)
+            print('--writing to output file: {}'.format(filename))
+            program_output = open(filename, 'w')
+            program_output.write(graph)
+            program_output.close()
         
-    def add_system(self):
-        system_triple = "ldc:LDCModelGenerator a aida:System ."
-        self.get('triple_blocks').append(system_triple)
+    def add(self, triple_block_dict):
+        for key in triple_block_dict:
+            triple_block = triple_block_dict[key]
+            self.get('triple_blocks')[key].append(triple_block)
 
-    def add_prefixes(self):
-        prefixes = """\
+    def get_system_triples(self):
+        triple_block = "ldc:LDCModelGenerator a aida:System ."
+        return triple_block
+
+    def get_prefix_triples(self):
+        triple_block = """\
             @prefix aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#> .
             @prefix ldc:   <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#> .
             @prefix ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#> .
             @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
             @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
         """
-        self.get('triple_blocks').append(prefixes)
+        return triple_block
     
     def generate_argument_assertions(self):
         for slot in self.get('annotations').get('slots').values():
@@ -680,28 +759,32 @@ class AIFGenerator(Object):
             if slot.get('argument').is_negated():
                 self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the object is negated")
                 continue
-            triple_block = generate_argument_assertions_with_single_contained_justification_triple(slot)
-            self.get('triple_blocks').append(triple_block)
-    
+            triple_block_dict = generate_argument_assertions_with_single_contained_justification_triple(slot)
+            self.add(triple_block_dict)
+
     def generate_ere_objects(self):
         for node in self.get('annotations').get('nodes').values():
-            for ere_object in node.get('mentions').values():
-                if ere_object.is_negated():
-                    self.get('logger').record_event('SKIPPING', 'ERE object corresponding to mention', '{}'.format(ere_object.get('id')), "because the mention is negated")
+            for mention in node.get('mentions').values():
+                if mention.is_negated():
+                    self.get('logger').record_event('SKIPPING', 'ERE object corresponding to mention', '{}'.format(mention.get('id')), "because the mention is negated")
                     continue
-                triple_block = generate_ere_object_triples(self.get('reference_kb_id'), ere_object)
-                self.get('triple_blocks').append(triple_block)
-    
+                triple_block_dict = generate_ere_object_triples(self.get('reference_kb_id'), mention)
+                self.add(triple_block_dict)
+
     def generate_clusters(self):
         for node in self.get('annotations').get('nodes').values():
-            triple_block = generate_cluster_triples(self.get('reference_kb_id'), node)
-            self.get('triple_blocks').append(triple_block)
-    
+            triple_block_dict = generate_cluster_triples(self.get('reference_kb_id'), node)
+            self.add(triple_block_dict)
+
     def generate_cluster_memberships(self):
         for node in self.get('annotations').get('nodes').values():
-            triple_block = generate_cluster_membership_triples(node)
-            self.get('triple_blocks').append(triple_block)
-    
+            for mention in node.get('mentions').values():
+                if mention.is_negated():
+                    self.get('logger').record_event('SKIPPING', 'Justification triples for mention', '{}'.format(mention.get('id')), "because the mention is negated")
+                    continue
+                triple_block_dict = generate_cluster_membership_triples(node, mention)
+                self.add(triple_block_dict)
+
     def generate_justifications(self):
         generate_optional_channel_attribute_flag = self.get('generate_optional_channel_attribute_flag')
         for node in self.get('annotations').get('nodes').values():
@@ -711,14 +794,14 @@ class AIFGenerator(Object):
                     continue
                 for document_span in mention.get('document_spans').values():
                     span_type = document_span.get('span_type')
-                    triple_block = None
+                    triple_block_dict = None
                     method_name = 'generate_{}_justification_triples'.format(span_type)
                     generator = globals().get(method_name)
                     if generator:
-                        triple_block = generator(document_span, generate_optional_channel_attribute_flag)
+                        triple_block_dict = generator(document_span, generate_optional_channel_attribute_flag)
                     else:
                         self.get('logger').record_event('UNDEFINED_METHOD', method_name)
-                    self.get('triple_blocks').append(triple_block)
+                    self.add(triple_block_dict)
     
     def generate_type_assertions(self):
         for node in self.get('annotations').get('nodes').values():
@@ -726,6 +809,5 @@ class AIFGenerator(Object):
                 if mention.is_negated():
                     self.get('logger').record_event('SKIPPING', 'Type assertion for mention', '{}'.format(mention.get('id')), "because the mention is negated")
                     continue
-                triple_block = generate_type_assertion_triples(mention)
-                self.get('triple_blocks').append(triple_block)
-            
+                triple_block_dict = generate_type_assertion_triples(mention)
+                self.add(triple_block_dict)
