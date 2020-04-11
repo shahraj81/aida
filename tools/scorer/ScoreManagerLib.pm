@@ -5929,36 +5929,41 @@ sub score_responses {
         my $filename = $response->get("WHERE")->{FILENAME};
         my $linenum = $response->get("WHERE")->{LINENUM};
         my $line = $response->get("LINE");
-        $logger->NIST_die("No assessment found for response\n $line\n in $filename (line#$linenum)\n");
-      }
-      $response->{ASSESSMENT_ENTRY} = $assessment;
-      $fqec = $assessment->get("FQEC") || "N/A";
-      if($assessment->get("ASSESSMENT") eq "CORRECT") {
-        push(@{$categorized_submissions{$query_and_document}{"CORRECT"}}, $response);
-        $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
-        if($correct_found{$query_and_document}{$fqec}) {
-          push(@{$categorized_submissions{$query_and_document}{"REDUNDANT"}}, $response);
-          push(@{$categorized_submissions{$query_and_document}{"WRONG"}}, $response);
-          $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
-          $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
-        }
-        else {
-          push(@{$categorized_submissions{$query_and_document}{"RIGHT"}}, $response);
-          $correct_found{$query_and_document}{$fqec} = 1;
-          $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
-        }
-      }
-      elsif($assessment->get("ASSESSMENT") eq "INCORRECT") {
-        push(@{$categorized_submissions{$query_and_document}{"INCORRECT"}}, $response);
-        $response->{ASSESSMENT}{"PRE-POLICY"}{INCORRECT} = 1;
-        push(@{$categorized_submissions{$query_and_document}{"WRONG"}}, $response);
-        $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+        $response->{ASSESSMENT}{"PRE-POLICY"}{NOTASSESSED} = 1;
+        $response->{ASSESSMENT}{"POST-POLICY"}{IGNORE} = 1;
+        push(@{$categorized_submissions{$query_and_document}{"NOTASSESSED"}}, $response);
+        push(@{$categorized_submissions{$query_and_document}{"IGNORE"}}, $response);
       }
       else{
-        my $filename = $response->get("WHERE")->{FILENAME};
-        my $linenum = $response->get("WHERE")->{LINENUM};
-        my $line = $response->get("LINE");
-        $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
+	      $response->{ASSESSMENT_ENTRY} = $assessment;
+	      $fqec = $assessment->get("FQEC") || "N/A";
+	      if($assessment->get("ASSESSMENT") eq "CORRECT") {
+	        push(@{$categorized_submissions{$query_and_document}{"CORRECT"}}, $response);
+	        $response->{ASSESSMENT}{"PRE-POLICY"}{CORRECT} = 1;
+	        if($correct_found{$query_and_document}{$fqec}) {
+	          push(@{$categorized_submissions{$query_and_document}{"REDUNDANT"}}, $response);
+	          push(@{$categorized_submissions{$query_and_document}{"WRONG"}}, $response);
+	          $response->{ASSESSMENT}{"PRE-POLICY"}{REDUNDANT} = 1;
+	          $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+	        }
+	        else {
+	          push(@{$categorized_submissions{$query_and_document}{"RIGHT"}}, $response);
+	          $correct_found{$query_and_document}{$fqec} = 1;
+	          $response->{ASSESSMENT}{"POST-POLICY"}{RIGHT} = 1;
+	        }
+	      }
+	      elsif($assessment->get("ASSESSMENT") eq "INCORRECT") {
+	        push(@{$categorized_submissions{$query_and_document}{"INCORRECT"}}, $response);
+	        $response->{ASSESSMENT}{"PRE-POLICY"}{INCORRECT} = 1;
+	        push(@{$categorized_submissions{$query_and_document}{"WRONG"}}, $response);
+	        $response->{ASSESSMENT}{"POST-POLICY"}{WRONG} = 1;
+	      }
+	      else{
+	        my $filename = $response->get("WHERE")->{FILENAME};
+	        my $linenum = $response->get("WHERE")->{LINENUM};
+	        my $line = $response->get("LINE");
+	        $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
+	      }
       }
     }
     else {
@@ -6010,6 +6015,7 @@ sub score_responses {
       my $num_submitted = @{$categorized_submissions{$query_and_document}{"SUBMITTED"} || []};
       my $num_correct = @{$categorized_submissions{$query_and_document}{"CORRECT"} || []};
       my $num_incorrect = @{$categorized_submissions{$query_and_document}{"INCORRECT"} || []};
+      my $num_notassessed = @{$categorized_submissions{$query_and_document}{"NOTASSESSED"} || []};
       my $num_right = @{$categorized_submissions{$query_and_document}{"RIGHT"} || []};
       my $num_wrong = @{$categorized_submissions{$query_and_document}{"WRONG"} || []};
       my $num_redundant = @{$categorized_submissions{$query_and_document}{"REDUNDANT"} || []};
@@ -6019,7 +6025,7 @@ sub score_responses {
       my $ap_treceval = $average_precision{TRECEVAL}{$query_and_document} || 0;
       my $ap_bestcase = $average_precision{BESTCASE}{$query_and_document} || 0;
       my $ap_worstcase = $average_precision{WORSTCASE}{$query_and_document} || 0;
-      my $score = ClassScore->new($logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
+      my $score = ClassScore->new($logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_notassessed, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval);
       $scores->add($score, $query_and_document);
     }
   }
@@ -6051,6 +6057,7 @@ my @class_scorer_fields_to_print = (
   {NAME => 'NUM_CORRECT',        HEADER => 'Correct',  FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_REDUNDANT',      HEADER => 'Dup',      FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_INCORRECT',      HEADER => 'Incrct',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_NOTASSESSED',    HEADER => 'Ntassd',   FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_COUNTED',        HEADER => 'Cntd',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_RIGHT',          HEADER => 'Right',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_WRONG',          HEADER => 'Wrong',    FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -6079,17 +6086,18 @@ sub new {
 sub get_SUMMARY {
   my ($self) = @_;
   my $logger = $self->get("LOGGER");
-  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+  my ($runid, $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_notassessed, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
   my $total_num_counted_queries = 0;
   foreach my $score($self->toarray()) {
-    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval)
-      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_POOLED NUM_IGNORED NUM_GROUND_TRUTH AVERAGE_PRECISION_BESTCASE AVERAGE_PRECISION_WORSTCASE AVERAGE_PRECISION_TRECEVAL);
+    my ($num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_notassessed, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval)
+      = map {$score->get($_)} qw(NUM_SUBMITTED_A NUM_SUBMITTED_B NUM_SUBMITTED NUM_CORRECT NUM_INCORRECT NUM_NOTASSESSED NUM_RIGHT NUM_WRONG NUM_REDUNDANT NUM_POOLED NUM_IGNORED NUM_GROUND_TRUTH AVERAGE_PRECISION_BESTCASE AVERAGE_PRECISION_WORSTCASE AVERAGE_PRECISION_TRECEVAL);
     $runid = $score->get("RUNID") unless $runid;
     $total_num_submitted += $num_submitted;
     $total_num_submitted_a += $num_submitted_a;
     $total_num_submitted_b += $num_submitted_b;
     $total_num_correct += $num_correct;
     $total_num_incorrect += $num_incorrect;
+    $total_num_notassessed += $num_notassessed;
     $total_num_right += $num_right;
     $total_num_wrong += $num_wrong;
     $total_num_redundant += $num_redundant;
@@ -6104,7 +6112,7 @@ sub get_SUMMARY {
   $map_bestcase /= $total_num_counted_queries;
   $map_worstcase /= $total_num_counted_queries;
   $map_treceval /= $total_num_counted_queries;
-  ClassScore->new($logger, $runid, "Summary", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
+  ClassScore->new($logger, $runid, "Summary", "", $total_num_submitted_a, $total_num_submitted_b, $total_num_submitted, $total_num_correct, $total_num_incorrect, $total_num_notassessed, $total_num_right, $total_num_wrong, $total_num_redundant, $total_num_pooled, $total_num_ignored, $total_num_ground_truth, $map_bestcase, $map_worstcase, $map_treceval);
 }
 
 sub print_line {
@@ -6164,7 +6172,7 @@ package ClassScore;
 use parent -norequire, 'Super';
 
 sub new {
-  my ($class, $logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval) = @_;
+  my ($class, $logger, $runid, $query_id, $docid, $num_submitted_a, $num_submitted_b, $num_submitted, $num_correct, $num_incorrect, $num_notassessed, $num_right, $num_wrong, $num_redundant, $num_pooled, $num_ignored, $num_ground_truth, $ap_bestcase, $ap_worstcase, $ap_treceval) = @_;
   my $self = {
     __CLASS__ => 'ClassScore',
     AVERAGE_PRECISION_BESTCASE => $ap_bestcase,
@@ -6176,6 +6184,7 @@ sub new {
     NUM_GROUND_TRUTH => $num_ground_truth,
     NUM_IGNORED => $num_ignored,
     NUM_INCORRECT => $num_incorrect,
+    NUM_NOTASSESSED => $num_notassessed,
     NUM_POOLED => $num_pooled,
     NUM_REDUNDANT => $num_redundant,
     NUM_RIGHT => $num_right,
