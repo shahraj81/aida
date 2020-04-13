@@ -1,6 +1,6 @@
 # Introduction
 
-November 8, 2019
+April 13, 2020
 
 This document describes:
 
@@ -708,6 +708,9 @@ The score and debug files will be produced in `examples/M9/zerohop_response/outp
 Note: The scorer does not overwrite score and debug file, and therefore, it is necessary to remove these files if they already exist. Also, note that the input to scorer is a pathfile containing paths of all the input xml response files.
 
 # Revision history
+## 4/13/2020 - AIDASR-v2019.2.1:
+	- Updated task1 class scorer to ignore new responses, i.e., those not in the pool of assessed responses, instead of printing an error message and crashing
+		- As an effect of this change, the cluster with its most confident response would be ignored if the response is not found in the pool of unassessed responses
 ## 11/8/2019 - AIDASR-v2019.2.0:
 	- Fixed the following bug(s) in task2 graph scoring based on strategy2:
 		- Computation of frame value was not taking maximum of the maximum number of unique edges in the submitted event/relation KE that are correct and that have the same global KB ID for the subject
