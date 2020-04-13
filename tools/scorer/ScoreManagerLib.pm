@@ -5934,7 +5934,7 @@ sub score_responses {
         push(@{$categorized_submissions{$query_and_document}{"NOTASSESSED"}}, $response);
         push(@{$categorized_submissions{$query_and_document}{"IGNORE"}}, $response);
       }
-      else{
+      else {
 	      $response->{ASSESSMENT_ENTRY} = $assessment;
 	      $fqec = $assessment->get("FQEC") || "N/A";
 	      if($assessment->get("ASSESSMENT") eq "CORRECT") {
