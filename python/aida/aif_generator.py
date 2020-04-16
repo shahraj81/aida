@@ -142,17 +142,26 @@ def generate_cluster_triples(reference_kb_id, node):
                    )
         link_assertion_triples.append(triples)
     
-    # generate cluster informative justifications
-    informative_justification_spans = node.get('informative_justification_spans')
+    # generate cluster informative justifications mention spans
+    informative_justification_mention_spans = node.get('informative_justification_mention_spans')
     informative_justification_triples_by_document = defaultdict(list)
-    for span in informative_justification_spans.values():
+    prototype_by_document = {}
+    for mention_span in informative_justification_mention_spans.values():
+        mention = mention_span.get('mention')
+        span = mention_span.get('span')
         triple = 'ldc:cluster-{node_name} aida:informativeJustification _:b{span_md5} .'.format(node_name=node.get('name'),
                                                                                                span_md5=span.get('md5'))
         informative_justification_triples_by_document['all_docs'].append(triple)
         informative_justification_triples_by_document[span.get('document_id')].append(triple)
+        prototype_by_document[span.get('document_id')] = mention
+        if 'all_docs' not in prototype_by_document:
+            prototype_by_document['all_docs'] = mention
+        elif prototype_by_document['all_docs'].get('level') != 'nam' and mention.get('level') == 'nam':
+            prototype_by_document['all_docs'] = mention
 
     triple_block_dict = {}
     for key in informative_justification_triples_by_document:
+        prototype = prototype_by_document[key]
         triples = """\
             ldc:cluster-{node_name} a aida:SameAsCluster .
             ldc:cluster-{node_name} aida:prototype ldc:{prototype_object_id} .
@@ -162,7 +171,7 @@ def generate_cluster_triples(reference_kb_id, node):
         """.format(node_name = node.get('name'),
                    informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
                    link_assertion_triples = '\n'.join(link_assertion_triples),
-                   prototype_object_id = node.get('prototype').get('id'),
+                   prototype_object_id = prototype.get('id'),
                    system = SYSTEM_NAME,
                    node_id = node.get('id'),
                    reference_kb_id = reference_kb_id)

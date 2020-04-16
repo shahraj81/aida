@@ -1,7 +1,6 @@
 """
 AIDA node class.
 """
-
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
@@ -24,9 +23,6 @@ class Node(Object):
         if mention is not None:
             self.add_mention(mention)
 
-    def get_prototype(self):
-        return list(self.get('mentions').values())[0]
-
     def add_mention(self, mention):
         node_metatype_from_mention = mention.get('node_metatype')
         if node_metatype_from_mention != self.metatype:
@@ -37,16 +33,13 @@ class Node(Object):
                                      mention.get('where'))
         self.mentions[mention.get('id')] = mention 
     
-#     def get_md5(self):
-#         return get_md5_from_string(self.get('id'))
-    
     def get_id(self):
         return self.get('kb_id')
     
     def get_name(self):
         return self.get('id').replace('|', '-')
         
-    def get_informative_justification_spans(self):
+    def get_informative_justification_mention_spans(self):
         informative_justification_mention_spans = {}
         for mention in self.get('mentions').values():
             for span in mention.get('document_spans').values():
@@ -56,15 +49,10 @@ class Node(Object):
                 if document_id not in informative_justification_mention_spans:
                     informative_justification_mention_spans[document_id] = mention_span
                 else:
-                    informative_justification_mention_spans[document_id] = self.get('preferred_span', informative_justification_mention_spans[document_id], mention_span)
-        informative_justification_spans = {}
-        for document_id in informative_justification_mention_spans:
-            mention_span = informative_justification_mention_spans[document_id]
-            span = mention_span['span']
-            informative_justification_spans[document_id] = span
-        return informative_justification_spans
+                    informative_justification_mention_spans[document_id] = self.get('preferred_mention_span', informative_justification_mention_spans[document_id], mention_span)
+        return informative_justification_mention_spans
     
-    def get_preferred_span(self, mention_span1, mention_span2):
+    def get_preferred_mention_span(self, mention_span1, mention_span2):
         
         def length_of(span):
             return float(span.get('span').get('end_x')) - float(span.get('span').get('start_x'))
@@ -158,23 +146,3 @@ class Node(Object):
             if distance_to_origin_of(span2, 'end') < distance_to_origin_of(span2, 'end'):
                 return mention_span2
             return
-    
-#     def get_informative_justification_spans_alpha(self):
-#         """
-#         returns a list containing one (arbitrarily picked) span per document
-#         """
-#         document_spans = {}
-#         for mention in self.get('mentions').values():
-#             for span in mention.get('document_spans').values():
-#                 document_id = span.get('document_id')
-#                 if document_id not in document_spans:
-#                     document_spans[document_id] = []
-#                 mention_span = Object(self.get('logger'))
-#                 mention_span.set(key='mention', value=mention)
-#                 mention_span.set(key='span', value=span)
-#                 document_spans[document_id].append(mention_span)
-#         informative_justification_spans = {}
-#         for document_id in document_spans:
-#             informative_justification_span = get_informative_justification_span(self.get('id'), document_spans[document_id])
-#             informative_justification_spans[document_id] = informative_justification_span
-#         return informative_justification_spans.values()
