@@ -44,11 +44,22 @@ class Mention(Object):
         self.load_node_metatype()
 
     def get_cleaned_full_type(self):
-        cleaned_full_type = self.type_mappings.get(self.get('cleaned_full_type_ov'))
+        entry = self.get('entry')
+
+        cleaned_full_type = self.get('cleaned_full_type_ov')
+
         if self.is_event() or self.is_relation():
             if unspecified(self.get('entry').get('subtype')):
-                cleaned_full_type = '{}.Unspecified'.format(cleaned_full_type)
-        return cleaned_full_type
+                if unspecified(self.get('entry').get('subsubtype')):
+                    cleaned_full_type = '{}.unspecified'.format(entry.get('type'))
+                else:
+                    cleaned_full_type = '{}.unspecified.{}'.format(entry.get('type'), entry.get('subsubtype'))
+
+        propercased_cleaned_full_type = self.type_mappings.get(cleaned_full_type, None)
+
+        retval = propercased_cleaned_full_type if propercased_cleaned_full_type is not None else cleaned_full_type
+
+        return retval
 
     def get_cleaned_full_type_ov(self):
         entry = self.get('entry')
