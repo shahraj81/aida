@@ -68,6 +68,10 @@ __date__    = "7 February 2019"
 # TODO # 9: Fix doubles to xsd:double
 #
 # STATUS: Complete
+# ---------------------------------------------------------------------------
+# TODO # 10: (a) Validate task 1 KBs using AIF validator
+#            (b) Write a script to check if the KB referred inside is not the source KB for the task 1 KB.
+#            (c) Run verify output and check like we did a few days ago
 
 from aida.object import Object
 from aida.utility import get_md5_from_string
@@ -317,8 +321,6 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     informative_justification_spans = ere_object.get('informative_justification_spans')
     informative_justification_triples_by_document = defaultdict(list)
     for span in informative_justification_spans.values():
-        if span is None:
-            print('check this')
         triple = 'ldc:{ere_object_id} aida:informativeJustification _:b{span_md5} .'.format(ere_object_id=ere_object.get('id'),
                                                                                                span_md5=span.get('md5'))
         informative_justification_triples_by_document['all_docs'].append(triple)
