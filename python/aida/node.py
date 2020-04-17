@@ -42,6 +42,8 @@ class Node(Object):
     def get_informative_justification_mention_spans(self):
         informative_justification_mention_spans = {}
         for mention in self.get('mentions').values():
+            if mention.is_negated():
+                continue
             for span in mention.get('document_spans').values():
                 mention_span = {'mention': mention,
                                 'span': span}
