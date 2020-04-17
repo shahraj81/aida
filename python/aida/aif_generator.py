@@ -72,6 +72,9 @@ __date__    = "7 February 2019"
 # TODO # 10: (a) Validate task 1 KBs using AIF validator
 #            (b) Write a script to check if the KB referred inside is not the source KB for the task 1 KB.
 #            (c) Run verify output and check like we did a few days ago
+#            (d) Fix generate_argument_assertions_with_single_contained_justification_triple to omit entries not from source kb
+#            (e) Retain only single prototype if multiple were found from the same source document.
+#            (f) No negated mention should be referenced
 
 from aida.object import Object
 from aida.utility import get_md5_from_string
@@ -790,6 +793,9 @@ class AIFGenerator(Object):
 
     def generate_clusters(self):
         for node in self.get('annotations').get('nodes').values():
+            if len(node.get('informative_justification_mention_spans').keys()) == 0:
+                self.get('logger').record_event('SKIPPING', 'SameAsCluster', '{}'.format(node.get('name')), "because it does not have any informative justification")
+                continue
             triple_block_dict = generate_cluster_triples(self.get('reference_kb_id'), node)
             self.add(triple_block_dict)
 
