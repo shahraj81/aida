@@ -75,6 +75,7 @@ __date__    = "7 February 2019"
 #            (d) Fix generate_argument_assertions_with_single_contained_justification_triple to omit entries not from source kb
 #            (e) Retain only single prototype if multiple were found from the same source document.
 #            (f) No negated mention should be referenced
+#            (g) switch for type of output (raw or turtle or parsed n-triples)
 
 from aida.object import Object
 from aida.utility import get_md5_from_string
@@ -155,6 +156,8 @@ def generate_cluster_triples(reference_kb_id, node):
     prototype_by_document = {}
     for mention_span in informative_justification_mention_spans.values():
         mention = mention_span.get('mention')
+        if mention.is_negated():
+            continue
         span = mention_span.get('span')
         triple = 'ldc:cluster-{node_name} aida:informativeJustification _:b{span_md5} .'.format(node_name=node.get('name'),
                                                                                                span_md5=span.get('md5'))
@@ -793,9 +796,6 @@ class AIFGenerator(Object):
 
     def generate_clusters(self):
         for node in self.get('annotations').get('nodes').values():
-            if len(node.get('informative_justification_mention_spans').keys()) == 0:
-                self.get('logger').record_event('SKIPPING', 'SameAsCluster', '{}'.format(node.get('name')), "because it does not have any informative justification")
-                continue
             triple_block_dict = generate_cluster_triples(self.get('reference_kb_id'), node)
             self.add(triple_block_dict)
 
