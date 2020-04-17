@@ -770,6 +770,12 @@ class AIFGenerator(Object):
             if slot.get('argument').is_negated():
                 self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the object is negated")
                 continue
+            if len(slot.get('subject').get('nodes')) == 0:
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('id')), "because the subject mention is not found in the linking table")
+                continue
+            if len(slot.get('argument').get('nodes')) == 0:
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('id')), "because the argument mention is not found in the linking table")
+                continue
             triple_block_dict = generate_argument_assertions_with_single_contained_justification_triple(slot)
             self.add(triple_block_dict)
 
