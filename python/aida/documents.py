@@ -11,8 +11,11 @@ from aida.container import Container
 
 class Documents(Container):
     """
-    AIDA documents class
+    The documents container
     """
 
     def __init__(self, logger):
+        """
+        Initialize the documents container.
+        """
         super().__init__(logger)
