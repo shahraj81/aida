@@ -46,7 +46,7 @@ class Object(object):
 
     def get_method(self, method_name):
         """
-        Returns the method whose name matches the value store in method_name,
+        Returns the method whose name matches the value stored in method_name,
         None otherwise.
         """
         try:
