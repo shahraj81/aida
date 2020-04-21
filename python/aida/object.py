@@ -28,7 +28,7 @@ class Object(object):
             
     def get(self, key, *args):
         """
-        Gets the value for the key given args.
+        Gets the value for the key using the given args.
 
         If method get_{key} is defined for this object, call that method with
         args as its arguments, and return what it returns, otherwise if there
