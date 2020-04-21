@@ -25,16 +25,19 @@ class DocumentBoundaries(Container):
     """
 
     def __init__(self, logger, filename):
+        """
+        Initializes this instance, and sets the logger and filename for newly created instance.
+        """
         super().__init__(logger)
         self.filename = filename
+        # the implementation of load needs to come from the derived classes.
         self.load()
         
     def get_BOUNDARY(self, span_string):
         """
         Given a span_string of the form:
             doceid:(start_x,start_y)-(end_x,end_y)
-        Return the document boundary of the document element with
-        ID=doceid
+        Return the document boundary corresponding to the document element whose id is doceid.
         """
         document_boundary = None
         search_obj = re.search( r'^(.*?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$', span_string)
