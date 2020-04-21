@@ -81,9 +81,6 @@ class Container(Object):
         else:
             self.store[key] = value
 
-    def dict(self):
-        return self.store
-
     def keys(self):
         """
         Returns a new view of the store's keys.
