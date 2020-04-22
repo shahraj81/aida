@@ -1,5 +1,5 @@
 """
-AIDA document elements container
+AIDA document elements container.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -12,12 +12,18 @@ from aida.document_element import DocumentElement
 
 class DocumentElements(Container):
     """
-    AIDA document elements container
+    The container to hold document elements.
     """
 
     def __init__(self, logger):
+        """
+        Initializes this instance.
+        """
         super().__init__(logger)
     
     def add_document_element(self, document_element):
-        doceid = document_element.get('ID')
+        """
+        Adds the document element to the container.
+        """
+        doceid = document_element.get('id')
         self.document_elements.add(key = doceid, value = document_element)
