@@ -35,7 +35,7 @@ class Container(Object):
         """
         return iter(self.store)
 
-    def get(self, key, *args, default=None):
+    def get(self, key, default=None, *args):
         """
         Gets the value for the key using the given args, if found. Returns None otherwise.
 
