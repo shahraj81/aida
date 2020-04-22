@@ -24,3 +24,9 @@ class DocumentElement(Object):
         super().__init__(logger)
         self.documents = Documents(logger)
         self.ID = ID
+
+    def add_document(self, document):
+        """
+        Adds the document that are the parents of the document element represented by this instance
+        """
+        self.get('documents').add(key=document.get('ID'), value=document)
