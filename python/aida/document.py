@@ -15,7 +15,7 @@ class Document(Container):
     AIDA document class
     """
 
-    def __init__(self, logger, ID=None):
+    def __init__(self, logger, id=None):
         super().__init__(logger)
         self.document_elements = DocumentElements(logger)
         self.id = id
