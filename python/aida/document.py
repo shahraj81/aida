@@ -15,14 +15,14 @@ class Document(Container):
     The document class
     """
 
-    def __init__(self, logger, id=None):
+    def __init__(self, logger, ID=None):
         """
         Initializes the document instance, setting the logger, and optionally its ID.
 
         Arguments:
             logger (aida.Logger):
                 the aida.Logger object
-            id (str):
+            ID (str):
                 the string identifier of the document
 
         NOTE: the document contains a container to store document elements that
@@ -30,7 +30,7 @@ class Document(Container):
         """
         super().__init__(logger)
         self.document_elements = DocumentElements(logger)
-        self.id = id
+        self.ID = ID
         self.logger = logger
 
     def add_document_element(self, document_element):
@@ -40,5 +40,5 @@ class Document(Container):
         Arguments:
             document_element (aida.DocumentELement)
         """
-        doceid = document_element.get('id')
+        doceid = document_element.get('ID')
         self.document_elements.add(key = doceid, value = document_element)
