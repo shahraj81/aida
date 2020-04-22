@@ -13,10 +13,15 @@ from aida.document_boundary import DocumentBoundary
 
 class KeyFrameBoundaries(DocumentBoundaries):
     """
-    AIDA KeyFrameBoundaries class.
+    This class is used for storing keyframe boundaries, and is inherited from the DocumentBoundaries
+    class which is a container customized to store document boundaries.
     """
 
     def __init__(self, logger, filename):
+        """
+        Initialize the KeyFrameBoundaries object by calling the constructor of
+        the parent DocumentBoundaries, passing it the logger and the filename.
+        """
         super().__init__(logger, filename)
     
     def load(self):
