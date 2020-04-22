@@ -50,12 +50,10 @@ class DocumentMappings(Object):
                 is_core = 0
                 if self.core_documents is not None and self.core_documents.exists(docid):
                     is_core = 1
-                document = self.documents.get(docid, default=Document(self.logger))
-                document.set('ID', docid)
+                document = self.get('documents').get(docid, default=Document(self.logger, docid))
                 document.set('is_core', is_core)
-                document_element = self.document_elements.get(doceid, default=DocumentElement(self.logger))
+                document_element = self.get('document_elements').get(doceid, default=DocumentElement(self.logger, doceid))
                 document_element.get('documents').add(key=docid, value=document)
-                document_element.set('ID', doceid)
                 document_element.set('type', detype)
                 document_element.set('modality', modality)
                 document.add_document_element(document_element)
