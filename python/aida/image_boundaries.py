@@ -14,10 +14,15 @@ from os.path import splitext
 
 class ImageBoundaries(DocumentBoundaries):
     """
-    AIDA ImageBoundaries class.
+    This class is used for storing image boundaries, and is inherited from the DocumentBoundaries
+    class which is a container customized to store document boundaries.
     """
 
     def __init__(self, logger, filename):
+        """
+        Initialize the ImageBoundaries object by calling the constructor of
+        the parent DocumentBoundaries, passing it the logger and the filename.
+        """
         super().__init__(logger, filename)
     
     def load(self):
