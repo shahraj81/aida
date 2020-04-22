@@ -15,7 +15,7 @@ class DocumentElement(Object):
     AIDA document-element class.
     """
 
-    def __init__(self, logger, ID=None):
+    def __init__(self, logger, id=None):
         super().__init__(logger)
         self.documents = Documents(logger)
         self.id = id
