@@ -37,7 +37,7 @@ class Container(Object):
 
     def get(self, key, *args, default=None):
         """
-        Gets the value for the key given args, if found. Returns None otherwise.
+        Gets the value for the key using the given args, if found. Returns None otherwise.
 
         The value is looked up first in the parent object, returned if found. Otherwise,
         the value is looked up in the store, again returned if found. Otherwise, the
@@ -89,6 +89,6 @@ class Container(Object):
 
     def values(self):
         """
-        Returns a new view of the store’s values.
+        Returns a new view of the store's values.
         """
         return self.store.values()
