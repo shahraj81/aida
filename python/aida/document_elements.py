@@ -25,5 +25,5 @@ class DocumentElements(Container):
         """
         Adds the document element to the container.
         """
-        doceid = document_element.get('id')
+        doceid = document_element.get('ID')
         self.document_elements.add(key = doceid, value = document_element)
