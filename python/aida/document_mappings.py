@@ -53,7 +53,7 @@ class DocumentMappings(Object):
                 document = self.get('documents').get(docid, default=Document(self.logger, docid))
                 document.set('is_core', is_core)
                 document_element = self.get('document_elements').get(doceid, default=DocumentElement(self.logger, doceid))
-                document_element.get('documents').add(key=docid, value=document)
+                document_element.add_document(document)
                 document_element.set('type', detype)
                 document_element.set('modality', modality)
                 document.add_document_element(document_element)
