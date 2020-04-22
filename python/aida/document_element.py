@@ -12,10 +12,15 @@ from aida.documents import Documents
 
 class DocumentElement(Object):
     """
-    AIDA document-element class.
+    The document-element class.
+
+    Along with its own ID (i.e. the document element it refers to), the object of this class contains a container holding its parent documents.
     """
 
-    def __init__(self, logger, id=None):
+    def __init__(self, logger, ID=None):
+        """
+        Initializes this instance.
+        """
         super().__init__(logger)
         self.documents = Documents(logger)
-        self.id = id
+        self.ID = ID
