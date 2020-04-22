@@ -16,9 +16,17 @@ def get_md5_from_string(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 def get_query_id_from_filename(filename):
+    """
+    Gets queryid from filename.
+    """
     return filename.split(r'/')[-1][:-7]
 
 def is_number(s):
+    """
+    Checks if the argument is numeric.
+
+    Return True if the argument is a number, False otherwise.
+    """
     try:
         float(s)
     except ValueError:
@@ -31,4 +39,4 @@ def types_are_compatible(entity_type_in_query, entity_type_in_response):
         return True
     if entity_type_in_response.startswith('{}.'.format(entity_type_in_query)):
         return True
-    return False    
+    return False
