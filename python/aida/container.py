@@ -57,7 +57,7 @@ class Container(Object):
 
     def set(self, key, value):
         """
-        Set the value of the key in the store if key is found in the store, otherwise,
+        Sets the value of the key in the store if key is found in the store, otherwise,
         the object's setter is called.
         """
         if key in self.store:
@@ -73,7 +73,7 @@ class Container(Object):
 
     def add(self, value, key=None):
         """
-        Add the value to the store and map it to the key if provided, otherwise,
+        Adds the value to the store and map it to the key if provided, otherwise,
         use the length of the store as the key.
         """
         if key is None:
