@@ -14,10 +14,15 @@ from os.path import splitext
 
 class VideoBoundaries(DocumentBoundaries):
     """
-    AIDA VideoBoundaries class.
+    This class is used for storing video boundaries, and is inherited from the DocumentBoundaries
+    class which is a container customized to store document boundaries.
     """
 
     def __init__(self, logger, filename):
+        """
+        Initialize the VideoBoundaries object by calling the constructor of
+        the parent DocumentBoundaries, passing it the logger and the filename.
+        """
         super().__init__(logger, filename)
     
     def load(self):
