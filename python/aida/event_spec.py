@@ -1,5 +1,5 @@
 """
-AIDA entity specs for ontology files
+Specifications of events in the ontology files
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -12,7 +12,14 @@ from aida.container import Container
 from aida.argument_spec import ArgumentSpec
 
 class EventSpec(ERESpec):
+    """
+    Specifications of events in the ontology files.
+    """
     def __init__(self, logger, entry):
+        """
+        Initialize the specification of an event from the entry corresponding to a line read
+        from the ontology file.
+        """
         super().__init__(logger, entry)
         self.arguments = Container(logger)
         self.annotation_id = entry.get('AnnotIndexID')
