@@ -12,7 +12,6 @@ from aida.object import Object
 from aida.file_handler import FileHandler
 from aida.document import Document
 from aida.container import Container
-from aida.document_elements import DocumentElements
 from aida.document_element import DocumentElement
 
 nested_dict = lambda: defaultdict(nested_dict)
@@ -39,7 +38,7 @@ class DocumentMappings(Object):
         self.fileheader = None
         self.core_documents = core_documents
         self.documents = Container(logger)
-        self.document_elements = DocumentElements(logger)
+        self.document_elements = Container(logger)
         self.encodings = encodings
         self.load_data()
     

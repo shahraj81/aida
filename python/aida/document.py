@@ -8,7 +8,7 @@ __version__ = "0.0.0.1"
 __date__    = "14 January 2020"
 
 from aida.object import Object
-from aida.document_elements import DocumentElements
+from aida.container import Container
 
 class Document(Object):
     """
@@ -29,7 +29,7 @@ class Document(Object):
         comprise this document.
         """
         super().__init__(logger)
-        self.document_elements = DocumentElements(logger)
+        self.document_elements = Container(logger)
         self.ID = ID
         self.logger = logger
 
