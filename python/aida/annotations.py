@@ -12,7 +12,7 @@ from aida.object import Object
 from aida.mention import Mention
 from aida.node import Node
 from aida.slot import Slot
-from aida.slots import Slots
+from aida.container import Container
 import os
 
 class Annotations(Object):
@@ -55,7 +55,7 @@ class Annotations(Object):
         self.load_video_time_offsets_flag = load_video_time_offsets_flag
         self.mentions = {}
         self.nodes = {}
-        self.slots = Slots(logger)
+        self.slots = Container(logger)
         self.load_annotations()
     
     def process_arg_mentions(self, filename):
@@ -101,7 +101,7 @@ class Annotations(Object):
                 self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Mention', argmention_id, entry.get('where'))
                 continue
             slot = Slot(self.logger, subject, slot_code, slot_type, argument, attribute, entry.get('where'))
-            self.get('slots').add_slot(slot)
+            self.get('slots').add_member(slot)
 
     def process_kb_linking(self, filename):
         for entry in FileHandler(self.logger, filename):
