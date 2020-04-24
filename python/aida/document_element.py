@@ -17,7 +17,7 @@ class DocumentElement(Object):
     Along with its own ID (i.e. the document element it refers to), the object of this class contains a container holding its parent documents.
     """
 
-    def __init__(self, logger, ID=None):
+    def __init__(self, logger, ID):
         """
         Initializes this instance.
         """
