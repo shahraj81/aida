@@ -1,5 +1,5 @@
 """
-AIDA ImageBoundaries class.
+The class providing access to ImageBoundaries class.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -14,8 +14,10 @@ from os.path import splitext
 
 class ImageBoundaries(DocumentBoundaries):
     """
-    This class is used for storing image boundaries, and is inherited from the DocumentBoundaries
-    class which is a container customized to store document boundaries.
+    This class provides easy access to image document boundaries, and is inherited
+    from the DocumentBoundaries class which is a container customized for storing
+    document boundaries, and providing methods to provide access to these document
+    boundaries.
     """
 
     def __init__(self, logger, filename):
