@@ -1,5 +1,5 @@
 """
-Slots used for AIDA-evaluation.
+Slots used to map between LDC's internal code for a slot, and its corresponding external slot name.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -12,11 +12,9 @@ from aida.object import Object
 
 class SlotMappings(Object):
     """
-    The slots module for scripts related to AIDA evaluation.
-    
-    This module provides easy access to LDC internal slot code, and external slot name.
+    Slots used to map between LDC's internal code for a slot, and its corresponding external slot name.
     """
-    
+
     # the dictionary used to store mappings
     mappings = {'code_to_type':{}, 'type_to_codes':{}}
     
@@ -54,40 +52,40 @@ class SlotMappings(Object):
                 self.mappings['type_to_codes'][row.slot_type] = {}
             self.mappings['type_to_codes'][row.slot_type][row.slot_type_code] = 1
 
-    def get_type_to_codes(self, type):
+    def get_type_to_codes(self, slot_type):
         """
-        Get the codes mapped to the type.
+        Get the slot_codes mapped to the slot_type.
         
         Parameters:
-            type (str):
-                the 'type' for which the mapped 'codes' are desired.
+            slot_type (str):
+                the slot_type for which the mapped slot_codes are desired.
                 
         Returns:
-            codes (list):
-                the list containing 'codes' mapped to the 'type'.
+            slot_codes (list):
+                the list containing slot_codes mapped to the slot_type.
                 
-            None is returned if no 'codes' were found.
+            None is returned if no slot_codes were found.
         """
-        codes = None
-        if type in self.mappings['type_to_codes'].keys():
-            codes = list(self.mappings['type_to_codes'][type].keys())
-        return codes
+        slot_codes = None
+        if slot_type in self.mappings['type_to_codes'].keys():
+            slot_codes = list(self.mappings['type_to_codes'][slot_type].keys())
+        return slot_codes
     
-    def get_code_to_type(self, code):
+    def get_code_to_type(self, slot_code):
         """
-        Get the 'type' mapped to the 'code'.
+        Get the slot_type mapped to the slot_code.
         
         Parameters:
-            code (str):
-                the 'code' for which the mapped 'type' is desired.
+            slot_code (str):
+                the slot_code for which the mapped slot_type is desired.
                 
         Returns:
-            type (str):
-                the 'type' mapped to the 'code'.
+            slot_type (str):
+                the slot_type mapped to the slot_code.
             
-            None is returned if 'type' is not found.
+            None is returned if slot_type is not found.
         """
-        type = None
-        if code in self.mappings['code_to_type'].keys():
-            type = self.mappings['code_to_type'][code]
-        return type
+        slot_type = None
+        if slot_code in self.mappings['code_to_type'].keys():
+            slot_type = self.mappings['code_to_type'][slot_code]
+        return slot_type
