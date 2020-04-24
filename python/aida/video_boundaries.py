@@ -14,8 +14,10 @@ from os.path import splitext
 
 class VideoBoundaries(DocumentBoundaries):
     """
-    This class is used for storing video boundaries, and is inherited from the DocumentBoundaries
-    class which is a container customized to store document boundaries.
+    This class provides easy access to video document boundaries, and is inherited
+    from the DocumentBoundaries class which is a container customized for storing
+    document boundaries, and providing methods to provide access to these document
+    boundaries.
     """
 
     def __init__(self, logger, filename):
