@@ -43,12 +43,12 @@ class Entry(Object):
 
     def get_filename(self):
         """
-        Get the name of the file which this instance corresponds to.
+        Gets the name of the file which this instance corresponds to.
         """
         return self.get('where').get('filename')
     
     def get_lineno(self):
         """
-        Get the line number which this instance corresponds to.
+        Gets the line number which this instance corresponds to.
         """
         return self.get('where').get('lineno')
