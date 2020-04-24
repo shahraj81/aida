@@ -1,5 +1,5 @@
 """
-AIDA TextDocumentBoundaries class.
+The class for storing TextDocumentBoundaries.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -13,10 +13,19 @@ from aida.document_boundary import DocumentBoundary
 
 class TextBoundaries(DocumentBoundaries):
     """
-    AIDA TextDocumentBoundaries class.
+    The class for storing TextDocumentBoundaries
     """
 
     def __init__(self, logger, filename):
+        """
+        Initialize TextDocumentBoundaries.
+
+        Arguments:
+            logger (aida.Logger):
+                the aida.Logger object
+            filename (str):
+                the file containing information about boundaries of text documents.
+        """
         super().__init__(logger, filename)
     
     def load(self):
