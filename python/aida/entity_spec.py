@@ -1,5 +1,5 @@
 """
-AIDA entity specs for ontology files
+Specifications of an entity as taken from ontology.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -10,7 +10,14 @@ __date__    = "11 February 2020"
 from aida.ere_spec import ERESpec
 
 class EntitySpec(ERESpec):
+    """
+    Specifications of an entity as taken from ontology.
+    """
     def __init__(self, logger, entry):
+        """
+        Initialize the specification of an entity taken from the entry corresponding to a line
+        as read from ontology.
+        """
         super().__init__(logger, entry)
         self.type = entry.get('Type')
         self.subtype = entry.get('Subtype')
