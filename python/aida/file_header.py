@@ -35,4 +35,4 @@ class FileHeader(Object):
         """
         Returns the string representation of the header.
         """
-        return self.line
+        return self.get('line')
