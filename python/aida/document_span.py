@@ -74,6 +74,13 @@ class DocumentSpan(Object):
             end_y (string):
                 zero ('0') for a text document, or
                 the bottom-right-y coordinate for an image
+            where:
+                a dictionary containing values corresponding to the following two keys used to store
+                information about the filename and line number where the span (as represented by the
+                current instance of DocumentSpan) was found:
+                    filename
+                    lineno
+                Primarily used for recording any logging information.
         """
         super().__init__(logger)
         self.document_id = document_id
@@ -86,6 +93,10 @@ class DocumentSpan(Object):
         self.span = Span(logger, start_x, start_y, end_x, end_y)
     
     def get_md5(self):
+        """
+            Gets the MD5 sum corresponding to the string representation of the span represented by the
+            current instance of DocumentSpan.
+        """
         return get_md5_from_string(self.__str__())
 
     def __str__(self, *args, **kwargs):
