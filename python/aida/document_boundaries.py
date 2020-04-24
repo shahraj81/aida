@@ -1,5 +1,5 @@
 """
-AIDA DocumentBoundaries class.
+The class providing access to DocumentBoundaries.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -13,15 +13,15 @@ import re
 
 class DocumentBoundaries(Container):
     """
-    AIDA DocumentBoundaries class.
-    
     This class serves as the base class for:
         TextDocumentBoundaries
         ImageBoundaries
         KeyFrameBoundaries
     
-    The derived classes will need to provide the implementation of
-    corresponding load method.
+    It provides implementation of method(s) common to these derived classes.
+
+    NOTE: The derived classes will need to provide the implementation of
+    corresponding load() method.
     """
 
     def __init__(self, logger, filename):
