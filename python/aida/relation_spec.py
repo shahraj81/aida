@@ -31,5 +31,3 @@ class RelationSpec(ERESpec):
         self.subsubtype_ov = entry.get('Output Value for Sub-Subtype')
         for arg_num in range(1, 3):
             self.get('arguments').add(ArgumentSpec(logger, entry, arg_num), 'arg{}'.format(arg_num))
-    
-    
