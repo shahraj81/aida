@@ -86,7 +86,10 @@ class Container(Object):
         Add a member to the container using the member.get('ID') as the key corresponding
         to which the member is stored.
         """
-        self.add(key=member.get('ID'), value=member)
+        if member.get('ID') not in self:
+            self.add(key=member.get('ID'), value=member)
+        else:
+            self.logger.record_event('DUPLICATE_VALUE', member.get('ID'), member.get('where'))
 
     def keys(self):
         """
