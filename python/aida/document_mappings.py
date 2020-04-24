@@ -11,7 +11,7 @@ from collections import defaultdict
 from aida.object import Object
 from aida.file_handler import FileHandler
 from aida.document import Document
-from aida.documents import Documents
+from aida.container import Container
 from aida.document_elements import DocumentElements
 from aida.document_element import DocumentElement
 
@@ -38,7 +38,7 @@ class DocumentMappings(Object):
         self.filename = filename
         self.fileheader = None
         self.core_documents = core_documents
-        self.documents = Documents(logger)
+        self.documents = Container(logger)
         self.document_elements = DocumentElements(logger)
         self.encodings = encodings
         self.load_data()

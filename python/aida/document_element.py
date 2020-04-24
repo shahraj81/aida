@@ -8,7 +8,7 @@ __version__ = "0.0.0.1"
 __date__    = "14 January 2020"
 
 from aida.object import Object
-from aida.documents import Documents
+from aida.container import Container
 
 class DocumentElement(Object):
     """
@@ -22,7 +22,7 @@ class DocumentElement(Object):
         Initializes this instance.
         """
         super().__init__(logger)
-        self.documents = Documents(logger)
+        self.documents = Container(logger)
         self.ID = ID
 
     def add_document(self, document):
