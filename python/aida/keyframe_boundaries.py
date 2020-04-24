@@ -1,5 +1,5 @@
 """
-AIDA KeyFrameBoundaries class.
+The class providing access to KeyFrameBoundaries.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -13,8 +13,10 @@ from aida.document_boundary import DocumentBoundary
 
 class KeyFrameBoundaries(DocumentBoundaries):
     """
-    This class is used for storing keyframe boundaries, and is inherited from the DocumentBoundaries
-    class which is a container customized to store document boundaries.
+    This class provides easy access to keyframe boundaries, and is inherited
+    from the DocumentBoundaries class which is a container customized for storing
+    document boundaries, and providing methods to provide access to these document
+    boundaries.
     """
 
     def __init__(self, logger, filename):
