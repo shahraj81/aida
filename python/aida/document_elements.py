@@ -19,10 +19,3 @@ class DocumentElements(Container):
         Initializes this instance.
         """
         super().__init__(logger)
-    
-    def add_document_element(self, document_element):
-        """
-        Adds the document element to the container.
-        """
-        doceid = document_element.get('ID')
-        self.document_elements.add(key = doceid, value = document_element)
