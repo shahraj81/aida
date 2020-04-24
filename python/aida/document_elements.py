@@ -8,7 +8,6 @@ __version__ = "0.0.0.1"
 __date__    = "14 January 2020"
 
 from aida.container import Container
-from aida.document_element import DocumentElement
 
 class DocumentElements(Container):
     """
