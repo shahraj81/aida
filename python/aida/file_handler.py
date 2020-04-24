@@ -1,5 +1,5 @@
 """
-File handler for AIDA.
+File handler for reading tab-separated files.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -15,10 +15,8 @@ import re
 
 class FileHandler(Object):
     """
-    File handler for AIDA.
-
-    This FileHandler supports reading tab-separated files only.
-    """
+    File handler for reading tab-separated files.
+   """
 
     def __init__(self, logger, filename, header=None, encoding=None):
         """
