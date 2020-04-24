@@ -1,5 +1,5 @@
 """
-AIDA relation specs for ontology files
+Specifications of a relation as taken from ontology.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -12,7 +12,14 @@ from aida.container import Container
 from aida.argument_spec import ArgumentSpec
 
 class RelationSpec(ERESpec):
+    """
+    Specifications of a relation as taken from ontology.
+    """
     def __init__(self, logger, entry):
+        """
+        Initialize the specifications of a relation taken from the entry corresponding to a line
+        as read from ontology.
+        """
         super().__init__(logger, entry)
         self.arguments = Container(logger)
         self.annotation_id = entry.get('AnnotIndexID')
