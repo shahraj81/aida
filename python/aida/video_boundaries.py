@@ -1,5 +1,5 @@
 """
-AIDA VideoBoundaries class.
+The class providing access to VideoBoundaries.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
