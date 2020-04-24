@@ -1,5 +1,5 @@
 """
-AIDA documents class
+The container used for storing documents.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -11,7 +11,7 @@ from aida.container import Container
 
 class Documents(Container):
     """
-    The documents container
+    The container used for storing documents.
     """
 
     def __init__(self, logger):
