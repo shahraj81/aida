@@ -26,3 +26,6 @@ class Slot(Object):
     def is_negated(self):
         attributes = self.get('attribute')
         return attributes is not None and 'not' in attributes.split(',')
+
+    def get_ID(self):
+        return '{}:{}:{}'.format(self.get('subject').get('id'), self.get('slot_type'), self.get('argument').get('id'))
