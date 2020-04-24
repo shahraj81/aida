@@ -15,7 +15,7 @@ class Document(Object):
     The class for storing information about a document.
     """
 
-    def __init__(self, logger, ID=None):
+    def __init__(self, logger, ID):
         """
         Initializes the document instance, setting the logger, and optionally its ID.
 
