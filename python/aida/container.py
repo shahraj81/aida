@@ -81,6 +81,13 @@ class Container(Object):
         else:
             self.store[key] = value
 
+    def add_member(self, member):
+        """
+        Add a member to the container using the member.get('ID') as the key corresponding
+        to which the member is stored.
+        """
+        self.add(key=member.get('ID'), value=member)
+
     def keys(self):
         """
         Returns a new view of the store's keys.
