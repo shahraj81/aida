@@ -14,10 +14,9 @@ from os.path import splitext
 
 class ImageBoundaries(DocumentBoundaries):
     """
-    This class provides easy access to image document boundaries, and is inherited
-    from the DocumentBoundaries class which is a container customized for storing
-    document boundaries, and providing methods to provide access to these document
-    boundaries.
+    This class provides easy access to image boundaries, and is inherited from the
+    DocumentBoundaries class which is a container customized for storing document
+    boundaries, and providing methods to provide access to these document boundaries.
     """
 
     def __init__(self, logger, filename):
