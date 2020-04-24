@@ -40,5 +40,4 @@ class Document(Object):
         Arguments:
             document_element (aida.DocumentELement)
         """
-        doceid = document_element.get('ID')
-        self.document_elements.add(key = doceid, value = document_element)
+        self.get('document_elements').add_member(document_element)
