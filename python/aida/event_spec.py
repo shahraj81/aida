@@ -17,7 +17,7 @@ class EventSpec(ERESpec):
     """
     def __init__(self, logger, entry):
         """
-        Initialize the specification of an event taken from the entry corresponding to a line
+        Initialize the specifications of an event taken from the entry corresponding to a line
         as read from ontology.
         """
         super().__init__(logger, entry)
