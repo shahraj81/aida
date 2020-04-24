@@ -45,21 +45,21 @@ class FileHandler(Object):
         """
         Load the file.
         """
-        with open(self.filename, encoding=self.encoding) as file:
+        with open(self.get('filename'), encoding=self.get('encoding')) as file:
             for lineno, line in enumerate(file, start=1):
-                if self.header is None:
-                    self.header = FileHeader(self.logger, line.rstrip())
+                if self.get('header') is None:
+                    self.header = FileHeader(self.get('logger'), line.rstrip())
                 else:
-                    where = {'filename': self.filename, 'lineno': lineno}
-                    entry = Entry(self.logger, self.header.columns, 
-                                   line.rstrip('\r\n').split('\t', len(self.header.columns)-1), where)
+                    where = {'filename': self.get('filename'), 'lineno': lineno}
+                    entry = Entry(self.get('logger'), self.get('header').get('columns'),
+                                   line.rstrip('\r\n').split('\t', len(self.get('header').get('columns'))-1), where)
                     entry.set('where', where)
-                    entry.set('header', self.header)
+                    entry.set('header', self.get('header'))
                     entry.set('line', line)
-                    self.entries.append(entry)
+                    self.get('entries').append(entry)
     
     def __iter__(self):
         """
         Returns iterator over entries.
         """
-        return iter(self.entries)
+        return iter(self.get('entries'))
