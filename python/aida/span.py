@@ -1,5 +1,5 @@
 """
-AIDA Span class.
+Span class to be used for storing a text span, or an image or video bounding box.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -11,8 +11,9 @@ from aida.object import Object
 
 class Span(Object):
     """
-    AIDA Span class to be used for storing a text span, or
-    an image or video bounding box
+    Span class to be used for storing a text span, or an image or video bounding box.
+
+    TODO: Update this class for future use of the audio-only bounding box.
     """
 
     def __init__(self, logger, start_x, start_y, end_x, end_y):
