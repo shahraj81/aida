@@ -1,5 +1,5 @@
 """
-AIDA document elements container.
+The container used for storing document elements.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -12,7 +12,7 @@ from aida.document_element import DocumentElement
 
 class DocumentElements(Container):
     """
-    The container to hold document elements.
+    The container used for storing document elements.
     """
 
     def __init__(self, logger):
