@@ -1,5 +1,5 @@
 """
-AIDA encoding format to modality mappings class.
+Encoding format to modality mappings class.
 """
 from fileinput import filename
 
@@ -13,16 +13,28 @@ from aida.container import Container
 
 class Encodings(Container):
     """
-    AIDA encoding format to modality mappings class.
+    Encoding format to modality mappings class.
     """
 
     def __init__(self, logger, filename):
+        """
+        Initialize the Encodings object.
+
+        Parameters:
+            logger (aida.Logger)
+            filename (str)
+        """
+        # initialize the parent
         super().__init__(logger)
         self.logger = logger
         self.filename = filename
+        # read the file and load into the Encodings.
         self.load_data()
         
     def load_data(self):
+        """
+        Reads the file containing the mappings into Encodings.
+        """
         fh = FileHandler(self.logger, self.filename)
         for entry in fh.get('entries'):
             self.add(key=entry.get('encoding'), value=entry.get('modality'))
