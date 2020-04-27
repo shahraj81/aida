@@ -115,7 +115,7 @@ class Annotations(Object):
             for kb_id in kb_id_or_kb_ids.split('|'):
                 node = self.get('nodes').get(kb_id, None)
                 if node is None:
-                    node = Node(self.logger, kb_id, node_metatype, mention)
+                    node = Node(self.logger, kb_id, node_metatype, [mention])
                     self.nodes[kb_id] = node
                 else:
                     node.add_mention(mention)
