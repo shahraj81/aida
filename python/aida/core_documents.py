@@ -1,5 +1,5 @@
 """
-AIDA CoreDocuments class.
+The container to hold CoreDocuments.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -14,10 +14,17 @@ import re
 
 class CoreDocuments(Container):
     """
-    AIDA CoreDocuments class.
+    The container to hold CoreDocuments.
     """
 
     def __init__(self, logger, filename):
+        """
+        Initialize the CoreDocuments.
+
+        Parameters:
+            logger (aida.Logger)
+            filename (str)
+        """
         super().__init__(logger)
         self.filename = filename
         self.load()
