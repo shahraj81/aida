@@ -1,5 +1,5 @@
 """
-AIDA node class.
+The class representing the node for an entity in the KB.
 """
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -12,18 +12,36 @@ from math import sqrt
 
 class Node(Object):
     """
-    AIDA node class.
+    The class representing the node for an entity in the KB.
     """
 
-    def __init__(self, logger, kb_id, metatype, mention):
+    def __init__(self, logger, kb_id, metatype, mentions=None):
+        """
+        Initialize the Node.
+
+        Parameters:
+            logger (aida.Logger)
+            kb_id (str):
+                the string identifier of the Node.
+            metatype (str):
+                'entity', 'relation' or 'event'.
+            mentions (None or list of aida.Mention)
+        """
         super().__init__(logger)
         self.kb_id = kb_id
         self.mentions = {}
         self.metatype = metatype
-        if mention is not None:
-            self.add_mention(mention)
+        if mentions is not None:
+            for mention in mentions:
+                self.add_mention(mention)
 
     def add_mention(self, mention):
+        """
+        Adds a mention to the Node.
+
+        Arguments:
+            mention (aida.Mention)
+        """
         node_metatype_from_mention = mention.get('node_metatype')
         if node_metatype_from_mention != self.metatype:
             self.logger.record_event('METATYPE_MISMATCH',
@@ -32,14 +50,30 @@ class Node(Object):
                                      node_metatype_from_mention,
                                      mention.get('where'))
         self.mentions[mention.get('ID')] = mention
-    
+
     def get_ID(self):
+        """
+        Gets the ID of the Node.
+        """
         return self.get('kb_id')
-    
+
     def get_name(self):
+        """
+        Gets the name of the Node.
+
+        The name is the same as ID except all occurrences of the pipe character '|' is replaced by a dash '-'.
+        """
         return self.get('ID').replace('|', '-')
         
     def get_informative_justification_mention_spans(self):
+        """
+        Get the informative justification mention spans of the Node.
+
+        Returns a dictionary that contains a mention_span (value) per document (key). The mention_span is a
+        dictionary object with exactly two keys:
+            mention -- the aida.Mention object corresponding to the informative justification span
+            span -- the informative justification span
+        """
         informative_justification_mention_spans = {}
         for mention in self.get('mentions').values():
             if mention.is_negated():
@@ -55,11 +89,31 @@ class Node(Object):
         return informative_justification_mention_spans
     
     def get_preferred_mention_span(self, mention_span1, mention_span2):
-        
+        """
+        Gets the mention span that is preferred out of the two mention_spans provided as arguments.
+
+        Arguments:
+            mention_span1 (dict)
+            mention_span2 (dict)
+        """
         def length_of(span):
+            """
+            Gets the length of the span as float.
+
+            Used for:
+                spans from text modality.
+                breaking ties between the two mention_spans passed as argument to get_preferred_mention_span.
+            """
             return float(span.get('span').get('end_x')) - float(span.get('span').get('start_x'))
         
         def area_of(span):
+            """
+            Gets the area of the span.
+
+            Used for:
+                spans from non-textual modalities.
+                breaking ties between the two mention_spans passed as argument to get_preferred_mention_span.
+            """
             width = float(span.get('span').get('end_x')) - float(span.get('span').get('start_x'))
             height = float(span.get('span').get('end_y')) - float(span.get('span').get('start_y'))
             if width == height == 0:
@@ -67,8 +121,23 @@ class Node(Object):
             if height == 0: return width
             if width == 0: return height
             return width * height
-        
+
         def category_of(mention, span):
+            """
+            Gets the category of the span given a particular mentions.
+
+            Returns:
+                named -- text span
+                nominal -- text span
+                pronominal -- text span
+                image
+                audio
+                keyframe
+                sound_channel_video
+                picture_channel_video
+
+            Note that the same span can be part of multiple mentions.
+            """
             modality = span.get('document_element_modality')
             level = mention.get('entry').get('level')
             mediamention_signaltype = mention.get('entry').get('mediamention_signaltype')
@@ -85,8 +154,21 @@ class Node(Object):
             return
         
         def distance_to_origin_of(span, start_or_end):
+            """
+            Gets the distance of the 'start' or 'end' of the span from origin.
+
+            Parameters:
+                span (aida.Span)
+                start_or_end (str):
+                    string literal 'start' or 'end'
+
+            Note: the span has a top left x,y coordinates (start) and a bottom right x,y coordinates (end).
+            start_or_end specifies which of the two points to be used to compute the distance to origin.
+
+            Used for breaking ties between the two mention_spans passed as argument to get_preferred_mention_span.
+            """
             return sqrt(float(span.get('span').get('{}_x'.format(start_or_end)))**2 + float(span.get('span').get('{}_y'.format(start_or_end)))**2)
-        
+
         mention1 = mention_span1['mention']
         span1 = mention_span1['span']
         mention2 = mention_span2['mention']
