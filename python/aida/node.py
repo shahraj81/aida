@@ -31,13 +31,13 @@ class Node(Object):
                                      self.metatype,
                                      node_metatype_from_mention,
                                      mention.get('where'))
-        self.mentions[mention.get('id')] = mention 
+        self.mentions[mention.get('ID')] = mention
     
-    def get_id(self):
+    def get_ID(self):
         return self.get('kb_id')
     
     def get_name(self):
-        return self.get('id').replace('|', '-')
+        return self.get('ID').replace('|', '-')
         
     def get_informative_justification_mention_spans(self):
         informative_justification_mention_spans = {}

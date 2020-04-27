@@ -75,7 +75,7 @@ class Mention(Object):
     def get_full_type(self):
         return self.get('cleaned_full_type')
 
-    def get_id(self):
+    def get_ID(self):
         return self.get('entry').get('eventmention_id') or self.get('entry').get('relationmention_id') or self.get('entry').get('argmention_id')
 
     def get_informative_justification_spans(self):
@@ -219,7 +219,7 @@ class Mention(Object):
                                              entry.get('where'))
 
         if len(self.document_spans) == 0:
-            self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Span type for mention', self.get('id'), entry.get('where'))
+            self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Span type for mention', self.get('ID'), entry.get('where'))
     
     def add_node(self, node):
-        self.nodes[node.get('id')] = node
+        self.nodes[node.get('ID')] = node
