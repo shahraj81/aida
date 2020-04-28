@@ -1,5 +1,5 @@
 """
-AIDA mention class.
+The class representing a mention.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -15,10 +15,24 @@ import re
 
 class Mention(Object):
     """
-    AIDA mention class.
+    The class representing a mention.
     """
 
     def __init__(self, logger, document_mappings, text_boundaries, image_boundaries, video_boundaries, keyframe_boundaries, type_mappings, load_video_time_offsets_flag, entry):
+        """
+        Initialize a mention instance.
+
+        Parameters:
+            logger (aida.Logger)
+            document_mappings (aida.DocumentMappings)
+            text_boundaries (aida.TextBoundaries)
+            image_boundaries (aida.ImageBoundaries)
+            video_boundaries (aida.VideoBoundaries)
+            keyframe_boundaries (aida.KeyFrameBoundaries)
+            type_mappings (aida.Container)
+            load_video_time_offsets_flag (bool)
+            entry (aida.Entry)
+        """
         super().__init__(logger)
         self.logger = logger
         # roll up relevant information from entry into mention
@@ -44,6 +58,16 @@ class Mention(Object):
         self.load_node_metatype()
 
     def get_cleaned_full_type(self):
+        """
+        Gets the cleaned full type of the mention.
+
+        This method first concatenates the type, subtype, and subsubtype,
+        removing any trailing undefined types, and then look up the proper-cased
+        full type in type mappings container.
+
+        Note that the type mappings container maps the output value type to
+        proper-typed types.
+        """
         entry = self.get('entry')
 
         cleaned_full_type = self.get('cleaned_full_type_ov')
@@ -62,6 +86,12 @@ class Mention(Object):
         return retval
 
     def get_cleaned_full_type_ov(self):
+        """
+        Gets the cleaned Full Type OV.
+
+        Note that OV is the type written in lower case descriptive type name as it came from LDC; OV values
+        are not the proper cased types used in the AIF.
+        """
         entry = self.get('entry')
         if unspecified(entry.get('type')):
             return
@@ -73,12 +103,31 @@ class Mention(Object):
         return full_type
         
     def get_full_type(self):
+        """
+        Gets the full type of the mention.
+
+        At this point, this method simply returns the output of the get_cleaned_full_type method.
+        """
         return self.get('cleaned_full_type')
 
     def get_ID(self):
+        """
+        Gets the ID of the mention.
+
+        The ID returned is the value of the following field taken from the entry:
+            argmention_id -- for entity mention
+            relationmention_id -- for relation mention
+            eventmention_id -- for event mention
+        """
         return self.get('entry').get('eventmention_id') or self.get('entry').get('relationmention_id') or self.get('entry').get('argmention_id')
 
     def get_informative_justification_spans(self):
+        """
+        Gets the informative justification spans of this mention.
+
+        The return value is a dictionary object that has one informative justification
+        span per document.
+        """
         informative_justification_spans = {} 
         for span in self.get('document_spans').values():
             document_id = span.get('document_id')
@@ -89,18 +138,33 @@ class Mention(Object):
         return informative_justification_spans
 
     def get_document_id(self):
+        """
+        Gets the document ID from which the mention was drawn.
+        """
         return self.get('entry').get('root_uid')
-        
+
     def get_document_element_id(self):
+        """
+        Gets the document element ID from which the mention was drawn.
+        """
         return self.get('entry').get('child_uid')
-    
+
     def get_document_element_modality(self):
+        """
+        Gets modality of the document element ID from which the mention was drawn.
+        """
         return self.get('document_mappings').get('document_elements').get(self.get('document_element_id')).get('modality')
 
     def get_keyframe_id(self):
+        """
+        Gets keyframe ID from which the mention was drawn.
+        """
         return self.get('entry').get('keyframe_id')
 
     def get_preferred_span(self, span1, span2):
+        """
+        Out of the two spans provided as argument, pick one that should be preferred over the other as the candidate of informative justification.
+        """
         if self.get('node_metatype') == 'entity':
             if span1.get('span_type') == 'keyframe':
                 return span1
@@ -114,19 +178,34 @@ class Mention(Object):
         return
 
     def is_event(self):
+        """
+        Returns True if the mention is a mention of an event, False otherwise.
+        """
         return self.get('entry').get('eventmention_id') is not None
-    
+
     def is_entity(self):
+        """
+        Returns True if the mention is a mention of an entity, False otherwise.
+        """
         return self.get('entry').get('argmention_id') is not None
-    
+
     def is_relation(self):
+        """
+        Returns True if the mention is a mention of a relation, False otherwise.
+        """
         return self.get('entry').get('relationmention_id') is not None
-    
+
     def is_negated(self):
+        """
+        Returns True if the mention is a negated, False otherwise.
+        """
         attributes = self.get('entry').get('attribute')
         return attributes is not None and 'not' in attributes.split(',')
 
     def load_node_metatype(self):
+        """
+        Determines and sets the metatype of the node based on this mention.
+        """
         node_metatype = None
         if self.is_event():
             node_metatype = 'event'
@@ -137,6 +216,9 @@ class Mention(Object):
         self.node_metatype = node_metatype
 
     def load_document_spans(self):
+        """
+        Loads the document spans corresponding to the mention.
+        """
         entry = self.get('entry')
         pattern = re.compile('^(\d+),(\d+),(\d+),(\d+)$')
         match = pattern.match(entry.get('mediamention_coordinates'))
@@ -217,9 +299,15 @@ class Mention(Object):
                                              entry.get('mediamention_endtime'),
                                              0,
                                              entry.get('where'))
-
+                self.document_spans[document_span.__str__()] = document_span
         if len(self.document_spans) == 0:
             self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Span type for mention', self.get('ID'), entry.get('where'))
-    
+
     def add_node(self, node):
+        """
+        Adds the node to this mention.
+
+        By doing so we are implying that this instance of the Mention class is a mention of the node
+        which is passed as the only argument to this method.
+        """
         self.nodes[node.get('ID')] = node
