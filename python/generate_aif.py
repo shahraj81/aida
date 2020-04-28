@@ -29,6 +29,11 @@ ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
 def check_for_paths_existance(args):
+    """
+    Checks if the required files and directories were present,
+    exit with an error code if any of the required file or directories
+    were not found.
+    """
     for path in [args.encodings_filename,
                  args.log_specifications_filename, 
                  args.core_documents_filename,
@@ -46,6 +51,9 @@ def check_for_paths_existance(args):
             exit(ERROR_EXIT_CODE)
 
 def main(args):
+    """
+    The main program for generating AIF
+    """
     check_for_paths_existance(args)
     logger = Logger(args.log, args.log_specifications_filename, sys.argv)
     core_documents = CoreDocuments(logger, args.core_documents_filename)
@@ -65,6 +73,7 @@ def main(args):
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
+    # create a parse and add command line arguments
     parser = argparse.ArgumentParser(description="Generate AIF")
     parser.add_argument('-l', '--log', default='log.txt', 
                         help='Specify a file to which log output should be redirected (default: %(default)s)')
@@ -100,5 +109,6 @@ if __name__ == '__main__':
                         help='Directory containing annotations package as received from LDC')
     parser.add_argument('output_dir', type=str,
                         help='Specify a directory to which output should be written')
+    # parse the argument and call main
     args = parser.parse_args()
     main(args)
