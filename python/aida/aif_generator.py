@@ -1,81 +1,11 @@
 """
-AIDA AIF generator
+AIDA AIF generator.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "7 February 2019"
-
-
-#############################################################################
-# TODOs:
-#############################################################################
-# TODO # 1: add a switch to allow/disallow reading picture/sound channel
-#    - based time frame spans
-#
-# STATUS: Complete
-#    - handled via annotations
-#    - switch added
-# ---------------------------------------------------------------------------
-# TODO # 2: add LDCTime
-#
-# STATUS: Complete
-#    - added, but patch needed for correctly printing year
-#    - patch applied to correctly print year
-# ---------------------------------------------------------------------------
-# TODO # 3: For reference KB IDs 690791 and 80000032, Next century's output 
-#     contains different number of informative justifications, why? Likely a bug.
-#     Are these not confusable nodes? Yes
-#
-# lehigh:aida-python skr1$ grep 690791 -A 1 example-data/example-m18-kb/LDC_2.LDC_2.ttl | grep informativeJustification
-#         aida:informativeJustification  _:b1190 , _:b1616 , _:b227 , _:b3347 , _:b393 , _:b3992 , _:b4158 , _:b4177 , _:b453 , _:b4838 , _:b5391 , _:b5850 , _:b593 , _:b6109 , _:b6382 , _:b7304 , _:b8285 , _:b914 , _:b9493 , _:b9629 ;
-# lehigh:aida-python skr1$ grep 80000032 -A 1 example-data/example-m18-kb/LDC_2.LDC_2.ttl | grep informativeJustification
-#         aida:informativeJustification  _:b163 , _:b1692 , _:b1977 , _:b1987 , _:b2078 , _:b2095 , _:b2290 , _:b2345 , _:b2501 , _:b2756 , _:b3014 , _:b33 , _:b3764 , _:b378 , _:b3891 , _:b4060 , _:b5639 , _:b6160 , _:b6429 , _:b674 , _:b6760 , _:b6832 , _:b6916 , _:b7028 , _:b729 , _:b7422 , _:b7545 , _:b7560 , _:b7613 , _:b7641 , _:b7674 , _:b7739 , _:b8531 , _:b858 , _:b8733 , _:b8781 , _:b8920 , _:b9189 , _:b9541 , _:b9774 , _:b9905 ;
-#
-# STATUS: Complete
-#     - This issue does not appear in the NIST output
-# ---------------------------------------------------------------------------
-# TODO # 4: Following entity is not a member of any cluster, why?
-#     ldc:EMIC00160R8.002266 a aida:Entity ;
-#
-# STATUS: Complete
-# ---------------------------------------------------------------------------
-# TODO # 5: Add only one mention to compound justification.
-#
-# STATUS: Complete
-#     - handled via calling a different function
-#     - original function is left unchanged
-# ---------------------------------------------------------------------------
-# TODO # 6: Equivalent cluster in LDC's confusable node list not to be split
-#
-# STATUS: Complete
-#     Ignored as this should not appear in LDC's annotation data in M36,
-#     (decided by Hoa)
-# ---------------------------------------------------------------------------
-# TODO # 7: Change the Picture/Sound channel justification to VideoJustification
-# with an optional attribute, say, 'channel' with three values 'picture', 'sound'
-# or 'both'. Also add a switch to turn on/off generation of the optional attribute.
-#
-# STATUS: Complete
-#     - Justifications updated
-#     - Switch added
-# ---------------------------------------------------------------------------
-# TODO # 8: Tests on informative justifications are failing
-#
-# STATUS: Pending
-# ---------------------------------------------------------------------------
-# TODO # 9: Fix doubles to xsd:double
-#
-# STATUS: Complete
-# ---------------------------------------------------------------------------
-# TODO # 10: (a) Validate task 1 KBs using AIF validator
-#            (b) Write a script to check if the KB referred inside is not the source KB for the task 1 KB.
-#            (c) Run verify output and check like we did a few days ago
-#            (d) Fix generate_argument_assertions_with_single_contained_justification_triple to omit entries not from source kb
-#            (e) Retain only single prototype if multiple were found from the same source document.
-#            (f) No negated mention should be referenced
-#            (g) switch for type of output (raw or turtle or parsed n-triples)
 
 from aida.object import Object
 from aida.utility import get_md5_from_string
@@ -87,6 +17,9 @@ from re import findall
 SYSTEM_NAME = 'ldc:LDCModelGenerator'
 
 def patch(serialized_output):
+    """
+    Applies patch to the serialized output, and returns the updated string.
+    """
     print('--patching output')
     # apply patch to year in the output
     patched_output = serialized_output.replace('-01-01"^^xsd:gYear', '"^^xsd:gYear')
@@ -102,6 +35,17 @@ def patch(serialized_output):
     return patched_output
 
 def generate_cluster_membership_triples(node, mention):
+    """
+    Generate the cluster membership triples.
+
+    Parameters:
+        node (aida.Node)
+        mention (aida.Mention)
+
+    The return value is a dictionary object containing triples corresponding to each document, and
+    one for 'all_docs'. Those corresponding to a particular document are used for generating
+    task1 document specific kbs.
+    """
     mention_id = mention.get('id')
     cluster_membership_md5 = get_md5_from_string('{node_name}:{mention_id}'.format(node_name = node.get('name'),
                                                                                      mention_id = mention_id))
@@ -127,6 +71,17 @@ def generate_cluster_membership_triples(node, mention):
     return triple_block_dict
 
 def generate_cluster_triples(reference_kb_id, node):
+    """
+    Generate the cluster triples.
+
+    Parameters:
+        reference_kb_id (str)
+        node (aida.Node)
+
+    The return value is a dictionary object containing triples corresponding to each document, and
+    one for 'all_docs'. Those corresponding to a particular document are used for generating
+    task1 document specific kbs.
+    """
     node_ids = []
     node_id_or_node_ids = node.get('id')
     for node_id in node_id_or_node_ids.split('|'):
@@ -189,7 +144,21 @@ def generate_cluster_triples(reference_kb_id, node):
     return triple_block_dict
 
 def generate_ere_object_triples(reference_kb_id, ere_object):
+    """
+    Generate the ERE object triples.
+
+    Parameters:
+        reference_kb_id (str)
+        ere_object (aida.Mention):
+            a mention corresponding to an entity, relation or an event.
+    The return value is a dictionary object containing triples corresponding to each document, and
+    one for 'all_docs'. Those corresponding to a particular document are used for generating
+    task1 document specific kbs.
+    """
     def get_ldc_time_triples(logger, date_iri, date_string, date_type, where):
+        """
+        Gets the LDC time triples
+        """
         type_map = {
                 'starton' : 'ON',
                 'endon' : 'ON',
@@ -229,11 +198,11 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             else:
                 logger.record_event('UNEXPECTED_DATE_FORMAT', date_string, where)
         return ldc_time_triples
-    
+
     logger = ere_object.get('logger')
     where = ere_object.get('where')
     ere_type = ere_object.get('node_metatype').capitalize()
-    
+
     # generate ldc time assertion triples
     ldc_time_assertion_triples = ''
     if ere_type in ['Event', 'Relation']:        
@@ -244,7 +213,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                                                       ere_object.get('entry').get('start_date'),
                                                       ere_object.get('entry').get('start_date_type'),
                                                       where)
-        
+
         ldc_start_time_triples = """\
             _:bldctime{ere_object_id} aida:start {ldc_start_time_blank_node_iri} .
             {ldc_start_time_blank_node_iri} a aida:LDCTimeComponent .
@@ -266,7 +235,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                                                     ere_object.get('entry').get('end_date'),
                                                     ere_object.get('entry').get('end_date_type'),
                                                     where)
-        
+
         ldc_end_time_triples = """\
             _:bldctime{ere_object_id} aida:end {ldc_end_time_blank_node_iri} .
             {ldc_end_time_blank_node_iri} a aida:LDCTimeComponent .
@@ -291,8 +260,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                    ldc_start_time_triples = ldc_start_time_triples,
                    ldc_end_time_triples = ldc_end_time_triples,
                    system = SYSTEM_NAME)
-    
-    
+
     # generate link assertion triples
     has_name_triple = ''
     if ere_type == 'Entity':
@@ -322,7 +290,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                    system = SYSTEM_NAME
                    )
         link_assertion_triples.append(triples)
-    
+
     # generate informative justification triples
     informative_justification_spans = ere_object.get('informative_justification_spans')
     informative_justification_triples_by_document = defaultdict(list)
@@ -353,6 +321,18 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     return triple_block_dict
 
 def generate_text_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    """
+    Generate the text justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:TextJustification .
@@ -376,6 +356,18 @@ def generate_text_justification_triples(document_span, generate_optional_channel
     return triple_block_dict
 
 def generate_image_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    """
+    Generate the image justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:ImageJustification .
@@ -405,6 +397,18 @@ def generate_image_justification_triples(document_span, generate_optional_channe
     return triple_block_dict
 
 def generate_keyframe_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    """
+    Generate the keyframe justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:KeyFrameVideoJustification .
@@ -436,6 +440,19 @@ def generate_keyframe_justification_triples(document_span, generate_optional_cha
     return triple_block_dict
 
 def generate_video_justification_triples(document_span, channel, generate_optional_channel_attribute_flag):
+    """
+    Generate the video justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        channel (str)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     triple_block_dict = {}
     channel_attribute_triple = ''
     if generate_optional_channel_attribute_flag:
@@ -465,15 +482,61 @@ def generate_video_justification_triples(document_span, channel, generate_option
     return triple_block_dict
 
 def generate_picture_channel_video_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    """
+    Generate the picture channel video justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     return generate_video_justification_triples(document_span, 'picture', generate_optional_channel_attribute_flag)
 
 def generate_sound_channel_video_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    """
+    Generate the video channel video justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     return generate_video_justification_triples(document_span, 'sound', generate_optional_channel_attribute_flag)
 
 def generate_both_channels_video_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    """
+    Generate triples for justification drawn from both channels of a video.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     return generate_video_justification_triples(document_span, 'both', generate_optional_channel_attribute_flag)
 
 def generate_picture_justification_triples(document_span):
+    """
+    Generate the picture justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:PictureChannelVideoJustification .
@@ -497,6 +560,16 @@ def generate_picture_justification_triples(document_span):
     return triple_block_dict
 
 def generate_sound_justification_triples(document_span):
+    """
+    Generate the sound justification triples.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:SoundChannelVideoJustification .
@@ -520,6 +593,16 @@ def generate_sound_justification_triples(document_span):
     return triple_block_dict
 
 def generate_type_assertion_triples(mention):
+    """
+    Generate the type assertion triples.
+
+    Parameters:
+        mention (aida.Mention)
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     full_type = mention.get('full_type')
     type_assertion_md5 = get_md5_from_string('{id}:{full_type}'.format(id=mention.get('id'),
                                                                   full_type=full_type
@@ -580,6 +663,16 @@ def generate_type_assertion_triples(mention):
     return triple_block_dict
 
 def generate_argument_assertions_with_single_contained_justification_triple(slot):
+    """
+    Generate the argument assertion triples with a single contained justification.
+
+    Parameters:
+        slot (aida.Slot)
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     subject = slot.get('subject')
     argument = slot.get('argument')
     subject_mention_id = subject.get('id')
@@ -630,6 +723,16 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     return triple_block_dict
 
 def generate_argument_assertions_with_two_contained_justifications_triple(slot):
+    """
+    Generate the argument assertion triples with up to two contained justification.
+
+    Parameters:
+        slot (aida.Slot)
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     subject = slot.get('subject')
     argument = slot.get('argument')
     subject_mention_id = subject.get('id')
@@ -673,6 +776,18 @@ def generate_argument_assertions_with_two_contained_justifications_triple(slot):
     return triples
 
 def generate_audio_justification_triples(document_span, generate_optional_channel_attribute_flag):
+    """
+    Generate the audio justification triples with a single contained justification.
+
+    Parameters:
+        document_span (aida.DocumentSpan)
+        generate_optional_channel_attribute_flag (bool):
+            True if you would like to generate optional channel attribute, False otherwise.
+
+    The return value is a dictionary object containing triples corresponding to the document
+    from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
+    document are used for generating task1 document specific kbs.
+    """
     triple_block_dict = {}
     triples = """\
         _:b{md5} a aida:AudioJustification .
@@ -697,9 +812,19 @@ def generate_audio_justification_triples(document_span, generate_optional_channe
 
 class AIFGenerator(Object):
     """
-    AIDA AIF Generator
+    The class to support AIF Generation.
     """    
     def __init__(self, logger, annotations, generate_optional_channel_attribute_flag, reference_kb_id):
+        """
+        Initialize the AIF generator.
+
+        Arguments:
+            logger (aida.Logger)
+            annotations (aida.Annotations)
+            generate_optional_channel_attribute_flag (bool)
+            reference_kb_id (str)
+                The reference KB ID to link the nodes to.
+        """
         super().__init__(logger)
         self.annotations = annotations
         self.reference_kb_id = reference_kb_id
@@ -708,6 +833,9 @@ class AIFGenerator(Object):
         self.generate_aif()
 
     def generate_aif(self):
+        """
+        Generate AIF.
+        """
         print('--generating justifications ...')
         self.generate_justifications()
         print('--generating clusters ...')
@@ -723,6 +851,12 @@ class AIFGenerator(Object):
         print('--aif generation finished ...')
 
     def write_output(self, output_dir, raw=False):
+        """
+        Writes the output to output directory specified using the argument 'output_dir'.
+
+        The boolean argument 'raw' will be used to control the output format. If True
+        raw output would be written otherwise output would be written in turtle format.
+        """
         system_triples = self.get('system_triples')
         prefix_triples = self.get('prefix_triples')
         for key in self.get('triple_blocks'):
@@ -742,17 +876,26 @@ class AIFGenerator(Object):
             program_output = open(filename, 'w')
             program_output.write(graph)
             program_output.close()
-        
+
     def add(self, triple_block_dict):
+        """
+        Store the triple_block_dict to a dictionary.
+        """
         for key in triple_block_dict:
             triple_block = triple_block_dict[key]
             self.get('triple_blocks')[key].append(triple_block)
 
     def get_system_triples(self):
+        """
+        Gets the system triples.
+        """
         triple_block = "ldc:LDCModelGenerator a aida:System ."
         return triple_block
 
     def get_prefix_triples(self):
+        """
+        Gets the prefix triples.
+        """
         triple_block = """\
             @prefix aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#> .
             @prefix ldc:   <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#> .
@@ -763,6 +906,9 @@ class AIFGenerator(Object):
         return triple_block
     
     def generate_argument_assertions(self):
+        """
+        Generate all the argument assertion triples.
+        """
         for slot in self.get('annotations').get('slots').values():
             # change generate_argument_assertions_with_single_contained_justification_triple 
             # to generate_argument_assertions_with_two_contained_justifications_triple
@@ -786,6 +932,9 @@ class AIFGenerator(Object):
             self.add(triple_block_dict)
 
     def generate_ere_objects(self):
+        """
+        Generate all the ERE object triples corresponding to the mentions in annotations.
+        """
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
@@ -795,11 +944,17 @@ class AIFGenerator(Object):
                 self.add(triple_block_dict)
 
     def generate_clusters(self):
+        """
+        Generate all the cluster triples.
+        """
         for node in self.get('annotations').get('nodes').values():
             triple_block_dict = generate_cluster_triples(self.get('reference_kb_id'), node)
             self.add(triple_block_dict)
 
     def generate_cluster_memberships(self):
+        """
+        Generate all the cluster membership triples.
+        """
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
@@ -809,6 +964,9 @@ class AIFGenerator(Object):
                 self.add(triple_block_dict)
 
     def generate_justifications(self):
+        """
+        Generate all the justification triples.
+        """
         generate_optional_channel_attribute_flag = self.get('generate_optional_channel_attribute_flag')
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
@@ -827,6 +985,9 @@ class AIFGenerator(Object):
                     self.add(triple_block_dict)
     
     def generate_type_assertions(self):
+        """
+        Generate all the type assertion triples.
+        """
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
