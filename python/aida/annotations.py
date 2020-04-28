@@ -1,5 +1,5 @@
 """
-AIDA annotations to be used as ground truth for M36
+AIDA annotations to be used as ground truth
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -22,7 +22,7 @@ class Annotations(Object):
     This module loads annotations and provides access to entities, relations and events collected
     as part of the annotation process. 
     """
-    
+
     load_file_types = {
             'mentions': { 
                 'order': 1, 
@@ -37,8 +37,27 @@ class Annotations(Object):
                 'types': ['kb_linking']
                 } 
         }
-    
+
     def __init__(self, logger, slot_mappings, document_mappings, text_boundaries, image_boundaries, video_boundaries, keyframe_boundaries, type_mappings, annotations_dir, load_topic_ids=None, load_video_time_offsets_flag=True):
+        """
+        Initialize the Annotations.
+
+        Arguments:
+            logger (aida.Logger)
+            slot_mappings (aida.SlotMappings)
+            document_mappings (aida.DocumentMappings)
+            text_boundaries (aida.TextBoundaries)
+            image_boundaries (aida.ImageBoundaries)
+            video_boundaries (aida.VideoBoundaries)
+            keyframe_boundaries (aida.KeyFrameBoundaries)
+            type_mappings (aida.Container)
+            annotations_dir (str):
+                The path to the annotations directory as received from LDC.
+            load_topic_ids (None or list):
+                Specify the topic IDs to load, or set it to None in order to load all the topics.
+            load_video_time_offsets_flag (bool):
+                Set it to True in order to load video time offsets, False otherwise.
+        """
         super().__init__(logger)
         self.logger = logger
         self.annotations_dir = annotations_dir
@@ -59,15 +78,29 @@ class Annotations(Object):
         self.load_annotations()
     
     def process_arg_mentions(self, filename):
+        """
+        Processes the argument mentions.
+        """
         self.process_mentions(filename, 'argmention_id')
 
     def process_evt_mentions(self, filename):
+        """
+        Processes the event mentions.
+        """
         self.process_mentions(filename, 'eventmention_id')
 
     def process_rel_mentions(self, filename):
+        """
+        Processes the relation mentions.
+        """
         self.process_mentions(filename, 'relationmention_id')
 
     def process_mentions(self, filename, key_fieldname):
+        """
+        Processes the mentions from the file specified using the argument 'filename',
+        and store the mentions into the mentions dictionary using the key taken
+        from the entry using the argument 'key_fieldname'.
+        """
         for entry in FileHandler(self.logger, filename):
             key = entry.get(key_fieldname)
             if self.mentions.get(key, None) is None:
@@ -80,12 +113,28 @@ class Annotations(Object):
                 self.record_event('DUPLICATE_VALUE_IN_COLUMN', key, key_fieldname, entry.get('where'))
 
     def process_evt_slots(self, filename):
+        """
+        Processes event slots.
+        """
         self.process_slots(filename, 'eventmention_id')
 
     def process_rel_slots(self, filename):
+        """
+        Processes relation slots.
+        """
         self.process_slots(filename, 'relationmention_id')
     
     def process_slots(self, filename, subjectmentionid_fieldname):
+        """
+        Processes the slots from the file specified using the argument 'filename',
+        and store the slots into the slots container.
+
+        Note that this method is called for both the relation slots, and event slots,
+        and the key field name, i.e. the subject mention ID fieldname, is different.
+        It is called 'relationmention_id' for relations, and 'eventmention_id' for
+        events. This is why we use the parameter subjectmentionid_fieldname to choose
+        between the two depending on where we are processing relations or events.
+        """
         for entry in FileHandler(self.logger, filename):
             subjectmention_id = entry.get(subjectmentionid_fieldname)
             slot_code = entry.get('slot_type')
@@ -104,6 +153,9 @@ class Annotations(Object):
             self.get('slots').add_member(slot)
 
     def process_kb_linking(self, filename):
+        """
+        Processes the KB linking information.
+        """
         for entry in FileHandler(self.logger, filename):
             kb_id_or_kb_ids = entry.get('kb_id')
             mention_id = entry.get('mention_id')
@@ -122,6 +174,9 @@ class Annotations(Object):
                 mention.add_node(node)
         
     def load_annotations(self):
+        """
+        Loads the annotations.
+        """
         for topic_id in self.load_topic_ids:
             for file_type_class in sorted(self.load_file_types, key=lambda x: self.load_file_types[x]['order']):
                 for file_type in self.load_file_types[file_type_class]['types']:
