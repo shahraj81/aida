@@ -46,7 +46,7 @@ def generate_cluster_membership_triples(node, mention):
     one for 'all_docs'. Those corresponding to a particular document are used for generating
     task1 document specific kbs.
     """
-    mention_id = mention.get('id')
+    mention_id = mention.get('ID')
     cluster_membership_md5 = get_md5_from_string('{node_name}:{mention_id}'.format(node_name = node.get('name'),
                                                                                      mention_id = mention_id))
     triples = """\
@@ -83,7 +83,7 @@ def generate_cluster_triples(reference_kb_id, node):
     task1 document specific kbs.
     """
     node_ids = []
-    node_id_or_node_ids = node.get('id')
+    node_id_or_node_ids = node.get('ID')
     for node_id in node_id_or_node_ids.split('|'):
         if not node_id.startswith('NIL'):
             node_ids.append(node_id)
@@ -136,9 +136,9 @@ def generate_cluster_triples(reference_kb_id, node):
         """.format(node_name = node.get('name'),
                    informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
                    link_assertion_triples = '\n'.join(link_assertion_triples),
-                   prototype_object_id = prototype.get('id'),
+                   prototype_object_id = prototype.get('ID'),
                    system = SYSTEM_NAME,
-                   node_id = node.get('id'),
+                   node_id = node.get('ID'),
                    reference_kb_id = reference_kb_id)
         triple_block_dict[key] = triples
     return triple_block_dict
@@ -207,7 +207,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     ldc_time_assertion_triples = ''
     if ere_type in ['Event', 'Relation']:        
         # ldc start time triples
-        ldc_start_time_blank_node_iri = '_:bldctime{ere_object_id}-start'.format(ere_object_id = ere_object.get('id'))
+        ldc_start_time_blank_node_iri = '_:bldctime{ere_object_id}-start'.format(ere_object_id = ere_object.get('ID'))
         ldc_start_time_triples = get_ldc_time_triples(logger,
                                                       ldc_start_time_blank_node_iri,
                                                       ere_object.get('entry').get('start_date'),
@@ -221,7 +221,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             {ldc_start_time_month_triples}
             {ldc_start_time_year_triples}
             {ldc_start_time_type_triples}
-        """.format(ere_object_id = ere_object.get('id'),
+        """.format(ere_object_id = ere_object.get('ID'),
                    ldc_start_time_blank_node_iri = ldc_start_time_blank_node_iri,
                    ldc_start_time_day_triples = ldc_start_time_triples['day'],
                    ldc_start_time_month_triples = ldc_start_time_triples['month'],
@@ -229,7 +229,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                    ldc_start_time_type_triples = ldc_start_time_triples['type'])
 
         # ldc end time triples
-        ldc_end_time_blank_node_iri = '_:bldctime{ere_object_id}-end'.format(ere_object_id = ere_object.get('id'))
+        ldc_end_time_blank_node_iri = '_:bldctime{ere_object_id}-end'.format(ere_object_id = ere_object.get('ID'))
         ldc_end_time_triples = get_ldc_time_triples(logger,
                                                     ldc_end_time_blank_node_iri,
                                                     ere_object.get('entry').get('end_date'),
@@ -243,7 +243,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             {ldc_end_time_month_triples}
             {ldc_end_time_year_triples}
             {ldc_end_time_type_triples}
-        """.format(ere_object_id = ere_object.get('id'),
+        """.format(ere_object_id = ere_object.get('ID'),
                    ldc_end_time_blank_node_iri = ldc_end_time_blank_node_iri,
                    ldc_end_time_day_triples = ldc_end_time_triples['day'],
                    ldc_end_time_month_triples = ldc_end_time_triples['month'],
@@ -256,7 +256,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             _:bldctime{ere_object_id} aida:system {system} .
             {ldc_start_time_triples}
             {ldc_end_time_triples}
-        """.format(ere_object_id = ere_object.get('id'),
+        """.format(ere_object_id = ere_object.get('ID'),
                    ldc_start_time_triples = ldc_start_time_triples,
                    ldc_end_time_triples = ldc_end_time_triples,
                    system = SYSTEM_NAME)
@@ -266,7 +266,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     if ere_type == 'Entity':
         text_string = ere_object.get('entry').get('text_string')
         if len(text_string) < 256 and ere_object.get('entry').get('level') == 'nam':
-            has_name_triple = 'ldc:{ere_object_id} aida:hasName "{text_string}" .'.format(ere_object_id=ere_object.get('id'),
+            has_name_triple = 'ldc:{ere_object_id} aida:hasName "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
                                                                                       text_string=text_string.replace('"', '\\"'))
     node_ids = []
     for node_id_or_node_ids in ere_object.get('nodes'):
@@ -284,7 +284,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             _:blinkassertion{node_id}-confidence a aida:Confidence .
             _:blinkassertion{node_id}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
             _:blinkassertion{node_id}-confidence aida:system {system} .
-        """.format(ere_object_id = ere_object.get('id'),
+        """.format(ere_object_id = ere_object.get('ID'),
                    reference_kb_id = reference_kb_id,
                    node_id = node_id,
                    system = SYSTEM_NAME
@@ -295,7 +295,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     informative_justification_spans = ere_object.get('informative_justification_spans')
     informative_justification_triples_by_document = defaultdict(list)
     for span in informative_justification_spans.values():
-        triple = 'ldc:{ere_object_id} aida:informativeJustification _:b{span_md5} .'.format(ere_object_id=ere_object.get('id'),
+        triple = 'ldc:{ere_object_id} aida:informativeJustification _:b{span_md5} .'.format(ere_object_id=ere_object.get('ID'),
                                                                                                span_md5=span.get('md5'))
         informative_justification_triples_by_document['all_docs'].append(triple)
         informative_justification_triples_by_document[span.get('document_id')].append(triple)
@@ -309,7 +309,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             {link_assertion_triples}
             {has_name_triple}
             ldc:{ere_object_id} aida:system {system} .
-        """.format(ere_object_id=ere_object.get('id'),
+        """.format(ere_object_id=ere_object.get('ID'),
                    ere_type = ere_type,
                    ldc_time_assertion_triples = ldc_time_assertion_triples,
                    informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
@@ -604,10 +604,10 @@ def generate_type_assertion_triples(mention):
     document are used for generating task1 document specific kbs.
     """
     full_type = mention.get('full_type')
-    type_assertion_md5 = get_md5_from_string('{id}:{full_type}'.format(id=mention.get('id'),
+    type_assertion_md5 = get_md5_from_string('{id}:{full_type}'.format(id=mention.get('ID'),
                                                                   full_type=full_type
                                                                   ))
-    subject = mention.get('id')
+    subject = mention.get('ID')
 
     triple_block_dict = {}
 
@@ -675,8 +675,8 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     """
     subject = slot.get('subject')
     argument = slot.get('argument')
-    subject_mention_id = subject.get('id')
-    argument_mention_id = argument.get('id')
+    subject_mention_id = subject.get('ID')
+    argument_mention_id = argument.get('ID')
     slot_type = slot.get('slot_type')
     slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(subject_mention_id, slot_type, argument_mention_id))
     subject_informative_justifications = subject.get('informative_justification_spans')
@@ -735,8 +735,8 @@ def generate_argument_assertions_with_two_contained_justifications_triple(slot):
     """
     subject = slot.get('subject')
     argument = slot.get('argument')
-    subject_mention_id = subject.get('id')
-    argument_mention_id = argument.get('id')
+    subject_mention_id = subject.get('ID')
+    argument_mention_id = argument.get('ID')
     slot_type = slot.get('slot_type')
     slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(subject_mention_id, slot_type, argument_mention_id))
     subject_informative_justifications = subject.get('informative_justification_spans')
@@ -914,19 +914,19 @@ class AIFGenerator(Object):
             # to generate_argument_assertions_with_two_contained_justifications_triple
             # if two contained justifications were needed
             if slot.is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the slot is negated")
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
                 continue
             if slot.get('subject').is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the subject is negated")
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
                 continue
             if slot.get('argument').is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('id'), slot.get('slot_type'), slot.get('argument').get('id')), "because the object is negated")
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
                 continue
             if len(slot.get('subject').get('nodes')) == 0:
-                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('id')), "because the subject mention is not found in the linking table")
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
                 continue
             if len(slot.get('argument').get('nodes')) == 0:
-                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('id')), "because the argument mention is not found in the linking table")
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
                 continue
             triple_block_dict = generate_argument_assertions_with_single_contained_justification_triple(slot)
             self.add(triple_block_dict)
@@ -938,7 +938,7 @@ class AIFGenerator(Object):
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
-                    self.get('logger').record_event('SKIPPING', 'ERE object corresponding to mention', '{}'.format(mention.get('id')), "because the mention is negated")
+                    self.get('logger').record_event('SKIPPING', 'ERE object corresponding to mention', '{}'.format(mention.get('ID')), "because the mention is negated")
                     continue
                 triple_block_dict = generate_ere_object_triples(self.get('reference_kb_id'), mention)
                 self.add(triple_block_dict)
@@ -958,7 +958,7 @@ class AIFGenerator(Object):
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
-                    self.get('logger').record_event('SKIPPING', 'Justification triples for mention', '{}'.format(mention.get('id')), "because the mention is negated")
+                    self.get('logger').record_event('SKIPPING', 'Justification triples for mention', '{}'.format(mention.get('ID')), "because the mention is negated")
                     continue
                 triple_block_dict = generate_cluster_membership_triples(node, mention)
                 self.add(triple_block_dict)
@@ -971,7 +971,7 @@ class AIFGenerator(Object):
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
-                    self.get('logger').record_event('SKIPPING', 'Justification triples for mention', '{}'.format(mention.get('id')), "because the mention is negated")
+                    self.get('logger').record_event('SKIPPING', 'Justification triples for mention', '{}'.format(mention.get('ID')), "because the mention is negated")
                     continue
                 for document_span in mention.get('document_spans').values():
                     span_type = document_span.get('span_type')
@@ -991,7 +991,7 @@ class AIFGenerator(Object):
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
                 if mention.is_negated():
-                    self.get('logger').record_event('SKIPPING', 'Type assertion for mention', '{}'.format(mention.get('id')), "because the mention is negated")
+                    self.get('logger').record_event('SKIPPING', 'Type assertion for mention', '{}'.format(mention.get('ID')), "because the mention is negated")
                     continue
                 triple_block_dict = generate_type_assertion_triples(mention)
                 self.add(triple_block_dict)

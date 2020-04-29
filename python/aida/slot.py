@@ -49,4 +49,4 @@ class Slot(Object):
 
         The ID is the concatenation of the subject ID, slot type, and the argument ID, separated by colon ':'
         """
-        return '{}:{}:{}'.format(self.get('subject').get('id'), self.get('slot_type'), self.get('argument').get('id'))
+        return '{}:{}:{}'.format(self.get('subject').get('ID'), self.get('slot_type'), self.get('argument').get('ID'))
