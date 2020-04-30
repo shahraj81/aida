@@ -1,5 +1,0 @@
-<!ELEMENT class_queries (class_query+)> 
-<!ELEMENT class_query (enttype,sparql)>
-<!ELEMENT enttype (#PCDATA)>
-<!ELEMENT sparql (#PCDATA)>
-<!ATTLIST class_query id CDATA #REQUIRED>
