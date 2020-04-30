@@ -4,7 +4,7 @@ Script for generating AIF from LDCs annotations
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
-__version__ = "0.0.0.1"
+__version__ = "1.0.0.0"
 __date__    = "7 February 2020"
 
 from aida.annotations import Annotations
