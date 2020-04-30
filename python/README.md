@@ -11,7 +11,7 @@ Refer to the sections corresponding to these scripts below for details.
 
 # The AIF Generator
 
-The AIF Generator script can be used to convert annotations into AIF.
+The AIF Generator script (v1.0.0.0) can be used to convert LDC's Phase-I annotations into AIF to support evaluation conducted at the end of 2019.
 
 This section is divided into the following parts:
 
