@@ -113,8 +113,8 @@ python3 generate_aif.py --log logs/generate_aif.log \
   input/aux_data/LDC2019E42.keyframe_boundaries.txt \
   input/aux_data/type_mappings.txt \
   input/aux_data/slotname_mappings.txt \
-  input/aux_data/LDC2019R14_AIDA_Phase_1_Evaluation_Topic_Annotations_V1.1_augmented \
-  output/aif
+  /path/to/annotation/package \
+  /path/to/output
 ~~~
 
 [top](#python-scripts-in-support-of-the-aida-program)
