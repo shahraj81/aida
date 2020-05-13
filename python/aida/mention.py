@@ -48,6 +48,8 @@ class Mention(Object):
         self.load_video_time_offsets_flag = load_video_time_offsets_flag
         # the set of nodes that are referred to by this mention
         self.nodes = {}
+        # the slots in which the mention participates
+        self.slots = {}
         # the document spans included in this mention
         self.document_spans = {}
         # set the span of text, or image bounding box of the 
@@ -69,20 +71,15 @@ class Mention(Object):
         proper-typed types.
         """
         entry = self.get('entry')
-
         cleaned_full_type = self.get('cleaned_full_type_ov')
-
         if self.is_event() or self.is_relation():
             if unspecified(self.get('entry').get('subtype')):
                 if unspecified(self.get('entry').get('subsubtype')):
                     cleaned_full_type = '{}.unspecified'.format(entry.get('type'))
                 else:
                     cleaned_full_type = '{}.unspecified.{}'.format(entry.get('type'), entry.get('subsubtype'))
-
         propercased_cleaned_full_type = self.type_mappings.get(cleaned_full_type, None)
-
         retval = propercased_cleaned_full_type if propercased_cleaned_full_type is not None else cleaned_full_type
-
         return retval
 
     def get_cleaned_full_type_ov(self):
@@ -311,3 +308,11 @@ class Mention(Object):
         which is passed as the only argument to this method.
         """
         self.nodes[node.get('ID')] = node
+
+    def add_slot(self, slot):
+        """
+        Adds the slot to the mention.
+        """
+        if slot.get('slot_type') not in self.get('slots'):
+            self.get('slots')[slot.get('slot_type')] = []
+        self.get('slots').get(slot.get('slot_type')).append(slot)
