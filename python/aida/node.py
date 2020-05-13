@@ -8,6 +8,7 @@ __date__    = "13 January 2020"
 
 from aida.object import Object
 from aida.utility import get_md5_from_string
+from aida.prototype import Prototype
 from math import sqrt
 
 class Node(Object):
@@ -50,6 +51,23 @@ class Node(Object):
                                      node_metatype_from_mention,
                                      mention.get('where'))
         self.mentions[mention.get('ID')] = mention
+
+    def get_document_ids(self):
+        """
+        Gets the document IDs across all mentions.
+
+        Returns an array of string representing document IDs.
+        """
+        document_ids = {}
+        for mention in self.get('mentions').values():
+            document_ids[mention.get('document_id')] = 1
+        return list(document_ids.keys())
+
+    def get_prototype(self):
+        """
+        Gets the prototype
+        """
+        return Prototype(self)
 
     def get_ID(self):
         """
