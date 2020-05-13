@@ -653,7 +653,7 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
 
     Parameters:
         slot (aida.Slot)
-        node (aida.Node or None):
+        subject_node (aida.Node or None):
             aida.Node if the slot represents an edge between prototypes
 
     The return value is a dictionary object containing triples corresponding to the document
