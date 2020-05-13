@@ -82,6 +82,7 @@ def generate_cluster_triples(reference_kb_id, node):
     one for 'all_docs'. Those corresponding to a particular document are used for generating
     task1 document specific kbs.
     """
+    prototype = node.get('prototype')
     node_ids = []
     node_id_or_node_ids = node.get('ID')
     for node_id in node_id_or_node_ids.split('|'):
@@ -105,7 +106,7 @@ def generate_cluster_triples(reference_kb_id, node):
                    )
         link_assertion_triples.append(triples)
     
-    # generate cluster informative justifications mention spans
+    # generate prototype informative justifications mention spans
     informative_justification_mention_spans = node.get('informative_justification_mention_spans')
     informative_justification_triples_by_document = defaultdict(list)
     prototype_by_document = {}
@@ -114,7 +115,7 @@ def generate_cluster_triples(reference_kb_id, node):
         if mention.is_negated():
             continue
         span = mention_span.get('span')
-        triple = 'ldc:cluster-{node_name} aida:informativeJustification _:b{span_md5} .'.format(node_name=node.get('name'),
+        triple = 'ldc:prototype-{node_name} aida:informativeJustification _:b{span_md5} .'.format(node_name=node.get('name'),
                                                                                                span_md5=span.get('md5'))
         informative_justification_triples_by_document['all_docs'].append(triple)
         informative_justification_triples_by_document[span.get('document_id')].append(triple)
@@ -129,7 +130,7 @@ def generate_cluster_triples(reference_kb_id, node):
         prototype = prototype_by_document[key]
         triples = """\
             ldc:cluster-{node_name} a aida:SameAsCluster .
-            ldc:cluster-{node_name} aida:prototype ldc:{prototype_object_id} .
+            ldc:cluster-{node_name} aida:prototype ldc:prototype-{node_name} .
             ldc:cluster-{node_name} aida:system {system} .
             {informative_justification_triples}
             {link_assertion_triples}
@@ -592,54 +593,38 @@ def generate_sound_justification_triples(document_span):
     triple_block_dict[document_span.get('document_id')] = triples
     return triple_block_dict
 
-def generate_type_assertion_triples(mention):
+def generate_type_assertion_triples(mention, node_name=None):
     """
     Generate the type assertion triples.
 
     Parameters:
         mention (aida.Mention)
+        node_name (str or None):
+            node_name is provided if the mention for which the type assertion is to be
+            generated is for the prototype of a cluster
 
     The return value is a dictionary object containing triples corresponding to the document
     from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
     document are used for generating task1 document specific kbs.
     """
     full_type = mention.get('full_type')
-    type_assertion_md5 = get_md5_from_string('{id}:{full_type}'.format(id=mention.get('ID'),
+    ID = mention.get('ID') if node_name is None else node_name
+    subject = mention.get('ID') if node_name is None else 'prototype-{}'.format(node_name)
+    type_assertion_md5 = get_md5_from_string('{ID}:{full_type}'.format(ID=ID,
                                                                   full_type=full_type
                                                                   ))
-    subject = mention.get('ID')
-
-    triple_block_dict = {}
 
     # all_docs triple block
-    justified_by_triples = []
     justified_by_triples_by_document = defaultdict(list)
     for document_span in mention.get('document_spans').values():
         justified_by_triple = 'ldc:assertion-{type_assertion_md5} aida:justifiedBy _:b{document_span_md5} .'.format(type_assertion_md5=type_assertion_md5,
                                                                                                          document_span_md5=document_span.get('md5'))
-        justified_by_triples.append(justified_by_triple)
         justified_by_triples_by_document[document_span.get('document_id')].append(justified_by_triple)
-
-    triples = """\
-        ldc:assertion-{type_assertion_md5} a rdf:Statement .
-        ldc:assertion-{type_assertion_md5} rdf:object ldcOnt:{full_type} .
-        ldc:assertion-{type_assertion_md5} rdf:predicate rdf:type .
-        ldc:assertion-{type_assertion_md5} rdf:subject ldc:{subject} .
-        ldc:assertion-{type_assertion_md5} aida:confidence _:bta{type_assertion_md5}-confidence .
-        _:bta{type_assertion_md5}-confidence a aida:Confidence .
-        _:bta{type_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-        _:bta{type_assertion_md5}-confidence aida:system {system} .
-        {justified_by_triples}
-        ldc:assertion-{type_assertion_md5} aida:system {system} .
-        """.format(type_assertion_md5 = type_assertion_md5,
-                   full_type = full_type,
-                   subject = subject,
-                   system = SYSTEM_NAME,
-                   justified_by_triples = '\n'.join(justified_by_triples)
-                   )
-    triple_block_dict['all_docs'] = triples
+        justified_by_triples_by_document['all_docs'].append(justified_by_triple)
 
     # document specific triple block
+    justified_by_triples = []
+    triple_block_dict = {}
     for document_id in justified_by_triples_by_document:
         justified_by_triples = justified_by_triples_by_document[document_id]
         triples = """\
@@ -662,64 +647,69 @@ def generate_type_assertion_triples(mention):
         triple_block_dict[document_id] = triples
     return triple_block_dict
 
-def generate_argument_assertions_with_single_contained_justification_triple(slot):
+def generate_argument_assertions_with_single_contained_justification_triple(slot, subject_node=None):
     """
     Generate the argument assertion triples with a single contained justification.
 
     Parameters:
         slot (aida.Slot)
+        node (aida.Node or None):
+            aida.Node if the slot represents an edge between prototypes
 
     The return value is a dictionary object containing triples corresponding to the document
     from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
     document are used for generating task1 document specific kbs.
     """
-    subject = slot.get('subject')
-    argument = slot.get('argument')
-    subject_mention_id = subject.get('ID')
-    argument_mention_id = argument.get('ID')
-    slot_type = slot.get('slot_type')
-    slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(subject_mention_id, slot_type, argument_mention_id))
-    subject_informative_justifications = subject.get('informative_justification_spans')
-    for informative_justifications in [subject_informative_justifications]:
-        if len(informative_justifications) != 1:
-            slot.get('logger').record_event('UNEXPECTED_NUM_INF_JUSTIFICATIONS', slot.get_code_location())
-    subject_informative_justification = list(subject_informative_justifications.values())[0]
+    subject_mention_id = slot.get('subject').get('ID')
+    arguments = [slot.get('argument')]
+    if subject_node is not None:
+        subject_mention_id = 'prototype-{}'.format(subject_node.get('name'))
+        arguments = list(slot.get('argument').get('nodes').values())
 
-    subject_document_ids = {document_span.get('document_id'):1 for document_span in subject.get('document_spans').values()}
-    argument_document_ids = {document_span.get('document_id'):1 for document_span in argument.get('document_spans').values()}
-    common_document_ids = {'all_docs':1}
-    for document_id in subject_document_ids:
-        if document_id in argument_document_ids:
-            common_document_ids[document_id] = 1
+    document_ids = {'all_docs':1}
+    subject_informative_justification_spans = slot.get('subject').get('informative_justification_spans')
+    predicate_justification_document_id = slot.get('subject').get('document_id')
+    subject_informative_justification_span = subject_informative_justification_spans[predicate_justification_document_id]
+    document_ids[predicate_justification_document_id] = 1
 
-    triple_block_dict = {}
-    for key in common_document_ids:
-        triples = """\
-            ldc:assertion-{slot_assertion_md5} a rdf:Statement .
-            ldc:assertion-{slot_assertion_md5} rdf:object ldc:{argument_mention_id} .
-            ldc:assertion-{slot_assertion_md5} rdf:predicate ldcOnt:{slot_type} .
-            ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
-            ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
-            _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
-            _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-            _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
-            ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
-            _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
-            _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{subject_informative_justification_md5} .
-            _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
-            _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
-            _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-            _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
-            _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
-            ldc:assertion-{slot_assertion_md5} aida:system {system} .
-            """.format(slot_assertion_md5 = slot_assertion_md5,
-                       subject_mention_id = subject_mention_id,
-                       argument_mention_id = argument_mention_id,
-                       slot_type = slot_type,
-                       subject_informative_justification_md5 = subject_informative_justification.get('md5'),
-                       system = SYSTEM_NAME
-                       )
-        triple_block_dict[key] = triples
+    for argument in arguments:
+        argument_mention_id = argument.get('ID')
+        if subject_node is not None:
+            argument_mention_id = 'prototype-{}'.format(argument.get('name'))
+            if predicate_justification_document_id not in argument.get('document_ids'):
+                slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Predicate justification document ID {} not in the documents from which the argument came'.format(predicate_justification_document_id))
+        slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(
+                                                    subject_mention_id,
+                                                    slot.get('slot_type'),
+                                                    argument_mention_id))
+        triple_block_dict = {}
+        for key in document_ids:
+            triples = """\
+                ldc:assertion-{slot_assertion_md5} a rdf:Statement .
+                ldc:assertion-{slot_assertion_md5} rdf:object ldc:{argument_mention_id} .
+                ldc:assertion-{slot_assertion_md5} rdf:predicate ldcOnt:{slot_type} .
+                ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
+                ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
+                _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
+                _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+                _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
+                ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
+                _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
+                _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{subject_mention_md5} .
+                _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
+                _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
+                _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+                _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
+                _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
+                ldc:assertion-{slot_assertion_md5} aida:system {system} .
+                """.format(slot_assertion_md5 = slot_assertion_md5,
+                           subject_mention_id = subject_mention_id,
+                           argument_mention_id = argument_mention_id,
+                           slot_type = slot.get('slot_type'),
+                           subject_mention_md5 = subject_informative_justification_span.get('md5'),
+                           system = SYSTEM_NAME
+                           )
+            triple_block_dict[key] = triples
     return triple_block_dict
 
 def generate_argument_assertions_with_two_contained_justifications_triple(slot):
@@ -904,32 +894,35 @@ class AIFGenerator(Object):
             @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
         """
         return triple_block
-    
+
     def generate_argument_assertions(self):
         """
         Generate all the argument assertion triples.
         """
-        for slot in self.get('annotations').get('slots').values():
-            # change generate_argument_assertions_with_single_contained_justification_triple 
-            # to generate_argument_assertions_with_two_contained_justifications_triple
-            # if two contained justifications were needed
-            if slot.is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
-                continue
-            if slot.get('subject').is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
-                continue
-            if slot.get('argument').is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
-                continue
-            if len(slot.get('subject').get('nodes')) == 0:
-                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
-                continue
-            if len(slot.get('argument').get('nodes')) == 0:
-                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
-                continue
-            triple_block_dict = generate_argument_assertions_with_single_contained_justification_triple(slot)
-            self.add(triple_block_dict)
+        method_name = 'generate_argument_assertions_with_single_contained_justification_triple'
+        generator = globals().get(method_name)
+        for node in self.get('annotations').get('nodes').values():
+            for slot_name in node.get('prototype').get('slots'):
+                for slot in node.get('prototype').get('slots').get(slot_name):
+                    if slot.is_negated():
+                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
+                        continue
+                    if slot.get('subject').is_negated():
+                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
+                        continue
+                    if slot.get('argument').is_negated():
+                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
+                        continue
+                    if len(slot.get('subject').get('nodes')) == 0:
+                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
+                        continue
+                    if len(slot.get('argument').get('nodes')) == 0:
+                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
+                        continue
+                    triple_block_dict = generator(slot)
+                    self.add(triple_block_dict)
+                    triple_block_dict = generator(slot, node)
+                    self.add(triple_block_dict)
 
     def generate_ere_objects(self):
         """
@@ -983,7 +976,7 @@ class AIFGenerator(Object):
                     else:
                         self.get('logger').record_event('UNDEFINED_METHOD', method_name)
                     self.add(triple_block_dict)
-    
+
     def generate_type_assertions(self):
         """
         Generate all the type assertion triples.
@@ -995,3 +988,9 @@ class AIFGenerator(Object):
                     continue
                 triple_block_dict = generate_type_assertion_triples(mention)
                 self.add(triple_block_dict)
+            for mention_type in node.get('prototype').get('types'):
+                for mention in node.get('prototype').get('types').get(mention_type):
+                    if mention.is_negated():
+                        self.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Negated mention encountered. Expected non-negated one.')
+                    triple_block_dict = generate_type_assertion_triples(mention, node.get('name'))
+                    self.add(triple_block_dict)
