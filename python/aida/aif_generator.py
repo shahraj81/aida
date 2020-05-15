@@ -199,6 +199,9 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
 
     ldc_time_assertion_triples = ere_object.get('time_range').get('aif', SYSTEM_NAME) if ere_object.get('time_range') else ''
 
+    if 'aida:timeType "ON"' in ldc_time_assertion_triples:
+        print('check this')
+
     triple_block_dict = {}
     for key in informative_justification_triples_by_document:
         triples = """\

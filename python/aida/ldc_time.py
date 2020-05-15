@@ -16,14 +16,15 @@ class LDCTime(Object):
     The class representing LDC time of an event or relation.
     """
 
-    def __init__(self, logger, date, date_type, where):
+    def __init__(self, logger, date, start_or_end, before_or_after, where):
         """
         Initialize a LDC date instance.
 
         Parameters:
             logger (aida.Logger)
-            time (str)
-            date_type(str)
+            date (str)
+            start_or_end (str)
+            before_or_after (str)
             where (dict):
                 a dictionary containing the following two keys representing the file location:
                     filename
@@ -32,7 +33,8 @@ class LDCTime(Object):
         super().__init__(logger)
         self.logger = logger
         self.date = date
-        self.date_type = date_type
+        self.start_or_end = start_or_end
+        self.before_or_after = before_or_after
         self.where = where
         self.load()
 
@@ -43,7 +45,7 @@ class LDCTime(Object):
         if self.get('date') == 'EMPTY_NA':
             return
         group_nums = {'year':1, 'month':2, 'day':3}
-        pattern = re.compile('^(....)-(..)-(..)$')
+        pattern = re.compile('^(-?....)-(..)-(..)$')
         match = pattern.match(self.get('date'))
         if match:
             for field_name in group_nums:
@@ -67,28 +69,7 @@ class LDCTime(Object):
         """
         if self.get('date') == 'EMPTY_NA':
             return ''
-        type_map = {
-                'starton' : 'ON',
-                'endon' : 'ON',
-                'startbefore' : 'BEFORE',
-                'endbefore' : 'BEFORE',
-                'endunk' : 'UNKNOWN',
-                'endafter' : 'AFTER',
-                'startafter' : 'AFTER',
-                'startunk' : 'UNKNOWN'
-            }
-        start_or_end = {
-                'starton' : 'start',
-                'endon' : 'end',
-                'startbefore' : 'start',
-                'endbefore' : 'end',
-                'endunk' : 'end',
-                'endafter' : 'end',
-                'startafter' : 'start',
-                'startunk' : 'start'
-            }
-        date_type = self.get('date_type')
-        ldc_time_type_triple = '{iri} aida:timeType "{type}" .'.format(iri = iri, type = type_map[date_type])
+        ldc_time_type_triple = '{iri} aida:timeType "{before_or_after}" .'.format(iri = iri, before_or_after = self.get('before_or_after'))
         ldc_time_triples = """\
             {parent_iri} aida:{start_or_end} {iri} .
             {iri} a aida:LDCTimeComponent .
@@ -97,7 +78,7 @@ class LDCTime(Object):
             {ldc_time_year_triples}
             {ldc_time_type_triple}
         """.format(parent_iri = parent_iri,
-                   start_or_end = start_or_end[date_type],
+                   start_or_end = self.get('start_or_end'),
                    iri = iri,
                    ldc_time_day_triples = self.get('day').get('aif', iri),
                    ldc_time_month_triples = self.get('month').get('aif', iri),
