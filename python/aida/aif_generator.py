@@ -156,111 +156,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     one for 'all_docs'. Those corresponding to a particular document are used for generating
     task1 document specific kbs.
     """
-    def get_ldc_time_triples(logger, date_iri, date_string, date_type, where):
-        """
-        Gets the LDC time triples
-        """
-        type_map = {
-                'starton' : 'ON',
-                'endon' : 'ON',
-                'startbefore' : 'BEFORE',
-                'endbefore' : 'BEFORE',
-                'endunk' : 'UNKNOWN',
-                'endafter' : 'AFTER',
-                'startafter' : 'AFTER',
-                'startunk' : 'UNKNOWN'
-            }
-        ldc_time_triples = {}
-        ldc_time_triples['day'] = ''
-        ldc_time_triples['month'] = ''
-        ldc_time_triples['year'] = ''
-        ldc_time_triples['type'] = ''
-        
-        if date_type is not None:
-            ldc_time_triples['type'] = '{date_iri} aida:timeType "{type}" .'.format(date_iri = date_iri,
-                                                                                    type = type_map[date_type])
-
-        if date_string is not None and date_string != 'EMPTY_NA':
-            pattern = compile('^(....)-(..)-(..)$')
-            match = pattern.match(date_string)
-            if match:
-                year = match.group(1)
-                month = match.group(2)
-                day = match.group(3)
-                if year != 'xxxx':
-                    ldc_time_triples['year'] = '{date_iri} aida:year "{year}"^^xsd:gYear .'.format(date_iri = date_iri,
-                                                                                                   year = year)
-                if month != 'xx':
-                    ldc_time_triples['month'] = '{date_iri} aida:month "--{month}"^^xsd:gMonth .'.format(date_iri = date_iri,
-                                                                                                       month = month)
-                if day != 'xx':
-                    ldc_time_triples['day'] = '{date_iri} aida:day "---{day}"^^xsd:gDay .'.format(date_iri = date_iri,
-                                                                                               day = day)
-            else:
-                logger.record_event('UNEXPECTED_DATE_FORMAT', date_string, where)
-        return ldc_time_triples
-
-    logger = ere_object.get('logger')
-    where = ere_object.get('where')
     ere_type = ere_object.get('node_metatype').capitalize()
-
-    # generate ldc time assertion triples
-    ldc_time_assertion_triples = ''
-    if ere_type in ['Event', 'Relation']:        
-        # ldc start time triples
-        ldc_start_time_blank_node_iri = '_:bldctime{ere_object_id}-start'.format(ere_object_id = ere_object.get('ID'))
-        ldc_start_time_triples = get_ldc_time_triples(logger,
-                                                      ldc_start_time_blank_node_iri,
-                                                      ere_object.get('entry').get('start_date'),
-                                                      ere_object.get('entry').get('start_date_type'),
-                                                      where)
-
-        ldc_start_time_triples = """\
-            _:bldctime{ere_object_id} aida:start {ldc_start_time_blank_node_iri} .
-            {ldc_start_time_blank_node_iri} a aida:LDCTimeComponent .
-            {ldc_start_time_day_triples}
-            {ldc_start_time_month_triples}
-            {ldc_start_time_year_triples}
-            {ldc_start_time_type_triples}
-        """.format(ere_object_id = ere_object.get('ID'),
-                   ldc_start_time_blank_node_iri = ldc_start_time_blank_node_iri,
-                   ldc_start_time_day_triples = ldc_start_time_triples['day'],
-                   ldc_start_time_month_triples = ldc_start_time_triples['month'],
-                   ldc_start_time_year_triples = ldc_start_time_triples['year'],
-                   ldc_start_time_type_triples = ldc_start_time_triples['type'])
-
-        # ldc end time triples
-        ldc_end_time_blank_node_iri = '_:bldctime{ere_object_id}-end'.format(ere_object_id = ere_object.get('ID'))
-        ldc_end_time_triples = get_ldc_time_triples(logger,
-                                                    ldc_end_time_blank_node_iri,
-                                                    ere_object.get('entry').get('end_date'),
-                                                    ere_object.get('entry').get('end_date_type'),
-                                                    where)
-
-        ldc_end_time_triples = """\
-            _:bldctime{ere_object_id} aida:end {ldc_end_time_blank_node_iri} .
-            {ldc_end_time_blank_node_iri} a aida:LDCTimeComponent .
-            {ldc_end_time_day_triples}
-            {ldc_end_time_month_triples}
-            {ldc_end_time_year_triples}
-            {ldc_end_time_type_triples}
-        """.format(ere_object_id = ere_object.get('ID'),
-                   ldc_end_time_blank_node_iri = ldc_end_time_blank_node_iri,
-                   ldc_end_time_day_triples = ldc_end_time_triples['day'],
-                   ldc_end_time_month_triples = ldc_end_time_triples['month'],
-                   ldc_end_time_year_triples = ldc_end_time_triples['year'],
-                   ldc_end_time_type_triples = ldc_end_time_triples['type'])
-
-        ldc_time_assertion_triples = """\
-            ldc:{ere_object_id} aida:ldcTime _:bldctime{ere_object_id} .
-            _:bldctime{ere_object_id} a aida:LDCTime .
-            _:bldctime{ere_object_id} aida:system {system} .
-            {ldc_start_time_triples}
-            {ldc_end_time_triples}
-        """.format(ere_object_id = ere_object.get('ID'),
-                   ldc_start_time_triples = ldc_start_time_triples,
-                   ldc_end_time_triples = ldc_end_time_triples,
-                   system = SYSTEM_NAME)
 
     # generate link assertion triples
     has_name_triple = ''
@@ -300,6 +196,8 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                                                                                                span_md5=span.get('md5'))
         informative_justification_triples_by_document['all_docs'].append(triple)
         informative_justification_triples_by_document[span.get('document_id')].append(triple)
+
+    ldc_time_assertion_triples = ere_object.get('time_range').get('aif', SYSTEM_NAME) if ere_object.get('time_range') else ''
 
     triple_block_dict = {}
     for key in informative_justification_triples_by_document:
