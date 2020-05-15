@@ -11,6 +11,7 @@ from aida.object import Object
 from aida.document_span import DocumentSpan
 from aida.utility import is_number
 from aida.ere_spec import unspecified
+from aida.ldc_time_range import LDCTimeRange
 import re
 
 class Mention(Object):
@@ -46,18 +47,10 @@ class Mention(Object):
         self.keyframe_boundaries = keyframe_boundaries
         self.type_mappings = type_mappings
         self.load_video_time_offsets_flag = load_video_time_offsets_flag
-        # the set of nodes that are referred to by this mention
         self.nodes = {}
-        # the slots in which the mention participates
         self.slots = {}
-        # the document spans included in this mention
         self.document_spans = {}
-        # set the span of text, or image bounding box of the 
-        # mention
-        self.load_document_spans()
-        # set the 'node_metatype' (i.e. ENTITY, RELATION, or 
-        # ENTITY) of the nodes referred to by this mention
-        self.load_node_metatype()
+        self.load()
 
     def get_cleaned_full_type(self):
         """
@@ -199,9 +192,29 @@ class Mention(Object):
         attributes = self.get('entry').get('attribute')
         return attributes is not None and 'not' in attributes.split(',')
 
+    def load(self):
+        """
+        Loads the required data from entry into different attributes.
+        """
+        self.load_document_spans()
+        self.load_node_metatype()
+        if self.get('node_metatype') in ['event', 'relation']:
+            self.time_range = LDCTimeRange(self.get('logger'),
+                                           self.get('ID'),
+                                           self.get('entry').get('start_date'),
+                                           self.get('entry').get('start_date_type'),
+                                           self.get('entry').get('end_date'),
+                                           self.get('entry').get('end_date_type'),
+                                           self.get('entry').get('where'))
+
     def load_node_metatype(self):
         """
         Determines and sets the metatype of the node based on this mention.
+
+        The metatype for a mention is one of the following:
+            entity,
+            relation, and
+            event
         """
         node_metatype = None
         if self.is_event():
