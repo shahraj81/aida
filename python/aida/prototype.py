@@ -49,3 +49,12 @@ class Prototype(Object):
                     self.get('slots')[slot_type] = []
                 for slot in mention.get('slots').get(slot_type):
                     self.get('slots').get(slot_type).append(slot)
+        self.add_time(node)
+
+    def add_time(self, node):
+        for mention in node.get('mentions').values():
+            time_range = mention.get('time_range')
+            if time_range is None:
+                continue
+            if self.get('time_range') is None:
+                self.set('time_range', time_range)
