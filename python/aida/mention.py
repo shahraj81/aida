@@ -50,6 +50,7 @@ class Mention(Object):
         self.nodes = {}
         self.slots = {}
         self.document_spans = {}
+        self.time_range_by_document = {}
         self.load()
 
     def get_cleaned_full_type(self):
@@ -208,12 +209,14 @@ class Mention(Object):
         self.load_document_spans()
         self.load_node_metatype()
         if self.get('node_metatype') in ['event', 'relation']:
-            self.time_range = LDCTimeRange(self.get('logger'),
+            time_range = LDCTimeRange(self.get('logger'),
                                            self.get('entry').get('start_date'),
                                            self.get('entry').get('start_date_type'),
                                            self.get('entry').get('end_date'),
                                            self.get('entry').get('end_date_type'),
                                            self.get('entry').get('where'))
+            self.get('time_range_by_document')[self.get('document_id')] = time_range
+            self.get('time_range_by_document')['all_docs'] = time_range
 
     def load_node_metatype(self):
         """

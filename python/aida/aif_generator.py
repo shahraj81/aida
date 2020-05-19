@@ -188,10 +188,12 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     if ere_object.get('time_range') and ere_object.get('time_range').is_invalid():
         ere_object.get('logger').record_event('INVALID_TIME_RANGE', ere_object.get('time_range'), ere_object.get('ID'))
 
-    ldc_time_assertion_triples = ere_object.get('time_range').get('aif', ere_object_iri, ldc_time_iri, SYSTEM_NAME) if ere_object.get('time_range') else ''
+    time_range_by_document = ere_object.get('time_range_by_document')
 
     triple_block_dict = {}
     for key in informative_justification_triples_by_document:
+        time_range = time_range_by_document[key] if key in time_range_by_document else None
+        ldc_time_assertion_triples = time_range.get('aif', ere_object_iri, ldc_time_iri, SYSTEM_NAME) if time_range else ''
         triples = """\
             {ere_object_iri} a aida:{ere_type} .
             {informative_justification_triples}

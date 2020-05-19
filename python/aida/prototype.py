@@ -27,6 +27,7 @@ class Prototype(Object):
         self.types = {}
         self.slots = {}
         self.text_strings = {}
+        self.time_range_by_document = {}
         self.load(node)
 
     def load(self, node):
@@ -60,30 +61,31 @@ class Prototype(Object):
 
     def add_time(self, node):
         for mention in node.get('mentions').values():
-            time_range_from_mention = mention.get('time_range')
-            if time_range_from_mention is None:
-                continue
-            if self.get('time_range') is None:
-                self.set('time_range', time_range_from_mention.get('copy'))
-            else:
-                time_range_from_prototype = self.get('time_range')
-                if time_range_from_mention.__str__() != time_range_from_prototype.__str__():
-                    mention_T1 = time_range_from_mention.get('start_time_after')
-                    mention_T2 = time_range_from_mention.get('start_time_before')
-                    mention_T3 = time_range_from_mention.get('end_time_after')
-                    mention_T4 = time_range_from_mention.get('end_time_before')
-                    prototype_T1 = time_range_from_prototype.get('start_time_after')
-                    prototype_T2 = time_range_from_prototype.get('start_time_before')
-                    prototype_T3 = time_range_from_prototype.get('end_time_after')
-                    prototype_T4 = time_range_from_prototype.get('end_time_before')
-                    if mention_T1 > prototype_T1:
-                        time_range_from_prototype.set('start_time_after', mention_T1.get('copy'))
-                    if mention_T2 < prototype_T2:
-                        time_range_from_prototype.set('start_time_before', mention_T2.get('copy'))
-                    if mention_T3 > prototype_T3:
-                        time_range_from_prototype.set('end_time_after', mention_T3.get('copy'))
-                    if mention_T4 < prototype_T4:
-                        time_range_from_prototype.set('end_time_before', mention_T4.get('copy'))
+            time_range_by_document_from_mention = mention.get('time_range_by_document')
+            time_range_by_document_from_prototype = self.get('time_range_by_document')
+            for key in time_range_by_document_from_mention:
+                time_range_from_mention = time_range_by_document_from_mention[key]
+                if key not in time_range_by_document_from_prototype:
+                    time_range_by_document_from_prototype[key] = time_range_from_mention.get('copy')
+                else:
+                    time_range_from_prototype = time_range_by_document_from_prototype[key]
+                    if time_range_from_mention.__str__() != time_range_from_prototype.__str__():
+                        mention_T1 = time_range_from_mention.get('start_time_after')
+                        mention_T2 = time_range_from_mention.get('start_time_before')
+                        mention_T3 = time_range_from_mention.get('end_time_after')
+                        mention_T4 = time_range_from_mention.get('end_time_before')
+                        prototype_T1 = time_range_from_prototype.get('start_time_after')
+                        prototype_T2 = time_range_from_prototype.get('start_time_before')
+                        prototype_T3 = time_range_from_prototype.get('end_time_after')
+                        prototype_T4 = time_range_from_prototype.get('end_time_before')
+                        if mention_T1 > prototype_T1:
+                            time_range_from_prototype.set('start_time_after', mention_T1.get('copy'))
+                        if mention_T2 < prototype_T2:
+                            time_range_from_prototype.set('start_time_before', mention_T2.get('copy'))
+                        if mention_T3 > prototype_T3:
+                            time_range_from_prototype.set('end_time_after', mention_T3.get('copy'))
+                        if mention_T4 < prototype_T4:
+                            time_range_from_prototype.set('end_time_before', mention_T4.get('copy'))
 
     def get_informative_justification_spans(self):
         informative_justification_spans = {}
