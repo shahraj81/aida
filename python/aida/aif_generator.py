@@ -105,39 +105,21 @@ def generate_cluster_triples(reference_kb_id, node):
                    system = SYSTEM_NAME
                    )
         link_assertion_triples.append(triples)
-    
-    # generate prototype informative justifications mention spans
-    informative_justification_mention_spans = node.get('informative_justification_mention_spans')
-    informative_justification_triples_by_document = defaultdict(list)
-    prototype_by_document = {}
-    for mention_span in informative_justification_mention_spans.values():
-        mention = mention_span.get('mention')
-        if mention.is_negated():
-            continue
-        span = mention_span.get('span')
-        triple = 'ldc:prototype-{node_name} aida:informativeJustification _:b{span_md5} .'.format(node_name=node.get('name'),
-                                                                                               span_md5=span.get('md5'))
-        informative_justification_triples_by_document['all_docs'].append(triple)
-        informative_justification_triples_by_document[span.get('document_id')].append(triple)
-        prototype_by_document[span.get('document_id')] = mention
-        if 'all_docs' not in prototype_by_document:
-            prototype_by_document['all_docs'] = mention
-        elif prototype_by_document['all_docs'].get('level') != 'nam' and mention.get('level') == 'nam':
-            prototype_by_document['all_docs'] = mention
+
+    document_ids = {'all_docs':1}
+    for mention in node.get('mentions').values():
+        document_ids[mention.get('document_id')] = 1
 
     triple_block_dict = {}
-    for key in informative_justification_triples_by_document:
-        prototype = prototype_by_document[key]
+    for key in document_ids:
         triples = """\
             ldc:cluster-{node_name} a aida:SameAsCluster .
-            ldc:cluster-{node_name} aida:prototype ldc:prototype-{node_name} .
+            ldc:cluster-{node_name} aida:prototype ldc:{prototype_name} .
             ldc:cluster-{node_name} aida:system {system} .
-            {informative_justification_triples}
             {link_assertion_triples}
         """.format(node_name = node.get('name'),
-                   informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
                    link_assertion_triples = '\n'.join(link_assertion_triples),
-                   prototype_object_id = prototype.get('ID'),
+                   prototype_name = prototype.get('name'),
                    system = SYSTEM_NAME,
                    node_id = node.get('ID'),
                    reference_kb_id = reference_kb_id)
@@ -156,15 +138,18 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     one for 'all_docs'. Those corresponding to a particular document are used for generating
     task1 document specific kbs.
     """
+
     ere_type = ere_object.get('node_metatype').capitalize()
 
     # generate link assertion triples
-    has_name_triple = ''
+    has_name_triples = []
     if ere_type == 'Entity':
-        text_string = ere_object.get('entry').get('text_string')
-        if len(text_string) < 256 and ere_object.get('entry').get('level') == 'nam':
-            has_name_triple = 'ldc:{ere_object_id} aida:hasName "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
-                                                                                      text_string=text_string.replace('"', '\\"'))
+        text_strings = ere_object.get('text_strings')
+        for text_string in text_strings:
+            if len(text_string) < 256 and 'nam' in text_strings[text_string]:
+                has_name_triple = 'ldc:{ere_object_id} aida:hasName "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
+                                                                                          text_string=text_string.replace('"', '\\"'))
+                has_name_triples.append(has_name_triple)
     node_ids = []
     for node_id_or_node_ids in ere_object.get('nodes'):
         for node_id in node_id_or_node_ids.split('|'):
@@ -197,26 +182,30 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
         informative_justification_triples_by_document['all_docs'].append(triple)
         informative_justification_triples_by_document[span.get('document_id')].append(triple)
 
-    ldc_time_assertion_triples = ere_object.get('time_range').get('aif', SYSTEM_NAME) if ere_object.get('time_range') else ''
+    ere_object_iri = 'ldc:{ere_object_id}'.format(ere_object_id=ere_object.get('ID'))
+    ldc_time_iri = '_:bldctime{ere_object_id}'.format(ere_object_id=ere_object.get('ID'))
 
-    if 'aida:timeType "ON"' in ldc_time_assertion_triples:
-        print('check this')
+    if ere_object.get('time_range') and ere_object.get('time_range').is_invalid():
+        ere_object.get('logger').record_event('INVALID_TIME_RANGE', ere_object.get('time_range'), ere_object.get('ID'))
+
+    ldc_time_assertion_triples = ere_object.get('time_range').get('aif', ere_object_iri, ldc_time_iri, SYSTEM_NAME) if ere_object.get('time_range') else ''
 
     triple_block_dict = {}
     for key in informative_justification_triples_by_document:
         triples = """\
-            ldc:{ere_object_id} a aida:{ere_type} .
+            {ere_object_iri} a aida:{ere_type} .
             {informative_justification_triples}
             {ldc_time_assertion_triples}
             {link_assertion_triples}
-            {has_name_triple}
-            ldc:{ere_object_id} aida:system {system} .
-        """.format(ere_object_id=ere_object.get('ID'),
+            {has_name_triples}
+            {ere_object_iri} aida:system {system} .
+        """.format(ere_object_iri=ere_object_iri,
                    ere_type = ere_type,
+                   ldc_time_iri = ldc_time_iri,
                    ldc_time_assertion_triples = ldc_time_assertion_triples,
                    informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
                    link_assertion_triples = '\n'.join(link_assertion_triples),
-                   has_name_triple = has_name_triple,
+                   has_name_triples = '\n'.join(has_name_triples),
                    system = SYSTEM_NAME,
                    )
         triple_block_dict[key] = triples
@@ -564,7 +553,7 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     subject_mention_id = slot.get('subject').get('ID')
     arguments = [slot.get('argument')]
     if subject_node is not None:
-        subject_mention_id = 'prototype-{}'.format(subject_node.get('name'))
+        subject_mention_id = subject_node.get('name')
         arguments = list(slot.get('argument').get('nodes').values())
 
     document_ids = {'all_docs':1}
@@ -576,7 +565,7 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     for argument in arguments:
         argument_mention_id = argument.get('ID')
         if subject_node is not None:
-            argument_mention_id = 'prototype-{}'.format(argument.get('name'))
+            argument_mention_id = argument.get('name')
             if predicate_justification_document_id not in argument.get('document_ids'):
                 slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Predicate justification document ID {} not in the documents from which the argument came'.format(predicate_justification_document_id))
         slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(
@@ -836,6 +825,8 @@ class AIFGenerator(Object):
                     continue
                 triple_block_dict = generate_ere_object_triples(self.get('reference_kb_id'), mention)
                 self.add(triple_block_dict)
+            triple_block_dict = generate_ere_object_triples(self.get('reference_kb_id'), node.get('prototype'))
+            self.add(triple_block_dict)
 
     def generate_clusters(self):
         """

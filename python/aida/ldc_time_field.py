@@ -8,6 +8,8 @@ __date__    = "14 May 2020"
 
 from aida.object import Object
 
+unspecified = {'day':'xx', 'month':'xx', 'year':'xxxx'}
+
 class LDCTimeField(Object):
     """
     The class represents a time field like day, month, and year.
@@ -34,6 +36,17 @@ class LDCTimeField(Object):
         self.field_value = field_value
         self.where = where
 
+    def is_specified(self):
+        return not self.is_unspecified()
+
+    def is_unspecified(self):
+        field_name = self.get('field_name')
+        field_value = self.get('field_value')
+        if field_value == unspecified[field_name]:
+            return True
+        return False
+
+
     def get_aif(self, iri):
         """
         Gets the AIF corresponding to the LDC Time Field.
@@ -43,11 +56,10 @@ class LDCTimeField(Object):
                 The IRI of the LDCTime field.
         """
         dashes = {'day':'---', 'month':'--', 'year':''}
-        unspecified = {'day':'xx', 'month':'xx', 'year':'xxxx'}
         field_name = self.get('field_name')
         field_value = self.get('field_value')
         triple = ''
-        if self.get('field_name') and field_value != unspecified[field_name]:
+        if self.is_specified():
             triple = '{iri} aida:{fn} "{dashes}{fv}"^^xsd:g{ufn} .'.format(
                         iri=iri,
                         dashes = dashes[field_name],
@@ -55,3 +67,6 @@ class LDCTimeField(Object):
                         fv=field_value,
                         ufn=field_name.capitalize())
         return triple
+
+    def __str__(self):
+        return self.get('field_value')

@@ -151,6 +151,9 @@ class Mention(Object):
         """
         return self.get('entry').get('keyframe_id')
 
+    def get_level(self):
+        return self.get('entry').get('level')
+
     def get_preferred_span(self, span1, span2):
         """
         Out of the two spans provided as argument, pick one that should be preferred over the other as the candidate of informative justification.
@@ -166,6 +169,12 @@ class Mention(Object):
             elif span2.get('span_type') == 'picture_channel_video' or span2.get('span_type') == 'sound_channel_video':
                 return span2
         return
+
+    def get_text_string(self):
+        return self.get('entry').get('text_string')
+
+    def get_text_strings(self):
+        return {self.get('text_string'):{self.get('level'):1}}
 
     def is_event(self):
         """
@@ -200,7 +209,6 @@ class Mention(Object):
         self.load_node_metatype()
         if self.get('node_metatype') in ['event', 'relation']:
             self.time_range = LDCTimeRange(self.get('logger'),
-                                           self.get('ID'),
                                            self.get('entry').get('start_date'),
                                            self.get('entry').get('start_date_type'),
                                            self.get('entry').get('end_date'),
