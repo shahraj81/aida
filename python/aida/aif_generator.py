@@ -880,8 +880,9 @@ class AIFGenerator(Object):
                     continue
                 triple_block_dict = generate_type_assertion_triples(mention)
                 self.add(triple_block_dict)
-            for mention_type in node.get('prototype').get('types'):
-                for mention in node.get('prototype').get('types').get(mention_type):
+            prototype = node.get('prototype')
+            for mention_type in prototype.get('types'):
+                for mention in prototype.get('types').get(mention_type):
                     if mention.is_negated():
                         self.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Negated mention encountered. Expected non-negated one.')
                     triple_block_dict = generate_type_assertion_triples(mention, node.get('name'))
