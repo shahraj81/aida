@@ -279,6 +279,7 @@ def main(args):
         # remove intermediate directory for scorer output
         call_system('rm -rf {intermediate}'.format(intermediate=intermediate))
 
+    record_and_display_message(logger, 'Generating scores completed.')
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
