@@ -6,9 +6,6 @@ HOST_INPUT_DIR=$(RUNS)/$(RUNID)
 HOST_OUTPUT_DIR=$(SCORES)/$(RUNID)
 GRAPHDB_VERSION=9.2.1
 GRAPHDB_EDITION=free
-HOST_GRAPHDB_PORT=7200
-CONTAINER_GRAPHDB_PORT=7200
-
 
 all:
 	@echo "Usage: make [build|run]"	
@@ -22,7 +19,6 @@ build:
 run:
 	docker run \
 		--env RUNID=$(RUNID) \
-		-p $(HOST_GRAPHDB_PORT):$(CONTAINER_GRAPHDB_PORT) \
 		-v $(HOST_INPUT_DIR):/evaluate:ro \
 		-v $(HOST_OUTPUT_DIR):/score \
 	-it aida-evaluation
