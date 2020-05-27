@@ -39,26 +39,34 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 RUN mkdir scripts
 RUN mkdir AUX-data
 
+COPY ./AUX-data/M18/AIDA_Phase1_Evaluation_Queries_V8.tgz /tmp/
+COPY ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz /tmp/
 COPY ./AUX-data/M18/graphdb-${edition}-${version}-dist.zip /tmp/
-COPY ./AUX-data/M18/queries /queries
 COPY ./scripts/run.py /scripts/
 COPY ./scripts/logger.py /scripts/
 COPY ./scripts/log_specifications.txt /scripts/
 COPY ./scripts/Makefile /scripts/
 COPY ./AUX-data/M18/LDC2019E42* /AUX-data/
-COPY ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1 /AUX-data/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1
 COPY ./AUX-data/M18/task1_*_queryids.txt /AUX-data/
 
 WORKDIR /tmp
 
 RUN mkdir -p ${GRAPHDB_PARENT_DIR} && \
     cd ${GRAPHDB_PARENT_DIR} && \
-    unzip /tmp/graphdb-${edition}-${version}-dist.zip && \
+    unzip -q /tmp/graphdb-${edition}-${version}-dist.zip && \
     rm /tmp/graphdb-${edition}-${version}-dist.zip && \
     mv graphdb-${edition}-${version} dist && \
     mkdir -p ${GRAPHDB_HOME}
 
 RUN mkdir $SPARQL_EVAL_HOME
+
+RUN tar -zxf AIDA_Phase1_Evaluation_Queries_V8.tgz
+RUN mv AIDA_Phase1_Evaluation_Queries_V8 /queries
+RUN rm AIDA_Phase1_Evaluation_Queries_V8.tgz
+RUN tar -zxf LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
+RUN mv LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1 /AUX-data/
+
+COPY ./AUX-data/M18/*.dtd /queries/
 
 # Install JSON
 
