@@ -1,0 +1,2 @@
+?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
+IC0015L64	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#FAC>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILE05090>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#FAC.Building.GovernmentBuilding>	IC0015L64:HC00002ZG:(4067,0)-(4131,0)	1.000000000000	1.000000000000	1.000000000000

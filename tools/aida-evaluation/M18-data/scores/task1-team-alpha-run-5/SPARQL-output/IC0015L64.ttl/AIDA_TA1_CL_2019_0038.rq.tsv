@@ -1,0 +1,3 @@
+?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
+IC0015L64	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#WEA>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-80000322>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#WEA.Gun.Firearm>	IC0015L64:HC00002ZG:(2153,0)-(2166,0)	1.0E0	1.0E0	1.0E0
+IC0015L64	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#WEA>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILE05086>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#WEA.GrenadeLauncher.GrenadeLauncher>	IC0015L64:HC00002ZG:(2172,0)-(2196,0)	1.0E0	1.0E0	1.0E0
