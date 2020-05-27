@@ -43,8 +43,12 @@ def main(args):
         print('ERROR: Output directory {} is not empty'.format(args.output))
         exit(ERROR_EXIT_CODE)
 
+    # create the logs directory
+    logs = '{output}/{logs}'.format(output=args.output, logs=args.logs)
+    call_system('mkdir {logs}'.format(logs=logs))
     # create the logger
-    logger = Logger(args.log, args.spec, sys.argv)
+    log = '{logs}/run.log'.format(logs=logs)
+    logger = Logger(log, args.spec, sys.argv)
 
     #############################################################################################
     # inspect the input directory
@@ -158,7 +162,7 @@ def main(args):
     # validate class and graph responses separately
     query_types = {'class':'TA1_CL', 'graph':'TA1_GR'}
     for query_type in query_types:
-        log = '{output}/validate-{query_type}-responses.log'.format(output=args.output, query_type=query_type)
+        log = '{logs}/validate-{query_type}-responses.log'.format(logs=logs, query_type=query_type)
         queries_dtd = '/queries/{}_query.dtd'.format(query_type)
         queries_xml = '/queries/task1_{}_queries.xml'.format(query_type)
         cmd = 'cd {validate_responses} && \
@@ -203,7 +207,7 @@ def main(args):
     
     for query_type in query_types:
         task_and_type_code = query_types[query_type]
-        log = '{output}/aggregate-{query_type}-confidences.log'.format(output=args.output, query_type=query_type)
+        log = '{logs}/aggregate-{query_type}-confidences.log'.format(logs=logs, query_type=query_type)
         cmd = 'cd {aggregate_confidences} && \
                 perl -I . AIDA-ConfidenceAggregation-MASTER.pl \
                 -error_file {log} \
@@ -231,7 +235,7 @@ def main(args):
     call_system('cd /scripts/aida && git checkout AIDASR-v2019.2.1')
     
     for query_type in query_types:
-        log = '{output}/{query_type}-score.log'.format(output=args.output, query_type=query_type)
+        log = '{logs}/{query_type}-score.log'.format(logs=logs, query_type=query_type)
         queries_dtd = '/queries/{}_query.dtd'.format(query_type)
         queries_xml = '/queries/task1_{}_queries.xml'.format(query_type)
         query_ids = '/AUX-data/task1_{}_queryids.txt'.format(query_type)
@@ -281,8 +285,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
     parser.add_argument('-i', '--input', default='/evaluate',
                         help='Specify the input directory (default: %(default)s)')
-    parser.add_argument('-l', '--log', default='/score/log.txt', 
-                        help='Specify a file to which log output should be redirected (default: %(default)s)')
+    parser.add_argument('-l', '--logs', default='logs',
+                        help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
     parser.add_argument('-o', '--output', default='/score',
                         help='Specify the input directory (default: %(default)s)')
     parser.add_argument('-r', '--run', default='system',
