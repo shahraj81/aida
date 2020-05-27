@@ -44,6 +44,7 @@ COPY ./AUX-data/M18/queries /queries
 COPY ./scripts/run.py /scripts/
 COPY ./scripts/logger.py /scripts/
 COPY ./scripts/log_specifications.txt /scripts/
+COPY ./scripts/Makefile /scripts/
 COPY ./AUX-data/M18/LDC2019E42* /AUX-data/
 COPY ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1 /AUX-data/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1
 COPY ./AUX-data/M18/task1_*_queryids.txt /AUX-data/
@@ -96,4 +97,4 @@ WORKDIR /scripts/
 #  Setup entrypoint
 #-------------------------------------------------------------
 
-ENTRYPOINT ["python3", "run.py"]
+ENTRYPOINT ["make"]

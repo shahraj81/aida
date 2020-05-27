@@ -1,0 +1,327 @@
+
+PREFIX ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#>
+PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+# Query: AIDA_TA1_GR_2019_0094
+# Query description: Find all edges of type ldcOnt:Conflict.Attack.AirstrikeMissileStrike_Target
+
+# By default, NIST will compute aggregate edge justification confidence (AEJC) as product of:
+#        ?oinf_j_cv    # confidence of object informativeJustification
+#        ?obcm_cv      # cluster membership confidence of the object
+#        ?edge_cj_cv   # confidence of a compound justification for the argument assertion
+#        ?sbcm_cv      # cluster membership confidence of the subject
+
+SELECT DISTINCT 
+       ?docid        # sourceDocument
+       ?edge_type_q  # edge type in the query
+       ?edge_type    # edge type in response matching the edge type in query
+       ?object_cluster  ?objectmo  ?oinf_j_span # object cluster, cluster member and its informativeJustification
+       ?subject_cluster ?subjectmo  # subject cluster, cluster member (its informativeJustification is not needed by LDC for assessment)
+       ?ej_span      # CompoundJustification span(s) for argument assertion
+       ?oinf_j_cv    # confidence of object informativeJustification
+       ?obcm_cv      # cluster membership confidence of the object
+       ?edge_cj_cv   # confidence of a compound justification for the argument assertion
+       ?sbcm_cv      # cluster membership confidence of the subject
+
+WHERE {
+
+    BIND (ldcOnt:Conflict.Attack.AirstrikeMissileStrike_Target AS ?edge_type_q)
+
+    # Get the object informativeJustification
+    # ?objectmo           a                             aida:Entity .
+    ?objectmo             aida:informativeJustification ?oinf_justification .
+    ?oinf_justification   aida:sourceDocument           ?docid .
+    ?oinf_justification   aida:source                   ?oinf_j_doceid .
+    ?oinf_justification   aida:confidence               ?oinf_j_confidence .
+    ?oinf_j_confidence    aida:confidenceValue          ?oinf_j_cv .
+
+    # Get the object cluster and cluster membership confidence
+    ?statement1           a                             aida:ClusterMembership .
+    ?statement1           aida:cluster                  ?object_cluster .
+    ?statement1           aida:clusterMember            ?objectmo .
+    ?statement1           aida:confidence               ?objcm_confidence .
+    ?objcm_confidence     aida:confidenceValue          ?obcm_cv .
+
+    # Get the edge and it's justifications
+    ?statement2           rdf:object                    ?objectmo .
+    ?statement2           rdf:predicate                 ?edge_type .
+    ?statement2           rdf:subject                   ?subjectmo .
+
+    # The ?edge_type should be matching ?edge_type_q
+    FILTER(cfn:superTypeOf(str(?edge_type_q), str(?edge_type)))
+
+    ?statement2           aida:justifiedBy              ?compoundedge_just .
+    ?compoundedge_just    aida:confidence               ?edge_cj_confidence .
+    ?edge_cj_confidence   aida:confidenceValue          ?edge_cj_cv .
+    # The first contained justification
+    ?compoundedge_just    aida:containedJustification   ?edge_justification1 .
+    ?edge_justification1  aida:sourceDocument           ?docid .
+    ?edge_justification1  aida:source                   ?edgecj1_doceid .
+    # The second contained justification
+    ?compoundedge_just    aida:containedJustification   ?edge_justification2 .
+    ?edge_justification2  aida:sourceDocument           ?docid .
+    ?edge_justification2  aida:source                   ?edgecj2_doceid .
+
+    # Get the subject informativeJustification
+    # ?subjectmo            aida:informativeJustification ?sinf_justification .
+    # ?sinf_justification   aida:sourceDocument           ?docid .
+    # ?sinf_justification   aida:source                   ?sinf_j_doceid .
+    # ?sinf_justification   aida:confidence               ?sinf_j_confidence .
+    # ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
+
+    # Get the subject cluster and cluster membership confidence
+    ?statement3           a                             aida:ClusterMembership .
+    ?statement3           aida:cluster                  ?subject_cluster .
+    ?statement3           aida:clusterMember            ?subjectmo .
+    ?statement3           aida:confidence               ?subjcm_confidence .
+    ?subjcm_confidence    aida:confidenceValue          ?sbcm_cv .
+
+    # Get the number of justifications (?edge_num_cjs) that are contained in
+    # the ?compoundedge_just
+    {
+       SELECT ?compoundedge_just (count(DISTINCT ?_c_j_span) as ?edge_num_cjs)
+       WHERE {
+           ?compoundedge_just aida:containedJustification ?c_justification .
+           ?c_justification   aida:sourceDocument         ?cj_docid .
+           ?c_justification   aida:source                 ?cj_doceid .
+
+           OPTIONAL {
+                  ?c_justification a                           aida:TextJustification .
+                  ?c_justification aida:startOffset            ?cj_so .
+                  ?c_justification aida:endOffsetInclusive     ?cj_eo
+           }
+           OPTIONAL {
+                  ?c_justification a                           aida:ImageJustification .
+                  ?c_justification aida:boundingBox            ?cj_bb1  .
+                  ?cj_bb1          aida:boundingBoxUpperLeftX  ?cj_ulx1 .
+                  ?cj_bb1          aida:boundingBoxUpperLeftY  ?cj_uly1 .
+                  ?cj_bb1          aida:boundingBoxLowerRightX ?cj_lrx1 .
+                  ?cj_bb1          aida:boundingBoxLowerRightY ?cj_lry1
+           }
+           OPTIONAL {
+                  ?c_justification a                           aida:KeyFrameVideoJustification .
+                  ?c_justification aida:keyFrame               ?cj_kfid .
+                  ?c_justification aida:boundingBox            ?cj_bb2  .
+                  ?cj_bb2          aida:boundingBoxUpperLeftX  ?cj_ulx2 .
+                  ?cj_bb2          aida:boundingBoxUpperLeftY  ?cj_uly2 .
+                  ?cj_bb2          aida:boundingBoxLowerRightX ?cj_lrx2 .
+                  ?cj_bb2          aida:boundingBoxLowerRightY ?cj_lry2
+           }
+           OPTIONAL {
+                  ?c_justification a                           aida:ShotVideoJustification .
+                  ?c_justification aida:shot                   ?cj_sid
+           }
+           OPTIONAL {
+                  ?c_justification a                           aida:AudioJustification .
+                  ?c_justification aida:startTimestamp         ?cj_st .
+                  ?c_justification aida:endTimestamp           ?cj_et
+           }
+
+           BIND( IF( BOUND(?cj_sid), ?cj_sid, "__NULL__") AS ?_cj_sid) .
+           BIND( IF( BOUND(?cj_kfid), ?cj_kfid, "__NULL__") AS ?_cj_kfid) .
+           BIND( IF( BOUND(?cj_so), ?cj_so, "__NULL__") AS ?_cj_so) .
+           BIND( IF( BOUND(?cj_eo), ?cj_eo, "__NULL__") AS ?_cj_eo) .
+           BIND( IF( BOUND(?cj_st), ?cj_st, "__NULL__") AS ?_cj_st) .
+           BIND( IF( BOUND(?cj_et), ?cj_et, "__NULL__") AS ?_cj_et) .
+           BIND( COALESCE(?cj_ulx1, ?cj_ulx2, "__NULL__") AS ?_cj_ulx) .
+           BIND( COALESCE(?cj_uly1, ?cj_uly2, "__NULL__") AS ?_cj_uly) .
+           BIND( COALESCE(?cj_lrx1, ?cj_lrx2, "__NULL__") AS ?_cj_lrx) .
+           BIND( COALESCE(?cj_lry1, ?cj_lry2, "__NULL__") AS ?_cj_lry) .
+
+           BIND( cfn:getSpan(str(?cj_docid), str(?cj_doceid), str(?_cj_sid), str(?_cj_kfid), str(?_cj_so), str(?_cj_eo), str(?_cj_ulx), str(?_cj_uly), str(?_cj_lrx), str(?_cj_lry), str(?_cj_st), str(?_cj_et) ) AS ?_c_j_span ) .
+       }
+       GROUP BY ?compoundedge_just
+    }
+
+    # Get object's informative justification span
+    OPTIONAL {
+           ?oinf_justification a                           aida:TextJustification .
+           ?oinf_justification aida:startOffset            ?oso .
+           ?oinf_justification aida:endOffsetInclusive     ?oeo
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:ImageJustification .
+           ?oinf_justification aida:boundingBox            ?obb1  .
+           ?obb1               aida:boundingBoxUpperLeftX  ?oulx1 .
+           ?obb1               aida:boundingBoxUpperLeftY  ?ouly1 .
+           ?obb1               aida:boundingBoxLowerRightX ?olrx1 .
+           ?obb1               aida:boundingBoxLowerRightY ?olry1
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:KeyFrameVideoJustification .
+           ?oinf_justification aida:keyFrame               ?okfid .
+           ?oinf_justification aida:boundingBox            ?obb2  .
+           ?obb2               aida:boundingBoxUpperLeftX  ?oulx2 .
+           ?obb2               aida:boundingBoxUpperLeftY  ?ouly2 .
+           ?obb2               aida:boundingBoxLowerRightX ?olrx2 .
+           ?obb2               aida:boundingBoxLowerRightY ?olry2
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:ShotVideoJustification .
+           ?oinf_justification aida:shot                   ?osid
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:AudioJustification .
+           ?oinf_justification aida:startTimestamp         ?ost .
+           ?oinf_justification aida:endTimestamp           ?oet
+    }
+
+    BIND( IF( BOUND(?osid), ?osid, "__NULL__") AS ?_osid) .
+    BIND( IF( BOUND(?okfid), ?okfid, "__NULL__") AS ?_okfid) .
+    BIND( IF( BOUND(?oso), ?oso, "__NULL__") AS ?_oso) .
+    BIND( IF( BOUND(?oeo), ?oeo, "__NULL__") AS ?_oeo) .
+    BIND( IF( BOUND(?ost), ?ost, "__NULL__") AS ?_ost) .
+    BIND( IF( BOUND(?oet), ?oet, "__NULL__") AS ?_oet) .
+    BIND( COALESCE(?oulx1, ?oulx2, "__NULL__") AS ?_oulx) .
+    BIND( COALESCE(?ouly1, ?ouly2, "__NULL__") AS ?_ouly) .
+    BIND( COALESCE(?olrx1, ?olrx2, "__NULL__") AS ?_olrx) .
+    BIND( COALESCE(?olry1, ?olry2, "__NULL__") AS ?_olry) .
+
+    BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) AS ?oinf_j_span ) .
+
+    # Get subject's informative justification span
+    # OPTIONAL {
+    #       ?sinf_justification a                           aida:TextJustification .
+    #       ?sinf_justification aida:startOffset            ?sso .
+    #       ?sinf_justification aida:endOffsetInclusive     ?seo
+    # }
+    # OPTIONAL {
+    #       ?sinf_justification a                           aida:ImageJustification .
+    #       ?sinf_justification aida:boundingBox            ?sbb1  .
+    #       ?sbb1               aida:boundingBoxUpperLeftX  ?sulx1 .
+    #       ?sbb1               aida:boundingBoxUpperLeftY  ?suly1 .
+    #       ?sbb1               aida:boundingBoxLowerRightX ?slrx1 .
+    #       ?sbb1               aida:boundingBoxLowerRightY ?slry1
+    # }
+    # OPTIONAL {
+    #       ?sinf_justification a                           aida:KeyFrameVideoJustification .
+    #       ?sinf_justification aida:keyFrame               ?skfid .
+    #       ?sinf_justification aida:boundingBox            ?sbb2  .
+    #       ?sbb2               aida:boundingBoxUpperLeftX  ?sulx2 .
+    #       ?sbb2               aida:boundingBoxUpperLeftY  ?suly2 .
+    #       ?sbb2               aida:boundingBoxLowerRightX ?slrx2 .
+    #       ?sbb2               aida:boundingBoxLowerRightY ?slry2
+    # }
+    # OPTIONAL {
+    #       ?sinf_justification a                           aida:ShotVideoJustification .
+    #       ?sinf_justification aida:shot                   ?ssid
+    # }
+    # OPTIONAL {
+    #       ?sinf_justification a                           aida:AudioJustification .
+    #       ?sinf_justification aida:startTimestamp         ?sst .
+    #       ?sinf_justification aida:endTimestamp           ?set
+    # }
+
+    # BIND( IF( BOUND(?ssid), ?ssid, "__NULL__") AS ?_ssid) .
+    # BIND( IF( BOUND(?skfid), ?skfid, "__NULL__") AS ?_skfid) .
+    # BIND( IF( BOUND(?sso), ?sso, "__NULL__") AS ?_sso) .
+    # BIND( IF( BOUND(?seo), ?seo, "__NULL__") AS ?_seo) .
+    # BIND( IF( BOUND(?sst), ?sst, "__NULL__") AS ?_sst) .
+    # BIND( IF( BOUND(?set), ?set, "__NULL__") AS ?_set) .
+    # BIND( COALESCE(?sulx1, ?sulx2, "__NULL__") AS ?_sulx) .
+    # BIND( COALESCE(?suly1, ?suly2, "__NULL__") AS ?_suly) .
+    # BIND( COALESCE(?slrx1, ?slrx2, "__NULL__") AS ?_slrx) .
+    # BIND( COALESCE(?slry1, ?slry2, "__NULL__") AS ?_slry) .
+
+    # BIND( cfn:getSpan(str(?docid), str(?sinf_j_doceid), str(?_ssid), str(?_skfid), str(?_sso), str(?_seo), str(?_sulx), str(?_suly), str(?_slrx), str(?_slry), str(?_sst), str(?_set) ) AS ?sinf_j_span ) .
+
+    # Get edge's justification span # 1
+    OPTIONAL {
+           ?edge_justification1 a                           aida:TextJustification .
+           ?edge_justification1 aida:startOffset            ?ej1so .
+           ?edge_justification1 aida:endOffsetInclusive     ?ej1eo
+    }
+    OPTIONAL {
+           ?edge_justification1 a                           aida:ImageJustification .
+           ?edge_justification1 aida:boundingBox            ?ej1bb1  .
+           ?ej1bb1              aida:boundingBoxUpperLeftX  ?ej1ulx1 .
+           ?ej1bb1              aida:boundingBoxUpperLeftY  ?ej1uly1 .
+           ?ej1bb1              aida:boundingBoxLowerRightX ?ej1lrx1 .
+           ?ej1bb1              aida:boundingBoxLowerRightY ?ej1lry1
+    }
+    OPTIONAL {
+           ?edge_justification1 a                           aida:KeyFrameVideoJustification .
+           ?edge_justification1 aida:keyFrame               ?ej1kfid .
+           ?edge_justification1 aida:boundingBox            ?ej1bb2  .
+           ?ej1bb2              aida:boundingBoxUpperLeftX  ?ej1ulx2 .
+           ?ej1bb2              aida:boundingBoxUpperLeftY  ?ej1uly2 .
+           ?ej1bb2              aida:boundingBoxLowerRightX ?ej1lrx2 .
+           ?ej1bb2              aida:boundingBoxLowerRightY ?ej1lry2
+    }
+    OPTIONAL {
+           ?edge_justification1 a                           aida:ShotVideoJustification .
+           ?edge_justification1 aida:shot                   ?ej1sid
+    }
+    OPTIONAL {
+           ?edge_justification1 a                           aida:AudioJustification .
+           ?edge_justification1 aida:startTimestamp         ?ej1st .
+           ?edge_justification1 aida:endTimestamp           ?ej1et
+    }
+
+    BIND( IF( BOUND(?ej1sid), ?ej1sid, "__NULL__") AS ?_ej1sid) .
+    BIND( IF( BOUND(?ej1kfid), ?ej1kfid, "__NULL__") AS ?_ej1kfid) .
+    BIND( IF( BOUND(?ej1so), ?ej1so, "__NULL__") AS ?_ej1so) .
+    BIND( IF( BOUND(?ej1eo), ?ej1eo, "__NULL__") AS ?_ej1eo) .
+    BIND( IF( BOUND(?ej1st), ?ej1st, "__NULL__") AS ?_ej1st) .
+    BIND( IF( BOUND(?ej1et), ?ej1et, "__NULL__") AS ?_ej1et) .
+    BIND( COALESCE(?ej1ulx1, ?ej1ulx2, "__NULL__") AS ?_ej1ulx) .
+    BIND( COALESCE(?ej1uly1, ?ej1uly2, "__NULL__") AS ?_ej1uly) .
+    BIND( COALESCE(?ej1lrx1, ?ej1lrx2, "__NULL__") AS ?_ej1lrx) .
+    BIND( COALESCE(?ej1lry1, ?ej1lry2, "__NULL__") AS ?_ej1lry) .
+
+    BIND( cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) AS ?ej1_span ) .
+
+
+    # Get edge's justification span # 2
+    OPTIONAL {
+           ?edge_justification2 a                           aida:TextJustification .
+           ?edge_justification2 aida:startOffset            ?ej2so .
+           ?edge_justification2 aida:endOffsetInclusive     ?ej2eo
+    }
+    OPTIONAL {
+           ?edge_justification2 a                           aida:ImageJustification .
+           ?edge_justification2 aida:boundingBox            ?ej2bb1  .
+           ?ej2bb1              aida:boundingBoxUpperLeftX  ?ej2ulx1 .
+           ?ej2bb1              aida:boundingBoxUpperLeftY  ?ej2uly1 .
+           ?ej2bb1              aida:boundingBoxLowerRightX ?ej2lrx1 .
+           ?ej2bb1              aida:boundingBoxLowerRightY ?ej2lry1
+    }
+    OPTIONAL {
+           ?edge_justification2 a                           aida:KeyFrameVideoJustification .
+           ?edge_justification2 aida:keyFrame               ?ej2kfid .
+           ?edge_justification2 aida:boundingBox            ?ej2bb2  .
+           ?ej2bb2              aida:boundingBoxUpperLeftX  ?ej2ulx2 .
+           ?ej2bb2              aida:boundingBoxUpperLeftY  ?ej2uly2 .
+           ?ej2bb2              aida:boundingBoxLowerRightX ?ej2lrx2 .
+           ?ej2bb2              aida:boundingBoxLowerRightY ?ej2lry2
+    }
+    OPTIONAL {
+           ?edge_justification2 a                           aida:ShotVideoJustification .
+           ?edge_justification2 aida:shot                   ?ej2sid
+    }
+    OPTIONAL {
+           ?edge_justification2 a                           aida:AudioJustification .
+           ?edge_justification2 aida:startTimestamp         ?ej2st .
+           ?edge_justification2 aida:endTimestamp           ?ej2et
+    }
+
+    BIND( IF( BOUND(?ej2sid), ?ej2sid, "__NULL__") AS ?_ej2sid) .
+    BIND( IF( BOUND(?ej2kfid), ?ej2kfid, "__NULL__") AS ?_ej2kfid) .
+    BIND( IF( BOUND(?ej2so), ?ej2so, "__NULL__") AS ?_ej2so) .
+    BIND( IF( BOUND(?ej2eo), ?ej2eo, "__NULL__") AS ?_ej2eo) .
+    BIND( IF( BOUND(?ej2st), ?ej2st, "__NULL__") AS ?_ej2st) .
+    BIND( IF( BOUND(?ej2et), ?ej2et, "__NULL__") AS ?_ej2et) .
+    BIND( COALESCE(?ej2ulx1, ?ej2ulx2, "__NULL__") AS ?_ej2ulx) .
+    BIND( COALESCE(?ej2uly1, ?ej2uly2, "__NULL__") AS ?_ej2uly) .
+    BIND( COALESCE(?ej2lrx1, ?ej2lrx2, "__NULL__") AS ?_ej2lrx) .
+    BIND( COALESCE(?ej2lry1, ?ej2lry2, "__NULL__") AS ?_ej2lry) .
+
+    BIND( cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) AS ?_ej2_span ) .
+    BIND(IF(?edge_num_cjs = 1, "", ?_ej2_span) AS ?ej2_span)
+    FILTER(?ej1_span > ?ej2_span)
+    BIND(IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
+}
+	
