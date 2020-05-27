@@ -39,15 +39,14 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 RUN mkdir scripts
 RUN mkdir AUX-data
 
-COPY ./AUX-data/graphdb-${edition}-${version}-dist.zip /tmp/
-COPY ./AUX-data/queries /queries
+COPY ./AUX-data/M18/graphdb-${edition}-${version}-dist.zip /tmp/
+COPY ./AUX-data/M18/queries /queries
 COPY ./scripts/run.py /scripts/
 COPY ./scripts/logger.py /scripts/
 COPY ./scripts/log_specifications.txt /scripts/
-COPY ./scripts/aida /scripts/aida
-COPY ./AUX-data/LDC2019E42* /AUX-data/
-COPY ./AUX-data/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1 /AUX-data/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1
-COPY ./AUX-data/task1_*_queryids.txt /AUX-data/
+COPY ./AUX-data/M18/LDC2019E42* /AUX-data/
+COPY ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1 /AUX-data/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1
+COPY ./AUX-data/M18/task1_*_queryids.txt /AUX-data/
 
 WORKDIR /tmp
 
@@ -60,13 +59,16 @@ RUN mkdir -p ${GRAPHDB_PARENT_DIR} && \
 
 RUN mkdir $SPARQL_EVAL_HOME
 
-
+# Install JSON
 
 ENV PERLBREW_PATH=/root/perl5/perlbrew/bin
 RUN perlbrew install-cpanm
 RUN $PERLBREW_PATH/cpanm install JSON
 
 # Setup the AIDA repository
+WORKDIR /scripts
+
+RUN git clone https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
@@ -95,5 +97,3 @@ WORKDIR /scripts/
 #-------------------------------------------------------------
 
 ENTRYPOINT ["python3", "run.py"]
-#ENTRYPOINT ["make", "-f" , "/scripts/Makefile"]
-#ENTRYPOINT ["/bin/bash"]
