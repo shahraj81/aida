@@ -138,7 +138,6 @@ def main(args):
         # stop GraphDB
         logger.record_event('DEFAULT_INFO', 'Stopping GraphDB.')
         call_system('pkill -9 -f graphdb')
-        break
     
     #############################################################################################
     # validate SPARQL output
