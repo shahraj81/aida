@@ -66,7 +66,7 @@ my $types_allowed = {
       # print header
       print $program_output join("\t", ("?cluster", "?rank")), "\n";
       # print lines
-      foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
+      foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a} || $a cmp $b} keys %clusters) {
         print $program_output join("\t", ($cluster_id, $rank)), "\n";
         $rank++;
       }
@@ -112,7 +112,7 @@ my $types_allowed = {
       my $header = $filehandler->get("HEADER")->get("LINE");
       print $program_output join("\t", ($header, "?ag_cv", "?rank")), "\n";
       my $rank = 1;
-      foreach my $edge_str(sort {$edges{$b}->get("?ag_cv") <=> $edges{$a}->get("?ag_cv")} keys %edges) {
+      foreach my $edge_str(sort {$edges{$b}->get("?ag_cv") <=> $edges{$a}->get("?ag_cv") || $a cmp $b} keys %edges) {
         my $line = $edges{$edge_str}->get("LINE");
         my $ag_cv = $edges{$edge_str}->get("?ag_cv");
         print $program_output join("\t", ($line, $ag_cv, $rank)), "\n";
@@ -155,7 +155,7 @@ my $types_allowed = {
       # print header
       print $program_output join("\t", ("?cluster", "?rank")), "\n";
       # print lines
-      foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a}} keys %clusters) {
+      foreach my $cluster_id(sort {$clusters{$b}<=>$clusters{$a} || $a cmp $b} keys %clusters) {
         print $program_output join("\t", ($cluster_id, $rank)), "\n";
         $rank++;
       }
@@ -193,7 +193,7 @@ my $types_allowed = {
       my $header = $filehandler->get("HEADER")->get("LINE");
       print $program_output join("\t", ($header, "?ag_cv", "?rank")), "\n";
       # print lines
-      foreach my $cluster_id(sort {$subjects{$b}->get("?ag_cv")<=>$subjects{$a}->get("?ag_cv")} keys %subjects) {
+      foreach my $cluster_id(sort {$subjects{$b}->get("?ag_cv")<=>$subjects{$a}->get("?ag_cv") || $a cmp $b} keys %subjects) {
         my $line = $subjects{$cluster_id}->get("LINE");
         my $ag_cv = $subjects{$cluster_id}->get("?ag_cv");
         print $program_output join("\t", ($line, $ag_cv, $rank)), "\n";
