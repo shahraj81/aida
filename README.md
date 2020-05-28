@@ -10,7 +10,7 @@ Tools and utilities for supporting AIDA evaluations.
 | tools/resolve-queries                | Tool for applying SPARQL queries to a knowledge base in AIF format in order to produce output in the simplified xml response format |
 | tools/validate-responses             | Tool for validating responses for AIDA M9 evaluation |
 
-## Tools and utilities for 2019 (M18) evaluations
+## Tools and utilities for Phase-I evaluation conducted at the end of 2019
 
 | Name | Description | Location | Latest release branch |
 |---|---|---|---|
@@ -18,5 +18,6 @@ Tools and utilities for supporting AIDA evaluations.
 | AIDA-ValidateResponses | Tool for validating responses obtained after applying SPARQL queries to KBs | tools/validate-responses | AIDAVR-v2019.0.3 |
 | AIDA-ConfidenceAggregation | Tool (and docker) for aggregating confidences | tools/confidence-aggregation | AIDACA-v2019.0.2 |
 | AIDA-ScoreResponses | Tool for scoring responses | tools/scorer | AIDASR-v2019.2.1 |
+| AIF Generator | Tool for converting annotations into AIF | python/generate_aif.py | AIDAAG-v2019.0.1 |
 
 Please refer to tool/utility specific README file(s) for more details.
