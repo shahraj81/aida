@@ -18,7 +18,7 @@ use ScoreManagerLib;
 # For usage, run with no arguments
 ##################################################################################### 
 
-my $version = "2019.2.1";
+my $version = "2019.2.2";
 
 # Filehandles for program and error output
 my $program_output = *STDOUT{IO};

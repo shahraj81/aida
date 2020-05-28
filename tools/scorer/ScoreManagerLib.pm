@@ -6791,63 +6791,70 @@ sub score_responses_TASK1_STRATEGY1 {
         $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{POOLED} = 1;
         my $key = "$predicate:$predicate_justification:$object_justification";
         my $assessment = $ground_truth{"STRATEGY-1A"}{ENTRIES_BY_KEY}{$key};
-        $logger->NIST_die("Assessment not found for key $key") unless $assessment;
-        $response->set("ASSESSMENT_ENTRY", $assessment);
-        if($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT") {
-          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{CORRECT}}, $response);
-          $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
-          if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
-            unless($assessment->get("SUBJECT_FQEC_READ") eq "") {
-              # predicate justification is correct and linkable to object, as well as it is not a relation
-              # where the subject EC is blank (i.e. not grouped into EC by LDC)
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
-              # response is either RIGHT or REDUNDANT because it met both the conditions given below:
-              #  (1) correct predicate justification, and
-              #  (2) predicate justification is linkable to object justification
-              my ($subject, $predicate, $object) = map {$assessment->get($_)} qw(SUBJECT_FQEC PREDICATE OBJECT_FQEC);
-              my $edge_string = join("\t", ($subject, $predicate, "LDC2019E43:".$object));
-              if($correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string}) {
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{REDUNDANT}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
+        unless($assessment) {
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{NOTASSESSED} = 1;
+          $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{NOTASSESSED}}, $response);
+          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{IGNORE}}, $response);
+        }
+        else {
+          $response->set("ASSESSMENT_ENTRY", $assessment);
+          if($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "CORRECT") {
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{CORRECT}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{CORRECT} = 1;
+            if($assessment->get("OBJECT_LINKABILITY") eq "YES") {
+              unless($assessment->get("SUBJECT_FQEC_READ") eq "") {
+                # predicate justification is correct and linkable to object, as well as it is not a relation
+                # where the subject EC is blank (i.e. not grouped into EC by LDC)
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT} = 1;
+                # response is either RIGHT or REDUNDANT because it met both the conditions given below:
+                #  (1) correct predicate justification, and
+                #  (2) predicate justification is linkable to object justification
+                my ($subject, $predicate, $object) = map {$assessment->get($_)} qw(SUBJECT_FQEC PREDICATE OBJECT_FQEC);
+                my $edge_string = join("\t", ($subject, $predicate, "LDC2019E43:".$object));
+                if($correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string}) {
+                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{REDUNDANT}}, $response);
+                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{REDUNDANT} = 1;
+                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{IGNORE}}, $response);
+                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+                }
+                else{
+                  push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RIGHT}}, $response);
+                  $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
+                  $correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string} = 1;
+                  if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}) {
+                    $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
+                    push(@{$categorized_submissions{"STRATEGY-1B"}{$query_and_document}{SALIENT}}, $response);
+                  }
+                }
+              }
+              else {
+                # predicate justification is correct and linkable to object, but it is a relation
+                # where the subject EC is blank (i.e. not grouped into EC by LDC)
+                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RELATION_WITHOUT_EC}}, $response);
+                $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{RELATION_WITHOUT_EC} = 1;
                 push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{IGNORE}}, $response);
                 $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
               }
-              else{
-                push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RIGHT}}, $response);
-                $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{RIGHT} = 1;
-                $correct_found{"STRATEGY-1A"}{$query_and_document}{$edge_string} = 1;
-                if(exists $ground_truth{"STRATEGY-1B"}{SALIENT_EDGES}{$query_id}{$edge_string}) {
-                  $response->{ASSESSMENT}{"STRATEGY-1B"}{"POST-POLICY"}{SALIENT} = 1;
-                  push(@{$categorized_submissions{"STRATEGY-1B"}{$query_and_document}{SALIENT}}, $response);
-                }
-              }
             }
             else {
-              # predicate justification is correct and linkable to object, but it is a relation
-              # where the subject EC is blank (i.e. not grouped into EC by LDC)
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{RELATION_WITHOUT_EC}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{RELATION_WITHOUT_EC} = 1;
-              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{IGNORE}}, $response);
-              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{IGNORE} = 1;
+              push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{WRONG}}, $response);
+              $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
             }
           }
-          else {
+          elsif($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "INCORRECT") {
+            push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{INCORRECT}}, $response);
+            $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{INCORRECT} = 1;
             push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{WRONG}}, $response);
             $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
           }
-        }
-        elsif($assessment->get("PREDICATE_JUSTIFICATION_CORRECTNESS") eq "INCORRECT") {
-          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{INCORRECT}}, $response);
-          $response->{ASSESSMENT}{"STRATEGY-1A"}{"PRE-POLICY"}{INCORRECT} = 1;
-          push(@{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{WRONG}}, $response);
-          $response->{ASSESSMENT}{"STRATEGY-1A"}{"POST-POLICY"}{WRONG} = 1;
-        }
-        else{
-          my $filename = $response->get("WHERE")->{FILENAME};
-          my $linenum = $response->get("WHERE")->{LINENUM};
-          my $line = $response->get("LINE");
-          $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
+          else{
+            my $filename = $response->get("WHERE")->{FILENAME};
+            my $linenum = $response->get("WHERE")->{LINENUM};
+            my $line = $response->get("LINE");
+            $logger->NIST_die("Unexpected value of assessment found for response\n $line\n in $filename (line#$linenum)\n");
+          }
         }
       }
       else {
@@ -6873,6 +6880,7 @@ sub score_responses_TASK1_STRATEGY1 {
       my $num_correct_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"CORRECT"} || []};
       my $num_predicate_justification_linkable_to_object_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT"} || []};
       my $num_incorrect_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"INCORRECT"} || []};
+      my $num_notassessed_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"NOTASSESSED"} || []};
       my $num_right_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"RIGHT"} || []};
       my $num_wrong_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"WRONG"} || []};
       my $num_redundant_1a = @{$categorized_submissions{"STRATEGY-1A"}{$query_and_document}{"REDUNDANT"} || []};
@@ -6889,6 +6897,7 @@ sub score_responses_TASK1_STRATEGY1 {
                                     $num_correct_1a,
                                     $num_predicate_justification_linkable_to_object_1a,
                                     $num_incorrect_1a,
+                                    $num_notassessed_1a,
                                     $num_right_1a,
                                     $num_wrong_1a,
                                     $num_redundant_1a,
@@ -7403,6 +7412,7 @@ my @task1_graph_scorer_strategy1_fields_to_print = (
   {NAME => 'NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT', HEADER => 'PJLnkabl2O',     FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_REDUNDANT_1A',                               HEADER => 'Dup',            FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_INCORRECT_1A',                               HEADER => 'Incrct',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
+  {NAME => 'NUM_NOTASSESSED_1A',                             HEADER => 'Ntassd',         FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_COUNTED_1A',                                 HEADER => 'Cntd',           FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_RIGHT_1A',                                   HEADER => 'Right',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
   {NAME => 'NUM_WRONG_1A',                                   HEADER => 'Wrong',          FORMAT => '%4d',    JUSTIFY => 'R', MEAN_FORMAT => '%4.2f'},
@@ -7433,6 +7443,7 @@ sub get_SUMMARY {
       $total_num_correct_1a, 
       $total_num_predicate_justification_linkable_to_object_1a,
       $total_num_incorrect_1a, 
+      $total_num_notassessed_1a,
       $total_num_right_1a,
       $total_num_wrong_1a, 
       $total_num_redundant_1a, 
@@ -7445,6 +7456,7 @@ sub get_SUMMARY {
         $num_correct_1a,
         $num_predicate_justification_linkable_to_object_1a,
         $num_incorrect_1a,
+        $num_notassessed_1a,
         $num_right_1a,
         $num_wrong_1a,
         $num_redundant_1a,
@@ -7457,6 +7469,7 @@ sub get_SUMMARY {
                                   NUM_CORRECT_1A
                                   NUM_PREDICATE_JUSTIFICATION_LINKABLE_TO_OBJECT
                                   NUM_INCORRECT_1A
+                                  NUM_NOTASSESSED_1A
                                   NUM_RIGHT_1A
                                   NUM_WRONG_1A
                                   NUM_REDUNDANT_1A
@@ -7470,6 +7483,7 @@ sub get_SUMMARY {
     $total_num_correct_1a += $num_correct_1a;
     $total_num_predicate_justification_linkable_to_object_1a += $num_predicate_justification_linkable_to_object_1a;
     $total_num_incorrect_1a += $num_incorrect_1a;
+    $total_num_notassessed_1a += $num_notassessed_1a;
     $total_num_right_1a += $num_right_1a;
     $total_num_wrong_1a += $num_wrong_1a;
     $total_num_redundant_1a += $num_redundant_1a;
@@ -7487,6 +7501,7 @@ sub get_SUMMARY {
                     $total_num_correct_1a,
                     $total_num_predicate_justification_linkable_to_object_1a,
                     $total_num_incorrect_1a,
+                    $total_num_notassessed_1a,
                     $total_num_right_1a,
                     $total_num_wrong_1a,
                     $total_num_redundant_1a,
@@ -7562,6 +7577,7 @@ sub new {
       $num_correct_1a,
       $num_predicate_justification_linkable_to_object_1a,
       $num_incorrect_1a,
+      $num_notassessed_1a,
       $num_right_1a,
       $num_wrong_1a,
       $num_redundant_1a,
@@ -7580,6 +7596,7 @@ sub new {
     NUM_GROUND_TRUTH_1A_COUNTED => $num_ground_truth_1a_counted,
     NUM_IGNORED_1A => $num_ignored_1a,
     NUM_INCORRECT_1A => $num_incorrect_1a,
+    NUM_NOTASSESSED_1A => $num_notassessed_1a,
     NUM_POOLED_1A => $num_pooled_1a,
     NUM_REDUNDANT_1A => $num_redundant_1a,
     NUM_RIGHT_1A => $num_right_1a,
