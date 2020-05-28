@@ -1,50 +1,50 @@
-05/28/2020 05:40:07 PM - run.py - INFO - Execution begins {current_dir:/scripts, script_name:run.py, arguments:--run task1-team-alpha-run-5}
-05/28/2020 05:40:07 PM - run.py - INFO - Inspecting the input directory.
-05/28/2020 05:40:07 PM - run.py - INFO - Input directory contains 5 KBs in total. (valid 4, invalid 1)
-05/28/2020 05:40:07 PM - run.py - INFO - Copying valid input KBs for applying SPARQL queries.
-05/28/2020 05:40:07 PM - run.py - INFO - Copying IC0015LTF.ttl
-05/28/2020 05:40:07 PM - run.py - INFO - Copying IC0015L64.ttl
-05/28/2020 05:40:08 PM - run.py - INFO - Copying IC0015LZK.ttl
-05/28/2020 05:40:08 PM - run.py - INFO - Copying IC0015LMY.ttl
-05/28/2020 05:40:08 PM - run.py - INFO - Applying SPARQL queries.
-05/28/2020 05:40:08 PM - run.py - INFO - Copying SPARQL queries to be applied.
-05/28/2020 05:40:08 PM - run.py - INFO - Applying queries to 1/5 IC0015LTF.ttl.
-05/28/2020 05:40:08 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/28/2020 05:40:08 PM - run.py - INFO - Loading IC0015LTF.ttl into GraphDB.
-05/28/2020 05:40:15 PM - run.py - INFO - Starting GraphDB
-05/28/2020 05:40:20 PM - run.py - INFO - Applying queries
-05/28/2020 05:41:05 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/28/2020 05:41:05 PM - run.py - INFO - Moving output out of the intermediate directory
-05/28/2020 05:41:05 PM - run.py - INFO - Removing the intermediate directory.
-05/28/2020 05:41:05 PM - run.py - INFO - Stopping GraphDB.
-05/28/2020 05:41:05 PM - run.py - INFO - Applying queries to 2/5 IC0015L64.ttl.
-05/28/2020 05:41:05 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/28/2020 05:41:05 PM - run.py - INFO - Loading IC0015L64.ttl into GraphDB.
-05/28/2020 05:41:11 PM - run.py - INFO - Starting GraphDB
-05/28/2020 05:41:17 PM - run.py - INFO - Applying queries
-05/28/2020 05:42:42 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/28/2020 05:42:42 PM - run.py - INFO - Moving output out of the intermediate directory
-05/28/2020 05:42:43 PM - run.py - INFO - Removing the intermediate directory.
-05/28/2020 05:42:43 PM - run.py - INFO - Stopping GraphDB.
-05/28/2020 05:42:43 PM - run.py - INFO - Applying queries to 3/5 IC0015LZK.ttl.
-05/28/2020 05:42:43 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/28/2020 05:42:43 PM - run.py - INFO - Loading IC0015LZK.ttl into GraphDB.
-05/28/2020 05:42:48 PM - run.py - INFO - Starting GraphDB
-05/28/2020 05:42:54 PM - run.py - INFO - Applying queries
-05/28/2020 05:43:20 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/28/2020 05:43:20 PM - run.py - INFO - Moving output out of the intermediate directory
-05/28/2020 05:43:20 PM - run.py - INFO - Removing the intermediate directory.
-05/28/2020 05:43:20 PM - run.py - INFO - Stopping GraphDB.
-05/28/2020 05:43:20 PM - run.py - INFO - Applying queries to 4/5 IC0015LMY.ttl.
-05/28/2020 05:43:20 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/28/2020 05:43:20 PM - run.py - INFO - Loading IC0015LMY.ttl into GraphDB.
-05/28/2020 05:43:27 PM - run.py - INFO - Starting GraphDB
-05/28/2020 05:43:32 PM - run.py - INFO - Applying queries
-05/28/2020 05:45:13 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/28/2020 05:45:13 PM - run.py - INFO - Moving output out of the intermediate directory
-05/28/2020 05:45:13 PM - run.py - INFO - Removing the intermediate directory.
-05/28/2020 05:45:13 PM - run.py - INFO - Stopping GraphDB.
-05/28/2020 05:45:13 PM - run.py - INFO - Validating SPARQL output.
-05/28/2020 05:45:30 PM - run.py - INFO - Generating aggregate confidences.
-05/28/2020 05:45:32 PM - run.py - INFO - Generating scores.
-05/28/2020 05:46:04 PM - run.py - INFO - Generating scores completed.
+05/28/2020 10:07:45 PM - run.py - INFO - Execution begins {current_dir:/scripts, script_name:run.py, arguments:--run task1-team-alpha-run-5}
+05/28/2020 10:07:45 PM - run.py - INFO - Inspecting the input directory.
+05/28/2020 10:07:45 PM - run.py - INFO - Input directory contains 5 KBs in total. (valid 4, invalid 1)
+05/28/2020 10:07:45 PM - run.py - INFO - Copying valid input KBs for applying SPARQL queries.
+05/28/2020 10:07:45 PM - run.py - INFO - Copying IC0015LTF.ttl
+05/28/2020 10:07:45 PM - run.py - INFO - Copying IC0015L64.ttl
+05/28/2020 10:07:45 PM - run.py - INFO - Copying IC0015LZK.ttl
+05/28/2020 10:07:45 PM - run.py - INFO - Copying IC0015LMY.ttl
+05/28/2020 10:07:45 PM - run.py - INFO - Applying SPARQL queries.
+05/28/2020 10:07:45 PM - run.py - INFO - Copying SPARQL queries to be applied.
+05/28/2020 10:07:46 PM - run.py - INFO - Applying queries to IC0015LTF.ttl ... 1 of 5.
+05/28/2020 10:07:46 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
+05/28/2020 10:07:46 PM - run.py - INFO - Loading IC0015LTF.ttl into GraphDB.
+05/28/2020 10:07:52 PM - run.py - INFO - Starting GraphDB
+05/28/2020 10:07:57 PM - run.py - INFO - Applying queries
+05/28/2020 10:08:40 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
+05/28/2020 10:08:40 PM - run.py - INFO - Moving output out of the intermediate directory
+05/28/2020 10:08:40 PM - run.py - INFO - Removing the intermediate directory.
+05/28/2020 10:08:40 PM - run.py - INFO - Stopping GraphDB.
+05/28/2020 10:08:40 PM - run.py - INFO - Applying queries to IC0015L64.ttl ... 2 of 5.
+05/28/2020 10:08:40 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
+05/28/2020 10:08:40 PM - run.py - INFO - Loading IC0015L64.ttl into GraphDB.
+05/28/2020 10:08:46 PM - run.py - INFO - Starting GraphDB
+05/28/2020 10:08:51 PM - run.py - INFO - Applying queries
+05/28/2020 10:10:15 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
+05/28/2020 10:10:15 PM - run.py - INFO - Moving output out of the intermediate directory
+05/28/2020 10:10:15 PM - run.py - INFO - Removing the intermediate directory.
+05/28/2020 10:10:15 PM - run.py - INFO - Stopping GraphDB.
+05/28/2020 10:10:15 PM - run.py - INFO - Applying queries to IC0015LZK.ttl ... 3 of 5.
+05/28/2020 10:10:15 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
+05/28/2020 10:10:15 PM - run.py - INFO - Loading IC0015LZK.ttl into GraphDB.
+05/28/2020 10:10:21 PM - run.py - INFO - Starting GraphDB
+05/28/2020 10:10:26 PM - run.py - INFO - Applying queries
+05/28/2020 10:10:51 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
+05/28/2020 10:10:51 PM - run.py - INFO - Moving output out of the intermediate directory
+05/28/2020 10:10:51 PM - run.py - INFO - Removing the intermediate directory.
+05/28/2020 10:10:51 PM - run.py - INFO - Stopping GraphDB.
+05/28/2020 10:10:51 PM - run.py - INFO - Applying queries to IC0015LMY.ttl ... 4 of 5.
+05/28/2020 10:10:51 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
+05/28/2020 10:10:51 PM - run.py - INFO - Loading IC0015LMY.ttl into GraphDB.
+05/28/2020 10:10:57 PM - run.py - INFO - Starting GraphDB
+05/28/2020 10:11:02 PM - run.py - INFO - Applying queries
+05/28/2020 10:12:41 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
+05/28/2020 10:12:41 PM - run.py - INFO - Moving output out of the intermediate directory
+05/28/2020 10:12:41 PM - run.py - INFO - Removing the intermediate directory.
+05/28/2020 10:12:41 PM - run.py - INFO - Stopping GraphDB.
+05/28/2020 10:12:42 PM - run.py - INFO - Validating SPARQL output.
+05/28/2020 10:12:57 PM - run.py - INFO - Generating aggregate confidences.
+05/28/2020 10:12:59 PM - run.py - INFO - Generating scores.
+05/28/2020 10:13:22 PM - run.py - INFO - Generating scores completed.
