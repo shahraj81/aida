@@ -238,7 +238,7 @@ def main(args):
     # create directory for scorer output
     call_system('mkdir {score_output}'.format(score_output=score_output))    
     # checkout the right branch of the scorer
-    call_system('cd /scripts/aida && git checkout AIDASR-v2019.2.1')
+    call_system('cd /scripts/aida && git checkout AIDASR-v2019.2.2')
     
     for query_type in query_types:
         log = '{logs}/{query_type}-score.log'.format(logs=logs, query_type=query_type)
