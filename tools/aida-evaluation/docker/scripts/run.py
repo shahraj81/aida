@@ -21,7 +21,9 @@ def call_system(cmd):
     os.system(cmd)
 
 def record_and_display_message(logger, message):
+    print("-------------------------------------------------------")
     print(message)
+    print("-------------------------------------------------------")
     logger.record_event('DEFAULT_INFO', message)
 
 def main(args):
@@ -120,7 +122,7 @@ def main(args):
         call_system('sleep 5')
         # apply queries
         logger.record_event('DEFAULT_INFO', 'Applying queries')
-        call_system('java -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
+        call_system('java -Xmx1024M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
                                                                                       properties=properties,
                                                                                       queries=queries,
                                                                                       intermediate=intermediate))
