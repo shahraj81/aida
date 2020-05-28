@@ -104,10 +104,15 @@ def main(args):
     call_system('mkdir {queries}'.format(queries=queries))
     call_system('cp /queries/{task}_*_queries/*.rq {queries}'.format(task=args.task, queries=queries))
     
+    num_total = len(kbs)
+    count = 0;
     for kb in kbs:
         if kbs[kb] == 0:
             continue
-        logger.record_event('DEFAULT_INFO', 'Applying queries to {}.ttl.'.format(kb))
+        count = count + 1
+        record_and_display_message(logger, 'Applying queries to {count}/{num_total} {kb}.ttl.'.format(count=count,
+                                                                                                      num_total=num_total,
+                                                                                                      kb=kb))
         # create the intermediate directory
         logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
         call_system('mkdir -p {}'.format(intermediate))
