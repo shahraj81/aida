@@ -110,7 +110,7 @@ def main(args):
         if kbs[kb] == 0:
             continue
         count = count + 1
-        record_and_display_message(logger, 'Applying queries to {count}/{num_total} {kb}.ttl.'.format(count=count,
+        record_and_display_message(logger, 'Applying queries to {kb}.ttl ... {count} of {num_total}.'.format(count=count,
                                                                                                       num_total=num_total,
                                                                                                       kb=kb))
         # create the intermediate directory
