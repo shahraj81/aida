@@ -5793,11 +5793,15 @@ sub get_AP {
   my $sum_precision = 0;
   if($tie_breaking_criteria eq "BESTCASE") {
     @responses = sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) ||
-                              $b->get("CORRECTNESS_CODE") <=> $a->get("CORRECTNESS_CODE")} @responses;
+                              $b->get("CORRECTNESS_CODE") <=> $a->get("CORRECTNESS_CODE") ||
+                              $b->get("VALUE_PROVENANCE_TRIPLE") cmp $a->get("VALUE_PROVENANCE_TRIPLE") ||
+                              $b->get("CLUSTER_ID") cmp $a->get("CLUSTER_ID")} @responses;
   }
   elsif($tie_breaking_criteria eq "WORSTCASE") {
     @responses = sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) ||
-                              $a->get("CORRECTNESS_CODE") <=> $b->get("CORRECTNESS_CODE")} @responses;
+                              $a->get("CORRECTNESS_CODE") <=> $b->get("CORRECTNESS_CODE") ||
+                              $b->get("VALUE_PROVENANCE_TRIPLE") cmp $a->get("VALUE_PROVENANCE_TRIPLE") ||
+                              $b->get("CLUSTER_ID") cmp $a->get("CLUSTER_ID")} @responses;
   }
   elsif($tie_breaking_criteria eq "TRECEVAL") {
     @responses = sort {$self->get("AP_RANKING_SCORE", $b) <=> $self->get("AP_RANKING_SCORE", $a) ||
