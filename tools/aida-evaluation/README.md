@@ -39,7 +39,7 @@ In order to build the docker image it is important that you have access to the f
   * AIDA_Phase1_Evaluation_Queries_V8.tgz
   * LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
 
-2. Make change to the first line (as shown below) of './docker/Makefile' in order to update the value of $(ROOT)to reflect your system directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
+2. Make change to the first line (as shown below) of './docker/Makefile' in order to update the value of variable ROOT to reflect your system directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
 
   ~~~
   ROOT=/absolute/path/to/aida/tools/aida-evaluation
