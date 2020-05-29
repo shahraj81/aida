@@ -9,6 +9,7 @@ __date__    = "26 May 2020"
 
 from logger import Logger
 import argparse
+import json
 import os
 import sys
 
@@ -285,7 +286,62 @@ def main(args):
         # remove intermediate directory for scorer output
         call_system('rm -rf {intermediate}'.format(intermediate=intermediate))
 
-    record_and_display_message(logger, 'Generating scores completed.')
+    # generate results.json file
+    # read task1 class scores
+    record_and_display_message(logger, 'Generating results.json file.')
+    file_handle = open("/score/scores/class-score.txt", "r")
+    lines = file_handle.readlines()
+    header_line = lines[0]
+    summary_line = lines[-1]
+    file_handle.close()
+
+    header_columns = header_line.split()
+    summary_columns = summary_line.split()
+    summary_columns.insert(1, '')
+
+    class_scores = {key: value for key, value in zip(header_columns, summary_columns)}
+
+    ap_best = class_scores.get('AP-B')
+    ap_worst = class_scores.get('AP-W')
+    ap_trec = class_scores.get('AP-T')
+
+    # read task1 graph scores
+    file_handle = open("/score/scores/graph-score.txt", "r")
+    lines = file_handle.readlines()
+    header_line = lines[0]
+    summary_line = lines[-1]
+    file_handle.close()
+
+    header_columns = header_line.split()
+    summary_columns = summary_line.split()
+    summary_columns.insert(1, '')
+
+    graph_scores = {key: value for key, value in zip(header_columns, summary_columns)}
+
+    precision = graph_scores.get('Prec')
+    recall = graph_scores.get('Recall')
+    f1 = graph_scores.get('F1')
+
+
+    output = {'scores' : [
+                            {
+                                'TASK1-CLASS-AP-TREC': ap_trec,
+                                'TASK1-CLASS-AP-BEST': ap_best,
+                                'TASK1-CLASS-AP-WORST': ap_worst,
+                                'TASK1-GRAPH-PRECISION': precision,
+                                'TASK1-GRAPH-RECALL': recall,
+                                'TASK1-GRAPH-qF1': f1,
+                                'Total': f1,
+                            }
+                         ]
+            }
+
+    outputdir = "/score/"
+    with open(outputdir + 'results.json', 'w') as fp:
+        json.dump(output, fp, indent=4, sort_keys=True)
+
+    record_and_display_message(logger, 'Done.')
+
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':

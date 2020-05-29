@@ -4,9 +4,9 @@
 * [How to build the docker image?](#how-to-build-the-docker-image)
 * [How to apply the docker on a test run?](#how-to-apply-the-docker-on-a-test-run)
 * [How to apply the docker on your run?](#how-to-apply-the-docker-on-your-run)
-* [What should be in the input directory?](#what-should-be-in-the-input-directory)
-* [What is contained in the output directory?](#what-is-contained-in-the-output-directory)
-* [What is contained in the logs directory?](#what-is-contained-in-the-logs-directory)
+* [What should the input directory contain?](#what-should-the-input-directory-contain)
+* [What does the output directory contain?](#what-does-the-output-directory-contain)
+* [What does the logs directory contain?](#what-does-the-logs-directory-contain)
 
 # Introduction
 
@@ -115,12 +115,12 @@ make run \
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
-# What should be in the input directory?
+# What should the input directory contain?
 The input directory should contain all the task1 KBs along with corresponding AIF report files. You may want to look at the input directory of the included example run at `/M18-data/runs/task1-team-alpha-run-5` to get an idea of how to structure your input directory.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
-# What is contained in the output directory?
+# What does the output directory contain?
 
 The output directory contains the following:
 
@@ -131,12 +131,13 @@ The output directory contains the following:
 | SPARQL-VALID-output | The directory containing valid SPARQL output. This directory will be used as input to the confidence aggregator |
 | SPARQL-CA-output    | The directory containing output of the confidence aggregator |
 | queries             | The directory containing SPARQL queries applied to KBs. |
-| logs                | The directory containing log files. (See the [section on logs](#what-is-contained-in-the-logs-directory) for more details).
+| logs                | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details).
 | scores              | The directory containing task1 class and graph scores in two separate files: `class-score.txt` and `graph-score.txt` |
+| results.json        | The results JSON file to be used by the leaderboard |
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
-# What is contained in the logs directory?
+# What does the logs directory contain?
 
 The logs directory contains the following log files:
 
