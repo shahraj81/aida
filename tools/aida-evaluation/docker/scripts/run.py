@@ -163,7 +163,7 @@ def main(args):
     call_system('mkdir {sparql_valid_output}'.format(sparql_valid_output=sparql_valid_output))
     
     # checkout the right branch of the validator
-    call_system('cd /scripts/aida && git checkout AIDAVR-v2019.0.3')
+    call_system('cd /scripts/aida && git pull && git checkout AIDAVR-v2019.0.3')
     
     # validate class and graph responses separately
     query_types = {'class':'TA1_CL', 'graph':'TA1_GR'}
@@ -209,7 +209,7 @@ def main(args):
     call_system('mkdir {sparql_ca_output}'.format(sparql_ca_output=sparql_ca_output))
 
     # checkout the right branch of the confidence aggregator
-    call_system('cd /scripts/aida && git checkout AIDACA-v2019.0.2')
+    call_system('cd /scripts/aida && git pull && git checkout AIDACA-v2019.0.2')
     
     for query_type in query_types:
         task_and_type_code = query_types[query_type]
@@ -238,7 +238,7 @@ def main(args):
     # create directory for scorer output
     call_system('mkdir {score_output}'.format(score_output=score_output))    
     # checkout the right branch of the scorer
-    call_system('cd /scripts/aida && git checkout AIDASR-v2019.2.2')
+    call_system('cd /scripts/aida && git pull && git checkout AIDASR-v2019.2.2')
     
     for query_type in query_types:
         log = '{logs}/{query_type}-score.log'.format(logs=logs, query_type=query_type)
