@@ -1,6 +1,4 @@
-# How to run the AIDA evaluation pipeline to task1 KBs
-
-(Last modified: May 27th, 2020)
+# How to run the AIDA evaluation pipeline
 
 * [Introduction](#introduction)
 * [How to build the docker image?](#how_to_build_the_docker_image)
@@ -31,6 +29,8 @@ In order to build the docker image it is important that you have access to the f
 3. Assessments Package -- ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
 
   The assessment package as received from LDC. Place the assessments package at './AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz' before building the docker.
+
+[top](#how_to_run_the_aida_evaluation_pipeline)
 
 # How to build the docker image
 
