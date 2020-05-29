@@ -28,18 +28,18 @@ In order to build the docker image it is important that you have access to the f
 
 3. Assessments Package -- ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
 
-  The assessment package as received from LDC. Place the assessments package at './AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz' before building the docker.
+  The assessment package as received from LDC. Place the assessments package at `./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz` before building the docker.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to build the docker image?
 
-1. Place the following files (see [Introduction](#introduction) for details) in './docker/AUX-data/M18':
+1. Place the following files (see [Introduction](#introduction) for details) inside the directory at `./docker/AUX-data/M18`:
   * graphdb-free-9.2.1-dist.zip
   * AIDA_Phase1_Evaluation_Queries_V8.tgz
   * LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
 
-2. Make change to the first line (as shown below) of './docker/Makefile' in order to update the value of variable ROOT to reflect your system directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
+2. Make change to the first line (as shown below) of `./docker/Makefile` in order to update the value of variable `ROOT` to reflect your system directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
 
   ~~~
   ROOT=/absolute/path/to/aida/tools/aida-evaluation
@@ -114,7 +114,7 @@ The output directory contains the following:
 | Name                |  Description                                          |
 | --------------------|-------------------------------------------------------|
 | SPARQL-KB-input     | The directory containing KBs validated by AIF validator. SPARQL queries are applied to these KBs.|
-| SPARQL-output       | The directory containing output of SPARQL queries when applied to KBs in SPARQL-KB-input. |
+| SPARQL-output       | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
 | SPARQL-VALID-output | The directory containing valid SPARQL output. This directory will be used as input to the confidence aggregator |
 | SPARQL-CA-output    | The directory containing output of the confidence aggregator |
 | queries             | The directory containing SPARQL queries applied to KBs. |
