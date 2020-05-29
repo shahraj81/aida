@@ -1,6 +1,9 @@
 FROM ubuntu:18.04
 MAINTAINER shahzad.rajput@nist.gov
 
+# Set timezone
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
 # Install system packages
 RUN apt-get update && apt-get install -y \
     curl \
@@ -9,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     unzip \
     perlbrew \
+    tzdata \
     vim
 
 #-------------------------------------------------------------
@@ -19,6 +23,9 @@ RUN \
 
 # Define JAVA_HOME variable
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
+
+# Reconfigure tzdata
+RUN dpkg-reconfigure -f noninteractive tzdata
 
 #-------------------------------------------------------------
 #  Install GraphDB
