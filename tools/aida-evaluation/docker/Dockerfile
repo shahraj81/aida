@@ -1,0 +1,115 @@
+FROM ubuntu:18.04
+MAINTAINER shahzad.rajput@nist.gov
+
+# Set timezone
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
+# Install system packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    make \
+    python3 \
+    unzip \
+    perlbrew \
+    tzdata \
+    vim
+
+#-------------------------------------------------------------
+#  Install Java OpenJDK 8
+#-------------------------------------------------------------
+RUN \
+  apt-get install -y --fix-missing openjdk-8-jdk
+
+# Define JAVA_HOME variable
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
+
+# Reconfigure tzdata
+RUN dpkg-reconfigure -f noninteractive tzdata
+
+#-------------------------------------------------------------
+#  Install GraphDB
+#  Taken from the Dockerfile for GraphDB docker available at:
+#  https://github.com/Ontotext-AD/graphdb-docker
+#-------------------------------------------------------------
+# Define arguments need for installation of GraphDB
+
+ARG version=8.2.1
+ARG edition=free
+
+ENV GRAPHDB_PARENT_DIR=/opt/graphdb
+ENV GRAPHDB_HOME=${GRAPHDB_PARENT_DIR}/home
+ENV GRAPHDB_INSTALL_DIR=${GRAPHDB_PARENT_DIR}/dist
+ENV SPARQL_EVAL_HOME=/opt/sparql-evaluation
+ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
+
+RUN mkdir scripts
+RUN mkdir AUX-data
+
+COPY ./AUX-data/M18/AIDA_Phase1_Evaluation_Queries_V8.tgz /tmp/
+COPY ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz /tmp/
+COPY ./AUX-data/M18/graphdb-${edition}-${version}-dist.zip /tmp/
+COPY ./scripts/run.py /scripts/
+COPY ./scripts/logger.py /scripts/
+COPY ./scripts/log_specifications.txt /scripts/
+COPY ./scripts/Makefile /scripts/
+COPY ./AUX-data/M18/LDC2019E42* /AUX-data/
+COPY ./AUX-data/M18/task1_*_queryids.txt /AUX-data/
+
+WORKDIR /tmp
+
+RUN mkdir -p ${GRAPHDB_PARENT_DIR} && \
+    cd ${GRAPHDB_PARENT_DIR} && \
+    unzip -q /tmp/graphdb-${edition}-${version}-dist.zip && \
+    rm /tmp/graphdb-${edition}-${version}-dist.zip && \
+    mv graphdb-${edition}-${version} dist && \
+    mkdir -p ${GRAPHDB_HOME}
+
+RUN mkdir $SPARQL_EVAL_HOME
+
+RUN tar -zxf AIDA_Phase1_Evaluation_Queries_V8.tgz
+RUN mv AIDA_Phase1_Evaluation_Queries_V8 /queries
+RUN rm AIDA_Phase1_Evaluation_Queries_V8.tgz
+RUN tar -zxf LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
+RUN mv LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1 /AUX-data/
+
+COPY ./AUX-data/M18/*.dtd /queries/
+
+# Install JSON
+
+ENV PERLBREW_PATH=/root/perl5/perlbrew/bin
+RUN perlbrew install-cpanm
+RUN $PERLBREW_PATH/cpanm install JSON
+
+# Setup the AIDA repository
+WORKDIR /scripts
+
+RUN git clone https://github.com/shahraj81/aida.git
+
+WORKDIR /scripts/aida
+
+RUN git checkout AIDAQA-v2019.2.5
+
+#-------------------------------------------------------------
+# Install SPARQL Evaluation Tool
+#-------------------------------------------------------------
+# Create directory structure
+
+WORKDIR $SPARQL_EVAL_HOME
+RUN mkdir -p config /
+
+# Copy shadow jar and example configuration to sparql-evaluation directory
+WORKDIR /scripts/aida/tools/sparql-query-application/docker/AUX-data
+RUN cp sparql-evaluation-*-all.jar $SPARQL_EVAL_HOME
+RUN cp Local-config.* $SPARQL_EVAL_HOME/config/
+
+# Copy the custom function jar files to inside GraphDB lib
+RUN cp rdf4j-function-* ${GRAPHDB_INSTALL_DIR}/lib/
+
+WORKDIR /scripts/
+
+#-------------------------------------------------------------
+#  Setup entrypoint
+#-------------------------------------------------------------
+
+ENTRYPOINT ["make"]

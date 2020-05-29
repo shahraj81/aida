@@ -1,0 +1,3 @@
+?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
+IC0015LMY	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#FAC.Structure>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-80000004>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#FAC.Structure.Plaza>	IC0015LMY:HC000030D:(582,0)-(597,0)	1.000000000000	1.000000000000	1.000000000000
+IC0015LMY	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#FAC.Structure>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-80000006>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#FAC.Structure.Plaza>	IC0015LMY:HC000030D:(3859,0)-(3878,0)	1.000000000000	1.000000000000	1.000000000000

@@ -19,5 +19,6 @@ Tools and utilities for supporting AIDA evaluations.
 | AIDA-ConfidenceAggregation | Tool (and docker) for aggregating confidences | tools/confidence-aggregation | AIDACA-v2019.0.2 |
 | AIDA-ScoreResponses | Tool for scoring responses | tools/scorer | AIDASR-v2019.2.1 |
 | AIF Generator | Tool for converting annotations into AIF | python/generate_aif.py | AIDAAG-v2019.0.1 |
+| AIDA-Evaluation Docker | Tool for applying the entire evaluation pipeline | tools/aida-evaluation | AIDAED-v2019.0.1 |
 
 Please refer to tool/utility specific README file(s) for more details.

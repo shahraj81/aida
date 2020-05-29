@@ -1,0 +1,2 @@
+?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
+IC0015LMY	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#WEA.ThrownProjectile>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-80000320>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#WEA.ThrownProjectile>	IC0015LMY:HC000030D:(2661,0)-(2675,0)	1.000000000000	1.000000000000	1.000000000000

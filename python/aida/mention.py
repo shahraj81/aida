@@ -11,6 +11,7 @@ from aida.object import Object
 from aida.document_span import DocumentSpan
 from aida.utility import is_number
 from aida.ere_spec import unspecified
+from aida.ldc_time_range import LDCTimeRange
 import re
 
 class Mention(Object):
@@ -46,16 +47,11 @@ class Mention(Object):
         self.keyframe_boundaries = keyframe_boundaries
         self.type_mappings = type_mappings
         self.load_video_time_offsets_flag = load_video_time_offsets_flag
-        # the set of nodes that are referred to by this mention
         self.nodes = {}
-        # the document spans included in this mention
+        self.slots = {}
         self.document_spans = {}
-        # set the span of text, or image bounding box of the 
-        # mention
-        self.load_document_spans()
-        # set the 'node_metatype' (i.e. ENTITY, RELATION, or 
-        # ENTITY) of the nodes referred to by this mention
-        self.load_node_metatype()
+        self.time_range_by_document = {}
+        self.load()
 
     def get_cleaned_full_type(self):
         """
@@ -69,20 +65,15 @@ class Mention(Object):
         proper-typed types.
         """
         entry = self.get('entry')
-
         cleaned_full_type = self.get('cleaned_full_type_ov')
-
         if self.is_event() or self.is_relation():
             if unspecified(self.get('entry').get('subtype')):
                 if unspecified(self.get('entry').get('subsubtype')):
                     cleaned_full_type = '{}.unspecified'.format(entry.get('type'))
                 else:
                     cleaned_full_type = '{}.unspecified.{}'.format(entry.get('type'), entry.get('subsubtype'))
-
         propercased_cleaned_full_type = self.type_mappings.get(cleaned_full_type, None)
-
         retval = propercased_cleaned_full_type if propercased_cleaned_full_type is not None else cleaned_full_type
-
         return retval
 
     def get_cleaned_full_type_ov(self):
@@ -161,6 +152,9 @@ class Mention(Object):
         """
         return self.get('entry').get('keyframe_id')
 
+    def get_level(self):
+        return self.get('entry').get('level')
+
     def get_preferred_span(self, span1, span2):
         """
         Out of the two spans provided as argument, pick one that should be preferred over the other as the candidate of informative justification.
@@ -176,6 +170,12 @@ class Mention(Object):
             elif span2.get('span_type') == 'picture_channel_video' or span2.get('span_type') == 'sound_channel_video':
                 return span2
         return
+
+    def get_text_string(self):
+        return self.get('entry').get('text_string')
+
+    def get_text_strings(self):
+        return {self.get('text_string'):{self.get('level'):1}}
 
     def is_event(self):
         """
@@ -202,9 +202,30 @@ class Mention(Object):
         attributes = self.get('entry').get('attribute')
         return attributes is not None and 'not' in attributes.split(',')
 
+    def load(self):
+        """
+        Loads the required data from entry into different attributes.
+        """
+        self.load_document_spans()
+        self.load_node_metatype()
+        if self.get('node_metatype') in ['event', 'relation']:
+            time_range = LDCTimeRange(self.get('logger'),
+                                           self.get('entry').get('start_date'),
+                                           self.get('entry').get('start_date_type'),
+                                           self.get('entry').get('end_date'),
+                                           self.get('entry').get('end_date_type'),
+                                           self.get('entry').get('where'))
+            self.get('time_range_by_document')[self.get('document_id')] = time_range
+            self.get('time_range_by_document')['all_docs'] = time_range
+
     def load_node_metatype(self):
         """
         Determines and sets the metatype of the node based on this mention.
+
+        The metatype for a mention is one of the following:
+            entity,
+            relation, and
+            event
         """
         node_metatype = None
         if self.is_event():
@@ -311,3 +332,11 @@ class Mention(Object):
         which is passed as the only argument to this method.
         """
         self.nodes[node.get('ID')] = node
+
+    def add_slot(self, slot):
+        """
+        Adds the slot to the mention.
+        """
+        if slot.get('slot_type') not in self.get('slots'):
+            self.get('slots')[slot.get('slot_type')] = []
+        self.get('slots').get(slot.get('slot_type')).append(slot)

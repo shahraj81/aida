@@ -1,0 +1,5 @@
+<!ELEMENT zerohop_queries (zerohop_query+)>
+<!ELEMENT zerohop_query (reference_kbid,sparql)>
+<!ELEMENT reference_kbid (#PCDATA)>
+<!ELEMENT sparql (#PCDATA)>
+<!ATTLIST zerohop_query id CDATA #REQUIRED>

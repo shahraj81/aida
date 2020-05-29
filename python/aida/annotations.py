@@ -150,6 +150,8 @@ class Annotations(Object):
                 self.get('logger').record_event('MISSING_ITEM_WITH_KEY', 'Mention', argmention_id, entry.get('where'))
                 continue
             slot = Slot(self.logger, subject, slot_code, slot_type, argument, attribute, entry.get('where'))
+            subject.add_slot(slot)
+            argument.add_slot(slot)
             self.get('slots').add_member(slot)
 
     def process_kb_linking(self, filename):
