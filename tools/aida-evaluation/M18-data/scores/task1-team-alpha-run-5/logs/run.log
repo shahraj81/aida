@@ -1,51 +1,31 @@
-05/29/2020 05:55:24 PM - run.py - INFO - Execution begins {current_dir:/scripts, script_name:run.py, arguments:--run task1-team-alpha-run-5}
-05/29/2020 05:55:24 PM - run.py - INFO - Inspecting the input directory.
-05/29/2020 05:55:24 PM - run.py - INFO - Input directory contains 5 KBs in total. (valid 4, invalid 1)
-05/29/2020 05:55:24 PM - run.py - INFO - Copying valid input KBs for applying SPARQL queries.
-05/29/2020 05:55:24 PM - run.py - INFO - Copying IC0015LTF.ttl
-05/29/2020 05:55:24 PM - run.py - INFO - Copying IC0015L64.ttl
-05/29/2020 05:55:24 PM - run.py - INFO - Copying IC0015LZK.ttl
-05/29/2020 05:55:24 PM - run.py - INFO - Copying IC0015LMY.ttl
-05/29/2020 05:55:24 PM - run.py - INFO - Applying SPARQL queries.
-05/29/2020 05:55:24 PM - run.py - INFO - Copying SPARQL queries to be applied.
-05/29/2020 05:55:25 PM - run.py - INFO - Applying queries to IC0015LTF.ttl ... 1 of 5.
-05/29/2020 05:55:25 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/29/2020 05:55:25 PM - run.py - INFO - Loading IC0015LTF.ttl into GraphDB.
-05/29/2020 05:55:31 PM - run.py - INFO - Starting GraphDB
-05/29/2020 05:55:36 PM - run.py - INFO - Applying queries
-05/29/2020 05:56:27 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/29/2020 05:56:27 PM - run.py - INFO - Moving output out of the intermediate directory
-05/29/2020 05:56:27 PM - run.py - INFO - Removing the intermediate directory.
-05/29/2020 05:56:27 PM - run.py - INFO - Stopping GraphDB.
-05/29/2020 05:56:27 PM - run.py - INFO - Applying queries to IC0015L64.ttl ... 2 of 5.
-05/29/2020 05:56:27 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/29/2020 05:56:27 PM - run.py - INFO - Loading IC0015L64.ttl into GraphDB.
-05/29/2020 05:56:39 PM - run.py - INFO - Starting GraphDB
-05/29/2020 05:56:44 PM - run.py - INFO - Applying queries
-05/29/2020 05:58:17 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/29/2020 05:58:17 PM - run.py - INFO - Moving output out of the intermediate directory
-05/29/2020 05:58:17 PM - run.py - INFO - Removing the intermediate directory.
-05/29/2020 05:58:17 PM - run.py - INFO - Stopping GraphDB.
-05/29/2020 05:58:17 PM - run.py - INFO - Applying queries to IC0015LZK.ttl ... 3 of 5.
-05/29/2020 05:58:17 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/29/2020 05:58:17 PM - run.py - INFO - Loading IC0015LZK.ttl into GraphDB.
-05/29/2020 05:58:23 PM - run.py - INFO - Starting GraphDB
-05/29/2020 05:58:28 PM - run.py - INFO - Applying queries
-05/29/2020 05:58:58 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/29/2020 05:58:58 PM - run.py - INFO - Moving output out of the intermediate directory
-05/29/2020 05:58:58 PM - run.py - INFO - Removing the intermediate directory.
-05/29/2020 05:58:58 PM - run.py - INFO - Stopping GraphDB.
-05/29/2020 05:58:58 PM - run.py - INFO - Applying queries to IC0015LMY.ttl ... 4 of 5.
-05/29/2020 05:58:58 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
-05/29/2020 05:58:58 PM - run.py - INFO - Loading IC0015LMY.ttl into GraphDB.
-05/29/2020 05:59:06 PM - run.py - INFO - Starting GraphDB
-05/29/2020 05:59:11 PM - run.py - INFO - Applying queries
-05/29/2020 06:01:02 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
-05/29/2020 06:01:02 PM - run.py - INFO - Moving output out of the intermediate directory
-05/29/2020 06:01:02 PM - run.py - INFO - Removing the intermediate directory.
-05/29/2020 06:01:02 PM - run.py - INFO - Stopping GraphDB.
-05/29/2020 06:01:02 PM - run.py - INFO - Validating SPARQL output.
-05/29/2020 06:01:20 PM - run.py - INFO - Generating aggregate confidences.
-05/29/2020 06:01:22 PM - run.py - INFO - Generating scores.
-05/29/2020 06:01:50 PM - run.py - INFO - Generating results.json file.
-05/29/2020 06:01:50 PM - run.py - INFO - Done.
+06/15/2020 01:30:56 PM - run.py - INFO - Execution begins {current_dir:/scripts, script_name:run.py, arguments:--run task1-team-alpha-run-5}
+06/15/2020 01:30:56 PM - run.py - INFO - Inspecting the input directory.
+06/15/2020 01:30:56 PM - run.py - INFO - Input directory contains 5 KBs in total. (valid 4, invalid 1)
+06/15/2020 01:30:56 PM - run.py - INFO - Copying valid input KBs, restricted to core-18 documents, for applying SPARQL queries.
+06/15/2020 01:30:56 PM - run.py - INFO - Copying IC0015LTF.ttl
+06/15/2020 01:30:56 PM - run.py - INFO - Copying IC0015LZK.ttl
+06/15/2020 01:30:56 PM - run.py - INFO - Applying SPARQL queries.
+06/15/2020 01:30:56 PM - run.py - INFO - Copying SPARQL queries to be applied.
+06/15/2020 01:30:57 PM - run.py - INFO - Applying queries to IC0015LTF.ttl ... 1 of 2.
+06/15/2020 01:30:57 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
+06/15/2020 01:30:57 PM - run.py - INFO - Loading IC0015LTF.ttl into GraphDB.
+06/15/2020 01:31:03 PM - run.py - INFO - Starting GraphDB
+06/15/2020 01:31:08 PM - run.py - INFO - Applying queries
+06/15/2020 01:31:51 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
+06/15/2020 01:31:51 PM - run.py - INFO - Moving output out of the intermediate directory
+06/15/2020 01:31:52 PM - run.py - INFO - Removing the intermediate directory.
+06/15/2020 01:31:52 PM - run.py - INFO - Stopping GraphDB.
+06/15/2020 01:31:52 PM - run.py - INFO - Applying queries to IC0015LZK.ttl ... 2 of 2.
+06/15/2020 01:31:52 PM - run.py - INFO - Creating /score/SPARQL-output/intermediate.
+06/15/2020 01:31:52 PM - run.py - INFO - Loading IC0015LZK.ttl into GraphDB.
+06/15/2020 01:31:57 PM - run.py - INFO - Starting GraphDB
+06/15/2020 01:32:02 PM - run.py - INFO - Applying queries
+06/15/2020 01:32:28 PM - run.py - INFO - Creating SPARQL output directory corresponding to the KB
+06/15/2020 01:32:28 PM - run.py - INFO - Moving output out of the intermediate directory
+06/15/2020 01:32:28 PM - run.py - INFO - Removing the intermediate directory.
+06/15/2020 01:32:28 PM - run.py - INFO - Stopping GraphDB.
+06/15/2020 01:32:28 PM - run.py - INFO - Validating SPARQL output.
+06/15/2020 01:32:43 PM - run.py - INFO - Generating aggregate confidences.
+06/15/2020 01:32:44 PM - run.py - INFO - Generating scores.
+06/15/2020 01:33:04 PM - run.py - INFO - Generating results.json file.
+06/15/2020 01:33:04 PM - run.py - INFO - Done.

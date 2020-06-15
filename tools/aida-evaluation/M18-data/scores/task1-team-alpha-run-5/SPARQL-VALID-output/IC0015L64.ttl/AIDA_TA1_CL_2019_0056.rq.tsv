@@ -1,3 +1,0 @@
-?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
-IC0015L64	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VEH.MilitaryVehicle>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-80000313>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VEH.MilitaryVehicle>	IC0015L64:HC00002ZG:(2218,0)-(2279,0)	1.000000000000	1.000000000000	1.000000000000
-IC0015L64	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VEH.MilitaryVehicle>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILE04047>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VEH.MilitaryVehicle.Tank>	IC0015L64:HC00002ZG:(2208,0)-(2279,0)	1.000000000000	1.000000000000	1.000000000000
