@@ -71,20 +71,31 @@ def main(args):
             num_invalid_kbs = num_invalid_kbs + 1
     num_valid_kbs = num_total_kbs - num_invalid_kbs
     logger.record_event('KB_STATS', num_total_kbs, num_valid_kbs, num_invalid_kbs)
-    
+
     # exit if no valid input KB
     if num_valid_kbs == 0:
         record_and_display_message(logger, 'No valid KB received as input.')
         exit(ALLOK_EXIT_CODE)
-    
+
+    # load core-18 documents
+    file_handle = open('/AUX-data/LDC2019E42.coredocs-18.txt', 'r')
+    lines = file_handle.readlines()
+    file_handle.close()
+
+    coredocs_18 = [d.strip() for d in lines[1:]]
+    for kb in kbs:
+        if kbs[kb] and kb not in coredocs_18:
+            kbs[kb] = 0
+
     # copy valid input KBs for querying
-    record_and_display_message(logger, 'Copying valid input KBs for applying SPARQL queries.')
+    # restrict to core-18 documents
+    record_and_display_message(logger, 'Copying valid input KBs, restricted to core-18 documents, for applying SPARQL queries.')
     call_system('mkdir /score/SPARQL-KB-input')
     for kb in kbs:
-        if kbs[kb]:
+        if kbs[kb] and kb in coredocs_18:
             logger.record_event('DEFAULT_INFO', 'Copying {}.ttl'.format(kb))
             call_system('cp {input}/{kb}.ttl {output}/SPARQL-KB-input'.format(input=args.input, output=args.output, kb=kb))
-    
+
     #############################################################################################
     # apply sparql queries
     #############################################################################################
@@ -105,7 +116,7 @@ def main(args):
     call_system('mkdir {queries}'.format(queries=queries))
     call_system('cp /queries/{task}_*_queries/*.rq {queries}'.format(task=args.task, queries=queries))
     
-    num_total = len(kbs)
+    num_total = len([d for d in kbs if kbs[d] == 1])
     count = 0;
     for kb in kbs:
         if kbs[kb] == 0:
@@ -128,7 +139,7 @@ def main(args):
         call_system('sleep 5')
         # apply queries
         logger.record_event('DEFAULT_INFO', 'Applying queries')
-        call_system('java -Xmx1024M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
+        call_system('java -Xmx4096M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
                                                                                       properties=properties,
                                                                                       queries=queries,
                                                                                       intermediate=intermediate))
