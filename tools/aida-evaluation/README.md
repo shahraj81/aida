@@ -159,7 +159,7 @@ The logs directory contains the following log files:
 * Initial version.
 
 ## 06/15/2020:
-* Apply SPARQL queries to only KB that were part of the core-18 documents
-* Increased the java heap space
+* Applying SPARQL queries to only KB that were part of the core-18 documents.
+* Increased the java heap space.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
