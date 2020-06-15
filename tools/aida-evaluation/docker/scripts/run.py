@@ -139,7 +139,7 @@ def main(args):
         call_system('sleep 5')
         # apply queries
         logger.record_event('DEFAULT_INFO', 'Applying queries')
-        call_system('java -Xmx1024M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
+        call_system('java -Xmx4096M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
                                                                                       properties=properties,
                                                                                       queries=queries,
                                                                                       intermediate=intermediate))
