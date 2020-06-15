@@ -3,7 +3,7 @@
 * [Introduction](#introduction)
 * [How to build the docker image?](#how-to-build-the-docker-image)
 * [How to apply the docker on a test run?](#how-to-apply-the-docker-on-a-test-run)
-* [How to apply the docker on your run?](#how-to-apply-the-docker-on-your-run)
+* [How to apply the docker to your run?](#how-to-apply-the-docker-to-your-run)
 * [What should the input directory contain?](#what-should-the-input-directory-contain)
 * [What does the output directory contain?](#what-does-the-output-directory-contain)
 * [What does the logs directory contain?](#what-does-the-logs-directory-contain)
@@ -157,5 +157,9 @@ The logs directory contains the following log files:
 
 ## 05/29/2020:
 * Initial version.
+
+## 06/15/2020:
+* Apply SPARQL queries to only KB that were part of the core-18 documents
+* Increased the java heap space
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
