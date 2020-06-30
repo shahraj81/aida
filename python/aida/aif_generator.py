@@ -567,7 +567,7 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     subject_mention_id = slot.get('subject').get('ID')
     arguments = [slot.get('argument')]
     if subject_node is not None:
-        subject_mention_id = subject_node.get('name')
+        subject_mention_id = subject_node.get('prototype').get('name')
         arguments = list(slot.get('argument').get('nodes').values())
 
     document_ids = {'all_docs':1}
@@ -579,7 +579,7 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     for argument in arguments:
         argument_mention_id = argument.get('ID')
         if subject_node is not None:
-            argument_mention_id = argument.get('name')
+            argument_mention_id = argument.get('prototype').get('name')
             if predicate_justification_document_id not in argument.get('document_ids'):
                 slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Predicate justification document ID {} not in the documents from which the argument came'.format(predicate_justification_document_id))
         slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(
