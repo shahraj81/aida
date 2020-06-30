@@ -121,6 +121,9 @@ python3 generate_aif.py --log logs/generate_aif.log \
 
 # Revision History
 
+## 06/30/2020:
+* Added justifiedBy triples to aida:Entity, aida:Relation and aida:Event
+
 ## 04/30/2020:
 * Added the README file
 * Added the section on the AIF Generator
