@@ -123,6 +123,7 @@ python3 generate_aif.py --log logs/generate_aif.log \
 
 ## 06/30/2020:
 * Added justifiedBy triples to aida:Entity, aida:Relation and aida:Event
+* Bug fix: edges were incorrectly going between cluster, corrected to go between prototypes
 
 ## 04/30/2020:
 * Added the README file
