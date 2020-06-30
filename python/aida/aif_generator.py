@@ -82,6 +82,7 @@ def generate_cluster_triples(reference_kb_id, node):
     one for 'all_docs'. Those corresponding to a particular document are used for generating
     task1 document specific kbs.
     """
+    prototype = node.get('prototype')
     node_ids = []
     node_id_or_node_ids = node.get('ID')
     for node_id in node_id_or_node_ids.split('|'):
@@ -104,39 +105,21 @@ def generate_cluster_triples(reference_kb_id, node):
                    system = SYSTEM_NAME
                    )
         link_assertion_triples.append(triples)
-    
-    # generate cluster informative justifications mention spans
-    informative_justification_mention_spans = node.get('informative_justification_mention_spans')
-    informative_justification_triples_by_document = defaultdict(list)
-    prototype_by_document = {}
-    for mention_span in informative_justification_mention_spans.values():
-        mention = mention_span.get('mention')
-        if mention.is_negated():
-            continue
-        span = mention_span.get('span')
-        triple = 'ldc:cluster-{node_name} aida:informativeJustification _:b{span_md5} .'.format(node_name=node.get('name'),
-                                                                                               span_md5=span.get('md5'))
-        informative_justification_triples_by_document['all_docs'].append(triple)
-        informative_justification_triples_by_document[span.get('document_id')].append(triple)
-        prototype_by_document[span.get('document_id')] = mention
-        if 'all_docs' not in prototype_by_document:
-            prototype_by_document['all_docs'] = mention
-        elif prototype_by_document['all_docs'].get('level') != 'nam' and mention.get('level') == 'nam':
-            prototype_by_document['all_docs'] = mention
+
+    document_ids = {'all_docs':1}
+    for mention in node.get('mentions').values():
+        document_ids[mention.get('document_id')] = 1
 
     triple_block_dict = {}
-    for key in informative_justification_triples_by_document:
-        prototype = prototype_by_document[key]
+    for key in document_ids:
         triples = """\
             ldc:cluster-{node_name} a aida:SameAsCluster .
-            ldc:cluster-{node_name} aida:prototype ldc:{prototype_object_id} .
+            ldc:cluster-{node_name} aida:prototype ldc:{prototype_name} .
             ldc:cluster-{node_name} aida:system {system} .
-            {informative_justification_triples}
             {link_assertion_triples}
         """.format(node_name = node.get('name'),
-                   informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
                    link_assertion_triples = '\n'.join(link_assertion_triples),
-                   prototype_object_id = prototype.get('ID'),
+                   prototype_name = prototype.get('name'),
                    system = SYSTEM_NAME,
                    node_id = node.get('ID'),
                    reference_kb_id = reference_kb_id)
@@ -155,119 +138,18 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     one for 'all_docs'. Those corresponding to a particular document are used for generating
     task1 document specific kbs.
     """
-    def get_ldc_time_triples(logger, date_iri, date_string, date_type, where):
-        """
-        Gets the LDC time triples
-        """
-        type_map = {
-                'starton' : 'ON',
-                'endon' : 'ON',
-                'startbefore' : 'BEFORE',
-                'endbefore' : 'BEFORE',
-                'endunk' : 'UNKNOWN',
-                'endafter' : 'AFTER',
-                'startafter' : 'AFTER',
-                'startunk' : 'UNKNOWN'
-            }
-        ldc_time_triples = {}
-        ldc_time_triples['day'] = ''
-        ldc_time_triples['month'] = ''
-        ldc_time_triples['year'] = ''
-        ldc_time_triples['type'] = ''
-        
-        if date_type is not None:
-            ldc_time_triples['type'] = '{date_iri} aida:timeType "{type}" .'.format(date_iri = date_iri,
-                                                                                    type = type_map[date_type])
 
-        if date_string is not None and date_string != 'EMPTY_NA':
-            pattern = compile('^(....)-(..)-(..)$')
-            match = pattern.match(date_string)
-            if match:
-                year = match.group(1)
-                month = match.group(2)
-                day = match.group(3)
-                if year != 'xxxx':
-                    ldc_time_triples['year'] = '{date_iri} aida:year "{year}"^^xsd:gYear .'.format(date_iri = date_iri,
-                                                                                                   year = year)
-                if month != 'xx':
-                    ldc_time_triples['month'] = '{date_iri} aida:month "--{month}"^^xsd:gMonth .'.format(date_iri = date_iri,
-                                                                                                       month = month)
-                if day != 'xx':
-                    ldc_time_triples['day'] = '{date_iri} aida:day "---{day}"^^xsd:gDay .'.format(date_iri = date_iri,
-                                                                                               day = day)
-            else:
-                logger.record_event('UNEXPECTED_DATE_FORMAT', date_string, where)
-        return ldc_time_triples
-
-    logger = ere_object.get('logger')
-    where = ere_object.get('where')
     ere_type = ere_object.get('node_metatype').capitalize()
 
-    # generate ldc time assertion triples
-    ldc_time_assertion_triples = ''
-    if ere_type in ['Event', 'Relation']:        
-        # ldc start time triples
-        ldc_start_time_blank_node_iri = '_:bldctime{ere_object_id}-start'.format(ere_object_id = ere_object.get('ID'))
-        ldc_start_time_triples = get_ldc_time_triples(logger,
-                                                      ldc_start_time_blank_node_iri,
-                                                      ere_object.get('entry').get('start_date'),
-                                                      ere_object.get('entry').get('start_date_type'),
-                                                      where)
-
-        ldc_start_time_triples = """\
-            _:bldctime{ere_object_id} aida:start {ldc_start_time_blank_node_iri} .
-            {ldc_start_time_blank_node_iri} a aida:LDCTimeComponent .
-            {ldc_start_time_day_triples}
-            {ldc_start_time_month_triples}
-            {ldc_start_time_year_triples}
-            {ldc_start_time_type_triples}
-        """.format(ere_object_id = ere_object.get('ID'),
-                   ldc_start_time_blank_node_iri = ldc_start_time_blank_node_iri,
-                   ldc_start_time_day_triples = ldc_start_time_triples['day'],
-                   ldc_start_time_month_triples = ldc_start_time_triples['month'],
-                   ldc_start_time_year_triples = ldc_start_time_triples['year'],
-                   ldc_start_time_type_triples = ldc_start_time_triples['type'])
-
-        # ldc end time triples
-        ldc_end_time_blank_node_iri = '_:bldctime{ere_object_id}-end'.format(ere_object_id = ere_object.get('ID'))
-        ldc_end_time_triples = get_ldc_time_triples(logger,
-                                                    ldc_end_time_blank_node_iri,
-                                                    ere_object.get('entry').get('end_date'),
-                                                    ere_object.get('entry').get('end_date_type'),
-                                                    where)
-
-        ldc_end_time_triples = """\
-            _:bldctime{ere_object_id} aida:end {ldc_end_time_blank_node_iri} .
-            {ldc_end_time_blank_node_iri} a aida:LDCTimeComponent .
-            {ldc_end_time_day_triples}
-            {ldc_end_time_month_triples}
-            {ldc_end_time_year_triples}
-            {ldc_end_time_type_triples}
-        """.format(ere_object_id = ere_object.get('ID'),
-                   ldc_end_time_blank_node_iri = ldc_end_time_blank_node_iri,
-                   ldc_end_time_day_triples = ldc_end_time_triples['day'],
-                   ldc_end_time_month_triples = ldc_end_time_triples['month'],
-                   ldc_end_time_year_triples = ldc_end_time_triples['year'],
-                   ldc_end_time_type_triples = ldc_end_time_triples['type'])
-
-        ldc_time_assertion_triples = """\
-            ldc:{ere_object_id} aida:ldcTime _:bldctime{ere_object_id} .
-            _:bldctime{ere_object_id} a aida:LDCTime .
-            _:bldctime{ere_object_id} aida:system {system} .
-            {ldc_start_time_triples}
-            {ldc_end_time_triples}
-        """.format(ere_object_id = ere_object.get('ID'),
-                   ldc_start_time_triples = ldc_start_time_triples,
-                   ldc_end_time_triples = ldc_end_time_triples,
-                   system = SYSTEM_NAME)
-
     # generate link assertion triples
-    has_name_triple = ''
+    has_name_triples = []
     if ere_type == 'Entity':
-        text_string = ere_object.get('entry').get('text_string')
-        if len(text_string) < 256 and ere_object.get('entry').get('level') == 'nam':
-            has_name_triple = 'ldc:{ere_object_id} aida:hasName "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
-                                                                                      text_string=text_string.replace('"', '\\"'))
+        text_strings = ere_object.get('text_strings')
+        for text_string in text_strings:
+            if len(text_string) < 256 and 'nam' in text_strings[text_string]:
+                has_name_triple = 'ldc:{ere_object_id} aida:hasName "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
+                                                                                          text_string=text_string.replace('"', '\\"'))
+                has_name_triples.append(has_name_triple)
     node_ids = []
     for node_id_or_node_ids in ere_object.get('nodes'):
         for node_id in node_id_or_node_ids.split('|'):
@@ -300,21 +182,44 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
         informative_justification_triples_by_document['all_docs'].append(triple)
         informative_justification_triples_by_document[span.get('document_id')].append(triple)
 
+    # generate justification triples
+    justification_triples_by_document = defaultdict(list)
+    justification_spans = ere_object.get('document_spans')
+    if justification_spans:
+        for span in justification_spans.values():
+            triple = 'ldc:{ere_object_id} aida:justifiedBy _:b{span_md5} .'.format(ere_object_id=ere_object.get('ID'),
+                                                                                               span_md5=span.get('md5'))
+            justification_triples_by_document['all_docs'].append(triple)
+            justification_triples_by_document[span.get('document_id')].append(triple)
+
+    ere_object_iri = 'ldc:{ere_object_id}'.format(ere_object_id=ere_object.get('ID'))
+    ldc_time_iri = '_:bldctime{ere_object_id}'.format(ere_object_id=ere_object.get('ID'))
+
+    if ere_object.get('time_range') and ere_object.get('time_range').is_invalid():
+        ere_object.get('logger').record_event('INVALID_TIME_RANGE', ere_object.get('time_range'), ere_object.get('ID'))
+
+    time_range_by_document = ere_object.get('time_range_by_document')
+
     triple_block_dict = {}
     for key in informative_justification_triples_by_document:
+        time_range = time_range_by_document[key] if key in time_range_by_document else None
+        ldc_time_assertion_triples = time_range.get('aif', ere_object_iri, ldc_time_iri, SYSTEM_NAME) if time_range else ''
         triples = """\
-            ldc:{ere_object_id} a aida:{ere_type} .
+            {ere_object_iri} a aida:{ere_type} .
+            {justification_triples}
             {informative_justification_triples}
             {ldc_time_assertion_triples}
             {link_assertion_triples}
-            {has_name_triple}
-            ldc:{ere_object_id} aida:system {system} .
-        """.format(ere_object_id=ere_object.get('ID'),
+            {has_name_triples}
+            {ere_object_iri} aida:system {system} .
+        """.format(ere_object_iri=ere_object_iri,
                    ere_type = ere_type,
+                   ldc_time_iri = ldc_time_iri,
                    ldc_time_assertion_triples = ldc_time_assertion_triples,
+                   justification_triples = '\n'.join(justification_triples_by_document[key]),
                    informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
                    link_assertion_triples = '\n'.join(link_assertion_triples),
-                   has_name_triple = has_name_triple,
+                   has_name_triples = '\n'.join(has_name_triples),
                    system = SYSTEM_NAME,
                    )
         triple_block_dict[key] = triples
@@ -592,54 +497,38 @@ def generate_sound_justification_triples(document_span):
     triple_block_dict[document_span.get('document_id')] = triples
     return triple_block_dict
 
-def generate_type_assertion_triples(mention):
+def generate_type_assertion_triples(mention, node_name=None):
     """
     Generate the type assertion triples.
 
     Parameters:
         mention (aida.Mention)
+        node_name (str or None):
+            node_name is provided if the mention for which the type assertion is to be
+            generated is for the prototype of a cluster
 
     The return value is a dictionary object containing triples corresponding to the document
     from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
     document are used for generating task1 document specific kbs.
     """
     full_type = mention.get('full_type')
-    type_assertion_md5 = get_md5_from_string('{id}:{full_type}'.format(id=mention.get('ID'),
+    ID = mention.get('ID') if node_name is None else node_name
+    subject = mention.get('ID') if node_name is None else 'prototype-{}'.format(node_name)
+    type_assertion_md5 = get_md5_from_string('{ID}:{full_type}'.format(ID=ID,
                                                                   full_type=full_type
                                                                   ))
-    subject = mention.get('ID')
-
-    triple_block_dict = {}
 
     # all_docs triple block
-    justified_by_triples = []
     justified_by_triples_by_document = defaultdict(list)
     for document_span in mention.get('document_spans').values():
         justified_by_triple = 'ldc:assertion-{type_assertion_md5} aida:justifiedBy _:b{document_span_md5} .'.format(type_assertion_md5=type_assertion_md5,
                                                                                                          document_span_md5=document_span.get('md5'))
-        justified_by_triples.append(justified_by_triple)
         justified_by_triples_by_document[document_span.get('document_id')].append(justified_by_triple)
-
-    triples = """\
-        ldc:assertion-{type_assertion_md5} a rdf:Statement .
-        ldc:assertion-{type_assertion_md5} rdf:object ldcOnt:{full_type} .
-        ldc:assertion-{type_assertion_md5} rdf:predicate rdf:type .
-        ldc:assertion-{type_assertion_md5} rdf:subject ldc:{subject} .
-        ldc:assertion-{type_assertion_md5} aida:confidence _:bta{type_assertion_md5}-confidence .
-        _:bta{type_assertion_md5}-confidence a aida:Confidence .
-        _:bta{type_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-        _:bta{type_assertion_md5}-confidence aida:system {system} .
-        {justified_by_triples}
-        ldc:assertion-{type_assertion_md5} aida:system {system} .
-        """.format(type_assertion_md5 = type_assertion_md5,
-                   full_type = full_type,
-                   subject = subject,
-                   system = SYSTEM_NAME,
-                   justified_by_triples = '\n'.join(justified_by_triples)
-                   )
-    triple_block_dict['all_docs'] = triples
+        justified_by_triples_by_document['all_docs'].append(justified_by_triple)
 
     # document specific triple block
+    justified_by_triples = []
+    triple_block_dict = {}
     for document_id in justified_by_triples_by_document:
         justified_by_triples = justified_by_triples_by_document[document_id]
         triples = """\
@@ -662,64 +551,69 @@ def generate_type_assertion_triples(mention):
         triple_block_dict[document_id] = triples
     return triple_block_dict
 
-def generate_argument_assertions_with_single_contained_justification_triple(slot):
+def generate_argument_assertions_with_single_contained_justification_triple(slot, subject_node=None):
     """
     Generate the argument assertion triples with a single contained justification.
 
     Parameters:
         slot (aida.Slot)
+        subject_node (aida.Node or None):
+            aida.Node if the slot represents an edge between prototypes
 
     The return value is a dictionary object containing triples corresponding to the document
     from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
     document are used for generating task1 document specific kbs.
     """
-    subject = slot.get('subject')
-    argument = slot.get('argument')
-    subject_mention_id = subject.get('ID')
-    argument_mention_id = argument.get('ID')
-    slot_type = slot.get('slot_type')
-    slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(subject_mention_id, slot_type, argument_mention_id))
-    subject_informative_justifications = subject.get('informative_justification_spans')
-    for informative_justifications in [subject_informative_justifications]:
-        if len(informative_justifications) != 1:
-            slot.get('logger').record_event('UNEXPECTED_NUM_INF_JUSTIFICATIONS', slot.get_code_location())
-    subject_informative_justification = list(subject_informative_justifications.values())[0]
+    subject_mention_id = slot.get('subject').get('ID')
+    arguments = [slot.get('argument')]
+    if subject_node is not None:
+        subject_mention_id = subject_node.get('name')
+        arguments = list(slot.get('argument').get('nodes').values())
 
-    subject_document_ids = {document_span.get('document_id'):1 for document_span in subject.get('document_spans').values()}
-    argument_document_ids = {document_span.get('document_id'):1 for document_span in argument.get('document_spans').values()}
-    common_document_ids = {'all_docs':1}
-    for document_id in subject_document_ids:
-        if document_id in argument_document_ids:
-            common_document_ids[document_id] = 1
+    document_ids = {'all_docs':1}
+    subject_informative_justification_spans = slot.get('subject').get('informative_justification_spans')
+    predicate_justification_document_id = slot.get('subject').get('document_id')
+    subject_informative_justification_span = subject_informative_justification_spans[predicate_justification_document_id]
+    document_ids[predicate_justification_document_id] = 1
 
-    triple_block_dict = {}
-    for key in common_document_ids:
-        triples = """\
-            ldc:assertion-{slot_assertion_md5} a rdf:Statement .
-            ldc:assertion-{slot_assertion_md5} rdf:object ldc:{argument_mention_id} .
-            ldc:assertion-{slot_assertion_md5} rdf:predicate ldcOnt:{slot_type} .
-            ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
-            ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
-            _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
-            _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-            _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
-            ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
-            _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
-            _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{subject_informative_justification_md5} .
-            _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
-            _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
-            _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
-            _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
-            _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
-            ldc:assertion-{slot_assertion_md5} aida:system {system} .
-            """.format(slot_assertion_md5 = slot_assertion_md5,
-                       subject_mention_id = subject_mention_id,
-                       argument_mention_id = argument_mention_id,
-                       slot_type = slot_type,
-                       subject_informative_justification_md5 = subject_informative_justification.get('md5'),
-                       system = SYSTEM_NAME
-                       )
-        triple_block_dict[key] = triples
+    for argument in arguments:
+        argument_mention_id = argument.get('ID')
+        if subject_node is not None:
+            argument_mention_id = argument.get('name')
+            if predicate_justification_document_id not in argument.get('document_ids'):
+                slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Predicate justification document ID {} not in the documents from which the argument came'.format(predicate_justification_document_id))
+        slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(
+                                                    subject_mention_id,
+                                                    slot.get('slot_type'),
+                                                    argument_mention_id))
+        triple_block_dict = {}
+        for key in document_ids:
+            triples = """\
+                ldc:assertion-{slot_assertion_md5} a rdf:Statement .
+                ldc:assertion-{slot_assertion_md5} rdf:object ldc:{argument_mention_id} .
+                ldc:assertion-{slot_assertion_md5} rdf:predicate ldcOnt:{slot_type} .
+                ldc:assertion-{slot_assertion_md5} rdf:subject ldc:{subject_mention_id} .
+                ldc:assertion-{slot_assertion_md5} aida:confidence _:bslotassertion-{slot_assertion_md5}-confidence .
+                _:bslotassertion-{slot_assertion_md5}-confidence a aida:Confidence .
+                _:bslotassertion-{slot_assertion_md5}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+                _:bslotassertion-{slot_assertion_md5}-confidence aida:system {system} .
+                ldc:assertion-{slot_assertion_md5} aida:justifiedBy _:bslotassertion-{slot_assertion_md5}-justification .
+                _:bslotassertion-{slot_assertion_md5}-justification a aida:CompoundJustification . 
+                _:bslotassertion-{slot_assertion_md5}-justification aida:containedJustification _:b{subject_mention_md5} .
+                _:bslotassertion-{slot_assertion_md5}-justification aida:confidence _:bslotassertion-{slot_assertion_md5}-justification-confidence .
+                _:bslotassertion-{slot_assertion_md5}-justification-confidence a aida:Confidence .
+                _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
+                _:bslotassertion-{slot_assertion_md5}-justification-confidence aida:system {system} .
+                _:bslotassertion-{slot_assertion_md5}-justification aida:system {system} .
+                ldc:assertion-{slot_assertion_md5} aida:system {system} .
+                """.format(slot_assertion_md5 = slot_assertion_md5,
+                           subject_mention_id = subject_mention_id,
+                           argument_mention_id = argument_mention_id,
+                           slot_type = slot.get('slot_type'),
+                           subject_mention_md5 = subject_informative_justification_span.get('md5'),
+                           system = SYSTEM_NAME
+                           )
+            triple_block_dict[key] = triples
     return triple_block_dict
 
 def generate_argument_assertions_with_two_contained_justifications_triple(slot):
@@ -904,32 +798,35 @@ class AIFGenerator(Object):
             @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
         """
         return triple_block
-    
+
     def generate_argument_assertions(self):
         """
         Generate all the argument assertion triples.
         """
-        for slot in self.get('annotations').get('slots').values():
-            # change generate_argument_assertions_with_single_contained_justification_triple 
-            # to generate_argument_assertions_with_two_contained_justifications_triple
-            # if two contained justifications were needed
-            if slot.is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
-                continue
-            if slot.get('subject').is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
-                continue
-            if slot.get('argument').is_negated():
-                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
-                continue
-            if len(slot.get('subject').get('nodes')) == 0:
-                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
-                continue
-            if len(slot.get('argument').get('nodes')) == 0:
-                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
-                continue
-            triple_block_dict = generate_argument_assertions_with_single_contained_justification_triple(slot)
-            self.add(triple_block_dict)
+        method_name = 'generate_argument_assertions_with_single_contained_justification_triple'
+        generator = globals().get(method_name)
+        for node in self.get('annotations').get('nodes').values():
+            for slot_name in node.get('prototype').get('slots'):
+                for slot in node.get('prototype').get('slots').get(slot_name):
+                    if slot.is_negated():
+                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
+                        continue
+                    if slot.get('subject').is_negated():
+                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
+                        continue
+                    if slot.get('argument').is_negated():
+                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
+                        continue
+                    if len(slot.get('subject').get('nodes')) == 0:
+                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
+                        continue
+                    if len(slot.get('argument').get('nodes')) == 0:
+                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
+                        continue
+                    triple_block_dict = generator(slot)
+                    self.add(triple_block_dict)
+                    triple_block_dict = generator(slot, node)
+                    self.add(triple_block_dict)
 
     def generate_ere_objects(self):
         """
@@ -942,6 +839,8 @@ class AIFGenerator(Object):
                     continue
                 triple_block_dict = generate_ere_object_triples(self.get('reference_kb_id'), mention)
                 self.add(triple_block_dict)
+            triple_block_dict = generate_ere_object_triples(self.get('reference_kb_id'), node.get('prototype'))
+            self.add(triple_block_dict)
 
     def generate_clusters(self):
         """
@@ -983,7 +882,7 @@ class AIFGenerator(Object):
                     else:
                         self.get('logger').record_event('UNDEFINED_METHOD', method_name)
                     self.add(triple_block_dict)
-    
+
     def generate_type_assertions(self):
         """
         Generate all the type assertion triples.
@@ -995,3 +894,10 @@ class AIFGenerator(Object):
                     continue
                 triple_block_dict = generate_type_assertion_triples(mention)
                 self.add(triple_block_dict)
+            prototype = node.get('prototype')
+            for mention_type in prototype.get('types'):
+                for mention in prototype.get('types').get(mention_type):
+                    if mention.is_negated():
+                        self.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Negated mention encountered. Expected non-negated one.')
+                    triple_block_dict = generate_type_assertion_triples(mention, node.get('name'))
+                    self.add(triple_block_dict)

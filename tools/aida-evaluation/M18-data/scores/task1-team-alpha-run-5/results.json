@@ -1,0 +1,13 @@
+{
+    "scores": [
+        {
+            "TASK1-CLASS-AP-BEST": "0.0129",
+            "TASK1-CLASS-AP-TREC": "0.0127",
+            "TASK1-CLASS-AP-WORST": "0.0127",
+            "TASK1-GRAPH-PRECISION": "0.9608",
+            "TASK1-GRAPH-RECALL": "0.0649",
+            "TASK1-GRAPH-qF1": "0.1216",
+            "Total": "0.1216"
+        }
+    ]
+}

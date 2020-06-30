@@ -1,0 +1,3 @@
+?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
+IC0015LTF	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VAL.Number>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILE06740>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VAL.Number.Number>	IC0015LTF:HC000030J:(744,0)-(755,0)	1.0E0	1.0E0	1.0E0
+IC0015LTF	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VAL.Number>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILE06742>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#VAL.Number.Number>	IC0015LTF:HC000030J:(421,0)-(427,0)	1.0E0	1.0E0	1.0E0
