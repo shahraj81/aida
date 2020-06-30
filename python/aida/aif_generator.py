@@ -182,6 +182,16 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
         informative_justification_triples_by_document['all_docs'].append(triple)
         informative_justification_triples_by_document[span.get('document_id')].append(triple)
 
+    # generate justification triples
+    justification_triples_by_document = defaultdict(list)
+    justification_spans = ere_object.get('document_spans')
+    if justification_spans:
+        for span in justification_spans.values():
+            triple = 'ldc:{ere_object_id} aida:justifiedBy _:b{span_md5} .'.format(ere_object_id=ere_object.get('ID'),
+                                                                                               span_md5=span.get('md5'))
+            justification_triples_by_document['all_docs'].append(triple)
+            justification_triples_by_document[span.get('document_id')].append(triple)
+
     ere_object_iri = 'ldc:{ere_object_id}'.format(ere_object_id=ere_object.get('ID'))
     ldc_time_iri = '_:bldctime{ere_object_id}'.format(ere_object_id=ere_object.get('ID'))
 
@@ -196,6 +206,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
         ldc_time_assertion_triples = time_range.get('aif', ere_object_iri, ldc_time_iri, SYSTEM_NAME) if time_range else ''
         triples = """\
             {ere_object_iri} a aida:{ere_type} .
+            {justification_triples}
             {informative_justification_triples}
             {ldc_time_assertion_triples}
             {link_assertion_triples}
@@ -205,6 +216,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                    ere_type = ere_type,
                    ldc_time_iri = ldc_time_iri,
                    ldc_time_assertion_triples = ldc_time_assertion_triples,
+                   justification_triples = '\n'.join(justification_triples_by_document[key]),
                    informative_justification_triples = '\n'.join(informative_justification_triples_by_document[key]),
                    link_assertion_triples = '\n'.join(link_assertion_triples),
                    has_name_triples = '\n'.join(has_name_triples),
