@@ -583,10 +583,11 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
             argument_mention_id = argument.get('prototype').get('name')
             if predicate_justification_document_id not in argument.get('document_ids'):
                 slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Predicate justification document ID {} not in the documents from which the argument came'.format(predicate_justification_document_id))
-        slot_assertion_md5 = get_md5_from_string('{}:{}:{}'.format(
+        slot_assertion_md5 = get_md5_from_string('{}:{}:{}:{}'.format(
                                                     subject_mention_id,
                                                     slot.get('slot_type'),
-                                                    argument_mention_id))
+                                                    argument_mention_id,
+                                                    subject_informative_justification_span))
         triple_block_dict = {}
         for key in document_ids:
             triples = """\
