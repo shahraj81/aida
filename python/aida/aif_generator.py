@@ -108,7 +108,8 @@ def generate_cluster_triples(reference_kb_id, node):
 
     document_ids = {'all_docs':1}
     for mention in node.get('mentions').values():
-        document_ids[mention.get('document_id')] = 1
+        if not mention.is_negated():
+            document_ids[mention.get('document_id')] = 1
 
     triple_block_dict = {}
     for key in document_ids:
