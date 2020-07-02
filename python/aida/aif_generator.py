@@ -805,7 +805,7 @@ class AIFGenerator(Object):
         """
         method_name = 'generate_argument_assertions_with_single_contained_justification_triple'
         generator = globals().get(method_name)
-        for node in self.get('annotations').get('nodes').values():
+        for node in self.get('annotations').get('subject_nodes').values():
             for slot_name in node.get('prototype').get('slots'):
                 for slot in node.get('prototype').get('slots').get(slot_name):
                     if slot.is_negated():
