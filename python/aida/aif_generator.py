@@ -556,7 +556,7 @@ def generate_type_assertion_triples(mention, node_name=None):
         triple_block_dict[document_id] = triples
     return triple_block_dict
 
-def generate_argument_assertions_with_single_contained_justification_triple(slot, subject_node=None):
+def generate_argument_assertions_with_single_contained_justification_triple(slot):
     """
     Generate the argument assertion triples with a single contained justification.
 
@@ -569,24 +569,18 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
     document are used for generating task1 document specific kbs.
     """
-    subject_mention_id = slot.get('subject').get('ID')
-    arguments = [slot.get('argument')]
-    if subject_node is not None:
-        subject_mention_id = subject_node.get('prototype').get('name')
-        arguments = list(slot.get('argument').get('nodes').values())
 
-    document_ids = {'all_docs':1}
-    subject_informative_justification_spans = slot.get('subject').get('informative_justification_spans')
     predicate_justification_document_id = slot.get('subject').get('document_id')
+    subject_informative_justification_spans = slot.get('subject').get('informative_justification_spans')
     subject_informative_justification_span = subject_informative_justification_spans[predicate_justification_document_id]
-    document_ids[predicate_justification_document_id] = 1
+    document_ids = { predicate_justification_document_id:1, 'all_docs': 1}
 
-    for argument in arguments:
-        argument_mention_id = argument.get('ID')
-        if subject_node is not None:
-            argument_mention_id = argument.get('prototype').get('name')
-            if predicate_justification_document_id not in argument.get('document_ids'):
-                slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Predicate justification document ID {} not in the documents from which the argument came'.format(predicate_justification_document_id))
+    edges = [(slot.get('subject').get('ID'), slot.get('argument').get('ID'))]
+    for subject_node in slot.get('subject').get('nodes').values():
+        for argument_node in slot.get('argument').get('nodes').values():
+            edges.append((subject_node.get('prototype').get('ID'), argument_node.get('prototype').get('ID')))
+
+    for subject_mention_id, argument_mention_id in edges:
         slot_assertion_md5 = get_md5_from_string('{}:{}:{}:{}'.format(
                                                     subject_mention_id,
                                                     slot.get('slot_type'),
@@ -811,28 +805,24 @@ class AIFGenerator(Object):
         """
         method_name = 'generate_argument_assertions_with_single_contained_justification_triple'
         generator = globals().get(method_name)
-        for node in self.get('annotations').get('subject_nodes').values():
-            for slot_name in node.get('prototype').get('slots'):
-                for slot in node.get('prototype').get('slots').get(slot_name):
-                    if slot.is_negated():
-                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
-                        continue
-                    if slot.get('subject').is_negated():
-                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
-                        continue
-                    if slot.get('argument').is_negated():
-                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
-                        continue
-                    if len(slot.get('subject').get('nodes')) == 0:
-                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
-                        continue
-                    if len(slot.get('argument').get('nodes')) == 0:
-                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
-                        continue
-                    triple_block_dict = generator(slot)
-                    self.add(triple_block_dict)
-                    triple_block_dict = generator(slot, node)
-                    self.add(triple_block_dict)
+        for slot in self.get('annotations').get('slots').values():
+            if slot.is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
+                continue
+            if slot.get('subject').is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
+                continue
+            if slot.get('argument').is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
+                continue
+            if len(slot.get('subject').get('nodes')) == 0:
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
+                continue
+            if len(slot.get('argument').get('nodes')) == 0:
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
+                continue
+            triple_block_dict = generator(slot)
+            self.add(triple_block_dict)
 
     def generate_ere_objects(self):
         """
