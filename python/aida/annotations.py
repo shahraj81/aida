@@ -189,10 +189,3 @@ class Annotations(Object):
                         self.record_event("UNDEFINED_METHOD", method_name, self.get_code_location())
                     filename = "{}/data/{}/{}_{}.tab".format(self.annotations_dir, topic_id, topic_id, file_type)
                     method(filename)
-
-        # record nodes that is a subject of any argument assertion
-        for slot in self.get('slots').values():
-            subject_mention = slot.get('subject')
-            for subject_node_id in subject_mention.get('nodes'):
-                subject_node = subject_mention.get('nodes').get(subject_node_id)
-                self.get('subject_nodes')[subject_node_id] = subject_node
