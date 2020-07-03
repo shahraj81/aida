@@ -106,10 +106,14 @@ def generate_cluster_triples(reference_kb_id, node):
                    )
         link_assertion_triples.append(triples)
 
-    document_ids = {'all_docs':1}
+    document_ids = {}
     for mention in node.get('mentions').values():
         if not mention.is_negated():
             document_ids[mention.get('document_id')] = 1
+
+    # include the cluster triples in all_docs if there was a non-negated mention
+    if len(document_ids):
+        document_ids['all_docs'] = 1
 
     triple_block_dict = {}
     for key in document_ids:
