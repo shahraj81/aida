@@ -581,6 +581,8 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
             edges.append((subject_node.get('prototype').get('ID'), argument_node.get('prototype').get('ID')))
 
     for subject_mention_id, argument_mention_id in edges:
+        if subject_mention_id == argument_mention_id:
+            slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'The subject and object of an argument assertion are {}'.format(subject_mention_id), slot.get('where'))
         slot_assertion_md5 = get_md5_from_string('{}:{}:{}:{}'.format(
                                                     subject_mention_id,
                                                     slot.get('slot_type'),
