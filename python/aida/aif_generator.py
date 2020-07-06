@@ -862,6 +862,11 @@ class AIFGenerator(Object):
         """
         Generate all the justification triples.
         """
+        span_types_aif_constants = {
+                "sound": ":VideoJustificationChannelSound",
+                "video": ":VideoJustificationChannelPicture",
+                "both": ":VideoJustificationChannelBoth"
+            }
         generate_optional_channel_attribute_flag = self.get('generate_optional_channel_attribute_flag')
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
@@ -870,6 +875,7 @@ class AIFGenerator(Object):
                     continue
                 for document_span in mention.get('document_spans').values():
                     span_type = document_span.get('span_type')
+                    span_type = span_types_aif_constants[span_type] if span_type in span_types_aif_constants else span_type
                     triple_block_dict = None
                     method_name = 'generate_{}_justification_triples'.format(span_type)
                     generator = globals().get(method_name)
