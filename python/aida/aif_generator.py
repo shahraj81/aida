@@ -84,9 +84,9 @@ def generate_cluster_triples(reference_kb_id, node):
     """
     prototype = node.get('prototype')
     node_ids = []
-    node_id_or_node_ids = node.get('ID')
-    for node_id in node_id_or_node_ids.split('|'):
-        if not node_id.startswith('NIL'):
+    if node.get('metatype') == 'entity':
+        node_id_or_node_ids = node.get('ID')
+        for node_id in node_id_or_node_ids.split('|'):
             node_ids.append(node_id)
     link_assertion_triples = []
     for node_id in node_ids:
@@ -156,9 +156,9 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
                                                                                           text_string=text_string.replace('"', '\\"'))
                 has_name_triples.append(has_name_triple)
     node_ids = []
-    for node_id_or_node_ids in ere_object.get('nodes'):
-        for node_id in node_id_or_node_ids.split('|'):
-            if not node_id.startswith('NIL'):
+    if ere_type == 'Entity':
+        for node_id_or_node_ids in ere_object.get('nodes'):
+            for node_id in node_id_or_node_ids.split('|'):
                 node_ids.append(node_id)
     link_assertion_triples = []
     for node_id in node_ids:
