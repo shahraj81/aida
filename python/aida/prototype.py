@@ -102,3 +102,6 @@ class Prototype(Object):
 
     def get_node_metatype(self):
         return self.get('metatype')
+
+    def get_top_level_types(self):
+        return [full_type.upper().split('.')[0] for full_type in self.get('types')]
