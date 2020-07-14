@@ -177,6 +177,9 @@ class Mention(Object):
     def get_text_strings(self):
         return {self.get('text_string'):{self.get('level'):1}}
 
+    def get_top_level_types(self):
+        return [self.get('entry').get('type').upper()]
+
     def is_event(self):
         """
         Returns True if the mention is a mention of an event, False otherwise.
