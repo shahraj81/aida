@@ -2,6 +2,7 @@ type      code                            message
 ERROR     DEFAULT_ERROR                   Error encountered {} {}
 WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
+INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
 CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
@@ -11,6 +12,7 @@ WARNING   INVALID_CONFIDENCE              Invalid confidence value '{}' (using 1
 WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is invalid
 CRITICAL  KEY_IS_NONE                     key 'None' used
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
+WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing entry '{}' in '{}'
 ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM_WITHOUT_KEY        '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
