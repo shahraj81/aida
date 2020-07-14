@@ -58,6 +58,7 @@ class Prototype(Object):
                 else:
                     self.get('text_strings')[mention.get('text_string')][mention.get('level')] = 1
         self.add_time(node)
+        self.set('where', node.get('where'))
 
     def add_time(self, node):
         for mention in node.get('mentions').values():
