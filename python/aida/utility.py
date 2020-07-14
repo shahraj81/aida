@@ -9,6 +9,9 @@ __date__    = "28 January 2020"
 
 import hashlib
 
+def parse_cv(cv):
+    return float(cv.replace('"',''))
+
 def get_kb_document_id_from_filename(filename):
     """
     Gets the source document ID of the KB from filename provided as argument.
