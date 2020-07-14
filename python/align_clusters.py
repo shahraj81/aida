@@ -65,6 +65,9 @@ def align_clusters(args):
     clusters = {}
     for file_type, filename in file_types.items():
         for entry in FileHandler(logger, filename):
+            metatype = entry.get('?metatype')
+            if metatype == 'Relation':
+                continue
             cluster_id = entry.get('?cluster')
             mention_span = entry.get('?mention_span')
             mention_type = entry.get('?type')
