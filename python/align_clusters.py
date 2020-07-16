@@ -17,6 +17,10 @@ import sys
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
+def check_path(args):
+    check_for_paths_existance(args)
+    check_for_paths_non_existance(args)
+
 def check_for_paths_existance(args):
     for path in [args.log_specifications_filename, 
                  args.gold_mentions,
@@ -27,10 +31,16 @@ def check_for_paths_existance(args):
             print('Error: Path {} does not exist'.format(path))
             exit(ERROR_EXIT_CODE)
 
+def check_for_paths_non_existance(args):
+    for path in [args.output]:
+        if os.path.exists(path):
+            print('Error: Path {} exists'.format(path))
+            exit(ERROR_EXIT_CODE)
+
 def align_clusters(args):
     logger = Logger(args.log, args.log_specifications_filename, sys.argv)
     clusters = Clusters(logger, args.gold_mentions, args.gold_edges, args.system_mentions, args.system_edges)
-
+    clusters.print_alignment(args.output)
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
@@ -49,6 +59,8 @@ if __name__ == '__main__':
                         help='File containing system clusters, corresponding mentions and types information.')
     parser.add_argument('system_edges', type=str,
                         help='File containing information about system edges.')
+    parser.add_argument('output', type=str,
+                        help='Specify a file to which the alignment information should be written.')
     args = parser.parse_args()
-    check_for_paths_existance(args)
+    check_path(args)
     align_clusters(args)
