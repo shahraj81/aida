@@ -217,6 +217,11 @@ class Clusters(Object):
         program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster='system_cluster',
                                                                                        gold_cluster='gold_cluster',
                                                                                        similarity='similarity'))
+        self.print_entities_and_events_alignment(program_output)
+        self.print_relations_alignment(program_output)
+        program_output.close()
+
+    def print_entities_and_events_alignment(self, program_output):
         for gold_cluster_id in sorted(self.get('clusters').get('gold')):
             system_cluster_id = 'None'
             similarity = 0
@@ -239,4 +244,25 @@ class Clusters(Object):
                                                                                        gold_cluster=gold_cluster_id,
                                                                                        similarity=similarity))
 
-        program_output.close()
+    def print_relations_alignment(self, program_output):
+        for gold_cluster_id in sorted(self.get('frames').get('gold')):
+            system_cluster_id = 'None'
+            similarity = 0
+            if gold_cluster_id in self.get('alignment').get('gold_to_system'):
+                system_cluster_id = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_to']
+                similarity = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_similarity']
+                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
+                                                                                       gold_cluster=gold_cluster_id,
+                                                                                       similarity=similarity))
+            else:
+                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
+                                                                                       gold_cluster=gold_cluster_id,
+                                                                                       similarity=similarity))
+
+        for system_cluster_id in sorted(self.get('frames').get('system')):
+            gold_cluster_id = 'None'
+            similarity = 0
+            if system_cluster_id not in self.get('alignment').get('system_to_gold'):
+                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
+                                                                                       gold_cluster=gold_cluster_id,
+                                                                                       similarity=similarity))
