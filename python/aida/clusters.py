@@ -111,6 +111,14 @@ class Clusters(Object):
                     return 0
         return score
 
+    def get_metatype(self, gold_or_system, cluster_or_frame_id):
+        cluster_id = self.get('clusters').get(gold_or_system).get(cluster_or_frame_id)
+        frame_id = self.get('frames').get(gold_or_system).get(cluster_or_frame_id)
+        if cluster_id and frame_id:
+            self.get('logger').record_event('AMBIGUOUS_CLUSTERID', cluster_or_frame_id)
+        cluster_or_frame = cluster_id or frame_id
+        return cluster_or_frame.get('metatype')
+
     def get_number_of_common_types(self, gold_cluster, system_cluster):
         gold_types = [full_type.split('.')[0] for full_type in gold_cluster.get('types')]
         system_types = [full_type.split('.')[0] for full_type in system_cluster.get('types')]
@@ -214,55 +222,54 @@ class Clusters(Object):
 
     def print_alignment(self, filename):
         program_output = open(filename, 'w')
-        program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster='system_cluster',
-                                                                                       gold_cluster='gold_cluster',
-                                                                                       similarity='similarity'))
+        program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(metatype='metatype',
+                                                                                        system_cluster='system_cluster',
+                                                                                        gold_cluster='gold_cluster',
+                                                                                        similarity='similarity'))
         self.print_entities_and_events_alignment(program_output)
         self.print_relations_alignment(program_output)
         program_output.close()
 
     def print_entities_and_events_alignment(self, program_output):
         for gold_cluster_id in sorted(self.get('clusters').get('gold')):
+            gold_cluster_metatype = self.get('metatype', 'gold', gold_cluster_id)
             system_cluster_id = 'None'
             similarity = 0
             if gold_cluster_id in self.get('alignment').get('gold_to_system'):
                 system_cluster_id = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_to']
+                system_cluster_metatype = self.get('metatype', 'system', system_cluster_id)
+                if gold_cluster_metatype != system_cluster_metatype:
+                    self.get('logger').record_event('METATYPE_MISMATCH', system_cluster_id, gold_cluster_metatype, system_cluster_metatype)
                 similarity = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_similarity']
-                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
-                                                                                       gold_cluster=gold_cluster_id,
-                                                                                       similarity=similarity))
-            else:
-                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
-                                                                                       gold_cluster=gold_cluster_id,
-                                                                                       similarity=similarity))
+            program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(metatype=gold_cluster_metatype,
+                                                                                        system_cluster=system_cluster_id,
+                                                                                        gold_cluster=gold_cluster_id,
+                                                                                        similarity=similarity))
 
         for system_cluster_id in sorted(self.get('clusters').get('system')):
-            gold_cluster_id = 'None'
-            similarity = 0
             if system_cluster_id not in self.get('alignment').get('system_to_gold'):
-                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
-                                                                                       gold_cluster=gold_cluster_id,
-                                                                                       similarity=similarity))
+                program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(
+                    metatype=self.get('metatype', 'system', system_cluster_id),
+                    system_cluster=system_cluster_id, gold_cluster='None', similarity=0))
 
     def print_relations_alignment(self, program_output):
         for gold_cluster_id in sorted(self.get('frames').get('gold')):
+            gold_cluster_metatype = self.get('metatype', 'gold', gold_cluster_id)
             system_cluster_id = 'None'
             similarity = 0
             if gold_cluster_id in self.get('alignment').get('gold_to_system'):
                 system_cluster_id = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_to']
+                system_cluster_metatype = self.get('metatype', 'system', system_cluster_id)
+                if gold_cluster_metatype != system_cluster_metatype:
+                    self.get('logger').record_event('METATYPE_MISMATCH', system_cluster_id, gold_cluster_metatype, system_cluster_metatype)
                 similarity = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_similarity']
-                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
-                                                                                       gold_cluster=gold_cluster_id,
-                                                                                       similarity=similarity))
-            else:
-                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
+            program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(metatype=gold_cluster_metatype,
+                                                                                       system_cluster=system_cluster_id,
                                                                                        gold_cluster=gold_cluster_id,
                                                                                        similarity=similarity))
 
         for system_cluster_id in sorted(self.get('frames').get('system')):
-            gold_cluster_id = 'None'
-            similarity = 0
             if system_cluster_id not in self.get('alignment').get('system_to_gold'):
-                program_output.write('{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(system_cluster=system_cluster_id,
-                                                                                       gold_cluster=gold_cluster_id,
-                                                                                       similarity=similarity))
+                program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(
+                    metatype = self.get('metatype', 'system', system_cluster_id),
+                    system_cluster=system_cluster_id, gold_cluster='None', similarity=0))
