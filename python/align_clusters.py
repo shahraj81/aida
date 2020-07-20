@@ -32,7 +32,8 @@ def check_for_paths_existance(args):
             exit(ERROR_EXIT_CODE)
 
 def check_for_paths_non_existance(args):
-    for path in [args.output]:
+    for path in [args.output, 
+                 args.similarities]:
         if os.path.exists(path):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
@@ -40,6 +41,7 @@ def check_for_paths_non_existance(args):
 def align_clusters(args):
     logger = Logger(args.log, args.log_specifications_filename, sys.argv)
     clusters = Clusters(logger, args.gold_mentions, args.gold_edges, args.system_mentions, args.system_edges)
+    clusters.print_similarities(args.similarities)
     clusters.print_alignment(args.output)
     exit(ALLOK_EXIT_CODE)
 
@@ -59,6 +61,8 @@ if __name__ == '__main__':
                         help='File containing system clusters, corresponding mentions and types information.')
     parser.add_argument('system_edges', type=str,
                         help='File containing information about system edges.')
+    parser.add_argument('similarities', type=str,
+                        help='Specify a file to which the similarity information should be written.')
     parser.add_argument('output', type=str,
                         help='Specify a file to which the alignment information should be written.')
     args = parser.parse_args()

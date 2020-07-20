@@ -273,3 +273,22 @@ class Clusters(Object):
                 program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(
                     metatype = self.get('metatype', 'system', system_cluster_id),
                     system_cluster=system_cluster_id, gold_cluster='None', similarity=0))
+
+    def print_similarities(self, output_file):
+        program_output = open(output_file, 'w')
+        program_output.write('{metatype}\t{system_or_gold}\t{cluster1}\t{cluster2}\t{similarity}\n'.format(metatype='metatype',
+                                                                                        system_or_gold='system_or_gold',
+                                                                                        cluster1='cluster1',
+                                                                                        cluster2='cluster2',
+                                                                                        similarity='similarity'))
+        for system_or_gold in ['system', 'gold']:
+            for cluster1 in self.get('clusters').get(system_or_gold).values():
+                for cluster2 in self.get('clusters').get(system_or_gold).values():
+                    if cluster1.get('metatype') == cluster2.get('metatype'):
+                        similarity = self.get('similarity', cluster1, cluster2)
+                        program_output.write('{metatype}\t{system_or_gold}\t{cluster1}\t{cluster2}\t{similarity}\n'.format(metatype=cluster1.get('metatype'),
+                                                                                system_or_gold=system_or_gold,
+                                                                                cluster1=cluster1.get('ID'),
+                                                                                cluster2=cluster2.get('ID'),
+                                                                                similarity=similarity))
+        program_output.close()
