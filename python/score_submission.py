@@ -7,6 +7,8 @@ __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "15 January 2020"
 
+# TODO: to be retired
+
 from aida.assessments import Assessments
 from aida.container import Container
 from aida.core_documents import CoreDocuments
