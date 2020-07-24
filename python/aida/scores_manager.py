@@ -6,6 +6,8 @@ __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "3 February 2020"
 
+# TODO: to be retired
+
 from aida.object import Object
 from aida.class_scorer import ClassScorer
 from aida.graph_scorer import GraphScorer
