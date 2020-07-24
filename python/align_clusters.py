@@ -47,24 +47,15 @@ def align_clusters(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Align system and gold clusters")
-    parser.add_argument('-l', '--log', default='log.txt', 
-                        help='Specify a file to which log output should be redirected (default: %(default)s)')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
-                        help='Print version number and exit')
-    parser.add_argument('log_specifications_filename', type=str,
-                        help='File containing error specifications')
-    parser.add_argument('gold_mentions', type=str,
-                        help='File containing gold clusters, corresponding mentions and types information.')
-    parser.add_argument('gold_edges', type=str,
-                        help='File containing information about gold edges.')
-    parser.add_argument('system_mentions', type=str,
-                        help='File containing system clusters, corresponding mentions and types information.')
-    parser.add_argument('system_edges', type=str,
-                        help='File containing information about system edges.')
-    parser.add_argument('similarities', type=str,
-                        help='Specify a file to which the similarity information should be written.')
-    parser.add_argument('output', type=str,
-                        help='Specify a file to which the alignment information should be written.')
+    parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+    parser.add_argument('log_specifications_filename', type=str, help='File containing error specifications')
+    parser.add_argument('gold_mentions', type=str, help='File containing gold clusters, corresponding mentions and types information.')
+    parser.add_argument('gold_edges', type=str, help='File containing information about gold edges.')
+    parser.add_argument('system_mentions', type=str, help='File containing system clusters, corresponding mentions and types information.')
+    parser.add_argument('system_edges', type=str, help='File containing information about system edges.')
+    parser.add_argument('similarities', type=str, help='Specify a file to which the similarity information should be written.')
+    parser.add_argument('output', type=str, help='Specify a file to which the alignment information should be written.')
     args = parser.parse_args()
     check_path(args)
     align_clusters(args)
