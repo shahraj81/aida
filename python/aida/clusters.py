@@ -13,6 +13,7 @@ from aida.container import Container
 from aida.file_handler import FileHandler
 from aida.cluster import Cluster
 from aida.event_or_relation_frame import EventOrRelationFrame
+from aida.utility import get_cost_matrix
 
 import sys
 from munkres import Munkres
@@ -177,17 +178,8 @@ class Clusters(Object):
                 mappings[filetype]['id_to_index'][cluster_id] = index
                 mappings[filetype]['index_to_id'][index] = cluster_id
                 index += 1
-        cost_matrix = []
         similarities = self.get('entities_and_events_similarities')
-        for gold_cluster_index in sorted(mappings['gold']['index_to_id']):
-            cost_row = []
-            gold_cluster_id = mappings['gold']['index_to_id'][gold_cluster_index]
-            for system_cluster_index in sorted(mappings['system']['index_to_id']):
-                system_cluster_id = mappings['system']['index_to_id'][system_cluster_index]
-                similarity = similarities[gold_cluster_id][system_cluster_id]
-                cost_row += [sys.maxsize - similarity]
-            cost_matrix += [cost_row]
-        
+        cost_matrix = get_cost_matrix(similarities, mappings)
         for gold_cluster_index, system_cluster_index in Munkres().compute(cost_matrix):
             gold_cluster = self.get('cluster', 'gold', mappings['gold']['index_to_id'][gold_cluster_index])
             system_cluster = self.get('cluster', 'system', mappings['system']['index_to_id'][system_cluster_index])
