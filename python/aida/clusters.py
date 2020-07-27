@@ -54,33 +54,6 @@ class Clusters(Object):
                 similarities[gold_cluster.get('ID')][system_cluster.get('ID')] = similarity
         return similarities
 
-    def get_intersection_over_union(self, m1, m2):
-        if m1.get('document_id') == m2.get('document_id'):
-            if m1.get('document_element_id') == m2.get('document_element_id'):
-                intersection = 0
-                dx = min(float(m1.get('span').get('end_x')), float(m2.get('span').get('end_x'))) - max(float(m1.get('span').get('start_x')), float(m2.get('span').get('start_x')))
-                dy = min(float(m1.get('span').get('end_y')), float(m2.get('span').get('end_y'))) - max(float(m1.get('span').get('start_y')), float(m2.get('span').get('start_y')))
-                if (dx>0) and (dy>0):
-                    intersection = dx*dy
-                elif dx:
-                    intersection = dx
-                elif dy:
-                    intersection = dy
-
-                union = 0
-                for m in [m1, m2]:
-                    dx = float(m.get('span').get('end_x'))-float(m.get('span').get('start_x'))
-                    dy = float(m.get('span').get('end_y'))-float(m.get('span').get('start_y'))
-                    if (dx>0) and (dy>0):
-                        union += dx*dy
-                    elif dx:
-                        union += dx
-                    elif dy:
-                        union += dy
-                union -= intersection
-        intersection_over_union = intersection/union
-        return intersection_over_union
-
     def get_relation_similarity(self, gold_frame, system_frame):
         score = 0
         gold_frame_type_elements = gold_frame.get('event_or_relation_type').split('.')
