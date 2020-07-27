@@ -12,6 +12,7 @@ from aida.object import Object
 from aida.container import Container
 from aida.file_handler import FileHandler
 from aida.cluster import Cluster
+from aida.annotated_regions import AnnotatedRegions
 from aida.event_or_relation_frame import EventOrRelationFrame
 from aida.utility import get_cost_matrix, get_intersection_over_union
 from munkres import Munkres
@@ -21,11 +22,12 @@ class Clusters(Object):
     The container to hold Clusters.
     """
 
-    def __init__(self, logger, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename):
+    def __init__(self, logger, regions_filename, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename):
         """
         Initialize the Clusters.
         """
         super().__init__(logger)
+        self.annotated_regions = AnnotatedRegions(logger, regions_filename)
         self.filenames = Container(logger)
         self.filenames.add(key='gold', value={'mentions': gold_mentions_filename, 'edges': gold_edges_filename})
         self.filenames.add(key='system', value={'mentions': system_mentions_filename, 'edges': system_edges_filename})
