@@ -13,9 +13,7 @@ from aida.container import Container
 from aida.file_handler import FileHandler
 from aida.cluster import Cluster
 from aida.event_or_relation_frame import EventOrRelationFrame
-from aida.utility import get_cost_matrix
-
-import sys
+from aida.utility import get_cost_matrix, get_intersection_over_union
 from munkres import Munkres
 
 class Clusters(Object):
@@ -128,10 +126,34 @@ class Clusters(Object):
     def get_similarity(self, gold_cluster, system_cluster):
         similarity = 0
         if self.get('number_of_common_types', gold_cluster, system_cluster) > 0:
-            for gold_mention in gold_cluster.get('mentions').values():
-                for system_mention in system_cluster.get('mentions').values():
-                    if self.get('intersection_over_union', gold_mention, system_mention) > 0.8:
-                        similarity += 1
+            mentions = {'gold': list(gold_cluster.get('mentions').values()),
+                        'system': list(system_cluster.get('mentions').values())}
+            mappings = {}
+            for filetype in mentions:
+                mappings[filetype] = {'id_to_index': {}, 'index_to_id': {}}
+                index = 0;
+                for mention in mentions[filetype]:
+                    mappings[filetype]['id_to_index'][mention.get('ID')] = index
+                    mappings[filetype]['index_to_id'][index] = mention.get('ID')
+                    index += 1
+            similarities = {}
+            for gold_mention in mentions['gold']:
+                for system_mention in mentions['system']:
+                    if gold_mention.get('ID') not in similarities:
+                        similarities[gold_mention.get('ID')] = {}
+                    similarities[gold_mention.get('ID')][system_mention.get('ID')] = get_intersection_over_union(gold_mention.get('span'), system_mention.get('span'))
+            cost_matrix = get_cost_matrix(similarities, mappings)
+            alignment = {'gold_mention': {}, 'system_mention': {}}
+            for gold_mention_index, system_mention_index in Munkres().compute(cost_matrix):
+                gold_mention_id = mappings['gold']['index_to_id'][gold_mention_index]
+                system_mention_id = mappings['system']['index_to_id'][system_mention_index]
+                alignment['gold_mention'][gold_mention_id] = {'system_mention': system_mention_id, 'score': similarities[gold_mention_id][system_mention_id]}
+                alignment['system_mention'][system_mention_id] = {'gold_mention': gold_mention_id, 'score': similarities[gold_mention_id][system_mention_id]}
+                if similarities[gold_mention_id][system_mention_id] > 0.8:
+                    # lenient similarity computation
+                    similarity += 1
+                    # alternative would be to add up the amount of overlap
+                    # similarity += similarities[gold_mention_id][system_mention_id]
         return similarity
 
     def load(self):
