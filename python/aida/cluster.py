@@ -21,6 +21,19 @@ class Cluster(Object):
         self.mentions = Container(logger)
         self.metatype = None
 
+    def get_top_level_types(self):
+        top_level_types = {}
+        num_levels_by_metatype = {'Entity': 1, 'Event': 2}
+        num_levels = num_levels_by_metatype[self.get('metatype')]
+        for cluster_type in self.get('types'):
+            elements = []
+            for element in cluster_type.split('.'):
+                if num_levels > 0:
+                    elements.append(element)
+                    num_levels -= 1
+            top_level_types['.'.join(elements)] = 1
+        return list(top_level_types.keys())
+
     def add(self, entry):
         self.add_metatype(entry.get('?metatype'), entry.get('where'))
         self.add_type(entry.get('?type'))
@@ -49,6 +62,15 @@ class Cluster(Object):
         mention.set('j_cv', j_cv)
         mention.set('span', spanstring_to_object(logger, span_string, where))
         self.get('mentions').add(key=mention.get('ID'), value=mention)
+
+    def is_invalid_for_alignment(self, annotated_regions):
+        return self.get('metatype') == 'Relation' or self.has_no_exhaustively_annotated_type(annotated_regions)
+
+    def has_no_exhaustively_annotated_type(self, annotated_regions):
+        for mention in self.get('mentions').values():
+            if annotated_regions.contains(mention.get('span'), self.get('types')):
+                return False
+        return True
 
     def __str__(self, *args, **kwargs):
         return self.get('ID')
