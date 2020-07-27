@@ -119,8 +119,8 @@ class Clusters(Object):
         return cluster_or_frame.get('metatype')
 
     def get_number_of_common_types(self, gold_cluster, system_cluster):
-        gold_types = [full_type.split('.')[0] for full_type in gold_cluster.get('types')]
-        system_types = [full_type.split('.')[0] for full_type in system_cluster.get('types')]
+        gold_types = gold_cluster.get('top_level_types')
+        system_types = system_cluster.get('top_level_types')
         return len(set(gold_types) & set(system_types))
 
     def get_similarity(self, gold_cluster, system_cluster):
