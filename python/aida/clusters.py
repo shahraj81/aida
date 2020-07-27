@@ -41,10 +41,10 @@ class Clusters(Object):
     def get_entities_and_events_similarities(self):
         similarities = {}
         for gold_cluster in self.get('clusters').get('gold').values():
-            if gold_cluster.get('metatype') == 'Relation':
+            if gold_cluster.is_invalid_for_alignment(self.get('annotated_regions')):
                 continue
             for system_cluster in self.get('clusters').get('system').values():
-                if system_cluster.get('metatype') == 'Relation':
+                if system_cluster.is_invalid_for_alignment(self.get('annotated_regions')):
                     continue
                 similarity = self.get('similarity', gold_cluster, system_cluster)
                 if gold_cluster.get('ID') not in similarities:
