@@ -22,7 +22,7 @@ def check_path(args):
     check_for_paths_non_existance(args)
 
 def check_for_paths_existance(args):
-    for path in [args.log_specifications_filename, 
+    for path in [args.log_specifications,
                  args.gold_mentions,
                  args.gold_edges,
                  args.system_mentions,
@@ -39,7 +39,7 @@ def check_for_paths_non_existance(args):
             exit(ERROR_EXIT_CODE)
 
 def align_clusters(args):
-    logger = Logger(args.log, args.log_specifications_filename, sys.argv)
+    logger = Logger(args.log, args.log_specifications, sys.argv)
     clusters = Clusters(logger, args.regions, args.gold_mentions, args.gold_edges, args.system_mentions, args.system_edges)
     clusters.print_similarities(args.similarities)
     clusters.print_alignment(args.output)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Align system and gold clusters")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
-    parser.add_argument('log_specifications_filename', type=str, help='File containing error specifications')
+    parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('regions', type=str, help='File containing annotated regions information')
     parser.add_argument('gold_mentions', type=str, help='File containing gold clusters, corresponding mentions and types information.')
     parser.add_argument('gold_edges', type=str, help='File containing information about gold edges.')
