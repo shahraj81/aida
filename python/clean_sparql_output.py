@@ -49,9 +49,8 @@ def clean_a_sparql_output_file(logger, input_filename, output_filename):
 def clean_sparql_output(args):
     logger = Logger(args.log, args.log_specifications, sys.argv)
     filenames = []
-    if(os.path.isdir(args.input)):
-        for root, dirs, files in os.walk(args.input):
-            filenames.extend([os.path.join(root, file) for file in files if file.endswith('.tsv')])
+    for root, dirs, files in os.walk(args.input):
+        filenames.extend([os.path.join(root, file) for file in files if file.endswith('.tsv')])
     os.mkdir(args.output)
     for input_filename in filenames:
         output_root = args.output
