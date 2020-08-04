@@ -157,7 +157,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
         'WEA': 'hasName',
         'VEH': 'hasName',
         'LAW': 'hasName',
-        'TTL': 'hasName',
+        'TTL': 'textValue',
         'MON': 'textValue',
         'RES': 'textValue',
         'VAL': 'textValue'
