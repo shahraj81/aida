@@ -71,6 +71,14 @@ class DocumentMappings(Object):
                 document_element.set('modality', modality)
                 document.add_document_element(document_element)
 
+    def get_modality(self, ID):
+        """
+        Returns the modality of the document element whose ID matches the parameter
+        """
+        if ID not in self.get('document_elements'):
+            return None
+        return self.get('document_elements').get(ID).get('modality')
+
     def __str__(self, *args, **kwargs):
         """
         Returns the string representation of the mappings.
