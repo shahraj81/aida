@@ -36,7 +36,7 @@ class Object(object):
         it. None is returned otherwise.
         """
         if key is None:
-            self.logger('KEY_IS_NONE', self.get('code_location'))
+            self.get('logger').record_event('KEY_IS_NONE', self.get('code_location'))
         method = self.get_method("get_{}".format(key))
         if method is not None:
             return method(*args)
