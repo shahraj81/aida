@@ -12,7 +12,6 @@ from aida.object import Object
 from aida.container import Container
 from aida.file_handler import FileHandler
 from aida.cluster import Cluster
-from aida.annotated_regions import AnnotatedRegions
 from aida.event_or_relation_frame import EventOrRelationFrame
 from aida.utility import get_cost_matrix, get_intersection_over_union
 from munkres import Munkres
@@ -22,12 +21,14 @@ class Clusters(Object):
     The container to hold Clusters.
     """
 
-    def __init__(self, logger, regions_filename, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename):
+    def __init__(self, logger, document_mappings, document_boundaries, annotated_regions, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename):
         """
         Initialize the Clusters.
         """
         super().__init__(logger)
-        self.annotated_regions = AnnotatedRegions(logger, regions_filename)
+        self.document_mappings = document_mappings
+        self.document_boundaries = document_boundaries
+        self.annotated_regions = annotated_regions
         self.filenames = Container(logger)
         self.filenames.add(key='gold', value={'mentions': gold_mentions_filename, 'edges': gold_edges_filename})
         self.filenames.add(key='system', value={'mentions': system_mentions_filename, 'edges': system_edges_filename})
@@ -39,6 +40,9 @@ class Clusters(Object):
 
     def get_cluster(self, gold_or_system, cluster_id):
         return self.get('clusters').get(gold_or_system).get(cluster_id)
+
+    def get_frame(self, gold_or_system, frame_id):
+        return self.get('frames').get(gold_or_system).get(frame_id)
 
     def get_entities_and_events_similarities(self):
         similarities = {}
@@ -54,53 +58,59 @@ class Clusters(Object):
                 similarities[gold_cluster.get('ID')][system_cluster.get('ID')] = similarity
         return similarities
 
+    def get_relation_similarities(self):
+        similarities = {}
+        for gold_frame in self.get('frames').get('gold').values():
+            if not gold_frame.is_alignable_relation(): continue
+            for system_frame in self.get('frames').get('system').values():
+                if not system_frame.is_alignable_relation(): continue
+                if gold_frame.get('ID') not in similarities:
+                    similarities[gold_frame.get('ID')] = {}
+                similarities[gold_frame.get('ID')][system_frame.get('ID')] = self.get('relation_similarity', gold_frame, system_frame)
+        return similarities
+
     def get_relation_similarity(self, gold_frame, system_frame):
-        score = 0
-        gold_frame_type_elements = gold_frame.get('event_or_relation_type').split('.')
-        system_frame_type_elements = system_frame.get('event_or_relation_type').split('.')
-        gold_frame_type = '{}.{}'.format(gold_frame_type_elements[0], gold_frame_type_elements[1])
-        system_frame_type = '{}.{}'.format(system_frame_type_elements[0], system_frame_type_elements[1])
-        if gold_frame_type == system_frame_type:
-            # return alignment score of zero if the roles don't match
-            if len(gold_frame.get('role_fillers')) != len(set(gold_frame.get('role_fillers')) & set(system_frame.get('role_fillers'))):
-                return 0
-            # role match, now match the fillers of each role
+        num_fillers_aligned = 0
+        if self.get('number_of_matching_types', gold_frame.get('types').keys(), system_frame.get('types').keys()):
+            found = {}
             for rolename in gold_frame.get('role_fillers'):
                 gold_fillers = list(gold_frame.get('role_fillers')[rolename])
+                for gold_filler_id in gold_fillers:
+                    rolename_and_filler = '{}:{}'.format(rolename, gold_filler_id)
+                    found[rolename_and_filler] = 0
                 system_fillers = list(system_frame.get('role_fillers')[rolename]) if rolename in system_frame.get('role_fillers') else []
-                # get the gold aligned system filler
-                gold_aligned_system_fillers = []
-                for filler in system_fillers:
-                    filler_alignment_score = 0
-                    gold_aligned_system_filler_mapping_object = self.get('alignment').get('system_to_gold').get(filler, None)
-                    if gold_aligned_system_filler_mapping_object is not None:
-                        gold_aligned_filler_id = gold_aligned_system_filler_mapping_object.get('aligned_to')
-                        gold_aligned_filler_alignment_score = gold_aligned_system_filler_mapping_object.get('aligned_similarity')
-                        gold_aligned_system_fillers.append(gold_aligned_filler_id)
-                        filler_alignment_score += gold_aligned_filler_alignment_score
-                # if the gold fillers do not match the gold aligned system fillers return 0
-                if len(gold_fillers) == len(set(gold_fillers) & set(gold_aligned_system_fillers)):
-                    score += filler_alignment_score
-                else:
-                    return 0
-        return score
+                for system_filler_id in system_fillers:
+                    gold_aligned_system_filler_mapping_object = self.get('alignment').get('system_to_gold').get(system_filler_id, None)
+                    if gold_aligned_system_filler_mapping_object:
+                        aligned_gold_id = gold_aligned_system_filler_mapping_object.get('aligned_to')
+                        rolename_and_filler = '{}:{}'.format(rolename, aligned_gold_id)
+                        if rolename_and_filler in found:
+                            found[rolename_and_filler] = 1
+            for rolename_and_filler in found:
+                if found[rolename_and_filler] == 1:
+                    num_fillers_aligned += 1
+        return 0 if num_fillers_aligned <= 1 else 1
 
     def get_metatype(self, gold_or_system, cluster_or_frame_id):
         cluster_id = self.get('clusters').get(gold_or_system).get(cluster_or_frame_id)
         frame_id = self.get('frames').get(gold_or_system).get(cluster_or_frame_id)
+        metatype = None
         if cluster_id and frame_id:
-            self.get('logger').record_event('AMBIGUOUS_CLUSTERID', cluster_or_frame_id)
-        cluster_or_frame = cluster_id or frame_id
-        return cluster_or_frame.get('metatype')
+            if cluster_id.get('metatype') != frame_id.get('metatype'):
+                self.get('logger').record_event('METATYPE_MISMATCH', cluster_or_frame_id, cluster_id.get('metatype'), frame_id.get('metatype'))
+            else:
+                metatype = cluster_id.get('metatype')
+        else:
+            cluster_or_frame = cluster_id or frame_id
+            metatype = cluster_or_frame.get('metatype')
+        return metatype
 
-    def get_number_of_common_types(self, gold_cluster, system_cluster):
-        gold_types = gold_cluster.get('top_level_types')
-        system_types = system_cluster.get('top_level_types')
+    def get_number_of_matching_types(self, gold_types, system_types):
         return len(set(gold_types) & set(system_types))
 
     def get_similarity(self, gold_cluster, system_cluster):
         similarity = 0
-        if self.get('number_of_common_types', gold_cluster, system_cluster) > 0:
+        if self.get('number_of_matching_types', gold_cluster.get('top_level_types'), system_cluster.get('top_level_types')):
             mentions = {'gold': list(gold_cluster.get('mentions').values()),
                         'system': list(system_cluster.get('mentions').values())}
             mappings = {}
@@ -116,7 +126,7 @@ class Clusters(Object):
                 for system_mention in mentions['system']:
                     if gold_mention.get('ID') not in similarities:
                         similarities[gold_mention.get('ID')] = {}
-                    similarities[gold_mention.get('ID')][system_mention.get('ID')] = get_intersection_over_union(gold_mention.get('span'), system_mention.get('span'))
+                    similarities[gold_mention.get('ID')][system_mention.get('ID')] = get_intersection_over_union(gold_mention, system_mention)
             cost_matrix = get_cost_matrix(similarities, mappings)
             alignment = {'gold_mention': {}, 'system_mention': {}}
             for gold_mention_index, system_mention_index in Munkres().compute(cost_matrix):
@@ -145,7 +155,7 @@ class Clusters(Object):
         for entry in FileHandler(self.get('logger'), self.get('filenames').get(filetype).get('mentions')):
             cluster_id = entry.get('?cluster')
             if not clusters.exists(cluster_id):
-                clusters.add(key=cluster_id, value=Cluster(logger, cluster_id))
+                clusters.add(key=cluster_id, value=Cluster(logger, self.get('document_mappings'), self.get('document_boundaries'), cluster_id))
             cluster = clusters.get(cluster_id)
             cluster.add(entry)
 
@@ -164,6 +174,26 @@ class Clusters(Object):
         self.align_entities_and_events()
         self.align_relations()
 
+    def record_alignment(self, similarities, mappings):
+        if len(similarities) == 0:
+            return
+        cost_matrix = get_cost_matrix(similarities, mappings)
+        for gold_cluster_index, system_cluster_index in Munkres().compute(cost_matrix):
+            gold_cluster = self.get('cluster', 'gold', mappings['gold']['index_to_id'][gold_cluster_index])
+            system_cluster = self.get('cluster', 'system', mappings['system']['index_to_id'][system_cluster_index])
+            similarity = self.lookup_similarity(similarities, gold_cluster.get('ID'), system_cluster.get('ID'))
+            if similarity <= 0:
+                self.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value of similarity: {}'.format(similarity))
+            if similarity > 0:
+                self.get('alignment').get('gold_to_system')[gold_cluster.get('ID')] = {
+                        'aligned_to': system_cluster.get('ID'),
+                        'aligned_similarity': similarity
+                    }
+                self.get('alignment').get('system_to_gold')[system_cluster.get('ID')] = {
+                        'aligned_to': gold_cluster.get('ID'),
+                        'aligned_similarity': similarity
+                    }
+
     def align_entities_and_events(self):
         mappings = {}
         for filetype in ['gold', 'system']:
@@ -175,39 +205,25 @@ class Clusters(Object):
                 mappings[filetype]['id_to_index'][cluster_id] = index
                 mappings[filetype]['index_to_id'][index] = cluster_id
                 index += 1
-        similarities = self.get('entities_and_events_similarities')
-        cost_matrix = get_cost_matrix(similarities, mappings)
-        for gold_cluster_index, system_cluster_index in Munkres().compute(cost_matrix):
-            gold_cluster = self.get('cluster', 'gold', mappings['gold']['index_to_id'][gold_cluster_index])
-            system_cluster = self.get('cluster', 'system', mappings['system']['index_to_id'][system_cluster_index])
-            similarity = similarities[gold_cluster.get('ID')][system_cluster.get('ID')]
-            if similarity > 0:
-                self.get('alignment').get('gold_to_system')[gold_cluster.get('ID')] = {
-                        'aligned_to': system_cluster.get('ID'),
-                        'aligned_similarity': similarity
-                    }
-                self.get('alignment').get('system_to_gold')[system_cluster.get('ID')] = {
-                        'aligned_to': gold_cluster.get('ID'),
-                        'aligned_similarity': similarity
-                    }
+        self.record_alignment(self.get('entities_and_events_similarities'), mappings)
 
     def align_relations(self):
-        for gold_frame in self.get('frames').get('gold').values():
-            if gold_frame.get('metatype') != 'Relation':
-                continue
-            for system_frame in self.get('frames').get('system').values():
-                if system_frame.get('metatype') != 'Relation':
-                    continue
-                similarity = self.get('relation_similarity', gold_frame, system_frame)
-                if similarity > 0:
-                    self.get('alignment').get('gold_to_system')[gold_frame.get('ID')] = {
-                            'aligned_to': system_frame.get('ID'),
-                            'aligned_similarity': similarity
-                        }
-                    self.get('alignment').get('system_to_gold')[system_frame.get('ID')] = {
-                            'aligned_to': gold_frame.get('ID'),
-                            'aligned_similarity': similarity
-                        }
+        mappings = {}
+        for filetype in ['gold', 'system']:
+            mappings[filetype] = {'id_to_index': {}, 'index_to_id': {}}
+            index = 0;
+            for frame_id in sorted(self.get('frames').get(filetype)):
+                if self.get('frame', filetype, frame_id).is_alignable_relation():
+                    mappings[filetype]['id_to_index'][frame_id] = index
+                    mappings[filetype]['index_to_id'][index] = frame_id
+                    index += 1
+        self.record_alignment(self.get('relation_similarities'), mappings)
+
+    def lookup_similarity(self, similarities, gold_cluster_id, system_cluster_id):
+        if gold_cluster_id in similarities:
+            if system_cluster_id in similarities.get(gold_cluster_id):
+                return similarities.get(gold_cluster_id).get(system_cluster_id)
+        return 0
 
     def print_alignment(self, filename):
         program_output = open(filename, 'w')
@@ -215,13 +231,11 @@ class Clusters(Object):
                                                                                         system_cluster='system_cluster',
                                                                                         gold_cluster='gold_cluster',
                                                                                         similarity='similarity'))
-        self.print_entities_and_events_alignment(program_output)
-        self.print_relations_alignment(program_output)
-        program_output.close()
-
-    def print_entities_and_events_alignment(self, program_output):
         for gold_cluster_id in sorted(self.get('clusters').get('gold')):
             gold_cluster_metatype = self.get('metatype', 'gold', gold_cluster_id)
+            if gold_cluster_metatype == 'Relation':
+                if gold_cluster_id not in self.get('frames').get('gold'): continue
+                if not self.get('frame', 'gold', gold_cluster_id).is_alignable_relation(): continue
             system_cluster_id = 'None'
             similarity = 0
             if gold_cluster_id in self.get('alignment').get('gold_to_system'):
@@ -236,32 +250,15 @@ class Clusters(Object):
                                                                                         similarity=similarity))
 
         for system_cluster_id in sorted(self.get('clusters').get('system')):
+            system_cluster_metatype = self.get('metatype', 'system', system_cluster_id)
+            if system_cluster_metatype == 'Relation':
+                if system_cluster_id not in self.get('frames').get('system'): continue
+                if not self.get('frame', 'system', system_cluster_id).is_alignable_relation(): continue
             if system_cluster_id not in self.get('alignment').get('system_to_gold'):
                 program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(
                     metatype=self.get('metatype', 'system', system_cluster_id),
                     system_cluster=system_cluster_id, gold_cluster='None', similarity=0))
-
-    def print_relations_alignment(self, program_output):
-        for gold_cluster_id in sorted(self.get('frames').get('gold')):
-            gold_cluster_metatype = self.get('metatype', 'gold', gold_cluster_id)
-            system_cluster_id = 'None'
-            similarity = 0
-            if gold_cluster_id in self.get('alignment').get('gold_to_system'):
-                system_cluster_id = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_to']
-                system_cluster_metatype = self.get('metatype', 'system', system_cluster_id)
-                if gold_cluster_metatype != system_cluster_metatype:
-                    self.get('logger').record_event('METATYPE_MISMATCH', system_cluster_id, gold_cluster_metatype, system_cluster_metatype)
-                similarity = self.get('alignment').get('gold_to_system')[gold_cluster_id]['aligned_similarity']
-            program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(metatype=gold_cluster_metatype,
-                                                                                       system_cluster=system_cluster_id,
-                                                                                       gold_cluster=gold_cluster_id,
-                                                                                       similarity=similarity))
-
-        for system_cluster_id in sorted(self.get('frames').get('system')):
-            if system_cluster_id not in self.get('alignment').get('system_to_gold'):
-                program_output.write('{metatype}\t{system_cluster}\t{gold_cluster}\t{similarity}\n'.format(
-                    metatype = self.get('metatype', 'system', system_cluster_id),
-                    system_cluster=system_cluster_id, gold_cluster='None', similarity=0))
+        program_output.close()
 
     def print_similarities(self, output_file):
         program_output = open(output_file, 'w')
