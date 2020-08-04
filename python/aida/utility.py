@@ -8,6 +8,7 @@ __date__    = "28 January 2020"
 
 from aida.span import Span
 from aida.object import Object
+import copy
 import hashlib
 import re
 import sys
@@ -43,10 +44,12 @@ def spanstring_to_object(logger, span_string, where=None):
         document_id = match.group(1)
         document_element_id, keyframe_id = parse_document_element_id(match.group(2))
         span = Span(logger, match.group(3), match.group(4), match.group(5), match.group(6))
+        mention.set('span_string', span_string)
         mention.set('document_id', document_id)
         mention.set('document_element_id', document_element_id)
         mention.set('keyframe_id', keyframe_id)
         mention.set('span', span)
+        mention.set('where', where)
     else:
         logger.record_event('UNEXPECTED_SPAN_FORMAT', span_string, where)
     return mention
@@ -92,41 +95,101 @@ def get_query_id_from_filename(filename):
     """
     return filename.split(r'/')[-1][:-7]
 
-def get_delta(start1, end1, start2, end2):
+def get_linear_overlap(start1, end1, start2, end2, text_modality=False):
     s1 = float(start1)
     e1 = float(end1)
     s2 = float(start2)
     e2 = float(end2)
-    delta = 0
+    overlap = 0
     if s2 <= s1 <= e2 or s2 <= e1 <= e2 or s1 <= s2 <= e1 or s1 <= e2 <= e1:
-        delta = min(e1, e2) - max(s1, s2)
-    return delta
+        overlap = min(e1, e2) - max(s1, s2) + (1 if text_modality else 0)
+    return overlap
+
+def get_intersection(m1, m2):
+    intersection = 0
+    dx = get_linear_overlap(m1.get('span').get('start_x'), m1.get('span').get('end_x'), m2.get('span').get('start_x'), m2.get('span').get('end_x'))
+    dy = get_linear_overlap(m1.get('span').get('start_y'), m1.get('span').get('end_y'), m2.get('span').get('start_y'), m2.get('span').get('end_y'))
+    if dx and dy:
+        intersection = dx*dy
+    elif dx:
+        intersection = dx
+    elif dy:
+        intersection = dy
+    return intersection
+
+def get_union(m1, m2):
+    union = 0
+    for m in [m1, m2]:
+        union += get_intersection(m, m)
+    union -= get_intersection(m1, m2)
+    return union
 
 def get_intersection_over_union(m1, m2):
+    logger = m1.get('logger')
+    intersection_over_union = 0
     if m1.get('document_id') == m2.get('document_id'):
         if m1.get('document_element_id') == m2.get('document_element_id'):
-            intersection = 0
-            dx = get_delta(m1.get('span').get('start_x'), m1.get('span').get('end_x'), m2.get('span').get('start_x'), m2.get('span').get('end_x'))
-            dy = get_delta(m1.get('span').get('start_y'), m1.get('span').get('end_y'), m2.get('span').get('start_y'), m2.get('span').get('end_y'))
-            if (dx>0) and (dy>0):
-                intersection = dx*dy
-            elif dx:
-                intersection = dx
-            elif dy:
-                intersection = dy
+            modality = m1.get('modality')
+            if modality == 'text':
+                intersection_over_union = get_intersection_over_union_text(m1, m2)
+            elif modality == 'image':
+                intersection_over_union = get_intersection_over_union_image(m1, m2)
+            elif modality == 'video':
+                if m1.get('keyframe_id'):
+                    intersection_over_union = get_intersection_over_union_image(m1, m2)
+                else:
+                    intersection_over_union = get_intersection_over_union_video(m1, m2)
+            else:
+                logger.record_event('DEFAULT_CRITICAL', 'Code does not handle modality: {}'.format(modality), m1.get('code_location'))
+    return intersection_over_union
 
-            union = 0
-            for m in [m1, m2]:
-                dx = get_delta(m.get('span').get('start_x'), m.get('span').get('end_x'), m.get('span').get('start_x'), m.get('span').get('end_x'))
-                dy = get_delta(m.get('span').get('start_y'), m.get('span').get('end_y'), m.get('span').get('start_y'), m.get('span').get('end_y'))
-                if (dx>0) and (dy>0):
-                    union += dx*dy
-                elif dx:
-                    union += dx
-                elif dy:
-                    union += dy
-            union -= intersection
-    intersection_over_union = intersection/union
+def get_intersection_over_union_text(m1, m2):
+    start1, end1 = [float(m1.get('span').get(f)) for f in ['start_x', 'end_x']]
+    start2, end2 = [float(m2.get('span').get(f)) for f in ['start_x', 'end_x']]
+    intersection = get_linear_overlap(start1, end1, start2, end2, text_modality=True)
+    union = (end1-start1+1) + (end2-start2+1) - intersection
+    intersection_over_union = 0 if union == 0 else intersection/union
+    return intersection_over_union
+
+def get_intersection_over_union_image(m1, m2, collar = 1):
+    m1c = copy.deepcopy(m1)
+    m2c = copy.deepcopy(m2)
+    for m in [m1c, m2c]:
+        for d in ['x', 'y']:
+            start_fieldname = 'start_{}'.format(d)
+            end_fieldname = 'end_{}'.format(d)
+            start, end = [float(m.get('span').get(k)) for k in [start_fieldname, end_fieldname]]
+            min, max = [float(m.get('boundary').get(k)) for k in [start_fieldname, end_fieldname]]
+            start -= collar
+            end += collar
+            if start < min:
+                start = min
+            if end > max:
+                end = max
+            m.get('span').set(start_fieldname, start)
+            m.get('span').set(end_fieldname, end)
+    intersection = get_intersection(m1c, m2c)
+    union = get_union(m1c, m2c)
+    intersection_over_union = 0 if union == 0 else intersection/union
+    return intersection_over_union
+
+def get_intersection_over_union_video(m1, m2, collar = 0.01):
+    m1c = copy.deepcopy(m1)
+    m2c = copy.deepcopy(m2)
+    for m in [m1c, m2c]:
+        start, end = [float(m.get('span').get(k)) for k in ['start_x', 'end_x']]
+        min, max = [float(m.get('boundary').get(k)) for k in ['start_x', 'end_x']]
+        start -= collar
+        end += collar
+        if start < min:
+            start = min
+        if end > max:
+            end = max
+        m.get('span').set('start_x', start)
+        m.get('span').set('end_x', end)
+    intersection = get_intersection(m1c, m2c)
+    union = get_union(m1c, m2c)
+    intersection_over_union = 0 if union == 0 else intersection/union
     return intersection_over_union
 
 def is_number(s):
