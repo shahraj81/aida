@@ -79,13 +79,13 @@ class Prototype(Object):
                         prototype_T2 = time_range_from_prototype.get('start_time_before')
                         prototype_T3 = time_range_from_prototype.get('end_time_after')
                         prototype_T4 = time_range_from_prototype.get('end_time_before')
-                        if mention_T1 > prototype_T1:
+                        if mention_T1 < prototype_T1 and not mention_T1.is_negative_infinity():
                             time_range_from_prototype.set('start_time_after', mention_T1.get('copy'))
                         if mention_T2 < prototype_T2:
                             time_range_from_prototype.set('start_time_before', mention_T2.get('copy'))
                         if mention_T3 > prototype_T3:
                             time_range_from_prototype.set('end_time_after', mention_T3.get('copy'))
-                        if mention_T4 < prototype_T4:
+                        if mention_T4 > prototype_T4 and not mention_T1.is_positive_infinity():
                             time_range_from_prototype.set('end_time_before', mention_T4.get('copy'))
 
     def get_informative_justification_spans(self):

@@ -41,6 +41,16 @@ class LDCTime(Object):
         self.load()
         self.fix_unspecified_information()
 
+    def is_negative_infinity(self):
+        if self.__str__() == '9999-12-31':
+            return True
+        return False
+
+    def is_positive_infinity(self):
+        if self.__str__() == '0001-01-01':
+            return True
+        return False
+
     def get_copy(self):
         return LDCTime(self.get('logger'), self.get('date'), self.get('start_or_end'), self.get('before_or_after'), self.get('where'))
 
