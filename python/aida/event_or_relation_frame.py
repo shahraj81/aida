@@ -16,16 +16,17 @@ class EventOrRelationFrame(Object):
     def __init__(self, logger, ID):
         super().__init__(logger)
         self.ID = ID
+        self.metatype = None
         self.role_fillers = {}
+        self.types = {}
 
     def update(self, entry):
         event_or_relation_type, rolename = entry.get('?predicate').split('_')
         if self.get('metatype') is None:
             self.set('metatype', entry.get('?metatype'))
-        if self.get('event_or_relation_type') is None:
-            self.set('event_or_relation_type', event_or_relation_type)
-        if event_or_relation_type != self.get('event_or_relation_type'):
-            self.record_event('MISMATCHED_EVENT_OR_RELATION_TYPE', event_or_relation_type, self.get('event_or_relation_type'), entry.get('where'))
+        if self.get('metatype') != entry.get('?metatype'):
+            self.record_event('METATYPE_MISMATCH', self.get('ID'), self.get('metatype'), entry.get('?metatype'), entry.get('where'))
+        self.get('types')[event_or_relation_type] = 1
         filler = Object(self.get('logger'))
         filler_cluster_id = entry.get('?object')
         filler.set('filler_cluster_id', filler_cluster_id)
