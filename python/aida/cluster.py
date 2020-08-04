@@ -14,9 +14,11 @@ from aida.utility import trim_cv, spanstring_to_object
 
 class Cluster(Object):
 
-    def __init__(self, logger, ID):
+    def __init__(self, logger, document_mappings, document_boundaries, ID):
         super().__init__(logger)
         self.ID = ID
+        self.document_mappings = document_mappings
+        self.document_boundaries = document_boundaries
         self.types = Container(logger)
         self.mentions = Container(logger)
         self.metatype = None
@@ -54,13 +56,16 @@ class Cluster(Object):
 
     def add_mention(self, span_string, t_cv, cm_cv, j_cv, where):
         logger = self.get('logger')
-        mention = Object(logger)
+        mention = spanstring_to_object(logger, span_string, where)
         mention.set('ID', span_string)
         mention.set('span_string', span_string)
         mention.set('t_cv', t_cv)
         mention.set('cm_cv', cm_cv)
         mention.set('j_cv', j_cv)
-        mention.set('span', spanstring_to_object(logger, span_string, where))
+        mention.set('modality', self.get('document_mappings').get('modality', mention.get('document_element_id')))
+        boundaries_key = 'keyframe' if mention.get('keyframe_id') else mention.get('modality')
+        document_element_or_keyframe_id = mention.get('keyframe_id') if mention.get('keyframe_id') else mention.get('document_element_id')
+        mention.set('boundary', self.get('document_boundaries').get(boundaries_key).get(document_element_or_keyframe_id))
         self.get('mentions').add(key=mention.get('ID'), value=mention)
 
     def is_invalid_for_alignment(self, annotated_regions):
@@ -68,7 +73,7 @@ class Cluster(Object):
 
     def has_no_exhaustively_annotated_type(self, annotated_regions):
         for mention in self.get('mentions').values():
-            if annotated_regions.contains(mention.get('span'), self.get('types')):
+            if annotated_regions.contains(mention, self.get('types')):
                 return False
         return True
 
