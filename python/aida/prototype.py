@@ -79,13 +79,23 @@ class Prototype(Object):
                         prototype_T2 = time_range_from_prototype.get('start_time_before')
                         prototype_T3 = time_range_from_prototype.get('end_time_after')
                         prototype_T4 = time_range_from_prototype.get('end_time_before')
+
+                        # if any of the time in prototype is infinity but not in the mention,
+                        # then update the time in prototype using that in the mention
+                        for (prototype_T, mention_T, field_name) in [(prototype_T1, mention_T1, 'start_time_after'),
+                                                     (prototype_T2, mention_T2, 'start_time_before'),
+                                                     (prototype_T3, mention_T3, 'end_time_after'),
+                                                     (prototype_T4, mention_T4, 'end_time_before')]:
+                            if prototype_T.is_infinity() and not mention_T.is_infinity():
+                                time_range_from_prototype.set(field_name, mention_T.get('copy'))
+
                         if mention_T1 < prototype_T1 and not mention_T1.is_negative_infinity():
                             time_range_from_prototype.set('start_time_after', mention_T1.get('copy'))
                         if mention_T2 < prototype_T2:
                             time_range_from_prototype.set('start_time_before', mention_T2.get('copy'))
                         if mention_T3 > prototype_T3:
                             time_range_from_prototype.set('end_time_after', mention_T3.get('copy'))
-                        if mention_T4 > prototype_T4 and not mention_T1.is_positive_infinity():
+                        if mention_T4 > prototype_T4 and not mention_T4.is_positive_infinity():
                             time_range_from_prototype.set('end_time_before', mention_T4.get('copy'))
 
     def get_informative_justification_spans(self):
