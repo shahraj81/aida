@@ -41,13 +41,31 @@ class LDCTime(Object):
         self.load()
         self.fix_unspecified_information()
 
+    def set_negative_infinity(self):
+        self.get('year').set('field_value', '0001')
+        self.get('month').set('field_value', '01')
+        self.get('day').set('field_value', '01')
+
+    def set_positive_infinity(self):
+        self.get('year').set('field_value', '9999')
+        self.get('month').set('field_value', '12')
+        self.get('day').set('field_value', '31')
+
+    def set_first_day_of_the_year(self):
+        self.get('month').set('field_value', '01')
+        self.get('day').set('field_value', '01')
+
+    def set_last_day_of_the_year(self):
+        self.get('month').set('field_value', '12')
+        self.get('day').set('field_value', '31')
+
     def is_negative_infinity(self):
-        if self.__str__() == '9999-12-31':
+        if self.__str__() == '0001-01-01':
             return True
         return False
 
     def is_positive_infinity(self):
-        if self.__str__() == '0001-01-01':
+        if self.__str__() == '9999-12-31':
             return True
         return False
 
@@ -62,33 +80,33 @@ class LDCTime(Object):
 
     def fix_unspecified_information_startafter(self):
         if self.get('year').is_unspecified():
-            self.get('year').set('field_value', '0001')
+            self.set_negative_infinity()
         if self.get('month').is_unspecified():
-            self.get('month').set('field_value', '01')
+            self.set_first_day_of_the_year()
         if self.get('day').is_unspecified():
             self.get('day').set('field_value', '01')
 
     def fix_unspecified_information_startbefore(self):
         if self.get('year').is_unspecified():
-            self.get('year').set('field_value', '9999')
+            self.set_positive_infinity()
         if self.get('month').is_unspecified():
-            self.get('month').set('field_value', '12')
+            self.set_last_day_of_the_year()
         if self.get('day').is_unspecified():
             self.get('day').set('field_value', str(monthrange(self.get('int_year'), self.get('int_month'))[1]))
 
     def fix_unspecified_information_endafter(self):
         if self.get('year').is_unspecified():
-            self.get('year').set('field_value', '0001')
+            self.set_negative_infinity()
         if self.get('month').is_unspecified():
-            self.get('month').set('field_value', '01')
+            self.set_first_day_of_the_year()
         if self.get('day').is_unspecified():
             self.get('day').set('field_value', '01')
 
     def fix_unspecified_information_endbefore(self):
         if self.get('year').is_unspecified():
-            self.get('year').set('field_value', '9999')
+            self.set_positive_infinity()
         if self.get('month').is_unspecified():
-            self.get('month').set('field_value', '12')
+            self.set_last_day_of_the_year()
         if self.get('day').is_unspecified():
             self.get('day').set('field_value', str(monthrange(self.get('int_year'), self.get('int_month'))[1]))
 
