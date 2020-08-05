@@ -51,6 +51,9 @@ class LDCTime(Object):
             return True
         return False
 
+    def is_infinity(self):
+        return self.is_positive_infinity() or self.is_negative_infinity()
+
     def get_copy(self):
         return LDCTime(self.get('logger'), self.get('date'), self.get('start_or_end'), self.get('before_or_after'), self.get('where'))
 
@@ -131,9 +134,9 @@ class LDCTime(Object):
         """.format(parent_iri = parent_iri,
                    start_or_end = self.get('start_or_end'),
                    iri = iri,
-                   ldc_time_day_triples = self.get('day').get('aif', iri),
-                   ldc_time_month_triples = self.get('month').get('aif', iri),
-                   ldc_time_year_triples = self.get('year').get('aif', iri),
+                   ldc_time_day_triples = '' if self.is_infinity() else self.get('day').get('aif', iri),
+                   ldc_time_month_triples = '' if self.is_infinity() else self.get('month').get('aif', iri),
+                   ldc_time_year_triples = '' if self.is_infinity() else self.get('year').get('aif', iri),
                    ldc_time_type_triple = ldc_time_type_triple)
         return ldc_time_triples
 
