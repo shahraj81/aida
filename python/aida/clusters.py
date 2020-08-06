@@ -66,8 +66,13 @@ class Clusters(Object):
                 if not system_frame.is_alignable_relation(): continue
                 if gold_frame.get('ID') not in similarities:
                     similarities[gold_frame.get('ID')] = {}
-                similarities[gold_frame.get('ID')][system_frame.get('ID')] = self.get('relation_similarity', gold_frame, system_frame)
+                similarities[gold_frame.get('ID')][system_frame.get('ID')] = self.get('similarity', gold_frame, system_frame)
         return similarities
+
+    def get_similarity(self, gold, system):
+        if gold.get('metatype') == 'Relation' and system.get('metatype') == 'Relation':
+            return self.get('relation_similarity', gold, system)
+        return self.get('entity_and_event_similarity', gold, system)
 
     def get_relation_similarity(self, gold_frame, system_frame):
         num_fillers_aligned = 0
@@ -108,7 +113,7 @@ class Clusters(Object):
     def get_number_of_matching_types(self, gold_types, system_types):
         return len(set(gold_types) & set(system_types))
 
-    def get_similarity(self, gold_cluster, system_cluster):
+    def get_entity_and_event_similarity(self, gold_cluster, system_cluster):
         similarity = 0
         if self.get('number_of_matching_types', gold_cluster.get('top_level_types'), system_cluster.get('top_level_types')):
             mentions = {'gold': list(gold_cluster.get('mentions').values()),
