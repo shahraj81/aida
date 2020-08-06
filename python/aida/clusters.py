@@ -78,7 +78,7 @@ class Clusters(Object):
         num_fillers_aligned = 0
         if self.get('number_of_matching_types', gold_frame.get('types').keys(), system_frame.get('types').keys()):
             found = {}
-            for rolename in gold_frame.get('role_fillers'):
+            for rolename in gold_frame.get('role_fillers') if gold_frame.get('role_fillers') else []:
                 gold_fillers = list(gold_frame.get('role_fillers')[rolename])
                 for gold_filler_id in gold_fillers:
                     rolename_and_filler = '{}:{}'.format(rolename, gold_filler_id)
