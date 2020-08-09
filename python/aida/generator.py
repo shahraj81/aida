@@ -23,6 +23,10 @@ class Generator(Object):
         method = self.get_method(method_name)
         method(responses, entry)
 
+    def generate_document_id(self, responses, entry):
+        if entry.get('kb_document_id'):
+            entry.set('document_id', entry.get('kb_document_id'))
+
     def generate_kb_document_id(self, responses, entry):
         kb_document_id = get_kb_document_id_from_filename(entry.get('filename'))
         entry.set('kb_document_id', kb_document_id)
