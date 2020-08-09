@@ -166,6 +166,7 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     # generate link assertion triples
     has_name_triples = []
     if ere_type == 'Entity':
+        skip_flag = 0
         text_predicate_fieldnames = {}
         for top_level_type in ere_object.get('top_level_types'):
             text_predicate_fieldname = default_predicate
@@ -176,10 +177,13 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
             text_predicate_fieldnames[text_predicate_fieldname] = 1
         text_predicate_fieldname = default_predicate
         if len(text_predicate_fieldnames) > 1:
-            logger.record_event('DEFAULT_CRITICAL_ERROR', '{} has more than one values for text_predicate_fieldname: {}'.format(ere_object.get('ID'), ','.join(text_predicate_fieldnames.keys())), ere_object.get('where'))
+            types = ','.join({t:1 for t in ere_object.get('top_level_types')})
+            logger.record_event('INCOMPATIBLE_TYPES', ere_object.get('ID'), types, ere_object.get('where'))
+            logger.record_event('SKIPPING_HASNAME_OR_TEXTVALUE', ere_object.get('ID'), ere_object.get('where'))
+            skip_flag = 1
         if len(text_predicate_fieldnames) == 1:
             text_predicate_fieldname = list(text_predicate_fieldnames.keys())[0]
-        text_strings = ere_object.get('text_strings')
+        text_strings = [] if skip_flag else ere_object.get('text_strings')
         for text_string in text_strings:
             if (len(text_string) < 256 and 'nam' in text_strings[text_string]) or text_predicate_fieldname == 'textValue':
                 has_name_triple = 'ldc:{ere_object_id} aida:{text_predicate_fieldname} "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
