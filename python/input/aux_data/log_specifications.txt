@@ -8,7 +8,11 @@ CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected 
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
+ERROR     INCOMPATIBLE_TYPES              '{}' has incompatible types '{}'
 WARNING   INVALID_CONFIDENCE              Invalid confidence value '{}' (using 1.0)
+ERROR     INVALID_METATYPE                Invalid metatype (expected one from '{}', provided '{}')
+ERROR     INVALID_PREDICATE_NO_UNDERSCORE No underscore provided in predicate '{}'
+ERROR     INVALID_PROVENANCE_FORMAT       Invalid provenance '{}'
 WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is invalid
 CRITICAL  KEY_IS_NONE                     key 'None' used
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
@@ -17,6 +21,7 @@ ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM_WITHOUT_KEY        '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
+ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
 CRITICAL  NO_SPECS                        No specifications available for '{}'
@@ -24,12 +29,13 @@ ERROR     NOT_AN_NUMBER                   '{}' is not a number
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
+INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
 ERROR     SPAN_OFF_BOUNDARY               Span '{}' is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown '{}' '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
-CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for '{}'
+CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\
