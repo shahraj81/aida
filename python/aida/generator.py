@@ -21,6 +21,8 @@ class Generator(Object):
 
     def generate(self, responses, method_name, entry):
         method = self.get_method(method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name)
         method(responses, entry)
 
     def generate_document_id(self, responses, entry):
