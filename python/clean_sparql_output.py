@@ -32,7 +32,7 @@ def clean_a_sparql_output_file(logger, input_filename, output_filename):
     input_fh = open(input_filename)
     output_fh = open(output_filename, 'w')
     for input_line in input_fh.readlines():
-        elements = input_line.strip().split('\t')
+        elements = input_line.rstrip('\r\n').split('\t')
         clean_elements = []
         for element in elements:
             match = re.search("<https://.*?#(.*?)>", element)
