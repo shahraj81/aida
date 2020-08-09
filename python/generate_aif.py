@@ -28,13 +28,8 @@ import sys
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
-def check_for_paths_existance(args):
-    """
-    Checks if the required files and directories were present,
-    exit with an error code if any of the required file or directories
-    were not found.
-    """
-    for path in [args.encodings_filename,
+def check_paths(args):
+    check_for_paths_existance([args.encodings_filename,
                  args.log_specifications_filename, 
                  args.core_documents_filename,
                  args.parent_children_filename,
@@ -44,17 +39,37 @@ def check_for_paths_existance(args):
                  args.keyframe_boundaries_filename,
                  args.slot_mappings_filename,
                  args.type_mappings_filename,
-                 args.annotations_dir
-                 ]:
+                 args.annotations
+                 ])
+    check_for_paths_non_existance([args.output])
+
+def check_for_paths_existance(paths):
+    """
+    Checks if the required files and directories were present,
+    exit with an error code if any of the required file or directories
+    were not found.
+    """
+    for path in paths:
         if not os.path.exists(path):
             print('Error: Path {} does not exist'.format(path))
+            exit(ERROR_EXIT_CODE)
+
+def check_for_paths_non_existance(paths):
+    """
+    Checks if the required files and directories were not present,
+    exit with an error code if any of the required file or directories
+    were not found.
+    """
+    for path in paths:
+        if os.path.exists(path):
+            print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
 
 def main(args):
     """
     The main program for generating AIF
     """
-    check_for_paths_existance(args)
+    check_paths(args)
     logger = Logger(args.log, args.log_specifications_filename, sys.argv)
     core_documents = CoreDocuments(logger, args.core_documents_filename)
     encodings = Encodings(logger, args.encodings_filename)
@@ -67,9 +82,9 @@ def main(args):
     for entry in FileHandler(logger, args.type_mappings_filename):
         type_mappings.add(key=entry.get('full_type_ov'), value=entry.get('full_type'))
     slot_mappings = SlotMappings(logger, args.slot_mappings_filename)
-    annotations = Annotations(logger, slot_mappings, document_mappings, text_boundaries, image_boundaries, video_boundaries, keyframe_boundaries, type_mappings, args.annotations_dir, load_video_time_offsets_flag=args.notime)
+    annotations = Annotations(logger, slot_mappings, document_mappings, text_boundaries, image_boundaries, video_boundaries, keyframe_boundaries, type_mappings, args.annotations, load_video_time_offsets_flag=args.notime)
     generator = AIFGenerator(logger, annotations, args.nochannel, args.reference_kb_id)
-    generator.write_output(args.output_dir)
+    generator.write_output(args.output)
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
@@ -105,9 +120,9 @@ if __name__ == '__main__':
                         help='File containing type mappings')
     parser.add_argument('slot_mappings_filename', type=str,
                         help='File containing slot mappings')
-    parser.add_argument('annotations_dir', type=str,
+    parser.add_argument('annotations', type=str,
                         help='Directory containing annotations package as received from LDC')
-    parser.add_argument('output_dir', type=str,
+    parser.add_argument('output', type=str,
                         help='Specify a directory to which output should be written')
     # parse the argument and call main
     args = parser.parse_args()
