@@ -14,6 +14,8 @@ from rdflib import Graph
 from re import compile
 from re import findall
 
+import os
+
 SYSTEM_NAME = 'ldc:LDCModelGenerator'
 
 def patch(serialized_output):
@@ -788,6 +790,7 @@ class AIFGenerator(Object):
         The boolean argument 'raw' will be used to control the output format. If True
         raw output would be written otherwise output would be written in turtle format.
         """
+        os.mkdir(output_dir)
         system_triples = self.get('system_triples')
         prefix_triples = self.get('prefix_triples')
         for key in self.get('triple_blocks'):
