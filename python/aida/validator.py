@@ -9,8 +9,7 @@ __date__    = "24 January 2020"
 
 from aida.object import Object
 from aida.span import Span
-from aida.utility import types_are_compatible
-from aida.utility import is_number
+from aida.utility import types_are_compatible, is_number, trim_cv
 
 import os
 import re
@@ -59,6 +58,19 @@ class Validator(Object):
             self.record_event('UNEXPECTED_ENTITY_TYPE', entity_type_in_query, query_entity_type_in_response, entry.get('where'))
         return True
 
+    def validate_metatype(self, responses, schema, entry, attribute):
+        allowed_metatypes = ['Entity', 'Relation', 'Event']
+        metatype = entry.get(attribute.get('name'))
+        if metatype not in allowed_metatypes:
+            self.record_event('INVALID_METATYPE', metatype, ','.join(allowed_metatypes), entry.get('where'))
+            return False
+
+    def validate_predicate(self, responses, schema, entry, attribute):
+        predicate = entry.get(attribute.get('name'))
+        if len(predicate.split('_')) != 2:
+            self.record_event('INVALID_PREDICATE_NO_UNDERSCORE', predicate, entry.get('where'))
+            return False
+
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):
         where = entry.get('where')
         
@@ -75,7 +87,7 @@ class Validator(Object):
 
         document_id = match.group(1)
         document_element_id = match.group(2)
-        start_x, start_y, end_x, end_y = map(lambda id: match.group(id), [3, 4, 5, 6])
+        start_x, start_y, end_x, end_y = map(lambda ID: match.group(ID), [3, 4, 5, 6])
         
         # if provided, obtain keyframe_id and update document_element_id
         pattern = re.compile('^(\w*?)_(\d+)$')
@@ -151,7 +163,7 @@ class Validator(Object):
         return True
     
     def validate_confidence(self, responses, schema, entry, attribute):
-        value = entry.get(attribute.get('name'))
+        value = trim_cv(entry.get(attribute.get('name')))
         if schema.get('task') == 'task3' and schema.get('query_type') == 'GraphQuery' and value == 'NULL' and attribute.get('name') == 'edge_compound_justification_confidence':
             return True
         try: 
