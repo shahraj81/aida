@@ -52,3 +52,6 @@ class Entry(Object):
         Gets the line number which this instance corresponds to.
         """
         return self.get('where').get('lineno')
+
+    def __str__(self):
+        return '{}\n'.format('\t'.join([self.get(column) for column in self.get('schema').get('columns')]))
