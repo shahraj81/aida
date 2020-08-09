@@ -25,7 +25,7 @@ import time
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
-def check_path(args):
+def check_paths(args):
     check_for_paths_existance([args.log_specifications, args.gold, args.system])
     check_for_paths_non_existance([args.alignment, args.similarities])
 
@@ -99,5 +99,5 @@ if __name__ == '__main__':
     parser.add_argument('similarities', type=str, help='Specify a directory to which the similarity information should be written.')
     parser.add_argument('alignment', type=str, help='Specify a directory to which the alignment information should be written.')
     args = parser.parse_args()
-    check_path(args)
+    check_paths(args)
     align_clusters(args)
