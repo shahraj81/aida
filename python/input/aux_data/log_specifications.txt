@@ -18,7 +18,7 @@ CRITICAL  KEY_IS_NONE                     key 'None' used
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
 WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing entry '{}' in '{}'
 ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
-ERROR     MISSING_ITEM_WITHOUT_KEY        '{}' not found
+ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
 ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
@@ -30,10 +30,10 @@ ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
 INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
-ERROR     SPAN_OFF_BOUNDARY               Span '{}' is outside the boundary '{}' of document element '{}'
+WARNING   SPAN_OFF_BOUNDARY               Span '{}' is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
-ERROR     UNKNOWN_ITEM                    Unknown '{}' '{}' in response
+ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
 CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')

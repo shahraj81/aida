@@ -46,6 +46,7 @@ attributes = {
         'years': [2020],
         },
     'document_id': {
+        'dependencies': ['kb_document_id'],
         'name': 'document_id',
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE'],
@@ -104,8 +105,8 @@ attributes = {
         'validate': 'validate_kb_document_id',
         'years': [2020],
         },
-    'mention_span': {
-        'name': 'mention_span',
+    'mention_span_text': {
+        'name': 'mention_span_text',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_value_provenance_triple',
@@ -124,8 +125,8 @@ attributes = {
         'tasks': ['task1'],
         'years': [2020],
         },
-    'object_informative_justification': {
-        'name' : 'object_informative_justification',
+    'object_informative_justification_span_text': {
+        'name' : 'object_informative_justification_span_text',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_value_provenance_triple',
@@ -145,8 +146,8 @@ attributes = {
         'validate': 'validate_predicate',
         'years': [2020],
         },
-    'predicate_justification': {
-        'name': 'predicate_justification',
+    'predicate_justification_span_text': {
+        'name': 'predicate_justification_span_text',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_value_provenance_triple',
@@ -221,8 +222,8 @@ schemas = {
             'subject_cluster_id',
             'predicate',
             'object_cluster_id',
-            'object_informative_justification',
-            'predicate_justification',
+            'object_informative_justification_span_text',
+            'predicate_justification_span_text',
             'predicate_justification_confidence',
             'argument_assertion_confidence',
             'object_justification_confidence'
@@ -237,7 +238,7 @@ schemas = {
             'cluster_id',
             'metatype',
             'cluster_type',
-            'mention_span',
+            'mention_span_text',
             'type_confidence',
             'cluster_membership_confidence',
             'justification_confidence'
@@ -317,6 +318,10 @@ class ResponseSet(Container):
             valid = True
             for attribute_name in attributes:
                 attribute = attributes[attribute_name]
+                if attribute_name != attribute.get('name'):
+                    logger.record_event('DEFAULT_CRITICAL_ERROR',
+                                        'Mismatching name of attribute: {}'.format(attribute_name),
+                                        self.get_code_location())
                 # skip if the attribute is not required for the given schema
                 if not self.attribute_required(attribute, schema): continue
                 # generate value for the attribute, if needed
@@ -355,6 +360,18 @@ class ResponseSet(Container):
         if generator_name:
             self.get('generator').generate(self, generator_name, entry)
 
+    def get_text_boundaries(self):
+        return self.get('document_boundaries').get('text')
+
+    def get_image_boundaries(self):
+        return self.get('document_boundaries').get('image')
+
+    def get_keyframe_boundaries(self):
+        return self.get('document_boundaries').get('keyframe')
+
+    def get_video_boundaries(self):
+        return self.get('document_boundaries').get('video')
+
     def write_valid_responses(self, output_dir):
         os.mkdir(output_dir)
         for input_filename in self:
@@ -366,6 +383,7 @@ class ResponseSet(Container):
             header_printed = False
             for linenum in sorted(self.get(input_filename), key=int):
                 entry = self.get(input_filename).get(str(linenum))
+                if not entry.get('valid'): continue
                 if not header_printed:
                     output_fh.write('{}\n'.format(entry.get('header').get('line')))
                     header_printed = True
