@@ -106,6 +106,8 @@ class Validator(Object):
         if subject_type not in entry.get('subject_cluster').get('types'):
             logger.record_event('UNEXPECTED_SUBJECT_TYPE', subject_type, entry.get('subject_cluster').get('ID'), entry.get('where'))
             return False
+        if entry.get('metatype') == 'Relation'and entry.get('subject_cluster').get('frame').get('number_of_fillers') > 2:
+                self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
         return True
 
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):

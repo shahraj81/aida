@@ -1,7 +1,7 @@
 """
 AIDA main script for validating responses
 """
-from aida.slot_mappings import SlotMappings
+
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
@@ -17,6 +17,7 @@ from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.video_boundaries import VideoBoundaries
 from aida.ontology_type_mappings import OntologyTypeMappings
+from aida.slot_mappings import SlotMappings
 
 import argparse
 import os

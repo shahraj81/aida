@@ -20,16 +20,19 @@ class EventOrRelationFrame(Object):
         self.role_fillers = {}
         self.types = {}
 
+    def get_number_of_fillers(self):
+        number_of_fillers = 0
+        for rolename in self.get('role_fillers'):
+            number_of_fillers += len(self.get('role_fillers').get(rolename))
+        return number_of_fillers
+
     def is_alignable_relation(self):
         """
         Event or relation frame is alignable if and only if it is both
         (1) a relation, and (2) has two fillers.
         """
         if self.get('metatype') != 'Relation': return False
-        num_fillers = 0
-        for rolename in self.get('role_fillers'):
-            num_fillers += len(self.get('role_fillers').get(rolename))
-        if num_fillers == 2: return True
+        if self.get('number_of_fillers') == 2: return True
         return False
 
     def update(self, entry):
