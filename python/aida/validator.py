@@ -85,6 +85,9 @@ class Validator(Object):
         cluster = entry.get('cluster')
         if cluster and cluster.get('metatype') != metatype:
             return False
+        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK1_AM_RESPONSE' and metatype == 'Entity':
+            self.record_event('UNEXPECTED_VALUE', 'metatype', metatype, entry.get('where'))
+            return False
         return True
 
     def validate_predicate(self, responses, schema, entry, attribute):

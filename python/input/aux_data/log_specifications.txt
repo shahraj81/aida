@@ -43,6 +43,7 @@ ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', pr
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_SPAN_TYPE            Unexpected span (expected one from [{}], provided '{}')
+ERROR     UNEXPECTED_VALUE                Unexpected {}: {}
 WARNING   MISSING_SPAN_FOR_MENTION        No span for mention '{}'
 WARNING   ARBITRARY_INF_JUSTIFICATION     Unable to select a single informative justification deterministically for node/mention '{}'; picking one arbitrarily
 CRITICAL  UNEXPECTED_NUM_INF_JUSTIFICATIONS Unexpected number of informative justifications
