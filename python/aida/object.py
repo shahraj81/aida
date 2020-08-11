@@ -26,7 +26,7 @@ class Object(object):
         """
         self.logger = logger
             
-    def get(self, key, *args):
+    def get(self, *args, **kwargs):
         """
         Gets the value for the key using the given args.
 
@@ -35,11 +35,13 @@ class Object(object):
         is an attribute whose name matches the value stored in key then return
         it. None is returned otherwise.
         """
+        key = args[0]
         if key is None:
             self.get('logger').record_event('KEY_IS_NONE', self.get('code_location'))
         method = self.get_method("get_{}".format(key))
         if method is not None:
-            return method(*args)
+            args = args[1:]
+            return method(*args, **kwargs)
         else:
             value = getattr(self, key, None)
             return value

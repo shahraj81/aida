@@ -35,7 +35,7 @@ class Container(Object):
         """
         return iter(self.store)
 
-    def get(self, key, default=None, *args):
+    def get(self, *args, **kwargs):
         """
         Gets the value for the key using the given args, if found. Returns None otherwise.
 
@@ -44,7 +44,9 @@ class Container(Object):
         key is added, to the store, with its value set to the default value provided
         or None, if no default value was provided.
         """
-        value = super().get(key, *args)
+        key = args[0]
+        default = kwargs['default'] if 'default' in kwargs else None
+        value = super().get(*args, **kwargs)
         if value:
             return value
         elif key in self.store:
