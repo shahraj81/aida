@@ -49,7 +49,7 @@ class Cluster(Object):
         if self.get('metatype') is None:
             self.set('metatype', metatype)
         if metatype != self.get('metatype'):
-            self.get('logger').record_event('MISMATCHED_METATYPE', metatype, self.get('metatype'), where)
+            self.get('logger').record_event('MULTIPLE_METATYPES', metatype, self.get('metatype'), self.get('ID'), where)
 
     def add_type(self, cluster_type):
         self.get('types').add(cluster_type, cluster_type)
