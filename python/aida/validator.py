@@ -28,6 +28,14 @@ class Validator(Object):
             self.record_event('UNDEFINED_METHOD', method_name)
         return method(responses, schema, entry, attribute)
 
+    def validate_cluster_type(self, responses, schema, entry, attribute):
+        logger = self.get('logger')
+        cluster_type = entry.get(attribute.get('name'))
+        if not responses.get('ontology_type_mappings').has(entry.get('metatype'), cluster_type):
+            logger.record_event('UNKNOWN_TYPE', cluster_type, entry.get('where'))
+            return False
+        return True
+
     def validate_document_id(self, responses, schema, entry, attribute):
         logger = self.get('logger')
         document_id = entry.get('document_id')

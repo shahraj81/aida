@@ -36,6 +36,7 @@ CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
 CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
+ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\

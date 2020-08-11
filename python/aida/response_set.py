@@ -43,6 +43,7 @@ attributes = {
         'name': 'cluster_type',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
+        'validate': 'validate_cluster_type',
         'years': [2020],
         },
     'document_id': {
@@ -283,8 +284,9 @@ class ResponseSet(Container):
     Set of responses for AIDA.
     """
 
-    def __init__(self, logger, document_mappings, document_boundaries, path, runid):
+    def __init__(self, logger, ontology_type_mappings, document_mappings, document_boundaries, path, runid):
         super().__init__(logger)
+        self.ontology_type_mappings = ontology_type_mappings
         self.document_mappings = document_mappings
         self.document_boundaries = document_boundaries
         self.validator = Validator(logger)
