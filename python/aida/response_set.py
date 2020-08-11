@@ -1,20 +1,19 @@
 """
 Set of responses for AIDA.
 """
+from aida.event_or_relation_frame import EventOrRelationFrame
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "22 January 2020"
 
+from aida.cluster import Cluster
 from aida.container import Container
 from aida.file_handler import FileHandler
 from aida.generator import Generator
 from aida.validator import Validator
 from aida.normalizer import Normalizer
-from aida.utility import get_md5_from_string
-from aida.utility import get_kb_document_id_from_filename
-from aida.utility import get_query_id_from_filename
 
 import os
   
@@ -128,6 +127,14 @@ attributes = {
         'tasks': ['task1'],
         'validate': 'validate_metatype',
         },
+    'object_cluster': {
+        'dependencies': ['object_cluster_id'],
+        'generate': 'generate_object_cluster',
+        'name': 'object_cluster',
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
+        'tasks': ['task1'],
+        'years': [2020],
+        },
     'object_cluster_id': {
         'name': 'object_cluster_id',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
@@ -202,6 +209,14 @@ attributes = {
     'start_after_year': {
         'name': 'start_after_year',
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1'],
+        'years': [2020],
+        },
+    'subject_cluster': {
+        'dependencies': ['subject_cluster_id'],
+        'generate': 'generate_subject_cluster',
+        'name': 'subject_cluster',
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'years': [2020],
         },
@@ -301,6 +316,7 @@ class ResponseSet(Container):
         self.generator = Generator(logger)
         self.normalizer = Normalizer(logger)
         self.document_clusters = Container(logger)
+        self.document_frames = Container(logger)
         self.runid = runid
         self.path = path
         self.load_responses()
@@ -369,6 +385,30 @@ class ResponseSet(Container):
         generator_name = attribute.get('generate')
         if generator_name:
             self.get('generator').generate(self, generator_name, entry)
+
+    def get_cluster(self, cluster_id, entry):
+        logger = self.get('logger')
+        document_id = entry.get('document_id')
+        if document_id not in self.get('document_clusters'):
+            self.get('document_clusters').add(key=document_id, value=Container(logger))
+        document_clusters = self.get('document_clusters').get(document_id)
+        if cluster_id not in document_clusters:
+            cluster = Cluster(logger, self.get('document_mappings'), self.get('document_boundaries'), cluster_id)
+            document_clusters.add(key=cluster_id, value=cluster)
+        cluster = document_clusters.get(cluster_id)
+        return cluster
+
+    def get_frame(self, frame_id, entry):
+        logger = self.get('logger')
+        document_id = entry.get('document_id')
+        if document_id not in self.get('document_frames'):
+            self.get('document_frames').add(key=document_id, value=Container(logger))
+        document_frames = self.get('document_frames').get(document_id)
+        if frame_id not in document_frames:
+            frame = EventOrRelationFrame(logger, frame_id)
+            document_frames.add(key=frame_id, value=frame)
+        frame = document_frames.get(frame_id)
+        return frame
 
     def get_text_boundaries(self):
         return self.get('document_boundaries').get('text')
