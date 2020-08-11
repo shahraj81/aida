@@ -165,7 +165,8 @@ class Validator(Object):
         document_element_boundary = responses.get('{}_boundaries'.format('keyframe' if modality=='video' and keyframe_id else modality)).get(keyframe_id if modality == 'video' and keyframe_id else document_element_id)
         span = Span(self.logger, start_x, start_y, end_x, end_y)
         if not document_element_boundary.validate(span):
-            corrected_provenance = '{}:{}:{}'.format(document_id, keyframe_id if keyframe_id else document_element_id, document_element_boundary.__str__())
+            corrected_span = document_element_boundary.get('corrected_span', span)
+            corrected_provenance = '{}:{}:{}'.format(document_id, keyframe_id if keyframe_id else document_element_id, corrected_span.__str__())
             entry.set(attribute.get('name'), corrected_provenance)
             self.record_event('SPAN_OFF_BOUNDARY', span, document_element_boundary, document_element_id, where)
         return True
@@ -178,6 +179,9 @@ class Validator(Object):
             float(value)
         except ValueError:
             entry.set(attribute.get('name'), 1)
+            self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
+            return False
+        if not 0 <= float(value) <= 1:
             self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
             return False
         return True
