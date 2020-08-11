@@ -1,7 +1,6 @@
 """
 Encoding format to modality mappings class.
 """
-from fileinput import filename
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
