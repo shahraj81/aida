@@ -26,7 +26,18 @@ class DocumentBoundary(Span):
         Initialize the DocumentBoundary object.
         """
         super().__init__(logger, start_x, start_y, end_x, end_y)
-    
+
+    def get_corrected_span(self, span):
+        min_x, min_y, max_x, max_y = map(lambda arg:float(self.get(arg)),
+                             ['start_x', 'start_y', 'end_x', 'end_y'])
+        sx, sy, ex, ey = map(lambda arg:float(span.get(arg)),
+                             ['start_x', 'start_y', 'end_x', 'end_y'])
+        sx = self.get('start_x') if sx < min_x else span.get('start_x')
+        sy = self.get('start_y') if sy < min_y else span.get('start_y')
+        ex = self.get('end_x') if ex > max_x else span.get('end_x')
+        ey = self.get('end_y') if ey > max_y else span.get('end_y')
+        return Span(self.get('logger'), sx, sy, ex, ey)
+
     def validate(self, span):
         """
         Validate if the span is inside the document boundary
