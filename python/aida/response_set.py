@@ -156,6 +156,7 @@ attributes = {
         'years': [2020],
         },
     'predicate': {
+        'dependencies': ['subject_cluster'],
         'name': 'predicate',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
@@ -307,9 +308,10 @@ class ResponseSet(Container):
     Set of responses for AIDA.
     """
 
-    def __init__(self, logger, ontology_type_mappings, document_mappings, document_boundaries, path, runid):
+    def __init__(self, logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, path, runid):
         super().__init__(logger)
         self.ontology_type_mappings = ontology_type_mappings
+        self.slot_mappings = slot_mappings
         self.document_mappings = document_mappings
         self.document_boundaries = document_boundaries
         self.validator = Validator(logger)
@@ -322,9 +324,19 @@ class ResponseSet(Container):
         self.load_responses()
 
     def load_responses(self):
+        def order(filename):
+            filename_order_map = {
+                'AIDA_P2_TA1_CM_A0001.rq.tsv': 1,
+                'AIDA_P2_TA1_AM_A0001.rq.tsv': 2,
+                'AIDA_P2_TA1_TM_A0001.rq.tsv': 3
+                }
+            if filename not in filename_order_map:
+                print("Filename: '{}' not found in lookup".format(filename))
+                exit()
+            return filename_order_map[filename]
         logger = self.get('logger')
         for subdir in ['{}/{}'.format(self.get('path'), d) for d in os.listdir(self.get('path'))]:
-            for filename in os.listdir(subdir):
+            for filename in sorted(os.listdir(subdir), key=order):
                 filename_including_path = '{}/{}'.format(subdir, filename)
                 fh = FileHandler(logger, filename_including_path)
                 schema = identify_file_schema(fh)

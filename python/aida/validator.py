@@ -91,10 +91,22 @@ class Validator(Object):
         return True
 
     def validate_predicate(self, responses, schema, entry, attribute):
+        logger = self.get('logger')
         predicate = entry.get(attribute.get('name'))
+        if not responses.get('slot_mappings').get('type_to_codes', predicate):
+            self.record_event('UNKNOWN_PREDICATE', predicate, entry.get('where'))
+            return False
         if len(predicate.split('_')) != 2:
             self.record_event('INVALID_PREDICATE_NO_UNDERSCORE', predicate, entry.get('where'))
             return False
+        subject_type, rolename = predicate.split('_')
+        if not responses.get('ontology_type_mappings').has(entry.get('metatype'), subject_type):
+            logger.record_event('UNKNOWN_TYPE', subject_type, entry.get('where'))
+            return False
+        if subject_type not in entry.get('subject_cluster').get('types'):
+            logger.record_event('UNEXPECTED_SUBJECT_TYPE', subject_type, entry.get('subject_cluster').get('ID'), entry.get('where'))
+            return False
+        return True
 
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):
         where = entry.get('where')

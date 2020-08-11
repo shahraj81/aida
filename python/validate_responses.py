@@ -1,6 +1,7 @@
 """
 AIDA main script for validating responses
 """
+from aida.slot_mappings import SlotMappings
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
@@ -27,6 +28,7 @@ ERROR_EXIT_CODE = 255
 def check_path(args):
     check_for_paths_existance([args.log_specifications,
                                args.ontology_type_mappings,
+                               args.slot_mappings,
                                args.encodings,
                                args.core_documents,
                                args.parent_children,
@@ -53,7 +55,7 @@ def validate_responses(args):
     logger = Logger(args.log, args.log_specifications, sys.argv)
 
     ontology_type_mappings = OntologyTypeMappings(logger, args.ontology_type_mappings)
-
+    slot_mappings = SlotMappings(logger, args.slot_mappings)
     document_mappings = DocumentMappings(logger,
                                          args.parent_children,
                                          Encodings(logger, args.encodings),
@@ -69,7 +71,7 @@ def validate_responses(args):
         'video': video_boundaries
         }
 
-    responses = ResponseSet(logger, ontology_type_mappings, document_mappings, document_boundaries, args.input, args.runid)
+    responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.input, args.runid)
     responses.write_valid_responses(args.output)
     exit(ALLOK_EXIT_CODE)
 
@@ -79,6 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
+    parser.add_argument('slot_mappings', type=str, help='File containing slot mappings')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
     parser.add_argument('core_documents', type=str, help='File containing list of core documents to be included in the pool')
     parser.add_argument('parent_children', type=str, help='DocumentID to DocumentElementID mappings file')
