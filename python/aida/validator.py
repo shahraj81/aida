@@ -82,6 +82,9 @@ class Validator(Object):
         if metatype not in allowed_metatypes:
             self.record_event('INVALID_METATYPE', metatype, ','.join(allowed_metatypes), entry.get('where'))
             return False
+        cluster = entry.get('cluster')
+        if cluster and cluster.get('metatype') != metatype:
+            return False
         return True
 
     def validate_predicate(self, responses, schema, entry, attribute):

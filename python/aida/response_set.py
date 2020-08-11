@@ -26,6 +26,14 @@ attributes = {
         'validate': 'validate_confidence',
         'years': [2020],
         },
+    'cluster': {
+        'dependencies': ['cluster_id', 'document_id'],
+        'name': 'cluster',
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1'],
+        'generate': 'generate_cluster',
+        'years': [2020],
+        },
     'cluster_id': {
         'name': 'cluster_id',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
@@ -292,7 +300,7 @@ class ResponseSet(Container):
         self.validator = Validator(logger)
         self.generator = Generator(logger)
         self.normalizer = Normalizer(logger)
-        self.responses = Container(logger)
+        self.document_clusters = Container(logger)
         self.runid = runid
         self.path = path
         self.load_responses()
