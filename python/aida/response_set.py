@@ -68,6 +68,7 @@ attributes = {
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'generate': 'generate_end',
+        'validate': 'validate_date_range',
         'years': [2020],
         },
     'end_before': {
@@ -76,7 +77,7 @@ attributes = {
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'generate': 'generate_end_before',
-        'validate': 'validate_end_before',
+        'validate': 'validate_date',
         'years': [2020],
         },
     'end_before_day': {
@@ -103,7 +104,7 @@ attributes = {
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'generate': 'generate_end_after',
-        'validate': 'validate_end_after',
+        'validate': 'validate_date',
         'years': [2020],
         },
     'end_after_day': {
@@ -209,6 +210,7 @@ attributes = {
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'generate': 'generate_start',
+        'validate': 'validate_date_range',
         'years': [2020],
         },
     'start_before': {
@@ -217,7 +219,7 @@ attributes = {
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'generate': 'generate_start_before',
-        'validate': 'validate_start_before',
+        'validate': 'validate_date',
         'years': [2020],
         },
     'start_before_day': {
@@ -244,7 +246,7 @@ attributes = {
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'generate': 'generate_start_after',
-        'validate': 'validate_start_after',
+        'validate': 'validate_date',
         'years': [2020],
         },
     'start_after_day': {

@@ -11,6 +11,7 @@ from aida.object import Object
 from aida.span import Span
 from aida.utility import types_are_compatible, is_number, trim_cv
 
+import datetime
 import os
 import re
 
@@ -61,15 +62,6 @@ class Validator(Object):
     def validate_kb_document_id(self, responses, schema, entry, attribute):
         return self.validate_document_id(responses, schema, entry, attribute)
 
-    def validate_end(self, responses, schema, entry, attribute):
-        return True
-
-    def validate_end_after(self, responses, schema, entry, attribute):
-        return True
-
-    def validate_end_before(self, responses, schema, entry, attribute):
-        return True
-
     def validate_entity_type_in_response(self, responses, schema, entry, attribute):
         entity_type_in_query = entry.get('query').get('entity_type')
         entity_type_in_response = entry.get('entity_type_in_response')
@@ -119,14 +111,40 @@ class Validator(Object):
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
         return True
 
-    def validate_start(self, responses, schema, entry, attribute):
-        return True
+    def validate_date(self, responses, schema, entry, attribute):
+        valid = True
+        datetime = entry.get(attribute.get('name'))
+        if datetime:
+            year = datetime.get('year')
+            month = datetime.get('month')
+            day = datetime.get('day')
+            if year and month and day:
+                try:
+                    datetime.date(year, month, day)
+                except:
+                    self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                    return False
+            elif year < 0:
+                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                valid = False
+            elif month and not 1 <= month <= 12:
+                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                valid = False
+        return valid
 
-    def validate_start_after(self, responses, schema, entry, attribute):
-        return True
-
-    def validate_start_before(self, responses, schema, entry, attribute):
-        return True
+    def validate_date_range(self, responses, schema, entry, attribute):
+        after = entry.get('{}_after'.format(attribute.get('name')))
+        before = entry.get('{}_before'.format(attribute.get('name')))
+        valid = True
+        if after and before:
+            date_fields = ['year', 'month', 'day']
+            for date_field in date_fields:
+                before_field = before.get(date_field)
+                after_field = after.get(date_field)
+                if before_field and after_field and before_field > after_field:
+                    self.record_event('INVALID_DATE_RANGE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                    valid = False
+        return valid
 
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):
         where = entry.get('where')

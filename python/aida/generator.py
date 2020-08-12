@@ -59,6 +59,10 @@ class Generator(Object):
         for date_field in date_fields:
             date_object.set(date_field, None if date_field_values[date_field]=='' else int(date_field_values[date_field]))
             if date_object.get(date_field): present = True
+        # consider all date fields to be missing if year was missing even if day and month were provided
+        if present and not date_object.get('year'): present = False
+        if present and date_object.get('day') and not date_object.get('month'):
+            date_object.set('day', None)
         return date_object if present else None
 
     def get_date_range(self, responses, entry, date_name):
