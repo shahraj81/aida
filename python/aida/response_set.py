@@ -53,6 +53,15 @@ attributes = {
         'validate': 'validate_cluster_type',
         'years': [2020],
         },
+    'date': {
+        'dependencies': ['start', 'end'],
+        'name': 'date',
+        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'generate': 'generate_date_start_and_end',
+        'validate': 'validate_date_start_and_end',
+        'years': [2020],
+        },
     'document_id': {
         'dependencies': ['kb_document_id'],
         'name': 'document_id',

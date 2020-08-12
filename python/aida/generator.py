@@ -32,6 +32,15 @@ class Generator(Object):
             cluster.add(entry)
         entry.set('cluster', cluster)
 
+    def generate_date_start_and_end(self, response, entry):
+        date_object = Object(entry.get('logger'))
+        present = False
+        for field_name in ['start', 'end']:
+            if entry.get(field_name):
+                present = True
+                date_object.set(field_name, entry.get(field_name))
+        entry.set('date', date_object if present else None)
+
     def generate_document_id(self, responses, entry):
         document_id = None
         if entry.get('kb_document_id'):

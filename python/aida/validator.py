@@ -111,6 +111,37 @@ class Validator(Object):
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
         return True
 
+    def validate_before_and_after_dates(self, responses, schema, entry, attribute, start_or_end_before, before, start_or_end_after, after):
+        valid = True
+        problem_field = None
+        if before.get('year') < after.get('year'):
+            problem_field = 'year'
+            valid = False
+        elif before.get('year') == after.get('year'):
+            if before.get('month') and after.get('month'):
+                if before.get('month') < after.get('month'):
+                    problem_field = 'month'
+                    valid = False
+                elif before.get('month') == after.get('month'):
+                    if before.get('day') and after.get('day') and before.get('day') < after.get('day'):
+                        problem_field = 'day'
+                        valid = False
+        if not valid:
+            self.record_event('INVALID_DATE_RANGE', entry.get('cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
+        return valid
+
+    def validate_date_start_and_end(self, responses, schema, entry, attribute):
+        valid = True
+        if entry.get('date'):
+            start = entry.get('date').get('start')
+            end = entry.get('date').get('end')
+            if start and end:
+                start_after = start.get('after')
+                end_before = end.get('before')
+                if start_after and end_before:
+                    valid = self.validate_before_and_after_dates(responses, schema, entry, attribute, 'end_before', end_before, 'start_after', start_after)
+        return valid
+
     def validate_date(self, responses, schema, entry, attribute):
         valid = True
         date_object = entry.get(attribute.get('name'))
@@ -137,13 +168,7 @@ class Validator(Object):
         before = entry.get('{}_before'.format(attribute.get('name')))
         valid = True
         if after and before:
-            date_fields = ['year', 'month', 'day']
-            for date_field in date_fields:
-                before_field = before.get(date_field)
-                after_field = after.get(date_field)
-                if before_field and after_field and before_field < after_field:
-                    self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date range', entry.get('where'))
-                    valid = False
+            valid = self.validate_before_and_after_dates(responses, schema, entry, attribute, '{}_before'.format(attribute.get('name')), before, '{}_after'.format(attribute.get('name')), after)
         return valid
 
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):
