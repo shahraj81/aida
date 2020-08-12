@@ -113,22 +113,22 @@ class Validator(Object):
 
     def validate_date(self, responses, schema, entry, attribute):
         valid = True
-        datetime = entry.get(attribute.get('name'))
-        if datetime:
-            year = datetime.get('year')
-            month = datetime.get('month')
-            day = datetime.get('day')
+        date_object = entry.get(attribute.get('name'))
+        if date_object:
+            year = date_object.get('year')
+            month = date_object.get('month')
+            day = date_object.get('day')
             if year and month and day:
                 try:
-                    datetime.date(year, month, day)
+                    datetime.date(int(year), int(month), int(day))
                 except:
-                    self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                    self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date', entry.get('where'))
                     return False
             elif year < 0:
-                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date', entry.get('where'))
                 valid = False
             elif month and not 1 <= month <= 12:
-                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date', entry.get('where'))
                 valid = False
         return valid
 
@@ -141,8 +141,8 @@ class Validator(Object):
             for date_field in date_fields:
                 before_field = before.get(date_field)
                 after_field = after.get(date_field)
-                if before_field and after_field and before_field > after_field:
-                    self.record_event('INVALID_DATE_RANGE', entry.get('cluster_id'), attribute.get('name'), entry.get('where'))
+                if before_field and after_field and before_field < after_field:
+                    self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date range', entry.get('where'))
                     valid = False
         return valid
 

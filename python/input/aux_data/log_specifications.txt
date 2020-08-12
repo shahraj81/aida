@@ -11,6 +11,7 @@ WARNING   ID_WITH_EXTENSION               File extension included as part of {} 
 ERROR     IMPROPER_RELATION               Relation '{}' has more than two fillers
 ERROR     INCOMPATIBLE_TYPES              '{}' has incompatible types '{}'
 WARNING   INVALID_CONFIDENCE              Invalid confidence value '{}' (using 1.0)
+ERROR     INVALID_DATE                    Cluster {} has invalid {} {}
 ERROR     INVALID_METATYPE                Invalid metatype (expected one from '{}', provided '{}')
 ERROR     INVALID_PREDICATE_NO_UNDERSCORE No underscore provided in predicate '{}'
 ERROR     INVALID_PROVENANCE_FORMAT       Invalid provenance '{}'
