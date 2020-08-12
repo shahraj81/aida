@@ -65,7 +65,10 @@ def string_to_span(logger, span_string, where=None):
     return span
 
 def trim_cv(cv):
-    return float(cv.replace('"',''))
+    return float(trim(cv))
+
+def trim(value):
+    return value.replace('"','')
 
 def parse_document_element_id(s):
     document_element_id = s

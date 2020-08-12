@@ -9,7 +9,7 @@ __date__    = "24 January 2020"
 
 from aida.container import Container
 from aida.object import Object
-from aida.utility import get_kb_document_id_from_filename, spanstring_to_object
+from aida.utility import get_kb_document_id_from_filename, spanstring_to_object, trim
 
 class Generator(Object):
     """
@@ -47,6 +47,34 @@ class Generator(Object):
             document_id = span_object.get('document_id')
         entry.set('document_id', document_id)
 
+    def generate_end(self, responses, entry):
+        entry.set('end', self.get('date_range', responses, entry, 'end'))
+
+    def get_date(self, responses, entry, date_name):
+        date_fields = ['month', 'day', 'year']
+        date_field_values = {key: trim(entry.get(field_name))
+                                for key, field_name in {key:'{}_{}'.format(date_name, key) for key in date_fields}.items()}
+        date_object = Object(entry.get('logger'))
+        present = False
+        for date_field in date_fields:
+            date_object.set(date_field, None if date_field_values[date_field]=='' else int(date_field_values[date_field]))
+            if date_object.get(date_field): present = True
+        return date_object if present else None
+
+    def get_date_range(self, responses, entry, date_name):
+        date_range = Object(entry.get('logger'))
+        present = False
+        for range_field in ['before', 'after']:
+            date_range.set(range_field, entry.get('{}_{}'.format(date_name, range_field)))
+            if date_range.get(range_field): present = True
+        return date_range if present else None
+
+    def generate_end_after(self, responses, entry):
+        entry.set('end_after', self.get('date', responses, entry, 'end_after'))
+
+    def generate_end_before(self, responses, entry):
+        entry.set('end_before', self.get('date', responses, entry, 'end_before'))
+
     def generate_kb_document_id(self, responses, entry):
         kb_document_id = get_kb_document_id_from_filename(entry.get('filename'))
         entry.set('kb_document_id', kb_document_id)
@@ -55,6 +83,15 @@ class Generator(Object):
         cluster_id = entry.get('object_cluster_id')
         cluster = responses.get('cluster', cluster_id, entry)
         entry.set('object_cluster', cluster)
+
+    def generate_start(self, responses, entry):
+        entry.set('start', self.get('date_range', responses, entry, 'start'))
+
+    def generate_start_after(self, responses, entry):
+        entry.set('start_after', self.get('date', responses, entry, 'start_after'))
+
+    def generate_start_before(self, responses, entry):
+        entry.set('start_before', self.get('date', responses, entry, 'start_before'))
 
     def generate_subject_cluster(self, responses, entry):
         cluster_id = entry.get('subject_cluster_id')

@@ -60,7 +60,16 @@ class Validator(Object):
     
     def validate_kb_document_id(self, responses, schema, entry, attribute):
         return self.validate_document_id(responses, schema, entry, attribute)
-    
+
+    def validate_end(self, responses, schema, entry, attribute):
+        return True
+
+    def validate_end_after(self, responses, schema, entry, attribute):
+        return True
+
+    def validate_end_before(self, responses, schema, entry, attribute):
+        return True
+
     def validate_entity_type_in_response(self, responses, schema, entry, attribute):
         entity_type_in_query = entry.get('query').get('entity_type')
         entity_type_in_response = entry.get('entity_type_in_response')
@@ -108,6 +117,15 @@ class Validator(Object):
             return False
         if entry.get('metatype') == 'Relation'and entry.get('subject_cluster').get('frame').get('number_of_fillers') > 2:
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
+        return True
+
+    def validate_start(self, responses, schema, entry, attribute):
+        return True
+
+    def validate_start_after(self, responses, schema, entry, attribute):
+        return True
+
+    def validate_start_before(self, responses, schema, entry, attribute):
         return True
 
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):
