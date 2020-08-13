@@ -251,6 +251,17 @@ class Validator(Object):
                 self.record_event('START_BIGGER_THAN_END', start, end, provenance, where)
                 return False
 
+        # An entry in the coreference metric output file is invalid if:
+        #  (a) a video mention of an entity was asserted using VideoJustification, or
+        #  (b) a video mention of an relation/event was asserted using KeyFrameVideoJustification
+        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK1_CM_RESPONSE' and modality == 'video':
+            if keyframe_id and entry.get('metatype') != 'Entity':
+                self.record_event('UNEXPECTED_JUSTIFICATION', provenance, entry.get('metatype'), entry.get('cluster_id'), 'KeyFrameVideoJustification', entry.get('where'))
+                return False
+            elif not keyframe_id and entry.get('metatype') not in ['Relation', 'Event']:
+                self.record_event('UNEXPECTED_JUSTIFICATION', provenance, entry.get('metatype'), entry.get('cluster_id'), 'VideoJustification', entry.get('where'))
+                return False
+
         document_element_boundary = responses.get('{}_boundaries'.format('keyframe' if modality=='video' and keyframe_id else modality)).get(keyframe_id if modality == 'video' and keyframe_id else document_element_id)
         span = Span(self.logger, start_x, start_y, end_x, end_y)
         if not document_element_boundary.validate(span):

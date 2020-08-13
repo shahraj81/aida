@@ -45,6 +45,7 @@ ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\
+ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_SPAN_TYPE            Unexpected span (expected one from [{}], provided '{}')
 ERROR     UNEXPECTED_VALUE                Unexpected {}: {}
