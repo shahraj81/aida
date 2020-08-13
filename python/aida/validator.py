@@ -270,7 +270,7 @@ class Validator(Object):
             entry.set(attribute.get('name'), 1)
             self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
             return False
-        if not 0 <= float(value) <= 1:
+        if not 0 < float(value) <= 1:
             self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
             return False
         return True
