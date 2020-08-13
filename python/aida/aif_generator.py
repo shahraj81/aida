@@ -149,7 +149,6 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     logger = ere_object.get('logger')
     ere_type = ere_object.get('node_metatype').capitalize()
 
-    default_predicate = 'hasName'
     type_to_text_predicate_fieldname_mapping = {
         'PER': 'hasName',
         'ORG': 'hasName',
@@ -161,38 +160,38 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
         'LAW': 'hasName',
         'MHI': 'textValue',
         'MON': 'textValue',
-        'TTL': 'textValue',
         'RES': 'textValue',
+        'TTL': 'textValue',
         'VAL': 'textValue'
         }
 
-    # generate link assertion triples
+    # generate hasName or textValue triples
     has_name_triples = []
     if ere_type == 'Entity':
         skip_flag = 0
         text_predicate_fieldnames = {}
         for top_level_type in ere_object.get('top_level_types'):
-            text_predicate_fieldname = default_predicate
-            if top_level_type not in type_to_text_predicate_fieldname_mapping:
-                logger.record_event('MISSING_ENTRY_IN_LOOKUP_WARNING', top_level_type, 'type_to_text_predicate_fieldname_mapping, using {} by default'.format(default_predicate))
-            else:
-                text_predicate_fieldname = type_to_text_predicate_fieldname_mapping[top_level_type]
-            text_predicate_fieldnames[text_predicate_fieldname] = 1
-        text_predicate_fieldname = default_predicate
-        if len(text_predicate_fieldnames) > 1:
+            if top_level_type in type_to_text_predicate_fieldname_mapping:
+                text_predicate_fieldnames[type_to_text_predicate_fieldname_mapping[top_level_type]] = 1
+        if len(text_predicate_fieldnames) == 0:
+            skip_flag = 1
+        elif len(text_predicate_fieldnames) > 1:
             types = ','.join({t:1 for t in ere_object.get('top_level_types')})
             logger.record_event('INCOMPATIBLE_TYPES', ere_object.get('ID'), types, ere_object.get('where'))
             logger.record_event('SKIPPING_HASNAME_OR_TEXTVALUE', ere_object.get('ID'), ere_object.get('where'))
             skip_flag = 1
-        if len(text_predicate_fieldnames) == 1:
+        else:
             text_predicate_fieldname = list(text_predicate_fieldnames.keys())[0]
-        text_strings = [] if skip_flag else ere_object.get('text_strings')
-        for text_string in text_strings:
-            if (len(text_string) < 256 and 'nam' in text_strings[text_string]) or text_predicate_fieldname == 'textValue':
-                has_name_triple = 'ldc:{ere_object_id} aida:{text_predicate_fieldname} "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
+        if not skip_flag:
+            text_strings = ere_object.get('text_strings')
+            for text_string in text_strings:
+                if (len(text_string) < 256 and 'nam' in text_strings[text_string]) or text_predicate_fieldname == 'textValue':
+                    has_name_triple = 'ldc:{ere_object_id} aida:{text_predicate_fieldname} "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
                                                                                           text_predicate_fieldname=text_predicate_fieldname,
                                                                                           text_string=text_string.replace('"', '\\"'))
-                has_name_triples.append(has_name_triple)
+                    has_name_triples.append(has_name_triple)
+
+    # generate link assertion triples
     node_ids = []
     if ere_type == 'Entity':
         for node_id_or_node_ids in ere_object.get('nodes'):
