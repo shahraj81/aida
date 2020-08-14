@@ -10,7 +10,7 @@ __date__    = "15 July 2020"
 
 from aida.object import Object
 from aida.container import Container
-from aida.utility import trim_cv, spanstring_to_object
+from aida.utility import get_expanded_types, trim_cv, spanstring_to_object
 
 class Cluster(Object):
 
@@ -35,6 +35,18 @@ class Cluster(Object):
                     num_levels -= 1
             top_level_types['.'.join(elements)] = 1
         return list(top_level_types.keys())
+
+    def get_all_expanded_types(self):
+        """
+        For all the types asserted for the cluster, return a union
+        of corresponding expanded types.
+        """
+        types = []
+
+        for cluster_type in self.get('types'):
+            expanded_types = get_expanded_types(self.get('metatype'), cluster_type)
+            types.extend(expanded_types)
+        return list({cluster_type:1 for cluster_type in types}.keys())
 
     def add(self, entry):
         self.add_metatype(entry.get('?metatype'), entry.get('where'))
@@ -73,7 +85,7 @@ class Cluster(Object):
 
     def has_no_exhaustively_annotated_type(self, annotated_regions):
         for mention in self.get('mentions').values():
-            if annotated_regions.contains(mention, self.get('types')):
+            if annotated_regions.contains(mention, self.get('all_expanded_types')):
                 return False
         return True
 

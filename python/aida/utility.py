@@ -36,6 +36,31 @@ def get_cost_matrix(similarities, mappings):
         cost_matrix += [cost_row]
     return cost_matrix
 
+def get_expanded_types(metatype, cluster_type):
+    """
+    If the cluster represents an entity:
+        If the type is:
+            'A.B.C' return ['A', 'A.B', 'A.B.C']
+            'A.B'   return ['A', A.B']
+            'A'     return ['A']
+    If the cluster represents an event or a relation:
+        If the type is:
+            'A.B.C' return [A.B', 'A.B.C']
+            'A.B'   return [A.B']
+    """
+    expanded_types = {}
+    elements = cluster_type.split('.')
+    for end_index in range(len(elements)):
+        if metatype != 'Entity' and end_index == 0: continue
+        start_index = 0
+        expanded_type_elements = []
+        while start_index <= end_index:
+            expanded_type_elements.append(elements[start_index])
+            start_index += 1
+        if len(expanded_type_elements):
+            expanded_types['.'.join(expanded_type_elements)] = 1
+    return list(expanded_types.keys())
+
 def spanstring_to_object(logger, span_string, where=None):
     pattern = re.compile('^(.*?):(.*?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
     match = pattern.match(span_string)
