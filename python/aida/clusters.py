@@ -76,7 +76,7 @@ class Clusters(Object):
 
     def get_relation_similarity(self, gold_frame, system_frame):
         num_fillers_aligned = 0
-        if self.get('number_of_matching_types', gold_frame.get('types').keys(), system_frame.get('types').keys()):
+        if self.get('number_of_matching_types', gold_frame.get('top_level_types'), system_frame.get('top_level_types')):
             found = {}
             for rolename in gold_frame.get('role_fillers') if gold_frame.get('role_fillers') else []:
                 gold_fillers = list(gold_frame.get('role_fillers')[rolename])
@@ -94,6 +94,8 @@ class Clusters(Object):
             for rolename_and_filler in found:
                 if found[rolename_and_filler] == 1:
                     num_fillers_aligned += 1
+        if num_fillers_aligned > 2:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'num_fillers_aligned > 2')
         return 0 if num_fillers_aligned <= 1 else 1
 
     def get_metatype(self, gold_or_system, cluster_or_frame_id):
@@ -131,7 +133,9 @@ class Clusters(Object):
                 for system_mention in mentions['system']:
                     if gold_mention.get('ID') not in similarities:
                         similarities[gold_mention.get('ID')] = {}
-                    similarities[gold_mention.get('ID')][system_mention.get('ID')] = get_intersection_over_union(gold_mention, system_mention)
+                    iou = get_intersection_over_union(gold_mention, system_mention)
+                    iou = 0 if iou < 0.8 else iou
+                    similarities[gold_mention.get('ID')][system_mention.get('ID')] = iou
             cost_matrix = get_cost_matrix(similarities, mappings)
             alignment = {'gold_mention': {}, 'system_mention': {}}
             for gold_mention_index, system_mention_index in Munkres().compute(cost_matrix):
@@ -139,7 +143,7 @@ class Clusters(Object):
                 system_mention_id = mappings['system']['index_to_id'][system_mention_index]
                 alignment['gold_mention'][gold_mention_id] = {'system_mention': system_mention_id, 'score': similarities[gold_mention_id][system_mention_id]}
                 alignment['system_mention'][system_mention_id] = {'gold_mention': gold_mention_id, 'score': similarities[gold_mention_id][system_mention_id]}
-                if similarities[gold_mention_id][system_mention_id] > 0.8:
+                if similarities[gold_mention_id][system_mention_id] > 0:
                     # lenient similarity computation
                     similarity += 1
                     # alternative would be to add up the amount of overlap
@@ -187,8 +191,8 @@ class Clusters(Object):
             gold_cluster = self.get('cluster', 'gold', mappings['gold']['index_to_id'][gold_cluster_index])
             system_cluster = self.get('cluster', 'system', mappings['system']['index_to_id'][system_cluster_index])
             similarity = self.lookup_similarity(similarities, gold_cluster.get('ID'), system_cluster.get('ID'))
-            if similarity <= 0:
-                self.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value of similarity: {}'.format(similarity))
+#             if similarity <= 0:
+#                 self.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value of similarity: {}'.format(similarity))
             if similarity > 0:
                 self.get('alignment').get('gold_to_system')[gold_cluster.get('ID')] = {
                         'aligned_to': system_cluster.get('ID'),
