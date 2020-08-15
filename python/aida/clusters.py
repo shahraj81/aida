@@ -71,8 +71,17 @@ class Clusters(Object):
 
     def get_similarity(self, gold, system):
         if gold.get('metatype') == 'Relation' and system.get('metatype') == 'Relation':
-            return self.get('relation_similarity', gold, system)
-        return self.get('entity_and_event_similarity', gold, system)
+            if isinstance(gold, Cluster):
+                gold = self.get('frame', 'gold', gold.get('ID'))
+            if isinstance(system, Cluster):
+                system = self.get('frame', 'system', system.get('ID'))
+            if gold and system:
+                return self.get('relation_similarity', gold, system)
+            return 0
+        elif gold.get('metatype') in ['Entity', 'Event'] and system.get('metatype') in ['Entity', 'Event'] and gold.get('metatype') == system.get('metatype'):
+            return self.get('entity_and_event_similarity', gold, system)
+        else:
+            self.record_event('DEFAULT_CRITICAL_ERROR', "unexpected combination of gold and system", self.get('code_location'))
 
     def get_relation_similarity(self, gold_frame, system_frame):
         num_fillers_aligned = 0
