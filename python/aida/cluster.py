@@ -42,7 +42,6 @@ class Cluster(Object):
         of corresponding expanded types.
         """
         types = []
-
         for cluster_type in self.get('types'):
             expanded_types = get_expanded_types(self.get('metatype'), cluster_type)
             types.extend(expanded_types)
@@ -52,9 +51,9 @@ class Cluster(Object):
         self.add_metatype(entry.get('?metatype'), entry.get('where'))
         self.add_type(entry.get('?type'))
         self.add_mention(entry.get('?mention_span'),
-                         trim_cv(entry.get('?t_cv')),
-                         trim_cv(entry.get('?cm_cv')),
-                         trim_cv(entry.get('?j_cv')),
+                         trim_cv(entry.get('?type_statement_confidence')),
+                         trim_cv(entry.get('?cluster_membership_confidence')),
+                         trim_cv(entry.get('?mention_type_justification_confidence')),
                          entry.get('where'))
 
     def add_metatype(self, metatype, where):
