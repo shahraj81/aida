@@ -134,8 +134,8 @@ attributes = {
         'tasks': ['task1'],
         'years': [2020],
         },
-    'justification_confidence': {
-        'name': 'justification_confidence',
+    'mention_type_justification_confidence': {
+        'name': 'mention_type_justification_confidence',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_confidence',
@@ -175,20 +175,6 @@ attributes = {
         'name': 'object_cluster_id',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
-        'years': [2020],
-        },
-    'object_informative_justification_span_text': {
-        'name' : 'object_informative_justification_span_text',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
-        'tasks': ['task1'],
-        'validate': 'validate_value_provenance_triple',
-        'years': [2020],
-        },
-    'object_justification_confidence': {
-        'name' : 'object_justification_confidence',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
-        'tasks': ['task1'],
-        'validate': 'validate_confidence',
         'years': [2020],
         },
     'predicate': {
@@ -290,8 +276,8 @@ attributes = {
         'tasks': ['task1'],
         'years': [2020],
         },
-    'type_confidence': {
-        'name': 'type_confidence',
+    'type_statement_confidence': {
+        'name': 'type_statement_confidence',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_confidence',
@@ -304,32 +290,30 @@ schemas = {
         'name': 'AIDA_PHASE2_TASK1_AM_RESPONSE',
         'year': 2020,
         'task': 'task1',
-        'header': ['?metatype', '?subject', '?predicate', '?object', '?object_inf_j_span', '?ej_span', '?edge_cj_cv', '?edge_cv', '?obj_inf_j_cv'],
+        'header': ['?metatype', '?subject', '?predicate', '?object', '?predicate_justification', '?argument_assertion_confidence', '?predicate_justification_confidence'],
         'columns': [
             'metatype',
             'subject_cluster_id',
             'predicate',
             'object_cluster_id',
-            'object_informative_justification_span_text',
             'predicate_justification_span_text',
-            'predicate_justification_confidence',
             'argument_assertion_confidence',
-            'object_justification_confidence'
+            'predicate_justification_confidence',
             ]
         },
     'AIDA_PHASE2_TASK1_CM_RESPONSE': {
         'name': 'AIDA_PHASE2_TASK1_CM_RESPONSE',
         'year': 2020,
         'task': 'task1',
-        'header': ['?cluster', '?metatype', '?type', '?mention_span', '?t_cv', '?cm_cv', '?j_cv'],
+        'header': ['?cluster', '?metatype', '?type', '?mention_span', '?type_statement_confidence', '?cluster_membership_confidence', '?mention_type_justification_confidence'],
         'columns': [
             'cluster_id',
             'metatype',
             'cluster_type',
             'mention_span_text',
-            'type_confidence',
+            'type_statement_confidence',
             'cluster_membership_confidence',
-            'justification_confidence'
+            'mention_type_justification_confidence'
             ]
         },
     'AIDA_PHASE2_TASK1_TM_RESPONSE': {
