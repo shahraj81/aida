@@ -1,4 +1,5 @@
 type      code                            message
+INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 ERROR     DEFAULT_ERROR                   Error encountered {} {}
 WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
