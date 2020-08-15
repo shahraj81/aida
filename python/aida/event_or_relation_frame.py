@@ -58,11 +58,9 @@ class EventOrRelationFrame(Object):
         filler = Object(self.get('logger'))
         filler_cluster_id = entry.get('?object')
         filler.set('filler_cluster_id', filler_cluster_id)
-        filler.set('filler_justification', entry.get('?object_inf_j_span'))
-        filler.set('predicate_justification', entry.get('?ej_span'))
-        filler.set('edge_cj_cv', entry.get('?edge_cj_cv'))
-        filler.set('edge_cv', entry.get('?edge_cv'))
-        filler.set('obj_inf_j_cv', entry.get('?obj_inf_j_cv'))
+        filler.set('predicate_justification', entry.get('?predicate_justification'))
+        filler.set('argument_assertion_confidence', entry.get('?argument_assertion_confidence'))
+        filler.set('predicate_justification_confidence', entry.get('?predicate_justification_confidence'))
         filler.set('where', entry.get('where'))
         if rolename not in self.get('role_fillers'):
             self.get('role_fillers')[rolename] = {}
