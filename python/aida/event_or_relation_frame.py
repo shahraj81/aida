@@ -26,6 +26,19 @@ class EventOrRelationFrame(Object):
             number_of_fillers += len(self.get('role_fillers').get(rolename))
         return number_of_fillers
 
+    def get_top_level_types(self):
+        top_level_types = {}
+        num_levels_by_metatype = {'Event': 2, 'Relation': 2}
+        num_levels = num_levels_by_metatype[self.get('metatype')]
+        for cluster_type in self.get('types'):
+            elements = []
+            for element in cluster_type.split('.'):
+                if num_levels > 0:
+                    elements.append(element)
+                    num_levels -= 1
+            top_level_types['.'.join(elements)] = 1
+        return list(top_level_types.keys())
+
     def is_alignable_relation(self):
         """
         Event or relation frame is alignable if and only if it is both
