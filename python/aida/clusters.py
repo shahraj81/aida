@@ -47,13 +47,9 @@ class Clusters(Object):
     def get_entities_and_events_similarities(self):
         similarities = {}
         for gold_cluster in self.get('clusters').get('gold').values():
-            if gold_cluster.is_invalid_for_alignment(self.get('annotated_regions')):
-                self.record_event('CLUSTER_INVALID_FOR_ALIGNMENT', gold_cluster.get('ID'))
-                continue
+            if not gold_cluster.is_alignable_entity_or_event(self.get('annotated_regions')): continue
             for system_cluster in self.get('clusters').get('system').values():
-                if system_cluster.is_invalid_for_alignment(self.get('annotated_regions')):
-                    self.record_event('CLUSTER_INVALID_FOR_ALIGNMENT', system_cluster.get('ID'))
-                    continue
+                if not system_cluster.is_alignable_entity_or_event(self.get('annotated_regions')): continue
                 similarity = 0
                 if gold_cluster.get('metatype') == system_cluster.get('metatype'):
                     similarity = self.get('similarity', gold_cluster, system_cluster)
