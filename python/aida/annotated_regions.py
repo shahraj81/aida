@@ -21,15 +21,11 @@ class AnnotatedRegions(Object):
         self.document_boundaries = document_boundaries
         self.filename = regions_filename
         self.regions = Container(logger)
-        self.cache = Container(logger)
         self.load()
 
     def contains(self, mention, types):
         contains = False
         for cluster_type in types:
-            lookup = self.lookup_cache(mention, cluster_type)
-            if lookup is not None:
-                return lookup
             document_element_id = mention.get('document_element_id')
             keyframe_id = mention.get('keyframe_id')
             key = '{docid}:{doce_or_kf_id}:{cluster_type}'.format(docid=mention.get('document_id'),
@@ -47,9 +43,6 @@ class AnnotatedRegions(Object):
                 region.set('boundary', self.get('document_boundaries').get(boundaries_key).get(document_element_or_keyframe_id))
                 if get_intersection_over_union(mention, region) >= 0.8:
                     contains = True
-                    self.update_cache(mention, cluster_type, True)
-                else:
-                    self.update_cache(mention, cluster_type, False)
         return contains
 
     def get_entry_to_key(self, entry):
@@ -73,15 +66,3 @@ class AnnotatedRegions(Object):
             regions_by_key = self.get('regions').get(key)
             for span in self.get('entry_to_spans', entry):
                 regions_by_key.add(key=span, value=span)
-
-    def lookup_cache(self, mention, types):
-        if mention.get('span_string') in self.get('cache'):
-            mention_cache = self.get('cache').get(mention.get('span_string'))
-            for cluster_type in types:
-                if cluster_type in mention_cache:
-                    return mention_cache.get(type)
-        return None
-
-    def update_cache(self, mention, cluster_type, contains):
-        mention_cache = self.get('cache').get(mention.get('span_string'), default=Container(self.get('logger')))
-        mention_cache.add(key=cluster_type, value=contains)
