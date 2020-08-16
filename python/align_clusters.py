@@ -63,7 +63,7 @@ def align_clusters(args):
 
     os.mkdir(args.similarities)
     os.mkdir(args.alignment)
-    for entry in os.scandir(args.gold):
+    for entry in sorted(os.scandir(args.gold), key=str):
         if entry.is_dir() and entry.name.endswith('.ttl'):
             kb = entry.name
             print('At {}: aligning clusters in {}'.format(time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()), entry.name))
