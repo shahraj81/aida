@@ -174,6 +174,7 @@ class Clusters(Object):
     def load_mentions(self, filetype):
         logger = self.get('logger')
         clusters = self.get('clusters').get(filetype)
+        if self.get('filenames').get(filetype).get('mentions') is None: return
         for entry in FileHandler(self.get('logger'), self.get('filenames').get(filetype).get('mentions')):
             cluster_id = entry.get('?cluster')
             if not clusters.exists(cluster_id):
@@ -184,6 +185,7 @@ class Clusters(Object):
     def load_frames(self, filetype):
         logger = self.get('logger')
         frames = self.get('frames').get(filetype)
+        if self.get('filenames').get(filetype).get('edges') is None: return
         for entry in FileHandler(self.get('logger'), self.get('filenames').get(filetype).get('edges')):
             # get edge_id
             frame_id = entry.get('?subject')
@@ -204,8 +206,6 @@ class Clusters(Object):
             gold_cluster = self.get('cluster', 'gold', mappings['gold']['index_to_id'][gold_cluster_index])
             system_cluster = self.get('cluster', 'system', mappings['system']['index_to_id'][system_cluster_index])
             similarity = self.lookup_similarity(similarities, gold_cluster.get('ID'), system_cluster.get('ID'))
-#             if similarity <= 0:
-#                 self.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value of similarity: {}'.format(similarity))
             if similarity > 0:
                 self.get('alignment').get('gold_to_system')[gold_cluster.get('ID')] = {
                         'aligned_to': system_cluster.get('ID'),

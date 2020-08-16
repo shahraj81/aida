@@ -68,13 +68,19 @@ def align_clusters(args):
             kb = entry.name
             print('At {}: aligning clusters in {}'.format(time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()), entry.name))
             document_id = kb.replace('.ttl', '')
+
             gold_mentions = '{}/{}/AIDA_P2_TA1_CM_A0001.rq.tsv'.format(args.gold, kb)
             gold_edges = '{}/{}/AIDA_P2_TA1_AM_A0001.rq.tsv'.format(args.gold, kb)
             system_mentions = '{}/{}/AIDA_P2_TA1_CM_A0001.rq.tsv'.format(args.system, kb)
             system_edges = '{}/{}/AIDA_P2_TA1_AM_A0001.rq.tsv'.format(args.system, kb)
+
+            gold_mentions = gold_mentions if os.path.exists(gold_mentions) else None
+            gold_edges = gold_edges if os.path.exists(gold_edges) else None
+            system_mentions = system_mentions if os.path.exists(system_mentions) else None
+            system_edges = system_edges if os.path.exists(system_edges) else None
+
             similarities = '{}/{}.tab'.format(args.similarities, document_id)
             alignment = '{}/{}.tab'.format(args.alignment, document_id)
-            check_for_paths_existance([gold_mentions, gold_edges, system_mentions, system_edges])
             check_for_paths_non_existance([similarities, alignment])
             clusters = Clusters(logger, document_mappings, document_boundaries, annotated_regions, gold_mentions, gold_edges, system_mentions, system_edges)
             clusters.print_similarities(similarities)
