@@ -79,14 +79,14 @@ class Cluster(Object):
         mention.set('boundary', self.get('document_boundaries').get(boundaries_key).get(document_element_or_keyframe_id))
         self.get('mentions').add(key=mention.get('ID'), value=mention)
 
-    def is_invalid_for_alignment(self, annotated_regions):
-        return self.get('metatype') == 'Relation' or self.has_no_exhaustively_annotated_type(annotated_regions)
+    def is_alignable_entity_or_event(self, annotated_regions):
+        return self.get('metatype') != 'Relation' and self.is_in_exhaustively_annotated_region(annotated_regions)
 
-    def has_no_exhaustively_annotated_type(self, annotated_regions):
+    def is_in_exhaustively_annotated_region(self, annotated_regions):
         for mention in self.get('mentions').values():
             if annotated_regions.contains(mention, self.get('all_expanded_types')):
-                return False
-        return True
+                return True
+        return False
 
     def __str__(self, *args, **kwargs):
         return self.get('ID')
