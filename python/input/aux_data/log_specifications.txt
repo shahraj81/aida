@@ -20,7 +20,8 @@ ERROR     INVALID_PROVENANCE_FORMAT       Invalid provenance '{}'
 WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is invalid
 CRITICAL  KEY_IS_NONE                     key 'None' used
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
-WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing entry '{}' in '{}'
+ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
+WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing '{}' in '{}'
 ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
