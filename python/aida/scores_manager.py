@@ -11,6 +11,7 @@ __date__    = "3 February 2020"
 from aida.object import Object
 from aida.container import Container
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
+from aida.frame_metric_scorer import FrameMetricScorer
 from aida.type_metric_scorer import TypeMetricScorer
 
 import os
@@ -21,8 +22,9 @@ class ScoresManager(Object):
     """
     
     metrics = {
-        'CoreferenceMetric': CoreferenceMetricScorer,
-        'TypeMetric': TypeMetricScorer,
+#         'CoreferenceMetric': CoreferenceMetricScorer,
+        'FrameMetric': FrameMetricScorer,
+#         'TypeMetric': TypeMetricScorer,
         }
 
     def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator = None):
