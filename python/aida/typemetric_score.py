@@ -16,8 +16,8 @@ class TypeMetricScore(Score):
         super().__init__(logger)
         self.run_id = run_id
         self.document_id = document_id
-        self.gold_cluster_id = gold_cluster_id if gold_cluster_id else 'None'
-        self.system_cluster_id = system_cluster_id if system_cluster_id else 'None'
+        self.gold_cluster_id = gold_cluster_id if gold_cluster_id is not None else 'None'
+        self.system_cluster_id = system_cluster_id if system_cluster_id is not None else 'None'
         self.precision = precision
         self.recall = recall
         self.f1 = f1
