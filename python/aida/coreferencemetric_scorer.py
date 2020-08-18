@@ -26,10 +26,10 @@ class CoreferenceMetricScorer(Scorer):
 
     def get_max_total_similarity(self, document_id):
         max_total_similarity = 0
-        for cluster_id in self.get('cluster_alignment').get('gold_to_system'):
+        for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):
             metatype = self.get('metatype', 'gold', cluster_id)
             if metatype != 'Relation':
-                max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(cluster_id).get('aligned_similarity'))
+                max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
         return max_total_similarity
 
     def get_metatype(self, system_or_gold, cluster_id):
@@ -40,9 +40,9 @@ class CoreferenceMetricScorer(Scorer):
 
     def get_total_self_similarity(self, system_or_gold, document_id):
         total_self_similarity = 0
-        for cluster_id in self.get('cluster_self_similarities').get(system_or_gold):
+        for cluster_id in self.get('cluster_self_similarities').get(system_or_gold).get(document_id):
             metatype = self.get('metatype', system_or_gold, cluster_id)
-            self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(cluster_id)
+            self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
             if metatype != 'Relation':
                 total_self_similarity += float(self_similarity)
         return total_self_similarity
