@@ -7,7 +7,7 @@ __version__ = "0.0.0.1"
 __date__    = "17 August 2020"
 
 from aida.scorer import Scorer
-from aida.coreferencemetric_score import CoreferenceMetricScore
+from aida.coreference_metric_score import CoreferenceMetricScore
 from aida.score_printer import ScorePrinter
 
 class CoreferenceMetricScorer(Scorer):

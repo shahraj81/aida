@@ -10,8 +10,8 @@ __date__    = "3 February 2020"
 
 from aida.object import Object
 from aida.container import Container
-from aida.coreferencemetric_scorer import CoreferenceMetricScorer
-from aida.typemetric_scorer import TypeMetricScorer
+from aida.coreference_metric_scorer import CoreferenceMetricScorer
+from aida.type_metric_scorer import TypeMetricScorer
 
 import os
 

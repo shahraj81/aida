@@ -8,7 +8,7 @@ __date__    = "18 August 2020"
 
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
-from aida.typemetric_score import TypeMetricScore
+from aida.type_metric_score import TypeMetricScore
 from aida.utility import get_precision_recall_and_f1
 
 class TypeMetricScorer(Scorer):
