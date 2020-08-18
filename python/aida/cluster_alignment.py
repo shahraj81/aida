@@ -27,9 +27,12 @@ class ClusterAlignment(Object):
         logger = self.get('logger')
         for filename in sorted(os.listdir(self.get('directory')), key=str):
             filename_including_path = '{}/{}'.format(self.get('directory'), filename)
+            document_id = filename.replace('.tab', '')
             for entry in FileHandler(logger, filename_including_path):
                 system_cluster = entry.get('system_cluster')
                 gold_cluster = entry.get('gold_cluster')
                 similarity = entry.get('similarity')
-                self.get('system_to_gold').add(key=system_cluster, value={'aligned_to': gold_cluster, 'aligned_similarity': similarity})
-                self.get('gold_to_system').add(key=gold_cluster, value={'aligned_to': system_cluster, 'aligned_similarity': similarity})
+                document_system_to_gold = self.get('system_to_gold').get(document_id, default=Container(logger))
+                document_gold_to_system = self.get('gold_to_system').get(document_id, default=Container(logger))
+                document_system_to_gold.add(key=system_cluster, value={'aligned_to': gold_cluster, 'aligned_similarity': similarity})
+                document_gold_to_system.add(key=gold_cluster, value={'aligned_to': system_cluster, 'aligned_similarity': similarity})
