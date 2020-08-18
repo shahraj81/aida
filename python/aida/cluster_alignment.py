@@ -4,7 +4,7 @@ AIDA class containing alignment between gold and system clusters.
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
-__date__    = "20 July 2020"
+__date__    = "17 August 2020"
 
 from aida.container import Container
 from aida.file_handler import FileHandler

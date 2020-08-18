@@ -17,32 +17,56 @@ class CoreferenceMetricScorer(Scorer):
     
     printing_specs = [{'name': 'document_id',      'header': 'DocID',   'format': 's', 'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',   'format': 's', 'justify': 'L'},
-                      {'name': 'precision',        'header': 'Prec',    'format': '6.4f', 'justify': 'R', 'mean_format': '%4.2f'},
-                      {'name': 'recall',           'header': 'Recall',  'format': '6.4f', 'justify': 'R', 'mean_format': '%4.2f'},
-                      {'name': 'f1',               'header': 'F1',      'format': '6.4f', 'justify': 'R', 'mean_format': '%4.2f'}]
+                      {'name': 'precision',        'header': 'Prec',    'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
+                      {'name': 'recall',           'header': 'Recall',  'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
+                      {'name': 'f1',               'header': 'F1',      'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
-    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, separator=None):
-        super().__init__(logger, gold_responses, system_responses, cluster_alignment, separator)
+    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
+        super().__init__(logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
 
     def get_core_documents(self):
         return self.get('gold_responses').get('document_mappings').get('core_documents')
 
+    def get_max_total_similarity(self, document_id):
+        max_total_similarity = 0
+        for cluster_id in self.get('cluster_alignment').get('gold_to_system'):
+            max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(cluster_id).get('aligned_similarity'))
+        return max_total_similarity
+
+    def get_total_self_similarity(self, system_or_gold, document_id):
+        total_self_similarity = 0
+        for self_similarity in self.get('cluster_self_similarities').get(system_or_gold).values():
+            total_self_similarity += float(self_similarity)
+        return total_self_similarity
+
     def score_responses(self):
         scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
-
-        # TODO: add details
-
+        mean_f1 = 0
         for document_id in self.get('core_documents'):
-            precision = 1
-            recall = 1
-            f1 = 1
+            max_total_similarity = self.get('max_total_similarity', document_id)
+            total_self_similarity_gold = self.get('total_self_similarity', 'gold', document_id)
+            total_self_similarity_system = self.get('total_self_similarity', 'system', document_id)
+
+            precision = max_total_similarity / total_self_similarity_system
+            recall = max_total_similarity / total_self_similarity_gold
+            f1 = 2 * precision * recall / (precision + recall)
             score = CoreferenceMetricScore(self.logger,
                                    self.get('runid'),
                                    document_id,
                                    precision,
                                    recall,
                                    f1)
+            mean_f1 += f1
             scores.add(score)
+        mean_f1 = mean_f1 / len(self.get('core_documents').keys())
+        mean_score = CoreferenceMetricScore(self.logger,
+                                   self.get('runid'),
+                                   'Summary',
+                                   '',
+                                   '',
+                                   mean_f1,
+                                   summary = True)
+        scores.add(mean_score)
         self.scores = scores
 
     def print_scores(self, filename):

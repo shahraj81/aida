@@ -23,11 +23,12 @@ class ScoresManager(Object):
         'CoreferenceMetric': CoreferenceMetricScorer,
         }
 
-    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, separator = None):
+    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator = None):
         super().__init__(logger)
         self.gold_responses = gold_responses
         self.system_responses = system_responses
         self.cluster_alignment = cluster_alignment
+        self.cluster_self_similarities = cluster_self_similarities
         self.separator = separator
         self.scores = Container(logger)
         self.score_responses()
@@ -38,6 +39,7 @@ class ScoresManager(Object):
                                     self.get('gold_responses'),
                                     self.get('system_responses'),
                                     self.get('cluster_alignment'),
+                                    self.get('cluster_self_similarities'),
                                     self.get('separator'))
             self.get('scores').add(key=metric, value=scorer)
 

@@ -8,6 +8,7 @@ __version__ = "1.0.0.1"
 __date__    = "17 August 2020"
 
 from aida.cluster_alignment import ClusterAlignment
+from aida.cluster_self_similarities import ClusterSelfSimilarities
 from aida.core_documents import CoreDocuments
 from aida.document_mappings import DocumentMappings
 from aida.encodings import Encodings
@@ -42,7 +43,8 @@ def check_paths(args):
                  args.video_boundaries,
                  args.gold,
                  args.system,
-                 args.alignment
+                 args.alignment,
+                 args.similarities
                  ])
     check_for_paths_non_existance([args.scores])
 
@@ -81,7 +83,8 @@ def score_submission(args):
     gold_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.gold, 'gold')
     system_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.system, args.runid)
     cluster_alignment = ClusterAlignment(logger, args.alignment)
-    scores = ScoresManager(logger, gold_responses, system_responses, cluster_alignment, args.separator)
+    cluster_self_similarities = ClusterSelfSimilarities(logger, args.similarities)
+    scores = ScoresManager(logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, args.separator)
     scores.print_scores(args.scores)
     exit(ALLOK_EXIT_CODE)
 
@@ -103,6 +106,7 @@ if __name__ == '__main__':
     parser.add_argument('gold', type=str, help='Directory containing gold information.')
     parser.add_argument('system', type=str, help='Directory containing system information.')
     parser.add_argument('alignment', type=str, help='Directory containing alignment information.')
+    parser.add_argument('similarities', type=str, help='Directory containing similarity information.')
     parser.add_argument('runid', type=str, help='Run ID of the system being scored')
     parser.add_argument('scores', type=str, help='Specify a directory to which the scores should be written.')
     args = parser.parse_args()
