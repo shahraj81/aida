@@ -87,4 +87,3 @@ class TypeMetricScorer(Scorer):
                                    summary = True)
         scores.add(mean_score)
         self.scores = scores
-
