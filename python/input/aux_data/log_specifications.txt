@@ -22,6 +22,7 @@ CRITICAL  KEY_IS_NONE                     key 'None' used
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
 ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
 WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing '{}' in '{}'
+ERROR     MISSING_GOLD_FRAME              Gold {} {} in document {} has no arguments
 ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
