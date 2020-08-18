@@ -4,24 +4,22 @@ AIDA main scoring script
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
-__version__ = "0.0.0.1"
-__date__    = "15 January 2020"
+__version__ = "1.0.0.1"
+__date__    = "17 August 2020"
 
-# TODO: to be retired
-
-from aida.assessments import Assessments
-from aida.container import Container
+from aida.cluster_alignment import ClusterAlignment
 from aida.core_documents import CoreDocuments
 from aida.document_mappings import DocumentMappings
 from aida.encodings import Encodings
-from aida.file_handler import FileHandler
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.scores_manager import ScoresManager
+from aida.slot_mappings import SlotMappings
 from aida.logger import Logger
-from aida.query_set import QuerySet
+from aida.ontology_type_mappings import OntologyTypeMappings
 from aida.response_set import ResponseSet
 from aida.text_boundaries import TextBoundaries
+from aida.video_boundaries import VideoBoundaries
 
 import argparse
 import os
@@ -30,87 +28,83 @@ import sys
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
-def check_for_paths_existance(args):
-    for path in [args.encodings_filename,
-                 args.log_specifications_filename, 
-                 args.core_documents_filename,
-                 args.parent_children_filename,
-                 args.sentence_boundaries_filename,
-                 args.image_boundaries_filename,
-                 args.keyframe_boundaries_filename,
-                 args.queries_to_score_filename,
-                 args.queries_xml_filename,
-                 args.assessments_dir
-                 ]:
+def check_paths(args):
+    check_for_paths_existance([
+                 args.log_specifications,
+                 args.ontology_type_mappings,
+                 args.slot_mappings,
+                 args.encodings,
+                 args.core_documents,
+                 args.parent_children,
+                 args.sentence_boundaries,
+                 args.image_boundaries,
+                 args.keyframe_boundaries,
+                 args.video_boundaries,
+                 args.gold,
+                 args.system,
+                 args.alignment
+                 ])
+    check_for_paths_non_existance([args.scores])
+
+def check_for_paths_existance(paths):
+    for path in paths:
         if not os.path.exists(path):
             print('Error: Path {} does not exist'.format(path))
             exit(ERROR_EXIT_CODE)
 
-def score_submission(args):
-    logger = Logger(args.log, args.log_specifications_filename, sys.argv)
-    core_documents = CoreDocuments(logger, args.core_documents_filename)
-    encodings = Encodings(logger, args.encodings_filename)
-    document_mappings = DocumentMappings(logger, args.parent_children_filename, encodings, core_documents)
-    text_boundaries = TextBoundaries(logger, args.sentence_boundaries_filename)
-    image_boundaries = ImageBoundaries(logger, args.image_boundaries_filename)
-    keyframe_boundaries = KeyFrameBoundaries(logger, args.keyframe_boundaries_filename)
-    queries = QuerySet(logger, args.queries_xml_filename)
-    queries_to_score = Container(logger)
-    for entry in FileHandler(logger, args.queries_to_score_filename):
-        queries_to_score.add(entry.get('query_id'), entry.get('query_id'))
-    assessments = Assessments(logger, args.assessments_dir, queries.get('query_type'))
-    response_set = ResponseSet(logger, queries, document_mappings, text_boundaries, image_boundaries, keyframe_boundaries, queries_to_score, args.runs_dir, args.runid)
-    scores = ScoresManager(logger, args.runid, document_mappings, queries, response_set, assessments, queries_to_score, args.separator)
-    print(scores)
+def check_for_paths_non_existance(paths):
+    for path in paths:
+        if os.path.exists(path):
+            print('Error: Path {} exists'.format(path))
+            exit(ERROR_EXIT_CODE)
 
-# my $docid_mappings = DocumentIDsMappings->new($logger, $switches->get("docid_mappings"), CoreDocs->new($logger, $switches->get("coredocs")));
-# my $text_document_boundaries = TextDocumentBoundaries->new($logger, $switches->get("sentence_boundaries"));
-# my $images_boundingboxes = ImagesBoundingBoxes->new($logger, $switches->get("images_boundingboxes"));
-# my $keyframes_boundingboxes = KeyFramesBoundingBoxes->new($logger, $switches->get("keyframes_boundingboxes"));
-# my $queries = QuerySet->new($logger, $switches->get("queries_dtd"), $switches->get("queries_xml"));
-# my $queries_to_score = Container->new($logger);
-# map {$queries_to_score->add($_, $_->get("query_id"))}
-#       FileHandler->new($logger, $switches->get("queries"))->get("ENTRIES")->toarray();
+def score_submission(args):
+    logger = Logger(args.log, args.log_specifications, sys.argv)
+
+    ontology_type_mappings = OntologyTypeMappings(logger, args.ontology_type_mappings)
+    slot_mappings = SlotMappings(logger, args.slot_mappings)
+    document_mappings = DocumentMappings(logger,
+                                         args.parent_children,
+                                         Encodings(logger, args.encodings),
+                                         CoreDocuments(logger, args.core_documents))
+    text_boundaries = TextBoundaries(logger, args.sentence_boundaries)
+    image_boundaries = ImageBoundaries(logger, args.image_boundaries)
+    video_boundaries = VideoBoundaries(logger, args.video_boundaries)
+    keyframe_boundaries = KeyFrameBoundaries(logger, args.keyframe_boundaries)
+    document_boundaries = {
+        'text': text_boundaries,
+        'image': image_boundaries,
+        'keyframe': keyframe_boundaries,
+        'video': video_boundaries
+        }
     
+    gold_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.gold, 'gold')
+    system_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.system, args.runid)
+    cluster_alignment = ClusterAlignment(logger, args.alignment)
+    scores = ScoresManager(logger, gold_responses, system_responses, cluster_alignment, args.separator)
+    scores.print_scores(args.scores)
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Score the AIDA submission")
-    # optional arguments
-    parser.add_argument('-l', '--log', default='log.txt', 
-                        help='Specify a file to which log output should be redirected (default: %(default)s)')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
-                        help='Print version number and exit')
-    parser.add_argument('-s', '--strategy', default='strategy-1', choices=['strategy-1', 'strategy-2'],
-                        help='Scoring strategy? (default: %(default)s)')
-    parser.add_argument('-S', '--separator', default='pretty', choices=['pretty', 'tab', 'space'],
-                        help='Column separator for scorer output? (default: %(default)s)')
-    # positional arguments
-    parser.add_argument('log_specifications_filename', type=str,
-                        help='File containing error specifications')
-    parser.add_argument('encodings_filename', type=str,
-                        help='File containing list of encoding to modality mappings')
-    parser.add_argument('core_documents_filename', type=str,
-                        help='File containing list of core documents to be included in the pool')
-    parser.add_argument('parent_children_filename', type=str,
-                        help='DocumentID to DocumentElementID mappings file')
-    parser.add_argument('sentence_boundaries_filename', type=str,
-                        help='File containing sentence boundaries')
-    parser.add_argument('image_boundaries_filename', type=str,
-                        help='File containing image bounding boxes')
-    parser.add_argument('keyframe_boundaries_filename', type=str,
-                        help='File containing keyframe bounding boxes')
-    parser.add_argument('queries_to_score_filename', type=str,
-                        help='File containing queryids to be scored')
-    parser.add_argument('queries_xml_filename', type=str,
-                        help='XML file containing queries')
-    parser.add_argument('assessments_dir', type=str,
-                        help='Directory containing assessments package as received from LDC')
-    parser.add_argument('runs_dir', type=str,
-                        help='Directory containing runs')
-    parser.add_argument('runid', type=str,
-                        help='Run ID of the system being scored')
-    # parse arguments    
+    parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+    parser.add_argument('-S', '--separator', default='pretty', choices=['pretty', 'tab', 'space'], help='Column separator for scorer output? (default: %(default)s)')
+    parser.add_argument('log_specifications', type=str, help='File containing error specifications')
+    parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
+    parser.add_argument('slot_mappings', type=str, help='File containing slot mappings')
+    parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
+    parser.add_argument('core_documents', type=str, help='File containing list of core documents')
+    parser.add_argument('parent_children', type=str, help='DocumentID to DocumentElementID mappings file')
+    parser.add_argument('sentence_boundaries', type=str, help='File containing sentence boundaries')
+    parser.add_argument('image_boundaries', type=str, help='File containing image bounding boxes')
+    parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
+    parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
+    parser.add_argument('gold', type=str, help='Directory containing gold information.')
+    parser.add_argument('system', type=str, help='Directory containing system information.')
+    parser.add_argument('alignment', type=str, help='Directory containing alignment information.')
+    parser.add_argument('runid', type=str, help='Run ID of the system being scored')
+    parser.add_argument('scores', type=str, help='Specify a directory to which the scores should be written.')
     args = parser.parse_args()
-    check_for_paths_existance(args)
+    check_paths(args)
     score_submission(args)

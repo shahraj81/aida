@@ -9,44 +9,41 @@ __date__    = "3 February 2020"
 # TODO: to be retired
 
 from aida.object import Object
-from aida.class_scorer import ClassScorer
-from aida.graph_scorer import GraphScorer
+from aida.container import Container
+from aida.coreferencemetric_scorer import CoreferenceMetricScorer
+
+import os
 
 class ScoresManager(Object):
     """
     AIDA class for managing scores.
     """
     
-    scorer = {
-        'ClassQuery': ClassScorer,
-        'GraphQuery': GraphScorer
+    metrics = {
+        'CoreferenceMetric': CoreferenceMetricScorer,
         }
 
-    def __init__(self, logger, runid, document_mappings, queries, response_set, assessments, queries_to_score, separator = None):
+    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, separator = None):
         super().__init__(logger)
-        self.runid = runid
-        self.document_mappings = document_mappings
-        self.queries = queries
-        self.response_set = response_set
-        self.assessments = assessments
-        self.query_type = queries.get('query_type')
-        self.queries_to_score = queries_to_score
+        self.gold_responses = gold_responses
+        self.system_responses = system_responses
+        self.cluster_alignment = cluster_alignment
         self.separator = separator
+        self.scores = Container(logger)
         self.score_responses()
-    
+
     def score_responses(self):
-        logger, runid, document_mappings, queries, responses, assessments, queries_to_score, separator = map(lambda arg: self.get(arg),
-                                                                                                  ['logger',
-                                                                                                   'runid',
-                                                                                                   'document_mappings',
-                                                                                                   'queries',
-                                                                                                   'responses',
-                                                                                                   'assessments',
-                                                                                                   'queries_to_score',
-                                                                                                   'separator'
-                                                                                                   ])
-        
-        self.scores = self.scorer[self.query_type](logger, runid, document_mappings, queries, responses, assessments, queries_to_score, separator)
-    
-    def __str__(self):
-        return self.get('scores').__str__()
+        for metric in self.get('metrics'):
+            scorer = self.get('metrics')[metric](self.get('logger'),
+                                    self.get('gold_responses'),
+                                    self.get('system_responses'),
+                                    self.get('cluster_alignment'),
+                                    self.get('separator'))
+            self.get('scores').add(key=metric, value=scorer)
+
+    def print_scores(self, output_directory):
+        os.mkdir(output_directory)
+        for metric in self.get('scores'):
+            scores = self.get('scores').get(metric)
+            output_file = '{}/{}-scores.txt'.format(output_directory, metric)
+            scores.print_scores(output_file)
