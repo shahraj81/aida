@@ -23,3 +23,14 @@ class Scorer(Object):
         self.cluster_self_similarities = cluster_self_similarities
         self.separator = separator
         self.score_responses()
+
+    def get_core_documents(self):
+        return self.get('gold_responses').get('document_mappings').get('core_documents')
+
+    def print_scores(self, filename):
+        fh = open(filename, 'w')
+        fh.write(self.__str__())
+        fh.close()
+
+    def __str__(self):
+        return self.get('scores').__str__()

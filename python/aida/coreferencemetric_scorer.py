@@ -24,9 +24,6 @@ class CoreferenceMetricScorer(Scorer):
     def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
         super().__init__(logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
 
-    def get_core_documents(self):
-        return self.get('gold_responses').get('document_mappings').get('core_documents')
-
     def get_max_total_similarity(self, document_id):
         max_total_similarity = 0
         for cluster_id in self.get('cluster_alignment').get('gold_to_system'):
@@ -79,11 +76,3 @@ class CoreferenceMetricScorer(Scorer):
                                    summary = True)
         scores.add(mean_score)
         self.scores = scores
-
-    def print_scores(self, filename):
-        fh = open(filename, 'w')
-        fh.write(self.__str__())
-        fh.close()
-
-    def __str__(self):
-        return self.get('scores').__str__()
