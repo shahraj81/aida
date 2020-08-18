@@ -22,9 +22,9 @@ class ScoresManager(Object):
     """
     
     metrics = {
-#         'CoreferenceMetric': CoreferenceMetricScorer,
+        'CoreferenceMetric': CoreferenceMetricScorer,
         'FrameMetric': FrameMetricScorer,
-#         'TypeMetric': TypeMetricScorer,
+        'TypeMetric': TypeMetricScorer,
         }
 
     def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator = None):
