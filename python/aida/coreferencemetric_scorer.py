@@ -30,13 +30,24 @@ class CoreferenceMetricScorer(Scorer):
     def get_max_total_similarity(self, document_id):
         max_total_similarity = 0
         for cluster_id in self.get('cluster_alignment').get('gold_to_system'):
-            max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(cluster_id).get('aligned_similarity'))
+            metatype = self.get('metatype', 'gold', cluster_id)
+            if metatype != 'Relation':
+                max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(cluster_id).get('aligned_similarity'))
         return max_total_similarity
+
+    def get_metatype(self, system_or_gold, cluster_id):
+        metatype = self.get('cluster_self_similarities').get('cluster_to_metatype').get('{}:{}'.format(system_or_gold.upper(), cluster_id))
+        if metatype not in ['Event', 'Relation', 'Entity']:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected metatype: {} for {}:{}'.format(metatype, system_or_gold.upper(), cluster_id), self.get('code_location'))
+        return metatype
 
     def get_total_self_similarity(self, system_or_gold, document_id):
         total_self_similarity = 0
-        for self_similarity in self.get('cluster_self_similarities').get(system_or_gold).values():
-            total_self_similarity += float(self_similarity)
+        for cluster_id in self.get('cluster_self_similarities').get(system_or_gold):
+            metatype = self.get('metatype', system_or_gold, cluster_id)
+            self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(cluster_id)
+            if metatype != 'Relation':
+                total_self_similarity += float(self_similarity)
         return total_self_similarity
 
     def score_responses(self):

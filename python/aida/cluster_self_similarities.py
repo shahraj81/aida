@@ -19,6 +19,7 @@ class ClusterSelfSimilarities(Object):
     def __init__(self, logger, similarities_directory):
         super().__init__(logger)
         self.directory = similarities_directory
+        self.cluster_to_metatype = Container(logger)
         self.gold = Container(logger)
         self.system = Container(logger)
         self.load()
@@ -28,9 +29,12 @@ class ClusterSelfSimilarities(Object):
         for filename in sorted(os.listdir(self.get('directory')), key=str):
             filename_including_path = '{}/{}'.format(self.get('directory'), filename)
             for entry in FileHandler(logger, filename_including_path):
+                metatype = entry.get('metatype')
                 system_or_gold = entry.get('system_or_gold')
                 cluster1 = entry.get('cluster1')
                 cluster2 = entry.get('cluster2')
                 similarity = entry.get('similarity')
                 if similarity == 0 or cluster1 != cluster2: continue
+                self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold.upper(), cluster1), value=metatype)
+                self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold.upper(), cluster1), value=metatype)
                 self.get(system_or_gold).add(key=cluster1, value=similarity)
