@@ -303,7 +303,7 @@ class Mention(Object):
                                              self.get('document_element_id'),
                                              None,
                                              self.get('document_element_modality'),
-                                             entry.get('mediamention_signaltype'),
+                                             'picture',
                                              entry.get('mediamention_starttime'),
                                              0,
                                              entry.get('mediamention_endtime'),
