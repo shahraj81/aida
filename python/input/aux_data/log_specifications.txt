@@ -50,6 +50,8 @@ ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', pr
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
+ERROR     UNEXPECTED_NUM_OF_REL_FILLERS   Unexpected number of filler(s) for relation {} (expected '2', provided '{}')
+CRITICAL  UNEXPECTED_SPAN_FORMAT          Unexpected span format: {}
 CRITICAL  UNEXPECTED_SPAN_TYPE            Unexpected span (expected one from [{}], provided '{}')
 ERROR     UNEXPECTED_VALUE                Unexpected {}: {}
 ERROR     UNEXPECTED_SUBJECT_TYPE         Type '{}' of subject '{}' used in predicate is not one of its asserted types
