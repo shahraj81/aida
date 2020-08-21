@@ -464,7 +464,7 @@ class ResponseSet(Container):
             self.get('document_frames').add(key=document_id, value=Container(logger))
         document_frames = self.get('document_frames').get(document_id)
         if frame_id not in document_frames:
-            frame = EventOrRelationFrame(logger, frame_id)
+            frame = EventOrRelationFrame(logger, frame_id, entry.get('where'))
             document_frames.add(key=frame_id, value=frame)
         frame = document_frames.get(frame_id)
         return frame
