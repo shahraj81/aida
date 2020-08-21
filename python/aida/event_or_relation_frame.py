@@ -13,12 +13,13 @@ from aida.object import Object
 
 class EventOrRelationFrame(Object):
 
-    def __init__(self, logger, ID):
+    def __init__(self, logger, ID, where):
         super().__init__(logger)
         self.ID = ID
         self.metatype = None
         self.role_fillers = {}
         self.types = {}
+        self.where = where
 
     def get_number_of_fillers(self):
         number_of_fillers = 0
@@ -45,8 +46,11 @@ class EventOrRelationFrame(Object):
         (1) a relation, and (2) has two fillers.
         """
         if self.get('metatype') != 'Relation': return False
-        if self.get('number_of_fillers') == 2: return True
-        return False
+        number_of_fillers = self.get('number_of_fillers')
+        if number_of_fillers != 2:
+            self.record_event('UNEXPECTED_NUM_OF_REL_FILLERS', self.get('ID'), number_of_fillers, self.get('where'))
+            return False
+        return True
 
     def update(self, entry):
         event_or_relation_type, rolename = entry.get('?predicate').split('_')

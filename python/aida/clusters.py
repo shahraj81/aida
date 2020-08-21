@@ -76,7 +76,8 @@ class Clusters(Object):
             if isinstance(system, Cluster):
                 system = self.get('frame', 'system', system.get('ID'))
             if gold and system:
-                return self.get('relation_similarity', gold, system)
+                if gold.is_alignable_relation() and system.is_alignable_relation():
+                    return self.get('relation_similarity', gold, system)
             return 0
         elif gold.get('metatype') in ['Entity', 'Event'] and system.get('metatype') in ['Entity', 'Event'] and gold.get('metatype') == system.get('metatype'):
             return self.get('entity_and_event_similarity', gold, system)
@@ -104,7 +105,7 @@ class Clusters(Object):
                 if found[rolename_and_filler] == 1:
                     num_fillers_aligned += 1
         if num_fillers_aligned > 2:
-            self.record_event('DEFAULT_CRITICAL_ERROR', 'num_fillers_aligned > 2')
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'num_fillers_aligned > 2: Gold frame: {}'.format(gold_frame.get('ID')))
         return 0 if num_fillers_aligned <= 1 else 1
 
     def get_metatype(self, gold_or_system, cluster_or_frame_id):
@@ -186,7 +187,7 @@ class Clusters(Object):
             # get edge_id
             frame_id = entry.get('?subject')
             if not frames.exists(frame_id):
-                frames.add(key=frame_id, value=EventOrRelationFrame(logger, frame_id))
+                frames.add(key=frame_id, value=EventOrRelationFrame(logger, frame_id, entry.get('where')))
             frame = frames.get(frame_id)
             frame.update(entry)
 
