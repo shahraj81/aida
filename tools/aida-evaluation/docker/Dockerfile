@@ -41,7 +41,7 @@ RUN dpkg-reconfigure -f noninteractive tzdata
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=9.3.2
+ARG version=9.3.3
 ARG edition=free
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
