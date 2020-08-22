@@ -1,0 +1,10 @@
+?metatype	?subject	?predicate	?object	?predicate_justification	?argument_assertion_confidence	?predicate_justification_confidence
+Event	cluster-NILV21835	Government.Vote.CastVote_Voter	cluster-NILE21842	KC003A7RG:KC003ADVE:(3368,0)-(3380,0)	"1.0"	"1.0"
+Event	cluster-NILV21835	Government.Vote.CastVote_Voter	cluster-NILE21843	KC003A7RG:KC003ADVE:(3820,0)-(3825,0)	"1.0"	"1.0"
+Event	cluster-NILV21836	Government.Vote.CastVote_Voter	cluster-NILE21845	KC003A7RG:KC003ADVE:(4039,0)-(4048,0)	"1.0"	"1.0"
+Relation	cluster-NILR21835	OrganizationAffiliation.EmploymentMembership.Employment_Employee	cluster-NILE21840	KC003A7RG:KC003ADVE:(3947,0)-(3956,0)	"1.0"	"1.0"
+Relation	cluster-NILR21835	OrganizationAffiliation.EmploymentMembership.Employment_PlaceOfEmployment	cluster-NILE21835	KC003A7RG:KC003ADVE:(3947,0)-(3956,0)	"1.0"	"1.0"
+Relation	cluster-NILR21836	OrganizationAffiliation.EmploymentMembership.Employment_Employee	cluster-NILE21838	KC003A7RG:KC003ADVE:(3751,0)-(3758,0)	"1.0"	"1.0"
+Relation	cluster-NILR21836	OrganizationAffiliation.EmploymentMembership.Employment_PlaceOfEmployment	cluster-NILE21837	KC003A7RG:KC003ADVE:(3751,0)-(3758,0)	"1.0"	"1.0"
+Relation	cluster-NILR21837	GeneralAffiliation.MemberOriginReligionEthnicity_EntityOrFiller	cluster-NILE21839	KC003A7RG:KC003ADVE:(3683,0)-(3692,0)	"1.0"	"1.0"
+Relation	cluster-NILR21837	GeneralAffiliation.MemberOriginReligionEthnicity_Person	cluster-NILE21841	KC003A7RG:KC003ADVE:(3683,0)-(3692,0)	"1.0"	"1.0"
