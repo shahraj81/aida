@@ -1,0 +1,9 @@
+?metatype	?subject	?predicate	?object	?predicate_justification	?argument_assertion_confidence	?predicate_justification_confidence
+Event	cluster-NILV21300	Life.Injure.InjuryCausedByViolentEvents_Victim	cluster-NILE21300	IC001VCIQ:IC001VCIS:(64.936,0)-(69.328,0)	"1.0"	"1.0"
+Event	cluster-NILV21301	Movement.TransportPerson.EvacuationRescue_Origin	cluster-NILE21302	IC001VCIQ:IC001VCIS:(69.313,0)-(77.414,0)	"1.0"	"1.0"
+Event	cluster-NILV21301	Movement.TransportPerson.EvacuationRescue_Passenger	cluster-NILE21300	IC001VCIQ:IC001VCIS:(64.936,0)-(69.231,0)	"1.0"	"1.0"
+Event	cluster-NILV21301	Movement.TransportPerson.EvacuationRescue_Passenger	cluster-NILE21301	IC001VCIQ:IC001VCIS:(69.313,0)-(77.414,0)	"1.0"	"1.0"
+Event	cluster-NILV21301	Movement.TransportPerson.EvacuationRescue_Transporter	cluster-NILE21303	IC001VCIQ:IC001VCIS:(64.936,0)-(69.231,0)	"1.0"	"1.0"
+Event	cluster-NILV21301	Movement.TransportPerson.EvacuationRescue_Transporter	cluster-NILE21304	IC001VCIQ:IC001VCIS:(64.936,0)-(69.231,0)	"1.0"	"1.0"
+Event	cluster-NILV21301	Movement.TransportPerson.EvacuationRescue_Transporter	cluster-NILE21305	IC001VCIQ:IC001VCIS:(64.936,0)-(69.231,0)	"1.0"	"1.0"
+Event	cluster-NILV21301	Movement.TransportPerson.EvacuationRescue_Transporter	cluster-NILE21306	IC001VCIQ:IC001VCIS:(64.936,0)-(69.231,0)	"1.0"	"1.0"
