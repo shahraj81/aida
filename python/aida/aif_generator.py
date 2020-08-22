@@ -93,7 +93,7 @@ def generate_cluster_triples(reference_kb_id, node):
     link_assertion_triples = []
     for node_id in node_ids:
         triples = """\
-            ldc:cluster-{node_name} aida:link _:blinkassertion{node_id} .
+            ldc:{prototype_name} aida:link _:blinkassertion{node_id} .
             _:blinkassertion{node_id} a aida:LinkAssertion .
             _:blinkassertion{node_id} aida:linkTarget "{reference_kb_id}:{node_id}" .
             _:blinkassertion{node_id} aida:system {system} .
@@ -101,7 +101,7 @@ def generate_cluster_triples(reference_kb_id, node):
             _:blinkassertion{node_id}-confidence a aida:Confidence .
             _:blinkassertion{node_id}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
             _:blinkassertion{node_id}-confidence aida:system {system} .
-        """.format(node_name = node.get('name'),
+        """.format(prototype_name = prototype.get('name'),
                    reference_kb_id = reference_kb_id,
                    node_id = node_id,
                    system = SYSTEM_NAME
