@@ -48,6 +48,8 @@ def main(args):
     # AUX-data
     #############################################################################################
 
+    python_scripts          = '/scripts/aida/python'
+    log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
     logs_directory          = '{output}/{logs}'.format(output=args.output, logs=args.logs)
     run_log_file            = '{logs_directory}/run.log'.format(logs_directory=logs_directory)
     ontology_type_mappings  = '/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
@@ -64,7 +66,7 @@ def main(args):
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
     sparql_filtered_output  = '{output}/SPARQL-FILTERED-output'.format(output=args.output)
-    sparql_valid_output     = '{output}/SPARQL-valid-output'.format(output=args.output)
+    sparql_valid_output     = '{output}/SPARQL-VALID-output'.format(output=args.output)
     alignment               = '{output}/alignment'.format(output=args.output)
     similarities            = '{output}/similarities'.format(output=args.output)
     scores                  = '{output}/scores'.format(output=args.output)
@@ -150,7 +152,7 @@ def main(args):
     # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /queries/{task}_*_queries/*.rq {queries}'.format(task=args.task, queries=queries))
+    call_system('cp /queries/*.rq {queries}'.format(task=args.task, queries=queries))
 
     num_total = len([d for d in kbs if kbs[d] == 1])
     count = 0;
@@ -207,7 +209,7 @@ def main(args):
             {log_specifications} \
             {sparql_output} \
             {sparql_clean_output}'.format(python_scripts=python_scripts,
-                                          log_specifications=args.spec,
+                                          log_specifications=log_specifications,
                                           sparql_output = sparql_output,
                                           sparql_clean_output = sparql_clean_output)
     call_system(cmd)
@@ -218,9 +220,6 @@ def main(args):
 
     record_and_display_message(logger, 'Validating SPARQL output.')
 
-    # create directory for valid SPARQL output
-    call_system('mkdir {sparql_valid_output}'.format(sparql_valid_output=sparql_valid_output))
-    
     log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
             python3 validate_responses.py \
@@ -239,7 +238,7 @@ def main(args):
             {sparql_clean_output} \
             {sparql_valid_output}'.format(python_scripts=python_scripts,
                                           log_file=log_file,
-                                          log_specifications=args.spec,
+                                          log_specifications=log_specifications,
                                           ontology_type_mappings=ontology_type_mappings,
                                           slotname_mappings=slotname_mappings,
                                           encoding_modality=encoding_modality,
@@ -260,9 +259,6 @@ def main(args):
 
     record_and_display_message(logger, 'Filtering SPARQL output.')
 
-    # create directory for valid SPARQL output
-    call_system('mkdir {sparql_filtered_output}'.format(sparql_filtered_output=sparql_filtered_output))
-
     log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
             python3 filter_responses.py \
@@ -282,7 +278,7 @@ def main(args):
             {sparql_valid_output} \
             {sparql_filtered_output}'.format(python_scripts=python_scripts,
                                              log_file=log_file,
-                                             log_specifications=args.spec,
+                                             log_specifications=log_specifications,
                                              ontology_type_mappings=ontology_type_mappings,
                                              slotname_mappings=slotname_mappings,
                                              encoding_modality=encoding_modality,
@@ -320,8 +316,9 @@ def main(args):
             {gold_filtered_responses} \
             {sparql_filtered_output} \
             {similarities} \
-            {alignment}'.format(log_file=log_file,
-                                log_specifications=args.spec,
+            {alignment}'.format(python_scripts=python_scripts,
+                                log_file=log_file,
+                                log_specifications=log_specifications,
                                 encoding_modality=encoding_modality,
                                 coredocs=coredocs_13,
                                 parent_children=parent_children,
@@ -361,8 +358,9 @@ def main(args):
             {alignment} \
             {similarities} \
             {run_id} \
-            {scores}'.format(log_file=log_file,
-                                log_specifications=args.spec,
+            {scores}'.format(python_scripts=python_scripts,
+                                log_file=log_file,
+                                log_specifications=log_specifications,
                                 ontology_type_mappings = ontology_type_mappings,
                                 slotname_mappings=slotname_mappings,
                                 encoding_modality=encoding_modality,
