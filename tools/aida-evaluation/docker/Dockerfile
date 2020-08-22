@@ -10,10 +10,17 @@ RUN apt-get update && apt-get install -y \
     git \
     make \
     python3 \
+    python3-pip \
     unzip \
     perlbrew \
     tzdata \
     vim
+
+#-------------------------------------------------------------
+# Install munkres
+#-------------------------------------------------------------
+
+RUN pip3 install munkres
 
 #-------------------------------------------------------------
 #  Install Java OpenJDK 8
@@ -34,7 +41,7 @@ RUN dpkg-reconfigure -f noninteractive tzdata
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=8.2.1
+ARG version=9.3.3
 ARG edition=free
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
@@ -46,15 +53,15 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 RUN mkdir scripts
 RUN mkdir AUX-data
 
-COPY ./AUX-data/M18/AIDA_Phase1_Evaluation_Queries_V8.tgz /tmp/
-COPY ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz /tmp/
-COPY ./AUX-data/M18/graphdb-${edition}-${version}-dist.zip /tmp/
+COPY ./AUX-data/M36-practice/AUX-data/ /AUX-data
+COPY ./AUX-data/M36-practice/gold/ /gold
+COPY ./AUX-data/M36-practice/queries/ /queries
 COPY ./scripts/run.py /scripts/
 COPY ./scripts/logger.py /scripts/
 COPY ./scripts/log_specifications.txt /scripts/
 COPY ./scripts/Makefile /scripts/
-COPY ./AUX-data/M18/LDC2019E42* /AUX-data/
-COPY ./AUX-data/M18/task1_*_queryids.txt /AUX-data/
+
+COPY ./AUX-data/M36-practice/graphdb-${edition}-${version}-dist.zip /tmp/
 
 WORKDIR /tmp
 
@@ -66,14 +73,6 @@ RUN mkdir -p ${GRAPHDB_PARENT_DIR} && \
     mkdir -p ${GRAPHDB_HOME}
 
 RUN mkdir $SPARQL_EVAL_HOME
-
-RUN tar -zxf AIDA_Phase1_Evaluation_Queries_V8.tgz
-RUN mv AIDA_Phase1_Evaluation_Queries_V8 /queries
-RUN rm AIDA_Phase1_Evaluation_Queries_V8.tgz
-RUN tar -zxf LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
-RUN mv LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1 /AUX-data/
-
-COPY ./AUX-data/M18/*.dtd /queries/
 
 # Install JSON
 
@@ -88,7 +87,7 @@ RUN git clone https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
-RUN git checkout AIDAQA-v2019.2.5
+RUN git checkout AIDAED-v2020.0.1
 
 #-------------------------------------------------------------
 # Install SPARQL Evaluation Tool

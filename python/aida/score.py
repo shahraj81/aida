@@ -14,6 +14,3 @@ class Score(Object):
     """
     def __init__(self, logger):
         super().__init__(logger)
-        
-    def get_num_counted(self):
-        return self.get('num_right') + self.get('num_wrong')

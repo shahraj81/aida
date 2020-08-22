@@ -14,13 +14,23 @@ class Scorer(Object):
     AIDA Scorer class.
     """
 
-    def __init__(self, logger, runid, document_mappings, queries, response_set, assessments, queries_to_score, separator=None):
+    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
         super().__init__(logger)
-        self.runid = runid
-        self.document_mappings = document_mappings
-        self.queries = queries
-        self.response_set = response_set
-        self.assessments = assessments
-        self.queries_to_score = queries_to_score
+        self.runid = system_responses.get('runid')
+        self.gold_responses = gold_responses
+        self.system_responses = system_responses
+        self.cluster_alignment = cluster_alignment
+        self.cluster_self_similarities = cluster_self_similarities
         self.separator = separator
         self.score_responses()
+
+    def get_core_documents(self):
+        return self.get('gold_responses').get('document_mappings').get('core_documents')
+
+    def print_scores(self, filename):
+        fh = open(filename, 'w')
+        fh.write(self.__str__())
+        fh.close()
+
+    def __str__(self):
+        return self.get('scores').__str__()

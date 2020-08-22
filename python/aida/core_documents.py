@@ -10,8 +10,6 @@ __date__    = "15 January 2020"
 from aida.container import Container
 from aida.file_handler import FileHandler
 
-import re
-
 class CoreDocuments(Container):
     """
     The container to hold CoreDocuments.

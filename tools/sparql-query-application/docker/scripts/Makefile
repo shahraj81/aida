@@ -24,7 +24,7 @@ run-sparql-over-a-kb:
 	@echo "--waiting for GraphDB"
 	sleep 5
 	@echo "--applying queries"
-	java -jar $(VERDI_SPARQL_EVAL_JAR) \
+	java -Xmx4096M -jar $(VERDI_SPARQL_EVAL_JAR) \
 	                -c $(REPOSITORY_CONFIG) \
 	                -q $(QUERIES)/ \
 	                -o $(INTERMEDIATE)/

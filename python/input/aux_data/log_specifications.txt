@@ -1,38 +1,60 @@
 type      code                            message
+INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 ERROR     DEFAULT_ERROR                   Error encountered {} {}
 WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
+INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
 CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
+ERROR     IMPROPER_RELATION               Relation '{}' has more than two fillers
+ERROR     INCOMPATIBLE_TYPES              '{}' has incompatible types '{}'
 WARNING   INVALID_CONFIDENCE              Invalid confidence value '{}' (using 1.0)
+ERROR     INVALID_DATE                    Cluster {} has invalid {} {}
+ERROR     INVALID_DATE_RANGE              Cluster {} has invalid date range: {} > {}
+ERROR     INVALID_METATYPE                Invalid metatype (expected one from '{}', provided '{}')
+ERROR     INVALID_PREDICATE_NO_UNDERSCORE No underscore provided in predicate '{}'
+ERROR     INVALID_PROVENANCE_FORMAT       Invalid provenance '{}'
 WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is invalid
 CRITICAL  KEY_IS_NONE                     key 'None' used
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
+ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
+WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing '{}' in '{}'
+ERROR     MISSING_GOLD_FRAME              Gold {} '{}' in document {} has no arguments
 ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
-ERROR     MISSING_ITEM_WITHOUT_KEY        '{}' not found
+ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
+ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
+ERROR     MULTIPLE_METATYPES              Multiple metatypes '{}' and '{} for '{}'
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
 CRITICAL  NO_SPECS                        No specifications available for '{}'
 ERROR     NOT_AN_NUMBER                   '{}' is not a number
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
-ERROR     SPAN_OFF_BOUNDARY               Span '{}' is outside the boundary '{}' of document element '{}'
+INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
+WARNING   SPAN_OFF_BOUNDARY               Span '{}' is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
-ERROR     UNKNOWN_ITEM                    Unknown '{}' '{}' in response
+ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
-CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for '{}'
+ERROR     UNKNOWN_PREDICATE               Unknown predicate '{}'
+CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
+ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\
+ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
+ERROR     UNEXPECTED_NUM_OF_REL_FILLERS   Unexpected number of filler(s) for relation {} (expected '2', provided '{}')
+CRITICAL  UNEXPECTED_SPAN_FORMAT          Unexpected span format: {}
 CRITICAL  UNEXPECTED_SPAN_TYPE            Unexpected span (expected one from [{}], provided '{}')
+ERROR     UNEXPECTED_VALUE                Unexpected {}: {}
+ERROR     UNEXPECTED_SUBJECT_TYPE         Type '{}' of subject '{}' used in predicate is not one of its asserted types
 WARNING   MISSING_SPAN_FOR_MENTION        No span for mention '{}'
 WARNING   ARBITRARY_INF_JUSTIFICATION     Unable to select a single informative justification deterministically for node/mention '{}'; picking one arbitrarily
 CRITICAL  UNEXPECTED_NUM_INF_JUSTIFICATIONS Unexpected number of informative justifications

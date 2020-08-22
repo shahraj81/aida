@@ -175,7 +175,7 @@ class Annotations(Object):
                 else:
                     node.add_mention(mention)
                 mention.add_node(node)
-        
+
     def load_annotations(self):
         """
         Loads the annotations.
@@ -189,10 +189,22 @@ class Annotations(Object):
                         self.record_event("UNDEFINED_METHOD", method_name, self.get_code_location())
                     filename = "{}/data/{}/{}_{}.tab".format(self.annotations_dir, topic_id, topic_id, file_type)
                     method(filename)
+        self.patch()
 
-        # record nodes that is a subject of any argument assertion
-        for slot in self.get('slots').values():
-            subject_mention = slot.get('subject')
-            for subject_node_id in subject_mention.get('nodes'):
-                subject_node = subject_mention.get('nodes').get(subject_node_id)
-                self.get('subject_nodes')[subject_node_id] = subject_node
+    def patch(self):
+        """
+        Patch the annotations.
+
+        The following patches are applied:
+
+            1. Create nodes for non-negated mentions not in the linking table.
+        """
+        node_num = 1001;
+        for mention in self.get('mentions').values():
+            if len(mention.get('nodes')) == 0:
+                node_id = 'AUTO{}'.format(node_num)
+                node_metatype = mention.get('node_metatype')
+                node = Node(self.logger, node_id, node_metatype, [mention])
+                self.nodes[node_id] = node
+                mention.add_node(node)
+                node_num = node_num + 1

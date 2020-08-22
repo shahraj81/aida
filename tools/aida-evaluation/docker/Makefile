@@ -1,10 +1,10 @@
 ROOT=/absolute/path/to/aida/tools/aida-evaluation
-RUNS=$(ROOT)/M18-data/runs
-SCORES=$(ROOT)/M18-data/scores
-RUNID=task1-team-alpha-run-5
+RUNS=$(ROOT)/M36-practice/runs
+SCORES=$(ROOT)/M36-practice/scores
+RUNID=example-run
 HOST_INPUT_DIR=$(RUNS)/$(RUNID)
 HOST_OUTPUT_DIR=$(SCORES)/$(RUNID)
-GRAPHDB_VERSION=9.2.1
+GRAPHDB_VERSION=9.3.3
 GRAPHDB_EDITION=free
 
 all:

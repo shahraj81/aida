@@ -177,6 +177,9 @@ class Mention(Object):
     def get_text_strings(self):
         return {self.get('text_string'):{self.get('level'):1}}
 
+    def get_top_level_types(self):
+        return [self.get('entry').get('type').upper()]
+
     def is_event(self):
         """
         Returns True if the mention is a mention of an event, False otherwise.
@@ -300,7 +303,7 @@ class Mention(Object):
                                              self.get('document_element_id'),
                                              None,
                                              self.get('document_element_modality'),
-                                             entry.get('mediamention_signaltype'),
+                                             'picture',
                                              entry.get('mediamention_starttime'),
                                              0,
                                              entry.get('mediamention_endtime'),

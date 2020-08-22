@@ -9,9 +9,9 @@ __date__    = "24 January 2020"
 
 from aida.object import Object
 from aida.span import Span
-from aida.utility import types_are_compatible
-from aida.utility import is_number
+from aida.utility import types_are_compatible, is_number, trim_cv
 
+import datetime
 import os
 import re
 
@@ -29,21 +29,39 @@ class Validator(Object):
             self.record_event('UNDEFINED_METHOD', method_name)
         return method(responses, schema, entry, attribute)
 
+    def validate_cluster_type(self, responses, schema, entry, attribute):
+        logger = self.get('logger')
+        cluster_type = entry.get(attribute.get('name'))
+        if not responses.get('ontology_type_mappings').has(entry.get('metatype'), cluster_type):
+            logger.record_event('UNKNOWN_TYPE', cluster_type, entry.get('where'))
+            return False
+        return True
+
     def validate_document_id(self, responses, schema, entry, attribute):
-        document_id_in_entry = entry.get('document_id')
-        if not responses.get('document_mappings').get('documents').exists(document_id_in_entry):
-            self.record_event('UNKNOWN_ITEM', 'document', document_id_in_entry, entry.get('where'))
+        logger = self.get('logger')
+        document_id = entry.get('document_id')
+        if document_id is None:
+            logger.record_event('MISSING_ITEM', 'document_id', entry.get('where'))
+            return False
+        if entry.get('object_informative_justification') and document_id != entry.get('object_informative_justification').get('document_id'):
+            logger.record_event('MULTIPLE_ITEMS', 'document_ids', document_id, entry.get('object_informative_justification'), entry.get('where'))
+            return False
+        if entry.get('predicate_justification') and document_id != entry.get('predicate_justification').get('document_id'):
+            logger.record_event('MULTIPLE_ITEMS', 'document_ids', document_id, entry.get('predicate_justification'), entry.get('where'))
+            return False
+        if not responses.get('document_mappings').get('documents').exists(document_id):
+            self.record_event('UNKNOWN_ITEM', 'document', document_id, entry.get('where'))
             return False
         if schema.get('task') == 'task1':
             kb_document_id = entry.get('kb_document_id')
-            if document_id_in_entry != kb_document_id:
-                self.record_event('UNEXPECTED_DOCUMENT', kb_document_id, document_id_in_entry, entry.get('where'))
+            if document_id != kb_document_id:
+                self.record_event('UNEXPECTED_DOCUMENT', kb_document_id, document_id, entry.get('where'))
                 return False
         return True
     
     def validate_kb_document_id(self, responses, schema, entry, attribute):
         return self.validate_document_id(responses, schema, entry, attribute)
-    
+
     def validate_entity_type_in_response(self, responses, schema, entry, attribute):
         entity_type_in_query = entry.get('query').get('entity_type')
         entity_type_in_response = entry.get('entity_type_in_response')
@@ -59,15 +77,109 @@ class Validator(Object):
             self.record_event('UNEXPECTED_ENTITY_TYPE', entity_type_in_query, query_entity_type_in_response, entry.get('where'))
         return True
 
+    def validate_metatype(self, responses, schema, entry, attribute):
+        allowed_metatypes = ['Entity', 'Relation', 'Event']
+        metatype = entry.get(attribute.get('name'))
+        if metatype not in allowed_metatypes:
+            self.record_event('INVALID_METATYPE', metatype, ','.join(allowed_metatypes), entry.get('where'))
+            return False
+        cluster = entry.get('cluster')
+        if cluster and cluster.get('metatype') != metatype:
+            return False
+        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK1_AM_RESPONSE' and metatype == 'Entity':
+            self.record_event('UNEXPECTED_VALUE', 'metatype', metatype, entry.get('where'))
+            return False
+        return True
+
+    def validate_predicate(self, responses, schema, entry, attribute):
+        logger = self.get('logger')
+        predicate = entry.get(attribute.get('name'))
+        if not responses.get('slot_mappings').get('type_to_codes', predicate):
+            self.record_event('UNKNOWN_PREDICATE', predicate, entry.get('where'))
+            return False
+        if len(predicate.split('_')) != 2:
+            self.record_event('INVALID_PREDICATE_NO_UNDERSCORE', predicate, entry.get('where'))
+            return False
+        subject_type, rolename = predicate.split('_')
+        if not responses.get('ontology_type_mappings').has(entry.get('metatype'), subject_type):
+            logger.record_event('UNKNOWN_TYPE', subject_type, entry.get('where'))
+            return False
+        if subject_type not in entry.get('subject_cluster').get('types'):
+            logger.record_event('UNEXPECTED_SUBJECT_TYPE', subject_type, entry.get('subject_cluster').get('ID'), entry.get('where'))
+            return False
+        if entry.get('metatype') == 'Relation'and entry.get('subject_cluster').get('frame').get('number_of_fillers') > 2:
+                self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
+        return True
+
+    def validate_before_and_after_dates(self, responses, schema, entry, attribute, start_or_end_before, before, start_or_end_after, after):
+        valid = True
+        problem_field = None
+        if before.get('year') < after.get('year'):
+            problem_field = 'year'
+            valid = False
+        elif before.get('year') == after.get('year'):
+            if before.get('month') and after.get('month'):
+                if before.get('month') < after.get('month'):
+                    problem_field = 'month'
+                    valid = False
+                elif before.get('month') == after.get('month'):
+                    if before.get('day') and after.get('day') and before.get('day') < after.get('day'):
+                        problem_field = 'day'
+                        valid = False
+        if not valid:
+            self.record_event('INVALID_DATE_RANGE', entry.get('cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
+        return valid
+
+    def validate_date_start_and_end(self, responses, schema, entry, attribute):
+        valid = True
+        if entry.get('date'):
+            start = entry.get('date').get('start')
+            end = entry.get('date').get('end')
+            if start and end:
+                start_after = start.get('after')
+                end_before = end.get('before')
+                if start_after and end_before:
+                    valid = self.validate_before_and_after_dates(responses, schema, entry, attribute, 'end_before', end_before, 'start_after', start_after)
+        return valid
+
+    def validate_date(self, responses, schema, entry, attribute):
+        valid = True
+        date_object = entry.get(attribute.get('name'))
+        if date_object:
+            year = date_object.get('year')
+            month = date_object.get('month')
+            day = date_object.get('day')
+            if year and month and day:
+                try:
+                    datetime.date(int(year), int(month), int(day))
+                except:
+                    self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date', entry.get('where'))
+                    return False
+            elif year < 0:
+                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date', entry.get('where'))
+                valid = False
+            elif month and not 1 <= month <= 12:
+                self.record_event('INVALID_DATE', entry.get('cluster_id'), attribute.get('name'), 'date', entry.get('where'))
+                valid = False
+        return valid
+
+    def validate_date_range(self, responses, schema, entry, attribute):
+        after = entry.get('{}_after'.format(attribute.get('name')))
+        before = entry.get('{}_before'.format(attribute.get('name')))
+        valid = True
+        if after and before:
+            valid = self.validate_before_and_after_dates(responses, schema, entry, attribute, '{}_before'.format(attribute.get('name')), before, '{}_after'.format(attribute.get('name')), after)
+        return valid
+
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):
         where = entry.get('where')
-        
+
         provenance = entry.get(attribute.get('name'))
         if len(provenance.split(':')) != 3:
             self.record_event('INVALID_PROVENANCE_FORMAT', provenance, where)
             return False
 
-        pattern = re.compile('^(\w+?):(\w+?):\((\d+),(\d+)\)-\((\d+),(\d+)\)$')
+        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
         match = pattern.match(provenance)
         if not match:
             self.record_event('INVALID_PROVENANCE_FORMAT', provenance, where)
@@ -75,7 +187,7 @@ class Validator(Object):
 
         document_id = match.group(1)
         document_element_id = match.group(2)
-        start_x, start_y, end_x, end_y = map(lambda id: match.group(id), [3, 4, 5, 6])
+        start_x, start_y, end_x, end_y = map(lambda ID: match.group(ID), [3, 4, 5, 6])
         
         # if provided, obtain keyframe_id and update document_element_id
         pattern = re.compile('^(\w*?)_(\d+)$')
@@ -108,27 +220,24 @@ class Validator(Object):
             self.record_event('UNKNOWN_ITEM', 'document element', document_element_id, where)
             return False
         document_element = document_elements.get(document_element_id)
-        
+
         modality = document_element.get('modality')
         if modality is None:
             self.record_event('UNKNOWN_MODALITY', document_element_id, where)
             return False
-        
+
         keyframe_id = None
         if modality == 'video':
-            if keyframe_num is None:
-                self.record_event('MISSING_ITEM_WITHOUT_KEY', 'KeyFrameID', where)
-                return False
-            else:
+            if keyframe_num:
                 keyframe_id = '{}_{}'.format(document_element_id, keyframe_num)
                 if keyframe_id not in responses.get('keyframe_boundaries'):
                     self.record_event('MISSING_ITEM_WITH_KEY', 'KeyFrameID', keyframe_id, where)
                     return False
-        
+
         if not document.get('document_elements').exists(document_element_id):
             self.record_event('PARENT_CHILD_RELATION_FAILURE', document_element_id, document_id, where)
             return False
-        
+
         for coordinate in [start_x, start_y, end_x, end_y]:
             if not is_number(coordinate):
                 self.record_event('NOT_A_NUMBER', coordinate, where)
@@ -136,28 +245,43 @@ class Validator(Object):
             if float(coordinate) < 0:
                 self.record_event('NEGATIVE_NUMBER', coordinate, where)
                 return False
-        
+
         for start, end in [(start_x, end_x), (start_y, end_y)]:
-            if start > end:
+            if float(start) > float(end):
                 self.record_event('START_BIGGER_THAN_END', start, end, provenance, where)
                 return False
-        
-        document_element_boundary = responses.get('{}_boundaries'.format('keyframe' if modality=='video' else modality)).get(keyframe_id if modality == 'video' else document_element_id)
+
+        # An entry in the coreference metric output file is invalid if:
+        #  (a) a video mention of an entity was asserted using VideoJustification, or
+        #  (b) a video mention of an relation/event was asserted using KeyFrameVideoJustification
+        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK1_CM_RESPONSE' and modality == 'video':
+            if keyframe_id and entry.get('metatype') != 'Entity':
+                self.record_event('UNEXPECTED_JUSTIFICATION', provenance, entry.get('metatype'), entry.get('cluster_id'), 'KeyFrameVideoJustification', entry.get('where'))
+                return False
+            elif not keyframe_id and entry.get('metatype') not in ['Relation', 'Event']:
+                self.record_event('UNEXPECTED_JUSTIFICATION', provenance, entry.get('metatype'), entry.get('cluster_id'), 'VideoJustification', entry.get('where'))
+                return False
+
+        document_element_boundary = responses.get('{}_boundaries'.format('keyframe' if modality=='video' and keyframe_id else modality)).get(keyframe_id if modality == 'video' and keyframe_id else document_element_id)
         span = Span(self.logger, start_x, start_y, end_x, end_y)
         if not document_element_boundary.validate(span):
+            corrected_span = document_element_boundary.get('corrected_span', span)
+            corrected_provenance = '{}:{}:{}'.format(document_id, keyframe_id if keyframe_id else document_element_id, corrected_span.__str__())
+            entry.set(attribute.get('name'), corrected_provenance)
             self.record_event('SPAN_OFF_BOUNDARY', span, document_element_boundary, document_element_id, where)
-            return False
-        
         return True
     
     def validate_confidence(self, responses, schema, entry, attribute):
-        value = entry.get(attribute.get('name'))
+        value = trim_cv(entry.get(attribute.get('name')))
         if schema.get('task') == 'task3' and schema.get('query_type') == 'GraphQuery' and value == 'NULL' and attribute.get('name') == 'edge_compound_justification_confidence':
             return True
         try: 
             float(value)
         except ValueError:
             entry.set(attribute.get('name'), 1)
+            self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
+            return False
+        if not 0 < float(value) <= 1:
             self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
             return False
         return True

@@ -1,11 +1,13 @@
 """
-Script for generating AIF from LDCs annotations
+Script for AIDA evaluation pipeline that generates scores starting from KBs.
+
+This version of the scorer works with M36 practice data.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
-__version__ = "2019.0.1"
-__date__    = "26 May 2020"
+__version__ = "2019.1.0"
+__date__    = "21 Aug 2020"
 
 from logger import Logger
 import argparse
@@ -29,12 +31,52 @@ def record_and_display_message(logger, message):
 
 def main(args):
     """
-    The main program applying SPARQL queries, validate responses, generate aggregate confidences, and scores.
+    The main program runs the following steps in the AIDA evaluation pipeline:
+
+        (1) Apply SPARQL queries to KBs,
+        (2) Clean SPARQL output,
+        (3) Validate cleaned SPARQL output,
+        (4) Filter validated SPARQL output to retain responses that were in the annotated regions,
+        (5) Align clusters in system responses with those in the gold M18 annotations,
+        (6) Generate scores.
+
+    Note that SPARQL queries are applied only to those KBs that came from the
+    set of core documents included in M18 annotations.
     """
+
+    #############################################################################################
+    # AUX-data
+    #############################################################################################
+
+    python_scripts          = '/scripts/aida/python'
+    log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
+    logs_directory          = '{output}/{logs}'.format(output=args.output, logs=args.logs)
+    run_log_file            = '{logs_directory}/run.log'.format(logs_directory=logs_directory)
+    ontology_type_mappings  = '/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
+    slotname_mappings       = '/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
+    encoding_modality       = '/AUX-data/encoding_modality.txt'
+    coredocs_13             = '/AUX-data/LDC2020E11.coredocs-13.txt'
+    parent_children         = '/AUX-data/LDC2020E11.parent_children.tsv'
+    sentence_boundaries     = '/AUX-data/LDC2020E11.sentence_boundaries.txt'
+    image_boundaries        = '/AUX-data/LDC2020E11.image_boundaries.txt'
+    keyframe_boundaries     = '/AUX-data/LDC2020E11.keyframe_boundaries.txt'
+    video_boundaries        = '/AUX-data/LDC2020E11.video_boundaries.txt'
+    annotated_regions       = '/AUX-data/LDC2020E11.annotated_regions_gen.txt'
+    sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
+    sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
+    sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
+    sparql_filtered_output  = '{output}/SPARQL-FILTERED-output'.format(output=args.output)
+    sparql_valid_output     = '{output}/SPARQL-VALID-output'.format(output=args.output)
+    alignment               = '{output}/alignment'.format(output=args.output)
+    similarities            = '{output}/similarities'.format(output=args.output)
+    scores                  = '{output}/scores'.format(output=args.output)
+
+    gold_filtered_responses = '/gold/SPARQL-FILTERED-output'
 
     #############################################################################################
     # check input/output directory for existence
     #############################################################################################
+
     print("Checking if input/output directories exist.")
     for path in [args.input, args.output]:
         if not os.path.exists(path):
@@ -46,16 +88,13 @@ def main(args):
         print('ERROR: Output directory {} is not empty'.format(args.output))
         exit(ERROR_EXIT_CODE)
 
-    # create the logs directory
-    logs = '{output}/{logs}'.format(output=args.output, logs=args.logs)
-    call_system('mkdir {logs}'.format(logs=logs))
-    # create the logger
-    log = '{logs}/run.log'.format(logs=logs)
-    logger = Logger(log, args.spec, sys.argv)
+    call_system('mkdir {logs_directory}'.format(logs_directory=logs_directory))
+    logger = Logger(run_log_file, args.spec, sys.argv)
 
     #############################################################################################
     # inspect the input directory
     #############################################################################################
+
     record_and_display_message(logger, 'Inspecting the input directory.')
     files = [f for f in os.listdir(args.input) if os.path.isfile(os.path.join(args.input, f))]
     kbs = {}
@@ -77,28 +116,28 @@ def main(args):
         record_and_display_message(logger, 'No valid KB received as input.')
         exit(ALLOK_EXIT_CODE)
 
-    # load core-18 documents
-    file_handle = open('/AUX-data/LDC2019E42.coredocs-18.txt', 'r')
+    # load core documents
+    file_handle = open(coredocs_13, 'r')
     lines = file_handle.readlines()
     file_handle.close()
-
-    coredocs_18 = [d.strip() for d in lines[1:]]
+    coredocs = [d.strip() for d in lines[1:]]
     for kb in kbs:
-        if kbs[kb] and kb not in coredocs_18:
+        if kbs[kb] and kb not in coredocs:
             kbs[kb] = 0
 
     # copy valid input KBs for querying
     # restrict to core-18 documents
-    record_and_display_message(logger, 'Copying valid input KBs, restricted to core-18 documents, for applying SPARQL queries.')
-    call_system('mkdir /score/SPARQL-KB-input')
+    record_and_display_message(logger, 'Copying valid input KBs, restricted to core documents, for applying SPARQL queries.')
+    call_system('mkdir {sparql_kb_input}'.format(sparql_kb_input=sparql_kb_input))
     for kb in kbs:
-        if kbs[kb] and kb in coredocs_18:
+        if kbs[kb] and kb in coredocs:
             logger.record_event('DEFAULT_INFO', 'Copying {}.ttl'.format(kb))
-            call_system('cp {input}/{kb}.ttl {output}/SPARQL-KB-input'.format(input=args.input, output=args.output, kb=kb))
+            call_system('cp {input}/{kb}.ttl {sparql_kb_input}'.format(input=args.input, sparql_kb_input=sparql_kb_input, kb=kb))
 
     #############################################################################################
     # apply sparql queries
     #############################################################################################
+
     record_and_display_message(logger, 'Applying SPARQL queries.')
     graphdb_bin = '/opt/graphdb/dist/bin'
     graphdb = '{}/graphdb'.format(graphdb_bin)
@@ -107,15 +146,14 @@ def main(args):
     jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
     config = '{}/config/Local-config.ttl'.format(verdi)
     properties = '{}/config/Local-config.properties'.format(verdi)
-    sparql_output = '/score/SPARQL-output'
     intermediate = '{}/intermediate'.format(sparql_output)
     queries = '{}/queries'.format(args.output)
-    
+
     # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /queries/{task}_*_queries/*.rq {queries}'.format(task=args.task, queries=queries))
-    
+    call_system('cp /queries/*.rq {queries}'.format(task=args.task, queries=queries))
+
     num_total = len([d for d in kbs if kbs[d] == 1])
     count = 0;
     for kb in kbs:
@@ -130,7 +168,7 @@ def main(args):
         call_system('mkdir -p {}'.format(intermediate))
         # load KB into GraphDB
         logger.record_event('DEFAULT_INFO', 'Loading {}.ttl into GraphDB.'.format(kb))
-        input_kb = '{output}/SPARQL-KB-input/{kb}.ttl'.format(output=args.output, kb=kb)
+        input_kb = '{sparql_kb_input}/{kb}.ttl'.format(sparql_kb_input=sparql_kb_input, kb=kb)
         call_system('{loadrdf} -c {config} -f -m parallel {input}'.format(loadrdf=loadrdf, config=config, input=input_kb))
         # start GraphDB
         logger.record_event('DEFAULT_INFO', 'Starting GraphDB')
@@ -157,192 +195,219 @@ def main(args):
         # stop GraphDB
         logger.record_event('DEFAULT_INFO', 'Stopping GraphDB.')
         call_system('pkill -9 -f graphdb')
-    
-    #############################################################################################
-    # validate SPARQL output
-    #############################################################################################
-    record_and_display_message(logger, 'Validating SPARQL output.')
-    
-    sparql_valid_output = '{output}/SPARQL-VALID-output'.format(output=args.output)
-    validate_responses = '/scripts/aida/tools/validate-responses'
-    mappings = '/AUX-data/LDC2019E42.parent_children.tsv'
-    sentences = '/AUX-data/LDC2019E42.sentence_boundaries.txt'
-    images = '/AUX-data/LDC2019E42.image_boundaries.txt'
-    keyframes = '/AUX-data/LDC2019E42.keyframe_boundaries.txt'
-    coredocs_all = '/AUX-data/LDC2019E42.coredocs-all.txt'
-    
-    # create directory for valid SPARQL output
-    call_system('mkdir {sparql_valid_output}'.format(sparql_valid_output=sparql_valid_output))
-    
-    # checkout the right branch of the validator
-    call_system('cd /scripts/aida && git pull && git checkout AIDAVR-v2019.0.3')
-    
-    # validate class and graph responses separately
-    query_types = {'class':'TA1_CL', 'graph':'TA1_GR'}
-    for query_type in query_types:
-        log = '{logs}/validate-{query_type}-responses.log'.format(logs=logs, query_type=query_type)
-        queries_dtd = '/queries/{}_query.dtd'.format(query_type)
-        queries_xml = '/queries/task1_{}_queries.xml'.format(query_type)
-        cmd = 'cd {validate_responses} && \
-                perl -I . AIDA-ValidateResponses-MASTER.pl \
-                -error_file {log} \
-                {mappings} \
-                {sentences} \
-                {images} \
-                {keyframes} \
-                {queries_dtd} \
-                {queries_xml} \
-                {coredocs} \
-                {run_id} \
-                {sparql_output} \
-                {sparql_valid_output}'.format(validate_responses=validate_responses,
-                                              log = log,
-                                              mappings=mappings,
-                                              sentences=sentences,
-                                              images=images,
-                                              keyframes=keyframes,
-                                              queries_dtd=queries_dtd,
-                                              queries_xml=queries_xml,
-                                              coredocs=coredocs_all,
-                                              run_id=args.run,
-                                              sparql_output=sparql_output,
-                                              sparql_valid_output=sparql_valid_output)
-        call_system(cmd)
-    
-    #############################################################################################
-    # generate aggregate confidences
-    #############################################################################################
-    record_and_display_message(logger, 'Generating aggregate confidences.')
-    
-    sparql_ca_output = '{output}/SPARQL-CA-output'.format(output=args.output)
-    aggregate_confidences = '/scripts/aida/tools/confidence-aggregation'
-    
-    # create directory for confidence aggregation output
-    call_system('mkdir {sparql_ca_output}'.format(sparql_ca_output=sparql_ca_output))
 
-    # checkout the right branch of the confidence aggregator
-    call_system('cd /scripts/aida && git pull && git checkout AIDACA-v2019.0.2')
-    
-    for query_type in query_types:
-        task_and_type_code = query_types[query_type]
-        log = '{logs}/aggregate-{query_type}-confidences.log'.format(logs=logs, query_type=query_type)
-        cmd = 'cd {aggregate_confidences} && \
-                perl -I . AIDA-ConfidenceAggregation-MASTER.pl \
-                -error_file {log} \
-                {task_and_type_code} \
-                {sparql_valid_output} \
-                {sparql_ca_output}'.format(aggregate_confidences=aggregate_confidences,
-                                           log = log,
-                                           task_and_type_code=task_and_type_code,
-                                           sparql_valid_output=sparql_valid_output,
-                                           sparql_ca_output=sparql_ca_output)
-        call_system(cmd)
-    
+    #############################################################################################
+    # Clean SPARQL output
+    #############################################################################################
+
+    record_and_display_message(logger, 'Cleaning SPARQL output.')
+
+    python_scripts = '/scripts/aida/python'
+
+    cmd = 'cd {python_scripts} && \
+            python3 clean_sparql_output.py \
+            {log_specifications} \
+            {sparql_output} \
+            {sparql_clean_output}'.format(python_scripts=python_scripts,
+                                          log_specifications=log_specifications,
+                                          sparql_output = sparql_output,
+                                          sparql_clean_output = sparql_clean_output)
+    call_system(cmd)
+
+    #############################################################################################
+    # Validate SPARQL output
+    #############################################################################################
+
+    record_and_display_message(logger, 'Validating SPARQL output.')
+
+    log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3 validate_responses.py \
+            --log {log_file} \
+            {log_specifications} \
+            {ontology_type_mappings} \
+            {slotname_mappings} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {run_id} \
+            {sparql_clean_output} \
+            {sparql_valid_output}'.format(python_scripts=python_scripts,
+                                          log_file=log_file,
+                                          log_specifications=log_specifications,
+                                          ontology_type_mappings=ontology_type_mappings,
+                                          slotname_mappings=slotname_mappings,
+                                          encoding_modality=encoding_modality,
+                                          coredocs=coredocs_13,
+                                          parent_children=parent_children,
+                                          sentence_boundaries=sentence_boundaries,
+                                          image_boundaries=image_boundaries,
+                                          keyframe_boundaries=keyframe_boundaries,
+                                          video_boundaries=video_boundaries,
+                                          run_id=args.run,
+                                          sparql_clean_output=sparql_clean_output,
+                                          sparql_valid_output=sparql_valid_output)
+    call_system(cmd)
+
+    #############################################################################################
+    # Filter SPARQL output
+    #############################################################################################
+
+    record_and_display_message(logger, 'Filtering SPARQL output.')
+
+    log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3 filter_responses.py \
+            --log {log_file} \
+            {log_specifications} \
+            {ontology_type_mappings} \
+            {slotname_mappings} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {annotated_regions} \
+            {run_id} \
+            {sparql_valid_output} \
+            {sparql_filtered_output}'.format(python_scripts=python_scripts,
+                                             log_file=log_file,
+                                             log_specifications=log_specifications,
+                                             ontology_type_mappings=ontology_type_mappings,
+                                             slotname_mappings=slotname_mappings,
+                                             encoding_modality=encoding_modality,
+                                             coredocs=coredocs_13,
+                                             parent_children=parent_children,
+                                             sentence_boundaries=sentence_boundaries,
+                                             image_boundaries=image_boundaries,
+                                             keyframe_boundaries=keyframe_boundaries,
+                                             video_boundaries=video_boundaries,
+                                             annotated_regions=annotated_regions,
+                                             run_id=args.run,
+                                             sparql_valid_output=sparql_valid_output,
+                                             sparql_filtered_output=sparql_filtered_output)
+    call_system(cmd)
+
+    #############################################################################################
+    # Aligning clusters
+    #############################################################################################
+
+    record_and_display_message(logger, 'Aligning clusters.')
+
+    log_file = '{logs_directory}/align-clusters.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3 align_clusters.py \
+            --log {log_file} \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {annotated_regions} \
+            {gold_filtered_responses} \
+            {sparql_filtered_output} \
+            {similarities} \
+            {alignment}'.format(python_scripts=python_scripts,
+                                log_file=log_file,
+                                log_specifications=log_specifications,
+                                encoding_modality=encoding_modality,
+                                coredocs=coredocs_13,
+                                parent_children=parent_children,
+                                sentence_boundaries=sentence_boundaries,
+                                image_boundaries=image_boundaries,
+                                keyframe_boundaries=keyframe_boundaries,
+                                video_boundaries=video_boundaries,
+                                annotated_regions=annotated_regions,
+                                gold_filtered_responses=gold_filtered_responses,
+                                sparql_filtered_output=sparql_filtered_output,
+                                similarities=similarities,
+                                alignment=alignment)
+    call_system(cmd)
+
     #############################################################################################
     # generate scores
     #############################################################################################
+
     record_and_display_message(logger, 'Generating scores.')
-    score_responses = '/scripts/aida/tools/scorer'
-    score_output = '{output}/scores'.format(output=args.output)
-    coredocs_scorer = '/AUX-data/LDC2019E42.coredocs-18.txt'
-    assessments = '/AUX-data/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1'
-    intermediate = '{output}/scores-intermediate'.format(output=args.output)
-    # create directory for scorer output
-    call_system('mkdir {score_output}'.format(score_output=score_output))    
-    # checkout the right branch of the scorer
-    call_system('cd /scripts/aida && git pull && git checkout AIDASR-v2019.2.2')
-    
-    for query_type in query_types:
-        log = '{logs}/{query_type}-score.log'.format(logs=logs, query_type=query_type)
-        queries_dtd = '/queries/{}_query.dtd'.format(query_type)
-        queries_xml = '/queries/task1_{}_queries.xml'.format(query_type)
-        query_ids = '/AUX-data/task1_{}_queryids.txt'.format(query_type)
-        output_file = '{score_output}/{query_type}-score.txt'.format(score_output=score_output,
-                                                                     query_type=query_type)
-        cmd = 'cd {score_responses} && \
-                perl -I . AIDA-Score-MASTER.pl \
-                -error_file {log} \
-                -runid {runid} \
-                {coredocs} \
-                {mappings} \
-                {sentences} \
-                {images} \
-                {keyframes} \
-                {query_ids} \
-                {queries_dtd} \
-                {queries_xml} \
-                none \
-                {assessments} \
-                {sparql_valid_output} \
-                {sparql_ca_output} \
-                {intermediate} \
-                {output_file}'.format(score_responses=score_responses,
-                                      log=log,
-                                      runid=args.run,
-                                      coredocs=coredocs_scorer,
-                                      mappings=mappings,
-                                      sentences=sentences,
-                                      images=images,
-                                      keyframes=keyframes,
-                                      query_ids=query_ids,
-                                      queries_dtd=queries_dtd,
-                                      queries_xml=queries_xml,
-                                      assessments=assessments,
-                                      sparql_valid_output=sparql_valid_output,
-                                      sparql_ca_output=sparql_ca_output,
-                                      intermediate=intermediate,
-                                      output_file=output_file
-                                      )
-        call_system(cmd)
-        # remove intermediate directory for scorer output
-        call_system('rm -rf {intermediate}'.format(intermediate=intermediate))
+
+    log_file = '{logs_directory}/score_submission.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3 score_submission.py \
+            --log {log_file} \
+            {log_specifications} \
+            {ontology_type_mappings} \
+            {slotname_mappings} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {gold_filtered_responses} \
+            {sparql_filtered_output} \
+            {alignment} \
+            {similarities} \
+            {run_id} \
+            {scores}'.format(python_scripts=python_scripts,
+                                log_file=log_file,
+                                log_specifications=log_specifications,
+                                ontology_type_mappings = ontology_type_mappings,
+                                slotname_mappings=slotname_mappings,
+                                encoding_modality=encoding_modality,
+                                coredocs=coredocs_13,
+                                parent_children=parent_children,
+                                sentence_boundaries=sentence_boundaries,
+                                image_boundaries=image_boundaries,
+                                keyframe_boundaries=keyframe_boundaries,
+                                video_boundaries=video_boundaries,
+                                gold_filtered_responses=gold_filtered_responses,
+                                sparql_filtered_output=sparql_filtered_output,
+                                similarities=similarities,
+                                alignment=alignment,
+                                run_id=args.run,
+                                scores=scores)
+    call_system(cmd)
 
     # generate results.json file
-    # read task1 class scores
     record_and_display_message(logger, 'Generating results.json file.')
-    file_handle = open("/score/scores/class-score.txt", "r")
+
+    file_handle = open("{output}/scores/CoreferenceMetric-scores.txt".format(output=args.output), "r")
     lines = file_handle.readlines()
-    header_line = lines[0]
     summary_line = lines[-1]
     file_handle.close()
+    CoreferenceMetric_F1 = summary_line.split()[-1]
 
-    header_columns = header_line.split()
-    summary_columns = summary_line.split()
-    summary_columns.insert(1, '')
-
-    class_scores = {key: value for key, value in zip(header_columns, summary_columns)}
-
-    ap_best = class_scores.get('AP-B')
-    ap_worst = class_scores.get('AP-W')
-    ap_trec = class_scores.get('AP-T')
-
-    # read task1 graph scores
-    file_handle = open("/score/scores/graph-score.txt", "r")
+    file_handle = open("{output}/scores/TypeMetric-scores.txt".format(output=args.output), "r")
     lines = file_handle.readlines()
-    header_line = lines[0]
     summary_line = lines[-1]
     file_handle.close()
+    TypeMetric_F1 = summary_line.split()[-1]
 
-    header_columns = header_line.split()
-    summary_columns = summary_line.split()
-    summary_columns.insert(1, '')
-
-    graph_scores = {key: value for key, value in zip(header_columns, summary_columns)}
-
-    precision = graph_scores.get('Prec')
-    recall = graph_scores.get('Recall')
-    f1 = graph_scores.get('F1')
-
+    file_handle = open("{output}/scores/FrameMetric-scores.txt".format(output=args.output), "r")
+    lines = file_handle.readlines()
+    summary_line = lines[-1]
+    file_handle.close()
+    FrameMetric_F1 = summary_line.split()[-1]
 
     output = {'scores' : [
                             {
-                                'TASK1-CLASS-AP-TREC': ap_trec,
-                                'TASK1-CLASS-AP-BEST': ap_best,
-                                'TASK1-CLASS-AP-WORST': ap_worst,
-                                'TASK1-GRAPH-PRECISION': precision,
-                                'TASK1-GRAPH-RECALL': recall,
-                                'TASK1-GRAPH-qF1': f1,
-                                'Total': f1,
+                                'CoreferenceMetric_F1': CoreferenceMetric_F1,
+                                'TypeMetric_F1': TypeMetric_F1,
+                                'TemporalMetric_F1': 0,
+                                'ArgumentMetricV1_F1': 0,
+                                'ArgumentMetricV2_F1': 0,
+                                'FrameMetric_F1': FrameMetric_F1,
+                                'Total': FrameMetric_F1,
                             }
                          ]
             }

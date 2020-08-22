@@ -45,7 +45,7 @@ class TextBoundaries(DocumentBoundaries):
                                                                   start_char, 0, end_char, 0))
             tb_start_char = document_boundary.get('start_x')
             tb_end_char = document_boundary.get('end_x')
-            if start_char < tb_start_char:
+            if int(start_char) < int(tb_start_char):
                 document_boundary.set('start_x', start_char)
-            if end_char > tb_end_char:
+            if int(end_char) > int(tb_end_char):
                 document_boundary.set('end_x', end_char)

@@ -14,6 +14,8 @@ from rdflib import Graph
 from re import compile
 from re import findall
 
+import os
+
 SYSTEM_NAME = 'ldc:LDCModelGenerator'
 
 def patch(serialized_output):
@@ -84,14 +86,14 @@ def generate_cluster_triples(reference_kb_id, node):
     """
     prototype = node.get('prototype')
     node_ids = []
-    node_id_or_node_ids = node.get('ID')
-    for node_id in node_id_or_node_ids.split('|'):
-        if not node_id.startswith('NIL'):
+    if node.get('metatype') == 'entity':
+        node_id_or_node_ids = node.get('ID')
+        for node_id in node_id_or_node_ids.split('|'):
             node_ids.append(node_id)
     link_assertion_triples = []
     for node_id in node_ids:
         triples = """\
-            ldc:cluster-{node_name} aida:link _:blinkassertion{node_id} .
+            ldc:{prototype_name} aida:link _:blinkassertion{node_id} .
             _:blinkassertion{node_id} a aida:LinkAssertion .
             _:blinkassertion{node_id} aida:linkTarget "{reference_kb_id}:{node_id}" .
             _:blinkassertion{node_id} aida:system {system} .
@@ -99,17 +101,21 @@ def generate_cluster_triples(reference_kb_id, node):
             _:blinkassertion{node_id}-confidence a aida:Confidence .
             _:blinkassertion{node_id}-confidence aida:confidenceValue "XSD_DOUBLE(1.0)" .
             _:blinkassertion{node_id}-confidence aida:system {system} .
-        """.format(node_name = node.get('name'),
+        """.format(prototype_name = prototype.get('name'),
                    reference_kb_id = reference_kb_id,
                    node_id = node_id,
                    system = SYSTEM_NAME
                    )
         link_assertion_triples.append(triples)
 
-    document_ids = {'all_docs':1}
+    document_ids = {}
     for mention in node.get('mentions').values():
         if not mention.is_negated():
             document_ids[mention.get('document_id')] = 1
+
+    # include the cluster triples in all_docs if there was a non-negated mention
+    if len(document_ids):
+        document_ids['all_docs'] = 1
 
     triple_block_dict = {}
     for key in document_ids:
@@ -140,21 +146,56 @@ def generate_ere_object_triples(reference_kb_id, ere_object):
     task1 document specific kbs.
     """
 
+    logger = ere_object.get('logger')
     ere_type = ere_object.get('node_metatype').capitalize()
 
-    # generate link assertion triples
+    type_to_text_predicate_fieldname_mapping = {
+        'PER': 'hasName',
+        'ORG': 'hasName',
+        'GPE': 'hasName',
+        'FAC': 'hasName',
+        'LOC': 'hasName',
+        'WEA': 'hasName',
+        'VEH': 'hasName',
+        'LAW': 'hasName',
+        'MHI': 'textValue',
+        'MON': 'textValue',
+        'RES': 'textValue',
+        'TTL': 'textValue',
+        'VAL': 'textValue'
+        }
+
+    # generate hasName or textValue triples
     has_name_triples = []
     if ere_type == 'Entity':
-        text_strings = ere_object.get('text_strings')
-        for text_string in text_strings:
-            if len(text_string) < 256 and 'nam' in text_strings[text_string]:
-                has_name_triple = 'ldc:{ere_object_id} aida:hasName "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
+        skip_flag = 0
+        text_predicate_fieldnames = {}
+        for top_level_type in ere_object.get('top_level_types'):
+            if top_level_type in type_to_text_predicate_fieldname_mapping:
+                text_predicate_fieldnames[type_to_text_predicate_fieldname_mapping[top_level_type]] = 1
+        if len(text_predicate_fieldnames) == 0:
+            skip_flag = 1
+        elif len(text_predicate_fieldnames) > 1:
+            types = ','.join({t:1 for t in ere_object.get('top_level_types')})
+            logger.record_event('INCOMPATIBLE_TYPES', ere_object.get('ID'), types, ere_object.get('where'))
+            logger.record_event('SKIPPING_HASNAME_OR_TEXTVALUE', ere_object.get('ID'), ere_object.get('where'))
+            skip_flag = 1
+        else:
+            text_predicate_fieldname = list(text_predicate_fieldnames.keys())[0]
+        if not skip_flag:
+            text_strings = ere_object.get('text_strings')
+            for text_string in text_strings:
+                if (len(text_string) < 256 and 'nam' in text_strings[text_string]) or text_predicate_fieldname == 'textValue':
+                    has_name_triple = 'ldc:{ere_object_id} aida:{text_predicate_fieldname} "{text_string}" .'.format(ere_object_id=ere_object.get('ID'),
+                                                                                          text_predicate_fieldname=text_predicate_fieldname,
                                                                                           text_string=text_string.replace('"', '\\"'))
-                has_name_triples.append(has_name_triple)
+                    has_name_triples.append(has_name_triple)
+
+    # generate link assertion triples
     node_ids = []
-    for node_id_or_node_ids in ere_object.get('nodes'):
-        for node_id in node_id_or_node_ids.split('|'):
-            if not node_id.startswith('NIL'):
+    if ere_type == 'Entity':
+        for node_id_or_node_ids in ere_object.get('nodes'):
+            for node_id in node_id_or_node_ids.split('|'):
                 node_ids.append(node_id)
     link_assertion_triples = []
     for node_id in node_ids:
@@ -552,7 +593,7 @@ def generate_type_assertion_triples(mention, node_name=None):
         triple_block_dict[document_id] = triples
     return triple_block_dict
 
-def generate_argument_assertions_with_single_contained_justification_triple(slot, subject_node=None):
+def generate_argument_assertions_with_single_contained_justification_triple(slot):
     """
     Generate the argument assertion triples with a single contained justification.
 
@@ -565,24 +606,20 @@ def generate_argument_assertions_with_single_contained_justification_triple(slot
     from which the span is drawn, and one for 'all_docs'. Those corresponding to a particular
     document are used for generating task1 document specific kbs.
     """
-    subject_mention_id = slot.get('subject').get('ID')
-    arguments = [slot.get('argument')]
-    if subject_node is not None:
-        subject_mention_id = subject_node.get('prototype').get('name')
-        arguments = list(slot.get('argument').get('nodes').values())
 
-    document_ids = {'all_docs':1}
-    subject_informative_justification_spans = slot.get('subject').get('informative_justification_spans')
     predicate_justification_document_id = slot.get('subject').get('document_id')
+    subject_informative_justification_spans = slot.get('subject').get('informative_justification_spans')
     subject_informative_justification_span = subject_informative_justification_spans[predicate_justification_document_id]
-    document_ids[predicate_justification_document_id] = 1
+    document_ids = { predicate_justification_document_id:1, 'all_docs': 1}
 
-    for argument in arguments:
-        argument_mention_id = argument.get('ID')
-        if subject_node is not None:
-            argument_mention_id = argument.get('prototype').get('name')
-            if predicate_justification_document_id not in argument.get('document_ids'):
-                slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'Predicate justification document ID {} not in the documents from which the argument came'.format(predicate_justification_document_id))
+    edges = [(slot.get('subject').get('ID'), slot.get('argument').get('ID'))]
+    for subject_node in slot.get('subject').get('nodes').values():
+        for argument_node in slot.get('argument').get('nodes').values():
+            edges.append((subject_node.get('prototype').get('ID'), argument_node.get('prototype').get('ID')))
+
+    for subject_mention_id, argument_mention_id in edges:
+        if subject_mention_id == argument_mention_id:
+            slot.get('logger').record_event('DEFAULT_CRITICAL_ERROR', 'The subject and object of an argument assertion are {}'.format(subject_mention_id), slot.get('where'))
         slot_assertion_md5 = get_md5_from_string('{}:{}:{}:{}'.format(
                                                     subject_mention_id,
                                                     slot.get('slot_type'),
@@ -753,6 +790,7 @@ class AIFGenerator(Object):
         The boolean argument 'raw' will be used to control the output format. If True
         raw output would be written otherwise output would be written in turtle format.
         """
+        os.mkdir(output_dir)
         system_triples = self.get('system_triples')
         prefix_triples = self.get('prefix_triples')
         for key in self.get('triple_blocks'):
@@ -795,7 +833,7 @@ class AIFGenerator(Object):
         triple_block = """\
             @prefix aida:  <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#> .
             @prefix ldc:   <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#> .
-            @prefix ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#> .
+            @prefix ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntologyM36#> .
             @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
             @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
         """
@@ -807,28 +845,24 @@ class AIFGenerator(Object):
         """
         method_name = 'generate_argument_assertions_with_single_contained_justification_triple'
         generator = globals().get(method_name)
-        for node in self.get('annotations').get('subject_nodes').values():
-            for slot_name in node.get('prototype').get('slots'):
-                for slot in node.get('prototype').get('slots').get(slot_name):
-                    if slot.is_negated():
-                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
-                        continue
-                    if slot.get('subject').is_negated():
-                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
-                        continue
-                    if slot.get('argument').is_negated():
-                        self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
-                        continue
-                    if len(slot.get('subject').get('nodes')) == 0:
-                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
-                        continue
-                    if len(slot.get('argument').get('nodes')) == 0:
-                        slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
-                        continue
-                    triple_block_dict = generator(slot)
-                    self.add(triple_block_dict)
-                    triple_block_dict = generator(slot, node)
-                    self.add(triple_block_dict)
+        for slot in self.get('annotations').get('slots').values():
+            if slot.is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the slot is negated")
+                continue
+            if slot.get('subject').is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the subject is negated")
+                continue
+            if slot.get('argument').is_negated():
+                self.get('logger').record_event('SKIPPING', 'Argument assertion for edge', 'SUBJECT={}:{}:{}=OBJECT'.format(slot.get('subject').get('ID'), slot.get('slot_type'), slot.get('argument').get('ID')), "because the object is negated")
+                continue
+            if len(slot.get('subject').get('nodes')) == 0:
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing subject', '{}'.format(slot.get('subject').get('ID')), "because the subject mention is not found in the linking table")
+                continue
+            if len(slot.get('argument').get('nodes')) == 0:
+                slot.get('logger').record_event('SKIPPING', 'Argument assertion triples containing argument', '{}'.format(slot.get('argument').get('ID')), "because the argument mention is not found in the linking table")
+                continue
+            triple_block_dict = generator(slot)
+            self.add(triple_block_dict)
 
     def generate_ere_objects(self):
         """
@@ -868,6 +902,11 @@ class AIFGenerator(Object):
         """
         Generate all the justification triples.
         """
+        span_types_aif_constants = {
+                "sound": ":VideoJustificationChannelSound",
+                "video": ":VideoJustificationChannelPicture",
+                "both": ":VideoJustificationChannelBoth"
+            }
         generate_optional_channel_attribute_flag = self.get('generate_optional_channel_attribute_flag')
         for node in self.get('annotations').get('nodes').values():
             for mention in node.get('mentions').values():
@@ -876,6 +915,7 @@ class AIFGenerator(Object):
                     continue
                 for document_span in mention.get('document_spans').values():
                     span_type = document_span.get('span_type')
+                    span_type = span_types_aif_constants[span_type] if span_type in span_types_aif_constants else span_type
                     triple_block_dict = None
                     method_name = 'generate_{}_justification_triples'.format(span_type)
                     generator = globals().get(method_name)
