@@ -94,7 +94,7 @@ if __name__ == '__main__':
                         help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
                         help='Print version number and exit')
-    parser.add_argument('-r', '--reference_kb_id', default='LDC2019E44',
+    parser.add_argument('-r', '--reference_kb_id', default='REFKB',
                         help='Specify the reference KB ID (default: %(default)s)')
     parser.add_argument('-t', '--notime', action='store_false', default=True,
                         help='Do not read time-offset based spans from video annotations (default: %(default)s)')
