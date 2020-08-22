@@ -10,34 +10,28 @@
 
 # Introduction
 
-This document describes how to run the AIDA evaluation pipeline for M18 re-run using the AIDA-Evaluation docker as a standalone utility to task1 KBs.
+This document describes how to run the AIDA Task1 evaluation pipeline for M36 practice data using the AIDA-Evaluation docker as a standalone utility.
 
 In order to build the docker image it is important that you have access to the following:
 
-1. GraphDB -- ./docker/AUX-data/M18/graphdb-free-9.2.1-dist.zip
+1. GraphDB -- ./docker/AUX-data/M36-practice/graphdb-free-9.3.3-dist.zip
 
-  The AIDA-Evaluation docker uses GraphDB as the triple-store for storing (and applying queries against) the KBs represented in the AIDA Interchange Format. The docker has been tested with `graphdb-free-9.2.1-dist.zip`. NOTE that the free version comes with the limitation of being able to run no more than two queries in parallel.
+  The AIDA-Evaluation docker uses GraphDB as the triple-store for storing (and applying queries against) the KBs represented in the AIDA Interchange Format. The docker has been tested with `graphdb-free-9.3.3-dist.zip`.
 
-  In order to make use of one of GraphDBs paid version (or another free version) place the installer in AUX-data/M18 and supply the corresponding values for variables `GRAPHDB_VERSION` and `GRAPHDB_EDITION` to make when invoking `make build`.
+  NOTE that:
+    (1) the free version comes with the limitation of being able to run no more than two queries in parallel,
+    (2) loadrdf utility of this version of GraphDB throws a java.lang.IllegalStateException: "Connection not obtained from this manager" which we think is a benign issue. We have shared our finding with Ontotext and are waiting for them to fix this issue.
 
-  In order to build the docker with the free version, make sure to download the installer from `https://www.ontotext.com/free-graphdb-download/` and place it at: `./docker/AUX-data/M18/graphdb-free-9.2.1-dist.zip`
+  In order to make use of another version of GraphDBs place the installer in AUX-data/M36-practice and supply the corresponding values for variables `GRAPHDB_VERSION` and `GRAPHDB_EDITION` to make when invoking `make build`.
 
-2. The M18 Evaluation Queries -- ./docker/AUX-data/M18/AIDA_Phase1_Evaluation_Queries_V8.tgz
-
-  The AIDA M18 evaluation queries can be downloaded from [AIDA Phase1 Evaluation Queries V8](https://tac.nist.gov/protected/2019-kbp/data/AIDA_Phase1_Evaluation_Queries_V8.tgz).
-
-3. Assessments Package -- ./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
-
-  The assessment package as received from LDC. Place the assessments package at `./AUX-data/M18/LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz` before building the docker.
+  In order to build the docker with the free version, make sure to download the installer from `https://www.ontotext.com/free-graphdb-download/` and place it at: `./docker/AUX-data/M36-practice/graphdb-free-9.3.3-dist.zip`
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to build the docker image?
 
-1. Place the following files (see [Introduction](#introduction) for details) inside the directory at `./docker/AUX-data/M18`:
-  * graphdb-free-9.2.1-dist.zip
-  * AIDA_Phase1_Evaluation_Queries_V8.tgz
-  * LDC2019R30_AIDA_Phase_1_Assessment_Results_V6.1.tgz
+1. Place the following files (see [Introduction](#introduction) for details) inside the directory at `./docker/AUX-data/M36-practice`:
+  * graphdb-free-9.3.3-dist.zip
 
 2. Make change to the first line (as shown below) of `./docker/Makefile` in order to update the value of variable `ROOT` to reflect your system specific location of directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
 
@@ -69,7 +63,7 @@ In order to build the docker image it is important that you have access to the f
 
 # How to apply the docker on a test run?
 
-  The docker comes with an example run stored at `./M18-data/runs/task1-team-alpha-run-5` and the corresponding output stored at `./M18-data/scores/task1-team-alpha-run-5`.
+  The docker comes with an example run stored at `./M36-practice/runs/example-run` and the corresponding output stored at `./M36-practice/scores/example-run`.
 
   Note that the docker expects the output directory to be empty.
 
@@ -83,7 +77,7 @@ In order to build the docker image it is important that you have access to the f
   If you see the message `ERROR: Output directory /score is not empty`, you would need to remove the pre-existing output by running the following command:
 
   ~~~
-  rm -rf ./M18-data/scores/task1-team-alpha-run-5/*
+  rm -rf ./M36-practice/scores/example-run/*
   ~~~
 
   You may compare your output with expected output by running the following command:
@@ -92,7 +86,7 @@ In order to build the docker image it is important that you have access to the f
   git diff
   ~~~
 
-  The only difference that you should see is the timestamps inside file `./M18-data/scores/task1-team-alpha-run-5/logs/run.log`. All other lines in this file, and content of all other files should remain unchanged.
+  The only difference that you should see is the timestamps inside file `./M36-practice/scores/example-run/logs/run.log`. All other lines in this file, and content of all other files should remain unchanged.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -116,7 +110,7 @@ make run \
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What should the input directory contain?
-The input directory should contain all the task1 KBs along with corresponding AIF report files. You may want to look at the input directory of the included example run at `/M18-data/runs/task1-team-alpha-run-5` to get an idea of how to structure your input directory.
+The input directory should contain all the task1 KBs along with corresponding AIF report files. You may want to look at the input directory of the included example run at `./M36-practice/scores/example-run` to get an idea of how to structure your input directory.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -124,16 +118,19 @@ The input directory should contain all the task1 KBs along with corresponding AI
 
 The output directory contains the following:
 
-| Name                |  Description                                          |
-| --------------------|-------------------------------------------------------|
-| SPARQL-KB-input     | The directory containing KBs validated by AIF validator. SPARQL queries are applied to these KBs.|
-| SPARQL-output       | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
-| SPARQL-VALID-output | The directory containing valid SPARQL output. This directory will be used as input to the confidence aggregator |
-| SPARQL-CA-output    | The directory containing output of the confidence aggregator |
-| queries             | The directory containing SPARQL queries applied to KBs. |
-| logs                | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details).
-| scores              | The directory containing task1 class and graph scores in two separate files: `class-score.txt` and `graph-score.txt` |
-| results.json        | The results JSON file to be used by the leaderboard |
+| Name                      |  Description                                          |
+| --------------------------|-------------------------------------------------------|
+| alignment                 | The directory containing information about alignment between system and gold clusters. |
+| logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
+| queries                   | The directory containing SPARQL queries applied to KBs. |
+| results.json              | The results JSON file to be used by the leaderboard. |
+| scores                    | The directory containing various task1 scores. |
+| similarities              | The directory containing information about similarities between system clusters, and between gold clusters. |
+| SPARQL-CLEAN-output       | The directory containing cleaned SPARQL output. |
+| SPARQL-FILTERED-output    | The directory containing filtered responses i.e. responses that are within annotated regions. |
+| SPARQL-KB-input           | The directory containing KBs validated by AIF validator. SPARQL queries are applied to these KBs.|
+| SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
+| SPARQL-VALID-output       | The directory containing valid SPARQL output. |
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -143,23 +140,24 @@ The logs directory contains the following log files:
 
 | Name                            |  Description            |
 | --------------------------------|-------------------------|
-| run.log                         | The main log file recording major events by the docker |
-| validate-class-responses.log    | The log file generated by the response validator when validating task1 class responses |
-| validate-graph-responses.log    | The log file generated by the response validator when validating task1 graph responses |
-| aggregate-class-confidences.log | The log file generated by the confidence aggregator when run on valid task1 class SPARQL output |
-| aggregate-graph-confidences.log | The log file generated by the confidence aggregator when run on valid task1 graph SPARQL output |
-| class-score.log                 | The log file generated by task1 class scorer |
-| graph-score.log                 | The log file generated by task1 graph scorer |
+| align-clusters.log              | The log file generated when aligning gold and system clusters. |
+| filter-responses.log            | The log file generated when filtering responses. |
+| run.log                         | The main log file recording major events by the docker. |
+| score_submission.log            | The log file generated by the scorer. |
+| validate-responses.log          | The log file generated by the validator. |
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
 
-## 05/29/2020:
-* Initial version.
+## 08/22/2020:
+* Initial version for M36 practice evaluation.
 
 ## 06/15/2020:
 * Applying SPARQL queries to only KB that were part of the core-18 documents.
 * Increased the java heap space.
+
+## 05/29/2020:
+* Initial version.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
