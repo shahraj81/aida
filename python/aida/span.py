@@ -52,6 +52,9 @@ class Span(Object):
         """
         return "{}-{}".format(self.get('START'), self.get('END'))
 
+    def get_copy(self):
+        return type(self)(self.get('logger'), self.get('start_x'), self.get('start_y'), self.get('end_x'), self.get('end_y'))
+
     def get_START(self):
         """
         Return a string containing the start of the bounding box 

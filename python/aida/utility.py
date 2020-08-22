@@ -105,6 +105,15 @@ def parse_document_element_id(s):
         keyframe_id = s
     return document_element_id, keyframe_id
 
+def get_deepcopy_of_mention_object(m):
+    # this function is a hack around the error thrown by
+    # copy.deepcopy() inside the docker container.
+    mc = spanstring_to_object(m.get('logger'), m.get('span_string'), m.get('where'))
+    mc.set('boundary', m.get('boundary').get('copy'))
+    for copy_attribure in ['ID', 'cm_cv', 'j_cv', 'modality', 't_cv']:
+        mc.set(copy_attribure, m.get(copy_attribure))
+    return mc
+
 def get_kb_document_id_from_filename(filename):
     """
     Gets the source document ID of the KB from filename provided as argument.
@@ -180,8 +189,8 @@ def get_intersection_over_union_text(m1, m2):
     return intersection_over_union
 
 def get_intersection_over_union_image(m1, m2, collar = 1):
-    m1c = copy.deepcopy(m1)
-    m2c = copy.deepcopy(m2)
+    m1c = get_deepcopy_of_mention_object(m1)
+    m2c = get_deepcopy_of_mention_object(m2)
     for m in [m1c, m2c]:
         for d in ['x', 'y']:
             start_fieldname = 'start_{}'.format(d)
@@ -202,8 +211,8 @@ def get_intersection_over_union_image(m1, m2, collar = 1):
     return intersection_over_union
 
 def get_intersection_over_union_video(m1, m2, collar = 0.01):
-    m1c = copy.deepcopy(m1)
-    m2c = copy.deepcopy(m2)
+    m1c = get_deepcopy_of_mention_object(m1)
+    m2c = get_deepcopy_of_mention_object(m2)
     for m in [m1c, m2c]:
         start, end = [float(m.get('span').get(k)) for k in ['start_x', 'end_x']]
         min, max = [float(m.get('boundary').get(k)) for k in ['start_x', 'end_x']]
