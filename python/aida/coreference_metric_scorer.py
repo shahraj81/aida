@@ -40,6 +40,8 @@ class CoreferenceMetricScorer(Scorer):
 
     def get_total_self_similarity(self, system_or_gold, document_id):
         total_self_similarity = 0
+        if system_or_gold == 'system' and document_id not in self.get('cluster_self_similarities').get(system_or_gold):
+            return total_self_similarity
         for cluster_id in self.get('cluster_self_similarities').get(system_or_gold).get(document_id):
             metatype = self.get('metatype', system_or_gold, cluster_id)
             self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
@@ -55,9 +57,9 @@ class CoreferenceMetricScorer(Scorer):
             total_self_similarity_gold = self.get('total_self_similarity', 'gold', document_id)
             total_self_similarity_system = self.get('total_self_similarity', 'system', document_id)
 
-            precision = max_total_similarity / total_self_similarity_system
+            precision = max_total_similarity / total_self_similarity_system if total_self_similarity_system else 0
             recall = max_total_similarity / total_self_similarity_gold
-            f1 = 2 * precision * recall / (precision + recall)
+            f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
             score = CoreferenceMetricScore(self.logger,
                                    self.get('runid'),
                                    document_id,

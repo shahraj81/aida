@@ -42,7 +42,9 @@ class TypeMetricScorer(Scorer):
                 precision, recall, f1 = [0,0,0]
                 if system_cluster_id:
                     gold_cluster_types = set(self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id).get('all_expanded_types'))
-                    system_cluster_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
+                    system_cluster_types = set()
+                    if document_id in self.get('system_responses').get('document_clusters'):
+                        system_cluster_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
                     precision, recall, f1 = get_precision_recall_and_f1(gold_cluster_types, system_cluster_types)
                 mean_f1 += f1
                 count += 1

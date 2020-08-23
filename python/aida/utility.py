@@ -230,7 +230,7 @@ def get_intersection_over_union_video(m1, m2, collar = 0.01):
     return intersection_over_union
 
 def get_precision_recall_and_f1(relevant, retrieved):
-    precision = len(relevant & retrieved) / len(retrieved)
+    precision = len(relevant & retrieved) / len(retrieved) if len(retrieved) else 0
     recall = len(relevant & retrieved) / len(relevant)
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
     return precision, recall, f1
