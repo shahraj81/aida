@@ -23,6 +23,51 @@ def call_system(cmd):
     print("running system command: '{}'".format(cmd))
     os.system(cmd)
 
+def generate_results_file():
+    CoreferenceMetric_F1 = 0
+    filename = "{output}/scores/CoreferenceMetric-scores.txt".format(output=args.output)
+    if os.path.exists(filename):
+        file_handle = open(filename, "r")
+        lines = file_handle.readlines()
+        summary_line = lines[-1]
+        file_handle.close()
+        CoreferenceMetric_F1 = summary_line.split()[-1]
+
+    TypeMetric_F1 = 0
+    filename = "{output}/scores/TypeMetric-scores.txt".format(output=args.output)
+    if os.path.exists(filename):
+        file_handle = open(filename, "r")
+        lines = file_handle.readlines()
+        summary_line = lines[-1]
+        file_handle.close()
+        TypeMetric_F1 = summary_line.split()[-1]
+
+    FrameMetric_F1 = 0
+    filename = "{output}/scores/FrameMetric-scores.txt".format(output=args.output)
+    if os.path.exists(filename):
+        file_handle = open(filename, "r")
+        lines = file_handle.readlines()
+        summary_line = lines[-1]
+        file_handle.close()
+        FrameMetric_F1 = summary_line.split()[-1]
+
+    output = {'scores' : [
+                            {
+                                'CoreferenceMetric_F1': CoreferenceMetric_F1,
+                                'TypeMetric_F1': TypeMetric_F1,
+                                'TemporalMetric_F1': 0,
+                                'ArgumentMetricV1_F1': 0,
+                                'ArgumentMetricV2_F1': 0,
+                                'FrameMetric_F1': FrameMetric_F1,
+                                'Total': FrameMetric_F1,
+                            }
+                         ]
+            }
+
+    outputdir = "/score/"
+    with open(outputdir + 'results.json', 'w') as fp:
+        json.dump(output, fp, indent=4, sort_keys=True)
+
 def record_and_display_message(logger, message):
     print("-------------------------------------------------------")
     print(message)
@@ -114,6 +159,7 @@ def main(args):
     # exit if no valid input KB
     if num_valid_kbs == 0:
         record_and_display_message(logger, 'No valid KB received as input.')
+        generate_results_file()
         exit(ALLOK_EXIT_CODE)
 
     # load core documents
@@ -380,42 +426,7 @@ def main(args):
 
     # generate results.json file
     record_and_display_message(logger, 'Generating results.json file.')
-
-    file_handle = open("{output}/scores/CoreferenceMetric-scores.txt".format(output=args.output), "r")
-    lines = file_handle.readlines()
-    summary_line = lines[-1]
-    file_handle.close()
-    CoreferenceMetric_F1 = summary_line.split()[-1]
-
-    file_handle = open("{output}/scores/TypeMetric-scores.txt".format(output=args.output), "r")
-    lines = file_handle.readlines()
-    summary_line = lines[-1]
-    file_handle.close()
-    TypeMetric_F1 = summary_line.split()[-1]
-
-    file_handle = open("{output}/scores/FrameMetric-scores.txt".format(output=args.output), "r")
-    lines = file_handle.readlines()
-    summary_line = lines[-1]
-    file_handle.close()
-    FrameMetric_F1 = summary_line.split()[-1]
-
-    output = {'scores' : [
-                            {
-                                'CoreferenceMetric_F1': CoreferenceMetric_F1,
-                                'TypeMetric_F1': TypeMetric_F1,
-                                'TemporalMetric_F1': 0,
-                                'ArgumentMetricV1_F1': 0,
-                                'ArgumentMetricV2_F1': 0,
-                                'FrameMetric_F1': FrameMetric_F1,
-                                'Total': FrameMetric_F1,
-                            }
-                         ]
-            }
-
-    outputdir = "/score/"
-    with open(outputdir + 'results.json', 'w') as fp:
-        json.dump(output, fp, indent=4, sort_keys=True)
-
+    generate_results_file()
     record_and_display_message(logger, 'Done.')
 
     exit(ALLOK_EXIT_CODE)
