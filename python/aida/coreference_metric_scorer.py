@@ -35,7 +35,7 @@ class CoreferenceMetricScorer(Scorer):
     def get_metatype(self, system_or_gold, cluster_id):
         metatype = self.get('cluster_self_similarities').get('cluster_to_metatype').get('{}:{}'.format(system_or_gold.upper(), cluster_id))
         if metatype not in ['Event', 'Relation', 'Entity']:
-            self.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected metatype: {} for {}:{}'.format(metatype, system_or_gold.upper(), cluster_id), self.get('code_location'))
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'Unknown metatype: {} for {}:{}'.format(metatype, system_or_gold.upper(), cluster_id), self.get('code_location'))
         return metatype
 
     def get_total_self_similarity(self, system_or_gold, document_id):
