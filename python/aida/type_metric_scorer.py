@@ -38,7 +38,8 @@ class TypeMetricScorer(Scorer):
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
                 precision, recall, f1 = [0,0,0]
-                if system_cluster_id and system_cluster_id != 'None':
+                if gold_cluster_id == 'None': continue
+                if system_cluster_id != 'None':
                     if aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                     gold_cluster_types = set(self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id).get('all_expanded_types'))
@@ -62,21 +63,21 @@ class TypeMetricScorer(Scorer):
             for system_cluster_id in document_system_to_gold if document_system_to_gold else []:
                 gold_cluster_id = document_system_to_gold.get(system_cluster_id).get('aligned_to')
                 aligned_similarity = document_system_to_gold.get(system_cluster_id).get('aligned_similarity')
-                if gold_cluster_id and gold_cluster_id!='None':
-                    if aligned_similarity == 0:
+                if system_cluster_id != 'None':
+                    if gold_cluster_id == 'None':
+                        precision, recall, f1 = [0,0,0]
+                        count += 1
+                        score = TypeMetricScore(self.logger,
+                                                self.get('runid'),
+                                                document_id,
+                                                gold_cluster_id,
+                                                system_cluster_id,
+                                                precision,
+                                                recall,
+                                                f1)
+                        scores.add(score)
+                    elif aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                    continue
-                precision, recall, f1 = [0,0,0]
-                count += 1
-                score = TypeMetricScore(self.logger,
-                                        self.get('runid'),
-                                        document_id,
-                                        gold_cluster_id,
-                                        system_cluster_id,
-                                        precision,
-                                        recall,
-                                        f1)
-                scores.add(score)
 
         mean_f1 = mean_f1 / count
         mean_score = TypeMetricScore(self.logger,
