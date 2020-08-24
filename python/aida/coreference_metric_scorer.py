@@ -27,6 +27,7 @@ class CoreferenceMetricScorer(Scorer):
     def get_max_total_similarity(self, document_id):
         max_total_similarity = 0
         for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):
+            if cluster_id == 'None': continue
             metatype = self.get('metatype', 'gold', cluster_id)
             if metatype != 'Relation':
                 max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
