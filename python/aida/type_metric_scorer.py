@@ -37,10 +37,10 @@ class TypeMetricScorer(Scorer):
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
-                if system_cluster_id and aligned_similarity == 0:
-                    self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                 precision, recall, f1 = [0,0,0]
-                if system_cluster_id:
+                if system_cluster_id and system_cluster_id != 'None':
+                    if aligned_similarity == 0:
+                        self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                     gold_cluster_types = set(self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id).get('all_expanded_types'))
                     system_cluster_types = set()
                     if document_id in self.get('system_responses').get('document_clusters'):
@@ -62,9 +62,10 @@ class TypeMetricScorer(Scorer):
             for system_cluster_id in document_system_to_gold if document_system_to_gold else []:
                 gold_cluster_id = document_system_to_gold.get(system_cluster_id).get('aligned_to')
                 aligned_similarity = document_system_to_gold.get(system_cluster_id).get('aligned_similarity')
-                if gold_cluster_id and aligned_similarity == 0:
-                    self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                if gold_cluster_id: continue
+                if gold_cluster_id and gold_cluster_id!='None':
+                    if aligned_similarity == 0:
+                        self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
+                    continue
                 precision, recall, f1 = [0,0,0]
                 count += 1
                 score = TypeMetricScore(self.logger,
