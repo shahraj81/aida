@@ -1112,57 +1112,57 @@ _:f683d51fd78fd4d20a73546d0aae99f45b8 a aida:Confidence ;
 
 _:f683d51fd78fd4d20a73546d0aae99f45b31 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b32 ;
-    aida:linkTarget "LDC2019E44:NILE21835" ;
+    aida:linkTarget "REFKB:NILE21835" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b33 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b34 ;
-    aida:linkTarget "LDC2019E44:NILE21836" ;
+    aida:linkTarget "REFKB:NILE21836" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b35 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b36 ;
-    aida:linkTarget "LDC2019E44:NILE21837" ;
+    aida:linkTarget "REFKB:NILE21837" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b37 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b38 ;
-    aida:linkTarget "LDC2019E44:NILE21838" ;
+    aida:linkTarget "REFKB:NILE21838" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b39 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b40 ;
-    aida:linkTarget "LDC2019E44:NILE21839" ;
+    aida:linkTarget "REFKB:NILE21839" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b41 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b42 ;
-    aida:linkTarget "LDC2019E44:NILE21840" ;
+    aida:linkTarget "REFKB:NILE21840" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b43 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b44 ;
-    aida:linkTarget "LDC2019E44:NILE21841" ;
+    aida:linkTarget "REFKB:NILE21841" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b45 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b46 ;
-    aida:linkTarget "LDC2019E44:NILE21842" ;
+    aida:linkTarget "REFKB:NILE21842" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b47 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b48 ;
-    aida:linkTarget "LDC2019E44:NILE21843" ;
+    aida:linkTarget "REFKB:NILE21843" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b49 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b50 ;
-    aida:linkTarget "LDC2019E44:NILE21844" ;
+    aida:linkTarget "REFKB:NILE21844" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b51 a aida:LinkAssertion ;
     aida:confidence _:f683d51fd78fd4d20a73546d0aae99f45b52 ;
-    aida:linkTarget "LDC2019E44:NILE21845" ;
+    aida:linkTarget "REFKB:NILE21845" ;
     aida:system ldc:LDCModelGenerator .
 
 _:f683d51fd78fd4d20a73546d0aae99f45b25 a aida:TextJustification ;
