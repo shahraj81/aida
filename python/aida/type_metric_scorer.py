@@ -37,11 +37,14 @@ class TypeMetricScorer(Scorer):
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
-                if system_cluster_id and aligned_similarity == 0:
-                    self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                 precision, recall, f1 = [0,0,0]
-                if system_cluster_id:
-                    gold_cluster_types = set(self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id).get('all_expanded_types'))
+                if gold_cluster_id == 'None': continue
+                gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
+                if gold_cluster.get('metatype') not in ['Entity', 'Event']: continue
+                if system_cluster_id != 'None':
+                    if aligned_similarity == 0:
+                        self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
+                    gold_cluster_types = set(gold_cluster.get('all_expanded_types'))
                     system_cluster_types = set()
                     if document_id in self.get('system_responses').get('document_clusters'):
                         system_cluster_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
@@ -62,20 +65,23 @@ class TypeMetricScorer(Scorer):
             for system_cluster_id in document_system_to_gold if document_system_to_gold else []:
                 gold_cluster_id = document_system_to_gold.get(system_cluster_id).get('aligned_to')
                 aligned_similarity = document_system_to_gold.get(system_cluster_id).get('aligned_similarity')
-                if gold_cluster_id and aligned_similarity == 0:
-                    self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                if gold_cluster_id: continue
-                precision, recall, f1 = [0,0,0]
-                count += 1
-                score = TypeMetricScore(self.logger,
-                                        self.get('runid'),
-                                        document_id,
-                                        gold_cluster_id,
-                                        system_cluster_id,
-                                        precision,
-                                        recall,
-                                        f1)
-                scores.add(score)
+                if system_cluster_id != 'None':
+                    system_cluster = self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id)
+                    if system_cluster.get('metatype') not in ['Entity', 'Event']: continue
+                    if gold_cluster_id == 'None':
+                        precision, recall, f1 = [0,0,0]
+                        count += 1
+                        score = TypeMetricScore(self.logger,
+                                                self.get('runid'),
+                                                document_id,
+                                                gold_cluster_id,
+                                                system_cluster_id,
+                                                precision,
+                                                recall,
+                                                f1)
+                        scores.add(score)
+                    elif aligned_similarity == 0:
+                        self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
 
         mean_f1 = mean_f1 / count
         mean_score = TypeMetricScore(self.logger,

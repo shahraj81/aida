@@ -38,16 +38,15 @@ class FrameMetricScorer(Scorer):
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
-                if system_cluster_id and system_cluster_id != 'None' and aligned_similarity == 0:
-                    self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                 precision, recall, f1 = [0,0,0]
-                if system_cluster_id and system_cluster_id != 'None':
-                    gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
+                if gold_cluster_id == 'None': continue
+                gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
+                if gold_cluster.get('metatype') not in ['Event', 'Relation']: continue
+                if system_cluster_id != 'None':
+                    if aligned_similarity == 0:
+                        self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                     system_cluster = self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id)
-                    skip_flag = False
-                    for cluster in [gold_cluster, system_cluster]:
-                        if cluster.get('metatype') not in ['Event', 'Relation']: skip_flag = True
-                    if skip_flag: continue
+                    if system_cluster.get('metatype') not in ['Event', 'Relation']: continue
                     gold_frame = self.get('gold_responses').get('document_frames').get(document_id).get(gold_cluster_id)
                     gold_slot_fillers = {}
                     if gold_frame is None:
@@ -62,7 +61,7 @@ class FrameMetricScorer(Scorer):
                         for system_filler_cluster_id in system_frame.get('role_fillers').get(role_name):
                             aligned_gold_filler_cluster_id = document_system_to_gold.get(system_filler_cluster_id).get('aligned_to')
                             aligned_gold_filler_cluster_id_similarity = document_system_to_gold.get(system_filler_cluster_id).get('aligned_similarity')
-                            if aligned_gold_filler_cluster_id and aligned_gold_filler_cluster_id != 'None':
+                            if aligned_gold_filler_cluster_id != 'None':
                                 if aligned_gold_filler_cluster_id_similarity == 0:
                                     self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                                 system_slot_fillers['{}:{}'.format(role_name, aligned_gold_filler_cluster_id)] = 1
@@ -77,18 +76,19 @@ class FrameMetricScorer(Scorer):
                                          precision, recall, f1)
                 scores.add(score)
             # add scores corresponding to unaligned system clusters
+            precision, recall, f1 = [0,0,0]
             for system_cluster_id in document_system_to_gold if document_system_to_gold else []:
                 gold_cluster_id = document_system_to_gold.get(system_cluster_id).get('aligned_to')
                 aligned_similarity = document_system_to_gold.get(system_cluster_id).get('aligned_similarity')
-                if gold_cluster_id and gold_cluster_id != 'None' and aligned_similarity == 0:
-                    self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                if gold_cluster_id and gold_cluster_id != 'None': continue
-                precision, recall, f1 = [0,0,0]
-                count += 1
-                score = FrameMetricScore(self.logger, self.get('runid'), document_id,
-                                         gold_cluster_id, system_cluster_id,
-                                         precision, recall, f1)
-                scores.add(score)
+                if system_cluster_id != 'None':
+                    if gold_cluster_id == 'None':
+                        count += 1
+                        score = FrameMetricScore(self.logger, self.get('runid'), document_id,
+                                                 gold_cluster_id, system_cluster_id,
+                                                 precision, recall, f1)
+                        scores.add(score)
+                    elif aligned_similarity == 0:
+                        self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
 
         mean_f1 = mean_f1 / count if count else 0
         mean_score = FrameMetricScore(self.logger, self.get('runid'), 'Summary', '', '', '', '', mean_f1, summary = True)

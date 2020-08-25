@@ -1,21 +1,21 @@
 ?cluster	?sa_month	?sa_day	?sa_year	?sb_month	?sb_day	?sb_year	?ea_month	?ea_day	?ea_year	?eb_month	?eb_day	?eb_year
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20001>				"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20002>				"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20003>	"08"	"07"	"2018"	"08"	"07"	"2018"						
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20004>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20005>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20006>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20007>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR20008>	"08"	"04"	"2018"									
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20001>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20002>	"07"	"04"	"2018"									
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20003>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20004>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20005>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20006>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20007>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20008>	"08"	"04"	"2018"									
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20009>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20010>	"08"	"07"	"2018"	"08"	"07"	"2018"	"08"	"07"	"2018"	"08"	"07"	"2018"
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20011>	"08"	"04"	"2018"									
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV20012>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20001>				"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20002>				"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20003>	"08"	"07"	"2018"	"08"	"07"	"2018"						
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20004>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20005>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20006>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20007>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR20008>	"08"	"04"	"2018"									
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20001>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20002>	"07"	"04"	"2018"									
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20003>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20004>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20005>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20006>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20007>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20008>	"08"	"04"	"2018"									
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20009>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20010>	"08"	"07"	"2018"	"08"	"07"	"2018"	"08"	"07"	"2018"	"08"	"07"	"2018"
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20011>	"08"	"04"	"2018"									
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV20012>	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"	"08"	"04"	"2018"
