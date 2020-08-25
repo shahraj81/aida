@@ -1,6 +1,6 @@
-@prefix aida: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/InterchangeOntology#> .
-@prefix ldc: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#> .
-@prefix ldcOnt: <https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntologyM36#> .
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -11,7 +11,7 @@ ldc:assertion-0026374cb50fb1e49994df67ede480ac a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b81 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b81 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-04eb2317481543846e50318d08bac0fd a rdf:Statement ;
@@ -25,7 +25,7 @@ ldc:assertion-04eb2317481543846e50318d08bac0fd a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b79 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b79 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -36,7 +36,7 @@ ldc:assertion-072fb5e2bf6c4808da79cf0a72ff368b a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b17 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b17 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-0c89abf98f85ff59d59f10548afac6f3 a rdf:Statement ;
@@ -46,7 +46,7 @@ ldc:assertion-0c89abf98f85ff59d59f10548afac6f3 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b61 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b61 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-0d6c571896cc4240e743a3c4f67c0e3e a rdf:Statement ;
@@ -56,7 +56,7 @@ ldc:assertion-0d6c571896cc4240e743a3c4f67c0e3e a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b79 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b79 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-103f826a0675c37dea106a7391081c97 a rdf:Statement ;
@@ -66,7 +66,7 @@ ldc:assertion-103f826a0675c37dea106a7391081c97 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b35 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b35 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-163b7add0ac948d87818d718054f137c a rdf:Statement ;
@@ -76,7 +76,7 @@ ldc:assertion-163b7add0ac948d87818d718054f137c a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b59 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b59 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-174b48192840a9e32077bb68288f38ba a rdf:Statement ;
@@ -86,7 +86,7 @@ ldc:assertion-174b48192840a9e32077bb68288f38ba a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b77 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b77 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-19c09da1978d1f3a021865d2c78aff29 a rdf:Statement ;
@@ -96,7 +96,7 @@ ldc:assertion-19c09da1978d1f3a021865d2c78aff29 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b15 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b15 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-1e7f9630d5032225d15d4e2e33ac4400 a rdf:Statement ;
@@ -106,7 +106,7 @@ ldc:assertion-1e7f9630d5032225d15d4e2e33ac4400 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b79 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b79 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-1ff97e3d802b0fa5840863c3faf3caaf a rdf:Statement ;
@@ -116,7 +116,7 @@ ldc:assertion-1ff97e3d802b0fa5840863c3faf3caaf a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b27 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b27 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-24d5946bca1664c274388a55ababbbe4 a rdf:Statement ;
@@ -126,7 +126,7 @@ ldc:assertion-24d5946bca1664c274388a55ababbbe4 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b17 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b17 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-27a52c4431706ee5ac489e62fe9419f0 a rdf:Statement ;
@@ -136,7 +136,7 @@ ldc:assertion-27a52c4431706ee5ac489e62fe9419f0 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b43 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b43 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-28a92c15fffcc0eea65842cd805d6791 a rdf:Statement ;
@@ -146,7 +146,7 @@ ldc:assertion-28a92c15fffcc0eea65842cd805d6791 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b7 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b7 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-2b1cf01cfe38a91c496df82b0597a531 a rdf:Statement ;
@@ -156,7 +156,7 @@ ldc:assertion-2b1cf01cfe38a91c496df82b0597a531 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b71 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b71 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-2b32b2f14f5f5e70f54af35be3f69d9c a rdf:Statement ;
@@ -166,7 +166,7 @@ ldc:assertion-2b32b2f14f5f5e70f54af35be3f69d9c a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b49 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b49 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-2f66305456de90709ca4b0037879e43d a rdf:Statement ;
@@ -176,7 +176,7 @@ ldc:assertion-2f66305456de90709ca4b0037879e43d a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b75 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b75 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-33785c324cf1d34a099e44158d2b33d0 a rdf:Statement ;
@@ -186,7 +186,7 @@ ldc:assertion-33785c324cf1d34a099e44158d2b33d0 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b5 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b5 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-35f97e544b7254c696fb9d341afeaa38 a rdf:Statement ;
@@ -196,7 +196,7 @@ ldc:assertion-35f97e544b7254c696fb9d341afeaa38 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b21 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b21 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-368681b90d8dee3761a2008025f89c5b a rdf:Statement ;
@@ -206,7 +206,7 @@ ldc:assertion-368681b90d8dee3761a2008025f89c5b a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b31 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b31 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-3adcbf161bc26ff469c73895020ce9f0 a rdf:Statement ;
@@ -216,10 +216,10 @@ ldc:assertion-3adcbf161bc26ff469c73895020ce9f0 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b11,
-        _:f66a0530586954e2fa544b287d790d228b13,
-        _:f66a0530586954e2fa544b287d790d228b7,
-        _:f66a0530586954e2fa544b287d790d228b9 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b11,
+        _:fa83f0147c7db4130b60267b9e27fed89b13,
+        _:fa83f0147c7db4130b60267b9e27fed89b7,
+        _:fa83f0147c7db4130b60267b9e27fed89b9 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-3ba131987d1ee8b4feae9cd852a4f0c1 a rdf:Statement ;
@@ -233,7 +233,7 @@ ldc:assertion-3ba131987d1ee8b4feae9cd852a4f0c1 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b3 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b3 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -244,7 +244,7 @@ ldc:assertion-3c9f4afcb40a6673f4c6c78c124e21ba a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b69 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b69 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-3ca4e69ab463d262afc94ac813ba84f5 a rdf:Statement ;
@@ -254,7 +254,7 @@ ldc:assertion-3ca4e69ab463d262afc94ac813ba84f5 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b13 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b13 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-3db98e4c0f09146f1bc87618f30354dc a rdf:Statement ;
@@ -264,7 +264,7 @@ ldc:assertion-3db98e4c0f09146f1bc87618f30354dc a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b31 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b31 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-3dd3b1ef5434da15f5a1f82ef1160f67 a rdf:Statement ;
@@ -274,7 +274,7 @@ ldc:assertion-3dd3b1ef5434da15f5a1f82ef1160f67 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b5 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b5 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-3dda049916498d285ea93421ef8596a2 a rdf:Statement ;
@@ -284,7 +284,7 @@ ldc:assertion-3dda049916498d285ea93421ef8596a2 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b47 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b47 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-40ff0bf064f2d177c8de2adc843b4be7 a rdf:Statement ;
@@ -294,7 +294,7 @@ ldc:assertion-40ff0bf064f2d177c8de2adc843b4be7 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b51 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b51 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-4326635c6c5fdb5476390aa4835a328f a rdf:Statement ;
@@ -304,7 +304,7 @@ ldc:assertion-4326635c6c5fdb5476390aa4835a328f a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b67 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b67 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-458561ce701638e2d918be2173812e83 a rdf:Statement ;
@@ -314,7 +314,7 @@ ldc:assertion-458561ce701638e2d918be2173812e83 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b43 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b43 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-45a4a9130e25dec85f7aa186acc1edea a rdf:Statement ;
@@ -324,7 +324,7 @@ ldc:assertion-45a4a9130e25dec85f7aa186acc1edea a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b25 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b25 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-46ad8c4652acb688d4f59c0280543053 a rdf:Statement ;
@@ -334,7 +334,7 @@ ldc:assertion-46ad8c4652acb688d4f59c0280543053 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b47 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b47 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-4706b9efb18b418c2fea7cb024efc0ca a rdf:Statement ;
@@ -348,7 +348,7 @@ ldc:assertion-4706b9efb18b418c2fea7cb024efc0ca a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b75 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b75 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -359,7 +359,7 @@ ldc:assertion-47fa603d347c3ba8bc6ab7511af1244b a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b55 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b55 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-53f4d70dbc438f334ed999b85844c8db a rdf:Statement ;
@@ -369,7 +369,7 @@ ldc:assertion-53f4d70dbc438f334ed999b85844c8db a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b47 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b47 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-56cdba6cd0b4b946fddf122d66aaa677 a rdf:Statement ;
@@ -379,7 +379,7 @@ ldc:assertion-56cdba6cd0b4b946fddf122d66aaa677 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b41 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b41 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-5ec0b44c33bcbb91e6af8d9cd7f110e3 a rdf:Statement ;
@@ -389,7 +389,7 @@ ldc:assertion-5ec0b44c33bcbb91e6af8d9cd7f110e3 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b65 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b65 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-66a47cc4990735e98e2137aef00c3a6c a rdf:Statement ;
@@ -399,7 +399,7 @@ ldc:assertion-66a47cc4990735e98e2137aef00c3a6c a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b63 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b63 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-66c418bebf6f870e0c0f83d016d109a2 a rdf:Statement ;
@@ -409,7 +409,7 @@ ldc:assertion-66c418bebf6f870e0c0f83d016d109a2 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b45 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b45 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-692d0757436d45d71d57310f0c0e38bd a rdf:Statement ;
@@ -423,7 +423,7 @@ ldc:assertion-692d0757436d45d71d57310f0c0e38bd a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b67 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b67 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -434,7 +434,7 @@ ldc:assertion-6954cb89a8642fd91f68430aaa7e5ff5 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b17 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b17 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-6a4fd130a84d11ae12b96045b866640d a rdf:Statement ;
@@ -444,7 +444,7 @@ ldc:assertion-6a4fd130a84d11ae12b96045b866640d a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b3 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b3 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-6b5793e69f3f8baa38d5593446208d0e a rdf:Statement ;
@@ -454,7 +454,7 @@ ldc:assertion-6b5793e69f3f8baa38d5593446208d0e a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b41 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b41 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-72299761dc43c3e91f107e1b694b2bb3 a rdf:Statement ;
@@ -464,7 +464,7 @@ ldc:assertion-72299761dc43c3e91f107e1b694b2bb3 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b73 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b73 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-7237e74b09ace0289f0cda956e0ce77d a rdf:Statement ;
@@ -474,7 +474,7 @@ ldc:assertion-7237e74b09ace0289f0cda956e0ce77d a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b3 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b3 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-743bed504bb647d3d5a13704d638cd38 a rdf:Statement ;
@@ -488,7 +488,7 @@ ldc:assertion-743bed504bb647d3d5a13704d638cd38 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b73 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b73 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -499,7 +499,7 @@ ldc:assertion-7769c315bdae95ac6cc06b45f462f915 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b69 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b69 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-7929523742ea407b5455b3ef33492bb0 a rdf:Statement ;
@@ -509,7 +509,7 @@ ldc:assertion-7929523742ea407b5455b3ef33492bb0 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b1 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b1 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-7b1e2c147e1f1865e918eeb1ac055220 a rdf:Statement ;
@@ -523,7 +523,7 @@ ldc:assertion-7b1e2c147e1f1865e918eeb1ac055220 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b81 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b81 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -538,7 +538,7 @@ ldc:assertion-7b488b7e0424c2b6ecb6f910e75553a7 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b41 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b41 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -549,7 +549,7 @@ ldc:assertion-7f880eedf1c7342792a12798991d1ed5 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b1 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b1 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-84d885017cff01f1988e6fd52df4e96d a rdf:Statement ;
@@ -559,7 +559,7 @@ ldc:assertion-84d885017cff01f1988e6fd52df4e96d a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b47 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b47 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-85b33402fe50738d3319c4f28a8845eb a rdf:Statement ;
@@ -569,7 +569,7 @@ ldc:assertion-85b33402fe50738d3319c4f28a8845eb a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b15 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b15 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-863e34c000fb7d362324607e1016d5c3 a rdf:Statement ;
@@ -579,7 +579,7 @@ ldc:assertion-863e34c000fb7d362324607e1016d5c3 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b19 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b19 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-879551ed8419844085327b5ee71e33a0 a rdf:Statement ;
@@ -593,7 +593,7 @@ ldc:assertion-879551ed8419844085327b5ee71e33a0 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b69 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b69 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -604,7 +604,7 @@ ldc:assertion-882470811c1d6492ced6103c27ea8c74 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b35 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b35 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-889af72ba543b5eabcec0eb38c786971 a rdf:Statement ;
@@ -618,7 +618,7 @@ ldc:assertion-889af72ba543b5eabcec0eb38c786971 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b47 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b47 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -629,7 +629,7 @@ ldc:assertion-8d2418086de6a05559b5d1c1b73f7efd a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b23 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b23 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-8fe5db1d722c73cdf393975eff95501e a rdf:Statement ;
@@ -639,8 +639,8 @@ ldc:assertion-8fe5db1d722c73cdf393975eff95501e a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b49,
-        _:f66a0530586954e2fa544b287d790d228b51 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b49,
+        _:fa83f0147c7db4130b60267b9e27fed89b51 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-916b57e773c2bfad2ac9b640699fb23f a rdf:Statement ;
@@ -650,7 +650,7 @@ ldc:assertion-916b57e773c2bfad2ac9b640699fb23f a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b11 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b11 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-92692d9265bffd9d014fda73171edf44 a rdf:Statement ;
@@ -664,7 +664,7 @@ ldc:assertion-92692d9265bffd9d014fda73171edf44 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b47 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b47 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -675,7 +675,7 @@ ldc:assertion-9417f6751ad726af08b9cf969c42fef4 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b3 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b3 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-95dc78a7bc3d5dddcbfe1db551786b72 a rdf:Statement ;
@@ -685,7 +685,7 @@ ldc:assertion-95dc78a7bc3d5dddcbfe1db551786b72 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b45 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b45 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-963b28c06b6f68c49d4e581973d2fa77 a rdf:Statement ;
@@ -699,7 +699,7 @@ ldc:assertion-963b28c06b6f68c49d4e581973d2fa77 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b73 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b73 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -710,7 +710,7 @@ ldc:assertion-982c5bcd8b4e4df263703d474fa83f2d a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b57 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b57 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-991916452c679133eeb34786579418f2 a rdf:Statement ;
@@ -720,7 +720,7 @@ ldc:assertion-991916452c679133eeb34786579418f2 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b25 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b25 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-995b57082a47e3ea0038e01724a0e7f5 a rdf:Statement ;
@@ -730,7 +730,7 @@ ldc:assertion-995b57082a47e3ea0038e01724a0e7f5 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b33 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b33 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-9fb2dbd24c87f476f646f5b9719aad36 a rdf:Statement ;
@@ -740,7 +740,7 @@ ldc:assertion-9fb2dbd24c87f476f646f5b9719aad36 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b17 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b17 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-a03581bcb04ae7bca8ec1686bf7b5559 a rdf:Statement ;
@@ -754,7 +754,7 @@ ldc:assertion-a03581bcb04ae7bca8ec1686bf7b5559 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b75 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b75 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -765,8 +765,8 @@ ldc:assertion-a141b5f016552f6f70a0942a1ce77517 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b37,
-        _:f66a0530586954e2fa544b287d790d228b39 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b37,
+        _:fa83f0147c7db4130b60267b9e27fed89b39 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-a2d536a1013548317c073c6c8cff5a37 a rdf:Statement ;
@@ -776,7 +776,7 @@ ldc:assertion-a2d536a1013548317c073c6c8cff5a37 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b41 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b41 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-a646ee405138c28aaef0bdd1ebce43db a rdf:Statement ;
@@ -786,7 +786,7 @@ ldc:assertion-a646ee405138c28aaef0bdd1ebce43db a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b81 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b81 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-a73bc36695c64f7b686c629846f1540f a rdf:Statement ;
@@ -800,7 +800,7 @@ ldc:assertion-a73bc36695c64f7b686c629846f1540f a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b17 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b17 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -811,7 +811,7 @@ ldc:assertion-a7e3dbc56653e1434c1ad3b0e95289ea a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b19 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b19 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-a9b0115179f02dd476b7258cadbb08e3 a rdf:Statement ;
@@ -821,7 +821,7 @@ ldc:assertion-a9b0115179f02dd476b7258cadbb08e3 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b37 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b37 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-a9c537fb30299f3303505c3dccaeef92 a rdf:Statement ;
@@ -831,7 +831,7 @@ ldc:assertion-a9c537fb30299f3303505c3dccaeef92 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b71 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b71 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-aae732ec8853b0068d59ea986f6eb899 a rdf:Statement ;
@@ -841,8 +841,8 @@ ldc:assertion-aae732ec8853b0068d59ea986f6eb899 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b73,
-        _:f66a0530586954e2fa544b287d790d228b75 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b73,
+        _:fa83f0147c7db4130b60267b9e27fed89b75 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-aaf7291586b47481538a63d9510d8382 a rdf:Statement ;
@@ -852,7 +852,7 @@ ldc:assertion-aaf7291586b47481538a63d9510d8382 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b33 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b33 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-ac6dfa5d70b28027ac248304e95f88c1 a rdf:Statement ;
@@ -862,7 +862,7 @@ ldc:assertion-ac6dfa5d70b28027ac248304e95f88c1 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b67 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b67 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-ac8492ac125677b5c9bee064f83d7c23 a rdf:Statement ;
@@ -872,7 +872,7 @@ ldc:assertion-ac8492ac125677b5c9bee064f83d7c23 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b57 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b57 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-adfb050e8f02fabf847429c03e779811 a rdf:Statement ;
@@ -882,7 +882,7 @@ ldc:assertion-adfb050e8f02fabf847429c03e779811 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b23 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b23 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-b05320f9ed41bb903a856589ddb83ca4 a rdf:Statement ;
@@ -892,7 +892,7 @@ ldc:assertion-b05320f9ed41bb903a856589ddb83ca4 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b39 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b39 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-b22239f34aa6a59e70399f0b7e14ec1d a rdf:Statement ;
@@ -902,7 +902,7 @@ ldc:assertion-b22239f34aa6a59e70399f0b7e14ec1d a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b9 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b9 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-ba48a88dd46e9ec1a3b6e0ddd2cc7e4e a rdf:Statement ;
@@ -912,7 +912,7 @@ ldc:assertion-ba48a88dd46e9ec1a3b6e0ddd2cc7e4e a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b1 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b1 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-bbc390be0f69ef5144d32e33edfcc9b3 a rdf:Statement ;
@@ -922,7 +922,7 @@ ldc:assertion-bbc390be0f69ef5144d32e33edfcc9b3 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b21 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b21 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-c06d70de9968da74c425e935dadc93fd a rdf:Statement ;
@@ -936,7 +936,7 @@ ldc:assertion-c06d70de9968da74c425e935dadc93fd a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b77 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b77 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -951,7 +951,7 @@ ldc:assertion-c47714d476e7ab1edc45be4c4908c26e a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b3 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b3 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -962,7 +962,7 @@ ldc:assertion-c6d5a19af2d7e84e6fda898f48526818 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b3 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b3 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-c9c7b101e71a8da27cf9077a27488159 a rdf:Statement ;
@@ -976,7 +976,7 @@ ldc:assertion-c9c7b101e71a8da27cf9077a27488159 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b71 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b71 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -987,7 +987,7 @@ ldc:assertion-cb418827cd829301ae16cdb93dd90008 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b29 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b29 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-cc425a74d008e3b0423e33098c197e42 a rdf:Statement ;
@@ -1001,7 +1001,7 @@ ldc:assertion-cc425a74d008e3b0423e33098c197e42 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b1 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b1 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -1016,7 +1016,7 @@ ldc:assertion-d5c31e482815ff46b664e19963dbdef7 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b1 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b1 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -1031,7 +1031,7 @@ ldc:assertion-d7e0b82697a433f12e170fc2b6990b60 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b17 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b17 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -1042,7 +1042,7 @@ ldc:assertion-d8ee4209c0f38286c2ed44af56e7f061 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b61 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b61 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-e3a48be3d00fbb9d4888ca9d1b8ce31d a rdf:Statement ;
@@ -1056,7 +1056,7 @@ ldc:assertion-e3a48be3d00fbb9d4888ca9d1b8ce31d a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b41 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b41 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -1067,7 +1067,7 @@ ldc:assertion-e44a03f14beefe0b9dab10b1934823a8 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b59 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b59 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-e47754af136857eacc5ea3e96ce37e06 a rdf:Statement ;
@@ -1077,7 +1077,7 @@ ldc:assertion-e47754af136857eacc5ea3e96ce37e06 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b55 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b55 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-e4c7f52b2adb487155470b5bbf52d5ec a rdf:Statement ;
@@ -1087,7 +1087,7 @@ ldc:assertion-e4c7f52b2adb487155470b5bbf52d5ec a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b77 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b77 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-e76c67efa83945866f6bc29f354e100f a rdf:Statement ;
@@ -1097,7 +1097,7 @@ ldc:assertion-e76c67efa83945866f6bc29f354e100f a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b1 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b1 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-e9413374e6c78bef04fbe1606c83e504 a rdf:Statement ;
@@ -1111,7 +1111,7 @@ ldc:assertion-e9413374e6c78bef04fbe1606c83e504 a rdf:Statement ;
             aida:confidence [ a aida:Confidence ;
                     aida:confidenceValue "1.0"^^xsd:double ;
                     aida:system ldc:LDCModelGenerator ] ;
-            aida:containedJustification _:f66a0530586954e2fa544b287d790d228b79 ;
+            aida:containedJustification _:fa83f0147c7db4130b60267b9e27fed89b79 ;
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
@@ -1122,7 +1122,7 @@ ldc:assertion-efd554ebeec309250fcb4de0cdd14554 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b29 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b29 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-f33a76877c9899caecaa29373fe1faf6 a rdf:Statement ;
@@ -1132,7 +1132,7 @@ ldc:assertion-f33a76877c9899caecaa29373fe1faf6 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b53 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b53 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-f587da61287c8d781bb29e6293e39eff a rdf:Statement ;
@@ -1142,7 +1142,7 @@ ldc:assertion-f587da61287c8d781bb29e6293e39eff a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b27 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b27 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-f8f215dec3f97622cd9a1939260a9906 a rdf:Statement ;
@@ -1152,7 +1152,7 @@ ldc:assertion-f8f215dec3f97622cd9a1939260a9906 a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b53 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b53 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-ffc48b08ff62804a6972b964dbb6972c a rdf:Statement ;
@@ -1162,8 +1162,8 @@ ldc:assertion-ffc48b08ff62804a6972b964dbb6972c a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b63,
-        _:f66a0530586954e2fa544b287d790d228b65 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b63,
+        _:fa83f0147c7db4130b60267b9e27fed89b65 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:assertion-ffff9c80f27011cf6c8fc3277441d2cc a rdf:Statement ;
@@ -1173,121 +1173,98 @@ ldc:assertion-ffff9c80f27011cf6c8fc3277441d2cc a rdf:Statement ;
     aida:confidence [ a aida:Confidence ;
             aida:confidenceValue "1.0"^^xsd:double ;
             aida:system ldc:LDCModelGenerator ] ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b41 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b41 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22455 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b83 ;
     aida:prototype ldc:prototype-NILE22455 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22456 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b85 ;
     aida:prototype ldc:prototype-NILE22456 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22457 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b87 ;
     aida:prototype ldc:prototype-NILE22457 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22459 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b91 ;
     aida:prototype ldc:prototype-NILE22459 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22460 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b93 ;
     aida:prototype ldc:prototype-NILE22460 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22461 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b95 ;
     aida:prototype ldc:prototype-NILE22461 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22462 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b97 ;
     aida:prototype ldc:prototype-NILE22462 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22463 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b99 ;
     aida:prototype ldc:prototype-NILE22463 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22464 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b101 ;
     aida:prototype ldc:prototype-NILE22464 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22465 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b103 ;
     aida:prototype ldc:prototype-NILE22465 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22466 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b105 ;
     aida:prototype ldc:prototype-NILE22466 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22467 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b107 ;
     aida:prototype ldc:prototype-NILE22467 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22468 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b109 ;
     aida:prototype ldc:prototype-NILE22468 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22469 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b111 ;
     aida:prototype ldc:prototype-NILE22469 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22471 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b115 ;
     aida:prototype ldc:prototype-NILE22471 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22472 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b117 ;
     aida:prototype ldc:prototype-NILE22472 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22473 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b119 ;
     aida:prototype ldc:prototype-NILE22473 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22474 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b121 ;
     aida:prototype ldc:prototype-NILE22474 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22476 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b125 ;
     aida:prototype ldc:prototype-NILE22476 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22477 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b127 ;
     aida:prototype ldc:prototype-NILE22477 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22478 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b129 ;
     aida:prototype ldc:prototype-NILE22478 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22479 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b131 ;
     aida:prototype ldc:prototype-NILE22479 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22480 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b133 ;
     aida:prototype ldc:prototype-NILE22480 ;
     aida:system ldc:LDCModelGenerator .
 
@@ -1336,230 +1313,230 @@ ldc:cluster-NILV22461 a aida:SameAsCluster ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000058 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b21 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b21 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b97 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b21 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b21 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b97 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "45 745 случаев лихорадки денге" .
 
 ldc:EMJC002YF02.000071 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b17 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b17 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b93 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b17 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b17 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b93 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "45 745" .
 
 ldc:EMJC002YF02.000105 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b33 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b33 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b109 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b33 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b33 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b109 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000139 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b15 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b15 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b91 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b15 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b15 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b91 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000186 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b3 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b3 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b85 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b3 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b3 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b85 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "400" .
 
 ldc:EMJC002YF02.000220 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b43 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b43 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b117 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b43 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b43 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b117 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000233 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b41 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b41 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b115 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b41 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b41 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b115 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "между 65 000 и 117 000" .
 
 ldc:EMJC002YF02.000267 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b47 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b47 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b121 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b47 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b47 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b121 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "министр здравоохранения" .
 
 ldc:EMJC002YF02.000280 a aida:Entity ;
     aida:hasName "Нэнси Перес" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b51 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b51 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b123 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b51 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b51 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b123 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000314 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b27 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b27 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b103 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b27 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b27 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b103 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000327 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b53 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b53 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b125 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b53 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b53 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b125 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "неизвестной болезни" .
 
 ldc:EMJC002YF02.000374 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b1 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b1 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b83 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b1 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b1 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b83 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "8" .
 
 ldc:EMJC002YF02.000408 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b11 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b11 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b89 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b11 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b11 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b89 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "Chikungunya" .
 
 ldc:EMJC002YF02.000421 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b65 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b65 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b135 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b65 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b65 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b135 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000455 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b59 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b59 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b131 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b59 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b59 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b131 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000489 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b13 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b13 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b89 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b13 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b13 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b89 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "Chikungunya" .
 
 ldc:EMJC002YF02.000523 a aida:Entity ;
     aida:hasName "Венесуэлы" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b31 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b31 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b107 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b31 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b31 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b107 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000536 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b7 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b7 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b89 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b7 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b7 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b89 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "Chikungunya" .
 
 ldc:EMJC002YF02.000549 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b9 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b9 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b89 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b9 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b9 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b89 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "Chikungunya" .
 
 ldc:EMJC002YF02.000730 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b19 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b19 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b95 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b19 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b19 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b95 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "45 745 случаев" .
 
 ldc:EMJC002YF02.000743 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b45 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b45 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b119 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b45 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b45 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b119 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000756 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b55 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b55 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b127 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b55 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b55 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b127 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000769 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b39 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b39 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b113 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b39 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b39 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b113 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "лихорадки денге" .
 
 ldc:EMJC002YF02.000782 a aida:Entity ;
     aida:hasName "штата Арагуа" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b63 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b63 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b135 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b63 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b63 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b135 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000795 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b57 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b57 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b129 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b57 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b57 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b129 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "президент Коллегии Врачей" .
 
 ldc:EMJC002YF02.000808 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b35 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b35 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b111 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b35 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b35 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b111 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.000842 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b23 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b23 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b99 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b23 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b23 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b99 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "65 000" .
 
 ldc:EMJC002YF02.000876 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b5 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b5 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b87 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b5 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b5 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b87 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "117 000" .
 
 ldc:EMJC002YF02.000910 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b25 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b25 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b101 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b25 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b25 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b101 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "8 граждан" .
 
 ldc:EMJC002YF02.000944 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b37 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b37 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b113 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b37 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b37 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b113 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "денге" .
 
 ldc:EMJC002YF02.001012 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b29 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b29 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b105 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b29 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b29 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b105 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "болезни" .
 
 ldc:EMJC002YF02.001093 a aida:Entity ;
     aida:hasName "министр здравоохранения Нэнси Перес" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b49 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b49 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b123 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b49 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b49 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b123 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:EMJC002YF02.001127 a aida:Entity ;
     aida:hasName "т" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b61 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b61 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b133 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b61 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b61 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b133 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:RMJC002YF02.000037 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b17 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b17 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b17 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b17 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -1579,8 +1556,8 @@ ldc:RMJC002YF02.000037 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:RMJC002YF02.000152 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b3 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b3 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b3 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b3 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -1600,8 +1577,8 @@ ldc:RMJC002YF02.000152 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:RMJC002YF02.000199 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b41 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b41 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b41 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b41 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -1621,8 +1598,8 @@ ldc:RMJC002YF02.000199 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:RMJC002YF02.000246 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b47 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b47 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b47 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b47 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1636,8 +1613,8 @@ ldc:RMJC002YF02.000246 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:RMJC002YF02.000340 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b1 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b1 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b1 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b1 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1651,8 +1628,8 @@ ldc:RMJC002YF02.000340 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000003 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b71 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b71 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b71 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b71 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -1672,8 +1649,8 @@ ldc:VMJC002YF02.000003 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000084 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b73 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b73 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b73 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b73 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -1693,8 +1670,8 @@ ldc:VMJC002YF02.000084 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000118 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b75 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b75 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b75 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b75 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -1714,8 +1691,8 @@ ldc:VMJC002YF02.000118 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000293 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b79 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b79 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b79 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b79 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1729,8 +1706,8 @@ ldc:VMJC002YF02.000293 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000387 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b77 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b77 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b77 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b77 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1744,8 +1721,8 @@ ldc:VMJC002YF02.000387 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000434 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b69 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b69 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b69 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b69 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1759,8 +1736,8 @@ ldc:VMJC002YF02.000434 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000468 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b81 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b81 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b81 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b81 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1774,8 +1751,8 @@ ldc:VMJC002YF02.000468 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:VMJC002YF02.000502 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b67 ;
-    aida:justifiedBy _:f66a0530586954e2fa544b287d790d228b67 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b67 ;
+    aida:justifiedBy _:fa83f0147c7db4130b60267b9e27fed89b67 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1789,17 +1766,14 @@ ldc:VMJC002YF02.000502 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22470 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b113 ;
     aida:prototype ldc:prototype-NILE22470 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22475 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b123 ;
     aida:prototype ldc:prototype-NILE22475 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22481 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b135 ;
     aida:prototype ldc:prototype-NILE22481 ;
     aida:system ldc:LDCModelGenerator .
 
@@ -1808,141 +1782,141 @@ ldc:cluster-NILV22458 a aida:SameAsCluster ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22457 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b5 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b87 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b5 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b87 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "117 000" .
 
 ldc:prototype-NILE22461 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b19 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b95 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b19 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b95 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "45 745 случаев" .
 
 ldc:prototype-NILE22463 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b23 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b99 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b23 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b99 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "65 000" .
 
 ldc:prototype-NILE22464 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b25 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b101 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b25 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b101 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "8 граждан" .
 
 ldc:prototype-NILE22466 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b29 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b105 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b29 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b105 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "болезни" .
 
 ldc:prototype-NILE22469 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b35 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b111 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b35 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b111 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22470 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b39 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b113 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b39 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b113 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "денге",
         "лихорадки денге" .
 
 ldc:prototype-NILE22473 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b45 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b119 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b45 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b119 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22477 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b55 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b127 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b55 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b127 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22478 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b57 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b129 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b57 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b129 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "президент Коллегии Врачей" .
 
 ldc:prototype-NILE22480 a aida:Entity ;
     aida:hasName "т" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b61 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b133 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b61 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b133 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22455 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b1 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b83 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b1 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b83 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "8" .
 
 ldc:prototype-NILE22456 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b3 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b85 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b3 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b85 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "400" .
 
 ldc:prototype-NILE22460 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b17 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b93 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b17 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b93 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "45 745" .
 
 ldc:prototype-NILE22467 a aida:Entity ;
     aida:hasName "Венесуэлы" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b31 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b107 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b31 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b107 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22468 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b33 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b109 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b33 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b109 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22471 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b41 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b115 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b41 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b115 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "между 65 000 и 117 000" .
 
 ldc:prototype-NILE22472 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b43 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b117 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b43 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b117 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22474 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b47 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b121 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b47 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b121 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "министр здравоохранения" .
 
 ldc:prototype-NILE22475 a aida:Entity ;
     aida:hasName "Нэнси Перес",
         "министр здравоохранения Нэнси Перес" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b49 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b123 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b49 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b123 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22476 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b53 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b125 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b53 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b125 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "неизвестной болезни" .
 
 ldc:prototype-NILE22479 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b59 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b131 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b59 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b131 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22481 a aida:Entity ;
     aida:hasName "штата Арагуа" ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b63 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b135 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b63 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b135 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILV22455 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b67 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b67 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1956,7 +1930,7 @@ ldc:prototype-NILV22455 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILV22456 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b69 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b69 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -1970,7 +1944,7 @@ ldc:prototype-NILV22456 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILV22457 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b71 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b71 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -1990,7 +1964,7 @@ ldc:prototype-NILV22457 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILV22459 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b77 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b77 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -2004,7 +1978,7 @@ ldc:prototype-NILV22459 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILV22461 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b81 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b81 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -2018,28 +1992,27 @@ ldc:prototype-NILV22461 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:cluster-NILE22458 a aida:SameAsCluster ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b89 ;
     aida:prototype ldc:prototype-NILE22458 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22459 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b15 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b91 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b15 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b91 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22462 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b21 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b97 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b21 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b97 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "45 745 случаев лихорадки денге" .
 
 ldc:prototype-NILE22465 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b27 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b103 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b27 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b103 ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILR22455 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b1 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b1 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -2053,7 +2026,7 @@ ldc:prototype-NILR22455 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILR22456 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b3 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b3 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -2073,7 +2046,7 @@ ldc:prototype-NILR22456 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILR22457 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b17 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b17 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -2093,7 +2066,7 @@ ldc:prototype-NILR22457 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILR22458 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b41 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b41 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -2113,7 +2086,7 @@ ldc:prototype-NILR22458 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILR22459 a aida:Relation ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b47 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b47 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -2127,7 +2100,7 @@ ldc:prototype-NILR22459 a aida:Relation ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILV22460 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b79 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b79 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:timeType "BEFORE" ],
@@ -2141,13 +2114,13 @@ ldc:prototype-NILV22460 a aida:Event ;
     aida:system ldc:LDCModelGenerator .
 
 ldc:prototype-NILE22458 a aida:Entity ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b7 ;
-    aida:link _:f66a0530586954e2fa544b287d790d228b89 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b7 ;
+    aida:link _:fa83f0147c7db4130b60267b9e27fed89b89 ;
     aida:system ldc:LDCModelGenerator ;
     aida:textValue "Chikungunya" .
 
 ldc:prototype-NILV22458 a aida:Event ;
-    aida:informativeJustification _:f66a0530586954e2fa544b287d790d228b75 ;
+    aida:informativeJustification _:fa83f0147c7db4130b60267b9e27fed89b75 ;
     aida:ldcTime [ a aida:LDCTime ;
             aida:end [ a aida:LDCTimeComponent ;
                     aida:day "---30"^^xsd:gDay ;
@@ -2536,735 +2509,735 @@ ldc:LDCModelGenerator a aida:System .
             aida:system ldc:LDCModelGenerator ] ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b10 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b10 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b100 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b100 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b102 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b102 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b104 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b104 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b106 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b106 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b108 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b108 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b110 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b110 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b112 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b112 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b114 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b114 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b116 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b116 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b118 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b118 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b12 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b12 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b120 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b120 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b122 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b122 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b124 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b124 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b126 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b126 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b128 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b128 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b130 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b130 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b132 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b132 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b134 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b134 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b136 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b136 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b14 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b14 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b16 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b16 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b18 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b18 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b2 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b2 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b20 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b20 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b22 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b22 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b24 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b24 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b26 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b26 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b28 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b28 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b30 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b30 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b32 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b32 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b34 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b34 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b36 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b36 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b38 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b38 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b4 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b4 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b40 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b40 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b42 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b42 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b44 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b44 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b46 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b46 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b48 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b48 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b50 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b50 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b52 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b52 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b54 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b54 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b56 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b56 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b58 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b58 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b6 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b6 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b60 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b60 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b62 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b62 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b64 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b64 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b66 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b66 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b68 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b68 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b70 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b70 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b72 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b72 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b74 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b74 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b76 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b76 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b78 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b78 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b8 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b8 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b80 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b80 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b82 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b82 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b84 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b84 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b86 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b86 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b88 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b88 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b90 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b90 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b92 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b92 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b94 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b94 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b96 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b96 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b98 a aida:Confidence ;
+_:fa83f0147c7db4130b60267b9e27fed89b98 a aida:Confidence ;
     aida:confidenceValue "1.0"^^xsd:double ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b101 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b102 ;
-    aida:linkTarget "LDC2019E44:NILE22464" ;
+_:fa83f0147c7db4130b60267b9e27fed89b101 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b102 ;
+    aida:linkTarget "REFKB:NILE22464" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b103 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b104 ;
-    aida:linkTarget "LDC2019E44:NILE22465" ;
+_:fa83f0147c7db4130b60267b9e27fed89b103 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b104 ;
+    aida:linkTarget "REFKB:NILE22465" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b105 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b106 ;
-    aida:linkTarget "LDC2019E44:NILE22466" ;
+_:fa83f0147c7db4130b60267b9e27fed89b105 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b106 ;
+    aida:linkTarget "REFKB:NILE22466" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b107 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b108 ;
-    aida:linkTarget "LDC2019E44:NILE22467" ;
+_:fa83f0147c7db4130b60267b9e27fed89b107 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b108 ;
+    aida:linkTarget "REFKB:NILE22467" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b109 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b110 ;
-    aida:linkTarget "LDC2019E44:NILE22468" ;
+_:fa83f0147c7db4130b60267b9e27fed89b109 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b110 ;
+    aida:linkTarget "REFKB:NILE22468" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b111 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b112 ;
-    aida:linkTarget "LDC2019E44:NILE22469" ;
+_:fa83f0147c7db4130b60267b9e27fed89b111 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b112 ;
+    aida:linkTarget "REFKB:NILE22469" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b115 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b116 ;
-    aida:linkTarget "LDC2019E44:NILE22471" ;
+_:fa83f0147c7db4130b60267b9e27fed89b115 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b116 ;
+    aida:linkTarget "REFKB:NILE22471" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b117 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b118 ;
-    aida:linkTarget "LDC2019E44:NILE22472" ;
+_:fa83f0147c7db4130b60267b9e27fed89b117 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b118 ;
+    aida:linkTarget "REFKB:NILE22472" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b119 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b120 ;
-    aida:linkTarget "LDC2019E44:NILE22473" ;
+_:fa83f0147c7db4130b60267b9e27fed89b119 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b120 ;
+    aida:linkTarget "REFKB:NILE22473" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b121 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b122 ;
-    aida:linkTarget "LDC2019E44:NILE22474" ;
+_:fa83f0147c7db4130b60267b9e27fed89b121 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b122 ;
+    aida:linkTarget "REFKB:NILE22474" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b125 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b126 ;
-    aida:linkTarget "LDC2019E44:NILE22476" ;
+_:fa83f0147c7db4130b60267b9e27fed89b125 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b126 ;
+    aida:linkTarget "REFKB:NILE22476" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b127 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b128 ;
-    aida:linkTarget "LDC2019E44:NILE22477" ;
+_:fa83f0147c7db4130b60267b9e27fed89b127 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b128 ;
+    aida:linkTarget "REFKB:NILE22477" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b129 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b130 ;
-    aida:linkTarget "LDC2019E44:NILE22478" ;
+_:fa83f0147c7db4130b60267b9e27fed89b129 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b130 ;
+    aida:linkTarget "REFKB:NILE22478" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b131 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b132 ;
-    aida:linkTarget "LDC2019E44:NILE22479" ;
+_:fa83f0147c7db4130b60267b9e27fed89b131 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b132 ;
+    aida:linkTarget "REFKB:NILE22479" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b133 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b134 ;
-    aida:linkTarget "LDC2019E44:NILE22480" ;
+_:fa83f0147c7db4130b60267b9e27fed89b133 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b134 ;
+    aida:linkTarget "REFKB:NILE22480" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b83 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b84 ;
-    aida:linkTarget "LDC2019E44:NILE22455" ;
+_:fa83f0147c7db4130b60267b9e27fed89b83 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b84 ;
+    aida:linkTarget "REFKB:NILE22455" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b85 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b86 ;
-    aida:linkTarget "LDC2019E44:NILE22456" ;
+_:fa83f0147c7db4130b60267b9e27fed89b85 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b86 ;
+    aida:linkTarget "REFKB:NILE22456" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b87 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b88 ;
-    aida:linkTarget "LDC2019E44:NILE22457" ;
+_:fa83f0147c7db4130b60267b9e27fed89b87 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b88 ;
+    aida:linkTarget "REFKB:NILE22457" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b91 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b92 ;
-    aida:linkTarget "LDC2019E44:NILE22459" ;
+_:fa83f0147c7db4130b60267b9e27fed89b91 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b92 ;
+    aida:linkTarget "REFKB:NILE22459" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b93 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b94 ;
-    aida:linkTarget "LDC2019E44:NILE22460" ;
+_:fa83f0147c7db4130b60267b9e27fed89b93 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b94 ;
+    aida:linkTarget "REFKB:NILE22460" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b95 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b96 ;
-    aida:linkTarget "LDC2019E44:NILE22461" ;
+_:fa83f0147c7db4130b60267b9e27fed89b95 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b96 ;
+    aida:linkTarget "REFKB:NILE22461" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b97 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b98 ;
-    aida:linkTarget "LDC2019E44:NILE22462" ;
+_:fa83f0147c7db4130b60267b9e27fed89b97 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b98 ;
+    aida:linkTarget "REFKB:NILE22462" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b99 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b100 ;
-    aida:linkTarget "LDC2019E44:NILE22463" ;
+_:fa83f0147c7db4130b60267b9e27fed89b99 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b100 ;
+    aida:linkTarget "REFKB:NILE22463" ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b11 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b12 ;
+_:fa83f0147c7db4130b60267b9e27fed89b113 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b114 ;
+    aida:linkTarget "REFKB:NILE22470" ;
+    aida:system ldc:LDCModelGenerator .
+
+_:fa83f0147c7db4130b60267b9e27fed89b123 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b124 ;
+    aida:linkTarget "REFKB:NILE22475" ;
+    aida:system ldc:LDCModelGenerator .
+
+_:fa83f0147c7db4130b60267b9e27fed89b135 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b136 ;
+    aida:linkTarget "REFKB:NILE22481" ;
+    aida:system ldc:LDCModelGenerator .
+
+_:fa83f0147c7db4130b60267b9e27fed89b11 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b12 ;
     aida:endOffsetInclusive "4561"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4551"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b113 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b114 ;
-    aida:linkTarget "LDC2019E44:NILE22470" ;
-    aida:system ldc:LDCModelGenerator .
-
-_:f66a0530586954e2fa544b287d790d228b123 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b124 ;
-    aida:linkTarget "LDC2019E44:NILE22475" ;
-    aida:system ldc:LDCModelGenerator .
-
-_:f66a0530586954e2fa544b287d790d228b13 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b14 ;
+_:fa83f0147c7db4130b60267b9e27fed89b13 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b14 ;
     aida:endOffsetInclusive "4856"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4846"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b135 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b136 ;
-    aida:linkTarget "LDC2019E44:NILE22481" ;
-    aida:system ldc:LDCModelGenerator .
-
-_:f66a0530586954e2fa544b287d790d228b37 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b38 ;
+_:fa83f0147c7db4130b60267b9e27fed89b37 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b38 ;
     aida:endOffsetInclusive "2649"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2645"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b51 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b52 ;
+_:fa83f0147c7db4130b60267b9e27fed89b51 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b52 ;
     aida:endOffsetInclusive "2600"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2590"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b65 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b66 ;
+_:fa83f0147c7db4130b60267b9e27fed89b65 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b66 ;
     aida:endOffsetInclusive "4512"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4501"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b9 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b10 ;
+_:fa83f0147c7db4130b60267b9e27fed89b9 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b10 ;
     aida:endOffsetInclusive "2843"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2833"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b15 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b16 ;
+_:fa83f0147c7db4130b60267b9e27fed89b15 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b16 ;
     aida:endOffsetInclusive "2817"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2802"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b19 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b20 ;
+_:fa83f0147c7db4130b60267b9e27fed89b19 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b20 ;
     aida:endOffsetInclusive "2633"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2620"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b21 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b22 ;
+_:fa83f0147c7db4130b60267b9e27fed89b21 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b22 ;
     aida:endOffsetInclusive "2649"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2620"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b23 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b24 ;
+_:fa83f0147c7db4130b60267b9e27fed89b23 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b24 ;
     aida:endOffsetInclusive "2929"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2924"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b25 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b26 ;
+_:fa83f0147c7db4130b60267b9e27fed89b25 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b26 ;
     aida:endOffsetInclusive "4034"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4026"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b27 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b28 ;
+_:fa83f0147c7db4130b60267b9e27fed89b27 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b28 ;
     aida:endOffsetInclusive "4047"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4026"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b29 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b30 ;
+_:fa83f0147c7db4130b60267b9e27fed89b29 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b30 ;
     aida:endOffsetInclusive "4077"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4071"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b31 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b32 ;
+_:fa83f0147c7db4130b60267b9e27fed89b31 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b32 ;
     aida:endOffsetInclusive "4708"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4700"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b33 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b34 ;
+_:fa83f0147c7db4130b60267b9e27fed89b33 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b34 ;
     aida:endOffsetInclusive "2711"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2700"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b35 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b36 ;
+_:fa83f0147c7db4130b60267b9e27fed89b35 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b36 ;
     aida:endOffsetInclusive "4034"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4028"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b39 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b40 ;
+_:fa83f0147c7db4130b60267b9e27fed89b39 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b40 ;
     aida:endOffsetInclusive "2649"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2635"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b43 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b44 ;
+_:fa83f0147c7db4130b60267b9e27fed89b43 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b44 ;
     aida:endOffsetInclusive "2963"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2918"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b45 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b46 ;
+_:fa83f0147c7db4130b60267b9e27fed89b45 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b46 ;
     aida:endOffsetInclusive "2572"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2566"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b49 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b50 ;
+_:fa83f0147c7db4130b60267b9e27fed89b49 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b50 ;
     aida:endOffsetInclusive "2600"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2566"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b5 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b6 ;
+_:fa83f0147c7db4130b60267b9e27fed89b5 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b6 ;
     aida:endOffsetInclusive "2939"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2933"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b53 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b54 ;
+_:fa83f0147c7db4130b60267b9e27fed89b53 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b54 ;
     aida:endOffsetInclusive "4077"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4059"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b55 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b56 ;
+_:fa83f0147c7db4130b60267b9e27fed89b55 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b56 ;
     aida:endOffsetInclusive "4279"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4271"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b57 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b58 ;
+_:fa83f0147c7db4130b60267b9e27fed89b57 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b58 ;
     aida:endOffsetInclusive "4133"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4109"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b59 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b60 ;
+_:fa83f0147c7db4130b60267b9e27fed89b59 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b60 ;
     aida:endOffsetInclusive "4286"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4271"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b61 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b62 ;
+_:fa83f0147c7db4130b60267b9e27fed89b61 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b62 ;
     aida:endOffsetInclusive "4378"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4378"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b63 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b64 ;
+_:fa83f0147c7db4130b60267b9e27fed89b63 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b64 ;
     aida:endOffsetInclusive "4047"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4036"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b7 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b8 ;
+_:fa83f0147c7db4130b60267b9e27fed89b7 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b8 ;
     aida:endOffsetInclusive "2735"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2725"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b67 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b68 ;
+_:fa83f0147c7db4130b60267b9e27fed89b89 a aida:LinkAssertion ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b90 ;
+    aida:linkTarget "REFKB:NILE22458" ;
+    aida:system ldc:LDCModelGenerator .
+
+_:fa83f0147c7db4130b60267b9e27fed89b67 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b68 ;
     aida:endOffsetInclusive "4691"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4673"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b69 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b70 ;
+_:fa83f0147c7db4130b60267b9e27fed89b69 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b70 ;
     aida:endOffsetInclusive "4326"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4317"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b71 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b72 ;
+_:fa83f0147c7db4130b60267b9e27fed89b71 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b72 ;
     aida:endOffsetInclusive "2618"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2615"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b73 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b74 ;
+_:fa83f0147c7db4130b60267b9e27fed89b73 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b74 ;
     aida:endOffsetInclusive "2723"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2714"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b77 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b78 ;
+_:fa83f0147c7db4130b60267b9e27fed89b77 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b78 ;
     aida:endOffsetInclusive "4549"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4535"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b81 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b82 ;
+_:fa83f0147c7db4130b60267b9e27fed89b81 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b82 ;
     aida:endOffsetInclusive "4831"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4814"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b89 a aida:LinkAssertion ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b90 ;
-    aida:linkTarget "LDC2019E44:NILE22458" ;
-    aida:system ldc:LDCModelGenerator .
-
-_:f66a0530586954e2fa544b287d790d228b75 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b76 ;
+_:fa83f0147c7db4130b60267b9e27fed89b75 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b76 ;
     aida:endOffsetInclusive "2831"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2819"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b79 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b80 ;
+_:fa83f0147c7db4130b60267b9e27fed89b79 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b80 ;
     aida:endOffsetInclusive "4054"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4049"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b1 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b2 ;
+_:fa83f0147c7db4130b60267b9e27fed89b1 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b2 ;
     aida:endOffsetInclusive "4026"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "4026"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b17 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b18 ;
+_:fa83f0147c7db4130b60267b9e27fed89b17 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b18 ;
     aida:endOffsetInclusive "2625"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2620"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b3 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b4 ;
+_:fa83f0147c7db4130b60267b9e27fed89b3 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b4 ;
     aida:endOffsetInclusive "2804"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2802"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b41 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b42 ;
+_:fa83f0147c7db4130b60267b9e27fed89b41 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b42 ;
     aida:endOffsetInclusive "2939"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;
     aida:startOffset "2918"^^xsd:int ;
     aida:system ldc:LDCModelGenerator .
 
-_:f66a0530586954e2fa544b287d790d228b47 a aida:TextJustification ;
-    aida:confidence _:f66a0530586954e2fa544b287d790d228b48 ;
+_:fa83f0147c7db4130b60267b9e27fed89b47 a aida:TextJustification ;
+    aida:confidence _:fa83f0147c7db4130b60267b9e27fed89b48 ;
     aida:endOffsetInclusive "2588"^^xsd:int ;
     aida:source "JC002YF53" ;
     aida:sourceDocument "JC002YF02" ;

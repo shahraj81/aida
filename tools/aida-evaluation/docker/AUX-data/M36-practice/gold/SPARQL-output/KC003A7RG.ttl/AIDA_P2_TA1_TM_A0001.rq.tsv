@@ -1,6 +1,6 @@
 ?cluster	?sa_month	?sa_day	?sa_year	?sb_month	?sb_day	?sb_year	?ea_month	?ea_day	?ea_year	?eb_month	?eb_day	?eb_year
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR21835>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR21836>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILR21837>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV21835>												
-<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-NILV21836>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR21835>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR21836>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILR21837>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV21835>												
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-NILV21836>												
