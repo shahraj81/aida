@@ -92,13 +92,13 @@ def filter_responses(args):
         header_printed = False
         for linenum in sorted(responses.get(input_filename), key=int):
             entry = responses.get(input_filename).get(str(linenum))
+            if not header_printed:
+                output_fh.write('{}\n'.format(entry.get('header').get('line')))
+                header_printed = True
             if not entry.get('valid'):
                 logger.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
                 continue
             if entry.get('passes_filter'):
-                if not header_printed:
-                    output_fh.write('{}\n'.format(entry.get('header').get('line')))
-                    header_printed = True
                 output_fh.write(entry.__str__())
         output_fh.close()
     exit(ALLOK_EXIT_CODE)
