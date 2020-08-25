@@ -55,20 +55,21 @@ class FrameMetricScorer(Scorer):
                     for role_name in gold_frame.get('role_fillers'):
                         for gold_filler_cluster_id in gold_frame.get('role_fillers').get(role_name):
                             gold_slot_fillers['{}:{}'.format(role_name, gold_filler_cluster_id)] = 1
-                    system_frame = self.get('system_responses').get('document_frames').get(document_id).get(system_cluster_id)
-                    system_slot_fillers = {}
-                    for role_name in system_frame.get('role_fillers'):
-                        for system_filler_cluster_id in system_frame.get('role_fillers').get(role_name):
-                            aligned_gold_filler_cluster_id = document_system_to_gold.get(system_filler_cluster_id).get('aligned_to')
-                            aligned_gold_filler_cluster_id_similarity = document_system_to_gold.get(system_filler_cluster_id).get('aligned_similarity')
-                            if aligned_gold_filler_cluster_id != 'None':
-                                if aligned_gold_filler_cluster_id_similarity == 0:
-                                    self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                                system_slot_fillers['{}:{}'.format(role_name, aligned_gold_filler_cluster_id)] = 1
-                            else:
-                                system_slot_fillers['{}:{}'.format(role_name, system_filler_cluster_id)] = 1
-                    if len(gold_slot_fillers) and len(system_slot_fillers):
-                        precision, recall, f1 = get_precision_recall_and_f1(set(gold_slot_fillers.keys()), set(system_slot_fillers.keys()))
+                    if system_cluster_id in self.get('system_responses').get('document_frames').get(document_id):
+                        system_frame = self.get('system_responses').get('document_frames').get(document_id).get(system_cluster_id)
+                        system_slot_fillers = {}
+                        for role_name in system_frame.get('role_fillers'):
+                            for system_filler_cluster_id in system_frame.get('role_fillers').get(role_name):
+                                aligned_gold_filler_cluster_id = document_system_to_gold.get(system_filler_cluster_id).get('aligned_to')
+                                aligned_gold_filler_cluster_id_similarity = document_system_to_gold.get(system_filler_cluster_id).get('aligned_similarity')
+                                if aligned_gold_filler_cluster_id != 'None':
+                                    if aligned_gold_filler_cluster_id_similarity == 0:
+                                        self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
+                                    system_slot_fillers['{}:{}'.format(role_name, aligned_gold_filler_cluster_id)] = 1
+                                else:
+                                    system_slot_fillers['{}:{}'.format(role_name, system_filler_cluster_id)] = 1
+                        if len(gold_slot_fillers) and len(system_slot_fillers):
+                            precision, recall, f1 = get_precision_recall_and_f1(set(gold_slot_fillers.keys()), set(system_slot_fillers.keys()))
                 mean_f1 += f1
                 count += 1
                 score = FrameMetricScore(self.logger, self.get('runid'), document_id,
