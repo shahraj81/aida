@@ -173,7 +173,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
             passes_filter = True
             filtered_clusters[key] = True
         else:
-            logger.record_event('DEFAULT_INFO', 'Entry fails the filter due to mention: {}'.format(mention.get('span_string')), entry.get('where'))
+            logger.record_event('MENTION_NOT_ANNOTATED', mention.get('span_string'), entry.get('where'))
 
     elif schema_name == 'AIDA_PHASE2_TASK1_TM_RESPONSE':
         cluster_id = entry.get('cluster').get('ID')
@@ -181,7 +181,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
         if key in filtered_clusters:
             passes_filter = filtered_clusters[key]
             if not passes_filter:
-                logger.record_event('DEFAULT_INFO', 'Entry fails the filter due to cluster: {}'.format(cluster_id), entry.get('where'))
+                logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
         else:
             logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', logger.get('code_location'))
 
