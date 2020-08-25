@@ -39,11 +39,11 @@ class TypeMetricScorer(Scorer):
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
                 precision, recall, f1 = [0,0,0]
                 if gold_cluster_id == 'None': continue
+                gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
+                if gold_cluster.get('metatype') not in ['Entity', 'Event']: continue
                 if system_cluster_id != 'None':
                     if aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                    gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
-                    if gold_cluster.get('metatype') not in ['Entity', 'Event']: continue
                     gold_cluster_types = set(gold_cluster.get('all_expanded_types'))
                     system_cluster_types = set()
                     if document_id in self.get('system_responses').get('document_clusters'):
