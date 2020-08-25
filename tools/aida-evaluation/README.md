@@ -16,15 +16,9 @@ In order to build the docker image it is important that you have access to the f
 
 1. GraphDB -- ./docker/AUX-data/M36-practice/graphdb-free-9.3.3-dist.zip
 
-  The AIDA-Evaluation docker uses GraphDB as the triple-store for storing (and applying queries against) the KBs represented in the AIDA Interchange Format. The docker has been tested with `graphdb-free-9.3.3-dist.zip`.
+  The AIDA-Evaluation docker uses GraphDB as the triple-store for storing (and applying queries against) the KBs represented in the AIDA Interchange Format. The docker has been tested with `graphdb-free-9.3.3-dist.zip`. The being the free version comes with the limitation of being able to run no more than two queries in parallel. GraphDB can be downloaded from `https://www.ontotext.com/free-graphdb-download/`.
 
-  NOTE that:
-    (1) the free version comes with the limitation of being able to run no more than two queries in parallel,
-    (2) loadrdf utility of this version of GraphDB throws a java.lang.IllegalStateException: "Connection not obtained from this manager" which we think is a benign issue. We have shared our finding with Ontotext and are waiting for them to fix this issue.
-
-  In order to make use of another version of GraphDBs place the installer in AUX-data/M36-practice and supply the corresponding values for variables `GRAPHDB_VERSION` and `GRAPHDB_EDITION` to make when invoking `make build`.
-
-  In order to build the docker with the free version, make sure to download the installer from `https://www.ontotext.com/free-graphdb-download/` and place it at: `./docker/AUX-data/M36-practice/graphdb-free-9.3.3-dist.zip`
+  This document also describes how to use build the docker image using a different version of GraphDB.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -46,9 +40,9 @@ In order to build the docker image it is important that you have access to the f
   make build
   ~~~
 
-  ## Using paid version (or another free version) version of GraphDB
+  ## Using another version of GraphDB
 
-  In order to build the docker with either a paid version of GraphDB or a version different from the one used by default, you would need to
+  In order to build the docker with either a different version of GraphDB you would need to:
 
   1. Download the paid version of GraphDB `graphdb-[otheredition]-[otherversion]-dist.zip` and place it inside `docker/AUX-data/`, and
 
@@ -149,6 +143,16 @@ The logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 08/24/2020:
+* Replaced reference KBID LDC2019E44 in example KBs with REFKB.
+* Handle the case when cluster ID is 'None' in the alignment table.
+* Example run, gold, and queries changed to reflect new prefixes in AIF.
+* Removed relations from type metric score.
+* Include only events and relations in frame metric score.
+
+## 08/23/2020:
+* Handled cases when the system document has no responses.
 
 ## 08/22/2020:
 * Initial version for M36 practice evaluation.
