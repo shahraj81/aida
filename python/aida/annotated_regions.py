@@ -46,7 +46,7 @@ class AnnotatedRegions(Object):
         return contains
 
     def get_entry_to_key(self, entry):
-        return ':'.join([entry.get('docid'), entry.get('doceid'), entry.get('type')])
+        return ':'.join([entry.get('document_id'), entry.get('document_element_or_keyframe_id'), entry.get('type')])
 
     def get_entry_to_spans(self, entry):
         logger = self.get('logger')
