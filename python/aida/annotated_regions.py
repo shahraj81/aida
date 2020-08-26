@@ -51,7 +51,7 @@ class AnnotatedRegions(Object):
     def get_entry_to_spans(self, entry):
         logger = self.get('logger')
         spans = Container(logger)
-        for span_string in entry.get('spans').split(';'):
+        for span_string in entry.get('region').split(';'):
             span = string_to_span(logger, span_string, entry.get('where'))
             span.set('modality', self.get(''))
             spans.add(key=span, value=span)
