@@ -41,7 +41,7 @@ class AnnotatedRegions(Object):
                 boundaries_key = 'keyframe' if region.get('keyframe_id') else region.get('modality')
                 document_element_or_keyframe_id = region.get('keyframe_id') if region.get('keyframe_id') else region.get('document_element_id')
                 region.set('boundary', self.get('document_boundaries').get(boundaries_key).get(document_element_or_keyframe_id))
-                if get_intersection_over_union(mention, region) >= 0.8:
+                if get_intersection_over_union(mention, region) > 0:
                     contains = True
         return contains
 
