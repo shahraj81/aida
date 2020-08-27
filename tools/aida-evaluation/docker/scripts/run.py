@@ -119,6 +119,12 @@ def main(args):
     gold_filtered_responses = '/gold/SPARQL-FILTERED-output'
 
     #############################################################################################
+    # pull latest copy of code from git
+    #############################################################################################
+
+    call_system('cd {python_scripts} && git pull'.format(python_scripts=python_scripts))
+
+    #############################################################################################
     # check input/output directory for existence
     #############################################################################################
 
