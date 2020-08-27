@@ -106,7 +106,7 @@ def main(args):
     image_boundaries        = '/AUX-data/LDC2020E11.image_boundaries.txt'
     keyframe_boundaries     = '/AUX-data/LDC2020E11.keyframe_boundaries.txt'
     video_boundaries        = '/AUX-data/LDC2020E11.video_boundaries.txt'
-    annotated_regions       = '/AUX-data/LDC2020E11.annotated_regions_gen.txt'
+    annotated_regions       = '/AUX-data/LDC2020E11.annotated_regions.txt'
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
@@ -399,6 +399,7 @@ def main(args):
             {image_boundaries} \
             {keyframe_boundaries} \
             {video_boundaries} \
+            {annotated_regions} \
             {gold_filtered_responses} \
             {sparql_filtered_output} \
             {alignment} \
@@ -416,6 +417,7 @@ def main(args):
                                 image_boundaries=image_boundaries,
                                 keyframe_boundaries=keyframe_boundaries,
                                 video_boundaries=video_boundaries,
+                                annotated_regions=annotated_regions,
                                 gold_filtered_responses=gold_filtered_responses,
                                 sparql_filtered_output=sparql_filtered_output,
                                 similarities=similarities,
