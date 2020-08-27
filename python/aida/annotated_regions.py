@@ -57,6 +57,14 @@ class AnnotatedRegions(Object):
             spans.add(key=span, value=span)
         return spans
 
+    def get_types_annotated_for_document(self, document_id):
+        types = {}
+        for key in self.get('regions'):
+            elements = key.split(':')
+            if elements[0] == document_id:
+                types[elements[2]] = 1
+        return set(list(types.keys()))
+
     def load(self):
         logger = self.get('logger')
         for entry in FileHandler(logger, self.get('filename')):

@@ -14,8 +14,9 @@ class Scorer(Object):
     AIDA Scorer class.
     """
 
-    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
+    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
         super().__init__(logger)
+        self.annotated_regions = annotated_regions
         self.runid = system_responses.get('runid')
         self.gold_responses = gold_responses
         self.system_responses = system_responses

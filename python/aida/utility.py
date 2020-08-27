@@ -161,6 +161,25 @@ def get_union(m1, m2):
     union -= get_intersection(m1, m2)
     return union
 
+def get_augmented_type(region_types, cluster_type):
+    if cluster_type is None:
+        return
+    if cluster_type in region_types:
+        return cluster_type
+    coarse_grain_type = None
+    if "." in cluster_type:
+        type_elements = cluster_type.split('.')
+        type_elements.pop()
+        coarse_grain_type = '.'.join(type_elements)
+    return get_augmented_type(region_types, coarse_grain_type)
+
+def get_augmented_types_utility(region_types, types):
+    augmented_types = {}
+    for cluster_type in types:
+        augmented_type = get_augmented_type(region_types, cluster_type)
+        augmented_types[augmented_type] = 1
+    return set(list(augmented_types.keys()))
+
 def get_intersection_over_union(m1, m2):
     logger = m1.get('logger')
     intersection_over_union = 0

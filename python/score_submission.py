@@ -7,6 +7,7 @@ __status__  = "production"
 __version__ = "1.0.0.1"
 __date__    = "17 August 2020"
 
+from aida.annotated_regions import AnnotatedRegions
 from aida.cluster_alignment import ClusterAlignment
 from aida.cluster_self_similarities import ClusterSelfSimilarities
 from aida.core_documents import CoreDocuments
@@ -41,6 +42,7 @@ def check_paths(args):
                  args.image_boundaries,
                  args.keyframe_boundaries,
                  args.video_boundaries,
+                 args.regions,
                  args.gold,
                  args.system,
                  args.alignment,
@@ -79,12 +81,14 @@ def score_submission(args):
         'keyframe': keyframe_boundaries,
         'video': video_boundaries
         }
-    
+
+    annotated_regions = AnnotatedRegions(logger, document_mappings, document_boundaries, args.regions)
+
     gold_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.gold, 'gold')
     system_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.system, args.runid)
     cluster_alignment = ClusterAlignment(logger, args.alignment)
     cluster_self_similarities = ClusterSelfSimilarities(logger, args.similarities)
-    scores = ScoresManager(logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, args.separator)
+    scores = ScoresManager(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, args.separator)
     scores.print_scores(args.scores)
     exit(ALLOK_EXIT_CODE)
 
@@ -103,6 +107,7 @@ if __name__ == '__main__':
     parser.add_argument('image_boundaries', type=str, help='File containing image bounding boxes')
     parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
     parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
+    parser.add_argument('regions', type=str, help='File containing annotated regions information')
     parser.add_argument('gold', type=str, help='Directory containing gold information.')
     parser.add_argument('system', type=str, help='Directory containing system information.')
     parser.add_argument('alignment', type=str, help='Directory containing alignment information.')

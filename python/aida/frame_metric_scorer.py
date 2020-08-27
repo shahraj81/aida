@@ -24,8 +24,8 @@ class FrameMetricScorer(Scorer):
                       {'name': 'recall',           'header': 'Recall',          'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'f1',               'header': 'F1',              'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
-    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
-        super().__init__(logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
+    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
+        super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
 
     def score_responses(self):
         scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
