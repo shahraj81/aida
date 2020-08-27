@@ -41,21 +41,29 @@ class AnnotatedRegions(Object):
                 boundaries_key = 'keyframe' if region.get('keyframe_id') else region.get('modality')
                 document_element_or_keyframe_id = region.get('keyframe_id') if region.get('keyframe_id') else region.get('document_element_id')
                 region.set('boundary', self.get('document_boundaries').get(boundaries_key).get(document_element_or_keyframe_id))
-                if get_intersection_over_union(mention, region) >= 0.8:
+                if get_intersection_over_union(mention, region) > 0:
                     contains = True
         return contains
 
     def get_entry_to_key(self, entry):
-        return ':'.join([entry.get('docid'), entry.get('doceid'), entry.get('type')])
+        return ':'.join([entry.get('document_id'), entry.get('document_element_or_keyframe_id'), entry.get('type')])
 
     def get_entry_to_spans(self, entry):
         logger = self.get('logger')
         spans = Container(logger)
-        for span_string in entry.get('spans').split(';'):
+        for span_string in entry.get('region').split(';'):
             span = string_to_span(logger, span_string, entry.get('where'))
             span.set('modality', self.get(''))
             spans.add(key=span, value=span)
         return spans
+
+    def get_types_annotated_for_document(self, document_id):
+        types = {}
+        for key in self.get('regions'):
+            elements = key.split(':')
+            if elements[0] == document_id:
+                types[elements[2]] = 1
+        return set(list(types.keys()))
 
     def load(self):
         logger = self.get('logger')

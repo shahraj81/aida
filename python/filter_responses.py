@@ -92,13 +92,13 @@ def filter_responses(args):
         header_printed = False
         for linenum in sorted(responses.get(input_filename), key=int):
             entry = responses.get(input_filename).get(str(linenum))
+            if not header_printed:
+                output_fh.write('{}\n'.format(entry.get('header').get('line')))
+                header_printed = True
             if not entry.get('valid'):
                 logger.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
                 continue
             if entry.get('passes_filter'):
-                if not header_printed:
-                    output_fh.write('{}\n'.format(entry.get('header').get('line')))
-                    header_printed = True
                 output_fh.write(entry.__str__())
         output_fh.close()
     exit(ALLOK_EXIT_CODE)
@@ -173,7 +173,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
             passes_filter = True
             filtered_clusters[key] = True
         else:
-            logger.record_event('DEFAULT_INFO', 'Entry fails the filter due to mention: {}'.format(mention.get('span_string')), entry.get('where'))
+            logger.record_event('MENTION_NOT_ANNOTATED', mention.get('span_string'), entry.get('where'))
 
     elif schema_name == 'AIDA_PHASE2_TASK1_TM_RESPONSE':
         cluster_id = entry.get('cluster').get('ID')
@@ -181,7 +181,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
         if key in filtered_clusters:
             passes_filter = filtered_clusters[key]
             if not passes_filter:
-                logger.record_event('DEFAULT_INFO', 'Entry fails the filter due to cluster: {}'.format(cluster_id), entry.get('where'))
+                logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
         else:
             logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', logger.get('code_location'))
 
