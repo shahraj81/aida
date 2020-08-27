@@ -144,6 +144,11 @@ The logs directory contains the following log files:
 
 # Revision History
 
+## 08/26/2020:
+* JPG files were not included in the boundary files due to a typo in the boundary file generator. These have now been included in the docker. Note that while fixing this bug, we discovered that IC001VGHH.jpg had some encoding error due to which the boundary file has a width-height of 0x0 corresponding to this image.
+* Using LDC's regions file (in NIST format) rather than the one constructed by NIST using spans from annotations. NIST constructed one was used previously due to a misunderstanding.
+* Type Metric scorer has been revised to compute scores using augmented types by restricting finer grain types to only the types that were annotated in the document.
+
 ## 08/24/2020:
 * Replaced reference KBID LDC2019E44 in example KBs with REFKB.
 * Handle the case when cluster ID is 'None' in the alignment table.

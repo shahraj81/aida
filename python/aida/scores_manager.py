@@ -27,8 +27,9 @@ class ScoresManager(Object):
         'TypeMetric': TypeMetricScorer,
         }
 
-    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator = None):
+    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator = None):
         super().__init__(logger)
+        self.annotated_regions = annotated_regions
         self.gold_responses = gold_responses
         self.system_responses = system_responses
         self.cluster_alignment = cluster_alignment
@@ -40,6 +41,7 @@ class ScoresManager(Object):
     def score_responses(self):
         for metric in self.get('metrics'):
             scorer = self.get('metrics')[metric](self.get('logger'),
+                                    self.get('annotated_regions'),
                                     self.get('gold_responses'),
                                     self.get('system_responses'),
                                     self.get('cluster_alignment'),

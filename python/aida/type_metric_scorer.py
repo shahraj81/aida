@@ -9,7 +9,7 @@ __date__    = "18 August 2020"
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.type_metric_score import TypeMetricScore
-from aida.utility import get_precision_recall_and_f1
+from aida.utility import get_precision_recall_and_f1, get_augmented_types_utility
 
 class TypeMetricScorer(Scorer):
     """
@@ -24,8 +24,13 @@ class TypeMetricScorer(Scorer):
                       {'name': 'recall',           'header': 'Recall',          'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'f1',               'header': 'F1',              'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
-    def __init__(self, logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
-        super().__init__(logger, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
+    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
+        super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
+
+    def get_augmented_types(self, document_id, types):
+        region_types = self.get('annotated_regions').get('types_annotated_for_document', document_id)
+        augmented_types = get_augmented_types_utility(region_types, types)
+        return augmented_types
 
     def score_responses(self):
         scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
@@ -44,11 +49,13 @@ class TypeMetricScorer(Scorer):
                 if system_cluster_id != 'None':
                     if aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                    gold_cluster_types = set(gold_cluster.get('all_expanded_types'))
-                    system_cluster_types = set()
+                    gold_types = set(gold_cluster.get('all_expanded_types'))
+                    system_types = set()
                     if document_id in self.get('system_responses').get('document_clusters'):
-                        system_cluster_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
-                    precision, recall, f1 = get_precision_recall_and_f1(gold_cluster_types, system_cluster_types)
+                        system_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
+                    augmented_gold_types = self.get('augmented_types', document_id, gold_types)
+                    augmented_system_types = self.get('augmented_types', document_id, system_types)
+                    precision, recall, f1 = get_precision_recall_and_f1(augmented_gold_types, augmented_system_types)
                 mean_f1 += f1
                 count += 1
                 score = TypeMetricScore(self.logger,
