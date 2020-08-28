@@ -34,6 +34,7 @@ CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple level
 ERROR     MULTIPLE_METATYPES              Multiple metatypes '{}' and '{} for '{}'
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
 CRITICAL  NO_SPECS                        No specifications available for '{}'
+INFO      NO_TEMPORAL_CONSTRAINT          Gold cluster {} in document {} has no temporal constraint
 ERROR     NOT_AN_NUMBER                   '{}' is not a number
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
 INFO      SKIPPING_FILE                   Skipping '{}'
@@ -52,6 +53,7 @@ ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', pr
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
+CRITICAL  UNEXPECTED_NUM_DATES            Unexpected number of dates for gold cluster {} in document {}
 ERROR     UNEXPECTED_NUM_OF_REL_FILLERS   Unexpected number of filler(s) for relation {} (expected '2', provided '{}')
 CRITICAL  UNEXPECTED_SPAN_FORMAT          Unexpected span format: {}
 CRITICAL  UNEXPECTED_SPAN_TYPE            Unexpected span (expected one from [{}], provided '{}')

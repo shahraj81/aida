@@ -40,12 +40,12 @@ class FrameMetricScorer(Scorer):
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
                 precision, recall, f1 = [0,0,0]
                 if gold_cluster_id == 'None': continue
-                gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
+                gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
                 if gold_cluster.get('metatype') not in ['Event', 'Relation']: continue
                 if system_cluster_id != 'None':
                     if aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                    system_cluster = self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id)
+                    system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
                     if system_cluster.get('metatype') not in ['Event', 'Relation']: continue
                     gold_frame = self.get('frame', 'gold', document_id, gold_cluster_id)
                     gold_slot_fillers = {}

@@ -12,6 +12,7 @@ from aida.object import Object
 from aida.container import Container
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
 from aida.frame_metric_scorer import FrameMetricScorer
+from aida.temporal_metric_scorer import TemporalMetricScorer
 from aida.type_metric_scorer import TypeMetricScorer
 
 import os
@@ -24,6 +25,7 @@ class ScoresManager(Object):
     metrics = {
         'CoreferenceMetric': CoreferenceMetricScorer,
         'FrameMetric': FrameMetricScorer,
+        'TemporalMetric': TemporalMetricScorer,
         'TypeMetric': TypeMetricScorer,
         }
 

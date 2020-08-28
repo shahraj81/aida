@@ -40,6 +40,7 @@ class Generator(Object):
                 present = True
                 date_object.set(field_name, entry.get(field_name))
         entry.set('date', date_object if present else None)
+        entry.get('cluster').get('dates').add(entry.get('date'))
 
     def generate_document_id(self, responses, entry):
         document_id = None

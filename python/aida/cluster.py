@@ -21,6 +21,7 @@ class Cluster(Object):
         self.document_boundaries = document_boundaries
         self.types = Container(logger)
         self.mentions = Container(logger)
+        self.dates = Container(logger)
         self.metatype = None
 
     def get_top_level_types(self):
