@@ -19,12 +19,17 @@ class TemporalMetricScorer(Scorer):
 
     printing_specs = [{'name': 'document_id',      'header': 'DocID',           'format': 's',    'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',           'format': 's',    'justify': 'L'},
+                      {'name': 'metatype',         'header': 'Metatype',        'format': 's',    'justify': 'L'},
                       {'name': 'gold_cluster_id',  'header': 'GoldClusterID',   'format': 's',    'justify': 'L'},
                       {'name': 'system_cluster_id','header': 'SystemClusterID', 'format': 's',    'justify': 'L'},
                       {'name': 'similarity',       'header': 'Similarity',      'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
     def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
         super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
+
+    def order(self, k):
+        m = {'Entity': 1, 'Relation': 2, 'Event': 3, 'ALL': 4}
+        return m[k]
 
     def compute_temporal_similarity(self, gold_date_range, system_date_range):
         k = self.get('temporal_tuple', gold_date_range)
@@ -92,8 +97,8 @@ class TemporalMetricScorer(Scorer):
 
     def score_responses(self):
         scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
-        mean_similarity = 0
-        count = 0
+        mean_similarities = {}
+        counts = {}
         for document_id in self.get('core_documents'):
             # add scores corresponding to all gold clusters
             document_gold_to_system = self.get('cluster_alignment').get('gold_to_system').get(document_id)
@@ -103,7 +108,8 @@ class TemporalMetricScorer(Scorer):
                 similarity = 0
                 if gold_cluster_id == 'None': continue
                 gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
-                if gold_cluster.get('metatype') not in ['Event', 'Relation']: continue
+                metatype = gold_cluster.get('metatype')
+                if metatype not in ['Event', 'Relation']: continue
                 if list(gold_cluster.get('dates').values())[0] is None:
                     self.record_event('NO_TEMPORAL_CONSTRAINT', gold_cluster_id, document_id)
                     continue
@@ -111,27 +117,32 @@ class TemporalMetricScorer(Scorer):
                     if aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
                     system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
-                    if system_cluster.get('metatype') not in ['Event', 'Relation']: continue
+                    if system_cluster.get('metatype') != metatype:
+                        self.record_event('UNEXPECTED_ALIGNED_CLUSTER_METATYPE', system_cluster.get('metatype'), system_cluster_id, metatype, gold_cluster_id)
                     if len(gold_cluster.get('dates').keys()) > 1:
                         self.record_event('UNEXPECTED_NUM_DATES', gold_cluster_id, document_id)
                     similarity = self.get('temporal_similarity', list(gold_cluster.get('dates').values())[0], list(system_cluster.get('dates').values()))
-                mean_similarity += similarity
-                count += 1
+                for key in ['ALL', metatype]:
+                    mean_similarities[key] = mean_similarities.get(key, 0) + similarity
+                    counts[key] = counts.get(key, 0) + 1
                 score = TemporalMetricScore(self.logger,
                                            self.get('runid'),
                                            document_id,
+                                           metatype,
                                            gold_cluster_id,
                                            system_cluster_id,
                                            similarity)
                 scores.add(score)
 
-        mean_similarity = mean_similarity / count
-        mean_score = TemporalMetricScore(self.logger,
-                                        self.get('runid'),
-                                        'Summary',
-                                        '',
-                                        '',
-                                        mean_similarity,
-                                        summary = True)
-        scores.add(mean_score)
-        self.scores = scores
+        for key in sorted(mean_similarities, key=self.order):
+            mean_similarity = mean_similarities[key] / counts[key] if counts[key] else 0
+            mean_score = TemporalMetricScore(self.logger,
+                                            self.get('runid'),
+                                            'Summary',
+                                            key,
+                                            '',
+                                            '',
+                                            mean_similarity,
+                                            summary = True)
+            scores.add(mean_score)
+            self.scores = scores

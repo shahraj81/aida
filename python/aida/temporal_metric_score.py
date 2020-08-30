@@ -12,10 +12,11 @@ class TemporalMetricScore(Score):
     """
     AIDA class for type metric score.
     """
-    def __init__(self, logger, run_id, document_id, gold_cluster_id, system_cluster_id, similarity, summary=False):
+    def __init__(self, logger, run_id, document_id, metatype, gold_cluster_id, system_cluster_id, similarity, summary=False):
         super().__init__(logger)
         self.run_id = run_id
         self.document_id = document_id
+        self.metatype = metatype
         self.gold_cluster_id = gold_cluster_id if gold_cluster_id is not None else 'None'
         self.system_cluster_id = system_cluster_id if system_cluster_id is not None else 'None'
         self.similarity = similarity
