@@ -10,7 +10,7 @@ __date__    = "15 July 2020"
 
 from aida.object import Object
 from aida.container import Container
-from aida.utility import get_expanded_types, trim_cv, spanstring_to_object
+from aida.utility import get_expanded_types, trim_cv, spanstring_to_object, augment_mention_object
 
 class Cluster(Object):
 
@@ -68,16 +68,12 @@ class Cluster(Object):
 
     def add_mention(self, span_string, t_cv, cm_cv, j_cv, where):
         logger = self.get('logger')
-        mention = spanstring_to_object(logger, span_string, where)
+        mention = augment_mention_object(spanstring_to_object(logger, span_string, where), self.get('document_mappings'), self.get('document_boundaries'))
         mention.set('ID', span_string)
         mention.set('span_string', span_string)
         mention.set('t_cv', t_cv)
         mention.set('cm_cv', cm_cv)
         mention.set('j_cv', j_cv)
-        mention.set('modality', self.get('document_mappings').get('modality', mention.get('document_element_id')))
-        boundaries_key = 'keyframe' if mention.get('keyframe_id') else mention.get('modality')
-        document_element_or_keyframe_id = mention.get('keyframe_id') if mention.get('keyframe_id') else mention.get('document_element_id')
-        mention.set('boundary', self.get('document_boundaries').get(boundaries_key).get(document_element_or_keyframe_id))
         self.get('mentions').add(key=mention.get('ID'), value=mention)
 
     def is_alignable_entity_or_event(self, annotated_regions):
