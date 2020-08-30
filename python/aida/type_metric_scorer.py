@@ -9,7 +9,7 @@ __date__    = "18 August 2020"
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.type_metric_score import TypeMetricScore
-from aida.utility import get_precision_recall_and_f1, get_augmented_types_utility
+from aida.utility import get_precision_recall_and_f1, get_augmented_types_utility, multisort
 
 class TypeMetricScorer(Scorer):
     """
@@ -38,7 +38,7 @@ class TypeMetricScorer(Scorer):
         return augmented_types
 
     def score_responses(self):
-        scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores = []
         mean_f1s = {}
         counts = {}
         for document_id in self.get('core_documents'):
@@ -77,7 +77,7 @@ class TypeMetricScorer(Scorer):
                                         precision,
                                         recall,
                                         f1)
-                scores.add(score)
+                scores.append(score)
             # add scores unaligned system clusters
             document_system_to_gold = self.get('cluster_alignment').get('system_to_gold').get(document_id)
             for system_cluster_id in document_system_to_gold if document_system_to_gold else []:
@@ -100,10 +100,16 @@ class TypeMetricScorer(Scorer):
                                                 precision,
                                                 recall,
                                                 f1)
-                        scores.add(score)
+                        scores.append(score)
                     elif aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
 
+        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        for score in multisort(scores, (('document_id', False),
+                                        ('metatype', False),
+                                        ('gold_cluster_id', False),
+                                        ('system_cluster_id', False))):
+            scores_printer.add(score)
         for key in sorted(mean_f1s, key=self.order):
             mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
             mean_score = TypeMetricScore(self.logger,
@@ -116,5 +122,5 @@ class TypeMetricScorer(Scorer):
                                        '',
                                        mean_f1,
                                        summary = True)
-            scores.add(mean_score)
-        self.scores = scores
+            scores_printer.add(mean_score)
+        self.scores = scores_printer

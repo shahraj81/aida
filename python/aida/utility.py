@@ -275,6 +275,11 @@ def is_number(s):
     else:
         return True
 
+def multisort(xs, specs):
+    for key, reverse in reversed(specs):
+        xs.sort(key=lambda x: x.get(key), reverse=reverse)
+    return xs
+
 def types_are_compatible(entity_type_in_query, entity_type_in_response):
     """
     Determine if two types 'entity_type_in_query' and 'entity_type_in_response',

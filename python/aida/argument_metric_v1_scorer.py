@@ -11,7 +11,7 @@ __date__    = "18 August 2020"
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.argument_metric_score import ArgumentMetricScore
-from aida.utility import get_precision_recall_and_f1
+from aida.utility import get_precision_recall_and_f1, multisort
 
 class ArgumentMetricScorerV1(Scorer):
     """
@@ -35,7 +35,7 @@ class ArgumentMetricScorerV1(Scorer):
         return False
 
     def score_responses(self):
-        scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores = []
         mean_f1 = 0
         count = 0
         for document_id in self.get('core_documents'):
@@ -92,9 +92,12 @@ class ArgumentMetricScorerV1(Scorer):
             count += 1
             score = ArgumentMetricScore(self.logger, self.get('runid'), document_id,
                                      precision, recall, f1)
-            scores.add(score)
+            scores.append(score)
 
+        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        for score in multisort(scores, (('document_id', False),)):
+            scores_printer.add(score)
         mean_f1 = mean_f1 / count if count else 0
         mean_score = ArgumentMetricScore(self.logger, self.get('runid'), 'Summary', '', '', mean_f1, summary = True)
-        scores.add(mean_score)
-        self.scores = scores
+        scores_printer.add(mean_score)
+        self.scores = scores_printer

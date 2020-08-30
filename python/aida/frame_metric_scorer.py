@@ -9,7 +9,7 @@ __date__    = "18 August 2020"
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.frame_metric_score import FrameMetricScore
-from aida.utility import get_precision_recall_and_f1
+from aida.utility import get_precision_recall_and_f1, multisort
 
 class FrameMetricScorer(Scorer):
     """
@@ -33,7 +33,7 @@ class FrameMetricScorer(Scorer):
         return m[k]
 
     def score_responses(self):
-        scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores = []
         mean_f1s = {}
         counts = {}
         for document_id in self.get('core_documents'):
@@ -83,7 +83,7 @@ class FrameMetricScorer(Scorer):
                 score = FrameMetricScore(self.logger, self.get('runid'), document_id, metatype,
                                          gold_cluster_id, system_cluster_id,
                                          precision, recall, f1)
-                scores.add(score)
+                scores.append(score)
             # add scores corresponding to unaligned system clusters
             precision, recall, f1 = [0,0,0]
             for system_cluster_id in document_system_to_gold if document_system_to_gold else []:
@@ -98,12 +98,18 @@ class FrameMetricScorer(Scorer):
                         score = FrameMetricScore(self.logger, self.get('runid'), document_id, metatype,
                                                  gold_cluster_id, system_cluster_id,
                                                  precision, recall, f1)
-                        scores.add(score)
+                        scores.append(score)
                     elif aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
 
+        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        for score in multisort(scores, (('document_id', False),
+                                        ('metatype', False),
+                                        ('gold_cluster_id', False),
+                                        ('system_cluster_id', False))):
+            scores_printer.add(score)
         for key in sorted(mean_f1s, key=self.order):
             mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
             mean_score = FrameMetricScore(self.logger, self.get('runid'), 'Summary', key, '', '', '', '', mean_f1, summary = True)
-            scores.add(mean_score)
-            self.scores = scores
+            scores_printer.add(mean_score)
+            self.scores = scores_printer

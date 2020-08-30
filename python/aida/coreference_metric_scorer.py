@@ -9,6 +9,7 @@ __date__    = "17 August 2020"
 from aida.scorer import Scorer
 from aida.coreference_metric_score import CoreferenceMetricScore
 from aida.score_printer import ScorePrinter
+from aida.utility import multisort
 
 class CoreferenceMetricScorer(Scorer):
     """
@@ -51,7 +52,7 @@ class CoreferenceMetricScorer(Scorer):
         return total_self_similarity
 
     def score_responses(self):
-        scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores = []
         mean_f1 = 0
         for document_id in self.get('core_documents'):
             max_total_similarity = self.get('max_total_similarity', document_id)
@@ -68,7 +69,11 @@ class CoreferenceMetricScorer(Scorer):
                                    recall,
                                    f1)
             mean_f1 += f1
-            scores.add(score)
+            scores.append(score)
+
+        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        for score in multisort(scores, (('document_id', False),)):
+            scores_printer.add(score)
         mean_f1 = mean_f1 / len(self.get('core_documents').keys())
         mean_score = CoreferenceMetricScore(self.logger,
                                    self.get('runid'),
@@ -77,5 +82,5 @@ class CoreferenceMetricScorer(Scorer):
                                    '',
                                    mean_f1,
                                    summary = True)
-        scores.add(mean_score)
-        self.scores = scores
+        scores_printer.add(mean_score)
+        self.scores = scores_printer

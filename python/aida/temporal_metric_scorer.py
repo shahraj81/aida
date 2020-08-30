@@ -9,6 +9,7 @@ __date__    = "27 August 2020"
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.temporal_metric_score import TemporalMetricScore
+from aida.utility import multisort
 
 import datetime
 
@@ -96,7 +97,7 @@ class TemporalMetricScorer(Scorer):
         return temporal_tuple
 
     def score_responses(self):
-        scores = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores = []
         mean_similarities = {}
         counts = {}
         for document_id in self.get('core_documents'):
@@ -132,8 +133,14 @@ class TemporalMetricScorer(Scorer):
                                            gold_cluster_id,
                                            system_cluster_id,
                                            similarity)
-                scores.add(score)
+                scores.append(score)
 
+        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        for score in multisort(scores, (('document_id', False),
+                                        ('metatype', False),
+                                        ('gold_cluster_id', False),
+                                        ('system_cluster_id', False))):
+            scores_printer.add(score)
         for key in sorted(mean_similarities, key=self.order):
             mean_similarity = mean_similarities[key] / counts[key] if counts[key] else 0
             mean_score = TemporalMetricScore(self.logger,
@@ -144,5 +151,5 @@ class TemporalMetricScorer(Scorer):
                                             '',
                                             mean_similarity,
                                             summary = True)
-            scores.add(mean_score)
-            self.scores = scores
+            scores_printer.add(mean_score)
+            self.scores = scores_printer
