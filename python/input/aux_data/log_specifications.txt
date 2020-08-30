@@ -42,6 +42,8 @@ INFO      SKIPPING                        SKIPPING: {} '{}' {}
 INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
 WARNING   SPAN_OFF_BOUNDARY               Span '{}' is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
+INFO      TEMPORAL_METRIC_SCORE_INFO      TEMPORAL_METRIC_SCORE_INFO: {}: DOCUMENT: {} GOLD_CLUSTER: {} TYPES: {} SYSTEM_CLUSTER: {} TYPES:{}
+INFO      ANNOTATED_TYPES_INFO            ANNOTATED_TYPES_INFO: DOCUMENT: {} TYPES_ANNOTATED: {}
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'

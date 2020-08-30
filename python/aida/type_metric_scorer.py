@@ -43,6 +43,7 @@ class TypeMetricScorer(Scorer):
         counts = {}
         for document_id in self.get('core_documents'):
             # add scores corresponding to all gold clusters
+            self.record_event('ANNOTATED_TYPES_INFO', document_id, ','.join(self.get('annotated_regions').get('types_annotated_for_document', document_id)))
             document_gold_to_system = self.get('cluster_alignment').get('gold_to_system').get(document_id)
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
@@ -64,6 +65,8 @@ class TypeMetricScorer(Scorer):
                         system_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
                     augmented_gold_types = self.get('augmented_types', document_id, gold_types)
                     augmented_system_types = self.get('augmented_types', document_id, system_types)
+                    self.record_event('TEMPORAL_METRIC_SCORE_INFO', 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(gold_types), system_cluster_id, ','.join(system_types))
+                    self.record_event('TEMPORAL_METRIC_SCORE_INFO', 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(augmented_gold_types), system_cluster_id, ','.join(augmented_system_types))
                     precision, recall, f1 = get_precision_recall_and_f1(augmented_gold_types, augmented_system_types)
                 for key in ['ALL', metatype]:
                     mean_f1s[key] = mean_f1s.get(key, 0) + f1
