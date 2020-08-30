@@ -61,6 +61,7 @@ class EventOrRelationFrame(Object):
         self.get('types')[event_or_relation_type] = 1
         filler = Object(self.get('logger'))
         filler_cluster_id = entry.get('?object')
+        filler.set('predicate', entry.get('predicate'))
         filler.set('filler_cluster_id', filler_cluster_id)
         filler.set('predicate_justification', entry.get('?predicate_justification'))
         filler.set('argument_assertion_confidence', entry.get('?argument_assertion_confidence'))

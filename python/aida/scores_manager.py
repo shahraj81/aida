@@ -10,6 +10,9 @@ __date__    = "3 February 2020"
 
 from aida.object import Object
 from aida.container import Container
+
+from aida.argument_metric_v1_scorer import ArgumentMetricScorerV1
+from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
 from aida.frame_metric_scorer import FrameMetricScorer
 from aida.temporal_metric_scorer import TemporalMetricScorer
@@ -23,6 +26,8 @@ class ScoresManager(Object):
     """
     
     metrics = {
+        'ArgumentMetricV1': ArgumentMetricScorerV1,
+        'ArgumentMetricV2': ArgumentMetricScorerV2,
         'CoreferenceMetric': CoreferenceMetricScorer,
         'FrameMetric': FrameMetricScorer,
         'TemporalMetric': TemporalMetricScorer,
