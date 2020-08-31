@@ -54,7 +54,7 @@ attributes = {
         'years': [2020],
         },
     'date': {
-        'dependencies': ['start', 'end'],
+        'dependencies': ['start', 'end', 'cluster'],
         'name': 'date',
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],

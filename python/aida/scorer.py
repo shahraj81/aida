@@ -25,12 +25,20 @@ class Scorer(Object):
         self.separator = separator
         self.score_responses()
 
+    def get_cluster(self, system_or_gold, document_id, cluster_id):
+        cluster = None
+        if document_id in self.get('{}_responses'.format(system_or_gold)).get('document_clusters'):
+            if cluster_id in self.get('{}_responses'.format(system_or_gold)).get('document_clusters').get(document_id):
+                cluster = self.get('{}_responses'.format(system_or_gold)).get('document_clusters').get(document_id).get(cluster_id)
+        return cluster
+
     def get_frame(self, system_or_gold, document_id, cluster_id):
         frame = None
         if document_id in self.get('{}_responses'.format(system_or_gold)).get('document_frames'):
             if cluster_id in self.get('{}_responses'.format(system_or_gold)).get('document_frames').get(document_id):
                 frame = self.get('{}_responses'.format(system_or_gold)).get('document_frames').get(document_id).get(cluster_id)
         return frame
+
 
     def get_core_documents(self):
         return self.get('gold_responses').get('document_mappings').get('core_documents')
