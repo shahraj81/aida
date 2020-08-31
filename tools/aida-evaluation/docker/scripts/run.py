@@ -23,7 +23,18 @@ def call_system(cmd):
     print("running system command: '{}'".format(cmd))
     os.system(cmd)
 
-def generate_results_file():
+def get_num_problems(logs_directory):
+    num_errors = 0
+    for filename in os.listdir(logs_directory):
+        filepath = '{}/{}'.format(logs_directory, filename)
+        fh = open(filepath)
+        for line in fh.readlines():
+            if 'ERROR' in line:
+                num_errors += 1
+        fh.close()
+    return num_errors
+
+def generate_results_file(logs_directory):
     metrics = {
         'ArgumentMetricV1_F1'  : 'ArgumentMetricV1-scores.txt',
         'ArgumentMetricV2_F1'  : 'ArgumentMetricV2-scores.txt',
@@ -55,6 +66,7 @@ def generate_results_file():
                                 'ArgumentMetricV2_F1' : scores['ArgumentMetricV2_F1'],
                                 'FrameMetric_F1'      : scores['FrameMetric_F1'],
                                 'Total'               : scores['FrameMetric_F1'],
+                                'Errors'              : get_num_problems(logs_directory)
                             }
                          ]
             }
@@ -160,7 +172,7 @@ def main(args):
     # exit if no valid input KB
     if num_valid_kbs == 0:
         record_and_display_message(logger, 'No valid KB received as input.')
-        generate_results_file()
+        generate_results_file(logs_directory)
         exit(ALLOK_EXIT_CODE)
 
     # load core documents
@@ -429,7 +441,7 @@ def main(args):
 
     # generate results.json file
     record_and_display_message(logger, 'Generating results.json file.')
-    generate_results_file()
+    generate_results_file(logs_directory)
     record_and_display_message(logger, 'Done.')
 
     exit(ALLOK_EXIT_CODE)
