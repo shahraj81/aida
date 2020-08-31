@@ -50,7 +50,7 @@ def generate_results_file():
                             {
                                 'CoreferenceMetric_F1': scores['CoreferenceMetric_F1'],
                                 'TypeMetric_F1'       : scores['TypeMetric_F1'],
-                                'TemporalMetric_F1'   : scores['TemporalMetric_F1'],
+                                'TemporalMetric_S'    : scores['TemporalMetric_S'],
                                 'ArgumentMetricV1_F1' : scores['ArgumentMetricV1_F1'],
                                 'ArgumentMetricV2_F1' : scores['ArgumentMetricV2_F1'],
                                 'FrameMetric_F1'      : scores['FrameMetric_F1'],
