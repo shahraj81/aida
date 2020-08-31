@@ -24,42 +24,37 @@ def call_system(cmd):
     os.system(cmd)
 
 def generate_results_file():
-    CoreferenceMetric_F1 = 0
-    filename = "{output}/scores/CoreferenceMetric-scores.txt".format(output=args.output)
-    if os.path.exists(filename):
-        file_handle = open(filename, "r")
-        lines = file_handle.readlines()
-        summary_line = lines[-1]
-        file_handle.close()
-        CoreferenceMetric_F1 = summary_line.split()[-1]
+    metrics = {
+        'ArgumentMetricV1_F1'  : 'ArgumentMetricV1-scores.txt',
+        'ArgumentMetricV2_F1'  : 'ArgumentMetricV2-scores.txt',
+        'CoreferenceMetric_F1' : 'CoreferenceMetric-scores.txt',
+        'TemporalMetric_S'     : 'TemporalMetric-scores.txt',
+        'TypeMetric_F1'        : 'TypeMetric-scores.txt',
+        'FrameMetric_F1'       : 'FrameMetric-scores.txt'
+        }
 
-    TypeMetric_F1 = 0
-    filename = "{output}/scores/TypeMetric-scores.txt".format(output=args.output)
-    if os.path.exists(filename):
-        file_handle = open(filename, "r")
-        lines = file_handle.readlines()
-        summary_line = lines[-1]
-        file_handle.close()
-        TypeMetric_F1 = summary_line.split()[-1]
+    scores = {}
 
-    FrameMetric_F1 = 0
-    filename = "{output}/scores/FrameMetric-scores.txt".format(output=args.output)
-    if os.path.exists(filename):
-        file_handle = open(filename, "r")
-        lines = file_handle.readlines()
-        summary_line = lines[-1]
-        file_handle.close()
-        FrameMetric_F1 = summary_line.split()[-1]
+    for metric in metrics:
+        scores[metric] = 0
+        filename = '{output}/scores/{filename}'.format(output=args.output,
+                                                       filename=metrics[metric])
+        if os.path.exists(filename):
+            file_handle = open(filename, "r")
+            lines = file_handle.readlines()
+            summary_line = lines[-1]
+            file_handle.close()
+            scores[metric] = summary_line.split()[-1]
 
     output = {'scores' : [
                             {
-                                'CoreferenceMetric_F1': CoreferenceMetric_F1,
-                                'TypeMetric_F1': TypeMetric_F1,
-                                'TemporalMetric_F1': 0,
-                                'ArgumentMetricV1_F1': 0,
-                                'ArgumentMetricV2_F1': 0,
-                                'FrameMetric_F1': FrameMetric_F1,
-                                'Total': FrameMetric_F1,
+                                'CoreferenceMetric_F1': scores['CoreferenceMetric_F1'],
+                                'TypeMetric_F1'       : scores['TypeMetric_F1'],
+                                'TemporalMetric_F1'   : scores['TemporalMetric_F1'],
+                                'ArgumentMetricV1_F1' : scores['ArgumentMetricV1_F1'],
+                                'ArgumentMetricV2_F1' : scores['ArgumentMetricV2_F1'],
+                                'FrameMetric_F1'      : scores['FrameMetric_F1'],
+                                'Total'               : scores['FrameMetric_F1'],
                             }
                          ]
             }
