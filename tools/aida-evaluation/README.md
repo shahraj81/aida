@@ -144,6 +144,16 @@ The logs directory contains the following log files:
 
 # Revision History
 
+## 08/31/2020:
+* Temporal Metric is being computed.
+* Two variant of Argument Metric being computed.
+* Entities, Relations, and Events only aggregated being computed.
+* Lines in score output files have been sorted before printing.
+* Debug information added showing how type metric score was computed.
+* Printing system-gold cluster similarities.
+* Total number of errors in log files being reported in results.json file.
+* Key corresponding to the score for Temporal Metric in results.json file corrected, and renamed from 'TemporalMetric_F1' to 'TemporalMetric_S'.
+
 ## 08/26/2020:
 * JPG files were not included in the boundary files due to a typo in the boundary file generator. These have now been included in the docker. Note that while fixing this bug, we discovered that IC001VGHH.jpg had some encoding error due to which the boundary file has a width-height of 0x0 corresponding to this image.
 * Using LDC's regions file (in NIST format) rather than the one constructed by NIST using spans from annotations. NIST constructed one was used previously due to a misunderstanding.

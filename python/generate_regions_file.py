@@ -14,6 +14,7 @@ from aida.logger import Logger
 from aida.container import Container
 from aida.text_boundaries import TextBoundaries
 from aida.video_boundaries import VideoBoundaries
+from aida.utility import multisort
 
 import argparse
 import os
@@ -46,11 +47,6 @@ def check_for_paths_non_existance(paths):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
 
-def multisort(xs, specs):
-    for key, reverse in reversed(specs):
-        xs.sort(key=lambda x: x[key], reverse=reverse)
-    return xs
-
 def get_line(output_object, columns):
     document_element_or_keyframe_id = output_object.get('keyframe_id') if output_object.get('keyframe_id') else output_object.get('document_element_id')
     output_object['document_element_or_keyframe_id'] = document_element_or_keyframe_id
@@ -82,9 +78,14 @@ def main(args):
         type = entry.get('type')
         subtype = entry.get('subtype')
         subsubtype = entry.get('subsubtype')
+        # apply patch to correct LDC's mistake in annotation
+        if type == 'personalsocial' and subtype == 'unspecified':
+            subtype = 'relationship'
         full_type = '{type}.{subtype}.{subsubtype}'.format(type=type, subtype=subtype, subsubtype=subsubtype)
         full_type_cleaned = full_type.replace('.unspecified', '')
         propercased_full_type = type_mappings.get(full_type_cleaned, None)
+        if propercased_full_type is None:
+            logger.record_event('DEFAULT_CRITICAL_ERROR', 'propercased_full_type is None for full_type: {}'.format(full_type))
         span_string = entry.get('span')
         keyframe_id = None
         keyframe_num = 0

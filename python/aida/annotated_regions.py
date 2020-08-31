@@ -9,7 +9,7 @@ __date__    = "20 July 2020"
 from aida.object import Object
 from aida.container import Container
 from aida.file_handler import FileHandler
-from aida.utility import string_to_span, spanstring_to_object, get_intersection_over_union
+from aida.utility import string_to_span, spanstring_to_object, get_intersection_over_union, augment_mention_object
 
 class AnnotatedRegions(Object):
     """
@@ -36,11 +36,7 @@ class AnnotatedRegions(Object):
                 span_string = '{docid}:{doce_or_kf_id}:{span_string}'.format(docid=mention.get('document_id'),
                                                            doce_or_kf_id=keyframe_id if keyframe_id else document_element_id,
                                                            span_string=span_string)
-                region = spanstring_to_object(self.get('logger'), span_string)
-                region.set('modality', self.get('document_mappings').get('modality', region.get('document_element_id')))
-                boundaries_key = 'keyframe' if region.get('keyframe_id') else region.get('modality')
-                document_element_or_keyframe_id = region.get('keyframe_id') if region.get('keyframe_id') else region.get('document_element_id')
-                region.set('boundary', self.get('document_boundaries').get(boundaries_key).get(document_element_or_keyframe_id))
+                region = augment_mention_object(spanstring_to_object(self.logger, span_string), self.get('document_mappings'), self.get('document_boundaries'))
                 if get_intersection_over_union(mention, region) > 0:
                     contains = True
         return contains
