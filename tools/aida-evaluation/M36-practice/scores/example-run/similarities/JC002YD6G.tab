@@ -1,669 +1,1003 @@
-metatype	system_or_gold	cluster1	cluster2	similarity
-Entity	system	cluster-NILE21445	cluster-NILE21445	1
-Entity	system	cluster-NILE21445	cluster-NILE21446	0
-Entity	system	cluster-NILE21445	cluster-NILE21447	0
-Entity	system	cluster-NILE21445	cluster-NILE21448	0
-Entity	system	cluster-NILE21445	cluster-NILE21449	0
-Entity	system	cluster-NILE21445	cluster-NILE21450	0
-Entity	system	cluster-NILE21445	cluster-NILE21451	0
-Entity	system	cluster-NILE21445	cluster-NILE21452	0
-Entity	system	cluster-NILE21445	cluster-NILE21453	0
-Entity	system	cluster-NILE21445	cluster-NILE21454	0
-Entity	system	cluster-NILE21445	cluster-NILE21455	0
-Entity	system	cluster-NILE21445	cluster-NILE21456	0
-Entity	system	cluster-NILE21445	cluster-NILE21457	0
-Entity	system	cluster-NILE21445	cluster-NILE21458	0
-Entity	system	cluster-NILE21445	cluster-NILE21459	0
-Entity	system	cluster-NILE21445	cluster-NILE21460	0
-Entity	system	cluster-NILE21445	cluster-NILE21461	0
-Entity	system	cluster-NILE21445	cluster-NILE21462	0
-Entity	system	cluster-NILE21446	cluster-NILE21445	0
-Entity	system	cluster-NILE21446	cluster-NILE21446	1
-Entity	system	cluster-NILE21446	cluster-NILE21447	0
-Entity	system	cluster-NILE21446	cluster-NILE21448	0
-Entity	system	cluster-NILE21446	cluster-NILE21449	0
-Entity	system	cluster-NILE21446	cluster-NILE21450	0
-Entity	system	cluster-NILE21446	cluster-NILE21451	0
-Entity	system	cluster-NILE21446	cluster-NILE21452	0
-Entity	system	cluster-NILE21446	cluster-NILE21453	0
-Entity	system	cluster-NILE21446	cluster-NILE21454	0
-Entity	system	cluster-NILE21446	cluster-NILE21455	0
-Entity	system	cluster-NILE21446	cluster-NILE21456	0
-Entity	system	cluster-NILE21446	cluster-NILE21457	0
-Entity	system	cluster-NILE21446	cluster-NILE21458	0
-Entity	system	cluster-NILE21446	cluster-NILE21459	0
-Entity	system	cluster-NILE21446	cluster-NILE21460	0
-Entity	system	cluster-NILE21446	cluster-NILE21461	0
-Entity	system	cluster-NILE21446	cluster-NILE21462	0
-Entity	system	cluster-NILE21447	cluster-NILE21445	0
-Entity	system	cluster-NILE21447	cluster-NILE21446	0
-Entity	system	cluster-NILE21447	cluster-NILE21447	1
-Entity	system	cluster-NILE21447	cluster-NILE21448	0
-Entity	system	cluster-NILE21447	cluster-NILE21449	0
-Entity	system	cluster-NILE21447	cluster-NILE21450	0
-Entity	system	cluster-NILE21447	cluster-NILE21451	0
-Entity	system	cluster-NILE21447	cluster-NILE21452	0
-Entity	system	cluster-NILE21447	cluster-NILE21453	0
-Entity	system	cluster-NILE21447	cluster-NILE21454	0
-Entity	system	cluster-NILE21447	cluster-NILE21455	0
-Entity	system	cluster-NILE21447	cluster-NILE21456	0
-Entity	system	cluster-NILE21447	cluster-NILE21457	0
-Entity	system	cluster-NILE21447	cluster-NILE21458	0
-Entity	system	cluster-NILE21447	cluster-NILE21459	0
-Entity	system	cluster-NILE21447	cluster-NILE21460	0
-Entity	system	cluster-NILE21447	cluster-NILE21461	0
-Entity	system	cluster-NILE21447	cluster-NILE21462	0
-Entity	system	cluster-NILE21448	cluster-NILE21445	0
-Entity	system	cluster-NILE21448	cluster-NILE21446	0
-Entity	system	cluster-NILE21448	cluster-NILE21447	0
-Entity	system	cluster-NILE21448	cluster-NILE21448	1
-Entity	system	cluster-NILE21448	cluster-NILE21449	0
-Entity	system	cluster-NILE21448	cluster-NILE21450	0
-Entity	system	cluster-NILE21448	cluster-NILE21451	0
-Entity	system	cluster-NILE21448	cluster-NILE21452	0
-Entity	system	cluster-NILE21448	cluster-NILE21453	0
-Entity	system	cluster-NILE21448	cluster-NILE21454	0
-Entity	system	cluster-NILE21448	cluster-NILE21455	0
-Entity	system	cluster-NILE21448	cluster-NILE21456	0
-Entity	system	cluster-NILE21448	cluster-NILE21457	0
-Entity	system	cluster-NILE21448	cluster-NILE21458	0
-Entity	system	cluster-NILE21448	cluster-NILE21459	0
-Entity	system	cluster-NILE21448	cluster-NILE21460	0
-Entity	system	cluster-NILE21448	cluster-NILE21461	0
-Entity	system	cluster-NILE21448	cluster-NILE21462	0
-Entity	system	cluster-NILE21449	cluster-NILE21445	0
-Entity	system	cluster-NILE21449	cluster-NILE21446	0
-Entity	system	cluster-NILE21449	cluster-NILE21447	0
-Entity	system	cluster-NILE21449	cluster-NILE21448	0
-Entity	system	cluster-NILE21449	cluster-NILE21449	1
-Entity	system	cluster-NILE21449	cluster-NILE21450	0
-Entity	system	cluster-NILE21449	cluster-NILE21451	0
-Entity	system	cluster-NILE21449	cluster-NILE21452	0
-Entity	system	cluster-NILE21449	cluster-NILE21453	0
-Entity	system	cluster-NILE21449	cluster-NILE21454	0
-Entity	system	cluster-NILE21449	cluster-NILE21455	0
-Entity	system	cluster-NILE21449	cluster-NILE21456	0
-Entity	system	cluster-NILE21449	cluster-NILE21457	0
-Entity	system	cluster-NILE21449	cluster-NILE21458	0
-Entity	system	cluster-NILE21449	cluster-NILE21459	0
-Entity	system	cluster-NILE21449	cluster-NILE21460	0
-Entity	system	cluster-NILE21449	cluster-NILE21461	0
-Entity	system	cluster-NILE21449	cluster-NILE21462	0
-Entity	system	cluster-NILE21450	cluster-NILE21445	0
-Entity	system	cluster-NILE21450	cluster-NILE21446	0
-Entity	system	cluster-NILE21450	cluster-NILE21447	0
-Entity	system	cluster-NILE21450	cluster-NILE21448	0
-Entity	system	cluster-NILE21450	cluster-NILE21449	0
-Entity	system	cluster-NILE21450	cluster-NILE21450	1
-Entity	system	cluster-NILE21450	cluster-NILE21451	0
-Entity	system	cluster-NILE21450	cluster-NILE21452	0
-Entity	system	cluster-NILE21450	cluster-NILE21453	0
-Entity	system	cluster-NILE21450	cluster-NILE21454	0
-Entity	system	cluster-NILE21450	cluster-NILE21455	0
-Entity	system	cluster-NILE21450	cluster-NILE21456	0
-Entity	system	cluster-NILE21450	cluster-NILE21457	0
-Entity	system	cluster-NILE21450	cluster-NILE21458	0
-Entity	system	cluster-NILE21450	cluster-NILE21459	0
-Entity	system	cluster-NILE21450	cluster-NILE21460	0
-Entity	system	cluster-NILE21450	cluster-NILE21461	0
-Entity	system	cluster-NILE21450	cluster-NILE21462	0
-Entity	system	cluster-NILE21451	cluster-NILE21445	0
-Entity	system	cluster-NILE21451	cluster-NILE21446	0
-Entity	system	cluster-NILE21451	cluster-NILE21447	0
-Entity	system	cluster-NILE21451	cluster-NILE21448	0
-Entity	system	cluster-NILE21451	cluster-NILE21449	0
-Entity	system	cluster-NILE21451	cluster-NILE21450	0
-Entity	system	cluster-NILE21451	cluster-NILE21451	1
-Entity	system	cluster-NILE21451	cluster-NILE21452	0
-Entity	system	cluster-NILE21451	cluster-NILE21453	0
-Entity	system	cluster-NILE21451	cluster-NILE21454	0
-Entity	system	cluster-NILE21451	cluster-NILE21455	0
-Entity	system	cluster-NILE21451	cluster-NILE21456	0
-Entity	system	cluster-NILE21451	cluster-NILE21457	0
-Entity	system	cluster-NILE21451	cluster-NILE21458	0
-Entity	system	cluster-NILE21451	cluster-NILE21459	0
-Entity	system	cluster-NILE21451	cluster-NILE21460	0
-Entity	system	cluster-NILE21451	cluster-NILE21461	0
-Entity	system	cluster-NILE21451	cluster-NILE21462	0
-Entity	system	cluster-NILE21452	cluster-NILE21445	0
-Entity	system	cluster-NILE21452	cluster-NILE21446	0
-Entity	system	cluster-NILE21452	cluster-NILE21447	0
-Entity	system	cluster-NILE21452	cluster-NILE21448	0
-Entity	system	cluster-NILE21452	cluster-NILE21449	0
-Entity	system	cluster-NILE21452	cluster-NILE21450	0
-Entity	system	cluster-NILE21452	cluster-NILE21451	0
-Entity	system	cluster-NILE21452	cluster-NILE21452	1
-Entity	system	cluster-NILE21452	cluster-NILE21453	0
-Entity	system	cluster-NILE21452	cluster-NILE21454	0
-Entity	system	cluster-NILE21452	cluster-NILE21455	0
-Entity	system	cluster-NILE21452	cluster-NILE21456	0
-Entity	system	cluster-NILE21452	cluster-NILE21457	0
-Entity	system	cluster-NILE21452	cluster-NILE21458	0
-Entity	system	cluster-NILE21452	cluster-NILE21459	0
-Entity	system	cluster-NILE21452	cluster-NILE21460	0
-Entity	system	cluster-NILE21452	cluster-NILE21461	0
-Entity	system	cluster-NILE21452	cluster-NILE21462	0
-Entity	system	cluster-NILE21453	cluster-NILE21445	0
-Entity	system	cluster-NILE21453	cluster-NILE21446	0
-Entity	system	cluster-NILE21453	cluster-NILE21447	0
-Entity	system	cluster-NILE21453	cluster-NILE21448	0
-Entity	system	cluster-NILE21453	cluster-NILE21449	0
-Entity	system	cluster-NILE21453	cluster-NILE21450	0
-Entity	system	cluster-NILE21453	cluster-NILE21451	0
-Entity	system	cluster-NILE21453	cluster-NILE21452	0
-Entity	system	cluster-NILE21453	cluster-NILE21453	1
-Entity	system	cluster-NILE21453	cluster-NILE21454	0
-Entity	system	cluster-NILE21453	cluster-NILE21455	0
-Entity	system	cluster-NILE21453	cluster-NILE21456	0
-Entity	system	cluster-NILE21453	cluster-NILE21457	0
-Entity	system	cluster-NILE21453	cluster-NILE21458	0
-Entity	system	cluster-NILE21453	cluster-NILE21459	0
-Entity	system	cluster-NILE21453	cluster-NILE21460	0
-Entity	system	cluster-NILE21453	cluster-NILE21461	0
-Entity	system	cluster-NILE21453	cluster-NILE21462	0
-Entity	system	cluster-NILE21454	cluster-NILE21445	0
-Entity	system	cluster-NILE21454	cluster-NILE21446	0
-Entity	system	cluster-NILE21454	cluster-NILE21447	0
-Entity	system	cluster-NILE21454	cluster-NILE21448	0
-Entity	system	cluster-NILE21454	cluster-NILE21449	0
-Entity	system	cluster-NILE21454	cluster-NILE21450	0
-Entity	system	cluster-NILE21454	cluster-NILE21451	0
-Entity	system	cluster-NILE21454	cluster-NILE21452	0
-Entity	system	cluster-NILE21454	cluster-NILE21453	0
-Entity	system	cluster-NILE21454	cluster-NILE21454	1
-Entity	system	cluster-NILE21454	cluster-NILE21455	0
-Entity	system	cluster-NILE21454	cluster-NILE21456	0
-Entity	system	cluster-NILE21454	cluster-NILE21457	0
-Entity	system	cluster-NILE21454	cluster-NILE21458	0
-Entity	system	cluster-NILE21454	cluster-NILE21459	0
-Entity	system	cluster-NILE21454	cluster-NILE21460	0
-Entity	system	cluster-NILE21454	cluster-NILE21461	0
-Entity	system	cluster-NILE21454	cluster-NILE21462	0
-Entity	system	cluster-NILE21455	cluster-NILE21445	0
-Entity	system	cluster-NILE21455	cluster-NILE21446	0
-Entity	system	cluster-NILE21455	cluster-NILE21447	0
-Entity	system	cluster-NILE21455	cluster-NILE21448	0
-Entity	system	cluster-NILE21455	cluster-NILE21449	0
-Entity	system	cluster-NILE21455	cluster-NILE21450	0
-Entity	system	cluster-NILE21455	cluster-NILE21451	0
-Entity	system	cluster-NILE21455	cluster-NILE21452	0
-Entity	system	cluster-NILE21455	cluster-NILE21453	0
-Entity	system	cluster-NILE21455	cluster-NILE21454	0
-Entity	system	cluster-NILE21455	cluster-NILE21455	1
-Entity	system	cluster-NILE21455	cluster-NILE21456	0
-Entity	system	cluster-NILE21455	cluster-NILE21457	0
-Entity	system	cluster-NILE21455	cluster-NILE21458	0
-Entity	system	cluster-NILE21455	cluster-NILE21459	0
-Entity	system	cluster-NILE21455	cluster-NILE21460	0
-Entity	system	cluster-NILE21455	cluster-NILE21461	0
-Entity	system	cluster-NILE21455	cluster-NILE21462	0
-Entity	system	cluster-NILE21456	cluster-NILE21445	0
-Entity	system	cluster-NILE21456	cluster-NILE21446	0
-Entity	system	cluster-NILE21456	cluster-NILE21447	0
-Entity	system	cluster-NILE21456	cluster-NILE21448	0
-Entity	system	cluster-NILE21456	cluster-NILE21449	0
-Entity	system	cluster-NILE21456	cluster-NILE21450	0
-Entity	system	cluster-NILE21456	cluster-NILE21451	0
-Entity	system	cluster-NILE21456	cluster-NILE21452	0
-Entity	system	cluster-NILE21456	cluster-NILE21453	0
-Entity	system	cluster-NILE21456	cluster-NILE21454	0
-Entity	system	cluster-NILE21456	cluster-NILE21455	0
-Entity	system	cluster-NILE21456	cluster-NILE21456	1
-Entity	system	cluster-NILE21456	cluster-NILE21457	0
-Entity	system	cluster-NILE21456	cluster-NILE21458	0
-Entity	system	cluster-NILE21456	cluster-NILE21459	0
-Entity	system	cluster-NILE21456	cluster-NILE21460	0
-Entity	system	cluster-NILE21456	cluster-NILE21461	0
-Entity	system	cluster-NILE21456	cluster-NILE21462	0
-Entity	system	cluster-NILE21457	cluster-NILE21445	0
-Entity	system	cluster-NILE21457	cluster-NILE21446	0
-Entity	system	cluster-NILE21457	cluster-NILE21447	0
-Entity	system	cluster-NILE21457	cluster-NILE21448	0
-Entity	system	cluster-NILE21457	cluster-NILE21449	0
-Entity	system	cluster-NILE21457	cluster-NILE21450	0
-Entity	system	cluster-NILE21457	cluster-NILE21451	0
-Entity	system	cluster-NILE21457	cluster-NILE21452	0
-Entity	system	cluster-NILE21457	cluster-NILE21453	0
-Entity	system	cluster-NILE21457	cluster-NILE21454	0
-Entity	system	cluster-NILE21457	cluster-NILE21455	0
-Entity	system	cluster-NILE21457	cluster-NILE21456	0
-Entity	system	cluster-NILE21457	cluster-NILE21457	1
-Entity	system	cluster-NILE21457	cluster-NILE21458	0
-Entity	system	cluster-NILE21457	cluster-NILE21459	0
-Entity	system	cluster-NILE21457	cluster-NILE21460	0
-Entity	system	cluster-NILE21457	cluster-NILE21461	0
-Entity	system	cluster-NILE21457	cluster-NILE21462	0
-Entity	system	cluster-NILE21458	cluster-NILE21445	0
-Entity	system	cluster-NILE21458	cluster-NILE21446	0
-Entity	system	cluster-NILE21458	cluster-NILE21447	0
-Entity	system	cluster-NILE21458	cluster-NILE21448	0
-Entity	system	cluster-NILE21458	cluster-NILE21449	0
-Entity	system	cluster-NILE21458	cluster-NILE21450	0
-Entity	system	cluster-NILE21458	cluster-NILE21451	0
-Entity	system	cluster-NILE21458	cluster-NILE21452	0
-Entity	system	cluster-NILE21458	cluster-NILE21453	0
-Entity	system	cluster-NILE21458	cluster-NILE21454	0
-Entity	system	cluster-NILE21458	cluster-NILE21455	0
-Entity	system	cluster-NILE21458	cluster-NILE21456	0
-Entity	system	cluster-NILE21458	cluster-NILE21457	0
-Entity	system	cluster-NILE21458	cluster-NILE21458	1
-Entity	system	cluster-NILE21458	cluster-NILE21459	0
-Entity	system	cluster-NILE21458	cluster-NILE21460	0
-Entity	system	cluster-NILE21458	cluster-NILE21461	0
-Entity	system	cluster-NILE21458	cluster-NILE21462	0
-Entity	system	cluster-NILE21459	cluster-NILE21445	0
-Entity	system	cluster-NILE21459	cluster-NILE21446	0
-Entity	system	cluster-NILE21459	cluster-NILE21447	0
-Entity	system	cluster-NILE21459	cluster-NILE21448	0
-Entity	system	cluster-NILE21459	cluster-NILE21449	0
-Entity	system	cluster-NILE21459	cluster-NILE21450	0
-Entity	system	cluster-NILE21459	cluster-NILE21451	0
-Entity	system	cluster-NILE21459	cluster-NILE21452	0
-Entity	system	cluster-NILE21459	cluster-NILE21453	0
-Entity	system	cluster-NILE21459	cluster-NILE21454	0
-Entity	system	cluster-NILE21459	cluster-NILE21455	0
-Entity	system	cluster-NILE21459	cluster-NILE21456	0
-Entity	system	cluster-NILE21459	cluster-NILE21457	0
-Entity	system	cluster-NILE21459	cluster-NILE21458	0
-Entity	system	cluster-NILE21459	cluster-NILE21459	2
-Entity	system	cluster-NILE21459	cluster-NILE21460	0
-Entity	system	cluster-NILE21459	cluster-NILE21461	0
-Entity	system	cluster-NILE21459	cluster-NILE21462	0
-Entity	system	cluster-NILE21460	cluster-NILE21445	0
-Entity	system	cluster-NILE21460	cluster-NILE21446	0
-Entity	system	cluster-NILE21460	cluster-NILE21447	0
-Entity	system	cluster-NILE21460	cluster-NILE21448	0
-Entity	system	cluster-NILE21460	cluster-NILE21449	0
-Entity	system	cluster-NILE21460	cluster-NILE21450	0
-Entity	system	cluster-NILE21460	cluster-NILE21451	0
-Entity	system	cluster-NILE21460	cluster-NILE21452	0
-Entity	system	cluster-NILE21460	cluster-NILE21453	0
-Entity	system	cluster-NILE21460	cluster-NILE21454	0
-Entity	system	cluster-NILE21460	cluster-NILE21455	0
-Entity	system	cluster-NILE21460	cluster-NILE21456	0
-Entity	system	cluster-NILE21460	cluster-NILE21457	0
-Entity	system	cluster-NILE21460	cluster-NILE21458	0
-Entity	system	cluster-NILE21460	cluster-NILE21459	0
-Entity	system	cluster-NILE21460	cluster-NILE21460	1
-Entity	system	cluster-NILE21460	cluster-NILE21461	0
-Entity	system	cluster-NILE21460	cluster-NILE21462	0
-Entity	system	cluster-NILE21461	cluster-NILE21445	0
-Entity	system	cluster-NILE21461	cluster-NILE21446	0
-Entity	system	cluster-NILE21461	cluster-NILE21447	0
-Entity	system	cluster-NILE21461	cluster-NILE21448	0
-Entity	system	cluster-NILE21461	cluster-NILE21449	0
-Entity	system	cluster-NILE21461	cluster-NILE21450	0
-Entity	system	cluster-NILE21461	cluster-NILE21451	0
-Entity	system	cluster-NILE21461	cluster-NILE21452	0
-Entity	system	cluster-NILE21461	cluster-NILE21453	0
-Entity	system	cluster-NILE21461	cluster-NILE21454	0
-Entity	system	cluster-NILE21461	cluster-NILE21455	0
-Entity	system	cluster-NILE21461	cluster-NILE21456	0
-Entity	system	cluster-NILE21461	cluster-NILE21457	0
-Entity	system	cluster-NILE21461	cluster-NILE21458	0
-Entity	system	cluster-NILE21461	cluster-NILE21459	0
-Entity	system	cluster-NILE21461	cluster-NILE21460	0
-Entity	system	cluster-NILE21461	cluster-NILE21461	1
-Entity	system	cluster-NILE21461	cluster-NILE21462	0
-Entity	system	cluster-NILE21462	cluster-NILE21445	0
-Entity	system	cluster-NILE21462	cluster-NILE21446	0
-Entity	system	cluster-NILE21462	cluster-NILE21447	0
-Entity	system	cluster-NILE21462	cluster-NILE21448	0
-Entity	system	cluster-NILE21462	cluster-NILE21449	0
-Entity	system	cluster-NILE21462	cluster-NILE21450	0
-Entity	system	cluster-NILE21462	cluster-NILE21451	0
-Entity	system	cluster-NILE21462	cluster-NILE21452	0
-Entity	system	cluster-NILE21462	cluster-NILE21453	0
-Entity	system	cluster-NILE21462	cluster-NILE21454	0
-Entity	system	cluster-NILE21462	cluster-NILE21455	0
-Entity	system	cluster-NILE21462	cluster-NILE21456	0
-Entity	system	cluster-NILE21462	cluster-NILE21457	0
-Entity	system	cluster-NILE21462	cluster-NILE21458	0
-Entity	system	cluster-NILE21462	cluster-NILE21459	0
-Entity	system	cluster-NILE21462	cluster-NILE21460	0
-Entity	system	cluster-NILE21462	cluster-NILE21461	0
-Entity	system	cluster-NILE21462	cluster-NILE21462	2
-Relation	system	cluster-NILR21445	cluster-NILR21445	1
-Event	system	cluster-NILV21445	cluster-NILV21445	2
-Event	system	cluster-NILV21445	cluster-NILV21446	0
-Event	system	cluster-NILV21445	cluster-NILV21447	0
-Event	system	cluster-NILV21446	cluster-NILV21445	0
-Event	system	cluster-NILV21446	cluster-NILV21446	1
-Event	system	cluster-NILV21446	cluster-NILV21447	0
-Event	system	cluster-NILV21447	cluster-NILV21445	0
-Event	system	cluster-NILV21447	cluster-NILV21446	0
-Event	system	cluster-NILV21447	cluster-NILV21447	3
-Entity	gold	cluster-NILE21445	cluster-NILE21445	1
-Entity	gold	cluster-NILE21445	cluster-NILE21446	0
-Entity	gold	cluster-NILE21445	cluster-NILE21447	0
-Entity	gold	cluster-NILE21445	cluster-NILE21448	0
-Entity	gold	cluster-NILE21445	cluster-NILE21449	0
-Entity	gold	cluster-NILE21445	cluster-NILE21450	0
-Entity	gold	cluster-NILE21445	cluster-NILE21451	0
-Entity	gold	cluster-NILE21445	cluster-NILE21452	0
-Entity	gold	cluster-NILE21445	cluster-NILE21453	0
-Entity	gold	cluster-NILE21445	cluster-NILE21454	0
-Entity	gold	cluster-NILE21445	cluster-NILE21455	0
-Entity	gold	cluster-NILE21445	cluster-NILE21456	0
-Entity	gold	cluster-NILE21445	cluster-NILE21457	0
-Entity	gold	cluster-NILE21445	cluster-NILE21458	0
-Entity	gold	cluster-NILE21445	cluster-NILE21459	0
-Entity	gold	cluster-NILE21445	cluster-NILE21460	0
-Entity	gold	cluster-NILE21445	cluster-NILE21461	0
-Entity	gold	cluster-NILE21445	cluster-NILE21462	0
-Entity	gold	cluster-NILE21446	cluster-NILE21445	0
-Entity	gold	cluster-NILE21446	cluster-NILE21446	1
-Entity	gold	cluster-NILE21446	cluster-NILE21447	0
-Entity	gold	cluster-NILE21446	cluster-NILE21448	0
-Entity	gold	cluster-NILE21446	cluster-NILE21449	0
-Entity	gold	cluster-NILE21446	cluster-NILE21450	0
-Entity	gold	cluster-NILE21446	cluster-NILE21451	0
-Entity	gold	cluster-NILE21446	cluster-NILE21452	0
-Entity	gold	cluster-NILE21446	cluster-NILE21453	0
-Entity	gold	cluster-NILE21446	cluster-NILE21454	0
-Entity	gold	cluster-NILE21446	cluster-NILE21455	0
-Entity	gold	cluster-NILE21446	cluster-NILE21456	0
-Entity	gold	cluster-NILE21446	cluster-NILE21457	0
-Entity	gold	cluster-NILE21446	cluster-NILE21458	0
-Entity	gold	cluster-NILE21446	cluster-NILE21459	0
-Entity	gold	cluster-NILE21446	cluster-NILE21460	0
-Entity	gold	cluster-NILE21446	cluster-NILE21461	0
-Entity	gold	cluster-NILE21446	cluster-NILE21462	0
-Entity	gold	cluster-NILE21447	cluster-NILE21445	0
-Entity	gold	cluster-NILE21447	cluster-NILE21446	0
-Entity	gold	cluster-NILE21447	cluster-NILE21447	1
-Entity	gold	cluster-NILE21447	cluster-NILE21448	0
-Entity	gold	cluster-NILE21447	cluster-NILE21449	0
-Entity	gold	cluster-NILE21447	cluster-NILE21450	0
-Entity	gold	cluster-NILE21447	cluster-NILE21451	0
-Entity	gold	cluster-NILE21447	cluster-NILE21452	0
-Entity	gold	cluster-NILE21447	cluster-NILE21453	0
-Entity	gold	cluster-NILE21447	cluster-NILE21454	0
-Entity	gold	cluster-NILE21447	cluster-NILE21455	0
-Entity	gold	cluster-NILE21447	cluster-NILE21456	0
-Entity	gold	cluster-NILE21447	cluster-NILE21457	0
-Entity	gold	cluster-NILE21447	cluster-NILE21458	0
-Entity	gold	cluster-NILE21447	cluster-NILE21459	0
-Entity	gold	cluster-NILE21447	cluster-NILE21460	0
-Entity	gold	cluster-NILE21447	cluster-NILE21461	0
-Entity	gold	cluster-NILE21447	cluster-NILE21462	0
-Entity	gold	cluster-NILE21448	cluster-NILE21445	0
-Entity	gold	cluster-NILE21448	cluster-NILE21446	0
-Entity	gold	cluster-NILE21448	cluster-NILE21447	0
-Entity	gold	cluster-NILE21448	cluster-NILE21448	1
-Entity	gold	cluster-NILE21448	cluster-NILE21449	0
-Entity	gold	cluster-NILE21448	cluster-NILE21450	0
-Entity	gold	cluster-NILE21448	cluster-NILE21451	0
-Entity	gold	cluster-NILE21448	cluster-NILE21452	0
-Entity	gold	cluster-NILE21448	cluster-NILE21453	0
-Entity	gold	cluster-NILE21448	cluster-NILE21454	0
-Entity	gold	cluster-NILE21448	cluster-NILE21455	0
-Entity	gold	cluster-NILE21448	cluster-NILE21456	0
-Entity	gold	cluster-NILE21448	cluster-NILE21457	0
-Entity	gold	cluster-NILE21448	cluster-NILE21458	0
-Entity	gold	cluster-NILE21448	cluster-NILE21459	0
-Entity	gold	cluster-NILE21448	cluster-NILE21460	0
-Entity	gold	cluster-NILE21448	cluster-NILE21461	0
-Entity	gold	cluster-NILE21448	cluster-NILE21462	0
-Entity	gold	cluster-NILE21449	cluster-NILE21445	0
-Entity	gold	cluster-NILE21449	cluster-NILE21446	0
-Entity	gold	cluster-NILE21449	cluster-NILE21447	0
-Entity	gold	cluster-NILE21449	cluster-NILE21448	0
-Entity	gold	cluster-NILE21449	cluster-NILE21449	1
-Entity	gold	cluster-NILE21449	cluster-NILE21450	0
-Entity	gold	cluster-NILE21449	cluster-NILE21451	0
-Entity	gold	cluster-NILE21449	cluster-NILE21452	0
-Entity	gold	cluster-NILE21449	cluster-NILE21453	0
-Entity	gold	cluster-NILE21449	cluster-NILE21454	0
-Entity	gold	cluster-NILE21449	cluster-NILE21455	0
-Entity	gold	cluster-NILE21449	cluster-NILE21456	0
-Entity	gold	cluster-NILE21449	cluster-NILE21457	0
-Entity	gold	cluster-NILE21449	cluster-NILE21458	0
-Entity	gold	cluster-NILE21449	cluster-NILE21459	0
-Entity	gold	cluster-NILE21449	cluster-NILE21460	0
-Entity	gold	cluster-NILE21449	cluster-NILE21461	0
-Entity	gold	cluster-NILE21449	cluster-NILE21462	0
-Entity	gold	cluster-NILE21450	cluster-NILE21445	0
-Entity	gold	cluster-NILE21450	cluster-NILE21446	0
-Entity	gold	cluster-NILE21450	cluster-NILE21447	0
-Entity	gold	cluster-NILE21450	cluster-NILE21448	0
-Entity	gold	cluster-NILE21450	cluster-NILE21449	0
-Entity	gold	cluster-NILE21450	cluster-NILE21450	1
-Entity	gold	cluster-NILE21450	cluster-NILE21451	0
-Entity	gold	cluster-NILE21450	cluster-NILE21452	0
-Entity	gold	cluster-NILE21450	cluster-NILE21453	0
-Entity	gold	cluster-NILE21450	cluster-NILE21454	0
-Entity	gold	cluster-NILE21450	cluster-NILE21455	0
-Entity	gold	cluster-NILE21450	cluster-NILE21456	0
-Entity	gold	cluster-NILE21450	cluster-NILE21457	0
-Entity	gold	cluster-NILE21450	cluster-NILE21458	0
-Entity	gold	cluster-NILE21450	cluster-NILE21459	0
-Entity	gold	cluster-NILE21450	cluster-NILE21460	0
-Entity	gold	cluster-NILE21450	cluster-NILE21461	0
-Entity	gold	cluster-NILE21450	cluster-NILE21462	0
-Entity	gold	cluster-NILE21451	cluster-NILE21445	0
-Entity	gold	cluster-NILE21451	cluster-NILE21446	0
-Entity	gold	cluster-NILE21451	cluster-NILE21447	0
-Entity	gold	cluster-NILE21451	cluster-NILE21448	0
-Entity	gold	cluster-NILE21451	cluster-NILE21449	0
-Entity	gold	cluster-NILE21451	cluster-NILE21450	0
-Entity	gold	cluster-NILE21451	cluster-NILE21451	1
-Entity	gold	cluster-NILE21451	cluster-NILE21452	0
-Entity	gold	cluster-NILE21451	cluster-NILE21453	0
-Entity	gold	cluster-NILE21451	cluster-NILE21454	0
-Entity	gold	cluster-NILE21451	cluster-NILE21455	0
-Entity	gold	cluster-NILE21451	cluster-NILE21456	0
-Entity	gold	cluster-NILE21451	cluster-NILE21457	0
-Entity	gold	cluster-NILE21451	cluster-NILE21458	0
-Entity	gold	cluster-NILE21451	cluster-NILE21459	0
-Entity	gold	cluster-NILE21451	cluster-NILE21460	0
-Entity	gold	cluster-NILE21451	cluster-NILE21461	0
-Entity	gold	cluster-NILE21451	cluster-NILE21462	0
-Entity	gold	cluster-NILE21452	cluster-NILE21445	0
-Entity	gold	cluster-NILE21452	cluster-NILE21446	0
-Entity	gold	cluster-NILE21452	cluster-NILE21447	0
-Entity	gold	cluster-NILE21452	cluster-NILE21448	0
-Entity	gold	cluster-NILE21452	cluster-NILE21449	0
-Entity	gold	cluster-NILE21452	cluster-NILE21450	0
-Entity	gold	cluster-NILE21452	cluster-NILE21451	0
-Entity	gold	cluster-NILE21452	cluster-NILE21452	1
-Entity	gold	cluster-NILE21452	cluster-NILE21453	0
-Entity	gold	cluster-NILE21452	cluster-NILE21454	0
-Entity	gold	cluster-NILE21452	cluster-NILE21455	0
-Entity	gold	cluster-NILE21452	cluster-NILE21456	0
-Entity	gold	cluster-NILE21452	cluster-NILE21457	0
-Entity	gold	cluster-NILE21452	cluster-NILE21458	0
-Entity	gold	cluster-NILE21452	cluster-NILE21459	0
-Entity	gold	cluster-NILE21452	cluster-NILE21460	0
-Entity	gold	cluster-NILE21452	cluster-NILE21461	0
-Entity	gold	cluster-NILE21452	cluster-NILE21462	0
-Entity	gold	cluster-NILE21453	cluster-NILE21445	0
-Entity	gold	cluster-NILE21453	cluster-NILE21446	0
-Entity	gold	cluster-NILE21453	cluster-NILE21447	0
-Entity	gold	cluster-NILE21453	cluster-NILE21448	0
-Entity	gold	cluster-NILE21453	cluster-NILE21449	0
-Entity	gold	cluster-NILE21453	cluster-NILE21450	0
-Entity	gold	cluster-NILE21453	cluster-NILE21451	0
-Entity	gold	cluster-NILE21453	cluster-NILE21452	0
-Entity	gold	cluster-NILE21453	cluster-NILE21453	1
-Entity	gold	cluster-NILE21453	cluster-NILE21454	0
-Entity	gold	cluster-NILE21453	cluster-NILE21455	0
-Entity	gold	cluster-NILE21453	cluster-NILE21456	0
-Entity	gold	cluster-NILE21453	cluster-NILE21457	0
-Entity	gold	cluster-NILE21453	cluster-NILE21458	0
-Entity	gold	cluster-NILE21453	cluster-NILE21459	0
-Entity	gold	cluster-NILE21453	cluster-NILE21460	0
-Entity	gold	cluster-NILE21453	cluster-NILE21461	0
-Entity	gold	cluster-NILE21453	cluster-NILE21462	0
-Entity	gold	cluster-NILE21454	cluster-NILE21445	0
-Entity	gold	cluster-NILE21454	cluster-NILE21446	0
-Entity	gold	cluster-NILE21454	cluster-NILE21447	0
-Entity	gold	cluster-NILE21454	cluster-NILE21448	0
-Entity	gold	cluster-NILE21454	cluster-NILE21449	0
-Entity	gold	cluster-NILE21454	cluster-NILE21450	0
-Entity	gold	cluster-NILE21454	cluster-NILE21451	0
-Entity	gold	cluster-NILE21454	cluster-NILE21452	0
-Entity	gold	cluster-NILE21454	cluster-NILE21453	0
-Entity	gold	cluster-NILE21454	cluster-NILE21454	1
-Entity	gold	cluster-NILE21454	cluster-NILE21455	0
-Entity	gold	cluster-NILE21454	cluster-NILE21456	0
-Entity	gold	cluster-NILE21454	cluster-NILE21457	0
-Entity	gold	cluster-NILE21454	cluster-NILE21458	0
-Entity	gold	cluster-NILE21454	cluster-NILE21459	0
-Entity	gold	cluster-NILE21454	cluster-NILE21460	0
-Entity	gold	cluster-NILE21454	cluster-NILE21461	0
-Entity	gold	cluster-NILE21454	cluster-NILE21462	0
-Entity	gold	cluster-NILE21455	cluster-NILE21445	0
-Entity	gold	cluster-NILE21455	cluster-NILE21446	0
-Entity	gold	cluster-NILE21455	cluster-NILE21447	0
-Entity	gold	cluster-NILE21455	cluster-NILE21448	0
-Entity	gold	cluster-NILE21455	cluster-NILE21449	0
-Entity	gold	cluster-NILE21455	cluster-NILE21450	0
-Entity	gold	cluster-NILE21455	cluster-NILE21451	0
-Entity	gold	cluster-NILE21455	cluster-NILE21452	0
-Entity	gold	cluster-NILE21455	cluster-NILE21453	0
-Entity	gold	cluster-NILE21455	cluster-NILE21454	0
-Entity	gold	cluster-NILE21455	cluster-NILE21455	1
-Entity	gold	cluster-NILE21455	cluster-NILE21456	0
-Entity	gold	cluster-NILE21455	cluster-NILE21457	0
-Entity	gold	cluster-NILE21455	cluster-NILE21458	0
-Entity	gold	cluster-NILE21455	cluster-NILE21459	0
-Entity	gold	cluster-NILE21455	cluster-NILE21460	0
-Entity	gold	cluster-NILE21455	cluster-NILE21461	0
-Entity	gold	cluster-NILE21455	cluster-NILE21462	0
-Entity	gold	cluster-NILE21456	cluster-NILE21445	0
-Entity	gold	cluster-NILE21456	cluster-NILE21446	0
-Entity	gold	cluster-NILE21456	cluster-NILE21447	0
-Entity	gold	cluster-NILE21456	cluster-NILE21448	0
-Entity	gold	cluster-NILE21456	cluster-NILE21449	0
-Entity	gold	cluster-NILE21456	cluster-NILE21450	0
-Entity	gold	cluster-NILE21456	cluster-NILE21451	0
-Entity	gold	cluster-NILE21456	cluster-NILE21452	0
-Entity	gold	cluster-NILE21456	cluster-NILE21453	0
-Entity	gold	cluster-NILE21456	cluster-NILE21454	0
-Entity	gold	cluster-NILE21456	cluster-NILE21455	0
-Entity	gold	cluster-NILE21456	cluster-NILE21456	1
-Entity	gold	cluster-NILE21456	cluster-NILE21457	0
-Entity	gold	cluster-NILE21456	cluster-NILE21458	0
-Entity	gold	cluster-NILE21456	cluster-NILE21459	0
-Entity	gold	cluster-NILE21456	cluster-NILE21460	0
-Entity	gold	cluster-NILE21456	cluster-NILE21461	0
-Entity	gold	cluster-NILE21456	cluster-NILE21462	0
-Entity	gold	cluster-NILE21457	cluster-NILE21445	0
-Entity	gold	cluster-NILE21457	cluster-NILE21446	0
-Entity	gold	cluster-NILE21457	cluster-NILE21447	0
-Entity	gold	cluster-NILE21457	cluster-NILE21448	0
-Entity	gold	cluster-NILE21457	cluster-NILE21449	0
-Entity	gold	cluster-NILE21457	cluster-NILE21450	0
-Entity	gold	cluster-NILE21457	cluster-NILE21451	0
-Entity	gold	cluster-NILE21457	cluster-NILE21452	0
-Entity	gold	cluster-NILE21457	cluster-NILE21453	0
-Entity	gold	cluster-NILE21457	cluster-NILE21454	0
-Entity	gold	cluster-NILE21457	cluster-NILE21455	0
-Entity	gold	cluster-NILE21457	cluster-NILE21456	0
-Entity	gold	cluster-NILE21457	cluster-NILE21457	1
-Entity	gold	cluster-NILE21457	cluster-NILE21458	0
-Entity	gold	cluster-NILE21457	cluster-NILE21459	0
-Entity	gold	cluster-NILE21457	cluster-NILE21460	0
-Entity	gold	cluster-NILE21457	cluster-NILE21461	0
-Entity	gold	cluster-NILE21457	cluster-NILE21462	0
-Entity	gold	cluster-NILE21458	cluster-NILE21445	0
-Entity	gold	cluster-NILE21458	cluster-NILE21446	0
-Entity	gold	cluster-NILE21458	cluster-NILE21447	0
-Entity	gold	cluster-NILE21458	cluster-NILE21448	0
-Entity	gold	cluster-NILE21458	cluster-NILE21449	0
-Entity	gold	cluster-NILE21458	cluster-NILE21450	0
-Entity	gold	cluster-NILE21458	cluster-NILE21451	0
-Entity	gold	cluster-NILE21458	cluster-NILE21452	0
-Entity	gold	cluster-NILE21458	cluster-NILE21453	0
-Entity	gold	cluster-NILE21458	cluster-NILE21454	0
-Entity	gold	cluster-NILE21458	cluster-NILE21455	0
-Entity	gold	cluster-NILE21458	cluster-NILE21456	0
-Entity	gold	cluster-NILE21458	cluster-NILE21457	0
-Entity	gold	cluster-NILE21458	cluster-NILE21458	1
-Entity	gold	cluster-NILE21458	cluster-NILE21459	0
-Entity	gold	cluster-NILE21458	cluster-NILE21460	0
-Entity	gold	cluster-NILE21458	cluster-NILE21461	0
-Entity	gold	cluster-NILE21458	cluster-NILE21462	0
-Entity	gold	cluster-NILE21459	cluster-NILE21445	0
-Entity	gold	cluster-NILE21459	cluster-NILE21446	0
-Entity	gold	cluster-NILE21459	cluster-NILE21447	0
-Entity	gold	cluster-NILE21459	cluster-NILE21448	0
-Entity	gold	cluster-NILE21459	cluster-NILE21449	0
-Entity	gold	cluster-NILE21459	cluster-NILE21450	0
-Entity	gold	cluster-NILE21459	cluster-NILE21451	0
-Entity	gold	cluster-NILE21459	cluster-NILE21452	0
-Entity	gold	cluster-NILE21459	cluster-NILE21453	0
-Entity	gold	cluster-NILE21459	cluster-NILE21454	0
-Entity	gold	cluster-NILE21459	cluster-NILE21455	0
-Entity	gold	cluster-NILE21459	cluster-NILE21456	0
-Entity	gold	cluster-NILE21459	cluster-NILE21457	0
-Entity	gold	cluster-NILE21459	cluster-NILE21458	0
-Entity	gold	cluster-NILE21459	cluster-NILE21459	2
-Entity	gold	cluster-NILE21459	cluster-NILE21460	0
-Entity	gold	cluster-NILE21459	cluster-NILE21461	0
-Entity	gold	cluster-NILE21459	cluster-NILE21462	0
-Entity	gold	cluster-NILE21460	cluster-NILE21445	0
-Entity	gold	cluster-NILE21460	cluster-NILE21446	0
-Entity	gold	cluster-NILE21460	cluster-NILE21447	0
-Entity	gold	cluster-NILE21460	cluster-NILE21448	0
-Entity	gold	cluster-NILE21460	cluster-NILE21449	0
-Entity	gold	cluster-NILE21460	cluster-NILE21450	0
-Entity	gold	cluster-NILE21460	cluster-NILE21451	0
-Entity	gold	cluster-NILE21460	cluster-NILE21452	0
-Entity	gold	cluster-NILE21460	cluster-NILE21453	0
-Entity	gold	cluster-NILE21460	cluster-NILE21454	0
-Entity	gold	cluster-NILE21460	cluster-NILE21455	0
-Entity	gold	cluster-NILE21460	cluster-NILE21456	0
-Entity	gold	cluster-NILE21460	cluster-NILE21457	0
-Entity	gold	cluster-NILE21460	cluster-NILE21458	0
-Entity	gold	cluster-NILE21460	cluster-NILE21459	0
-Entity	gold	cluster-NILE21460	cluster-NILE21460	1
-Entity	gold	cluster-NILE21460	cluster-NILE21461	0
-Entity	gold	cluster-NILE21460	cluster-NILE21462	0
-Entity	gold	cluster-NILE21461	cluster-NILE21445	0
-Entity	gold	cluster-NILE21461	cluster-NILE21446	0
-Entity	gold	cluster-NILE21461	cluster-NILE21447	0
-Entity	gold	cluster-NILE21461	cluster-NILE21448	0
-Entity	gold	cluster-NILE21461	cluster-NILE21449	0
-Entity	gold	cluster-NILE21461	cluster-NILE21450	0
-Entity	gold	cluster-NILE21461	cluster-NILE21451	0
-Entity	gold	cluster-NILE21461	cluster-NILE21452	0
-Entity	gold	cluster-NILE21461	cluster-NILE21453	0
-Entity	gold	cluster-NILE21461	cluster-NILE21454	0
-Entity	gold	cluster-NILE21461	cluster-NILE21455	0
-Entity	gold	cluster-NILE21461	cluster-NILE21456	0
-Entity	gold	cluster-NILE21461	cluster-NILE21457	0
-Entity	gold	cluster-NILE21461	cluster-NILE21458	0
-Entity	gold	cluster-NILE21461	cluster-NILE21459	0
-Entity	gold	cluster-NILE21461	cluster-NILE21460	0
-Entity	gold	cluster-NILE21461	cluster-NILE21461	1
-Entity	gold	cluster-NILE21461	cluster-NILE21462	0
-Entity	gold	cluster-NILE21462	cluster-NILE21445	0
-Entity	gold	cluster-NILE21462	cluster-NILE21446	0
-Entity	gold	cluster-NILE21462	cluster-NILE21447	0
-Entity	gold	cluster-NILE21462	cluster-NILE21448	0
-Entity	gold	cluster-NILE21462	cluster-NILE21449	0
-Entity	gold	cluster-NILE21462	cluster-NILE21450	0
-Entity	gold	cluster-NILE21462	cluster-NILE21451	0
-Entity	gold	cluster-NILE21462	cluster-NILE21452	0
-Entity	gold	cluster-NILE21462	cluster-NILE21453	0
-Entity	gold	cluster-NILE21462	cluster-NILE21454	0
-Entity	gold	cluster-NILE21462	cluster-NILE21455	0
-Entity	gold	cluster-NILE21462	cluster-NILE21456	0
-Entity	gold	cluster-NILE21462	cluster-NILE21457	0
-Entity	gold	cluster-NILE21462	cluster-NILE21458	0
-Entity	gold	cluster-NILE21462	cluster-NILE21459	0
-Entity	gold	cluster-NILE21462	cluster-NILE21460	0
-Entity	gold	cluster-NILE21462	cluster-NILE21461	0
-Entity	gold	cluster-NILE21462	cluster-NILE21462	2
-Relation	gold	cluster-NILR21445	cluster-NILR21445	1
-Event	gold	cluster-NILV21445	cluster-NILV21445	2
-Event	gold	cluster-NILV21445	cluster-NILV21446	0
-Event	gold	cluster-NILV21445	cluster-NILV21447	0
-Event	gold	cluster-NILV21446	cluster-NILV21445	0
-Event	gold	cluster-NILV21446	cluster-NILV21446	1
-Event	gold	cluster-NILV21446	cluster-NILV21447	0
-Event	gold	cluster-NILV21447	cluster-NILV21445	0
-Event	gold	cluster-NILV21447	cluster-NILV21446	0
-Event	gold	cluster-NILV21447	cluster-NILV21447	3
+metatype	system_or_gold1	cluster1	system_or_gold2	cluster2	similarity
+Entity	system	cluster-NILE21445	system	cluster-NILE21445	1
+Entity	system	cluster-NILE21445	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21445	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21446	1
+Entity	system	cluster-NILE21446	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21446	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21447	1
+Entity	system	cluster-NILE21447	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21447	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21448	1
+Entity	system	cluster-NILE21448	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21448	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21449	1
+Entity	system	cluster-NILE21449	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21449	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21450	1
+Entity	system	cluster-NILE21450	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21450	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21451	1
+Entity	system	cluster-NILE21451	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21451	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21452	1
+Entity	system	cluster-NILE21452	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21452	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21453	1
+Entity	system	cluster-NILE21453	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21453	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21454	1
+Entity	system	cluster-NILE21454	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21454	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21455	1
+Entity	system	cluster-NILE21455	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21455	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21456	1
+Entity	system	cluster-NILE21456	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21456	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21457	1
+Entity	system	cluster-NILE21457	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21457	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21458	1
+Entity	system	cluster-NILE21458	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21458	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21459	2
+Entity	system	cluster-NILE21459	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21459	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21460	1
+Entity	system	cluster-NILE21460	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21460	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21461	system	cluster-NILE21461	1
+Entity	system	cluster-NILE21461	system	cluster-NILE21462	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21445	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21446	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21447	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21448	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21449	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21450	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21451	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21452	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21453	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21454	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21455	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21456	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21457	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21458	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21459	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21460	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21461	0
+Entity	system	cluster-NILE21462	system	cluster-NILE21462	2
+Relation	system	cluster-NILR21445	system	cluster-NILR21445	1
+Event	system	cluster-NILV21445	system	cluster-NILV21445	2
+Event	system	cluster-NILV21445	system	cluster-NILV21446	0
+Event	system	cluster-NILV21445	system	cluster-NILV21447	0
+Event	system	cluster-NILV21446	system	cluster-NILV21445	0
+Event	system	cluster-NILV21446	system	cluster-NILV21446	1
+Event	system	cluster-NILV21446	system	cluster-NILV21447	0
+Event	system	cluster-NILV21447	system	cluster-NILV21445	0
+Event	system	cluster-NILV21447	system	cluster-NILV21446	0
+Event	system	cluster-NILV21447	system	cluster-NILV21447	3
+Entity	system	cluster-NILE21445	gold	cluster-NILE21445	1
+Entity	system	cluster-NILE21445	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21445	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21446	1
+Entity	system	cluster-NILE21446	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21446	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21447	1
+Entity	system	cluster-NILE21447	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21447	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21448	1
+Entity	system	cluster-NILE21448	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21448	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21449	1
+Entity	system	cluster-NILE21449	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21449	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21450	1
+Entity	system	cluster-NILE21450	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21450	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21451	1
+Entity	system	cluster-NILE21451	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21451	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21452	1
+Entity	system	cluster-NILE21452	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21452	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21453	1
+Entity	system	cluster-NILE21453	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21453	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21454	1
+Entity	system	cluster-NILE21454	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21454	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21455	1
+Entity	system	cluster-NILE21455	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21455	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21456	1
+Entity	system	cluster-NILE21456	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21456	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21457	1
+Entity	system	cluster-NILE21457	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21457	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21458	1
+Entity	system	cluster-NILE21458	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21458	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21459	2
+Entity	system	cluster-NILE21459	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21459	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21460	1
+Entity	system	cluster-NILE21460	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21460	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21461	gold	cluster-NILE21461	1
+Entity	system	cluster-NILE21461	gold	cluster-NILE21462	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21445	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21446	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21447	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21448	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21449	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21450	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21451	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21452	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21453	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21454	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21455	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21456	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21457	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21458	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21459	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21460	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21461	0
+Entity	system	cluster-NILE21462	gold	cluster-NILE21462	2
+Relation	system	cluster-NILR21445	gold	cluster-NILR21445	1
+Event	system	cluster-NILV21445	gold	cluster-NILV21445	2
+Event	system	cluster-NILV21445	gold	cluster-NILV21446	0
+Event	system	cluster-NILV21445	gold	cluster-NILV21447	0
+Event	system	cluster-NILV21446	gold	cluster-NILV21445	0
+Event	system	cluster-NILV21446	gold	cluster-NILV21446	1
+Event	system	cluster-NILV21446	gold	cluster-NILV21447	0
+Event	system	cluster-NILV21447	gold	cluster-NILV21445	0
+Event	system	cluster-NILV21447	gold	cluster-NILV21446	0
+Event	system	cluster-NILV21447	gold	cluster-NILV21447	3
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21445	1
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21445	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21446	1
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21446	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21447	1
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21447	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21448	1
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21448	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21449	1
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21449	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21450	1
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21450	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21451	1
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21451	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21452	1
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21452	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21453	1
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21453	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21454	1
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21454	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21455	1
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21455	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21456	1
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21456	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21457	1
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21457	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21458	1
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21458	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21459	2
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21459	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21460	1
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21460	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21461	1
+Entity	gold	cluster-NILE21461	gold	cluster-NILE21462	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21445	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21446	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21447	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21448	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21449	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21450	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21451	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21452	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21453	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21454	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21455	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21456	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21457	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21458	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21459	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21460	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21461	0
+Entity	gold	cluster-NILE21462	gold	cluster-NILE21462	2
+Relation	gold	cluster-NILR21445	gold	cluster-NILR21445	1
+Event	gold	cluster-NILV21445	gold	cluster-NILV21445	2
+Event	gold	cluster-NILV21445	gold	cluster-NILV21446	0
+Event	gold	cluster-NILV21445	gold	cluster-NILV21447	0
+Event	gold	cluster-NILV21446	gold	cluster-NILV21445	0
+Event	gold	cluster-NILV21446	gold	cluster-NILV21446	1
+Event	gold	cluster-NILV21446	gold	cluster-NILV21447	0
+Event	gold	cluster-NILV21447	gold	cluster-NILV21445	0
+Event	gold	cluster-NILV21447	gold	cluster-NILV21446	0
+Event	gold	cluster-NILV21447	gold	cluster-NILV21447	3
