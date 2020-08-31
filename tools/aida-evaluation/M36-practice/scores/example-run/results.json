@@ -1,11 +1,12 @@
 {
     "scores": [
         {
-            "ArgumentMetricV1_F1": 0,
-            "ArgumentMetricV2_F1": 0,
+            "ArgumentMetricV1_F1": "1.0000",
+            "ArgumentMetricV2_F1": "1.0000",
             "CoreferenceMetric_F1": "1.0000",
+            "Errors": 523,
             "FrameMetric_F1": "1.0000",
-            "TemporalMetric_F1": 0,
+            "TemporalMetric_S": "1.0000",
             "Total": "1.0000",
             "TypeMetric_F1": "1.0000"
         }
