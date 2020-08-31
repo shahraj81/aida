@@ -39,4 +39,4 @@ class ClusterSelfSimilarities(Object):
                 if similarity == 0 or system_or_gold1 != system_or_gold2 or cluster1 != cluster2: continue
                 self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold1.upper(), cluster1), value=metatype)
                 self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold1.upper(), cluster1), value=metatype)
-                self.get(system_or_gold).get(document_id, default=Container(logger)).add(key=cluster1, value=similarity)
+                self.get(system_or_gold1).get(document_id, default=Container(logger)).add(key=cluster1, value=similarity)
