@@ -103,6 +103,8 @@ class Annotations(Object):
         from the entry using the argument 'key_fieldname'.
         """
         for entry in FileHandler(self.logger, filename):
+            if entry.get('type') == 'personalsocial' and entry.get('subtype') == 'unspecified':
+                entry.set('subtype', 'relationship')
             key = entry.get(key_fieldname)
             if self.mentions.get(key, None) is None:
                 mention = Mention(self.logger, self.document_mappings, self.text_boundaries, self.image_boundaries, self.video_boundaries, self.keyframe_boundaries, self.type_mappings, self.load_video_time_offsets_flag, entry)

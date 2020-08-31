@@ -78,6 +78,9 @@ def main(args):
         type = entry.get('type')
         subtype = entry.get('subtype')
         subsubtype = entry.get('subsubtype')
+        # apply patch to correct LDC's mistake in annotation
+        if type == 'personalsocial' and subtype == 'unspecified':
+            subtype = 'relationship'
         full_type = '{type}.{subtype}.{subsubtype}'.format(type=type, subtype=subtype, subsubtype=subsubtype)
         full_type_cleaned = full_type.replace('.unspecified', '')
         propercased_full_type = type_mappings.get(full_type_cleaned, None)
