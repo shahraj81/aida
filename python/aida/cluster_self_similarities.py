@@ -31,11 +31,12 @@ class ClusterSelfSimilarities(Object):
             document_id = filename.replace('.tab', '')
             for entry in FileHandler(logger, filename_including_path):
                 metatype = entry.get('metatype')
-                system_or_gold = entry.get('system_or_gold')
+                system_or_gold1 = entry.get('system_or_gold1')
+                system_or_gold2 = entry.get('system_or_gold2')
                 cluster1 = entry.get('cluster1')
                 cluster2 = entry.get('cluster2')
                 similarity = entry.get('similarity')
-                if similarity == 0 or cluster1 != cluster2: continue
-                self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold.upper(), cluster1), value=metatype)
-                self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold.upper(), cluster1), value=metatype)
+                if similarity == 0 or system_or_gold1 != system_or_gold2 or cluster1 != cluster2: continue
+                self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold1.upper(), cluster1), value=metatype)
+                self.get('cluster_to_metatype').add(key='{}:{}'.format(system_or_gold1.upper(), cluster1), value=metatype)
                 self.get(system_or_gold).get(document_id, default=Container(logger)).add(key=cluster1, value=similarity)
