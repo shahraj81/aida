@@ -104,16 +104,16 @@ def main(args):
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
     logs_directory          = '{output}/{logs}'.format(output=args.output, logs=args.logs)
     run_log_file            = '{logs_directory}/run.log'.format(logs_directory=logs_directory)
-    ontology_type_mappings  = '/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
-    slotname_mappings       = '/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
-    encoding_modality       = '/AUX-data/encoding_modality.txt'
-    coredocs_29             = '/AUX-data/LDC2020E11.coredocs-29.txt'
-    parent_children         = '/AUX-data/LDC2020E11.parent_children.tsv'
-    sentence_boundaries     = '/AUX-data/LDC2020E11.sentence_boundaries.txt'
-    image_boundaries        = '/AUX-data/LDC2020E11.image_boundaries.txt'
-    keyframe_boundaries     = '/AUX-data/LDC2020E11.keyframe_boundaries.txt'
-    video_boundaries        = '/AUX-data/LDC2020E11.video_boundaries.txt'
-    annotated_regions       = '/AUX-data/LDC2020E11.annotated_regions.txt'
+    ontology_type_mappings  = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
+    slotname_mappings       = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
+    encoding_modality       = '/data/AUX-data/encoding_modality.txt'
+    coredocs_29             = '/data/AUX-data/LDC2020E11.coredocs-29.txt'
+    parent_children         = '/data/AUX-data/LDC2020E11.parent_children.tsv'
+    sentence_boundaries     = '/data/AUX-data/LDC2020E11.sentence_boundaries.txt'
+    image_boundaries        = '/data/AUX-data/LDC2020E11.image_boundaries.txt'
+    keyframe_boundaries     = '/data/AUX-data/LDC2020E11.keyframe_boundaries.txt'
+    video_boundaries        = '/data/AUX-data/LDC2020E11.video_boundaries.txt'
+    annotated_regions       = '/data/AUX-data/LDC2020E11.annotated_regions.txt'
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
@@ -123,7 +123,7 @@ def main(args):
     similarities            = '{output}/similarities'.format(output=args.output)
     scores                  = '{output}/scores'.format(output=args.output)
 
-    gold_filtered_responses = '/gold/SPARQL-FILTERED-output'
+    gold_filtered_responses = '/data/gold/SPARQL-FILTERED-output'
 
     #############################################################################################
     # pull latest copy of code from git
@@ -211,7 +211,7 @@ def main(args):
     # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /queries/*.rq {queries}'.format(task=args.task, queries=queries))
+    call_system('cp /data/queries/*.rq {queries}'.format(task=args.task, queries=queries))
 
     num_total = len([d for d in kbs if kbs[d] == 1])
     count = 0;

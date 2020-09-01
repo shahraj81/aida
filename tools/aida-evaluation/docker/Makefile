@@ -4,6 +4,7 @@ SCORES=$(ROOT)/M36-practice/scores
 RUNID=example-run
 HOST_INPUT_DIR=$(RUNS)/$(RUNID)
 HOST_OUTPUT_DIR=$(SCORES)/$(RUNID)
+HOST_DATA_DIR=$(ROOT)/docker/AUX-data/M36-practice/
 GRAPHDB_VERSION=9.3.3
 GRAPHDB_EDITION=free
 
@@ -21,4 +22,5 @@ run:
 		--env RUNID=$(RUNID) \
 		-v $(HOST_INPUT_DIR):/evaluate:ro \
 		-v $(HOST_OUTPUT_DIR):/score \
+		-v $(HOST_DATA_DIR):/data \
 	-it aida-evaluation
