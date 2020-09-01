@@ -51,17 +51,13 @@ ENV SPARQL_EVAL_HOME=/opt/sparql-evaluation
 ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 
 RUN mkdir scripts
-RUN mkdir AUX-data
 
-COPY ./AUX-data/M36-practice/AUX-data/ /AUX-data
-COPY ./AUX-data/M36-practice/gold/ /gold
-COPY ./AUX-data/M36-practice/queries/ /queries
 COPY ./scripts/run.py /scripts/
 COPY ./scripts/logger.py /scripts/
 COPY ./scripts/log_specifications.txt /scripts/
 COPY ./scripts/Makefile /scripts/
 
-COPY ./AUX-data/M36-practice/graphdb-${edition}-${version}-dist.zip /tmp/
+COPY ./graphdb-${edition}-${version}-dist.zip /tmp/
 
 WORKDIR /tmp
 

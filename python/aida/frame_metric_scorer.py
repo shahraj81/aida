@@ -57,7 +57,8 @@ class FrameMetricScorer(Scorer):
                     gold_frame = self.get('frame', 'gold', document_id, gold_cluster_id)
                     gold_slot_fillers = {}
                     if gold_frame is None:
-                        self.record_event('MISSING_GOLD_FRAME', gold_cluster.get('metatype'), gold_cluster_id, document_id, self.get('code_location'))
+                        if gold_cluster.get('metatype') == 'Relation':
+                            self.record_event('MISSING_GOLD_FRAME', gold_cluster.get('metatype'), gold_cluster_id, document_id, self.get('code_location'))
                         continue
                     for role_name in gold_frame.get('role_fillers'):
                         for gold_filler_cluster_id in gold_frame.get('role_fillers').get(role_name):
