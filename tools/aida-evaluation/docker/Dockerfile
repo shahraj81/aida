@@ -87,7 +87,7 @@ RUN git clone https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
-RUN git checkout AIDAED-v2020.0.1
+RUN git checkout AIDAED-v2020.1.0
 
 #-------------------------------------------------------------
 # Install SPARQL Evaluation Tool

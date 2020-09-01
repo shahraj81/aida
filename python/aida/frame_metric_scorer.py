@@ -29,7 +29,7 @@ class FrameMetricScorer(Scorer):
         super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
 
     def order(self, k):
-        m = {'Entity': 1, 'Relation': 2, 'Event': 3, 'ALL': 4}
+        m = {'Entity': 1, 'Event': 2, 'Relation': 3, 'ALL': 4}
         return m[k]
 
     def score_responses(self):

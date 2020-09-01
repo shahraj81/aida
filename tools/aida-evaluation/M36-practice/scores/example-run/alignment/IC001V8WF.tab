@@ -22,12 +22,16 @@ Entity	cluster-NILE20020	cluster-NILE20020	6
 Entity	cluster-NILE20021	cluster-NILE20021	1
 Entity	cluster-NILE20022	cluster-NILE20022	1
 Entity	cluster-NILE20023	cluster-NILE20023	3
+Relation	cluster-NILR20001	cluster-NILR20001	1
+Relation	cluster-NILR20002	cluster-NILR20002	1
 Relation	cluster-NILR20003	cluster-NILR20003	1
 Relation	cluster-NILR20004	cluster-NILR20004	1
 Relation	cluster-NILR20005	cluster-NILR20005	1
 Relation	cluster-NILR20006	cluster-NILR20006	1
 Relation	cluster-NILR20007	cluster-NILR20007	1
 Relation	cluster-NILR20008	cluster-NILR20008	1
+Relation	cluster-NILR20009	cluster-NILR20009	1
+Relation	cluster-NILR20010	cluster-NILR20010	1
 Event	cluster-NILV20001	cluster-NILV20001	4
 Event	cluster-NILV20002	cluster-NILV20002	2
 Event	cluster-NILV20003	cluster-NILV20003	1
