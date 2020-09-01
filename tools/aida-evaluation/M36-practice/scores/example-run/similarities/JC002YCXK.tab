@@ -1614,7 +1614,7 @@ Relation	system	cluster-NILR20496	system	cluster-NILR20497	0
 Relation	system	cluster-NILR20497	system	cluster-NILR20494	0
 Relation	system	cluster-NILR20497	system	cluster-NILR20495	0
 Relation	system	cluster-NILR20497	system	cluster-NILR20496	0
-Relation	system	cluster-NILR20497	system	cluster-NILR20497	0
+Relation	system	cluster-NILR20497	system	cluster-NILR20497	1
 Event	system	cluster-NILV20494	system	cluster-NILV20494	2
 Event	system	cluster-NILV20494	system	cluster-NILV20495	0
 Event	system	cluster-NILV20494	system	cluster-NILV20496	0
@@ -3294,7 +3294,7 @@ Relation	system	cluster-NILR20496	gold	cluster-NILR20497	0
 Relation	system	cluster-NILR20497	gold	cluster-NILR20494	0
 Relation	system	cluster-NILR20497	gold	cluster-NILR20495	0
 Relation	system	cluster-NILR20497	gold	cluster-NILR20496	0
-Relation	system	cluster-NILR20497	gold	cluster-NILR20497	0
+Relation	system	cluster-NILR20497	gold	cluster-NILR20497	1
 Event	system	cluster-NILV20494	gold	cluster-NILV20494	2
 Event	system	cluster-NILV20494	gold	cluster-NILV20495	0
 Event	system	cluster-NILV20494	gold	cluster-NILV20496	0
@@ -4974,7 +4974,7 @@ Relation	gold	cluster-NILR20496	gold	cluster-NILR20497	0
 Relation	gold	cluster-NILR20497	gold	cluster-NILR20494	0
 Relation	gold	cluster-NILR20497	gold	cluster-NILR20495	0
 Relation	gold	cluster-NILR20497	gold	cluster-NILR20496	0
-Relation	gold	cluster-NILR20497	gold	cluster-NILR20497	0
+Relation	gold	cluster-NILR20497	gold	cluster-NILR20497	1
 Event	gold	cluster-NILV20494	gold	cluster-NILV20494	2
 Event	gold	cluster-NILV20494	gold	cluster-NILV20495	0
 Event	gold	cluster-NILV20494	gold	cluster-NILV20496	0
