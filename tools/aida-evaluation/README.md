@@ -144,6 +144,9 @@ The logs directory contains the following log files:
 
 # Revision History
 
+## 09/03/2020:
+* Bug fix: logger can't call get('code_location') therefore get code_location through an object of aida:Object.
+
 ## 09/02/2020:
 * A minor update: logs files that were generated when scoring example run were updated to reflect no errors in example-run.
 
