@@ -143,7 +143,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
     logger = entry.get('logger')
 
     if schema_name not in ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE']:
-        logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected schema name: {}'.format(schema_name), logger.get('code_location'))
+        logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected schema name: {}'.format(schema_name), entry.get('code_location'))
 
     passes_filter = False
 
@@ -162,7 +162,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
                     logger.record_event('DEFAULT_INFO', 'Entry fails the filter due to cluster: {}'.format(cluster_id), entry.get('where'))
                     break
             else:
-                logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', logger.get('code_location'))
+                logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', entry.get('code_location'))
 
     elif schema_name == 'AIDA_PHASE2_TASK1_CM_RESPONSE':
         mention = get_mention(entry, document_mappings, document_boundaries)
@@ -183,7 +183,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
             if not passes_filter:
                 logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
         else:
-            logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', logger.get('code_location'))
+            logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', entry.get('code_location'))
 
     entry.set('passes_filter', passes_filter)
 
