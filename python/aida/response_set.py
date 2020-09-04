@@ -491,13 +491,11 @@ class ResponseSet(Container):
             dirname = os.path.dirname(output_filename)
             if not os.path.exists(dirname):
                 os.mkdir(dirname)
+            file_container = self.get(input_filename)
             output_fh = open(output_filename, 'w')
-            header_printed = False
-            for linenum in sorted(self.get(input_filename), key=int):
+            output_fh.write('{}\n'.format(file_container.get('header').get('line')))
+            for linenum in sorted(file_container, key=int):
                 entry = self.get(input_filename).get(str(linenum))
                 if not entry.get('valid'): continue
-                if not header_printed:
-                    output_fh.write('{}\n'.format(entry.get('header').get('line')))
-                    header_printed = True
                 output_fh.write(entry.__str__())
             output_fh.close()
