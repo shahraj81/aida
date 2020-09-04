@@ -111,10 +111,10 @@ class Validator(Object):
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
         return True
 
-    def validate_subject(self, responses, schema, entry, attribute):
-        subject_cluster = entry.get(attribute.get('name'))
+    def validate_entries_in_cluster(self, responses, schema, entry, attribute):
+        cluster = entry.get(attribute.get('name'))
         valid = False
-        for entry in subject_cluster.get('entries').values():
+        for entry in cluster.get('entries').values():
             if entry.get('valid'):
                 valid = True
         return valid

@@ -169,6 +169,7 @@ attributes = {
         'name': 'object_cluster',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
+        'validate': 'validate_entries_in_cluster',
         'years': [2020],
         },
     'object_cluster_id': {
@@ -268,7 +269,7 @@ attributes = {
         'name': 'subject_cluster',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'tasks': ['task1'],
-        'validate': 'validate_subject',
+        'validate': 'validate_entries_in_cluster',
         'years': [2020],
         },
     'subject_cluster_id': {
