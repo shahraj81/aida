@@ -114,5 +114,6 @@ class Generator(Object):
             frame = responses.get('frame', cluster_id, entry)
             cluster.set('frame', frame)
         frame = cluster.get('frame')
-        frame.update(entry)
+        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK1_AM_RESPONSE':
+            frame.update(entry)
         entry.set('subject_cluster', cluster)
