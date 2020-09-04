@@ -90,7 +90,7 @@ class TemporalMetricScorer(Scorer):
         for index in index_to_name:
             start_or_end, before_or_after = index_to_name[index]
             date_object = None
-            if date_range.get(start_or_end):
+            if date_range is not None and date_range.get(start_or_end):
                 if date_range.get(start_or_end).get(before_or_after):
                     date_object = self.get('date', date_range.get(start_or_end).get(before_or_after))
             temporal_tuple[index] = date_object
