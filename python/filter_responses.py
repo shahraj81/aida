@@ -176,7 +176,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
             logger.record_event('MENTION_NOT_ANNOTATED', mention.get('span_string'), entry.get('where'))
 
     elif schema_name == 'AIDA_PHASE2_TASK1_TM_RESPONSE':
-        cluster_id = entry.get('cluster').get('ID')
+        cluster_id = entry.get('subject_cluster').get('ID')
         key = '{}:{}'.format(entry.get('kb_document_id'), cluster_id)
         if key in filtered_clusters:
             passes_filter = filtered_clusters[key]
