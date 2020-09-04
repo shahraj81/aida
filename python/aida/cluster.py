@@ -22,6 +22,7 @@ class Cluster(Object):
         self.types = Container(logger)
         self.mentions = Container(logger)
         self.dates = Container(logger)
+        self.entries = Container(logger)
         self.metatype = None
 
     def get_top_level_types(self):
@@ -56,6 +57,7 @@ class Cluster(Object):
                          trim_cv(entry.get('?cluster_membership_confidence')),
                          trim_cv(entry.get('?mention_type_justification_confidence')),
                          entry.get('where'))
+        self.get('entries').add(entry)
 
     def add_metatype(self, metatype, where):
         if self.get('metatype') is None:

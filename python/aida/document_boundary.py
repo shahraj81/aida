@@ -32,6 +32,9 @@ class DocumentBoundary(Span):
                              ['start_x', 'start_y', 'end_x', 'end_y'])
         sx, sy, ex, ey = map(lambda arg:float(span.get(arg)),
                              ['start_x', 'start_y', 'end_x', 'end_y'])
+        if sx > max_x or sy > max_y or ex < min_x or ey < min_y:
+            # can't correct, return None
+            return
         sx = self.get('start_x') if sx < min_x else span.get('start_x')
         sy = self.get('start_y') if sy < min_y else span.get('start_y')
         ex = self.get('end_x') if ex > max_x else span.get('end_x')
