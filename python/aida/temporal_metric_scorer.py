@@ -90,7 +90,7 @@ class TemporalMetricScorer(Scorer):
         for index in index_to_name:
             start_or_end, before_or_after = index_to_name[index]
             date_object = None
-            if date_range.get(start_or_end):
+            if date_range is not None and date_range.get(start_or_end):
                 if date_range.get(start_or_end).get(before_or_after):
                     date_object = self.get('date', date_range.get(start_or_end).get(before_or_after))
             temporal_tuple[index] = date_object
@@ -108,7 +108,7 @@ class TemporalMetricScorer(Scorer):
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
                 similarity = 0
                 if gold_cluster_id == 'None': continue
-                gold_cluster = self.get('subject_cluster', 'gold', document_id, gold_cluster_id)
+                gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
                 metatype = gold_cluster.get('metatype')
                 if metatype not in ['Event', 'Relation']: continue
                 if list(gold_cluster.get('dates').values())[0] is None:
@@ -117,7 +117,7 @@ class TemporalMetricScorer(Scorer):
                 if system_cluster_id != 'None':
                     if aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                    system_cluster = self.get('subject_cluster', 'system', document_id, system_cluster_id)
+                    system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
                     if system_cluster.get('metatype') != metatype:
                         self.record_event('UNEXPECTED_ALIGNED_CLUSTER_METATYPE', system_cluster.get('metatype'), system_cluster_id, metatype, gold_cluster_id)
                     if len(gold_cluster.get('dates').keys()) > 1:
