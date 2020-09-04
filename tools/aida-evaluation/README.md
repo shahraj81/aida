@@ -144,6 +144,12 @@ The logs directory contains the following log files:
 
 # Revision History
 
+## 09/04/2020:
+* Logger modified to record error code in the log output file for reporting stats.
+* Validator modified to correct off-boundary spans if possible otherwise throw them out as invalid.
+* Validator modified to generate empty output file (but with header) when all the lines in file being validated are invalid.
+* Validator modified to remove all lines from argument-metric and temporal-metric SPARQL output files  if all line corresponding to the subject cluster (or to the object cluster when applicable) in the corresponding corerference-metric SPARQL output file are invalid.
+
 ## 09/03/2020:
 * Bug fix: logger can't call get('code_location') therefore get code_location through an object of aida:Object.
 

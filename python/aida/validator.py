@@ -111,6 +111,14 @@ class Validator(Object):
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
         return True
 
+    def validate_entries_in_cluster(self, responses, schema, entry, attribute):
+        cluster = entry.get(attribute.get('name'))
+        valid = False
+        for entry in cluster.get('entries').values():
+            if entry.get('valid'):
+                valid = True
+        return valid
+
     def validate_before_and_after_dates(self, responses, schema, entry, attribute, start_or_end_before, before, start_or_end_after, after):
         valid = True
         problem_field = None
@@ -266,9 +274,12 @@ class Validator(Object):
         span = Span(self.logger, start_x, start_y, end_x, end_y)
         if not document_element_boundary.validate(span):
             corrected_span = document_element_boundary.get('corrected_span', span)
+            if corrected_span is None:
+                self.record_event('SPAN_OFF_BOUNDARY_ERROR', span, document_element_boundary, document_element_id, where)
+                return False
             corrected_provenance = '{}:{}:{}'.format(document_id, keyframe_id if keyframe_id else document_element_id, corrected_span.__str__())
             entry.set(attribute.get('name'), corrected_provenance)
-            self.record_event('SPAN_OFF_BOUNDARY', span, document_element_boundary, document_element_id, where)
+            self.record_event('SPAN_OFF_BOUNDARY_CORRECTED', span, corrected_span, document_element_boundary, document_element_id, where)
         return True
     
     def validate_confidence(self, responses, schema, entry, attribute):
