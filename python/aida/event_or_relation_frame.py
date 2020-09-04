@@ -53,6 +53,14 @@ class EventOrRelationFrame(Object):
         return True
 
     def update(self, entry):
+        schema_name = entry.get('schema').get('name')
+        method_name = 'update_{}'.format(schema_name)
+        method = self.get_method(method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name, self.get_code_location())
+        method(entry)
+
+    def update_AIDA_PHASE2_TASK1_AM_RESPONSE(self, entry):
         event_or_relation_type, rolename = entry.get('?predicate').split('_')
         if self.get('metatype') is None:
             self.set('metatype', entry.get('?metatype'))
@@ -72,3 +80,7 @@ class EventOrRelationFrame(Object):
         if filler_cluster_id not in self.get('role_fillers')[rolename]:
             self.get('role_fillers')[rolename][filler_cluster_id] = []
         self.get('role_fillers')[rolename][filler_cluster_id].append(filler)
+
+    def update_AIDA_PHASE2_TASK1_TM_RESPONSE(self, entry):
+        # nothing to update
+        pass

@@ -111,6 +111,14 @@ class Validator(Object):
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
         return True
 
+    def validate_subject(self, responses, schema, entry, attribute):
+        subject_cluster = entry.get(attribute.get('name'))
+        valid = False
+        for entry in subject_cluster.get('entries').values():
+            if entry.get('valid'):
+                valid = True
+        return valid
+
     def validate_before_and_after_dates(self, responses, schema, entry, attribute, start_or_end_before, before, start_or_end_after, after):
         valid = True
         problem_field = None

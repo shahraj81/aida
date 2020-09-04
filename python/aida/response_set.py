@@ -28,14 +28,14 @@ attributes = {
     'cluster': {
         'dependencies': ['cluster_id', 'document_id'],
         'name': 'cluster',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'generate': 'generate_cluster',
         'years': [2020],
         },
     'cluster_id': {
         'name': 'cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'years': [2020],
         },
@@ -54,7 +54,7 @@ attributes = {
         'years': [2020],
         },
     'date': {
-        'dependencies': ['start', 'end', 'cluster'],
+        'dependencies': ['start', 'end', 'subject_cluster'],
         'name': 'date',
         'tasks': ['task1'],
         'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
@@ -66,7 +66,7 @@ attributes = {
         'dependencies': ['kb_document_id'],
         'name': 'document_id',
         'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'validate': 'validate_document_id',
         'generate': 'generate_document_id',
         'years': [2020],
@@ -263,16 +263,17 @@ attributes = {
         'years': [2020],
         },
     'subject_cluster': {
-        'dependencies': ['subject_cluster_id'],
+        'dependencies': ['subject_cluster_id', 'document_id'],
         'generate': 'generate_subject_cluster',
         'name': 'subject_cluster',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'tasks': ['task1'],
+        'validate': 'validate_subject',
         'years': [2020],
         },
     'subject_cluster_id': {
         'name': 'subject_cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
         'tasks': ['task1'],
         'years': [2020],
         },
@@ -322,7 +323,7 @@ schemas = {
         'task': 'task1',
         'header': ['?cluster', '?sa_month', '?sa_day', '?sa_year', '?sb_month', '?sb_day', '?sb_year', '?ea_month', '?ea_day', '?ea_year', '?eb_month', '?eb_day', '?eb_year'],
         'columns': [
-            'cluster_id',
+            'subject_cluster_id',
             'start_after_month',
             'start_after_day',
             'start_after_year',
@@ -393,8 +394,12 @@ class ResponseSet(Container):
 
     def load_file(self, fh, schema):
         logger = self.get('logger')
+        filename = fh.get('filename')
+        if not self.exists(filename):
+            file_container = Container(logger)
+            file_container.set('header', fh.get('header'))
+            self.add(key=filename, value=file_container)
         for entry in fh:
-            filename = entry.get('filename')
             lineno = entry.get('lineno')
             entry.set('runid', self.get('runid'))
             entry.set('schema', schema)
@@ -421,8 +426,6 @@ class ResponseSet(Container):
                     valid_attribute = self.get('validator').validate(self, validator_name, schema, entry, attribute)
                     if not valid_attribute: valid = False
             entry.set('valid', valid)
-            if not self.exists(filename):
-                self.add(key=filename, value=Container(logger))
             self.get(filename).add(key=str(lineno), value=entry)
 
     def attribute_required(self, attribute, schema):
