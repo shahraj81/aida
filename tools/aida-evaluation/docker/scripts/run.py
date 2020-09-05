@@ -23,16 +23,19 @@ def call_system(cmd):
     print("running system command: '{}'".format(cmd))
     os.system(cmd)
 
-def get_num_problems(logs_directory):
+def get_problems(logs_directory):
     num_errors = 0
+    stats = {}
     for filename in os.listdir(logs_directory):
         filepath = '{}/{}'.format(logs_directory, filename)
         fh = open(filepath)
         for line in fh.readlines():
             if 'ERROR' in line:
                 num_errors += 1
+                error_type = line.split('-')[3].strip()
+                stats[error_type] = stats.get(error_type, 0) + 1
         fh.close()
-    return num_errors
+    return num_errors, stats
 
 def generate_results_file(logs_directory):
     metrics = {
@@ -57,6 +60,8 @@ def generate_results_file(logs_directory):
             file_handle.close()
             scores[metric] = summary_line.split()[-1]
 
+    num_problems, problem_stats = get_problems(logs_directory)
+
     output = {'scores' : [
                             {
                                 'CoreferenceMetric_F1': scores['CoreferenceMetric_F1'],
@@ -66,7 +71,8 @@ def generate_results_file(logs_directory):
                                 'ArgumentMetricV2_F1' : scores['ArgumentMetricV2_F1'],
                                 'FrameMetric_F1'      : scores['FrameMetric_F1'],
                                 'Total'               : scores['FrameMetric_F1'],
-                                'Errors'              : get_num_problems(logs_directory)
+                                'Errors'              : num_problems,
+                                'ErrorStats'          : problem_stats
                             }
                          ]
             }
