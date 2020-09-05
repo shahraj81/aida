@@ -49,6 +49,8 @@ def generate_results_file(logs_directory):
 
     scores = {}
 
+    exit_code = ALLOK_EXIT_CODE
+
     for metric in metrics:
         scores[metric] = 0
         filename = '{output}/scores/{filename}'.format(output=args.output,
@@ -59,8 +61,12 @@ def generate_results_file(logs_directory):
             summary_line = lines[-1]
             file_handle.close()
             scores[metric] = summary_line.split()[-1]
+        else:
+            exit_code = ERROR_EXIT_CODE
 
     num_problems, problem_stats = get_problems(logs_directory)
+
+    fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
     output = {'scores' : [
                             {
@@ -72,7 +78,8 @@ def generate_results_file(logs_directory):
                                 'FrameMetric_F1'      : scores['FrameMetric_F1'],
                                 'Total'               : scores['FrameMetric_F1'],
                                 'Errors'              : num_problems,
-                                'ErrorStats'          : problem_stats
+                                'ErrorStats'          : problem_stats,
+                                'FatalError'          : fatal_error
                             }
                          ]
             }
@@ -80,6 +87,8 @@ def generate_results_file(logs_directory):
     outputdir = "/score/"
     with open(outputdir + 'results.json', 'w') as fp:
         json.dump(output, fp, indent=4, sort_keys=True)
+
+    return exit_code
 
 def record_and_display_message(logger, message):
     print("-------------------------------------------------------")
@@ -160,124 +169,157 @@ def main(args):
     #############################################################################################
 
     record_and_display_message(logger, 'Inspecting the input directory.')
-    files = [f for f in os.listdir(args.input) if os.path.isfile(os.path.join(args.input, f))]
-    kbs = {}
-    num_total_kbs = 0
-    num_invalid_kbs = 0
-    for file in files:
-        if file.endswith('.ttl'):
-            kbs[file.replace('.ttl', '')] = 1
-            num_total_kbs = num_total_kbs + 1
-    for file in files:
-        if file.endswith('-report.txt'):
-            kbs[file.replace('-report.txt', '')] = 0
-            num_invalid_kbs = num_invalid_kbs + 1
-    num_valid_kbs = num_total_kbs - num_invalid_kbs
-    logger.record_event('KB_STATS', num_total_kbs, num_valid_kbs, num_invalid_kbs)
+    items = [f for f in os.listdir(args.input)]
+
+    performer = None
+
+    num_files = 0
+    num_directories = 0
+
+    for item in items:
+        if not item.endswith('.ttl'): continue
+        if item.startswith('.'): continue
+        if os.path.isfile(os.path.join(args.input, item)):
+            num_files += 1
+            if performer is None or performer == 'AIDA':
+                performer = 'AIDA'
+            else:
+                logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine performer type')
+        elif os.path.isdir(os.path.join(args.input, item)):
+            num_directories += 1
+            if performer is None or performer == 'OPEN':
+                performer = 'OPEN'
+            else:
+                logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine performer type')
+
+    documents_in_submission = {}
+    num_total_documents = 0
+    num_invalid_documents = 0
+    for item in items:
+        if item.endswith('.ttl'):
+            documents_in_submission[item.replace('.ttl', '')] = 1
+            num_total_documents = num_total_documents + 1
+    for item in items:
+        if item.endswith('-report.txt'):
+            documents_in_submission[item.replace('-report.txt', '')] = 0
+            num_invalid_documents = num_invalid_documents + 1
+    num_valid_documents = num_total_documents - num_invalid_documents
+    if performer == 'AIDA':
+        logger.record_event('KB_STATS', num_total_documents, num_valid_documents, num_invalid_documents)
 
     # exit if no valid input KB
-    if num_valid_kbs == 0:
-        record_and_display_message(logger, 'No valid KB received as input.')
+    if num_valid_documents == 0:
+        logger.record_event('NOTHING_TO_SCORE')
+        record_and_display_message(logger, 'Nothing to score.')
         generate_results_file(logs_directory)
-        exit(ALLOK_EXIT_CODE)
+        exit(ERROR_EXIT_CODE)
 
     # load core documents
     file_handle = open(coredocs_xx, 'r')
     lines = file_handle.readlines()
     file_handle.close()
     coredocs = [d.strip() for d in lines[1:]]
-    for kb in kbs:
-        if kbs[kb] and kb not in coredocs:
-            kbs[kb] = 0
+    for document_id in documents_in_submission:
+        if documents_in_submission[document_id] and document_id not in coredocs:
+            documents_in_submission[document_id] = 0
 
     # copy valid input KBs for querying
     # restrict to annotated documents
-    record_and_display_message(logger, 'Copying valid input KBs, restricted to core documents, for applying SPARQL queries.')
-    call_system('mkdir {sparql_kb_input}'.format(sparql_kb_input=sparql_kb_input))
-    for kb in kbs:
-        if kbs[kb] and kb in coredocs:
-            logger.record_event('DEFAULT_INFO', 'Copying {}.ttl'.format(kb))
-            call_system('cp {input}/{kb}.ttl {sparql_kb_input}'.format(input=args.input, sparql_kb_input=sparql_kb_input, kb=kb))
+    if performer == 'AIDA':
+        destination = sparql_kb_input
+        record_and_display_message(logger, 'Copying valid input KBs, restricted to core documents, for applying SPARQL queries.')
+    if performer == 'OPEN':
+        destination = sparql_clean_output
+        record_and_display_message(logger, 'Copying input corresponding to core documents for scoring.')
+    call_system('mkdir {destination}'.format(destination=destination))
+    for document_id in documents_in_submission:
+        if documents_in_submission[document_id] and document_id in coredocs:
+            logger.record_event('DEFAULT_INFO', 'Copying {}.ttl'.format(document_id))
+            call_system('cp {input}/{document_id}.ttl {destination}'.format(input=args.input, destination=destination, document_id=document_id))
 
     #############################################################################################
     # apply sparql queries
     #############################################################################################
 
-    record_and_display_message(logger, 'Applying SPARQL queries.')
-    graphdb_bin = '/opt/graphdb/dist/bin'
-    graphdb = '{}/graphdb'.format(graphdb_bin)
-    loadrdf = '{}/loadrdf'.format(graphdb_bin)
-    verdi = '/opt/sparql-evaluation'
-    jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
-    config = '{}/config/Local-config.ttl'.format(verdi)
-    properties = '{}/config/Local-config.properties'.format(verdi)
-    intermediate = '{}/intermediate'.format(sparql_output)
-    queries = '{}/queries'.format(args.output)
+    if performer == 'AIDA':
 
-    # copy queries to be applied
-    record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
-    call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /data/queries/*.rq {queries}'.format(task=args.task, queries=queries))
+        record_and_display_message(logger, 'Applying SPARQL queries.')
+        graphdb_bin = '/opt/graphdb/dist/bin'
+        graphdb = '{}/graphdb'.format(graphdb_bin)
+        loadrdf = '{}/loadrdf'.format(graphdb_bin)
+        verdi = '/opt/sparql-evaluation'
+        jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
+        config = '{}/config/Local-config.ttl'.format(verdi)
+        properties = '{}/config/Local-config.properties'.format(verdi)
+        intermediate = '{}/intermediate'.format(sparql_output)
+        queries = '{}/queries'.format(args.output)
 
-    num_total = len([d for d in kbs if kbs[d] == 1])
-    count = 0;
-    for kb in kbs:
-        if kbs[kb] == 0:
-            continue
-        count = count + 1
-        record_and_display_message(logger, 'Applying queries to {kb}.ttl ... {count} of {num_total}.'.format(count=count,
-                                                                                                      num_total=num_total,
-                                                                                                      kb=kb))
-        # create the intermediate directory
-        logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
-        call_system('mkdir -p {}'.format(intermediate))
-        # load KB into GraphDB
-        logger.record_event('DEFAULT_INFO', 'Loading {}.ttl into GraphDB.'.format(kb))
-        input_kb = '{sparql_kb_input}/{kb}.ttl'.format(sparql_kb_input=sparql_kb_input, kb=kb)
-        call_system('{loadrdf} -c {config} -f -m parallel {input}'.format(loadrdf=loadrdf, config=config, input=input_kb))
-        # start GraphDB
-        logger.record_event('DEFAULT_INFO', 'Starting GraphDB')
-        call_system('{graphdb} -d'.format(graphdb=graphdb))
-        # wait for GraphDB
-        call_system('sleep 5')
-        # apply queries
-        logger.record_event('DEFAULT_INFO', 'Applying queries')
-        call_system('java -Xmx4096M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
-                                                                                      properties=properties,
-                                                                                      queries=queries,
-                                                                                      intermediate=intermediate))
-        # generate the SPARQL output directory corresponding to the KB
-        logger.record_event('DEFAULT_INFO', 'Creating SPARQL output directory corresponding to the KB')
-        call_system('mkdir {sparql_output}/{kb}.ttl'.format(sparql_output=sparql_output, kb=kb))
-        # move output out of intermediate into the output corresponding to the KB
-        logger.record_event('DEFAULT_INFO', 'Moving output out of the intermediate directory')
-        call_system('mv {intermediate}/*/* {output}/{kb}.ttl'.format(intermediate=intermediate,
-                                                                          output=sparql_output,
-                                                                          kb=kb))
-        # remove intermediate directory
-        logger.record_event('DEFAULT_INFO', 'Removing the intermediate directory.')
-        call_system('rm -rf {}'.format(intermediate))
-        # stop GraphDB
-        logger.record_event('DEFAULT_INFO', 'Stopping GraphDB.')
-        call_system('pkill -9 -f graphdb')
+        # copy queries to be applied
+        record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
+        call_system('mkdir {queries}'.format(queries=queries))
+        call_system('cp /data/queries/*.rq {queries}'.format(task=args.task, queries=queries))
+
+        num_total = len([d for d in documents_in_submission if documents_in_submission[d] == 1])
+        count = 0;
+        for document_id in documents_in_submission:
+            if documents_in_submission[document_id] == 0:
+                continue
+            count = count + 1
+            record_and_display_message(logger, 'Applying queries to {document_id}.ttl ... {count} of {num_total}.'.format(count=count,
+                                                                                                          num_total=num_total,
+                                                                                                          document_id=document_id))
+            # create the intermediate directory
+            logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
+            call_system('mkdir -p {}'.format(intermediate))
+            # load KB into GraphDB
+            logger.record_event('DEFAULT_INFO', 'Loading {}.ttl into GraphDB.'.format(document_id))
+            input_kb = '{sparql_kb_input}/{document_id}.ttl'.format(sparql_kb_input=sparql_kb_input, document_id=document_id)
+            call_system('{loadrdf} -c {config} -f -m parallel {input}'.format(loadrdf=loadrdf, config=config, input=input_kb))
+            # start GraphDB
+            logger.record_event('DEFAULT_INFO', 'Starting GraphDB')
+            call_system('{graphdb} -d'.format(graphdb=graphdb))
+            # wait for GraphDB
+            call_system('sleep 5')
+            # apply queries
+            logger.record_event('DEFAULT_INFO', 'Applying queries')
+            call_system('java -Xmx4096M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
+                                                                                          properties=properties,
+                                                                                          queries=queries,
+                                                                                          intermediate=intermediate))
+            # generate the SPARQL output directory corresponding to the KB
+            logger.record_event('DEFAULT_INFO', 'Creating SPARQL output directory corresponding to the KB')
+            call_system('mkdir {sparql_output}/{document_id}.ttl'.format(sparql_output=sparql_output, document_id=document_id))
+            # move output out of intermediate into the output corresponding to the KB
+            logger.record_event('DEFAULT_INFO', 'Moving output out of the intermediate directory')
+            call_system('mv {intermediate}/*/* {output}/{document_id}.ttl'.format(intermediate=intermediate,
+                                                                              output=sparql_output,
+                                                                              document_id=document_id))
+            # remove intermediate directory
+            logger.record_event('DEFAULT_INFO', 'Removing the intermediate directory.')
+            call_system('rm -rf {}'.format(intermediate))
+            # stop GraphDB
+            logger.record_event('DEFAULT_INFO', 'Stopping GraphDB.')
+            call_system('pkill -9 -f graphdb')
 
     #############################################################################################
     # Clean SPARQL output
     #############################################################################################
 
-    record_and_display_message(logger, 'Cleaning SPARQL output.')
+    if performer == 'AIDA':
 
-    python_scripts = '/scripts/aida/python'
+        record_and_display_message(logger, 'Cleaning SPARQL output.')
 
-    cmd = 'cd {python_scripts} && \
-            python3 clean_sparql_output.py \
-            {log_specifications} \
-            {sparql_output} \
-            {sparql_clean_output}'.format(python_scripts=python_scripts,
-                                          log_specifications=log_specifications,
-                                          sparql_output = sparql_output,
-                                          sparql_clean_output = sparql_clean_output)
-    call_system(cmd)
+        python_scripts = '/scripts/aida/python'
+
+        cmd = 'cd {python_scripts} && \
+                python3 clean_sparql_output.py \
+                {log_specifications} \
+                {sparql_output} \
+                {sparql_clean_output}'.format(python_scripts=python_scripts,
+                                              log_specifications=log_specifications,
+                                              sparql_output = sparql_output,
+                                              sparql_clean_output = sparql_clean_output)
+        call_system(cmd)
 
     #############################################################################################
     # Validate SPARQL output
@@ -447,10 +489,13 @@ def main(args):
 
     # generate results.json file
     record_and_display_message(logger, 'Generating results.json file.')
-    generate_results_file(logs_directory)
-    record_and_display_message(logger, 'Done.')
+    exit_code = generate_results_file(logs_directory)
+    exit_message = 'Done.'
+    if exit_code == ERROR_EXIT_CODE:
+        exit_message = 'Fatal error encountered.'
+    record_and_display_message(logger, exit_message)
 
-    exit(ALLOK_EXIT_CODE)
+    exit(exit_code)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
