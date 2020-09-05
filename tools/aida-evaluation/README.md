@@ -144,6 +144,9 @@ The logs directory contains the following log files:
 
 # Revision History
 
+## 09/05/2020:
+* Bugfix: frame-metric scorer updated to remove gold event clusters from output that had no argument.
+
 ## 09/04/2020:
 * Logger modified to record error code in the log output file for reporting stats.
 * Validator modified to correct off-boundary spans if possible otherwise throw them out as invalid.
