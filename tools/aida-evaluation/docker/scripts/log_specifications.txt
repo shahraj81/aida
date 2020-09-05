@@ -19,6 +19,7 @@ WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
+ERROR     NOTHING_TO_SCORE                Nothing to score.
 CRITICAL  NO_SPECS                        No specifications available for '{}'
 ERROR     NOT_AN_NUMBER                   '{}' is not a number
 CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.

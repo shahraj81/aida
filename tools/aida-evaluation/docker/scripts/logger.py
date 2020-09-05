@@ -141,6 +141,7 @@ class Logger:
             event_object = self.event_specs[event_code]
             event_type = event_object['type']
             event_message = event_object['message'].format(*argslst)
+            event_message = '{code} - {message}'.format(code=event_code, message=event_message)
             if where is not None:
                 event_message += " at " + where['filename'] + ":" + str(where['lineno'])
             if event_type.upper() == "CRITICAL":
