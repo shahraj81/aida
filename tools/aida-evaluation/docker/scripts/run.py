@@ -195,13 +195,13 @@ def main(args):
     documents_in_submission = {}
     num_total_documents = 0
     num_invalid_documents = 0
-    for file in files:
-        if file.endswith('.ttl'):
-            documents_in_submission[file.replace('.ttl', '')] = 1
+    for item in items:
+        if item.endswith('.ttl'):
+            documents_in_submission[item.replace('.ttl', '')] = 1
             num_total_documents = num_total_documents + 1
-    for file in files:
-        if file.endswith('-report.txt'):
-            documents_in_submission[file.replace('-report.txt', '')] = 0
+    for item in items:
+        if item.endswith('-report.txt'):
+            documents_in_submission[item.replace('-report.txt', '')] = 0
             num_invalid_documents = num_invalid_documents + 1
     num_valid_documents = num_total_documents - num_invalid_documents
     if performer == 'AIDA':
