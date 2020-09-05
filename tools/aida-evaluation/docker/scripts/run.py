@@ -176,6 +176,8 @@ def main(args):
     num_files = 0
     num_directories = 0
 
+    open_performer_files = ['AIDA_P2_TA1_AM_A0001.rq.tsv', 'AIDA_P2_TA1_CM_A0001.rq.tsv', 'AIDA_P2_TA1_TM_A0001.rq.tsv']
+
     for item in items:
         if not item.endswith('.ttl'): continue
         if item.startswith('.'): continue
@@ -189,6 +191,15 @@ def main(args):
             num_directories += 1
             if performer is None or performer == 'OPEN':
                 performer = 'OPEN'
+                expected_files = {f:0 for f in open_performer_files}
+                for filename in os.listdir(os.path.join(args.input, item)):
+                    if filename in expected_files:
+                        pathname = '{}/{}'.format(args.input, item)
+                        if os.path.isfile(os.path.join(pathname, filename)):
+                            expected_files[filename] = 1
+                for filename in expected_files:
+                    if expected_files[filename] == 0:
+                        logger.record_event('DEFAULT_CRITICAL_ERROR', '{}/{} is expected from open performers but not found'.format(pathname, filename))
             else:
                 logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine performer type')
 
