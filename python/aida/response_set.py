@@ -393,7 +393,8 @@ class ResponseSet(Container):
                 schema = identify_file_schema(fh)
                 if schema is None:
                     logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
-                self.load_file(fh, schema)
+                else:
+                    self.load_file(fh, schema)
 
     def load_file(self, fh, schema):
         logger = self.get('logger')

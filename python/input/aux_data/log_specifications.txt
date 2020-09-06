@@ -51,7 +51,7 @@ CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
 ERROR     UNKNOWN_PREDICATE               Unknown predicate '{}'
-CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
+ERROR     UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
 ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
 CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} cluster '{}' is aligned to gold {} cluster '{}'
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
