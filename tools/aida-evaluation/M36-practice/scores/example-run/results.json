@@ -6,6 +6,7 @@
             "CoreferenceMetric_F1": "1.0000",
             "ErrorStats": {},
             "Errors": 0,
+            "FatalError": "No",
             "FrameMetric_F1": "1.0000",
             "TemporalMetric_S": "1.0000",
             "Total": "1.0000",
