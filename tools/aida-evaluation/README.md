@@ -145,6 +145,8 @@ The logs directory contains the following log files:
 # Revision History
 
 ## 09/05/2020:
+* A field in results.json file added to report if fatal error was encountered.
+* The aida evaluation docker modified to work for open performers with basic error handling if expected files were missing or empty.
 * Bugfix: frame-metric scorer updated to remove gold event clusters from output that had no argument.
 * Reporting error stats in results.json file.
 
