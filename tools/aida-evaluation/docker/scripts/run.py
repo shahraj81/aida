@@ -37,7 +37,7 @@ def get_problems(logs_directory):
         fh.close()
     return num_errors, stats
 
-def generate_results_file(logs_directory):
+def generate_results_file(logger, logs_directory):
     metrics = {
         'ArgumentMetricV1_F1'  : 'ArgumentMetricV1-scores.txt',
         'ArgumentMetricV2_F1'  : 'ArgumentMetricV2-scores.txt',
@@ -88,7 +88,12 @@ def generate_results_file(logs_directory):
     with open(outputdir + 'results.json', 'w') as fp:
         json.dump(output, fp, indent=4, sort_keys=True)
 
-    return exit_code
+    exit_message = 'Done.'
+    if exit_code == ERROR_EXIT_CODE:
+        exit_message = 'Fatal error encountered.'
+    record_and_display_message(logger, exit_message)
+
+    exit(exit_code)
 
 def record_and_display_message(logger, message):
     print("-------------------------------------------------------")
@@ -176,6 +181,8 @@ def main(args):
     num_files = 0
     num_directories = 0
 
+    open_performer_files = ['AIDA_P2_TA1_AM_A0001.rq.tsv', 'AIDA_P2_TA1_CM_A0001.rq.tsv', 'AIDA_P2_TA1_TM_A0001.rq.tsv']
+
     for item in items:
         if not item.endswith('.ttl'): continue
         if item.startswith('.'): continue
@@ -184,13 +191,24 @@ def main(args):
             if performer is None or performer == 'AIDA':
                 performer = 'AIDA'
             else:
-                logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine performer type')
+                logger.record_event('UNKNOWN_PERFORMER_TYPE')
         elif os.path.isdir(os.path.join(args.input, item)):
             num_directories += 1
             if performer is None or performer == 'OPEN':
                 performer = 'OPEN'
+                expected_files = {f:0 for f in open_performer_files}
+                for filename in os.listdir(os.path.join(args.input, item)):
+                    if filename in expected_files:
+                        pathname = '{}/{}'.format(args.input, item)
+                        if os.path.isfile(os.path.join(pathname, filename)):
+                            expected_files[filename] = 1
+                for filename in expected_files:
+                    if expected_files[filename] == 0:
+                        logger.record_event('MISSING_OPEN_PERFORMER_FILE', pathname, filename)
+                        generate_results_file(logger, logs_directory)
             else:
-                logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine performer type')
+                logger.record_event('UNKNOWN_PERFORMER_TYPE')
+                generate_results_file(logger, logs_directory)
 
     documents_in_submission = {}
     num_total_documents = 0
@@ -211,8 +229,7 @@ def main(args):
     if num_valid_documents == 0:
         logger.record_event('NOTHING_TO_SCORE')
         record_and_display_message(logger, 'Nothing to score.')
-        generate_results_file(logs_directory)
-        exit(ERROR_EXIT_CODE)
+        generate_results_file(logger, logs_directory)
 
     # load core documents
     file_handle = open(coredocs_xx, 'r')
@@ -235,7 +252,7 @@ def main(args):
     for document_id in documents_in_submission:
         if documents_in_submission[document_id] and document_id in coredocs:
             logger.record_event('DEFAULT_INFO', 'Copying {}.ttl'.format(document_id))
-            call_system('cp {input}/{document_id}.ttl {destination}'.format(input=args.input, destination=destination, document_id=document_id))
+            call_system('cp -r {input}/{document_id}.ttl {destination}'.format(input=args.input, destination=destination, document_id=document_id))
 
     #############################################################################################
     # apply sparql queries
@@ -489,13 +506,7 @@ def main(args):
 
     # generate results.json file
     record_and_display_message(logger, 'Generating results.json file.')
-    exit_code = generate_results_file(logs_directory)
-    exit_message = 'Done.'
-    if exit_code == ERROR_EXIT_CODE:
-        exit_message = 'Fatal error encountered.'
-    record_and_display_message(logger, exit_message)
-
-    exit(exit_code)
+    generate_results_file(logger, logs_directory)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")

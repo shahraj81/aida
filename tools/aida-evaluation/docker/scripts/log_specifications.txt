@@ -16,6 +16,7 @@ CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (exp
 ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM_WITHOUT_KEY        '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
+ERROR     MISSING_OPEN_PERFORMER_FILE     {}/{} is expected from open performers but not found
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
@@ -31,6 +32,7 @@ ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown '{}' '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
+ERROR     UNKNOWN_PERFORMER_TYPE          Unable to determine performer type
 CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for '{}'
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})

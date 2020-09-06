@@ -344,7 +344,9 @@ schemas = {
 def identify_file_schema(fh):
     for schema in schemas.values():
         found = 1
-        if len(schema['header']) == len(fh.get('header').get('columns')):
+        if fh.get('header') is None:
+            fh.record_event('EMPTY_FILE_WITHOUT_HEADER', fh.get('filename'), '\t'.join(schema['header']))
+        elif len(schema['header']) == len(fh.get('header').get('columns')):
             for i in range(len(schema['header'])):
                 if schema['header'][i] != fh.get('header').get('columns')[i]:
                     found = 0
@@ -391,7 +393,8 @@ class ResponseSet(Container):
                 schema = identify_file_schema(fh)
                 if schema is None:
                     logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
-                self.load_file(fh, schema)
+                else:
+                    self.load_file(fh, schema)
 
     def load_file(self, fh, schema):
         logger = self.get('logger')
