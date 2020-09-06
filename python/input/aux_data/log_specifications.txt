@@ -8,6 +8,7 @@ INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
 CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
+ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
 ERROR     EXPECTING_VALID_ENTRY           Code expected entry to be valid but it was not. It seems like response validator did not remove an invalid entry.
 INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
