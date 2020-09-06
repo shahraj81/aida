@@ -8,6 +8,7 @@ INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
 CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
+ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
 ERROR     EXPECTING_VALID_ENTRY           Code expected entry to be valid but it was not. It seems like response validator did not remove an invalid entry.
 INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
@@ -50,7 +51,7 @@ CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
 ERROR     UNKNOWN_PREDICATE               Unknown predicate '{}'
-CRITICAL  UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
+ERROR     UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
 ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
 CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} cluster '{}' is aligned to gold {} cluster '{}'
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
