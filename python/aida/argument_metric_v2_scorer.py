@@ -108,7 +108,7 @@ class ArgumentMetricScorerV2(Scorer):
                         system_mention_object = augment_mention_object(spanstring_to_object(self.logger, system_predicate_justification_span), document_mappings, document_boundaries)
                         for gold_predicate_justification_span in gold_trfs[trf]:
                             gold_mention_object = augment_mention_object(spanstring_to_object(self.logger, gold_predicate_justification_span), document_mappings, document_boundaries)
-                            if get_intersection_over_union(system_mention_object, gold_mention_object) > 0.8:
+                            if get_intersection_over_union(system_mention_object, gold_mention_object) > 0:
                                 justification_correctness = True
                         max_num_justifications -= 1
                         if max_num_justifications == 0: break
