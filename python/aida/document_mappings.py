@@ -53,6 +53,7 @@ class DocumentMappings(Object):
             doceid = entry.get('doceid')
             docid = entry.get('docid')
             detype = entry.get('detype')
+            delang = entry.get('lang_manual')
             mappings[doceid]['docids'][docid] = 1
             mappings[doceid]['detype'] = detype
         for doceid in mappings:
@@ -69,6 +70,7 @@ class DocumentMappings(Object):
                 document_element.add_document(document)
                 document_element.set('type', detype)
                 document_element.set('modality', modality)
+                document_element.set('language', delang)
                 document.add_document_element(document_element)
 
     def get_modality(self, ID):
