@@ -113,4 +113,5 @@ class FrameMetricScorer(Scorer):
             mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
             mean_score = FrameMetricScore(self.logger, self.get('runid'), 'Summary', key, '', '', '', '', mean_f1, summary = True)
             scores_printer.add(mean_score)
-            self.scores = scores_printer
+
+        self.scores = scores_printer
