@@ -12,10 +12,11 @@ class CoreferenceMetricScore(Score):
     """
     AIDA class for coreference metric score.
     """
-    def __init__(self, logger, run_id, document_id, precision, recall, f1, summary=False):
+    def __init__(self, logger, run_id, document_id, language, precision, recall, f1, summary=False):
         super().__init__(logger)
         self.run_id = run_id
         self.document_id = document_id
+        self.language = language
         self.precision = precision
         self.recall = recall
         self.f1 = f1
