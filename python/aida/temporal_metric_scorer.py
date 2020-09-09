@@ -152,4 +152,4 @@ class TemporalMetricScorer(Scorer):
                                             mean_similarity,
                                             summary = True)
             scores_printer.add(mean_score)
-            self.scores = scores_printer
+        self.scores = scores_printer
