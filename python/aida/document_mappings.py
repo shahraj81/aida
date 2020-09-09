@@ -56,8 +56,10 @@ class DocumentMappings(Object):
             delang = entry.get('lang_manual')
             mappings[doceid]['docids'][docid] = 1
             mappings[doceid]['detype'] = detype
+            mappings[doceid]['delang'] = delang.upper()
         for doceid in mappings:
             # TODO: next if doceid is n/a?
+            delang = mappings[doceid]['delang']
             detype = mappings[doceid]['detype']
             modality = self.encodings.get(detype)
             for docid in mappings[doceid]['docids']:
