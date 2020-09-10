@@ -18,6 +18,7 @@ class ArgumentMetricScore(Score):
         self.document_id = document_id
         self.language = language
         self.metatype = metatype
+        self.metatype_sortkey = '_ALL' if metatype == 'ALL' else metatype
         self.precision = precision
         self.recall = recall
         self.f1 = f1

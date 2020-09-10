@@ -68,16 +68,17 @@ class ArgumentMetricScorerV2(Scorer):
                                                                                           role_name=role_name,
                                                                                           filler_cluster_id=filler_cluster_id)
 
-                                key = '{language}:{metatype}'.format(language=language, metatype=metatype)
-                                if key not in gold_trfs:
-                                    gold_trfs[key] = {}
-                                if trf not in gold_trfs[key]:
-                                    gold_trfs[key][trf] = {}
+                                for metatype_key in ['ALL', metatype]:
+                                    key = '{language}:{metatype}'.format(language=language, metatype=metatype_key)
+                                    if key not in gold_trfs:
+                                        gold_trfs[key] = {}
+                                    if trf not in gold_trfs[key]:
+                                        gold_trfs[key][trf] = {}
 
-                                predicate_justification_span = predicate_justification.get('predicate_justification')
-                                predicate_justification_confidence = trim_cv(predicate_justification.get('argument_assertion_confidence'))
-                                predicate_justification_confidence *= trim_cv(predicate_justification.get('predicate_justification_confidence'))
-                                gold_trfs[key][trf][predicate_justification_span] = predicate_justification_confidence
+                                    predicate_justification_span = predicate_justification.get('predicate_justification')
+                                    predicate_justification_confidence = trim_cv(predicate_justification.get('argument_assertion_confidence'))
+                                    predicate_justification_confidence *= trim_cv(predicate_justification.get('predicate_justification_confidence'))
+                                    gold_trfs[key][trf][predicate_justification_span] = predicate_justification_confidence
 
             system_trfs = {}
             candidate_system_trfs = {}
@@ -106,15 +107,17 @@ class ArgumentMetricScorerV2(Scorer):
                                 trf = '{type_invoked}_{role_name}:{filler_cluster_id}'.format(type_invoked=type_invoked,
                                                                                           role_name=role_name,
                                                                                           filler_cluster_id=aligned_gold_filler_cluster_id)
-                                key = '{language}:{metatype}'.format(language=language, metatype=metatype)
-                                if key not in candidate_system_trfs:
-                                    candidate_system_trfs[key] = {}
-                                if trf not in candidate_system_trfs[key]:
-                                    candidate_system_trfs[key][trf] = {}
-                                predicate_justification_span = predicate_justification.get('predicate_justification')
-                                predicate_justification_confidence = trim_cv(predicate_justification.get('argument_assertion_confidence'))
-                                predicate_justification_confidence *= trim_cv(predicate_justification.get('predicate_justification_confidence'))
-                                candidate_system_trfs.get(key)[trf][predicate_justification_span] = predicate_justification_confidence
+
+                                for metatype_key in ['ALL', metatype]:
+                                    key = '{language}:{metatype}'.format(language=language, metatype=metatype_key)
+                                    if key not in candidate_system_trfs:
+                                        candidate_system_trfs[key] = {}
+                                    if trf not in candidate_system_trfs[key]:
+                                        candidate_system_trfs[key][trf] = {}
+                                    predicate_justification_span = predicate_justification.get('predicate_justification')
+                                    predicate_justification_confidence = trim_cv(predicate_justification.get('argument_assertion_confidence'))
+                                    predicate_justification_confidence *= trim_cv(predicate_justification.get('predicate_justification_confidence'))
+                                    candidate_system_trfs.get(key)[trf][predicate_justification_span] = predicate_justification_confidence
 
             document_mappings = self.get('gold_responses').get('document_mappings')
             document_boundaries = self.get('gold_responses').get('document_boundaries')
@@ -143,17 +146,16 @@ class ArgumentMetricScorerV2(Scorer):
                 system_trf_set = set(system_trfs.get(key, dict()).keys())
                 precision, recall, f1 = get_precision_recall_and_f1(gold_trf_set, system_trf_set)
                 for language_key in ['ALL', language]:
-                    for metatype_key in ['ALL', metatype]:
-                        aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
-                        mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
-                        counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
+                    aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
+                    mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
+                    counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
                 score = ArgumentMetricScore(self.logger, self.get('runid'), document_id, language, metatype,
                                      precision, recall, f1)
                 scores.append(score)
 
         scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
         for score in multisort(scores, (('document_id', False),
-                                        ('metatype', False))):
+                                        ('metatype_sortkey', False))):
             scores_printer.add(score)
 
         for key in sorted(mean_f1s, key=self.order):
