@@ -146,7 +146,7 @@ class ArgumentMetricScorerV2(Scorer):
                 system_trf_set = set(system_trfs.get(key, dict()).keys())
                 precision, recall, f1 = get_precision_recall_and_f1(gold_trf_set, system_trf_set)
                 for language_key in ['ALL', language]:
-                    aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
+                    aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype)
                     mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
                     counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
                 score = ArgumentMetricScore(self.logger, self.get('runid'), document_id, language, metatype,
