@@ -22,6 +22,8 @@ class ArgumentMetricScorerV2(Scorer):
     
     printing_specs = [{'name': 'document_id',      'header': 'DocID',           'format': 's',    'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',           'format': 's',    'justify': 'L'},
+                      {'name': 'language',         'header': 'Language',        'format': 's',    'justify': 'L'},
+                      {'name': 'metatype',         'header': 'Metatype',        'format': 's',    'justify': 'L'},
                       {'name': 'precision',        'header': 'Prec',            'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'recall',           'header': 'Recall',          'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'f1',               'header': 'F1',              'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
@@ -34,15 +36,22 @@ class ArgumentMetricScorerV2(Scorer):
             return True
         return False
 
+    def order(self, k):
+        language, metatype = k.split(':')
+        metatype = '_ALL' if metatype == 'ALL' else metatype
+        language = '_ALL' if language == 'ALL' else language
+        return '{language}:{metatype}'.format(metatype=metatype, language=language)
+
     def score_responses(self):
         scores = []
-        mean_f1 = 0
-        count = 0
+        mean_f1s = {}
+        counts = {}
         for document_id in self.get('core_documents'):
-
+            language = self.get('gold_responses').get('document_mappings').get('documents').get(document_id).get('language')
             gold_trfs = {}
             if document_id in self.get('gold_responses').get('document_frames'):
                 for gold_frame in self.get('gold_responses').get('document_frames').get(document_id).values():
+                    metatype = gold_frame.get('metatype')
                     for role_name in gold_frame.get('role_fillers'):
                         for filler_cluster_id in gold_frame.get('role_fillers').get(role_name):
                             for predicate_justification in gold_frame.get('role_fillers').get(role_name).get(filler_cluster_id):
@@ -58,18 +67,24 @@ class ArgumentMetricScorerV2(Scorer):
                                 trf = '{type_invoked}_{role_name}:{filler_cluster_id}'.format(type_invoked=type_invoked,
                                                                                           role_name=role_name,
                                                                                           filler_cluster_id=filler_cluster_id)
-                                if trf not in gold_trfs:
-                                    gold_trfs[trf] = {}
+
+                                key = '{language}:{metatype}'.format(language=language, metatype=metatype)
+                                if key not in gold_trfs:
+                                    gold_trfs[key] = {}
+                                if trf not in gold_trfs[key]:
+                                    gold_trfs[key][trf] = {}
+
                                 predicate_justification_span = predicate_justification.get('predicate_justification')
                                 predicate_justification_confidence = trim_cv(predicate_justification.get('argument_assertion_confidence'))
                                 predicate_justification_confidence *= trim_cv(predicate_justification.get('predicate_justification_confidence'))
-                                gold_trfs[trf][predicate_justification_span] = predicate_justification_confidence
+                                gold_trfs[key][trf][predicate_justification_span] = predicate_justification_confidence
 
             system_trfs = {}
             candidate_system_trfs = {}
             if document_id in self.get('system_responses').get('document_frames'):
                 document_system_to_gold = self.get('cluster_alignment').get('system_to_gold').get(document_id)
                 for system_frame in self.get('system_responses').get('document_frames').get(document_id).values():
+                    metatype = system_frame.get('metatype')
                     for role_name in system_frame.get('role_fillers'):
                         for filler_cluster_id in system_frame.get('role_fillers').get(role_name):
                             for predicate_justification in system_frame.get('role_fillers').get(role_name).get(filler_cluster_id):
@@ -91,41 +106,60 @@ class ArgumentMetricScorerV2(Scorer):
                                 trf = '{type_invoked}_{role_name}:{filler_cluster_id}'.format(type_invoked=type_invoked,
                                                                                           role_name=role_name,
                                                                                           filler_cluster_id=aligned_gold_filler_cluster_id)
-                                if trf not in candidate_system_trfs:
-                                    candidate_system_trfs[trf] = {}
+                                key = '{language}:{metatype}'.format(language=language, metatype=metatype)
+                                if key not in candidate_system_trfs:
+                                    candidate_system_trfs[key] = {}
+                                if trf not in candidate_system_trfs[key]:
+                                    candidate_system_trfs[key][trf] = {}
                                 predicate_justification_span = predicate_justification.get('predicate_justification')
                                 predicate_justification_confidence = trim_cv(predicate_justification.get('argument_assertion_confidence'))
                                 predicate_justification_confidence *= trim_cv(predicate_justification.get('predicate_justification_confidence'))
-                                candidate_system_trfs[trf][predicate_justification_span] = predicate_justification_confidence
+                                candidate_system_trfs.get(key)[trf][predicate_justification_span] = predicate_justification_confidence
 
             document_mappings = self.get('gold_responses').get('document_mappings')
             document_boundaries = self.get('gold_responses').get('document_boundaries')
-            for trf in candidate_system_trfs:
-                if trf in gold_trfs:
+            for key in candidate_system_trfs:
+                for trf in candidate_system_trfs[key]:
+                    if key not in gold_trfs: continue
+                    if trf not in gold_trfs[key]: continue
                     max_num_justifications = 2
                     justification_correctness = False
-                    for system_predicate_justification_span in sorted(candidate_system_trfs[trf], key=lambda s: candidate_system_trfs[trf][s], reverse=True):
+                    for system_predicate_justification_span in sorted(candidate_system_trfs[key][trf], key=lambda s: candidate_system_trfs[key][trf][s], reverse=True):
                         system_mention_object = augment_mention_object(spanstring_to_object(self.logger, system_predicate_justification_span), document_mappings, document_boundaries)
-                        for gold_predicate_justification_span in gold_trfs[trf]:
+                        for gold_predicate_justification_span in gold_trfs[key][trf]:
                             gold_mention_object = augment_mention_object(spanstring_to_object(self.logger, gold_predicate_justification_span), document_mappings, document_boundaries)
                             if get_intersection_over_union(system_mention_object, gold_mention_object) > 0:
                                 justification_correctness = True
                         max_num_justifications -= 1
                         if max_num_justifications == 0: break
                     if justification_correctness:
-                        system_trfs[trf] = 1
+                        if key not in system_trfs:
+                            system_trfs[key] = {}
+                        system_trfs[key][trf] = 1
 
-            precision, recall, f1 = get_precision_recall_and_f1(set(gold_trfs.keys()), set(system_trfs.keys()))
-            mean_f1 += f1
-            count += 1
-            score = ArgumentMetricScore(self.logger, self.get('runid'), document_id,
+            for key in set().union(gold_trfs, system_trfs):
+                language, metatype = key.split(':')
+                gold_trf_set = set(gold_trfs.get(key, dict()).keys())
+                system_trf_set = set(system_trfs.get(key, dict()).keys())
+                precision, recall, f1 = get_precision_recall_and_f1(gold_trf_set, system_trf_set)
+                for language_key in ['ALL', language]:
+                    for metatype_key in ['ALL', metatype]:
+                        aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
+                        mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
+                        counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
+                score = ArgumentMetricScore(self.logger, self.get('runid'), document_id, language, metatype,
                                      precision, recall, f1)
-            scores.append(score)
+                scores.append(score)
 
         scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
-        for score in multisort(scores, (('document_id', False),)):
+        for score in multisort(scores, (('document_id', False),
+                                        ('metatype', False))):
             scores_printer.add(score)
-        mean_f1 = mean_f1 / count if count else 0
-        mean_score = ArgumentMetricScore(self.logger, self.get('runid'), 'Summary', '', '', mean_f1, summary = True)
-        scores_printer.add(mean_score)
+
+        for key in sorted(mean_f1s, key=self.order):
+            mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
+            language, metatype = key.split(':')
+            mean_score = ArgumentMetricScore(self.logger, self.get('runid'), 'Summary', language, metatype, '', '', mean_f1, summary = True)
+            scores_printer.add(mean_score)
+
         self.scores = scores_printer
