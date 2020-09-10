@@ -22,6 +22,8 @@ class ArgumentMetricScorerV1(Scorer):
 
     printing_specs = [{'name': 'document_id',      'header': 'DocID',           'format': 's',    'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',           'format': 's',    'justify': 'L'},
+                      {'name': 'language',         'header': 'Language',        'format': 's',    'justify': 'L'},
+                      {'name': 'metatype',         'header': 'Metatype',        'format': 's',    'justify': 'L'},
                       {'name': 'precision',        'header': 'Prec',            'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'recall',           'header': 'Recall',          'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'f1',               'header': 'F1',              'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
@@ -34,15 +36,22 @@ class ArgumentMetricScorerV1(Scorer):
             return True
         return False
 
+    def order(self, k):
+        language, metatype = k.split(':')
+        metatype = '_ALL' if metatype == 'ALL' else metatype
+        language = '_ALL' if language == 'ALL' else language
+        return '{language}:{metatype}'.format(metatype=metatype, language=language)
+
     def score_responses(self):
         scores = []
-        mean_f1 = 0
-        count = 0
+        mean_f1s = {}
+        counts = {}
         for document_id in self.get('core_documents'):
-
+            language = self.get('gold_responses').get('document_mappings').get('documents').get(document_id).get('language')
             gold_trfs = {}
             if document_id in self.get('gold_responses').get('document_frames'):
                 for gold_frame in self.get('gold_responses').get('document_frames').get(document_id).values():
+                    metatype = gold_frame.get('metatype')
                     for role_name in gold_frame.get('role_fillers'):
                         for filler_cluster_id in gold_frame.get('role_fillers').get(role_name):
                             for predicate_justification in gold_frame.get('role_fillers').get(role_name).get(filler_cluster_id):
@@ -58,12 +67,17 @@ class ArgumentMetricScorerV1(Scorer):
                                 trf = '{type_invoked}_{role_name}:{filler_cluster_id}'.format(type_invoked=type_invoked,
                                                                                           role_name=role_name,
                                                                                           filler_cluster_id=filler_cluster_id)
-                                gold_trfs[trf] = 1
+
+                                key = '{language}:{metatype}'.format(language=language, metatype=metatype)
+                                if key not in gold_trfs:
+                                    gold_trfs[key] = {}
+                                gold_trfs.get(key)[trf] = 1
 
             system_trfs = {}
             if document_id in self.get('system_responses').get('document_frames'):
                 document_system_to_gold = self.get('cluster_alignment').get('system_to_gold').get(document_id)
                 for system_frame in self.get('system_responses').get('document_frames').get(document_id).values():
+                    metatype = system_frame.get('metatype')
                     for role_name in system_frame.get('role_fillers'):
                         for filler_cluster_id in system_frame.get('role_fillers').get(role_name):
                             for predicate_justification in system_frame.get('role_fillers').get(role_name).get(filler_cluster_id):
@@ -85,19 +99,36 @@ class ArgumentMetricScorerV1(Scorer):
                                 trf = '{type_invoked}_{role_name}:{filler_cluster_id}'.format(type_invoked=type_invoked,
                                                                                           role_name=role_name,
                                                                                           filler_cluster_id=aligned_gold_filler_cluster_id)
-                                system_trfs[trf] = 1
 
-            precision, recall, f1 = get_precision_recall_and_f1(set(gold_trfs.keys()), set(system_trfs.keys()))
-            mean_f1 += f1
-            count += 1
-            score = ArgumentMetricScore(self.logger, self.get('runid'), document_id,
+                                key = '{language}:{metatype}'.format(language=language, metatype=metatype)
+                                if key not in system_trfs:
+                                    system_trfs[key] = {}
+                                system_trfs.get(key)[trf] = 1
+
+
+            for key in set().union(gold_trfs, system_trfs):
+                language, metatype = key.split(':')
+                gold_trf_set = set(gold_trfs.get(key, dict()).keys())
+                system_trf_set = set(system_trfs.get(key, dict()).keys())
+                precision, recall, f1 = get_precision_recall_and_f1(gold_trf_set, system_trf_set)
+                for language_key in ['ALL', language]:
+                    for metatype_key in ['ALL', metatype]:
+                        aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
+                        mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
+                        counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
+                score = ArgumentMetricScore(self.logger, self.get('runid'), document_id, language, metatype,
                                      precision, recall, f1)
-            scores.append(score)
+                scores.append(score)
 
         scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
-        for score in multisort(scores, (('document_id', False),)):
+        for score in multisort(scores, (('document_id', False),
+                                        ('metatype', False))):
             scores_printer.add(score)
-        mean_f1 = mean_f1 / count if count else 0
-        mean_score = ArgumentMetricScore(self.logger, self.get('runid'), 'Summary', '', '', mean_f1, summary = True)
-        scores_printer.add(mean_score)
+
+        for key in sorted(mean_f1s, key=self.order):
+            mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
+            language, metatype = key.split(':')
+            mean_score = ArgumentMetricScore(self.logger, self.get('runid'), 'Summary', language, metatype, '', '', mean_f1, summary = True)
+            scores_printer.add(mean_score)
+
         self.scores = scores_printer
