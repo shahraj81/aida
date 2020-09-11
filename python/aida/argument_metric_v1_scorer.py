@@ -110,8 +110,8 @@ class ArgumentMetricScorerV1(Scorer):
             if trf.get('metatype') not in metatypes: continue
             if not trf.get('aligned'):
                 num_false_positive += 1
-        precision = num_true_positive / (num_true_positive + num_false_negative) if num_true_positive + num_false_negative else 0
-        recall = num_true_positive / (num_true_positive + num_false_positive) if num_true_positive + num_false_positive else 0
+        precision = num_true_positive / (num_true_positive + num_false_positive) if num_true_positive + num_false_positive else 0
+        recall = num_true_positive / (num_true_positive + num_false_negative) if num_true_positive + num_false_negative else 0
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
         return precision, recall, f1
 
