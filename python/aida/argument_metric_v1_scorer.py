@@ -96,24 +96,28 @@ class ArgumentMetricScorerV1(Scorer):
                             type_role_filler.get('predicate_justifications').add(predicate_justification)
         return type_role_fillers
 
-    def get_precision_recall_and_f1(self, gold_trfs, system_trfs, metatypes):
+    def get_score(self, gold_trfs, system_trfs, metatypes):
         num_true_positive = 0
         num_false_positive = 0
         num_false_negative = 0
+        num_gold_trf = 0
+        num_system_trf = 0
         for trf in gold_trfs.values():
             if trf.get('metatype') not in metatypes: continue
+            num_gold_trf += 1
             if trf.get('aligned'):
                 num_true_positive += 1
             else:
                 num_false_negative += 1
         for trf in system_trfs.values():
             if trf.get('metatype') not in metatypes: continue
+            num_system_trf += 1
             if not trf.get('aligned'):
                 num_false_positive += 1
         precision = num_true_positive / (num_true_positive + num_false_positive) if num_true_positive + num_false_positive else 0
         recall = num_true_positive / (num_true_positive + num_false_negative) if num_true_positive + num_false_negative else 0
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
-        return precision, recall, f1
+        return num_gold_trf, num_system_trf, precision, recall, f1
 
     def get_type_invoked(self, predicate_justification, role_name):
         type_invoked = predicate_justification.get('predicate').split('_')[0]
@@ -142,7 +146,8 @@ class ArgumentMetricScorerV1(Scorer):
             system_trfs = self.get('document_type_role_fillers', 'system', document_id)
             self.align_trfs(document_id, gold_trfs, system_trfs)
             for metatype_key in metatypes:
-                precision, recall, f1 = self.get('precision_recall_and_f1', gold_trfs, system_trfs, metatypes[metatype_key])
+                num_gold_trf, num_system_trf, precision, recall, f1 = self.get('score', gold_trfs, system_trfs, metatypes[metatype_key])
+                if num_gold_trf + num_system_trf == 0: continue
                 for language_key in ['ALL', language]:
                     aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
                     mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
