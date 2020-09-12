@@ -184,7 +184,7 @@ def generate_results_file(logger, logs_directory):
             'Columns': columns,
             'ScoreColumn': score_columnname
             }
-        metric_class[metricname] = metric
+        metric_class['Metrics'][metricname] = metric
 
     scores = {}
 
