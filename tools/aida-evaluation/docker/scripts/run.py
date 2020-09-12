@@ -151,7 +151,7 @@ def generate_results_file(logger, logs_directory):
     fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
     scores['Total'] = scores['FrameMetric_F1']
-    scores['Error'] = num_problems
+    scores['Errors'] = num_problems
     scores['ErrorStats'] = problem_stats
     scores['FatalError'] = fatal_error
 
