@@ -118,7 +118,7 @@ def generate_results_file(logger, logs_directory):
     exit_code = ALLOK_EXIT_CODE
 
     for metric_class in metric_classes.values():
-        filename = '{output}/scores/{filename}'.format(output=output_dir,
+        filename = '{output}/scores/{filename}'.format(output=args.output,
                                                        filename=metric_class['Filename'])
         summary_scores = []
         if os.path.exists(filename):
