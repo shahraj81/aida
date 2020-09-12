@@ -38,49 +38,125 @@ def get_problems(logs_directory):
     return num_errors, stats
 
 def generate_results_file(logger, logs_directory):
-    metrics = {
-        'ArgumentMetricV1_F1'  : 'ArgumentMetricV1-scores.txt',
-        'ArgumentMetricV2_F1'  : 'ArgumentMetricV2-scores.txt',
-        'CoreferenceMetric_F1' : 'CoreferenceMetric-scores.txt',
-        'TemporalMetric_S'     : 'TemporalMetric-scores.txt',
-        'TypeMetric_F1'        : 'TypeMetric-scores.txt',
-        'FrameMetric_F1'       : 'FrameMetric-scores.txt'
+    metric_classes = {
+        'ArgumentMetricV1'  : {
+            'Filename': 'ArgumentMetricV1-scores.txt',
+            'Metrics' : {
+                'ArgumentMetricV1_F1':{
+                    'Columns': {
+                        'Language'    : 'ALL',
+                        'Metatype'    : 'ALL',
+                        },
+                    'ScoreColumn' : 'F1'
+                    },
+                }
+            },
+        'ArgumentMetricV2'  : {
+            'Filename': 'ArgumentMetricV2-scores.txt',
+            'Metrics' : {
+                'ArgumentMetricV2_F1':{
+                    'Columns': {
+                        'Language'    : 'ALL',
+                        'Metatype'    : 'ALL',
+                        },
+                    'ScoreColumn' : 'F1'
+                    },
+                }
+            },
+        'CoreferenceMetric'  : {
+            'Filename': 'CoreferenceMetric-scores.txt',
+            'Metrics' : {
+                'CoreferenceMetric_F1':{
+                    'Columns': {
+                        'Language'    : 'ALL',
+                        'Metatype'    : 'ALL',
+                        },
+                    'ScoreColumn' : 'F1'
+                    },
+                }
+            },
+        'TemporalMetric'  : {
+            'Filename': 'TemporalMetric-scores.txt',
+            'Metrics' : {
+                'TemporalMetric_S':{
+                    'Columns': {
+                        'Language'    : 'ALL',
+                        'Metatype'    : 'ALL',
+                        },
+                    'ScoreColumn' : 'Similarity'
+                    },
+                }
+            },
+        'TypeMetric'  : {
+            'Filename': 'TypeMetric-scores.txt',
+            'Metrics' : {
+                'TypeMetric_F1':{
+                    'Columns': {
+                        'Language'    : 'ALL',
+                        'Metatype'    : 'ALL',
+                        },
+                    'ScoreColumn' : 'F1'
+                    },
+                }
+            },
+        'FrameMetric'  : {
+            'Filename': 'FrameMetric-scores.txt',
+            'Metrics' : {
+                'FrameMetric_F1':{
+                    'Columns': {
+                        'Language'    : 'ALL',
+                        'Metatype'    : 'ALL',
+                        },
+                    'ScoreColumn' : 'F1'
+                    },
+                }
+            },
         }
 
     scores = {}
 
     exit_code = ALLOK_EXIT_CODE
 
-    for metric in metrics:
-        scores[metric] = 0
-        filename = '{output}/scores/{filename}'.format(output=args.output,
-                                                       filename=metrics[metric])
+    for metric_class in metric_classes.values():
+        filename = '{output}/scores/{filename}'.format(output=output_dir,
+                                                       filename=metric_class['Filename'])
+        summary_scores = []
         if os.path.exists(filename):
             file_handle = open(filename, "r")
             lines = file_handle.readlines()
-            summary_line = lines[-1]
-            file_handle.close()
-            scores[metric] = summary_line.split()[-1]
-        else:
-            exit_code = ERROR_EXIT_CODE
+            columns = lines[0].strip().split()
+            for line in [l for l in lines if 'Summary' in l]:
+                line.strip()
+                values = line.split()
+                for i in range(len(columns) - len(values)):
+                    values.insert(len(values)-1, '')
+                score = {columns[i]:values[i] for i in range(len(columns))}
+                summary_scores.append(score)
+
+        metrics = metric_class['Metrics']
+        for metric_name in metrics:
+            specs = metrics[metric_name]
+            for score in [s for s in summary_scores if 'Metric' not in s]:
+                num_columns = len(specs['Columns'])
+                num_matched = 0
+                for column_name, column_value in specs['Columns'].items():
+                    if column_value == score[column_name]:
+                        num_matched += 1
+                if num_columns == num_matched:
+                    scores[metric_name] = score[specs['ScoreColumn']]
+                    score['Metric'] = metric_name
 
     num_problems, problem_stats = get_problems(logs_directory)
 
     fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
+    scores['Total'] = scores['FrameMetric_F1'],
+    scores['Error'] = num_problems,
+    scores['ErrorStats'] = problem_stats,
+    scores['FatalError'] = fatal_error
+
     output = {'scores' : [
-                            {
-                                'CoreferenceMetric_F1': scores['CoreferenceMetric_F1'],
-                                'TypeMetric_F1'       : scores['TypeMetric_F1'],
-                                'TemporalMetric_S'    : scores['TemporalMetric_S'],
-                                'ArgumentMetricV1_F1' : scores['ArgumentMetricV1_F1'],
-                                'ArgumentMetricV2_F1' : scores['ArgumentMetricV2_F1'],
-                                'FrameMetric_F1'      : scores['FrameMetric_F1'],
-                                'Total'               : scores['FrameMetric_F1'],
-                                'Errors'              : num_problems,
-                                'ErrorStats'          : problem_stats,
-                                'FatalError'          : fatal_error
-                            }
+                            scores
                          ]
             }
 
