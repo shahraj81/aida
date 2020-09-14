@@ -53,10 +53,13 @@ class DocumentMappings(Object):
             doceid = entry.get('doceid')
             docid = entry.get('docid')
             detype = entry.get('detype')
+            delang = entry.get('lang_manual')
             mappings[doceid]['docids'][docid] = 1
             mappings[doceid]['detype'] = detype
+            mappings[doceid]['delang'] = delang.upper()
         for doceid in mappings:
             # TODO: next if doceid is n/a?
+            delang = mappings[doceid]['delang']
             detype = mappings[doceid]['detype']
             modality = self.encodings.get(detype)
             for docid in mappings[doceid]['docids']:
@@ -69,6 +72,7 @@ class DocumentMappings(Object):
                 document_element.add_document(document)
                 document_element.set('type', detype)
                 document_element.set('modality', modality)
+                document_element.set('language', delang)
                 document.add_document_element(document_element)
 
     def get_modality(self, ID):

@@ -38,49 +38,201 @@ def get_problems(logs_directory):
     return num_errors, stats
 
 def generate_results_file(logger, logs_directory):
-    metrics = {
-        'ArgumentMetricV1_F1'  : 'ArgumentMetricV1-scores.txt',
-        'ArgumentMetricV2_F1'  : 'ArgumentMetricV2-scores.txt',
-        'CoreferenceMetric_F1' : 'CoreferenceMetric-scores.txt',
-        'TemporalMetric_S'     : 'TemporalMetric-scores.txt',
-        'TypeMetric_F1'        : 'TypeMetric-scores.txt',
-        'FrameMetric_F1'       : 'FrameMetric-scores.txt'
-        }
+
+    metric_classes_specs = """
+        # Filename                     Metric                              ColumnValuePairs               ScoreColumn
+        #
+        # ---
+        # ArgumentMetricV1
+        #
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_F1                 Language:ALL,Metatype:ALL      F1
+
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_Events_F1          Language:ALL,Metatype:Event    F1
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_Relations_F1       Language:ALL,Metatype:Relation F1
+
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_ENG_F1             Language:ENG,Metatype:ALL      F1
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_ENG_Events_F1      Language:ENG,Metatype:Event    F1
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_ENG_Relations_F1   Language:ENG,Metatype:Relation F1
+
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_RUS_F1             Language:RUS,Metatype:ALL      F1
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_RUS_Events_F1      Language:RUS,Metatype:Event    F1
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_RUS_Relations_F1   Language:RUS,Metatype:Relation F1
+
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_SPA_F1             Language:SPA,Metatype:ALL      F1
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_SPA_Events_F1      Language:SPA,Metatype:Event    F1
+          ArgumentMetricV1-scores.txt  ArgumentMetricV1_SPA_Relations_F1   Language:SPA,Metatype:Relation F1
+
+        # ---
+        # ArgumentMetricV2
+        #
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_F1                 Language:ALL,Metatype:ALL      F1
+
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_Events_F1          Language:ALL,Metatype:Event    F1
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_Relations_F1       Language:ALL,Metatype:Relation F1
+
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_ENG_F1             Language:ENG,Metatype:ALL      F1
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_ENG_Events_F1      Language:ENG,Metatype:Event    F1
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_ENG_Relations_F1   Language:ENG,Metatype:Relation F1
+
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_RUS_F1             Language:RUS,Metatype:ALL      F1
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_RUS_Events_F1      Language:RUS,Metatype:Event    F1
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_RUS_Relations_F1   Language:RUS,Metatype:Relation F1
+
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_SPA_F1             Language:SPA,Metatype:ALL      F1
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_SPA_Events_F1      Language:SPA,Metatype:Event    F1
+          ArgumentMetricV2-scores.txt  ArgumentMetricV2_SPA_Relations_F1   Language:SPA,Metatype:Relation F1
+
+        # ---
+        # CoreferenceMetric
+        #
+          CoreferenceMetric-scores.txt CoreferenceMetric_F1                Language:ALL,Metatype:ALL      F1
+
+          CoreferenceMetric-scores.txt CoreferenceMetric_Events_F1         Language:ALL,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_Entities_F1       Language:ALL,Metatype:Entity   F1
+
+          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_F1            Language:ENG,Metatype:ALL      F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Events_F1     Language:ENG,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Entities_F1   Language:ENG,Metatype:Entity   F1
+
+          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_F1            Language:RUS,Metatype:ALL      F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Events_F1     Language:RUS,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Entities_F1   Language:RUS,Metatype:Entity   F1
+
+          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_F1            Language:SPA,Metatype:ALL      F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Events_F1     Language:SPA,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Entities_F1   Language:SPA,Metatype:Entity   F1
+
+        # ---
+        # TemporalMetric
+        #
+          TemporalMetric-scores.txt    TemporalMetric_S                    Language:ALL,Metatype:ALL      Similarity
+
+          TemporalMetric-scores.txt    TemporalMetric_Events_S             Language:ALL,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_Relations_S          Language:ALL,Metatype:Relation Similarity
+
+          TemporalMetric-scores.txt    TemporalMetric_ENG_S                Language:ENG,Metatype:ALL      Similarity
+          TemporalMetric-scores.txt    TemporalMetric_ENG_Events_S         Language:ENG,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_ENG_Relations_S      Language:ENG,Metatype:Relation Similarity
+
+          TemporalMetric-scores.txt    TemporalMetric_RUS_S                Language:RUS,Metatype:ALL      Similarity
+          TemporalMetric-scores.txt    TemporalMetric_RUS_Events_S         Language:RUS,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_RUS_Relations_S      Language:RUS,Metatype:Relation Similarity
+
+          TemporalMetric-scores.txt    TemporalMetric_SPA_S                Language:SPA,Metatype:ALL      Similarity
+          TemporalMetric-scores.txt    TemporalMetric_SPA_Events_S         Language:SPA,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_SPA_Relations_S      Language:SPA,Metatype:Relation Similarity
+
+        # ---
+        # TypeMetric
+        #
+          TypeMetric-scores.txt        TypeMetric_F1                       Language:ALL,Metatype:ALL      F1
+
+          TypeMetric-scores.txt        TypeMetric_Events_F1                Language:ALL,Metatype:Event    F1
+          TypeMetric-scores.txt        TypeMetric_Entities_F1              Language:ALL,Metatype:Entity   F1
+
+          TypeMetric-scores.txt        TypeMetric_ENG_F1                   Language:ENG,Metatype:ALL      F1
+          TypeMetric-scores.txt        TypeMetric_ENG_Events_F1            Language:ENG,Metatype:Event    F1
+          TypeMetric-scores.txt        TypeMetric_ENG_Entities_F1          Language:ENG,Metatype:Entity   F1
+
+          TypeMetric-scores.txt        TypeMetric_RUS_F1                   Language:RUS,Metatype:ALL      F1
+          TypeMetric-scores.txt        TypeMetric_RUS_Events_F1            Language:RUS,Metatype:Event    F1
+          TypeMetric-scores.txt        TypeMetric_RUS_Entities_F1          Language:RUS,Metatype:Entity   F1
+
+          TypeMetric-scores.txt        TypeMetric_SPA_F1                   Language:SPA,Metatype:ALL      F1
+          TypeMetric-scores.txt        TypeMetric_SPA_Events_F1            Language:SPA,Metatype:Event    F1
+          TypeMetric-scores.txt        TypeMetric_SPA_Entities_F1          Language:SPA,Metatype:Entity   F1
+
+        # ---
+        # FrameMetric
+        #
+          FrameMetric-scores.txt       FrameMetric_F1                      Language:ALL,Metatype:ALL      F1
+
+          FrameMetric-scores.txt       FrameMetric_Events_F1               Language:ALL,Metatype:Event    F1
+          FrameMetric-scores.txt       FrameMetric_Relations_F1            Language:ALL,Metatype:Relation F1
+
+          FrameMetric-scores.txt       FrameMetric_ENG_F1                  Language:ENG,Metatype:ALL      F1
+          FrameMetric-scores.txt       FrameMetric_ENG_Events_F1           Language:ENG,Metatype:Event    F1
+          FrameMetric-scores.txt       FrameMetric_ENG_Relations_F1        Language:ENG,Metatype:Relation F1
+
+          FrameMetric-scores.txt       FrameMetric_RUS_F1                  Language:RUS,Metatype:ALL      F1
+          FrameMetric-scores.txt       FrameMetric_RUS_Events_F1           Language:RUS,Metatype:Event    F1
+          FrameMetric-scores.txt       FrameMetric_RUS_Relations_F1        Language:RUS,Metatype:Relation F1
+
+          FrameMetric-scores.txt       FrameMetric_SPA_F1                  Language:SPA,Metatype:ALL      F1
+          FrameMetric-scores.txt       FrameMetric_SPA_Events_F1           Language:SPA,Metatype:Event    F1
+          FrameMetric-scores.txt       FrameMetric_SPA_Relations_F1        Language:SPA,Metatype:Relation F1
+
+    """
+
+    metric_classes = {}
+
+    for line in metric_classes_specs.split('\n'):
+        line = line.strip()
+        if line == '': continue
+        if line.startswith('#'): continue
+        filename, metricname, column_value_pairs, score_columnname = line.split()
+        metric_classname = filename.split('-')[0]
+        if metric_classname not in metric_classes:
+            metric_class = {'Filename': filename, 'Metrics': {}}
+            metric_classes[metric_classname] = metric_class
+        metric_class = metric_classes[metric_classname]
+        columns = {}
+        for column_value_pair in column_value_pairs.split(','):
+            column, value = column_value_pair.split(':')
+            columns[column] = value
+        metric = {
+            'Columns': columns,
+            'ScoreColumn': score_columnname
+            }
+        metric_class['Metrics'][metricname] = metric
 
     scores = {}
 
     exit_code = ALLOK_EXIT_CODE
 
-    for metric in metrics:
-        scores[metric] = 0
+    for metric_class in metric_classes.values():
         filename = '{output}/scores/{filename}'.format(output=args.output,
-                                                       filename=metrics[metric])
+                                                       filename=metric_class['Filename'])
+        summary_scores = []
         if os.path.exists(filename):
             file_handle = open(filename, "r")
             lines = file_handle.readlines()
-            summary_line = lines[-1]
-            file_handle.close()
-            scores[metric] = summary_line.split()[-1]
+            columns = lines[0].strip().split()
+            for line in [l for l in lines if 'Summary' in l]:
+                line.strip()
+                values = line.split()
+                for i in range(len(columns) - len(values)):
+                    values.insert(len(values)-1, '')
+                score = {columns[i]:values[i] for i in range(len(columns))}
+                summary_scores.append(score)
         else:
             exit_code = ERROR_EXIT_CODE
+
+        metrics = metric_class['Metrics']
+        for metric_name in metrics:
+            scores[metric_name] = 0
+            specs = metrics[metric_name]
+            for score in [s for s in summary_scores if 'Metric' not in s]:
+                num_columns = len(specs['Columns'])
+                num_matched = 0
+                for column_name, column_value in specs['Columns'].items():
+                    if column_value == score[column_name]:
+                        num_matched += 1
+                if num_columns == num_matched:
+                    scores[metric_name] = score[specs['ScoreColumn']]
+                    score['Metric'] = metric_name
 
     num_problems, problem_stats = get_problems(logs_directory)
 
     fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
+    scores['Total'] = scores['FrameMetric_F1']
+    scores['Errors'] = num_problems
+    scores['ErrorStats'] = problem_stats
+    scores['FatalError'] = fatal_error
+
     output = {'scores' : [
-                            {
-                                'CoreferenceMetric_F1': scores['CoreferenceMetric_F1'],
-                                'TypeMetric_F1'       : scores['TypeMetric_F1'],
-                                'TemporalMetric_S'    : scores['TemporalMetric_S'],
-                                'ArgumentMetricV1_F1' : scores['ArgumentMetricV1_F1'],
-                                'ArgumentMetricV2_F1' : scores['ArgumentMetricV2_F1'],
-                                'FrameMetric_F1'      : scores['FrameMetric_F1'],
-                                'Total'               : scores['FrameMetric_F1'],
-                                'Errors'              : num_problems,
-                                'ErrorStats'          : problem_stats,
-                                'FatalError'          : fatal_error
-                            }
+                            scores
                          ]
             }
 

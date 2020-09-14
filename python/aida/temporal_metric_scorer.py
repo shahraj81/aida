@@ -20,6 +20,7 @@ class TemporalMetricScorer(Scorer):
 
     printing_specs = [{'name': 'document_id',      'header': 'DocID',           'format': 's',    'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',           'format': 's',    'justify': 'L'},
+                      {'name': 'language',         'header': 'Language',        'format': 's',    'justify': 'L'},
                       {'name': 'metatype',         'header': 'Metatype',        'format': 's',    'justify': 'L'},
                       {'name': 'gold_cluster_id',  'header': 'GoldClusterID',   'format': 's',    'justify': 'L'},
                       {'name': 'system_cluster_id','header': 'SystemClusterID', 'format': 's',    'justify': 'L'},
@@ -29,8 +30,10 @@ class TemporalMetricScorer(Scorer):
         super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
 
     def order(self, k):
-        m = {'Entity': 1, 'Event': 2, 'Relation': 3, 'ALL': 4}
-        return m[k]
+        language, metatype = k.split(':')
+        metatype = '_ALL' if metatype == 'ALL' else metatype
+        language = '_ALL' if language == 'ALL' else language
+        return '{language}:{metatype}'.format(metatype=metatype, language=language)
 
     def compute_temporal_similarity(self, gold_date_range, system_date_range):
         k = self.get('temporal_tuple', gold_date_range)
@@ -102,6 +105,8 @@ class TemporalMetricScorer(Scorer):
         counts = {}
         for document_id in self.get('core_documents'):
             # add scores corresponding to all gold clusters
+            document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
+            language = document.get('language')
             document_gold_to_system = self.get('cluster_alignment').get('gold_to_system').get(document_id)
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
@@ -123,12 +128,15 @@ class TemporalMetricScorer(Scorer):
                     if len(gold_cluster.get('dates').keys()) > 1:
                         self.record_event('UNEXPECTED_NUM_DATES', gold_cluster_id, document_id)
                     similarity = self.get('temporal_similarity', list(gold_cluster.get('dates').values())[0], list(system_cluster.get('dates').values()))
-                for key in ['ALL', metatype]:
-                    mean_similarities[key] = mean_similarities.get(key, 0) + similarity
-                    counts[key] = counts.get(key, 0) + 1
+                for metatype_key in ['ALL', metatype]:
+                    for language_key in ['ALL', language]:
+                        key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
+                        mean_similarities[key] = mean_similarities.get(key, 0) + similarity
+                        counts[key] = counts.get(key, 0) + 1
                 score = TemporalMetricScore(self.logger,
                                            self.get('runid'),
                                            document_id,
+                                           language,
                                            metatype,
                                            gold_cluster_id,
                                            system_cluster_id,
@@ -143,13 +151,15 @@ class TemporalMetricScorer(Scorer):
             scores_printer.add(score)
         for key in sorted(mean_similarities, key=self.order):
             mean_similarity = mean_similarities[key] / counts[key] if counts[key] else 0
+            language, metatype = key.split(':')
             mean_score = TemporalMetricScore(self.logger,
                                             self.get('runid'),
                                             'Summary',
-                                            key,
+                                            language,
+                                            metatype,
                                             '',
                                             '',
                                             mean_similarity,
                                             summary = True)
             scores_printer.add(mean_score)
-            self.scores = scores_printer
+        self.scores = scores_printer

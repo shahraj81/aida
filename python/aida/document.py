@@ -33,6 +33,24 @@ class Document(Object):
         self.ID = ID
         self.logger = logger
 
+    def get_language(self):
+        language = None
+        languages = {}
+        for document_element in self.get('document_elements').values():
+            de_language = document_element.get('language')
+            if de_language is not None and de_language != 'N/A':
+                languages[de_language] = 1
+        if len(languages) > 1:
+            self.record_event('DEFAULT_CRITICAL_ERROR',
+                              "Unhandled case: multiple languages '{languages}' found for document {ID}".format(
+                                  languages = ','.join(languages.keys()),
+                                  ID = self.get('ID')
+                                  ),
+                              self.get('code_location'))
+        elif len(languages) == 1:
+            language = list(languages.keys())[0]
+        return language
+
     def add_document_element(self, document_element):
         """
         Adds the document element to this document.

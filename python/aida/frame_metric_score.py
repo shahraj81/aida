@@ -12,10 +12,11 @@ class FrameMetricScore(Score):
     """
     AIDA class for Event/Relation frame evaluation metric score.
     """
-    def __init__(self, logger, run_id, document_id, metatype, gold_cluster_id, system_cluster_id, precision, recall, f1, summary=False):
+    def __init__(self, logger, run_id, document_id, language, metatype, gold_cluster_id, system_cluster_id, precision, recall, f1, summary=False):
         super().__init__(logger)
         self.run_id = run_id
         self.document_id = document_id
+        self.language = language
         self.metatype = metatype
         self.gold_cluster_id = gold_cluster_id if gold_cluster_id is not None else 'None'
         self.system_cluster_id = system_cluster_id if system_cluster_id is not None else 'None'
