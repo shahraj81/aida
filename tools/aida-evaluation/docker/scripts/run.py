@@ -205,6 +205,8 @@ def generate_results_file(logger, logs_directory):
                     values.insert(len(values)-1, '')
                 score = {columns[i]:values[i] for i in range(len(columns))}
                 summary_scores.append(score)
+        else:
+            exit_code = ERROR_EXIT_CODE
 
         metrics = metric_class['Metrics']
         for metric_name in metrics:
