@@ -52,7 +52,7 @@ class Clusters(Object):
                 if not system_cluster.is_alignable_entity_or_event(self.get('annotated_regions')): continue
                 similarity = 0
                 if gold_cluster.get('metatype') == system_cluster.get('metatype'):
-                    similarity = self.get('similarity', gold_cluster, system_cluster)
+                    similarity = self.get('similarity', 'gold', gold_cluster, 'system', system_cluster)
                 if gold_cluster.get('ID') not in similarities:
                     similarities[gold_cluster.get('ID')] = {}
                 similarities[gold_cluster.get('ID')][system_cluster.get('ID')] = similarity
@@ -66,25 +66,63 @@ class Clusters(Object):
                 if not system_frame.is_alignable_relation(): continue
                 if gold_frame.get('ID') not in similarities:
                     similarities[gold_frame.get('ID')] = {}
-                similarities[gold_frame.get('ID')][system_frame.get('ID')] = self.get('similarity', gold_frame, system_frame)
+                similarities[gold_frame.get('ID')][system_frame.get('ID')] = self.get('similarity', 'gold', gold_frame, 'system', system_frame)
         return similarities
 
-    def get_similarity(self, gold, system):
-        if gold.get('metatype') == 'Relation' and system.get('metatype') == 'Relation':
-            if isinstance(gold, Cluster):
-                gold = self.get('frame', 'gold', gold.get('ID'))
-            if isinstance(system, Cluster):
-                system = self.get('frame', 'system', system.get('ID'))
-            if gold and system:
-                if gold.is_alignable_relation() and system.is_alignable_relation():
-                    return self.get('relation_similarity', gold, system)
+    def get_similarity(self, system_or_gold1, cluster_or_frame1, system_or_gold2, cluster_or_frame2):
+        if cluster_or_frame1.get('metatype') == 'Relation' and cluster_or_frame2.get('metatype') == 'Relation':
+            if isinstance(cluster_or_frame1, Cluster):
+                cluster_or_frame1 = self.get('frame', system_or_gold1, cluster_or_frame1.get('ID'))
+            if isinstance(cluster_or_frame2, Cluster):
+                cluster_or_frame2 = self.get('frame', system_or_gold2, cluster_or_frame2.get('ID'))
+            if cluster_or_frame1 and cluster_or_frame2:
+                if cluster_or_frame1.is_alignable_relation() and cluster_or_frame2.is_alignable_relation():
+                    return self.get('relation_similarity', system_or_gold1, cluster_or_frame1, system_or_gold2, cluster_or_frame2)
             return 0
-        elif gold.get('metatype') in ['Entity', 'Event'] and system.get('metatype') in ['Entity', 'Event'] and gold.get('metatype') == system.get('metatype'):
-            return self.get('entity_and_event_similarity', gold, system)
+        elif cluster_or_frame1.get('metatype') in ['Entity', 'Event'] and cluster_or_frame2.get('metatype') in ['Entity', 'Event'] and cluster_or_frame1.get('metatype') == cluster_or_frame2.get('metatype'):
+            return self.get('entity_and_event_similarity', cluster_or_frame1, cluster_or_frame2)
         else:
             self.record_event('DEFAULT_CRITICAL_ERROR', "unexpected combination of gold and system", self.get('code_location'))
 
-    def get_relation_similarity(self, gold_frame, system_frame):
+    def get_relation_similarity(self, system_or_gold1, frame1, system_or_gold2, frame2):
+        options = {'gold': 1, 'system': 1}
+        for system_or_gold in [system_or_gold1, system_or_gold2]:
+            if system_or_gold not in options:
+                self.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value for system_or_gold: {}'.format(system_or_gold))
+        if system_or_gold1 != system_or_gold2:
+            gold_frame = frame2
+            system_frame = frame1
+            if system_or_gold1 == 'gold' and system_or_gold2 == 'system':
+                gold_frame = frame1
+                system_frame = frame2
+            return self.get('gold_system_relation_similarity', gold_frame, system_frame)
+        else:
+            return self.get('relation_self_similarity', frame1, frame2)
+
+    def get_relation_self_similarity(self, frame1, frame2):
+        num_fillers_aligned = 0
+        if self.get('number_of_matching_types', frame1.get('top_level_types'), frame2.get('top_level_types')):
+            found = {}
+            for rolename in frame1.get('role_fillers') if frame1.get('role_fillers') else []:
+                frame1_fillers = list(frame1.get('role_fillers')[rolename])
+                for frame1_filler_id in frame1_fillers:
+                    rolename_and_filler = '{}:{}'.format(rolename, frame1_filler_id)
+                    found[rolename_and_filler] = 0
+                frame2_fillers = list(frame2.get('role_fillers')[rolename]) if rolename in frame2.get('role_fillers') else []
+                for frame2_filler_id in frame2_fillers:
+                    rolename_and_filler = '{}:{}'.format(rolename, frame2_filler_id)
+                    if rolename_and_filler in found:
+                        found[rolename_and_filler] = 1
+                    else:
+                        found[rolename_and_filler] = 0
+            for rolename_and_filler in found:
+                if found[rolename_and_filler] == 1:
+                    num_fillers_aligned += 1
+        if num_fillers_aligned > 2:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'num_fillers_aligned > 2: Gold frame: {}'.format(gold_frame.get('ID')))
+        return 0 if num_fillers_aligned <= 1 else 1
+
+    def get_gold_system_relation_similarity(self, gold_frame, system_frame):
         num_fillers_aligned = 0
         if self.get('number_of_matching_types', gold_frame.get('top_level_types'), system_frame.get('top_level_types')):
             found = {}
@@ -291,7 +329,7 @@ class Clusters(Object):
             for cluster1 in self.get('clusters').get(system_or_gold1).values():
                 for cluster2 in self.get('clusters').get(system_or_gold2).values():
                     if cluster1.get('metatype') == cluster2.get('metatype'):
-                        similarity = self.get('similarity', cluster1, cluster2)
+                        similarity = self.get('similarity', system_or_gold1, cluster1, system_or_gold2, cluster2)
                         program_output.write('{metatype}\t{system_or_gold1}\t{cluster1}\t{system_or_gold2}\t{cluster2}\t{similarity}\n'.format(metatype=cluster1.get('metatype'),
                                                                                                                                                system_or_gold1=system_or_gold1,
                                                                                                                                                system_or_gold2=system_or_gold2,
