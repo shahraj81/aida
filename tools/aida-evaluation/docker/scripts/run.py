@@ -88,19 +88,19 @@ def generate_results_file(logger, logs_directory):
           CoreferenceMetric-scores.txt CoreferenceMetric_F1                Language:ALL,Metatype:ALL      F1
 
           CoreferenceMetric-scores.txt CoreferenceMetric_Events_F1         Language:ALL,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_Relations_F1      Language:ALL,Metatype:Relation F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_Entities_F1       Language:ALL,Metatype:Entity   F1
 
           CoreferenceMetric-scores.txt CoreferenceMetric_ENG_F1            Language:ENG,Metatype:ALL      F1
           CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Events_F1     Language:ENG,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Relations_F1  Language:ENG,Metatype:Relation F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Entities_F1   Language:ENG,Metatype:Entity   F1
 
           CoreferenceMetric-scores.txt CoreferenceMetric_RUS_F1            Language:RUS,Metatype:ALL      F1
           CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Events_F1     Language:RUS,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Relations_F1  Language:RUS,Metatype:Relation F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Entities_F1   Language:RUS,Metatype:Entity   F1
 
           CoreferenceMetric-scores.txt CoreferenceMetric_SPA_F1            Language:SPA,Metatype:ALL      F1
           CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Events_F1     Language:SPA,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Relations_F1  Language:SPA,Metatype:Relation F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Entities_F1   Language:SPA,Metatype:Entity   F1
 
         # ---
         # TemporalMetric
@@ -128,19 +128,19 @@ def generate_results_file(logger, logs_directory):
           TypeMetric-scores.txt        TypeMetric_F1                       Language:ALL,Metatype:ALL      F1
 
           TypeMetric-scores.txt        TypeMetric_Events_F1                Language:ALL,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_Relations_F1             Language:ALL,Metatype:Relation F1
+          TypeMetric-scores.txt        TypeMetric_Entities_F1              Language:ALL,Metatype:Entity   F1
 
           TypeMetric-scores.txt        TypeMetric_ENG_F1                   Language:ENG,Metatype:ALL      F1
           TypeMetric-scores.txt        TypeMetric_ENG_Events_F1            Language:ENG,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_ENG_Relations_F1         Language:ENG,Metatype:Relation F1
+          TypeMetric-scores.txt        TypeMetric_ENG_Entities_F1          Language:ENG,Metatype:Entity   F1
 
           TypeMetric-scores.txt        TypeMetric_RUS_F1                   Language:RUS,Metatype:ALL      F1
           TypeMetric-scores.txt        TypeMetric_RUS_Events_F1            Language:RUS,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_RUS_Relations_F1         Language:RUS,Metatype:Relation F1
+          TypeMetric-scores.txt        TypeMetric_RUS_Entities_F1          Language:RUS,Metatype:Entity   F1
 
           TypeMetric-scores.txt        TypeMetric_SPA_F1                   Language:SPA,Metatype:ALL      F1
           TypeMetric-scores.txt        TypeMetric_SPA_Events_F1            Language:SPA,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_SPA_Relations_F1         Language:SPA,Metatype:Relation F1
+          TypeMetric-scores.txt        TypeMetric_SPA_Entities_F1          Language:SPA,Metatype:Entity   F1
 
         # ---
         # FrameMetric
