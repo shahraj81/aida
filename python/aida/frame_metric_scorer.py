@@ -18,6 +18,7 @@ class FrameMetricScorer(Scorer):
     
     printing_specs = [{'name': 'document_id',      'header': 'DocID',           'format': 's',    'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',           'format': 's',    'justify': 'L'},
+                      {'name': 'language',         'header': 'Language',        'format': 's',    'justify': 'L'},
                       {'name': 'metatype',         'header': 'Metatype',        'format': 's',    'justify': 'L'},
                       {'name': 'gold_cluster_id',  'header': 'GoldClusterID',   'format': 's',    'justify': 'L'},
                       {'name': 'system_cluster_id','header': 'SystemClusterID', 'format': 's',    'justify': 'L'},
@@ -29,8 +30,10 @@ class FrameMetricScorer(Scorer):
         super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
 
     def order(self, k):
-        m = {'Entity': 1, 'Event': 2, 'Relation': 3, 'ALL': 4}
-        return m[k]
+        language, metatype = k.split(':')
+        metatype = '_ALL' if metatype == 'ALL' else metatype
+        language = '_ALL' if language == 'ALL' else language
+        return '{language}:{metatype}'.format(metatype=metatype, language=language)
 
     def score_responses(self):
         scores = []
@@ -38,6 +41,8 @@ class FrameMetricScorer(Scorer):
         counts = {}
         for document_id in self.get('core_documents'):
             # add scores corresponding to all gold clusters
+            document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
+            language = document.get('language')
             document_gold_to_system = self.get('cluster_alignment').get('gold_to_system').get(document_id)
             document_system_to_gold = self.get('cluster_alignment').get('system_to_gold').get(document_id)
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
@@ -78,10 +83,12 @@ class FrameMetricScorer(Scorer):
                                     system_slot_fillers['{}:{}'.format(role_name, system_filler_cluster_id)] = 1
                         if len(gold_slot_fillers) and len(system_slot_fillers):
                             precision, recall, f1 = get_precision_recall_and_f1(set(gold_slot_fillers.keys()), set(system_slot_fillers.keys()))
-                for key in ['ALL', metatype]:
-                    mean_f1s[key] = mean_f1s.get(key, 0) + f1
-                    counts[key] = counts.get(key, 0) + 1
-                score = FrameMetricScore(self.logger, self.get('runid'), document_id, metatype,
+                for metatype_key in ['ALL', metatype]:
+                    for language_key in ['ALL', language]:
+                        key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
+                        mean_f1s[key] = mean_f1s.get(key, 0) + f1
+                        counts[key] = counts.get(key, 0) + 1
+                score = FrameMetricScore(self.logger, self.get('runid'), document_id, language, metatype,
                                          gold_cluster_id, system_cluster_id,
                                          precision, recall, f1)
                 scores.append(score)
@@ -94,9 +101,12 @@ class FrameMetricScorer(Scorer):
                     if gold_cluster_id == 'None':
                         metatype = self.get('cluster', 'system', document_id, system_cluster_id).get('metatype')
                         if metatype not in ['Event', 'Relation']: continue
-                        counts['ALL'] = counts.get('ALL',0) + 1
-                        counts[metatype] = counts.get(metatype, 0) + 1
-                        score = FrameMetricScore(self.logger, self.get('runid'), document_id, metatype,
+                        for metatype_key in ['ALL', metatype]:
+                            for language_key in ['ALL', language]:
+                                key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
+                                mean_f1s[key] = mean_f1s.get(key, 0) + f1
+                                counts[key] = counts.get(key, 0) + 1
+                        score = FrameMetricScore(self.logger, self.get('runid'), document_id, language, metatype,
                                                  gold_cluster_id, system_cluster_id,
                                                  precision, recall, f1)
                         scores.append(score)
@@ -111,6 +121,8 @@ class FrameMetricScorer(Scorer):
             scores_printer.add(score)
         for key in sorted(mean_f1s, key=self.order):
             mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
-            mean_score = FrameMetricScore(self.logger, self.get('runid'), 'Summary', key, '', '', '', '', mean_f1, summary = True)
+            language, metatype = key.split(':')
+            mean_score = FrameMetricScore(self.logger, self.get('runid'), 'Summary', language, metatype, '', '', '', '', mean_f1, summary = True)
             scores_printer.add(mean_score)
-            self.scores = scores_printer
+
+        self.scores = scores_printer
