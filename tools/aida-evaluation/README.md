@@ -145,6 +145,7 @@ The logs directory contains the following log files:
 # Revision History
 
 ## 09/14/2020:
+* A bug has been fixed which at the time of printing similarity values generated zeros for relations. This bug had no impact on scores, however.
 * A bug in TRF alignment was discovered in Argument Metric scorers, the correction was made in V1 scorer. V2 scorer was modified to: (1) inherit code from V1 scorer, and (2) override the definition of predicate justification correctness. For V1 scorer, a system TRF is aligned to a gold TRF if both have a matching type and rolename, and both arguments were aligned. For V2 scorer, TRF alignement requires meeting an addition requirement i.e. at least one of the two highest confident system predicate justifications should have some overlap with a gold predicate justification (previously the overlap was required to have an IOU of 0.8 or above).
 * Processed parent-children file modified to include language information.
 * Breaking up scores by language and metatype.
