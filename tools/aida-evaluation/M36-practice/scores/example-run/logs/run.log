@@ -1,303 +1,303 @@
-09/05/2020 09:42:29 PM - run.py - INFO - Execution begins {current_dir:/scripts, script_name:run.py, arguments:--run example-run}
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Inspecting the input directory.
-09/05/2020 09:42:29 PM - run.py - INFO - KB_STATS - Input directory contains 29 KBs in total. (valid 29, invalid 0)
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying valid input KBs, restricted to core documents, for applying SPARQL queries.
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V8NY.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VFH8.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A6NA.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YFXO.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YF1M.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VFA7.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V9CI.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V76J.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V8J7.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A9VN.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YCXK.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V7VC.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A7C4.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VAPK.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VCIQ.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A59I.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V9U9.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YC48.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YC4N.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001ZTKF.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V6F1.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YF02.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V8WF.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A7RG.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YD6G.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YC3Z.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V6OI.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YDCM.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VGO2.ttl
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Applying SPARQL queries.
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Copying SPARQL queries to be applied.
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V8NY.ttl ... 1 of 29.
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:42:29 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V8NY.ttl into GraphDB.
-09/05/2020 09:42:35 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:42:40 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:42:50 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:42:50 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:42:50 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:42:50 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:42:50 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VFH8.ttl ... 2 of 29.
-09/05/2020 09:42:50 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:42:50 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VFH8.ttl into GraphDB.
-09/05/2020 09:42:55 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:43:00 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:43:09 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:43:09 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:43:09 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:43:09 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:43:09 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A6NA.ttl ... 3 of 29.
-09/05/2020 09:43:09 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:43:09 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A6NA.ttl into GraphDB.
-09/05/2020 09:43:15 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:43:20 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:43:29 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:43:29 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:43:29 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:43:29 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:43:29 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YFXO.ttl ... 4 of 29.
-09/05/2020 09:43:29 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:43:29 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YFXO.ttl into GraphDB.
-09/05/2020 09:43:35 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:43:40 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:43:50 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:43:50 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:43:50 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:43:50 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:43:50 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YF1M.ttl ... 5 of 29.
-09/05/2020 09:43:50 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:43:50 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YF1M.ttl into GraphDB.
-09/05/2020 09:43:55 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:44:00 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:44:10 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:44:10 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:44:10 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:44:10 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:44:10 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VFA7.ttl ... 6 of 29.
-09/05/2020 09:44:10 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:44:10 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VFA7.ttl into GraphDB.
-09/05/2020 09:44:16 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:44:21 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:44:31 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:44:31 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:44:31 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:44:31 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:44:31 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V9CI.ttl ... 7 of 29.
-09/05/2020 09:44:31 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:44:31 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V9CI.ttl into GraphDB.
-09/05/2020 09:44:36 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:44:41 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:44:52 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:44:52 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:44:52 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:44:52 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:44:52 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V76J.ttl ... 8 of 29.
-09/05/2020 09:44:52 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:44:52 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V76J.ttl into GraphDB.
-09/05/2020 09:44:58 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:45:03 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:45:12 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:45:12 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:45:12 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:45:12 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:45:12 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V8J7.ttl ... 9 of 29.
-09/05/2020 09:45:12 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:45:12 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V8J7.ttl into GraphDB.
-09/05/2020 09:45:18 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:45:23 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:45:33 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:45:33 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:45:33 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:45:33 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:45:33 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A9VN.ttl ... 10 of 29.
-09/05/2020 09:45:33 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:45:33 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A9VN.ttl into GraphDB.
-09/05/2020 09:45:38 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:45:43 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:45:53 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:45:53 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:45:53 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:45:53 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:45:53 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YCXK.ttl ... 11 of 29.
-09/05/2020 09:45:53 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:45:53 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YCXK.ttl into GraphDB.
-09/05/2020 09:45:58 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:46:03 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:46:13 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:46:13 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:46:13 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:46:13 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:46:13 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V7VC.ttl ... 12 of 29.
-09/05/2020 09:46:13 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:46:13 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V7VC.ttl into GraphDB.
-09/05/2020 09:46:18 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:46:23 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:46:33 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:46:33 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:46:33 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:46:33 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:46:33 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A7C4.ttl ... 13 of 29.
-09/05/2020 09:46:33 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:46:33 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A7C4.ttl into GraphDB.
-09/05/2020 09:46:38 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:46:43 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:46:53 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:46:53 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:46:53 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:46:53 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:46:53 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VAPK.ttl ... 14 of 29.
-09/05/2020 09:46:53 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:46:53 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VAPK.ttl into GraphDB.
-09/05/2020 09:46:58 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:47:03 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:47:13 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:47:13 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:47:13 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:47:13 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:47:13 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VCIQ.ttl ... 15 of 29.
-09/05/2020 09:47:13 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:47:13 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VCIQ.ttl into GraphDB.
-09/05/2020 09:47:18 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:47:23 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:47:32 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:47:32 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:47:32 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:47:32 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:47:32 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A59I.ttl ... 16 of 29.
-09/05/2020 09:47:32 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:47:32 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A59I.ttl into GraphDB.
-09/05/2020 09:47:37 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:47:42 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:47:52 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:47:52 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:47:52 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:47:52 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:47:52 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V9U9.ttl ... 17 of 29.
-09/05/2020 09:47:52 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:47:52 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V9U9.ttl into GraphDB.
-09/05/2020 09:47:58 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:48:03 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:48:12 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:48:12 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:48:13 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:48:13 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:48:13 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YC48.ttl ... 18 of 29.
-09/05/2020 09:48:13 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:48:13 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YC48.ttl into GraphDB.
-09/05/2020 09:48:18 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:48:23 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:48:32 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:48:32 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:48:32 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:48:32 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:48:32 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YC4N.ttl ... 19 of 29.
-09/05/2020 09:48:32 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:48:32 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YC4N.ttl into GraphDB.
-09/05/2020 09:48:37 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:48:42 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:48:51 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:48:51 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:48:51 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:48:51 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:48:51 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001ZTKF.ttl ... 20 of 29.
-09/05/2020 09:48:51 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:48:51 PM - run.py - INFO - DEFAULT_INFO - Loading IC001ZTKF.ttl into GraphDB.
-09/05/2020 09:48:57 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:49:02 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:49:11 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:49:11 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:49:11 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:49:11 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:49:11 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V6F1.ttl ... 21 of 29.
-09/05/2020 09:49:11 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:49:11 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V6F1.ttl into GraphDB.
-09/05/2020 09:49:16 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:49:22 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:49:31 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:49:31 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:49:31 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:49:31 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:49:31 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YF02.ttl ... 22 of 29.
-09/05/2020 09:49:31 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:49:31 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YF02.ttl into GraphDB.
-09/05/2020 09:49:36 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:49:41 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:49:51 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:49:51 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:49:51 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:49:51 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:49:51 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V8WF.ttl ... 23 of 29.
-09/05/2020 09:49:51 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:49:51 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V8WF.ttl into GraphDB.
-09/05/2020 09:49:56 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:50:01 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:50:11 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:50:11 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:50:11 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:50:11 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:50:11 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A7RG.ttl ... 24 of 29.
-09/05/2020 09:50:11 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:50:11 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A7RG.ttl into GraphDB.
-09/05/2020 09:50:16 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:50:21 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:50:30 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:50:30 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:50:30 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:50:30 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:50:30 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YD6G.ttl ... 25 of 29.
-09/05/2020 09:50:30 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:50:30 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YD6G.ttl into GraphDB.
-09/05/2020 09:50:36 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:50:42 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:50:51 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:50:51 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:50:51 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:50:51 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:50:51 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YC3Z.ttl ... 26 of 29.
-09/05/2020 09:50:51 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:50:51 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YC3Z.ttl into GraphDB.
-09/05/2020 09:50:57 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:51:02 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:51:11 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:51:11 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:51:11 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:51:11 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:51:11 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V6OI.ttl ... 27 of 29.
-09/05/2020 09:51:11 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:51:11 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V6OI.ttl into GraphDB.
-09/05/2020 09:51:16 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:51:21 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:51:31 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:51:31 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:51:31 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:51:31 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:51:31 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YDCM.ttl ... 28 of 29.
-09/05/2020 09:51:31 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:51:31 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YDCM.ttl into GraphDB.
-09/05/2020 09:51:36 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:51:41 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:51:51 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:51:51 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:51:51 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:51:51 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:51:51 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VGO2.ttl ... 29 of 29.
-09/05/2020 09:51:51 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/05/2020 09:51:51 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VGO2.ttl into GraphDB.
-09/05/2020 09:51:57 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
-09/05/2020 09:52:02 PM - run.py - INFO - DEFAULT_INFO - Applying queries
-09/05/2020 09:52:12 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/05/2020 09:52:12 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-09/05/2020 09:52:12 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-09/05/2020 09:52:12 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-09/05/2020 09:52:12 PM - run.py - INFO - DEFAULT_INFO - Cleaning SPARQL output.
-09/05/2020 09:52:13 PM - run.py - INFO - DEFAULT_INFO - Validating SPARQL output.
-09/05/2020 09:52:19 PM - run.py - INFO - DEFAULT_INFO - Filtering SPARQL output.
-09/05/2020 09:52:28 PM - run.py - INFO - DEFAULT_INFO - Aligning clusters.
-09/05/2020 09:54:07 PM - run.py - INFO - DEFAULT_INFO - Generating scores.
-09/05/2020 09:54:24 PM - run.py - INFO - DEFAULT_INFO - Generating results.json file.
-09/05/2020 09:54:24 PM - run.py - INFO - DEFAULT_INFO - Done.
+09/14/2020 12:53:49 PM - run.py - INFO - Execution begins {current_dir:/scripts, script_name:run.py, arguments:--run example-run}
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Inspecting the input directory.
+09/14/2020 12:53:49 PM - run.py - INFO - KB_STATS - Input directory contains 29 KBs in total. (valid 29, invalid 0)
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying valid input KBs, restricted to core documents, for applying SPARQL queries.
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V8NY.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VFH8.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A6NA.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YFXO.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YF1M.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VFA7.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V9CI.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V76J.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V8J7.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A9VN.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YCXK.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V7VC.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A7C4.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VAPK.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VCIQ.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A59I.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V9U9.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YC48.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YC4N.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001ZTKF.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V6F1.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YF02.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V8WF.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying KC003A7RG.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YD6G.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YC3Z.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001V6OI.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying JC002YDCM.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying IC001VGO2.ttl
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Applying SPARQL queries.
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Copying SPARQL queries to be applied.
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V8NY.ttl ... 1 of 29.
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:53:49 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V8NY.ttl into GraphDB.
+09/14/2020 12:53:55 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:54:01 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:54:11 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:54:11 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:54:11 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:54:11 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:54:11 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VFH8.ttl ... 2 of 29.
+09/14/2020 12:54:11 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:54:11 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VFH8.ttl into GraphDB.
+09/14/2020 12:54:16 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:54:21 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:54:30 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:54:30 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:54:30 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:54:30 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:54:30 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A6NA.ttl ... 3 of 29.
+09/14/2020 12:54:30 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:54:30 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A6NA.ttl into GraphDB.
+09/14/2020 12:54:35 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:54:40 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:54:49 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:54:49 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:54:49 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:54:49 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:54:49 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YFXO.ttl ... 4 of 29.
+09/14/2020 12:54:49 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:54:49 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YFXO.ttl into GraphDB.
+09/14/2020 12:54:55 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:55:00 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:55:09 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:55:09 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:55:09 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:55:09 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:55:09 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YF1M.ttl ... 5 of 29.
+09/14/2020 12:55:09 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:55:09 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YF1M.ttl into GraphDB.
+09/14/2020 12:55:14 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:55:19 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:55:28 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:55:28 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:55:29 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:55:29 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:55:29 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VFA7.ttl ... 6 of 29.
+09/14/2020 12:55:29 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:55:29 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VFA7.ttl into GraphDB.
+09/14/2020 12:55:34 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:55:39 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:55:48 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:55:48 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:55:48 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:55:48 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:55:48 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V9CI.ttl ... 7 of 29.
+09/14/2020 12:55:48 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:55:48 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V9CI.ttl into GraphDB.
+09/14/2020 12:55:53 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:55:58 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:56:07 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:56:07 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:56:07 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:56:07 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:56:07 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V76J.ttl ... 8 of 29.
+09/14/2020 12:56:07 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:56:07 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V76J.ttl into GraphDB.
+09/14/2020 12:56:13 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:56:18 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:56:27 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:56:27 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:56:27 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:56:27 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:56:27 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V8J7.ttl ... 9 of 29.
+09/14/2020 12:56:27 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:56:27 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V8J7.ttl into GraphDB.
+09/14/2020 12:56:32 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:56:37 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:56:46 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:56:46 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:56:46 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:56:46 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:56:46 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A9VN.ttl ... 10 of 29.
+09/14/2020 12:56:46 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:56:46 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A9VN.ttl into GraphDB.
+09/14/2020 12:56:52 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:56:57 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:57:06 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:57:06 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:57:06 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:57:06 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:57:06 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YCXK.ttl ... 11 of 29.
+09/14/2020 12:57:06 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:57:06 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YCXK.ttl into GraphDB.
+09/14/2020 12:57:11 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:57:16 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:57:25 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:57:25 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:57:25 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:57:25 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:57:25 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V7VC.ttl ... 12 of 29.
+09/14/2020 12:57:25 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:57:25 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V7VC.ttl into GraphDB.
+09/14/2020 12:57:30 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:57:35 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:57:44 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:57:44 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:57:44 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:57:44 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:57:44 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A7C4.ttl ... 13 of 29.
+09/14/2020 12:57:44 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:57:44 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A7C4.ttl into GraphDB.
+09/14/2020 12:57:50 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:57:55 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:58:04 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:58:04 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:58:04 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:58:04 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:58:04 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VAPK.ttl ... 14 of 29.
+09/14/2020 12:58:04 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:58:04 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VAPK.ttl into GraphDB.
+09/14/2020 12:58:09 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:58:14 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:58:23 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:58:23 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:58:23 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:58:23 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:58:23 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VCIQ.ttl ... 15 of 29.
+09/14/2020 12:58:23 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:58:24 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VCIQ.ttl into GraphDB.
+09/14/2020 12:58:28 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:58:34 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:58:42 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:58:42 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:58:42 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:58:42 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:58:42 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A59I.ttl ... 16 of 29.
+09/14/2020 12:58:42 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:58:42 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A59I.ttl into GraphDB.
+09/14/2020 12:58:47 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:58:53 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:59:02 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:59:02 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:59:02 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:59:02 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:59:02 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V9U9.ttl ... 17 of 29.
+09/14/2020 12:59:02 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:59:02 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V9U9.ttl into GraphDB.
+09/14/2020 12:59:07 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:59:12 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:59:22 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:59:22 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:59:22 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:59:22 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:59:22 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YC48.ttl ... 18 of 29.
+09/14/2020 12:59:22 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:59:22 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YC48.ttl into GraphDB.
+09/14/2020 12:59:26 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:59:31 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:59:40 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:59:40 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:59:40 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:59:40 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:59:40 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YC4N.ttl ... 19 of 29.
+09/14/2020 12:59:40 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:59:40 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YC4N.ttl into GraphDB.
+09/14/2020 12:59:45 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 12:59:50 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 12:59:59 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 12:59:59 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 12:59:59 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 12:59:59 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 12:59:59 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001ZTKF.ttl ... 20 of 29.
+09/14/2020 12:59:59 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 12:59:59 PM - run.py - INFO - DEFAULT_INFO - Loading IC001ZTKF.ttl into GraphDB.
+09/14/2020 01:00:05 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:00:10 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:00:19 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:00:19 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:00:19 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:00:19 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:00:19 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V6F1.ttl ... 21 of 29.
+09/14/2020 01:00:19 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:00:19 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V6F1.ttl into GraphDB.
+09/14/2020 01:00:24 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:00:29 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:00:38 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:00:38 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:00:38 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:00:38 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:00:38 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YF02.ttl ... 22 of 29.
+09/14/2020 01:00:38 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:00:38 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YF02.ttl into GraphDB.
+09/14/2020 01:00:43 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:00:48 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:00:57 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:00:57 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:00:57 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:00:57 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:00:57 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V8WF.ttl ... 23 of 29.
+09/14/2020 01:00:57 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:00:57 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V8WF.ttl into GraphDB.
+09/14/2020 01:01:02 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:01:08 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:01:17 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:01:17 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:01:17 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:01:17 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:01:17 PM - run.py - INFO - DEFAULT_INFO - Applying queries to KC003A7RG.ttl ... 24 of 29.
+09/14/2020 01:01:17 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:01:17 PM - run.py - INFO - DEFAULT_INFO - Loading KC003A7RG.ttl into GraphDB.
+09/14/2020 01:01:22 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:01:27 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:01:36 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:01:36 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:01:36 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:01:36 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:01:36 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YD6G.ttl ... 25 of 29.
+09/14/2020 01:01:36 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:01:36 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YD6G.ttl into GraphDB.
+09/14/2020 01:01:41 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:01:46 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:01:55 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:01:55 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:01:55 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:01:55 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:01:55 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YC3Z.ttl ... 26 of 29.
+09/14/2020 01:01:55 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:01:55 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YC3Z.ttl into GraphDB.
+09/14/2020 01:02:00 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:02:05 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:02:14 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:02:14 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:02:14 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:02:14 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:02:14 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001V6OI.ttl ... 27 of 29.
+09/14/2020 01:02:14 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:02:14 PM - run.py - INFO - DEFAULT_INFO - Loading IC001V6OI.ttl into GraphDB.
+09/14/2020 01:02:19 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:02:24 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:02:33 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:02:33 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:02:33 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:02:33 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:02:33 PM - run.py - INFO - DEFAULT_INFO - Applying queries to JC002YDCM.ttl ... 28 of 29.
+09/14/2020 01:02:33 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:02:33 PM - run.py - INFO - DEFAULT_INFO - Loading JC002YDCM.ttl into GraphDB.
+09/14/2020 01:02:38 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:02:43 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:02:53 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:02:53 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:02:53 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:02:53 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:02:53 PM - run.py - INFO - DEFAULT_INFO - Applying queries to IC001VGO2.ttl ... 29 of 29.
+09/14/2020 01:02:53 PM - run.py - INFO - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+09/14/2020 01:02:53 PM - run.py - INFO - DEFAULT_INFO - Loading IC001VGO2.ttl into GraphDB.
+09/14/2020 01:02:58 PM - run.py - INFO - DEFAULT_INFO - Starting GraphDB
+09/14/2020 01:03:03 PM - run.py - INFO - DEFAULT_INFO - Applying queries
+09/14/2020 01:03:13 PM - run.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+09/14/2020 01:03:13 PM - run.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+09/14/2020 01:03:13 PM - run.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+09/14/2020 01:03:13 PM - run.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+09/14/2020 01:03:13 PM - run.py - INFO - DEFAULT_INFO - Cleaning SPARQL output.
+09/14/2020 01:03:14 PM - run.py - INFO - DEFAULT_INFO - Validating SPARQL output.
+09/14/2020 01:03:20 PM - run.py - INFO - DEFAULT_INFO - Filtering SPARQL output.
+09/14/2020 01:03:29 PM - run.py - INFO - DEFAULT_INFO - Aligning clusters.
+09/14/2020 01:05:08 PM - run.py - INFO - DEFAULT_INFO - Generating scores.
+09/14/2020 01:05:25 PM - run.py - INFO - DEFAULT_INFO - Generating results.json file.
+09/14/2020 01:05:25 PM - run.py - INFO - DEFAULT_INFO - Done.
