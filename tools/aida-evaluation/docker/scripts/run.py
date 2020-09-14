@@ -208,6 +208,7 @@ def generate_results_file(logger, logs_directory):
 
         metrics = metric_class['Metrics']
         for metric_name in metrics:
+            scores[metric_name] = 0
             specs = metrics[metric_name]
             for score in [s for s in summary_scores if 'Metric' not in s]:
                 num_columns = len(specs['Columns'])
