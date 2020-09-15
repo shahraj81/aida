@@ -157,7 +157,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
                 if not filtered_clusters[key]:
                     passes_filter = False
                     cluster_id = entry.get('{}_cluster'.format(cluster_type)).get('ID')
-                    logger.record_event('DEFAULT_INFO', 'Entry fails the filter due to cluster: {}'.format(cluster_id), entry.get('where'))
+                    logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
                     break
             else:
                 logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', entry.get('code_location'))
