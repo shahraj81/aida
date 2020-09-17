@@ -220,7 +220,7 @@ def generate_results_file(logger, logs_directory):
         for metric_name in metrics:
             scores[metric_name] = 0
             specs = metrics[metric_name]
-            for score in [s for s in summary_scores if 'Metric' not in s]:
+            for score in [s for s in summary_scores]:
                 num_columns = len(specs['Columns'])
                 num_matched = 0
                 for column_name, column_value in specs['Columns'].items():
@@ -228,6 +228,8 @@ def generate_results_file(logger, logs_directory):
                         num_matched += 1
                 if num_columns == num_matched:
                     scores[metric_name] = score[specs['ScoreColumn']]
+                    if 'Metric' in score:
+                        logger.record_event('DEFAULT_CRITICAL_ERROR', 'Attempting to bind score to {} which was already bound to {}'.format(metric_name, score['Metric']))
                     score['Metric'] = metric_name
 
     num_problems, problem_stats = get_problems(logs_directory)
