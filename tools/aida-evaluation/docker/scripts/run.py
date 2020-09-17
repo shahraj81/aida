@@ -164,14 +164,20 @@ def generate_results_file(logger, logs_directory):
 
     """
 
+    metric_column_value_pairs = {}
     metric_classes = {}
-
     for line in metric_classes_specs.split('\n'):
         line = line.strip()
         if line == '': continue
         if line.startswith('#'): continue
         filename, metricname, column_value_pairs, score_columnname = line.split()
         metric_classname = filename.split('-')[0]
+        metric_column_value_pair = '{metric_classname}:{column_value_pairs}'.format(metric_classname=metric_classname,
+                                                                                   column_value_pairs=','.join(sorted(column_value_pairs.split(','))))
+        if metric_column_value_pair in metric_column_value_pairs:
+            logger.record_event('DEFAULT_CRITICAL_ERROR', 'Duplicate column-value pair \'{}\' for metric-class: \'{}\''.format(metric_classname,
+                                                                                                                               column_value_pairs))
+        metric_column_value_pairs[metric_column_value_pair] = 1
         if metric_classname not in metric_classes:
             metric_class = {'Filename': filename, 'Metrics': {}}
             metric_classes[metric_classname] = metric_class
@@ -184,6 +190,8 @@ def generate_results_file(logger, logs_directory):
             'Columns': columns,
             'ScoreColumn': score_columnname
             }
+        if metricname in metric_class['Metrics']:
+            logger.record_event('DEFAULT_CRITICAL_ERROR', 'Duplicate metricname: {} (expected to be unique)'.format(metricname) )
         metric_class['Metrics'][metricname] = metric
 
     scores = {}
