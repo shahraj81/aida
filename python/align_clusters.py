@@ -1,7 +1,6 @@
 """
 AIDA main script for aligning clusters
 """
-from aida.annotated_regions import AnnotatedRegions
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
@@ -16,6 +15,7 @@ from aida.text_boundaries import TextBoundaries
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.video_boundaries import VideoBoundaries
+from aida.annotated_regions import AnnotatedRegions
 
 import argparse
 import os
