@@ -21,7 +21,7 @@ class Clusters(Object):
     The container to hold Clusters.
     """
 
-    def __init__(self, logger, document_mappings, document_boundaries, annotated_regions, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename):
+    def __init__(self, logger, document_mappings, document_boundaries, annotated_regions, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename, thresholds):
         """
         Initialize the Clusters.
         """
@@ -35,6 +35,7 @@ class Clusters(Object):
         self.clusters = {'gold': Container(logger), 'system': Container(logger)}
         self.frames = {'gold': Container(logger), 'system': Container(logger)}
         self.alignment = {'gold_to_system': {}, 'system_to_gold': {}}
+        self.thresholds = thresholds
         self.load()
         self.align_clusters()
 
@@ -163,6 +164,16 @@ class Clusters(Object):
     def get_number_of_matching_types(self, gold_types, system_types):
         return len(set(gold_types) & set(system_types))
 
+    def get_threshold(self, modality, language):
+        threshold = None
+        if modality == 'text':
+            threshold = self.get('thresholds').get(language)
+        else:
+            threshold = self.get('thresholds').get(modality)
+        if threshold is None:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine threshold for modality \'{}\' and language \'{}\''.format(modality, language))
+        return threshold
+
     def get_entity_and_event_similarity(self, gold_cluster, system_cluster):
         similarity = 0
         if self.get('number_of_matching_types', gold_cluster.get('top_level_types'), system_cluster.get('top_level_types')):
@@ -178,11 +189,14 @@ class Clusters(Object):
                     index += 1
             similarities = {}
             for gold_mention in mentions['gold']:
+                document_element_id = gold_mention.get('document_element_id')
+                modality = self.get('document_mappings').get('modality', document_element_id)
+                language = self.get('document_mappings').get('language', document_element_id)
                 for system_mention in mentions['system']:
                     if gold_mention.get('ID') not in similarities:
                         similarities[gold_mention.get('ID')] = {}
                     iou = get_intersection_over_union(gold_mention, system_mention)
-                    iou = 0 if iou < 0.8 else iou
+                    iou = 0 if iou < self.get('threshold', modality, language) else iou
                     similarities[gold_mention.get('ID')][system_mention.get('ID')] = iou
             cost_matrix = get_cost_matrix(similarities, mappings)
             alignment = {'gold_mention': {}, 'system_mention': {}}
