@@ -164,14 +164,20 @@ def generate_results_file(logger, logs_directory):
 
     """
 
+    metric_column_value_pairs = {}
     metric_classes = {}
-
     for line in metric_classes_specs.split('\n'):
         line = line.strip()
         if line == '': continue
         if line.startswith('#'): continue
         filename, metricname, column_value_pairs, score_columnname = line.split()
         metric_classname = filename.split('-')[0]
+        metric_column_value_pair = '{metric_classname}:{column_value_pairs}'.format(metric_classname=metric_classname,
+                                                                                   column_value_pairs=','.join(sorted(column_value_pairs.split(','))))
+        if metric_column_value_pair in metric_column_value_pairs:
+            logger.record_event('DEFAULT_CRITICAL_ERROR', 'Duplicate column-value pair \'{}\' for metric-class: \'{}\''.format(metric_classname,
+                                                                                                                               column_value_pairs))
+        metric_column_value_pairs[metric_column_value_pair] = 1
         if metric_classname not in metric_classes:
             metric_class = {'Filename': filename, 'Metrics': {}}
             metric_classes[metric_classname] = metric_class
@@ -184,6 +190,8 @@ def generate_results_file(logger, logs_directory):
             'Columns': columns,
             'ScoreColumn': score_columnname
             }
+        if metricname in metric_class['Metrics']:
+            logger.record_event('DEFAULT_CRITICAL_ERROR', 'Duplicate metricname: {} (expected to be unique)'.format(metricname) )
         metric_class['Metrics'][metricname] = metric
 
     scores = {}
@@ -212,7 +220,7 @@ def generate_results_file(logger, logs_directory):
         for metric_name in metrics:
             scores[metric_name] = 0
             specs = metrics[metric_name]
-            for score in [s for s in summary_scores if 'Metric' not in s]:
+            for score in [s for s in summary_scores]:
                 num_columns = len(specs['Columns'])
                 num_matched = 0
                 for column_name, column_value in specs['Columns'].items():
@@ -220,6 +228,8 @@ def generate_results_file(logger, logs_directory):
                         num_matched += 1
                 if num_columns == num_matched:
                     scores[metric_name] = score[specs['ScoreColumn']]
+                    if 'Metric' in score:
+                        logger.record_event('DEFAULT_CRITICAL_ERROR', 'Attempting to bind score to {} which was already bound to {}'.format(metric_name, score['Metric']))
                     score['Metric'] = metric_name
 
     num_problems, problem_stats = get_problems(logs_directory)
@@ -589,6 +599,11 @@ def main(args):
             {keyframe_boundaries} \
             {video_boundaries} \
             {annotated_regions} \
+            {eng_iou_threshold} \
+            {spa_iou_threshold} \
+            {rus_iou_threshold} \
+            {image_iou_threshold} \
+            {video_iou_threshold} \
             {gold_filtered_responses} \
             {sparql_filtered_output} \
             {similarities} \
@@ -603,6 +618,11 @@ def main(args):
                                 keyframe_boundaries=keyframe_boundaries,
                                 video_boundaries=video_boundaries,
                                 annotated_regions=annotated_regions,
+                                eng_iou_threshold=args.eng_iou_threshold,
+                                spa_iou_threshold=args.spa_iou_threshold,
+                                rus_iou_threshold=args.rus_iou_threshold,
+                                image_iou_threshold=args.image_iou_threshold,
+                                video_iou_threshold=args.video_iou_threshold,
                                 gold_filtered_responses=gold_filtered_responses,
                                 sparql_filtered_output=sparql_filtered_output,
                                 similarities=similarities,
@@ -662,19 +682,17 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
-    parser.add_argument('-i', '--input', default='/evaluate',
-                        help='Specify the input directory (default: %(default)s)')
-    parser.add_argument('-l', '--logs', default='logs',
-                        help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
-    parser.add_argument('-o', '--output', default='/score',
-                        help='Specify the input directory (default: %(default)s)')
-    parser.add_argument('-r', '--run', default='system',
-                        help='Specify the run name (default: %(default)s)')
-    parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt',
-                        help='Specify the log specifications file (default: %(default)s)')
-    parser.add_argument('-t', '--task', default='task1',
-                        help='Specify the task in order to apply relevant queries (default: %(default)s)')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
-                        help='Print version number and exit')
+    parser.add_argument('-i', '--input', default='/evaluate', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
+    parser.add_argument('-o', '--output', default='/score', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')
+    parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt', help='Specify the log specifications file (default: %(default)s)')
+    parser.add_argument('-t', '--task', default='task1', help='Specify the task in order to apply relevant queries (default: %(default)s)')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__,  help='Print version number and exit')
+    parser.add_argument('eng_iou_threshold', type=float, help='English text IOU threshold for alignment')
+    parser.add_argument('spa_iou_threshold', type=float, help='Spanish text IOU threshold for alignment')
+    parser.add_argument('rus_iou_threshold', type=float, help='Russian text IOU threshold for alignment')
+    parser.add_argument('image_iou_threshold', type=float, help='Image IOU threshold for alignment')
+    parser.add_argument('video_iou_threshold', type=float, help='Video IOU threshold for alignment')
     args = parser.parse_args()
     main(args)

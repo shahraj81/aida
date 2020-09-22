@@ -1,7 +1,6 @@
 """
 AIDA main script for aligning clusters
 """
-from aida.annotated_regions import AnnotatedRegions
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
@@ -16,6 +15,7 @@ from aida.text_boundaries import TextBoundaries
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.video_boundaries import VideoBoundaries
+from aida.annotated_regions import AnnotatedRegions
 
 import argparse
 import os
@@ -61,6 +61,14 @@ def align_clusters(args):
 
     annotated_regions = AnnotatedRegions(logger, document_mappings, document_boundaries, args.regions)
 
+    thresholds = {
+        'ENG': args.eng_iou_threshold,
+        'SPA': args.spa_iou_threshold,
+        'RUS': args.rus_iou_threshold,
+        'image': args.image_iou_threshold,
+        'video': args.video_iou_threshold
+        }
+
     os.mkdir(args.similarities)
     os.mkdir(args.alignment)
     for entry in sorted(os.scandir(args.gold), key=str):
@@ -84,7 +92,7 @@ def align_clusters(args):
             similarities = '{}/{}.tab'.format(args.similarities, document_id)
             alignment = '{}/{}.tab'.format(args.alignment, document_id)
             check_for_paths_non_existance([similarities, alignment])
-            clusters = Clusters(logger, document_mappings, document_boundaries, annotated_regions, gold_mentions, gold_edges, system_mentions, system_edges)
+            clusters = Clusters(logger, document_mappings, document_boundaries, annotated_regions, gold_mentions, gold_edges, system_mentions, system_edges, thresholds)
             clusters.print_similarities(similarities)
             clusters.print_alignment(alignment)
     exit(ALLOK_EXIT_CODE)
@@ -102,6 +110,11 @@ if __name__ == '__main__':
     parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
     parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
     parser.add_argument('regions', type=str, help='File containing annotated regions information')
+    parser.add_argument('eng_iou_threshold', type=float, help='English text IOU threshold for alignment')
+    parser.add_argument('spa_iou_threshold', type=float, help='Spanish text IOU threshold for alignment')
+    parser.add_argument('rus_iou_threshold', type=float, help='Russian text IOU threshold for alignment')
+    parser.add_argument('image_iou_threshold', type=float, help='Image IOU threshold for alignment')
+    parser.add_argument('video_iou_threshold', type=float, help='Video IOU threshold for alignment')
     parser.add_argument('gold', type=str, help='Directory containing gold information.')
     parser.add_argument('system', type=str, help='Directory containing system information.')
     parser.add_argument('similarities', type=str, help='Specify a directory to which the similarity information should be written.')
