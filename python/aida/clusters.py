@@ -98,9 +98,9 @@ class Clusters(Object):
                 system_frame = frame2
             return self.get('gold_system_relation_similarity', gold_frame, system_frame)
         else:
-            return self.get('relation_self_similarity', frame1, frame2)
+            return self.get('relation_self_similarity', system_or_gold1, frame1, frame2)
 
-    def get_relation_self_similarity(self, frame1, frame2):
+    def get_relation_self_similarity(self, system_or_gold, frame1, frame2):
         num_fillers_aligned = 0
         if self.get('number_of_matching_types', frame1.get('top_level_types'), frame2.get('top_level_types')):
             found = {}
@@ -119,8 +119,8 @@ class Clusters(Object):
             for rolename_and_filler in found:
                 if found[rolename_and_filler] == 1:
                     num_fillers_aligned += 1
-        if num_fillers_aligned > 2:
-            self.record_event('DEFAULT_CRITICAL_ERROR', 'num_fillers_aligned > 2: Gold frame: {}'.format(gold_frame.get('ID')))
+        if num_fillers_aligned > 2 and system_or_gold == 'gold' :
+                self.record_event('DEFAULT_CRITICAL_ERROR', 'num_fillers_aligned > 2: Gold frames: {} and {}'.format(frame1.get('ID'), frame2.get('ID')))
         return 0 if num_fillers_aligned <= 1 else 1
 
     def get_gold_system_relation_similarity(self, gold_frame, system_frame):
