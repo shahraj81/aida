@@ -599,6 +599,11 @@ def main(args):
             {keyframe_boundaries} \
             {video_boundaries} \
             {annotated_regions} \
+            {eng_iou_threshold} \
+            {spa_iou_threshold} \
+            {rus_iou_threshold} \
+            {image_iou_threshold} \
+            {video_iou_threshold} \
             {gold_filtered_responses} \
             {sparql_filtered_output} \
             {similarities} \
@@ -613,6 +618,11 @@ def main(args):
                                 keyframe_boundaries=keyframe_boundaries,
                                 video_boundaries=video_boundaries,
                                 annotated_regions=annotated_regions,
+                                eng_iou_threshold=args.eng_iou_threshold,
+                                spa_iou_threshold=args.spa_iou_threshold,
+                                rus_iou_threshold=args.rus_iou_threshold,
+                                image_iou_threshold=args.image_iou_threshold,
+                                video_iou_threshold=args.video_iou_threshold,
                                 gold_filtered_responses=gold_filtered_responses,
                                 sparql_filtered_output=sparql_filtered_output,
                                 similarities=similarities,
@@ -672,19 +682,17 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
-    parser.add_argument('-i', '--input', default='/evaluate',
-                        help='Specify the input directory (default: %(default)s)')
-    parser.add_argument('-l', '--logs', default='logs',
-                        help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
-    parser.add_argument('-o', '--output', default='/score',
-                        help='Specify the input directory (default: %(default)s)')
-    parser.add_argument('-r', '--run', default='system',
-                        help='Specify the run name (default: %(default)s)')
-    parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt',
-                        help='Specify the log specifications file (default: %(default)s)')
-    parser.add_argument('-t', '--task', default='task1',
-                        help='Specify the task in order to apply relevant queries (default: %(default)s)')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
-                        help='Print version number and exit')
+    parser.add_argument('-i', '--input', default='/evaluate', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
+    parser.add_argument('-o', '--output', default='/score', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')
+    parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt', help='Specify the log specifications file (default: %(default)s)')
+    parser.add_argument('-t', '--task', default='task1', help='Specify the task in order to apply relevant queries (default: %(default)s)')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__,  help='Print version number and exit')
+    parser.add_argument('eng_iou_threshold', type=float, help='English text IOU threshold for alignment')
+    parser.add_argument('spa_iou_threshold', type=float, help='Spanish text IOU threshold for alignment')
+    parser.add_argument('rus_iou_threshold', type=float, help='Russian text IOU threshold for alignment')
+    parser.add_argument('image_iou_threshold', type=float, help='Image IOU threshold for alignment')
+    parser.add_argument('video_iou_threshold', type=float, help='Video IOU threshold for alignment')
     args = parser.parse_args()
     main(args)
