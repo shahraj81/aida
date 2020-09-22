@@ -101,6 +101,30 @@ make run \
       HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
+The scorer uses a default value of 0.8 for all IOU thresholds. If you would like to change default values, you may update thresholds on the following line in the Makefile:
+
+~~~
+ENG_TEXT_IOU_THRESHOLD=0.8
+SPA_TEXT_IOU_THRESHOLD=0.8
+RUS_TEXT_IOU_THRESHOLD=0.8
+IMAGE_IOU_THRESHOLD=0.8
+VIDEO_IOU_THRESHOLD=0.8
+~~~
+
+You may also supply the new value when you run the docker using:
+
+~~~
+make run \
+      RUNID=your_run_id \
+      ENG_TEXT_IOU_THRESHOLD=your_threshold \
+      SPA_TEXT_IOU_THRESHOLD=your_threshold \
+      RUS_TEXT_IOU_THRESHOLD=your_threshold \
+      IMAGE_IOU_THRESHOLD=your_threshold \
+      VIDEO_IOU_THRESHOLD=your_threshold \
+      HOST_INPUT_DIR=/absolute/path/to/your/run \
+      HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What should the input directory contain?
@@ -143,6 +167,10 @@ The logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+## 09/22/2020:
+* Allowing IOU thresholds to be specified when running the docker.
+* Section `How to apply the docker to your run?` in this README revised to explain how to specify non-default values of IOU thresholds.
+* Sanity checks added.
 
 ## 09/15/2020:
 * The error message, which is generated when a response entry (i.e. line) is removed by filter because none of the system mentions corresponding to one or more clusters in the response entry fall within exhaustively annotated regions, is modified to make the message more clear.

@@ -75,6 +75,14 @@ class DocumentMappings(Object):
                 document_element.set('language', delang)
                 document.add_document_element(document_element)
 
+    def get_language(self, ID):
+        """
+        Returns the language of the document element whose ID matches the parameter
+        """
+        if ID not in self.get('document_elements'):
+            return None
+        return self.get('document_elements').get(ID).get('language')
+
     def get_modality(self, ID):
         """
         Returns the modality of the document element whose ID matches the parameter
