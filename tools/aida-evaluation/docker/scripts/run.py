@@ -37,7 +37,7 @@ def get_problems(logs_directory):
         fh.close()
     return num_errors, stats
 
-def generate_results_file(logger, logs_directory):
+def generate_results_file_and_exit(logger, logs_directory):
 
     metric_classes_specs = """
         # Filename                     Metric                              ColumnValuePairs               ScoreColumn
@@ -279,23 +279,72 @@ def main(args):
     """
 
     #############################################################################################
+    # check input/output directory for existence
+    #############################################################################################
+
+    print("Checking if input/output directories exist.")
+    for path in [args.input, args.output]:
+        if not os.path.exists(path):
+            print('ERROR: Path {} does not exist'.format(path))
+            exit(ERROR_EXIT_CODE)
+    print("Checking if output directory is empty.")
+    files = [f for f in os.listdir(args.output)]
+    if len(files) > 0:
+        print('ERROR: Output directory {} is not empty'.format(args.output))
+        exit(ERROR_EXIT_CODE)
+
+    #############################################################################################
+    # create logger
+    #############################################################################################
+
+    logs_directory = '{output}/{logs}'.format(output=args.output, logs=args.logs)
+    run_log_file = '{logs_directory}/run.log'.format(logs_directory=logs_directory)
+    call_system('mkdir {logs_directory}'.format(logs_directory=logs_directory))
+    logger = Logger(run_log_file, args.spec, sys.argv)
+
+    #############################################################################################
+    # validate values of arguments
+    #############################################################################################
+
+    runtypes = {
+        'practice': 'LDC2020E11',
+        'evaluation': 'LDC2020R17'}
+    if args.runtype not in runtypes:
+        logger.record_event('UNKNOWN_RUNTYPE', args.runtype, ','.join(runtypes))
+        generate_results_file_and_exit(logger, logs_directory)
+    ldc_package_id = runtypes[args.runtype]
+    record_and_display_message(logger, 'Docker is using {} data for scoring'.format(args.runtype))
+
+    thresholds = {
+        'eng_iou_threshold': args.eng_iou_threshold,
+        'spa_iou_threshold': args.spa_iou_threshold,
+        'rus_iou_threshold': args.rus_iou_threshold,
+        'image_iou_threshold': args.image_iou_threshold,
+        'video_iou_threshold': args.video_iou_threshold,
+        }
+
+    for threshold_arg_name in thresholds:
+        threshold = thresholds[threshold_arg_name]
+        if not 0 <= threshold <= 1:
+            logger.record_event('UNEXCPECTED_THRESHOLD', threshold_arg_name, threshold)
+            generate_results_file_and_exit(logger, logs_directory)
+
+    #############################################################################################
     # AUX-data
     #############################################################################################
 
     python_scripts          = '/scripts/aida/python'
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
-    logs_directory          = '{output}/{logs}'.format(output=args.output, logs=args.logs)
-    run_log_file            = '{logs_directory}/run.log'.format(logs_directory=logs_directory)
     ontology_type_mappings  = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
     slotname_mappings       = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
     encoding_modality       = '/data/AUX-data/encoding_modality.txt'
-    coredocs_xx             = '/data/AUX-data/LDC2020E11.coredocs-xx.txt'
-    parent_children         = '/data/AUX-data/LDC2020E11.parent_children.tsv'
-    sentence_boundaries     = '/data/AUX-data/LDC2020E11.sentence_boundaries.txt'
-    image_boundaries        = '/data/AUX-data/LDC2020E11.image_boundaries.txt'
-    keyframe_boundaries     = '/data/AUX-data/LDC2020E11.keyframe_boundaries.txt'
-    video_boundaries        = '/data/AUX-data/LDC2020E11.video_boundaries.txt'
-    annotated_regions       = '/data/AUX-data/LDC2020E11.annotated_regions.txt'
+    coredocs_xx             = '/data/AUX-data/{}.coredocs-xx.txt'.format(ldc_package_id)
+    parent_children         = '/data/AUX-data/{}.parent_children.tsv'.format(ldc_package_id)
+    sentence_boundaries     = '/data/AUX-data/{}.sentence_boundaries.txt'.format(ldc_package_id)
+    image_boundaries        = '/data/AUX-data/{}.image_boundaries.txt'.format(ldc_package_id)
+    keyframe_boundaries     = '/data/AUX-data/{}.keyframe_boundaries.txt'.format(ldc_package_id)
+    video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
+    annotated_regions       = '/data/AUX-data/{}.annotated_regions.txt'.format(ldc_package_id)
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
@@ -313,23 +362,6 @@ def main(args):
 
     call_system('cd {python_scripts} && git pull'.format(python_scripts=python_scripts))
 
-    #############################################################################################
-    # check input/output directory for existence
-    #############################################################################################
-
-    print("Checking if input/output directories exist.")
-    for path in [args.input, args.output]:
-        if not os.path.exists(path):
-            print('ERROR: Path {} does not exist'.format(path))
-            exit(ERROR_EXIT_CODE)
-    print("Checking if output directory is empty.")
-    files = [f for f in os.listdir(args.output)]
-    if len(files) > 0:
-        print('ERROR: Output directory {} is not empty'.format(args.output))
-        exit(ERROR_EXIT_CODE)
-
-    call_system('mkdir {logs_directory}'.format(logs_directory=logs_directory))
-    logger = Logger(run_log_file, args.spec, sys.argv)
 
     #############################################################################################
     # inspect the input directory
@@ -367,10 +399,10 @@ def main(args):
                 for filename in expected_files:
                     if expected_files[filename] == 0:
                         logger.record_event('MISSING_OPEN_PERFORMER_FILE', pathname, filename)
-                        generate_results_file(logger, logs_directory)
+                        generate_results_file_and_exit(logger, logs_directory)
             else:
                 logger.record_event('UNKNOWN_PERFORMER_TYPE')
-                generate_results_file(logger, logs_directory)
+                generate_results_file_and_exit(logger, logs_directory)
 
     documents_in_submission = {}
     num_total_documents = 0
@@ -391,7 +423,7 @@ def main(args):
     if num_valid_documents == 0:
         logger.record_event('NOTHING_TO_SCORE')
         record_and_display_message(logger, 'Nothing to score.')
-        generate_results_file(logger, logs_directory)
+        generate_results_file_and_exit(logger, logs_directory)
 
     # load core documents
     file_handle = open(coredocs_xx, 'r')
@@ -678,7 +710,7 @@ def main(args):
 
     # generate results.json file
     record_and_display_message(logger, 'Generating results.json file.')
-    generate_results_file(logger, logs_directory)
+    generate_results_file_and_exit(logger, logs_directory)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
@@ -686,6 +718,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
     parser.add_argument('-o', '--output', default='/score', help='Specify the input directory (default: %(default)s)')
     parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')
+    parser.add_argument('-R', '--runtype', default='practice', help='Specify the run type (default: %(default)s)')
     parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt', help='Specify the log specifications file (default: %(default)s)')
     parser.add_argument('-t', '--task', default='task1', help='Specify the task in order to apply relevant queries (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__,  help='Print version number and exit')
