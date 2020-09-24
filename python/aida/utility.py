@@ -45,8 +45,8 @@ def get_expanded_types(metatype, cluster_type):
             'A'     return ['A']
     If the cluster represents an event or a relation:
         If the type is:
-            'A.B.C' return [A.B', 'A.B.C']
-            'A.B'   return [A.B']
+            'A.B.C' return ['A.B', 'A.B.C']
+            'A.B'   return ['A.B']
     """
     expanded_types = {}
     elements = cluster_type.split('.')
