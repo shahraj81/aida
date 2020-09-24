@@ -1,10 +1,13 @@
 ROOT=/absolute/path/to/aida/tools/aida-evaluation
+
+RUNTYPE=practice
+
 RUNS=$(ROOT)/M36-practice/runs
 SCORES=$(ROOT)/M36-practice/scores
 RUNID=example-run
 HOST_INPUT_DIR=$(RUNS)/$(RUNID)
 HOST_OUTPUT_DIR=$(SCORES)/$(RUNID)
-HOST_DATA_DIR=$(ROOT)/docker/AUX-data/M36-practice/
+HOST_DATA_DIR=$(ROOT)/docker/AUX-data/M36-$(RUNTYPE)/
 GRAPHDB_VERSION=9.3.3
 GRAPHDB_EDITION=free
 
@@ -23,9 +26,13 @@ build:
 	       --build-arg edition=$(GRAPHDB_EDITION) \
 	       -t aida-evaluation .
 
+evaluate:
+	make run RUNTYPE=evaluation
+
 run:
 	docker run \
-		--env RUNID=$(RUNID) \
+                --env RUNID=$(RUNID) \
+                --env RUNTYPE=$(RUNTYPE) \
                 --env ENG_TEXT_IOU_THRESHOLD=$(ENG_TEXT_IOU_THRESHOLD) \
                 --env SPA_TEXT_IOU_THRESHOLD=$(SPA_TEXT_IOU_THRESHOLD) \
                 --env RUS_TEXT_IOU_THRESHOLD=$(RUS_TEXT_IOU_THRESHOLD) \
