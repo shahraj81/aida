@@ -41,7 +41,7 @@ def get_expanded_types(metatype, cluster_type):
     If the cluster represents an entity:
         If the type is:
             'A.B.C' return ['A', 'A.B', 'A.B.C']
-            'A.B'   return ['A', A.B']
+            'A.B'   return ['A', 'A.B']
             'A'     return ['A']
     If the cluster represents an event or a relation:
         If the type is:
