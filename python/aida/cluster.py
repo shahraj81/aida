@@ -83,7 +83,7 @@ class Cluster(Object):
 
     def is_in_exhaustively_annotated_region(self, annotated_regions):
         for mention in self.get('mentions').values():
-            if annotated_regions.contains(mention, self.get('all_expanded_types')):
+            if annotated_regions.contains(mention, self.get('all_expanded_types'), self.get('metatype')):
                 return True
         return False
 

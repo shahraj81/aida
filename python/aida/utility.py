@@ -36,6 +36,10 @@ def get_cost_matrix(similarities, mappings):
         cost_matrix += [cost_row]
     return cost_matrix
 
+def get_top_level_type(cluster_type, metatype):
+    expanded_types = get_expanded_types(metatype, cluster_type)
+    return sorted(expanded_types, key=len)[0]
+
 def get_expanded_types(metatype, cluster_type):
     """
     If the cluster represents an entity:

@@ -167,7 +167,7 @@ def run_filter_on_entry(entry, schema_name, filtered_clusters, annotated_regions
         key = '{}:{}'.format(entry.get('kb_document_id'), entry.get('cluster').get('ID'))
         if key not in filtered_clusters:
             filtered_clusters[key] = False
-        if annotated_regions.contains(mention, get_expanded_types(entry.get('metatype'), entry.get('cluster_type'))):
+        if annotated_regions.contains(mention, get_expanded_types(entry.get('metatype'), entry.get('cluster_type')), entry.get('metatype')):
             passes_filter = True
             filtered_clusters[key] = True
         else:
