@@ -4,9 +4,11 @@
 * [How to build the docker image?](#how-to-build-the-docker-image)
 * [How to apply the docker on a test run?](#how-to-apply-the-docker-on-a-test-run)
 * [How to apply the docker to your run?](#how-to-apply-the-docker-to-your-run)
+* [How to apply the docker to your run in the evaluation setting?](#how-to-apply-the-docker-to-your-run-in-the-evaluation-setting)
 * [What should the input directory contain?](#what-should-the-input-directory-contain)
 * [What does the output directory contain?](#what-does-the-output-directory-contain)
 * [What does the logs directory contain?](#what-does-the-logs-directory-contain)
+* [Revision History](#revision-history)
 
 # Introduction
 
@@ -127,6 +129,49 @@ make run \
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
+# How to apply the docker to your run in the evaluation setting?
+
+In order to run the docker on the evaluation data (rather than the default practice data), you need to set the value of RUNTYPE to `evaluation` in the Makefile.
+
+~~~
+RUNTYPE=evaluation
+~~~
+
+Alternatively, you may run one of the following commands:
+
+~~~
+make run \
+      RUNID=your_run_id \
+      RUNTYPE=evaluation
+      ENG_TEXT_IOU_THRESHOLD=your_threshold \
+      SPA_TEXT_IOU_THRESHOLD=your_threshold \
+      RUS_TEXT_IOU_THRESHOLD=your_threshold \
+      IMAGE_IOU_THRESHOLD=your_threshold \
+      VIDEO_IOU_THRESHOLD=your_threshold \
+      HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+      HOST_INPUT_DIR=/absolute/path/to/your/run \
+      HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+~~~
+make evaluate \
+      RUNID=your_run_id \
+      ENG_TEXT_IOU_THRESHOLD=your_threshold \
+      SPA_TEXT_IOU_THRESHOLD=your_threshold \
+      RUS_TEXT_IOU_THRESHOLD=your_threshold \
+      IMAGE_IOU_THRESHOLD=your_threshold \
+      VIDEO_IOU_THRESHOLD=your_threshold \
+      HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+      HOST_INPUT_DIR=/absolute/path/to/your/run \
+      HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+Note that:
+* this option is intended for the leaderboard, and not for individual performers.
+* you must specify the required auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the auxiliary data driven from the practice corpus and annotations, and will not work for the evaluation.
+
+[top](#how-to-run-the-aida-evaluation-pipeline)
+
 # What should the input directory contain?
 The input directory should contain all the task1 KBs along with corresponding AIF report files. You may want to look at the input directory of the included example run at `./M36-practice/scores/example-run` to get an idea of how to structure your input directory.
 
@@ -167,6 +212,16 @@ The logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 09/25/2020:
+* Implemented relaxed filter for determining which mentions are evaluable. Default strategy for filtering still remains to be the strict one. In order to understand the difference between the strict filter and the relaxed one, let `M` be a mention with span `MS` and type `MT`, `R` be the annotated region with span `RS`, and `RT` be the type exhausitvely annotated in `RS`. `M` would pass the strict filter if and only if `MS` has some non-zero overlap with `RS`, and `MT` be either the same as `RT` or be a finer-grained type of `RT`. However, in order for `M` to pass the relaxed filter, in addition to having a non-zero span overlap between `MS` and `RS`, only the top-level types of `MT` and `RT` should match. 
+
+## 09/24/2020:
+* Changed IOU thresholds from 0.8 to 0.1.
+* Section `How to apply the docker to your run in the evaluation setting?` added to this README to describe how to run the docker using evaluation data (rather than the default practice data). This option is intended for the leaderboard, and not for individual performers.
+* Align responses restricted to core documents only.
+* Changing scripts to make them work on evaluation data.
+
 ## 09/22/2020:
 * Allowing IOU thresholds to be specified when running the docker.
 * Section `How to apply the docker to your run?` in this README revised to explain how to specify non-default values of IOU thresholds.

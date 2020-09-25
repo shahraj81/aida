@@ -36,17 +36,21 @@ def get_cost_matrix(similarities, mappings):
         cost_matrix += [cost_row]
     return cost_matrix
 
+def get_top_level_type(cluster_type, metatype):
+    expanded_types = get_expanded_types(metatype, cluster_type)
+    return sorted(expanded_types, key=len)[0]
+
 def get_expanded_types(metatype, cluster_type):
     """
     If the cluster represents an entity:
         If the type is:
             'A.B.C' return ['A', 'A.B', 'A.B.C']
-            'A.B'   return ['A', A.B']
+            'A.B'   return ['A', 'A.B']
             'A'     return ['A']
     If the cluster represents an event or a relation:
         If the type is:
-            'A.B.C' return [A.B', 'A.B.C']
-            'A.B'   return [A.B']
+            'A.B.C' return ['A.B', 'A.B.C']
+            'A.B'   return ['A.B']
     """
     expanded_types = {}
     elements = cluster_type.split('.')
