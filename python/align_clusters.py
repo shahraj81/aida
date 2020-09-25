@@ -74,10 +74,12 @@ def align_clusters(args):
     for entry in sorted(os.scandir(args.gold), key=str):
         if entry.is_dir() and entry.name.endswith('.ttl'):
             kb = entry.name
+            document_id = kb.replace('.ttl', '')
+            if not document_mappings.get('documents').get(document_id).get('is_core'):
+                continue
             message = 'aligning clusters in {}'.format(entry.name)
             logger.record_event('DEFAULT_INFO', message)
             print('At {}: {}'.format(time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()), message))
-            document_id = kb.replace('.ttl', '')
 
             gold_mentions = '{}/{}/AIDA_P2_TA1_CM_A0001.rq.tsv'.format(args.gold, kb)
             gold_edges = '{}/{}/AIDA_P2_TA1_AM_A0001.rq.tsv'.format(args.gold, kb)
