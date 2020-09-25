@@ -25,9 +25,9 @@ class AnnotatedRegions(Object):
 
     def contains(self, mention, types):
         contains = False
+        document_element_id = mention.get('document_element_id')
+        keyframe_id = mention.get('keyframe_id')
         for cluster_type in types:
-            document_element_id = mention.get('document_element_id')
-            keyframe_id = mention.get('keyframe_id')
             key = '{docid}:{doce_or_kf_id}:{cluster_type}'.format(docid=mention.get('document_id'),
                                                            doce_or_kf_id=keyframe_id if keyframe_id else document_element_id,
                                                            cluster_type=cluster_type)
