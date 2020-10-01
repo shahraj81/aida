@@ -21,7 +21,7 @@ class Clusters(Object):
     The container to hold Clusters.
     """
 
-    def __init__(self, logger, document_mappings, document_boundaries, annotated_regions, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename, thresholds):
+    def __init__(self, logger, document_mappings, document_boundaries, annotated_regions, gold_mentions_filename, gold_edges_filename, system_mentions_filename, system_edges_filename, thresholds, weight='all'):
         """
         Initialize the Clusters.
         """
@@ -36,6 +36,7 @@ class Clusters(Object):
         self.frames = {'gold': Container(logger), 'system': Container(logger)}
         self.alignment = {'gold_to_system': {}, 'system_to_gold': {}}
         self.thresholds = thresholds
+        self.weight = weight
         self.load()
         self.align_clusters()
 
@@ -207,9 +208,10 @@ class Clusters(Object):
                 alignment['system_mention'][system_mention_id] = {'gold_mention': gold_mention_id, 'score': similarities[gold_mention_id][system_mention_id]}
                 if similarities[gold_mention_id][system_mention_id] > 0:
                     # lenient similarity computation
-                    similarity += 1
-                    # alternative would be to add up the amount of overlap
-                    # similarity += similarities[gold_mention_id][system_mention_id]
+                    if self.get('weight') == 'all':
+                        similarity += 1
+                    elif self.get('weight') == 'iou':
+                        similarity += similarities[gold_mention_id][system_mention_id]
         return similarity
 
     def load(self):
