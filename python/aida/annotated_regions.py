@@ -45,7 +45,7 @@ class AnnotatedRegions(Object):
                 if doce_or_kf_id != doce_or_kf_id_: continue
                 if top_level_type != top_level_type_: continue
                 for region_string in [s.__str__() for s in self.get('regions').get(key)]:
-                    fq_region_string = '{docid}:{doce_or_kf_id}:{span_string}'.format(docid=document_id_,
+                    fq_region_string = '{docid}:{doce_or_kf_id}:{region_string}'.format(docid=document_id_,
                                                            doce_or_kf_id=doce_or_kf_id_,
                                                            region_string=region_string)
                     region = augment_mention_object(spanstring_to_object(self.logger, fq_region_string), self.get('document_mappings'), self.get('document_boundaries'))
