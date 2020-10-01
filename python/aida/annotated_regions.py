@@ -15,8 +15,9 @@ class AnnotatedRegions(Object):
     """
     AIDA annotated regions class.
     """
-    def __init__(self, logger, document_mappings, document_boundaries, regions_filename, strictness='strict'):
+    def __init__(self, logger, ontology_type_mappings, document_mappings, document_boundaries, regions_filename, strictness='strict'):
         super().__init__(logger)
+        self.ontology_type_mappings = ontology_type_mappings
         self.document_mappings = document_mappings
         self.document_boundaries = document_boundaries
         self.filename = regions_filename
@@ -40,7 +41,8 @@ class AnnotatedRegions(Object):
             top_level_type = get_top_level_type(cluster_type, metatype)
             for key in self.get('regions'):
                 document_id_, doce_or_kf_id_, cluster_type_ = key.split(':')
-                top_level_type_ = get_top_level_type(cluster_type_, metatype)
+                metatype_ = self.get('ontology_type_mappings').get('type_to_metatype', cluster_type_)
+                top_level_type_ = get_top_level_type(cluster_type_, metatype_)
                 if document_id != document_id_: continue
                 if doce_or_kf_id != doce_or_kf_id_: continue
                 if top_level_type != top_level_type_: continue
