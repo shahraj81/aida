@@ -69,7 +69,8 @@ def augment_mention_object(mention_object, document_mappings, document_boundarie
     mention_object.set('modality', document_mappings.get('modality', mention_object.get('document_element_id')))
     boundaries_key = 'keyframe' if mention_object.get('keyframe_id') else mention_object.get('modality')
     document_element_or_keyframe_id = mention_object.get('keyframe_id') if mention_object.get('keyframe_id') else mention_object.get('document_element_id')
-    mention_object.set('boundary', document_boundaries.get(boundaries_key).get(document_element_or_keyframe_id))
+    if boundaries_key and boundaries_key in document_boundaries:
+        mention_object.set('boundary', document_boundaries.get(boundaries_key).get(document_element_or_keyframe_id))
     return mention_object
 
 def spanstring_to_object(logger, span_string, where=None):
