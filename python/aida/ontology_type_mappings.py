@@ -27,7 +27,7 @@ class OntologyTypeMappings(Object):
             } 
         self.load_data()
 
-    def type_to_metatype(self, full_type):
+    def get_type_to_metatype(self, full_type):
         retVal = None
         for metatype in self.get('containers'):
             if self.has(metatype, full_type):
