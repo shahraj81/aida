@@ -8,6 +8,7 @@ __version__ = "0.0.0.1"
 __date__    = "24 January 2020"
 
 from aida.container import Container
+from aida.ldc_time import LDCTime
 from aida.object import Object
 from aida.utility import get_kb_document_id_from_filename, spanstring_to_object, trim
 
@@ -61,19 +62,33 @@ class Generator(Object):
         entry.set('end', self.get('date_range', responses, entry, 'end'))
 
     def get_date(self, responses, entry, date_name):
-        date_fields = ['month', 'day', 'year']
+        date_fields = {'month': 'xx', 'day':'xx', 'year':'xxxx'}
         date_field_values = {key: trim(entry.get(field_name))
                                 for key, field_name in {key:'{}_{}'.format(date_name, key) for key in date_fields}.items()}
+        field_names_missing = []
         date_object = Object(entry.get('logger'))
-        present = False
         for date_field in date_fields:
             date_object.set(date_field, None if date_field_values[date_field]=='' else int(date_field_values[date_field]))
-            if date_object.get(date_field): present = True
-        # consider all date fields to be missing if year was missing even if day and month were provided
-        if present and not date_object.get('year'): present = False
-        if present and date_object.get('day') and not date_object.get('month'):
-            date_object.set('day', None)
-        return date_object if present else None
+            if date_field_values[date_field]=='':
+                field_names_missing.append(date_field)
+                date_field_values[date_field] = date_fields[date_field]
+
+        if len(field_names_missing) > 0:
+            unspecified_date = '{year}-{month}-{day}'.format(day=date_field_values['day'],
+                                                             month=date_field_values['month'],
+                                                             year=date_field_values['year'])
+            start_or_end, before_or_after = date_name.split('_')
+            corrected_date = LDCTime(self.get('logger'), unspecified_date, start_or_end, before_or_after, entry.get('where'))
+            # update date_object
+            if 'year' in field_names_missing:
+                date_object = None
+            else:
+                missing_fields = ','.join(field_names_missing)
+                self.record_event('MISSING_DATE_FIELD', date_name, missing_fields, corrected_date.__str__(), date_name, entry.get('where'))
+                for date_field in date_fields:
+                    date_object.set(date_field, int(corrected_date.get(date_field).__str__()))
+                    entry.set('{}_{}'.format(date_name, date_field), '"{}"'.format(corrected_date.get(date_field).__str__()))
+        return date_object
 
     def get_date_range(self, responses, entry, date_name):
         date_range = Object(entry.get('logger'))
