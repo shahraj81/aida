@@ -368,7 +368,7 @@ Entity	system	cluster-NILE20320	system	cluster-NILE20325	0
 Entity	system	cluster-NILE20320	system	cluster-NILE20326	0
 Entity	system	cluster-NILE20320	system	cluster-NILE20327	0
 Entity	system	cluster-NILE20320	system	cluster-NILE20328	0
-Entity	system	cluster-NILE20320	system	cluster-NILE20329	0
+Entity	system	cluster-NILE20320	system	cluster-NILE20329	1
 Entity	system	cluster-NILE20320	system	cluster-NILE20330	0
 Entity	system	cluster-NILE20320	system	cluster-NILE20331	0
 Entity	system	cluster-NILE20320	system	cluster-NILE20332	0
@@ -674,7 +674,7 @@ Entity	system	cluster-NILE20329	system	cluster-NILE20316	0
 Entity	system	cluster-NILE20329	system	cluster-NILE20317	0
 Entity	system	cluster-NILE20329	system	cluster-NILE20318	0
 Entity	system	cluster-NILE20329	system	cluster-NILE20319	0
-Entity	system	cluster-NILE20329	system	cluster-NILE20320	0
+Entity	system	cluster-NILE20329	system	cluster-NILE20320	1
 Entity	system	cluster-NILE20329	system	cluster-NILE20321	0
 Entity	system	cluster-NILE20329	system	cluster-NILE20322	0
 Entity	system	cluster-NILE20329	system	cluster-NILE20323	0
@@ -1818,7 +1818,7 @@ Entity	system	cluster-NILE20320	gold	cluster-NILE20325	0
 Entity	system	cluster-NILE20320	gold	cluster-NILE20326	0
 Entity	system	cluster-NILE20320	gold	cluster-NILE20327	0
 Entity	system	cluster-NILE20320	gold	cluster-NILE20328	0
-Entity	system	cluster-NILE20320	gold	cluster-NILE20329	0
+Entity	system	cluster-NILE20320	gold	cluster-NILE20329	1
 Entity	system	cluster-NILE20320	gold	cluster-NILE20330	0
 Entity	system	cluster-NILE20320	gold	cluster-NILE20331	0
 Entity	system	cluster-NILE20320	gold	cluster-NILE20332	0
@@ -2124,7 +2124,7 @@ Entity	system	cluster-NILE20329	gold	cluster-NILE20316	0
 Entity	system	cluster-NILE20329	gold	cluster-NILE20317	0
 Entity	system	cluster-NILE20329	gold	cluster-NILE20318	0
 Entity	system	cluster-NILE20329	gold	cluster-NILE20319	0
-Entity	system	cluster-NILE20329	gold	cluster-NILE20320	0
+Entity	system	cluster-NILE20329	gold	cluster-NILE20320	1
 Entity	system	cluster-NILE20329	gold	cluster-NILE20321	0
 Entity	system	cluster-NILE20329	gold	cluster-NILE20322	0
 Entity	system	cluster-NILE20329	gold	cluster-NILE20323	0
@@ -3268,7 +3268,7 @@ Entity	gold	cluster-NILE20320	gold	cluster-NILE20325	0
 Entity	gold	cluster-NILE20320	gold	cluster-NILE20326	0
 Entity	gold	cluster-NILE20320	gold	cluster-NILE20327	0
 Entity	gold	cluster-NILE20320	gold	cluster-NILE20328	0
-Entity	gold	cluster-NILE20320	gold	cluster-NILE20329	0
+Entity	gold	cluster-NILE20320	gold	cluster-NILE20329	1
 Entity	gold	cluster-NILE20320	gold	cluster-NILE20330	0
 Entity	gold	cluster-NILE20320	gold	cluster-NILE20331	0
 Entity	gold	cluster-NILE20320	gold	cluster-NILE20332	0
@@ -3574,7 +3574,7 @@ Entity	gold	cluster-NILE20329	gold	cluster-NILE20316	0
 Entity	gold	cluster-NILE20329	gold	cluster-NILE20317	0
 Entity	gold	cluster-NILE20329	gold	cluster-NILE20318	0
 Entity	gold	cluster-NILE20329	gold	cluster-NILE20319	0
-Entity	gold	cluster-NILE20329	gold	cluster-NILE20320	0
+Entity	gold	cluster-NILE20329	gold	cluster-NILE20320	1
 Entity	gold	cluster-NILE20329	gold	cluster-NILE20321	0
 Entity	gold	cluster-NILE20329	gold	cluster-NILE20322	0
 Entity	gold	cluster-NILE20329	gold	cluster-NILE20323	0
