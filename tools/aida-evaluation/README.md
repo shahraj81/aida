@@ -213,6 +213,18 @@ The logs directory contains the following log files:
 
 # Revision History
 
+## 10/05/2020:
+* Bugfix: Code crashed if it encountered partially specified date of an aligned event or relation. Validator modified to fill in day/month if day/month was unspecified (No change to the fact that date is considered not present if year is unspecified even if day or month were provided).
+
+## 10/02/2020:
+* Bugfix: Code fixed to avoid crashing when it encountered unexpected document element ID.
+* Bugfix: typo corrected in code.
+
+## 10/01/2020:
+* Code modified to add a parameter `weighted` to the constructor of class `Clusters`. This parameter controls how the similarity between a pair of gold and system event clusters (or relation clusters) is calculated. When `weighted` has the default value "no", the similarity will be the number of aligned pairs of gold-system mentions that have an IOU > selected_threshold (current default=0.1) between spans. However, if `weighted` is set to "yes", the similarity value would be the sum of IOU across all aligned pairs of system-and-gold mentions constraint by the fact that the IOU > selected_threshold (current default=0.1).
+* Code changed to support extraction of metatype corresponding to the annotated type.
+* Bugfix: typo corrected in code.
+
 ## 09/25/2020:
 * Implemented relaxed filter for determining which mentions are evaluable. Default strategy for filtering still remains to be the strict one. In order to understand the difference between the strict filter and the relaxed one, let `M` be a mention with span `MS` and type `MT`, `R` be the annotated region with span `RS`, and `RT` be the type exhausitvely annotated in `RS`. `M` would pass the strict filter if and only if `MS` has some non-zero overlap with `RS`, and `MT` be either the same as `RT` or be a finer-grained type of `RT`. However, in order for `M` to pass the relaxed filter, in addition to having a non-zero span overlap between `MS` and `RS`, only the top-level types of `MT` and `RT` should match. 
 

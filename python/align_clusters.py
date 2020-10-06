@@ -15,6 +15,7 @@ from aida.text_boundaries import TextBoundaries
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.video_boundaries import VideoBoundaries
+from aida.ontology_type_mappings import OntologyTypeMappings
 from aida.annotated_regions import AnnotatedRegions
 
 import argparse
@@ -26,7 +27,7 @@ ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
 def check_paths(args):
-    check_for_paths_existance([args.log_specifications, args.gold, args.system])
+    check_for_paths_existance([args.log_specifications, args.ontology_type_mappings, args.gold, args.system])
     check_for_paths_non_existance([args.alignment, args.similarities])
 
 def check_for_paths_existance(paths):
@@ -44,6 +45,7 @@ def check_for_paths_non_existance(paths):
 def align_clusters(args):
     logger = Logger(args.log, args.log_specifications, sys.argv)
 
+    ontology_type_mappings = OntologyTypeMappings(logger, args.ontology_type_mappings)
     document_mappings = DocumentMappings(logger,
                                          args.parent_children,
                                          Encodings(logger, args.encodings),
@@ -59,7 +61,7 @@ def align_clusters(args):
         'video': video_boundaries
         }
 
-    annotated_regions = AnnotatedRegions(logger, document_mappings, document_boundaries, args.regions)
+    annotated_regions = AnnotatedRegions(logger, ontology_type_mappings, document_mappings, document_boundaries, args.regions)
 
     thresholds = {
         'ENG': args.eng_iou_threshold,
@@ -104,6 +106,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
+    parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
     parser.add_argument('core_documents', type=str, help='File containing list of core documents to be included in the pool')
     parser.add_argument('parent_children', type=str, help='DocumentID to DocumentElementID mappings file')
