@@ -214,7 +214,7 @@ The logs directory contains the following log files:
 # Revision History
 
 ## 10/05/2020:
-* Bugfix: Code crashed if it encountered partially specified date of an alinged event or relation. Validator modified to fill in day/month if day/month was unspecified (No change to the fact that date is considered not present if year is unspecified even if day or month were provided).
+* Bugfix: Code crashed if it encountered partially specified date of an aligned event or relation. Validator modified to fill in day/month if day/month was unspecified (No change to the fact that date is considered not present if year is unspecified even if day or month were provided).
 
 ## 10/02/2020:
 * Bugfix: Code fixed to avoid crashing when it encountered unexpected document element ID.
