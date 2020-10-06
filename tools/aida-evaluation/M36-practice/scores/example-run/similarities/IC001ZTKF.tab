@@ -1,7 +1,7 @@
 metatype	system_or_gold1	cluster1	system_or_gold2	cluster2	similarity
 Entity	system	cluster-NILE22240	system	cluster-NILE22240	3
 Entity	system	cluster-NILE22240	system	cluster-NILE22241	0
-Entity	system	cluster-NILE22240	system	cluster-NILE22242	0
+Entity	system	cluster-NILE22240	system	cluster-NILE22242	1
 Entity	system	cluster-NILE22240	system	cluster-NILE22243	0
 Entity	system	cluster-NILE22240	system	cluster-NILE22244	0
 Entity	system	cluster-NILE22240	system	cluster-NILE22245	0
@@ -81,7 +81,7 @@ Entity	system	cluster-NILE22241	system	cluster-NILE22278	0
 Entity	system	cluster-NILE22241	system	cluster-NILE22279	0
 Entity	system	cluster-NILE22241	system	cluster-NILE22280	0
 Entity	system	cluster-NILE22241	system	cluster-NILE22281	0
-Entity	system	cluster-NILE22242	system	cluster-NILE22240	0
+Entity	system	cluster-NILE22242	system	cluster-NILE22240	1
 Entity	system	cluster-NILE22242	system	cluster-NILE22241	0
 Entity	system	cluster-NILE22242	system	cluster-NILE22242	10
 Entity	system	cluster-NILE22242	system	cluster-NILE22243	0
@@ -1638,7 +1638,7 @@ Entity	system	cluster-NILE22280	system	cluster-NILE22277	0
 Entity	system	cluster-NILE22280	system	cluster-NILE22278	0
 Entity	system	cluster-NILE22280	system	cluster-NILE22279	0
 Entity	system	cluster-NILE22280	system	cluster-NILE22280	1
-Entity	system	cluster-NILE22280	system	cluster-NILE22281	0
+Entity	system	cluster-NILE22280	system	cluster-NILE22281	1
 Entity	system	cluster-NILE22281	system	cluster-NILE22240	0
 Entity	system	cluster-NILE22281	system	cluster-NILE22241	0
 Entity	system	cluster-NILE22281	system	cluster-NILE22242	0
@@ -1678,7 +1678,7 @@ Entity	system	cluster-NILE22281	system	cluster-NILE22276	0
 Entity	system	cluster-NILE22281	system	cluster-NILE22277	0
 Entity	system	cluster-NILE22281	system	cluster-NILE22278	0
 Entity	system	cluster-NILE22281	system	cluster-NILE22279	0
-Entity	system	cluster-NILE22281	system	cluster-NILE22280	0
+Entity	system	cluster-NILE22281	system	cluster-NILE22280	1
 Entity	system	cluster-NILE22281	system	cluster-NILE22281	3
 Relation	system	cluster-NILR22258	system	cluster-NILR22258	1
 Relation	system	cluster-NILR22258	system	cluster-NILR22259	0
@@ -2371,7 +2371,7 @@ Event	system	cluster-NILV22274	system	cluster-NILV22273	0
 Event	system	cluster-NILV22274	system	cluster-NILV22274	1
 Entity	system	cluster-NILE22240	gold	cluster-NILE22240	3
 Entity	system	cluster-NILE22240	gold	cluster-NILE22241	0
-Entity	system	cluster-NILE22240	gold	cluster-NILE22242	0
+Entity	system	cluster-NILE22240	gold	cluster-NILE22242	1
 Entity	system	cluster-NILE22240	gold	cluster-NILE22243	0
 Entity	system	cluster-NILE22240	gold	cluster-NILE22244	0
 Entity	system	cluster-NILE22240	gold	cluster-NILE22245	0
@@ -2451,7 +2451,7 @@ Entity	system	cluster-NILE22241	gold	cluster-NILE22278	0
 Entity	system	cluster-NILE22241	gold	cluster-NILE22279	0
 Entity	system	cluster-NILE22241	gold	cluster-NILE22280	0
 Entity	system	cluster-NILE22241	gold	cluster-NILE22281	0
-Entity	system	cluster-NILE22242	gold	cluster-NILE22240	0
+Entity	system	cluster-NILE22242	gold	cluster-NILE22240	1
 Entity	system	cluster-NILE22242	gold	cluster-NILE22241	0
 Entity	system	cluster-NILE22242	gold	cluster-NILE22242	10
 Entity	system	cluster-NILE22242	gold	cluster-NILE22243	0
@@ -4008,7 +4008,7 @@ Entity	system	cluster-NILE22280	gold	cluster-NILE22277	0
 Entity	system	cluster-NILE22280	gold	cluster-NILE22278	0
 Entity	system	cluster-NILE22280	gold	cluster-NILE22279	0
 Entity	system	cluster-NILE22280	gold	cluster-NILE22280	1
-Entity	system	cluster-NILE22280	gold	cluster-NILE22281	0
+Entity	system	cluster-NILE22280	gold	cluster-NILE22281	1
 Entity	system	cluster-NILE22281	gold	cluster-NILE22240	0
 Entity	system	cluster-NILE22281	gold	cluster-NILE22241	0
 Entity	system	cluster-NILE22281	gold	cluster-NILE22242	0
@@ -4048,7 +4048,7 @@ Entity	system	cluster-NILE22281	gold	cluster-NILE22276	0
 Entity	system	cluster-NILE22281	gold	cluster-NILE22277	0
 Entity	system	cluster-NILE22281	gold	cluster-NILE22278	0
 Entity	system	cluster-NILE22281	gold	cluster-NILE22279	0
-Entity	system	cluster-NILE22281	gold	cluster-NILE22280	0
+Entity	system	cluster-NILE22281	gold	cluster-NILE22280	1
 Entity	system	cluster-NILE22281	gold	cluster-NILE22281	3
 Relation	system	cluster-NILR22258	gold	cluster-NILR22258	1
 Relation	system	cluster-NILR22258	gold	cluster-NILR22259	0
@@ -4741,7 +4741,7 @@ Event	system	cluster-NILV22274	gold	cluster-NILV22273	0
 Event	system	cluster-NILV22274	gold	cluster-NILV22274	1
 Entity	gold	cluster-NILE22240	gold	cluster-NILE22240	3
 Entity	gold	cluster-NILE22240	gold	cluster-NILE22241	0
-Entity	gold	cluster-NILE22240	gold	cluster-NILE22242	0
+Entity	gold	cluster-NILE22240	gold	cluster-NILE22242	1
 Entity	gold	cluster-NILE22240	gold	cluster-NILE22243	0
 Entity	gold	cluster-NILE22240	gold	cluster-NILE22244	0
 Entity	gold	cluster-NILE22240	gold	cluster-NILE22245	0
@@ -4821,7 +4821,7 @@ Entity	gold	cluster-NILE22241	gold	cluster-NILE22278	0
 Entity	gold	cluster-NILE22241	gold	cluster-NILE22279	0
 Entity	gold	cluster-NILE22241	gold	cluster-NILE22280	0
 Entity	gold	cluster-NILE22241	gold	cluster-NILE22281	0
-Entity	gold	cluster-NILE22242	gold	cluster-NILE22240	0
+Entity	gold	cluster-NILE22242	gold	cluster-NILE22240	1
 Entity	gold	cluster-NILE22242	gold	cluster-NILE22241	0
 Entity	gold	cluster-NILE22242	gold	cluster-NILE22242	10
 Entity	gold	cluster-NILE22242	gold	cluster-NILE22243	0
@@ -6378,7 +6378,7 @@ Entity	gold	cluster-NILE22280	gold	cluster-NILE22277	0
 Entity	gold	cluster-NILE22280	gold	cluster-NILE22278	0
 Entity	gold	cluster-NILE22280	gold	cluster-NILE22279	0
 Entity	gold	cluster-NILE22280	gold	cluster-NILE22280	1
-Entity	gold	cluster-NILE22280	gold	cluster-NILE22281	0
+Entity	gold	cluster-NILE22280	gold	cluster-NILE22281	1
 Entity	gold	cluster-NILE22281	gold	cluster-NILE22240	0
 Entity	gold	cluster-NILE22281	gold	cluster-NILE22241	0
 Entity	gold	cluster-NILE22281	gold	cluster-NILE22242	0
@@ -6418,7 +6418,7 @@ Entity	gold	cluster-NILE22281	gold	cluster-NILE22276	0
 Entity	gold	cluster-NILE22281	gold	cluster-NILE22277	0
 Entity	gold	cluster-NILE22281	gold	cluster-NILE22278	0
 Entity	gold	cluster-NILE22281	gold	cluster-NILE22279	0
-Entity	gold	cluster-NILE22281	gold	cluster-NILE22280	0
+Entity	gold	cluster-NILE22281	gold	cluster-NILE22280	1
 Entity	gold	cluster-NILE22281	gold	cluster-NILE22281	3
 Relation	gold	cluster-NILR22258	gold	cluster-NILR22258	1
 Relation	gold	cluster-NILR22258	gold	cluster-NILR22259	0
