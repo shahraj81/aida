@@ -623,6 +623,7 @@ def main(args):
             python3 align_clusters.py \
             --log {log_file} \
             {log_specifications} \
+            {ontology_type_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -642,6 +643,7 @@ def main(args):
             {alignment}'.format(python_scripts=python_scripts,
                                 log_file=log_file,
                                 log_specifications=log_specifications,
+                                ontology_type_mappings=ontology_type_mappings,
                                 encoding_modality=encoding_modality,
                                 coredocs=coredocs_xx,
                                 parent_children=parent_children,

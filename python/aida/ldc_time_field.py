@@ -46,7 +46,6 @@ class LDCTimeField(Object):
             return True
         return False
 
-
     def get_aif(self, iri):
         """
         Gets the AIF corresponding to the LDC Time Field.

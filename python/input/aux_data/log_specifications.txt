@@ -24,6 +24,7 @@ WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is in
 CRITICAL  KEY_IS_NONE                     key 'None' used
 INFO      MENTION_NOT_ANNOTATED           Response skipped because mention '{}' is outside the annotated regions
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
+INFO      MISSING_DATE_FIELD              Missing {} {}; using '{}' as the {} date
 ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
 WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing '{}' in '{}'
 ERROR     MISSING_GOLD_FRAME              Gold {} '{}' in document {} has no arguments

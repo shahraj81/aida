@@ -27,6 +27,17 @@ class OntologyTypeMappings(Object):
             } 
         self.load_data()
 
+    def get_type_to_metatype(self, full_type):
+        retVal = None
+        for metatype in self.get('containers'):
+            if self.has(metatype, full_type):
+                if retVal is not None:
+                    self.record_event('DEFAULT_CRITICAL_ERROR', 'Found multiple values for metatype: {},{}'.format(metatype, retVal))
+                retVal = metatype
+        if retVal is None:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'Unknown metatype corresponding to type \'{}\''.format(full_type))
+        return retVal
+
     def load_data(self):
         fh = FileHandler(self.logger, self.filename)
         for entry in fh.get('entries'):

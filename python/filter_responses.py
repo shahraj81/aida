@@ -79,7 +79,7 @@ def filter_responses(args):
         }
 
     responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.input, args.runid)
-    annotated_regions = AnnotatedRegions(logger, document_mappings, document_boundaries, args.regions)
+    annotated_regions = AnnotatedRegions(logger, ontology_type_mappings, document_mappings, document_boundaries, args.regions)
     run_filter_on_all_responses(responses, annotated_regions, document_mappings, document_boundaries)
     
     os.mkdir(args.output)

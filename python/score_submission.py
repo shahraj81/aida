@@ -82,7 +82,7 @@ def score_submission(args):
         'video': video_boundaries
         }
 
-    annotated_regions = AnnotatedRegions(logger, document_mappings, document_boundaries, args.regions)
+    annotated_regions = AnnotatedRegions(logger, ontology_type_mappings, document_mappings, document_boundaries, args.regions)
 
     gold_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.gold, 'gold')
     system_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.system, args.runid)
