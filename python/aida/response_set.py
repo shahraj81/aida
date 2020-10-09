@@ -491,7 +491,7 @@ class ResponseSet(Container):
                     valid_attribute = self.get('validator').validate(self, validator_name, schema, entry, attribute)
                     if not valid_attribute: valid = False
             entry.set('valid', valid)
-            if self.get('document_mappings').get('documents').get(entry.get('document_id')).get('is_core'):
+            if entry.get('document_id') in self.get('document_mappings').get('documents') and self.get('document_mappings').get('documents').get(entry.get('document_id')).get('is_core'):
                 self.get(filename).add(key=str(lineno), value=entry)
 
     def attribute_required(self, attribute, schema):
