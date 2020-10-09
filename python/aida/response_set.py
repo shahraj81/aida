@@ -171,8 +171,8 @@ attributes = {
         },
     'mention_span_text': {
         'name': 'mention_span_text',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task1', 'task2'],
         'validate': 'validate_value_provenance_triple',
         'years': [2020],
         },
@@ -468,6 +468,8 @@ class ResponseSet(Container):
             lineno = entry.get('lineno')
             entry.set('runid', self.get('runid'))
             entry.set('schema', schema)
+            if self.get('task') == 'task2':
+                entry.set('metatype', 'Entity')
             for i in range(len(schema.get('columns'))):
                 entry.set(schema.get('columns')[i], entry.get(entry.get('header').get('columns')[i]))
             valid = True
