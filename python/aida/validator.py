@@ -262,7 +262,7 @@ class Validator(Object):
         # An entry in the coreference metric output file is invalid if:
         #  (a) a video mention of an entity was asserted using VideoJustification, or
         #  (b) a video mention of an relation/event was asserted using KeyFrameVideoJustification
-        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK1_CM_RESPONSE' and modality == 'video':
+        if entry.get('schema').get('name') in ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'] and modality == 'video':
             if keyframe_id and entry.get('metatype') != 'Entity':
                 self.record_event('UNEXPECTED_JUSTIFICATION', provenance, entry.get('metatype'), entry.get('cluster_id'), 'KeyFrameVideoJustification', entry.get('where'))
                 return False
