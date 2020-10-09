@@ -283,16 +283,16 @@ class Validator(Object):
         return True
     
     def validate_confidence(self, responses, schema, entry, attribute):
-        value = trim_cv(entry.get(attribute.get('name')))
+        try:
+            value = trim_cv(entry.get(attribute.get('name')))
+        except ValueError:
+            self.record_event('INVALID_CONFIDENCE', entry.get(attribute.get('name')), entry.get('where'))
+            value = 1.0
+            entry.set(attribute.get('name'), '"{value}"'.format(value=value))
         if schema.get('task') == 'task3' and schema.get('query_type') == 'GraphQuery' and value == 'NULL' and attribute.get('name') == 'edge_compound_justification_confidence':
             return True
-        try: 
-            float(value)
-        except ValueError:
-            entry.set(attribute.get('name'), 1)
+        if not 0 < value <= 1:
             self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
-            return False
-        if not 0 < float(value) <= 1:
-            self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
-            return False
+            value = 1.0
+            entry.set(attribute.get('name'), '"{value}"'.format(value=value))
         return True
