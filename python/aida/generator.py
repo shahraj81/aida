@@ -21,7 +21,7 @@ class Generator(Object):
         super().__init__(logger)
 
     def generate(self, responses, method_name, entry):
-        method = self.get_method(method_name)
+        method = self.get('method', method_name)
         if method is None:
             self.record_event('UNDEFINED_METHOD', method_name)
         method(responses, entry)
