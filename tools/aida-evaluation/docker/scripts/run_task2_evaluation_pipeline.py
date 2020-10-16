@@ -249,7 +249,7 @@ if __name__ == '__main__':
     parser.add_argument('-I', '--aws_access_key_id', help='aws_access_key_id; required if the KB is to be obtained from an S3 location')
     parser.add_argument('-K', '--aws_secret_access_key', help='aws_secret_access_key; required if the KB is to be obtained from an S3 location')
     parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
-    parser.add_argument('-o', '--output', default='/output', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-o', '--output', default='/output', help='Specify the output directory (default: %(default)s)')
     parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')
     parser.add_argument('-R', '--runtype', default='practice', help='Specify the run type (default: %(default)s)')
     parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt', help='Specify the log specifications file (default: %(default)s)')
