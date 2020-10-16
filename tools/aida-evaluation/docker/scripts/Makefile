@@ -1,5 +1,5 @@
 all:
-ifeq ($(TASK), "task1")
+ifeq ($(TASK), task1)
 	python3 run_task1_evaluation_pipeline.py \
 	  --run $(RUNID) \
 	  --runtype $(RUNTYPE) \
@@ -9,7 +9,7 @@ ifeq ($(TASK), "task1")
 	  $(IMAGE_IOU_THRESHOLD) \
 	  $(VIDEO_IOU_THRESHOLD)
 else
-	ifeq (($(TASK), "task2")
+	ifeq (($(TASK), task2)
 		python3 run_task2_evaluation_pipeline.py \
 		  --run $(RUNID) \
 		  --runtype $(RUNTYPE) \
