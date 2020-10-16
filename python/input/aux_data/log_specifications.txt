@@ -21,9 +21,11 @@ ERROR     INVALID_METATYPE                Invalid metatype (expected one from '{
 ERROR     INVALID_PREDICATE_NO_UNDERSCORE No underscore provided in predicate '{}'
 ERROR     INVALID_PROVENANCE_FORMAT       Invalid provenance '{}'
 WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is invalid
+INFO      KB_STATS                        Input directory contains {} KBs in total. (valid {}, invalid {})
 CRITICAL  KEY_IS_NONE                     key 'None' used
 INFO      MENTION_NOT_ANNOTATED           Response skipped because mention '{}' is outside the annotated regions
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
+ERROR     MISSING_AWS_CREDENTIALS         AWS credentials missing
 INFO      MISSING_DATE_FIELD              Missing {} {}; using '{}' as the {} date
 ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
 WARNING   MISSING_ENTRY_IN_LOOKUP_WARNING Missing '{}' in '{}'
@@ -31,6 +33,7 @@ ERROR     MISSING_GOLD_FRAME              Gold {} '{}' in document {} has no arg
 ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
+ERROR     MISSING_OPEN_PERFORMER_FILE     {}/{} is expected from open performers but not found
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
 ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
@@ -39,6 +42,8 @@ ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negati
 CRITICAL  NO_SPECS                        No specifications available for '{}'
 INFO      NO_TEMPORAL_CONSTRAINT          Gold cluster {} in document {} has no temporal constraint
 ERROR     NOT_AN_NUMBER                   '{}' is not a number
+ERROR     NOTHING_TO_SCORE                Nothing to score.
+CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
@@ -51,19 +56,26 @@ INFO      ANNOTATED_TYPES_INFO            ANNOTATED_TYPES_INFO: DOCUMENT: {} TYP
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
 ERROR     UNKNOWN_MODALITY                Unknown modality for document element '{}'
+ERROR     UNKNOWN_PERFORMER_TYPE          Unable to determine performer type
 ERROR     UNKNOWN_PREDICATE               Unknown predicate '{}'
 ERROR     UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
+ERROR     UNKNOWN_RUNTYPE                 Unknown runtype {} (expected one from: {})
 ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
 CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} cluster '{}' is aligned to gold {} cluster '{}'
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
-ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{})\
+ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
+ERROR     UNEXPECTED_FILENAME             Unexpected filename (expected one from '{}', provided '{}')
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_NUM_DATES            Unexpected number of dates for gold cluster {} in document {}
+ERROR     UNEXPECTED_NUM_LINES_IN_INPUT   Unexpected number of lines in input (expected '{}', provided '{}')
+ERROR     UNEXPECTED_NUM_FILES_IN_INPUT   Unexpected number of files in input (expected '{}', provided '{}')
 ERROR     UNEXPECTED_NUM_OF_REL_FILLERS   Unexpected number of filler(s) for relation {} (expected '2', provided '{}')
+ERROR     UNEXPECTED_S3_LOCATION          Unexpected S3 location (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_SPAN_FORMAT          Unexpected span format: {}
 CRITICAL  UNEXPECTED_SPAN_TYPE            Unexpected span (expected one from [{}], provided '{}')
+ERROR     UNEXCPECTED_THRESHOLD           Unexpected value {} of {} (expected to be in [0,1])
 ERROR     UNEXPECTED_VALUE                Unexpected {}: {}
 ERROR     UNEXPECTED_SUBJECT_TYPE         Type '{}' of subject '{}' used in predicate is not one of its asserted types
 WARNING   MISSING_SPAN_FOR_MENTION        No span for mention '{}'
