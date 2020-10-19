@@ -468,7 +468,7 @@ def main(args):
         # copy queries to be applied
         record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
         call_system('mkdir {queries}'.format(queries=queries))
-        call_system('cp /data/queries/*.rq {queries}'.format(task=args.task, queries=queries))
+        call_system('cp /data/queries/AIDA_P2_TA1_*.rq {queries}'.format(task=args.task, queries=queries))
 
         num_total = len([d for d in documents_in_submission if documents_in_submission[d] == 1])
         count = 0;
