@@ -72,7 +72,7 @@ def main(args):
         exit(ERROR_EXIT_CODE)
 
     ldc_package_id = runtypes[args.runtype]
-    record_and_display_message(logger, 'Docker is using {} data for scoring'.format(args.runtype))
+    record_and_display_message(logger, 'Docker is using {} data.'.format(args.runtype))
 
     #############################################################################################
     # AUX-data
@@ -242,6 +242,17 @@ def main(args):
                                           sparql_output=sparql_output,
                                           sparql_valid_output=sparql_valid_output)
     call_system(cmd)
+
+    num_errors = 0
+    with open(log_file) as f:
+        for line in f.readlines():
+            if 'ERROR' in line:
+                num_errors += 1
+
+    if num_errors:
+        print('\nSPARQL output had {} error(s).\n'.format(num_errors))
+    else:
+        print('\nSPARQL output had no errors.\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply AIDA M36 task2 evaluation pipeline to the KB.")
