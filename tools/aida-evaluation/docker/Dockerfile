@@ -84,7 +84,7 @@ RUN git clone https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
-RUN git checkout AIDAED-v2020.1.0
+RUN git checkout AIDAED-v2020.2.0
 
 RUN cp /scripts/aida/python/input/aux_data/log_specifications.txt /scripts/
 RUN cp /scripts/aida/python/aida/logger.py /scripts/
