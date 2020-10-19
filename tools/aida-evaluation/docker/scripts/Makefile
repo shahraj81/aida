@@ -1,8 +1,8 @@
-ifdef ($(AWS_ACCESS_KEY_ID))
+ifneq ($(AWS_ACCESS_KEY_ID),)
 	AWS_ACCESS_KEY_ID_ARG=--aws_access_key_id $(AWS_ACCESS_KEY_ID)
 endif
 
-ifdef ($(AWS_SECRET_ACCESS_KEY))
+ifneq ($(AWS_SECRET_ACCESS_KEY),)
 	AWS_SECRET_ACCESS_KEY_ARG=--aws_secret_access_key $(AWS_SECRET_ACCESS_KEY)
 endif
 
