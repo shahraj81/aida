@@ -1,0 +1,2 @@
+?docid	?query_link_target	?link_target	?cluster	?mention_span	?j_cv	?link_cv
+IC001V8NY	REFKB:30005137	REFKB:30005137	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#cluster-venezuela>	IC001V8NY:IC001VBHL:(6956,0)-(6966,0)	"1.0"	"1.0"
