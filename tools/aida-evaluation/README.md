@@ -12,28 +12,23 @@
 
 # Introduction
 
-This document describes how to run the AIDA Task1 evaluation pipeline for M36 practice data using the AIDA-Evaluation docker as a standalone utility.
-
-In order to build the docker image it is important that you have access to the following:
-
-1. GraphDB -- ./docker/graphdb-free-9.3.3-dist.zip
-
-  The AIDA-Evaluation docker uses GraphDB as the triple-store for storing (and applying queries against) the KBs represented in the AIDA Interchange Format. The docker has been tested with `graphdb-free-9.3.3-dist.zip`. The being the free version comes with the limitation of being able to run no more than two queries in parallel. GraphDB can be downloaded from `https://www.ontotext.com/free-graphdb-download/`.
-
-  This document also describes how to use build the docker image using a different version of GraphDB.
+This document describes how to run the AIDA Task1/Task2 evaluation pipeline for M36 practice data using the AIDA-Evaluation docker as a standalone utility.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to build the docker image?
 
-1. Place the following files (see [Introduction](#introduction) for details) inside the directory at `./docker/`:
-  * graphdb-free-9.3.3-dist.zip
+The docker has been tested with `graphdb-free-9.3.3-dist` but this section also describes how to configure it to work with a different version.
 
-2. Make change to the first line (as shown below) of `./docker/Makefile` in order to update the value of variable `ROOT` to reflect your system specific location of directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
+Independent of which version of GraphDB you are using, you would need to first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` (as shown below) to reflect your system specific location of directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
 
   ~~~
   ROOT=/absolute/path/to/aida/tools/aida-evaluation
   ~~~
+
+## Using the tested version of GraphDB
+
+1. Download `graphdb-free-9.3.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`:
 
 3. Run the following command:
 
@@ -42,53 +37,58 @@ In order to build the docker image it is important that you have access to the f
   make build
   ~~~
 
-  ## Using another version of GraphDB
+## Using another version of GraphDB
 
-  In order to build the docker with either a different version of GraphDB you would need to:
+In order to build the docker with a different version of GraphDB you would need to:
 
-  1. Download the paid version of GraphDB `graphdb-[otheredition]-[otherversion]-dist.zip` and place it inside `./docker/`, and
+1. Download the GraphDB installer (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`), and place it inside `./docker/`, and
 
-  2. Run the following command:
+3. Run the following command:
 
-  ~~~
-  cd docker
-  make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
-  ~~~
+~~~
+cd docker
+make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
+~~~
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to apply the docker on a test run?
 
-  The docker comes with an example run stored at `./M36-practice/runs/example-run` and the corresponding output stored at `./M36-practice/scores/example-run`.
+The docker comes loaded with two example runs: one for `task1` and the other for `task2`. The example runs are stored at `./M36-practice/runs/example-task1-run` and `./M36-practice/runs/example-task2-run`, respectively, and the output stored at `./M36-practice/scores/example-task1-run` and `./M36-practice/scores/example-task2-run`, respectively.
 
-  Note that the docker expects the output directory to be empty.
+Note that the docker expects the output directory to be empty.
 
-  In order to run the docker on the example run, you may execute the following:
+In order to run the docker on the task1 example run, you may execute the following:
 
-  ~~~
-  cd docker
-  make run
-  ~~~
+~~~
+cd docker
+make task1-example
+~~~
 
-  If you see the message `ERROR: Output directory /score is not empty`, you would need to remove the pre-existing output by running the following command:
+In order to run the docker on the task2 example run, you may execute the following:
 
-  ~~~
-  rm -rf ./M36-practice/scores/example-run/*
-  ~~~
+~~~
+cd docker
+make task2-example
+~~~
 
-  You may compare your output with expected output by running the following command:
+If you see the message `ERROR: Output directory /score is not empty`, you would need to remove the pre-existing output.
 
-  ~~~
-  git diff
-  ~~~
+You may compare your output with the expected output by running the following command:
 
-  The only difference that you should see is the timestamps inside file `./M36-practice/scores/example-run/logs/run.log`. All other lines in this file, and content of all other files should remain unchanged.
+~~~
+git diff
+~~~
+
+The only difference that you should see is the timestamps inside file `./M36-practice/scores/example-task?-run/logs/run.log`. All other lines in this file, and content of all other files should remain unchanged.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to apply the docker to your run?
 
-In order to run the docker on your run, you will need to specify the following when calling `make run`:
+## How to apply the docker to task1 run?
+
+In order to run the docker on a `task1` run, you will need to specify the following when calling `make task1`:
 
   1. The Run ID,
   2. The input directory, and
@@ -97,89 +97,140 @@ In order to run the docker on your run, you will need to specify the following w
 You may run the following command after changing the values for the variables RUNID, HOST_INPUT_DIR, and HOST_OUTPUT_DIR.
 
 ~~~
-make run \
-      RUNID=your_run_id \
-      HOST_INPUT_DIR=/absolute/path/to/your/run \
-      HOST_OUTPUT_DIR=/absolute/path/to/output
+make task1 \
+  RUNID=your_run_id \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-The scorer uses a default value of 0.8 for all IOU thresholds. If you would like to change default values, you may update thresholds on the following line in the Makefile:
+The scorer uses a default value of 0.1 for all IOU thresholds. If you would like to change default values, you may update thresholds on the following line in the Makefile:
 
 ~~~
-ENG_TEXT_IOU_THRESHOLD=0.8
-SPA_TEXT_IOU_THRESHOLD=0.8
-RUS_TEXT_IOU_THRESHOLD=0.8
-IMAGE_IOU_THRESHOLD=0.8
-VIDEO_IOU_THRESHOLD=0.8
+ENG_TEXT_IOU_THRESHOLD=0.1
+SPA_TEXT_IOU_THRESHOLD=0.1
+RUS_TEXT_IOU_THRESHOLD=0.1
+IMAGE_IOU_THRESHOLD=0.1
+VIDEO_IOU_THRESHOLD=0.1
 ~~~
 
-You may also supply the new value when you run the docker using:
+Alternatively, you may also supply the new value when you run the docker using:
 
 ~~~
-make run \
-      RUNID=your_run_id \
-      ENG_TEXT_IOU_THRESHOLD=your_threshold \
-      SPA_TEXT_IOU_THRESHOLD=your_threshold \
-      RUS_TEXT_IOU_THRESHOLD=your_threshold \
-      IMAGE_IOU_THRESHOLD=your_threshold \
-      VIDEO_IOU_THRESHOLD=your_threshold \
-      HOST_INPUT_DIR=/absolute/path/to/your/run \
-      HOST_OUTPUT_DIR=/absolute/path/to/output
+make task1 \
+  RUNID=your_run_id \
+  ENG_TEXT_IOU_THRESHOLD=your_threshold \
+  SPA_TEXT_IOU_THRESHOLD=your_threshold \
+  RUS_TEXT_IOU_THRESHOLD=your_threshold \
+  IMAGE_IOU_THRESHOLD=your_threshold \
+  VIDEO_IOU_THRESHOLD=your_threshold \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+## How to apply the docker to task2 run?
+
+In order to run the docker on a task2 KB you may run the following command:
+
+~~~
+make task2 \
+  RUNID=your_run_id \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+For task2, the docker expects as input either the task2 KB or an S3 location of the task2 KB, and there should be exactly one file in the `HOST_INPUT_DIR` with a specific name as described below.
+
+### Providing Task2 KB
+When you provide the task2 KB directly, the file should be named `task2_kb.ttl`.
+
+### Providing S3 location of Task2 KB
+When you provide the S3 location of task2 KB, the file should be named `s3_location.txt`. The docker expects exactly one line in `s3_location.txt` which should be of the form:
+
+~~~
+s3://aida-phase2-ta-performers/.../*-nist.tgz
+~~~
+
+The compressed file at the above location when expanded should have a `NIST` directory containing a single `ttl` file.
+
+Note that when supplying an S3 location you must provide your own credentials, using for example the following command:
+
+~~~
+make task2 \
+  RUNID=your_run_id \
+  AWS_ACCESS_KEY_ID=your_aws_access_key_id \
+  AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to apply the docker to your run in the evaluation setting?
 
-In order to run the docker on the evaluation data (rather than the default practice data), you need to set the value of RUNTYPE to `evaluation` in the Makefile.
+This section is intended only for the leaderboard usage or NIST-internal usage.
+
+In order to run the docker on the evaluation data (rather than the default practice data), you need to supply the value of `evaluation` to variable named `RUNTYPE` when calling `make task1` or `make task2` either by modifying the Makefile to reflect the following:
 
 ~~~
 RUNTYPE=evaluation
 ~~~
 
-Alternatively, you may run one of the following commands:
+Alternatively, you may run one of the following commands to run on `task1`:
 
 ~~~
-make run \
-      RUNID=your_run_id \
-      RUNTYPE=evaluation
-      ENG_TEXT_IOU_THRESHOLD=your_threshold \
-      SPA_TEXT_IOU_THRESHOLD=your_threshold \
-      RUS_TEXT_IOU_THRESHOLD=your_threshold \
-      IMAGE_IOU_THRESHOLD=your_threshold \
-      VIDEO_IOU_THRESHOLD=your_threshold \
-      HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
-      HOST_INPUT_DIR=/absolute/path/to/your/run \
-      HOST_OUTPUT_DIR=/absolute/path/to/output
+make task1 \
+  RUNID=your_run_id \
+  RUNTYPE=evaluation
+  ENG_TEXT_IOU_THRESHOLD=your_threshold \
+  SPA_TEXT_IOU_THRESHOLD=your_threshold \
+  RUS_TEXT_IOU_THRESHOLD=your_threshold \
+  IMAGE_IOU_THRESHOLD=your_threshold \
+  VIDEO_IOU_THRESHOLD=your_threshold \
+  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
+In order to run the docker in the evaluation setting on a task2 submission you may run the following command when providing the KB as input:
+
 ~~~
-make evaluate \
-      RUNID=your_run_id \
-      ENG_TEXT_IOU_THRESHOLD=your_threshold \
-      SPA_TEXT_IOU_THRESHOLD=your_threshold \
-      RUS_TEXT_IOU_THRESHOLD=your_threshold \
-      IMAGE_IOU_THRESHOLD=your_threshold \
-      VIDEO_IOU_THRESHOLD=your_threshold \
-      HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
-      HOST_INPUT_DIR=/absolute/path/to/your/run \
-      HOST_OUTPUT_DIR=/absolute/path/to/output
+make task2 \
+  RUNID=your_run_id \
+  RUNTYPE=evaluation \
+  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-Note that:
-* this option is intended for the leaderboard, and not for individual performers.
-* you must specify the required auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the auxiliary data driven from the practice corpus and annotations, and will not work for the evaluation.
+You may run the following command when providing the S3 location of the KB as input:
+
+~~~
+make task2 \
+  RUNID=your_run_id \
+  RUNTYPE=evaluation \
+  AWS_ACCESS_KEY_ID=your_aws_access_key_id \
+  AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
+  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+Note that you must specify the required auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the auxiliary data driven from the practice corpus and annotations, and will not work for the evaluation.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What should the input directory contain?
-The input directory should contain all the task1 KBs along with corresponding AIF report files. You may want to look at the input directory of the included example run at `./M36-practice/scores/example-run` to get an idea of how to structure your input directory.
+For task1, the input directory should contain all the task1 KBs along with corresponding AIF report files. You may want to look at the input directories of the task1 and task2 example runs located at `./M36-practice/runs/` to get an idea of how to structure your input directory.
+
+See the section: [How to apply the docker to task2 run?](#how-to-apply-the-docker-to-task2-run) for details on the input directory structure for task2 submission.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What does the output directory contain?
 
-The output directory contains the following:
+## Task1
+
+The task1 output directory contains the following:
 
 | Name                      |  Description                                          |
 | --------------------------|-------------------------------------------------------|
@@ -195,11 +246,25 @@ The output directory contains the following:
 | SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
 | SPARQL-VALID-output       | The directory containing valid SPARQL output. |
 
+## Task2
+
+The task2 output directory contains the following:
+
+| Name                      |  Description                                          |
+| --------------------------|-------------------------------------------------------|
+| logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
+| queries                   | The directory containing SPARQL queries applied to KBs. |
+| SPARQL-KB-input           | The directory containing KBs to which SPARQL queries were applied.|
+| SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
+| SPARQL-VALID-output       | The directory containing valid SPARQL output. |
+
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What does the logs directory contain?
 
-The logs directory contains the following log files:
+## Task1
+
+The task1 logs directory contains the following log files:
 
 | Name                            |  Description            |
 | --------------------------------|-------------------------|
@@ -209,9 +274,22 @@ The logs directory contains the following log files:
 | score_submission.log            | The log file generated by the scorer. |
 | validate-responses.log          | The log file generated by the validator. |
 
+## Task2
+
+The task2 logs directory contains the following log files:
+
+| Name                            |  Description            |
+| --------------------------------|-------------------------|
+| run.log                         | The main log file recording major events by the docker. |
+| validate-responses.log          | The log file generated by the validator. |
+
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 10/20/2020:
+* Evaluation pipeline modified to work on Task2 input. This README has been revised accordingly.
+* The functionality of the task1 side of the pipeline is unchanged except that in order to call the docker for a task1 system you would call `make task1` instead to `make run`.
 
 ## 10/05/2020:
 * Bugfix: Code crashed if it encountered partially specified date of an aligned event or relation. Validator modified to fill in day/month if day/month was unspecified (No change to the fact that date is considered not present if year is unspecified even if day or month were provided).
@@ -226,7 +304,7 @@ The logs directory contains the following log files:
 * Bugfix: typo corrected in code.
 
 ## 09/25/2020:
-* Implemented relaxed filter for determining which mentions are evaluable. Default strategy for filtering still remains to be the strict one. In order to understand the difference between the strict filter and the relaxed one, let `M` be a mention with span `MS` and type `MT`, `R` be the annotated region with span `RS`, and `RT` be the type exhausitvely annotated in `RS`. `M` would pass the strict filter if and only if `MS` has some non-zero overlap with `RS`, and `MT` be either the same as `RT` or be a finer-grained type of `RT`. However, in order for `M` to pass the relaxed filter, in addition to having a non-zero span overlap between `MS` and `RS`, only the top-level types of `MT` and `RT` should match. 
+* Implemented relaxed filter for determining which mentions are evaluable. Default strategy for filtering still remains to be the strict one. In order to understand the difference between the strict filter and the relaxed one, let `M` be a mention with span `MS` and type `MT`, `R` be the annotated region with span `RS`, and `RT` be the type exhausitvely annotated in `RS`. `M` would pass the strict filter if and only if `MS` has some non-zero overlap with `RS`, and `MT` be either the same as `RT` or be a finer-grained type of `RT`. However, in order for `M` to pass the relaxed filter, in addition to having a non-zero span overlap between `MS` and `RS`, only the top-level types of `MT` and `RT` should match.
 
 ## 09/24/2020:
 * Changed IOU thresholds from 0.8 to 0.1.
