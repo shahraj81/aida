@@ -293,7 +293,7 @@ The `task2` logs directory contains the following log files:
 
 ## 10/20/2020:
 * Evaluation pipeline modified to work on Task2 input. This README has been revised accordingly.
-* The functionality of the task1 side of the pipeline is unchanged except that in order to call the docker for a task1 system you would call `make task1` instead to `make run`.
+* The functionality of the task1 side of the pipeline is unchanged except that in order to call the docker for a task1 system you would call `make task1` instead of `make run`.
 
 ## 10/05/2020:
 * Bugfix: Code crashed if it encountered partially specified date of an aligned event or relation. Validator modified to fill in day/month if day/month was unspecified (No change to the fact that date is considered not present if year is unspecified even if day or month were provided).
