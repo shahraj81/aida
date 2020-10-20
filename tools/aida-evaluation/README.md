@@ -20,13 +20,15 @@ This document describes how to run the AIDA Task1/Task2 evaluation pipeline for 
 
 The docker has been tested with `graphdb-free-9.3.3-dist` but this section also describes how to configure it to work with a different version.
 
-Independent of which version of GraphDB you are using, you would need to first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` (as shown below) to reflect your system specific location of directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
+Independent of which version of GraphDB you are using, you would need to first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` (as shown below) to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
 
   ~~~
   ROOT=/absolute/path/to/aida/tools/aida-evaluation
   ~~~
 
 ## Using the tested version of GraphDB
+
+In order to build the docker image with the tested version of GraphDB you would need to:
 
 1. Download `graphdb-free-9.3.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`, and
 
@@ -39,9 +41,9 @@ Independent of which version of GraphDB you are using, you would need to first u
 
 ## Using another version of GraphDB
 
-In order to build the docker with a different version of GraphDB you would need to:
+In order to build the docker image with a different version of GraphDB you would need to:
 
-1. Download the GraphDB installer (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`), and place it inside `./docker/`, and
+1. Download the installer of the GraphDB version that you would like to use (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`), and place it inside `./docker/`, and
 
 2. Run the following command:
 
@@ -80,7 +82,7 @@ You may compare your output with the expected output by running the following co
 git diff
 ~~~
 
-The only difference that you should see is the timestamps in the log files. Content of all other files should remain unchanged.
+The only difference that you should see is in the timestamps inside the log files. Content of all other files should remain unchanged.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -103,7 +105,7 @@ make task1 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-Note that the scorer uses a default value of 0.1 for all IOU thresholds. If you would like to change default values, you may update thresholds on the following line in the Makefile:
+Note that the scorer uses a default value of 0.1 for all IOU thresholds. If you would like to change these values, you may update thresholds on the following line of the Makefile:
 
 ~~~
 ENG_TEXT_IOU_THRESHOLD=0.1
@@ -113,7 +115,7 @@ IMAGE_IOU_THRESHOLD=0.1
 VIDEO_IOU_THRESHOLD=0.1
 ~~~
 
-Alternatively, you may also supply the new value when you run the docker using:
+Alternatively, you may also supply the new values when you run the docker using:
 
 ~~~
 make task1 \
@@ -129,7 +131,7 @@ make task1 \
 
 ## How to apply the docker to a task2 run?
 
-In order to run the docker on a task2 KB you may run the following command:
+In order to run the docker on a `task2` KB you may run the following command:
 
 ~~~
 make task2 \
@@ -138,21 +140,21 @@ make task2 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-For task2, the docker expects either the a KB or an S3 location of the KB as input. This should be specified using file in the input directory `HOST_INPUT_DIR`. The name of this file tells the docker whether the input is a KB or an S3 location.
+For `task2` the docker expects either the a KB or an S3 location of the KB as input. The name of the file (in the input directory `HOST_INPUT_DIR`) tells the docker whether the input is a KB or an S3 location of the KB (see below for details).
 
 ### Providing Task2 KB
 When the input is a KB the name of the file should be `task2_kb.ttl`.
 
 ### Providing S3 location of Task2 KB
-When the input is a S3 location of the KB, the file should be named `s3_location.txt`. The docker expects exactly one line in this file, and that line should be of the form:
+When the input is an S3 location of the KB, the file should be named `s3_location.txt`. The docker expects exactly one line in this file, and that line should be of the form:
 
 ~~~
 s3://aida-phase2-ta-performers/.../*-nist.tgz
 ~~~
 
-The compressed file at the above location when expanded should have a `NIST` directory containing a single file (with extension ttl) containing task2 KB.
+The compressed file at the above location should expand into a directory containing a sub-directory called `NIST` which should contain a single file (with extension ttl) containing task2 KB.
 
-Note that when supplying an S3 location you must also provide your own credentials using for example the following command:
+Note that when supplying an S3 location you must also provide your own AWS credentials using for example the following command:
 
 ~~~
 make task2 \
@@ -167,15 +169,15 @@ make task2 \
 
 # How to apply the docker to your run in the evaluation setting?
 
-This section is only for the leaderboard usage or NIST-internal usage.
+This section is written for the leaderboard usage or NIST-internal usage.
 
-In order to run the docker on the evaluation data (rather than the default practice data), you need to supply the value `evaluation` to variable named `RUNTYPE` when calling `make task1` or `make task2` by modifying the Makefile to reflect the following:
+In order to run the docker on the `evaluation` data (rather than the default `practice` data), you would need to supply the value `evaluation` to the variable named `RUNTYPE` when calling `make task1` or `make task2` by modifying the Makefile to reflect the following:
 
 ~~~
 RUNTYPE=evaluation
 ~~~
 
-Alternatively, you may run the following commands for `task1`:
+Alternatively, you may run the following command for `task1`:
 
 ~~~
 make task1 \
@@ -191,7 +193,7 @@ make task1 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-In order to run the docker in the evaluation setting for task2 you may run the following command when providing the KB as input:
+In order to run the docker in the evaluation setting for `task2` you may run the following command when providing the KB as input:
 
 ~~~
 make task2 \
@@ -202,7 +204,7 @@ make task2 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-You may run the following command when providing the S3 location of the task2 KB as input:
+You may run the following command when providing the S3 location of the `task2` KB as input:
 
 ~~~
 make task2 \
@@ -215,16 +217,16 @@ make task2 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-Note that you must specify the required `evaluation` auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `practice` auxiliary data, driven from the practice corpus and annotations, and this default value will not make the docker run in the `evaluation` setting.
+Note that you must specify the required `evaluation` auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `practice` auxiliary data, driven from the practice corpus and annotations, and using this default value will make the docker run in the `practice` setting.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What should the input directory contain?
-For `task1`, the input directory should contain all the task1 KBs along with corresponding AIF report files.
+For `task1`, the input directory should contain all the `task1` KBs along with corresponding AIF report files.
 
-See the section: [How to apply the docker to task2 run?](#how-to-apply-the-docker-to-task2-run) for details on the input directory structure for `task2` submission.
+See the section: [How to apply the docker to a task2 run?](#how-to-apply-the-docker-to-a-task2-run) for details on the input directory structure for `task2` submission.
 
-You may also want to look at the input directories of the `task1` and `task2` example runs located at `./M36-practice/runs/` to get an idea of how to structure your input directories.
+You may also want to take a look at the input directories of the `task1` and `task2` example runs located at `./M36-practice/runs/` to get an idea of how to structure your input directories.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
