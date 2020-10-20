@@ -18,7 +18,7 @@ IMAGE_IOU_THRESHOLD=0.1
 VIDEO_IOU_THRESHOLD=0.1
 
 all:
-	@echo "Usage: make [build|run]"	
+	@echo "Usage: make [build|task1-example|task2-example|task1|task2]"
 
 build:
 	docker build \
@@ -26,19 +26,14 @@ build:
 	       --build-arg edition=$(GRAPHDB_EDITION) \
 	       -t aida-evaluation .
 
-evaluate:
-	make run RUNTYPE=evaluation
-
 task1-example:
 	make task1 \
 	  RUNID=example-task1-run \
-	  RUNTYPE=practice \
 	  HOST_INPUT_DIR=$(ROOT)/M36-practice/runs/example-task1-run \
 	  HOST_OUTPUT_DIR=$(ROOT)/M36-practice/scores/example-task1-run
 
 task2-example:
 	make task2 \
-	  RUNTYPE=practice \
 	  RUNID=example-task2-run \
 	  HOST_INPUT_DIR=$(ROOT)/M36-practice/runs/example-task2-run \
 	  HOST_OUTPUT_DIR=$(ROOT)/M36-practice/scores/example-task2-run
