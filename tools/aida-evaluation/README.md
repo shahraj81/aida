@@ -28,9 +28,9 @@ Independent of which version of GraphDB you are using, you would need to first u
 
 ## Using the tested version of GraphDB
 
-1. Download `graphdb-free-9.3.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`:
+1. Download `graphdb-free-9.3.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`, and
 
-3. Run the following command:
+2. Run the following command:
 
   ~~~
   cd docker
@@ -43,7 +43,7 @@ In order to build the docker with a different version of GraphDB you would need 
 
 1. Download the GraphDB installer (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`), and place it inside `./docker/`, and
 
-3. Run the following command:
+2. Run the following command:
 
 ~~~
 cd docker
@@ -54,18 +54,18 @@ make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
 
 # How to apply the docker on a test run?
 
-The docker comes loaded with two example runs: one for `task1` and the other for `task2`. The example runs are stored at `./M36-practice/runs/example-task1-run` and `./M36-practice/runs/example-task2-run`, respectively, and the output stored at `./M36-practice/scores/example-task1-run` and `./M36-practice/scores/example-task2-run`, respectively.
+The docker comes loaded with two example runs: one for `task1` and the other for `task2`. The example runs are stored at `./M36-practice/runs/example-task1-run` and `./M36-practice/runs/example-task2-run`, respectively, and the output is stored at `./M36-practice/scores/example-task1-run` and `./M36-practice/scores/example-task2-run`, respectively.
 
 Note that the docker expects the output directory to be empty.
 
-In order to run the docker on the task1 example run, you may execute the following:
+In order to run the docker on the `task1` example run, you may execute the following:
 
 ~~~
 cd docker
 make task1-example
 ~~~
 
-In order to run the docker on the task2 example run, you may execute the following:
+In order to run the docker on the `task2` example run, you may execute the following:
 
 ~~~
 cd docker
@@ -80,13 +80,13 @@ You may compare your output with the expected output by running the following co
 git diff
 ~~~
 
-The only difference that you should see is the timestamps inside file `./M36-practice/scores/example-task?-run/logs/run.log`. All other lines in this file, and content of all other files should remain unchanged.
+The only difference that you should see is the timestamps in the log files. Content of all other files should remain unchanged.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to apply the docker to your run?
 
-## How to apply the docker to task1 run?
+## How to apply the docker to a task1 run?
 
 In order to run the docker on a `task1` run, you will need to specify the following when calling `make task1`:
 
@@ -103,7 +103,7 @@ make task1 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-The scorer uses a default value of 0.1 for all IOU thresholds. If you would like to change default values, you may update thresholds on the following line in the Makefile:
+Note that the scorer uses a default value of 0.1 for all IOU thresholds. If you would like to change default values, you may update thresholds on the following line in the Makefile:
 
 ~~~
 ENG_TEXT_IOU_THRESHOLD=0.1
@@ -127,7 +127,7 @@ make task1 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-## How to apply the docker to task2 run?
+## How to apply the docker to a task2 run?
 
 In order to run the docker on a task2 KB you may run the following command:
 
@@ -138,21 +138,21 @@ make task2 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-For task2, the docker expects as input either the task2 KB or an S3 location of the task2 KB, and there should be exactly one file in the `HOST_INPUT_DIR` with a specific name as described below.
+For task2, the docker expects either the a KB or an S3 location of the KB as input. This should be specified using file in the input directory `HOST_INPUT_DIR`. The name of this file tells the docker whether the input is a KB or an S3 location.
 
 ### Providing Task2 KB
-When you provide the task2 KB directly, the file should be named `task2_kb.ttl`.
+When the input is a KB the name of the file should be `task2_kb.ttl`.
 
 ### Providing S3 location of Task2 KB
-When you provide the S3 location of task2 KB, the file should be named `s3_location.txt`. The docker expects exactly one line in `s3_location.txt` which should be of the form:
+When the input is a S3 location of the KB, the file should be named `s3_location.txt`. The docker expects exactly one line in this file, and that line should be of the form:
 
 ~~~
 s3://aida-phase2-ta-performers/.../*-nist.tgz
 ~~~
 
-The compressed file at the above location when expanded should have a `NIST` directory containing a single `ttl` file.
+The compressed file at the above location when expanded should have a `NIST` directory containing a single file (with extension ttl) containing task2 KB.
 
-Note that when supplying an S3 location you must provide your own credentials, using for example the following command:
+Note that when supplying an S3 location you must also provide your own credentials using for example the following command:
 
 ~~~
 make task2 \
@@ -167,15 +167,15 @@ make task2 \
 
 # How to apply the docker to your run in the evaluation setting?
 
-This section is intended only for the leaderboard usage or NIST-internal usage.
+This section is only for the leaderboard usage or NIST-internal usage.
 
-In order to run the docker on the evaluation data (rather than the default practice data), you need to supply the value of `evaluation` to variable named `RUNTYPE` when calling `make task1` or `make task2` either by modifying the Makefile to reflect the following:
+In order to run the docker on the evaluation data (rather than the default practice data), you need to supply the value `evaluation` to variable named `RUNTYPE` when calling `make task1` or `make task2` by modifying the Makefile to reflect the following:
 
 ~~~
 RUNTYPE=evaluation
 ~~~
 
-Alternatively, you may run one of the following commands to run on `task1`:
+Alternatively, you may run the following commands for `task1`:
 
 ~~~
 make task1 \
@@ -191,7 +191,7 @@ make task1 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-In order to run the docker in the evaluation setting on a task2 submission you may run the following command when providing the KB as input:
+In order to run the docker in the evaluation setting for task2 you may run the following command when providing the KB as input:
 
 ~~~
 make task2 \
@@ -202,7 +202,7 @@ make task2 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-You may run the following command when providing the S3 location of the KB as input:
+You may run the following command when providing the S3 location of the task2 KB as input:
 
 ~~~
 make task2 \
@@ -215,14 +215,16 @@ make task2 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-Note that you must specify the required auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the auxiliary data driven from the practice corpus and annotations, and will not work for the evaluation.
+Note that you must specify the required `evaluation` auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `practice` auxiliary data, driven from the practice corpus and annotations, and this default value will not make the docker run in the `evaluation` setting.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What should the input directory contain?
-For task1, the input directory should contain all the task1 KBs along with corresponding AIF report files. You may want to look at the input directories of the task1 and task2 example runs located at `./M36-practice/runs/` to get an idea of how to structure your input directory.
+For `task1`, the input directory should contain all the task1 KBs along with corresponding AIF report files.
 
-See the section: [How to apply the docker to task2 run?](#how-to-apply-the-docker-to-task2-run) for details on the input directory structure for task2 submission.
+See the section: [How to apply the docker to task2 run?](#how-to-apply-the-docker-to-task2-run) for details on the input directory structure for `task2` submission.
+
+You may also want to look at the input directories of the `task1` and `task2` example runs located at `./M36-practice/runs/` to get an idea of how to structure your input directories.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -230,7 +232,7 @@ See the section: [How to apply the docker to task2 run?](#how-to-apply-the-docke
 
 ## Task1
 
-The task1 output directory contains the following:
+The `task1` output directory contains the following:
 
 | Name                      |  Description                                          |
 | --------------------------|-------------------------------------------------------|
@@ -248,7 +250,7 @@ The task1 output directory contains the following:
 
 ## Task2
 
-The task2 output directory contains the following:
+The `task2` output directory contains the following:
 
 | Name                      |  Description                                          |
 | --------------------------|-------------------------------------------------------|
@@ -264,7 +266,7 @@ The task2 output directory contains the following:
 
 ## Task1
 
-The task1 logs directory contains the following log files:
+The `task1` logs directory contains the following log files:
 
 | Name                            |  Description            |
 | --------------------------------|-------------------------|
@@ -276,7 +278,7 @@ The task1 logs directory contains the following log files:
 
 ## Task2
 
-The task2 logs directory contains the following log files:
+The `task2` logs directory contains the following log files:
 
 | Name                            |  Description            |
 | --------------------------------|-------------------------|
