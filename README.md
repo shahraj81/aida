@@ -6,7 +6,7 @@ Tools and utilities for supporting AIDA evaluations.
 
 | Name | Description | Location | Latest release branch |
 |---|---|---|---|
-| AIDA-Evaluation Docker | Tool for applying the entire evaluation pipeline to task1 submissions | tools/aida-evaluation | AIDAED-v2020.1.0 |
+| AIDA-Evaluation Docker | Tool for applying the entire evaluation pipeline to task1 (or the pre-pooling steps to task2) submissions | tools/aida-evaluation | AIDAED-v2020.2.0 |
 
 ## Tools and utilities for Phase-I evaluation conducted at the end of 2019
 
