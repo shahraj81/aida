@@ -1,0 +1,100 @@
+DocID     RunID             Language Metatype   Prec Recall     F1
+IC001V6F1 example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+IC001V6F1 example-task1-run RUS      Event    1.0000 1.0000 1.0000
+IC001V6F1 example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+IC001V6OI example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+IC001V6OI example-task1-run RUS      Event    1.0000 1.0000 1.0000
+IC001V6OI example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+IC001V76J example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+IC001V76J example-task1-run RUS      Event    1.0000 1.0000 1.0000
+IC001V76J example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+IC001V7VC example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+IC001V7VC example-task1-run RUS      Event    1.0000 1.0000 1.0000
+IC001V7VC example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+IC001V8J7 example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+IC001V8J7 example-task1-run RUS      Event    1.0000 1.0000 1.0000
+IC001V8J7 example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+IC001V8NY example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+IC001V8NY example-task1-run SPA      Event    1.0000 1.0000 1.0000
+IC001V8NY example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+IC001V8WF example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+IC001V8WF example-task1-run ENG      Event    1.0000 1.0000 1.0000
+IC001V8WF example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+IC001V9CI example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+IC001V9CI example-task1-run SPA      Event    1.0000 1.0000 1.0000
+IC001V9CI example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+IC001V9U9 example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+IC001V9U9 example-task1-run ENG      Event    1.0000 1.0000 1.0000
+IC001V9U9 example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+IC001VAPK example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+IC001VAPK example-task1-run ENG      Event    1.0000 1.0000 1.0000
+IC001VAPK example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+IC001VCIQ example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+IC001VCIQ example-task1-run SPA      Event    1.0000 1.0000 1.0000
+IC001VCIQ example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+IC001VFA7 example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+IC001VFA7 example-task1-run SPA      Event    1.0000 1.0000 1.0000
+IC001VFA7 example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+IC001VFH8 example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+IC001VFH8 example-task1-run SPA      Event    1.0000 1.0000 1.0000
+IC001VFH8 example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+IC001VGO2 example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+IC001VGO2 example-task1-run ENG      Event    1.0000 1.0000 1.0000
+IC001VGO2 example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+IC001ZTKF example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+IC001ZTKF example-task1-run RUS      Event    1.0000 1.0000 1.0000
+IC001ZTKF example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+JC002YC3Z example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+JC002YC3Z example-task1-run RUS      Event    1.0000 1.0000 1.0000
+JC002YC3Z example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+JC002YC48 example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+JC002YC48 example-task1-run RUS      Event    1.0000 1.0000 1.0000
+JC002YC48 example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+JC002YC4N example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+JC002YC4N example-task1-run RUS      Event    1.0000 1.0000 1.0000
+JC002YC4N example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+JC002YCXK example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+JC002YCXK example-task1-run ENG      Event    1.0000 1.0000 1.0000
+JC002YCXK example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+JC002YD6G example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+JC002YD6G example-task1-run SPA      Event    1.0000 1.0000 1.0000
+JC002YD6G example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+JC002YDCM example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+JC002YDCM example-task1-run SPA      Event    1.0000 1.0000 1.0000
+JC002YDCM example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+JC002YF02 example-task1-run RUS      Entity   1.0000 1.0000 1.0000
+JC002YF02 example-task1-run RUS      Event    1.0000 1.0000 1.0000
+JC002YF02 example-task1-run RUS      ALL      1.0000 1.0000 1.0000
+JC002YF1M example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+JC002YF1M example-task1-run SPA      Event    1.0000 1.0000 1.0000
+JC002YF1M example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+JC002YFXO example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+JC002YFXO example-task1-run ENG      Event    1.0000 1.0000 1.0000
+JC002YFXO example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+KC003A59I example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+KC003A59I example-task1-run ENG      Event    1.0000 1.0000 1.0000
+KC003A59I example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+KC003A6NA example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+KC003A6NA example-task1-run ENG      Event    1.0000 1.0000 1.0000
+KC003A6NA example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+KC003A7C4 example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+KC003A7C4 example-task1-run SPA      Event    1.0000 1.0000 1.0000
+KC003A7C4 example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+KC003A7RG example-task1-run SPA      Entity   1.0000 1.0000 1.0000
+KC003A7RG example-task1-run SPA      Event    1.0000 1.0000 1.0000
+KC003A7RG example-task1-run SPA      ALL      1.0000 1.0000 1.0000
+KC003A9VN example-task1-run ENG      Entity   1.0000 1.0000 1.0000
+KC003A9VN example-task1-run ENG      Event    1.0000 1.0000 1.0000
+KC003A9VN example-task1-run ENG      ALL      1.0000 1.0000 1.0000
+Summary   example-task1-run ENG      Entity                 1.0000
+Summary   example-task1-run ENG      Event                  1.0000
+Summary   example-task1-run ENG      ALL                    1.0000
+Summary   example-task1-run RUS      Entity                 1.0000
+Summary   example-task1-run RUS      Event                  1.0000
+Summary   example-task1-run RUS      ALL                    1.0000
+Summary   example-task1-run SPA      Entity                 1.0000
+Summary   example-task1-run SPA      Event                  1.0000
+Summary   example-task1-run SPA      ALL                    1.0000
+Summary   example-task1-run ALL      Entity                 1.0000
+Summary   example-task1-run ALL      Event                  1.0000
+Summary   example-task1-run ALL      ALL                    1.0000

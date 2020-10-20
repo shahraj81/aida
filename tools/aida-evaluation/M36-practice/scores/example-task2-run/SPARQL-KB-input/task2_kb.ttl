@@ -1,0 +1,68 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:cluster-venezuela a aida:SameAsCluster ;
+    aida:prototype ldc:prototype-venezuela ;
+    aida:system ldc:TestModelGenerator .
+
+ldc:prototype-venezuela a aida:Entity ;
+    aida:hasName "Venezuela",
+        "venezolana",
+        "venezolano",
+        "venezolanos" ;
+    aida:informativeJustification _:f3ef173e6799a4fdbba82ce4597eea6b0b5122 ;
+    aida:link _:f3ef173e6799a4fdbba82ce4597eea6b0b8001 ;
+    aida:system ldc:TestModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-venezuela ;
+    aida:clusterMember ldc:member-venezuela ;
+    aida:confidence [ a aida:Confidence ;
+            aida:confidenceValue "1.0"^^xsd:double ;
+            aida:system ldc:TestModelGenerator ] ;
+    aida:system ldc:TestModelGenerator .
+
+ldc:member-venezuela a aida:Entity ;
+    aida:hasName "Venezuela" ;
+    aida:informativeJustification _:f3ef173e6799a4fdbba82ce4597eea6b0b5120 ;
+    aida:justifiedBy _:f3ef173e6799a4fdbba82ce4597eea6b0b5120 ;
+    aida:link _:f3ef173e6799a4fdbba82ce4597eea6b0b8001 ;
+    aida:system ldc:TestModelGenerator .
+
+_:f3ef173e6799a4fdbba82ce4597eea6b0b5122 a aida:TextJustification ;
+    aida:confidence _:f3ef173e6799a4fdbba82ce4597eea6b0b5123 ;
+    aida:endOffsetInclusive "6966"^^xsd:int ;
+    aida:source "IC001VBHL" ;
+    aida:sourceDocument "IC001V8NY" ;
+    aida:startOffset "6956"^^xsd:int ;
+    aida:system ldc:TestModelGenerator .
+
+_:f3ef173e6799a4fdbba82ce4597eea6b0b5120 a aida:TextJustification ;
+    aida:confidence _:f3ef173e6799a4fdbba82ce4597eea6b0b5121 ;
+    aida:endOffsetInclusive "6836"^^xsd:int ;
+    aida:source "IC001VBHL" ;
+    aida:sourceDocument "IC001V8NY" ;
+    aida:startOffset "6828"^^xsd:int ;
+    aida:system ldc:TestModelGenerator .
+
+_:f3ef173e6799a4fdbba82ce4597eea6b0b8001 a aida:LinkAssertion ;
+    aida:confidence _:f3ef173e6799a4fdbba82ce4597eea6b0b8002 ;
+    aida:linkTarget "REFKB:30005137" ;
+    aida:system ldc:TestModelGenerator .
+
+_:f3ef173e6799a4fdbba82ce4597eea6b0b5123 a aida:Confidence ;
+    aida:confidenceValue "1.0"^^xsd:double ;
+    aida:system ldc:TestModelGenerator .
+
+_:f3ef173e6799a4fdbba82ce4597eea6b0b5121 a aida:Confidence ;
+    aida:confidenceValue "1.0"^^xsd:double ;
+    aida:system ldc:TestModelGenerator .
+
+_:f3ef173e6799a4fdbba82ce4597eea6b0b8002 a aida:Confidence ;
+    aida:confidenceValue "1.0"^^xsd:double ;
+    aida:system ldc:TestModelGenerator .
+
+ldc:TestModelGenerator a aida:System .

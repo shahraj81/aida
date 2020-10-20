@@ -1,7 +1,6 @@
 """
 Set of responses for AIDA.
 """
-from aida.event_or_relation_frame import EventOrRelationFrame
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -14,6 +13,7 @@ from aida.file_handler import FileHandler
 from aida.generator import Generator
 from aida.validator import Validator
 from aida.normalizer import Normalizer
+from aida.event_or_relation_frame import EventOrRelationFrame
 
 import os
   
@@ -35,8 +35,8 @@ attributes = {
         },
     'cluster_id': {
         'name': 'cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task1', 'task2'],
         'years': [2020],
         },
     'cluster_membership_confidence': {
@@ -65,8 +65,8 @@ attributes = {
     'document_id': {
         'dependencies': ['kb_document_id'],
         'name': 'document_id',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task2'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'],
         'validate': 'validate_document_id',
         'generate': 'generate_document_id',
         'years': [2020],
@@ -134,6 +134,20 @@ attributes = {
         'tasks': ['task1'],
         'years': [2020],
         },
+    'justification_confidence': {
+        'name': 'justification_confidence',
+        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task2'],
+        'validate': 'validate_confidence',
+        'years': [2020],
+        },
+    'linking_confidence': {
+        'name': 'linking_confidence',
+        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task2'],
+        'validate': 'validate_confidence',
+        'years': [2020],
+        },
     'mention_type_justification_confidence': {
         'name': 'mention_type_justification_confidence',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
@@ -149,10 +163,16 @@ attributes = {
         'validate': 'validate_kb_document_id',
         'years': [2020],
         },
+    'link_target': {
+        'name': 'link_target',
+        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task2'],
+        'years': [2020],
+        },
     'mention_span_text': {
         'name': 'mention_span_text',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task1', 'task2'],
         'validate': 'validate_value_provenance_triple',
         'years': [2020],
         },
@@ -198,6 +218,12 @@ attributes = {
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_confidence',
+        'years': [2020],
+        },
+    'query_link_target': {
+        'name': 'query_link_target',
+        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task2'],
         'years': [2020],
         },
     'start': {
@@ -338,7 +364,22 @@ schemas = {
             'end_before_day',
             'end_before_year'
             ]
-        }
+        },
+    'AIDA_PHASE2_TASK2_ZH_RESPONSE': {
+        'name': 'AIDA_PHASE2_TASK2_ZH_RESPONSE',
+        'year': 2020,
+        'task': 'task2',
+        'header': ['?docid', '?query_link_target', '?link_target', '?cluster', '?mention_span', '?j_cv', '?link_cv'],
+        'columns': [
+            'document_id',
+            'query_link_target',
+            'link_target',
+            'cluster_id',
+            'mention_span_text',
+            'justification_confidence',
+            'linking_confidence'
+            ]
+        },
     }
 
 def identify_file_schema(fh):
@@ -359,7 +400,7 @@ class ResponseSet(Container):
     Set of responses for AIDA.
     """
 
-    def __init__(self, logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, path, runid):
+    def __init__(self, logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, path, runid, task='task1'):
         super().__init__(logger)
         self.ontology_type_mappings = ontology_type_mappings
         self.slot_mappings = slot_mappings
@@ -372,9 +413,17 @@ class ResponseSet(Container):
         self.document_frames = Container(logger)
         self.runid = runid
         self.path = path
+        self.task = task
         self.load_responses()
 
     def load_responses(self):
+        method_name = 'load_responses_{task}'.format(task=self.get('task'))
+        method = self.get('method', method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name)
+        method()
+
+    def load_responses_task1(self):
         def order(filename):
             filename_order_map = {
                 'AIDA_P2_TA1_CM_A0001.rq.tsv': 1,
@@ -396,6 +445,18 @@ class ResponseSet(Container):
                 else:
                     self.load_file(fh, schema)
 
+    def load_responses_task2(self):
+        logger = self.get('logger')
+        path = self.get('path')
+        for filename in sorted(os.listdir(path)):
+            filename_including_path = '{}/{}'.format(path, filename)
+            fh = FileHandler(logger, filename_including_path)
+            schema = identify_file_schema(fh)
+            if schema is None:
+                logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
+            else:
+                self.load_file(fh, schema)
+
     def load_file(self, fh, schema):
         logger = self.get('logger')
         filename = fh.get('filename')
@@ -407,6 +468,8 @@ class ResponseSet(Container):
             lineno = entry.get('lineno')
             entry.set('runid', self.get('runid'))
             entry.set('schema', schema)
+            if self.get('task') == 'task2':
+                entry.set('metatype', 'Entity')
             for i in range(len(schema.get('columns'))):
                 entry.set(schema.get('columns')[i], entry.get(entry.get('header').get('columns')[i]))
             valid = True
@@ -430,7 +493,7 @@ class ResponseSet(Container):
                     valid_attribute = self.get('validator').validate(self, validator_name, schema, entry, attribute)
                     if not valid_attribute: valid = False
             entry.set('valid', valid)
-            if self.get('document_mappings').get('documents').get(entry.get('document_id')).get('is_core'):
+            if entry.get('document_id') in self.get('document_mappings').get('documents') and self.get('document_mappings').get('documents').get(entry.get('document_id')).get('is_core'):
                 self.get(filename).add(key=str(lineno), value=entry)
 
     def attribute_required(self, attribute, schema):
@@ -490,12 +553,32 @@ class ResponseSet(Container):
         return self.get('document_boundaries').get('video')
 
     def write_valid_responses(self, output_dir):
+        method_name = 'write_valid_responses_{task}'.format(task=self.get('task'))
+        method = self.get('method', method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name)
+        method(output_dir)
+
+    def write_valid_responses_task1(self, output_dir):
         os.mkdir(output_dir)
         for input_filename in self:
             output_filename = input_filename.replace(self.get('path'), output_dir)
             dirname = os.path.dirname(output_filename)
             if not os.path.exists(dirname):
                 os.mkdir(dirname)
+            file_container = self.get(input_filename)
+            output_fh = open(output_filename, 'w')
+            output_fh.write('{}\n'.format(file_container.get('header').get('line')))
+            for linenum in sorted(file_container, key=int):
+                entry = self.get(input_filename).get(str(linenum))
+                if not entry.get('valid'): continue
+                output_fh.write(entry.__str__())
+            output_fh.close()
+
+    def write_valid_responses_task2(self, output_dir):
+        os.mkdir(output_dir)
+        for input_filename in self:
+            output_filename = input_filename.replace(self.get('path'), output_dir)
             file_container = self.get(input_filename)
             output_fh = open(output_filename, 'w')
             output_fh.write('{}\n'.format(file_container.get('header').get('line')))

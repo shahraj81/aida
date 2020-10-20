@@ -23,6 +23,12 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install munkres
 
 #-------------------------------------------------------------
+#  Install awscli
+#-------------------------------------------------------------
+
+RUN pip3 --no-cache-dir install --upgrade awscli
+
+#-------------------------------------------------------------
 #  Install Java OpenJDK 8
 #-------------------------------------------------------------
 RUN \
@@ -52,11 +58,6 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 
 RUN mkdir scripts
 
-COPY ./scripts/run.py /scripts/
-COPY ./scripts/logger.py /scripts/
-COPY ./scripts/log_specifications.txt /scripts/
-COPY ./scripts/Makefile /scripts/
-
 COPY ./graphdb-${edition}-${version}-dist.zip /tmp/
 
 WORKDIR /tmp
@@ -83,7 +84,12 @@ RUN git clone https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
-RUN git checkout AIDAED-v2020.1.0
+RUN git checkout AIDAED-v2020.2.0
+
+RUN cp /scripts/aida/python/input/aux_data/log_specifications.txt /scripts/
+RUN cp /scripts/aida/python/aida/logger.py /scripts/
+RUN cp /scripts/aida/tools/aida-evaluation/docker/scripts/run_task?_evaluation_pipeline.py /scripts/
+RUN cp /scripts/aida/tools/aida-evaluation/docker/scripts/Makefile /scripts/
 
 #-------------------------------------------------------------
 # Install SPARQL Evaluation Tool
