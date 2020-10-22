@@ -35,7 +35,9 @@ ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
 ERROR     MISSING_OPEN_PERFORMER_FILE     {}/{} is expected from open performers but not found
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
+CRITICAL  MULTIPLE_CLUSTER_LINKING_CONFIDENCES Multiple distinct values of linking confidences ({}, {}) found for cluster {}; expected single distinct value
 ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
+CRITICAL  MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT Multiple informative justifications ({}, {}) found for document {}
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
 ERROR     MULTIPLE_METATYPES              Multiple metatypes '{}' and '{} for '{}'
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
