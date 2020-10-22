@@ -244,7 +244,7 @@ def main(args):
 
     os.mkdir(args.sparql)
 
-    columns = ['query_id', 'entrypoint_type', 'entrypoint', 'num_clusters', 'depth']
+    columns = ['query_id', 'entrypoint_type', 'entrypoint', 'clusters', 'documents']
 
     queries_fh = open(args.queries, 'w')
     queries_fh.write('{}\n'.format('\t'.join(columns)))
@@ -252,7 +252,7 @@ def main(args):
     for entry in FileHandler(logger, args.input):
         query_num += 1
         values = {
-            'depth'          : args.depth,
+            'documents'      : args.documents,
             'entrypoint_type': entry.get('entrypoint_type'),
             'entrypoint'     : entry.get('entrypoint'),
             'num_clusters'   : entry.get('num_clusters'),
@@ -274,7 +274,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Align system and gold clusters")
-    parser.add_argument('-d', '--depth', default='10', help='Specify the depth to be used for pooling (default: %(default)s)')
+    parser.add_argument('-d', '--documents', default='10', help='Specify the depth to be used for pooling (default: %(default)s)')
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-p', '--prefix', default='AIDA_P2_TA2_P', help='Specify the prefix of SPARQL query files.')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
