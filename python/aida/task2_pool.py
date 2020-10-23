@@ -1,13 +1,13 @@
 """
 Class representing pool of task2 responses.
 """
-from aida import document
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "21 October 2020"
 
+from aida.file_handler import FileHandler
 from aida.object import Object
 from aida.utility import multisort, trim_cv, augment_mention_object, spanstring_to_object
 
@@ -18,7 +18,7 @@ class Task2Pool(Object):
     Class representing pool of task2 responses.
     """
 
-    def __init__(self, logger, queries, document_mappings, document_boundaries):
+    def __init__(self, logger, queries, document_mappings, document_boundaries, previous_pools):
         super().__init__(logger)
         self.document_boundaries = document_boundaries
         self.document_mappings = document_mappings
@@ -33,20 +33,30 @@ class Task2Pool(Object):
             'MENTION_TYPE',
             'FQEC'
             ]
+        self.last_response_ids = {}
+        self.previous_pool = {}
+        self.previous_pool_dirs = previous_pools
         self.pool = {}
         self.queries = queries
+        self.load_previous_pools()
 
     def get_line(self, columns=None):
         if columns is None:
             return '{}\n'.format('\t'.join(self.get('header')))
         else:
-            return '{}\n'.format('\t'.join([columns[column_name] for column_name in self.get('header')]))
+            return '{}\n'.format('\t'.join([str(columns[column_name]) for column_name in self.get('header')]))
 
     def get_mention(self, span_string):
         logger = self.get('logger')
         return augment_mention_object(spanstring_to_object(logger, span_string, self.get('code_location')),
                                       self.get('document_mappings'),
                                       self.get('document_boundaries'))
+
+    def get_last_response_id(self, query_id):
+        last_response_ids = self.get('last_response_ids')
+        if query_id not in last_response_ids:
+            return 0
+        return last_response_ids.get(query_id)
 
     def get_top_C_clusters(self, query_responses, C):
         cluster_responses = {}
@@ -117,27 +127,74 @@ class Task2Pool(Object):
                 cluster_responses = selected_clusters[cluster_id]
                 selected_justifications = self.get('top_K_cluster_justifications', cluster_responses, K=num_documents)
                 for selected_justification in selected_justifications:
-                    query_pool[selected_justification] = 1
+                    if self.not_in_previous_pool(query_id, selected_justification):
+                        query_pool[selected_justification] = 1
+
+    def increment_last_response_id(self, query_id):
+        self.get('last_response_ids')[query_id] = self.get('last_response_id', query_id) + 1
+
+    def load_previous_pools(self):
+        logger = self.get('logger')
+        previous_pool = self.get('previous_pool')
+        last_response_ids = self.get('last_response_ids')
+        previous_pool_dirs = self.get('previous_pool_dirs')
+        if previous_pool_dirs is not None:
+            for previous_pool_dir in previous_pool_dirs.split(','):
+                for entry in FileHandler(logger, '{}/pool.txt'.format(previous_pool_dir)):
+                    query_id = entry.get('QUERY_ID')
+                    document_id = entry.get('DOCUMENT_ID')
+                    mention_span = entry.get('MENTION_SPAN')
+                    response_id = int(entry.get('RESPONSE_ID'))
+                    if query_id not in previous_pool:
+                        previous_pool[query_id] = {}
+                    previous_pool[query_id]['{}:{}'.format(document_id, mention_span)] = 1
+                    if query_id not in last_response_ids or last_response_ids[query_id] < response_id:
+                        last_response_ids[query_id] = response_id
+
+    def not_in_previous_pool(self, query_id, justification):
+        if query_id not in self.get('previous_pool'):
+            return True
+        if justification not in self.get('previous_pool').get(query_id):
+            return True
+        return False
 
     def write_output(self, output_dir):
-        os.mkdir(output_dir)
-        output = open('{dir}/pool.txt'.format(dir=output_dir), 'w')
-        output.write(self.get('line'))
+        lines = []
         for query_id in self.get('pool'):
             for mention_span in self.get('pool').get(query_id):
                 mention = self.get('mention', mention_span)
-                columns = {
-                    'CORRECTNESS'    : 'NIL',
-                    'DESCRIPTOR'     : self.get('queries').get(query_id).get('entrypoint'),
-                    'DOCUMENT_ID'    : mention.get('document_id'),
-                    'FQEC'           : 'NIL',
-                    'MENTION_TYPE'   : 'NIL',
-                    'MENTION_SOURCE' : mention.get('modality'),
-                    'QUERY_ID'       : query_id,
-                    'RESPONSE_ID'    : '<ID>',
-                    'MENTION_SPAN'   : '{doceid}:{span}'.format(doceid=mention.get('document_element_id'),
-                                                                span=mention.get('span').__str__())
+                line = {
+                    'CORRECTNESS'        : 'NIL',
+                    'DESCRIPTOR'         : self.get('queries').get(query_id).get('entrypoint'),
+                    'DOCUMENT_ID'        : mention.get('document_id'),
+                    'FQEC'               : 'NIL',
+                    'MENTION_TYPE'       : 'NIL',
+                    'MENTION_SOURCE'     : mention.get('modality'),
+                    'QUERY_ID'           : query_id,
+                    'RESPONSE_ID'        : '<ID>',
+                    'MENTION_SPAN'       : '{doceid}:{span}'.format(doceid=mention.get('document_element_id'),
+                                                                span=mention.get('span').__str__()),
+                    'DOCUMENT_ELEMENT_ID': mention.get('document_element_id'),
+                    'START_X'            : float(mention.get('span').get('start_x')),
+                    'START_Y'            : float(mention.get('span').get('start_y')),
+                    'END_X'              : float(mention.get('span').get('end_x')),
+                    'END_Y'              : float(mention.get('span').get('end_y'))
                 }
-                line = self.get('line', columns)
-                output.write(line)
+                lines.append(line)
+        os.mkdir(output_dir)
+        output = open('{dir}/pool.txt'.format(dir=output_dir), 'w')
+        output.write(self.get('line'))
+        query_id = None
+        for line in multisort(lines, (('QUERY_ID', False),
+                                      ('DOCUMENT_ID', False),
+                                      ('DOCUMENT_ELEMENT_ID', False),
+                                      ('START_X', False),
+                                      ('START_Y', False),
+                                      ('END_X', False),
+                                      ('END_Y', False))):
+            if query_id is None or query_id != line.get('QUERY_ID'):
+                query_id = line.get('QUERY_ID')
+            line['RESPONSE_ID'] = self.get('last_response_id', query_id) + 1
+            output.write(self.get('line', line))
+            self.increment_last_response_id(query_id)
         output.close()
