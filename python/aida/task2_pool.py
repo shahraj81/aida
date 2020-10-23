@@ -9,6 +9,7 @@ __date__    = "21 October 2020"
 
 from aida.file_handler import FileHandler
 from aida.object import Object
+from aida.response_set import ResponseSet
 from aida.utility import multisort, trim_cv, augment_mention_object, spanstring_to_object
 
 import os
@@ -18,8 +19,9 @@ class Task2Pool(Object):
     Class representing pool of task2 responses.
     """
 
-    def __init__(self, logger, document_mappings, document_boundaries, runs_to_pool_file, queries_to_pool_file, previous_pools):
+    def __init__(self, logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, runs_to_pool_file, queries_to_pool_file, max_kit_size, batch_id, input_dir, previous_pools):
         super().__init__(logger)
+        self.batch_id = batch_id
         self.document_boundaries = document_boundaries
         self.document_mappings = document_mappings
         self.header = [
@@ -33,15 +35,21 @@ class Task2Pool(Object):
             'MENTION_TYPE',
             'FQEC'
             ]
+        self.input_dir = input_dir
+        self.max_kit_size = max_kit_size
         self.last_response_ids = {}
+        self.ontology_type_mappings = ontology_type_mappings
         self.previous_pool = {}
         self.previous_pool_dirs = previous_pools
         self.pool = {}
-        self.runs_to_pool_file = runs_to_pool_file
         self.queries_to_pool = {}
         self.queries_to_pool_file = queries_to_pool_file
+        self.query_kits = {}
+        self.runs_to_pool_file = runs_to_pool_file
+        self.slot_mappings = slot_mappings
         self.load_queries_to_pool_file()
         self.load_previous_pools()
+        self.load_responses()
 
     def get_line(self, columns=None):
         if columns is None:
@@ -60,6 +68,25 @@ class Task2Pool(Object):
         if query_id not in last_response_ids:
             return 0
         return last_response_ids.get(query_id)
+
+    def get_query_kit(self, query_id):
+        query_kits = self.get('query_kits')
+        if query_id not in query_kits:
+            query_kits[query_id] = {1: []}
+            return query_kits.get(query_id).get(1)
+        else:
+            query_kit_contanier = query_kits.get(query_id)
+            max_kit_id = None
+            for kit_id in query_kit_contanier:
+                if max_kit_id is None or max_kit_id < kit_id:
+                    max_kit_id = kit_id
+                query_kit = query_kit_contanier.get(kit_id)
+                if len(query_kit) < self.get('max_kit_size'):
+                    return query_kit
+            next_kit_id = max_kit_id + 1
+            query_kit = []
+            query_kit_contanier[next_kit_id] = query_kit
+            return query_kit
 
     def get_top_C_clusters(self, query_responses, C):
         cluster_responses = {}
@@ -134,6 +161,10 @@ class Task2Pool(Object):
                     if self.not_in_previous_pool(query_id, selected_justification):
                         query_pool[selected_justification] = 1
 
+    def add_to_kit(self, query_id, pretty_line):
+        query_kit = self.get('query_kit', query_id)
+        query_kit.append(pretty_line)
+
     def increment_last_response_id(self, query_id):
         self.get('last_response_ids')[query_id] = self.get('last_response_id', query_id) + 1
 
@@ -154,6 +185,19 @@ class Task2Pool(Object):
                     previous_pool[query_id]['{}:{}'.format(document_id, mention_span)] = 1
                     if query_id not in last_response_ids or last_response_ids[query_id] < response_id:
                         last_response_ids[query_id] = response_id
+
+    def load_responses(self):
+        logger = self.get('logger')
+        ontology_type_mappings = self.get('ontology_type_mappings')
+        slot_mappings = self.get('slot_mappings')
+        document_mappings = self.get('document_mappings')
+        document_boundaries = self.get('document_boundaries')
+        runs_to_pool_file = self.get('runs_to_pool_file')
+        for entry in FileHandler(logger, runs_to_pool_file):
+            run_id = entry.get('run_id')
+            run_dir = '{input}/{run_id}/SPARQL-VALID-output'.format(input=self.get('input_dir'), run_id=run_id)
+            responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, run_dir, run_id, 'task2')
+            self.add(responses)
 
     def load_queries_to_pool_file(self):
         logger = self.get('logger')
@@ -177,6 +221,18 @@ class Task2Pool(Object):
         os.mkdir(output_dir)
         self.write_setting_files(output_dir)
         self.write_pool(output_dir)
+        self.write_kits(output_dir)
+
+    def write_kits(self, output_dir):
+        os.mkdir('{}/kits'.format(output_dir))
+        query_kits = self.get('query_kits')
+        for query_id in query_kits:
+            query_kit_contanier = query_kits.get(query_id)
+            for kit_id in query_kit_contanier:
+                query_kit = query_kit_contanier.get(kit_id)
+                output = open('{}/kits/{}_{}_{}.tab'.format(output_dir, self.get('batch_id'), query_id, kit_id), 'w')
+                for line in query_kit:
+                    output.write(line)
 
     def write_pool(self, output_dir):
         lines = []
@@ -214,7 +270,9 @@ class Task2Pool(Object):
             if query_id is None or query_id != line.get('QUERY_ID'):
                 query_id = line.get('QUERY_ID')
             line['RESPONSE_ID'] = self.get('last_response_id', query_id) + 1
-            output.write(self.get('line', line))
+            pretty_line = self.get('line', line)
+            self.add_to_kit(query_id, pretty_line)
+            output.write(pretty_line)
             self.increment_last_response_id(query_id)
         output.close()
 

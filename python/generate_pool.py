@@ -10,12 +10,10 @@ __date__    = "21 October 2020"
 from aida.core_documents import CoreDocuments
 from aida.document_mappings import DocumentMappings
 from aida.encodings import Encodings
-from aida.file_handler import FileHandler
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.logger import Logger
 from aida.ontology_type_mappings import OntologyTypeMappings
-from aida.response_set import ResponseSet
 from aida.slot_mappings import SlotMappings
 from aida.task2_pool import Task2Pool
 from aida.text_boundaries import TextBoundaries
@@ -76,19 +74,16 @@ def main(args):
         'keyframe': keyframe_boundaries,
         'video': video_boundaries
         }
-    pool = Task2Pool(logger, document_mappings, document_boundaries, args.runs_to_pool, args.queries, args.previous_pools)
-    for entry in FileHandler(logger, args.runs_to_pool):
-        run_id = entry.get('run_id')
-        run_dir = '{input}/{run_id}/SPARQL-VALID-output'.format(input=args.input, run_id=run_id)
-        responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, run_dir, run_id, 'task2')
-        pool.add(responses)
 
+    pool = Task2Pool(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.runs_to_pool, args.queries, args.kit_size, args.batch_id, args.input, args.previous_pools)
     pool.write_output(args.output)
 
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate a pool of task2 responses for assessment.")
+    parser.add_argument('-b', '--batch_id', default='BATCH1', help='Specify the batch ID (default: %(default)s)')
+    parser.add_argument('-k', '--kit_size', default=200, type=int, help='Specify the maximum number of entries in a kit (default: %(default)s)')
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-p', '--previous_pools', help='Specify comma-separated list of the directories containing previous pool(s), if any')
     parser.add_argument('-t', '--task', default='task1', choices=['task1', 'task2'], help='Specify task1 or task2 (default: %(default)s)')
