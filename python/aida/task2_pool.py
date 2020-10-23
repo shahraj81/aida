@@ -119,6 +119,7 @@ class Task2Pool(Object):
     def add(self, responses):
         for input_filepath in responses:
             query_id = os.path.basename(input_filepath).replace('.rq.tsv', '')
+            if query_id not in self.get('queries_to_pool'): continue
             if query_id not in self.get('pool'):
                 self.get('pool')[query_id] = {}
             query_pool = self.get('pool').get(query_id)
