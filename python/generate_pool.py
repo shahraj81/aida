@@ -76,17 +76,7 @@ def main(args):
         'keyframe': keyframe_boundaries,
         'video': video_boundaries
         }
-
-    pooling_specs = {}
-    for entry in FileHandler(logger, args.queries):
-        pooling_specs[entry.get('query_id')] = {'query_id'  : entry.get('query_id'),
-                                                'entrypoint': entry.get('entrypoint'),
-                                                'clusters'  : int(entry.get('clusters')),
-                                                'documents' : int(entry.get('documents'))
-                                                }
-
-    pool = Task2Pool(logger, pooling_specs, document_mappings, document_boundaries, args.previous_pools)
-
+    pool = Task2Pool(logger, document_mappings, document_boundaries, args.runs_to_pool, args.queries, args.previous_pools)
     for entry in FileHandler(logger, args.runs_to_pool):
         run_id = entry.get('run_id')
         run_dir = '{input}/{run_id}/SPARQL-VALID-output'.format(input=args.input, run_id=run_id)

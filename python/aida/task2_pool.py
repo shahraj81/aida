@@ -18,7 +18,7 @@ class Task2Pool(Object):
     Class representing pool of task2 responses.
     """
 
-    def __init__(self, logger, queries, document_mappings, document_boundaries, previous_pools):
+    def __init__(self, logger, document_mappings, document_boundaries, runs_to_pool_file, queries_to_pool_file, previous_pools):
         super().__init__(logger)
         self.document_boundaries = document_boundaries
         self.document_mappings = document_mappings
@@ -37,7 +37,10 @@ class Task2Pool(Object):
         self.previous_pool = {}
         self.previous_pool_dirs = previous_pools
         self.pool = {}
-        self.queries = queries
+        self.runs_to_pool_file = runs_to_pool_file
+        self.queries_to_pool = {}
+        self.queries_to_pool_file = queries_to_pool_file
+        self.load_queries_to_pool_file()
         self.load_previous_pools()
 
     def get_line(self, columns=None):
@@ -119,8 +122,8 @@ class Task2Pool(Object):
             if query_id not in self.get('pool'):
                 self.get('pool')[query_id] = {}
             query_pool = self.get('pool').get(query_id)
-            num_clusters = self.get('queries').get(query_id).get('clusters')
-            num_documents = self.get('queries').get(query_id).get('documents')
+            num_clusters = self.get('queries_to_pool').get(query_id).get('clusters')
+            num_documents = self.get('queries_to_pool').get(query_id).get('documents')
             query_responses = responses.get(input_filepath)
             selected_clusters = self.get('top_C_clusters', query_responses, C=num_clusters)
             for cluster_id in selected_clusters:
@@ -151,6 +154,17 @@ class Task2Pool(Object):
                     if query_id not in last_response_ids or last_response_ids[query_id] < response_id:
                         last_response_ids[query_id] = response_id
 
+    def load_queries_to_pool_file(self):
+        logger = self.get('logger')
+        queries_to_pool = self.get('queries_to_pool')
+        for entry in FileHandler(logger, self.get('queries_to_pool_file')):
+            queries_to_pool[entry.get('query_id')] = {
+                'query_id'  : entry.get('query_id'),
+                'entrypoint': entry.get('entrypoint'),
+                'clusters'  : int(entry.get('clusters')),
+                'documents' : int(entry.get('documents'))
+                }
+
     def not_in_previous_pool(self, query_id, justification):
         if query_id not in self.get('previous_pool'):
             return True
@@ -159,13 +173,18 @@ class Task2Pool(Object):
         return False
 
     def write_output(self, output_dir):
+        os.mkdir(output_dir)
+        self.write_setting_files(output_dir)
+        self.write_pool(output_dir)
+
+    def write_pool(self, output_dir):
         lines = []
         for query_id in self.get('pool'):
             for mention_span in self.get('pool').get(query_id):
                 mention = self.get('mention', mention_span)
                 line = {
                     'CORRECTNESS'        : 'NIL',
-                    'DESCRIPTOR'         : self.get('queries').get(query_id).get('entrypoint'),
+                    'DESCRIPTOR'         : self.get('queries_to_pool').get(query_id).get('entrypoint'),
                     'DOCUMENT_ID'        : mention.get('document_id'),
                     'FQEC'               : 'NIL',
                     'MENTION_TYPE'       : 'NIL',
@@ -181,7 +200,6 @@ class Task2Pool(Object):
                     'END_Y'              : float(mention.get('span').get('end_y'))
                 }
                 lines.append(line)
-        os.mkdir(output_dir)
         output = open('{dir}/pool.txt'.format(dir=output_dir), 'w')
         output.write(self.get('line'))
         query_id = None
@@ -198,3 +216,8 @@ class Task2Pool(Object):
             output.write(self.get('line', line))
             self.increment_last_response_id(query_id)
         output.close()
+
+    def write_setting_files(self, output_dir):
+        for settings_file in ['runs_to_pool_file', 'queries_to_pool_file']:
+            os.system('cp {settings_file} {output_dir}'.format(settings_file=self.get(settings_file),
+                                                               output_dir=output_dir))
