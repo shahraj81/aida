@@ -12,7 +12,9 @@ from aida.object import Object
 from aida.response_set import ResponseSet
 from aida.utility import multisort, trim_cv, augment_mention_object, spanstring_to_object
 
+import datetime
 import os
+import subprocess
 
 class Task2Pool(Object):
     """
@@ -51,6 +53,20 @@ class Task2Pool(Object):
         self.load_previous_pools()
         self.load_responses()
 
+    def generate_ldc_package(self, output_dir):
+        ldc_package_dir = '{output_dir}/task2_pool_{batchid}'.format(output_dir=output_dir,
+                                                              batchid=self.get('batch_id').lower())
+        os.system('tar -zcf {ldc_package_dir}.tgz.txt {ldc_package_dir}'.format(ldc_package_dir=ldc_package_dir))
+        result = subprocess.run(['md5', '-q', '{}.tgz.txt'.format(ldc_package_dir)], stdout=subprocess.PIPE)
+        md5hash = result.stdout.decode('utf-8').strip()
+        ctime = os.path.getctime('{ldc_package_dir}.tgz.txt'.format(ldc_package_dir=ldc_package_dir))
+        ctimestamp = datetime.datetime.fromtimestamp(ctime).__str__()
+        ctimestamp = ctimestamp.replace('-', '').replace(' ', '').replace(':', '')
+        ctimestamp = ctimestamp[0:12]
+        os.system('mv {ldc_package_dir}.tgz.txt {ldc_package_dir}_{ctimestamp}_{md5hash}.tgz.txt'.format(ldc_package_dir=ldc_package_dir,
+                                                                                                         ctimestamp=ctimestamp,
+                                                                                                         md5hash=md5hash))
+
     def get_line(self, columns=None):
         if columns is None:
             return '{}\n'.format('\t'.join(self.get('header')))
@@ -62,6 +78,9 @@ class Task2Pool(Object):
         return augment_mention_object(spanstring_to_object(logger, span_string, self.get('code_location')),
                                       self.get('document_mappings'),
                                       self.get('document_boundaries'))
+
+    def get_language(self, line):
+        return self.get('document_mappings').get('language', line.get('DOCUMENT_ID'))
 
     def get_last_response_id(self, query_id):
         last_response_ids = self.get('last_response_ids')
@@ -222,17 +241,36 @@ class Task2Pool(Object):
         self.write_setting_files(output_dir)
         self.write_pool(output_dir)
         self.write_kits(output_dir)
+        self.generate_ldc_package(output_dir)
 
     def write_kits(self, output_dir):
-        os.mkdir('{}/kits'.format(output_dir))
+        kit_language_map = {}
+        ldc_package_dir = '{output_dir}/task2_pool_{batchid}'.format(output_dir=output_dir,
+                                                              batchid=self.get('batch_id').lower())
+        os.mkdir('{ldc_package_dir}'.format(ldc_package_dir=ldc_package_dir))
+        os.mkdir('{ldc_package_dir}/kits'.format(ldc_package_dir=ldc_package_dir))
         query_kits = self.get('query_kits')
         for query_id in query_kits:
             query_kit_contanier = query_kits.get(query_id)
             for kit_id in query_kit_contanier:
                 query_kit = query_kit_contanier.get(kit_id)
-                output = open('{}/kits/{}_{}_{}.tab'.format(output_dir, self.get('batch_id'), query_id, kit_id), 'w')
+                kit_filename = '{}_{}_{}.tab'.format(self.get('batch_id'), query_id, kit_id)
+                if kit_filename not in kit_language_map:
+                    kit_language_map[kit_filename] = {}
+                output = open('{ldc_package_dir}/kits/{kit_filename}'.format(ldc_package_dir=ldc_package_dir,
+                                                                             kit_filename=kit_filename), 'w')
                 for line in query_kit:
-                    output.write(line)
+                    language = self.get('language', line)
+                    kit_language_map.get(kit_filename)[language] = 1
+                    output.write(self.get('line', line))
+                output.close()
+        kit_language_map_filepath = '{ldc_package_dir}/task2_pool_{batchid}.klm'.format(ldc_package_dir=ldc_package_dir,
+                                                                                        batchid=self.get('batch_id').lower()) 
+        with open(kit_language_map_filepath, 'w') as output:
+            for kit_filename in kit_language_map:
+                languages = ','.join(sorted(kit_language_map.get(kit_filename)))
+                output.write('{kit_filename}\t{languages}\n'.format(kit_filename=kit_filename,
+                                                                  languages=languages))
 
     def write_pool(self, output_dir):
         lines = []
@@ -270,8 +308,8 @@ class Task2Pool(Object):
             if query_id is None or query_id != line.get('QUERY_ID'):
                 query_id = line.get('QUERY_ID')
             line['RESPONSE_ID'] = self.get('last_response_id', query_id) + 1
+            self.add_to_kit(query_id, line)
             pretty_line = self.get('line', line)
-            self.add_to_kit(query_id, pretty_line)
             output.write(pretty_line)
             self.increment_last_response_id(query_id)
         output.close()
