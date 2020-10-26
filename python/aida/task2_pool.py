@@ -47,6 +47,7 @@ class Task2Pool(Object):
         self.queries_to_pool = {}
         self.queries_to_pool_file = queries_to_pool_file
         self.query_kits = {}
+        self.responses = {}
         self.runs_to_pool_file = runs_to_pool_file
         self.slot_mappings = slot_mappings
         self.load_queries_to_pool_file()
@@ -67,6 +68,9 @@ class Task2Pool(Object):
         os.system('mv {ldc_package_dir}.tgz.txt {ldc_package_dir}_{ctimestamp}_{md5hash}.tgz.txt'.format(ldc_package_dir=ldc_package_dir,
                                                                                                          ctimestamp=ctimestamp,
                                                                                                          md5hash=md5hash))
+        print('--ldc package written to {ldc_package_dir}_{ctimestamp}_{md5hash}.tgz.txt'.format(ldc_package_dir=ldc_package_dir,
+                                                                                                 ctimestamp=ctimestamp,
+                                                                                                 md5hash=md5hash))
 
     def get_line(self, columns=None):
         if columns is None:
@@ -153,7 +157,8 @@ class Task2Pool(Object):
             confidence = trim_cv(entry.get('justification_confidence'))
             justifications.append({
                 'justification': justification,
-                'confidence': confidence
+                'confidence': confidence,
+                'entry': entry
                 })
             if document_id in document_justifications:
                 self.record_event('MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT', justification, document_justifications[document_id], document_id, entry.get('where'))
@@ -164,10 +169,12 @@ class Task2Pool(Object):
         for sorted_justification in sorted_justifications:
             if K == 0: break
             selected_justifications[sorted_justification.get('justification')] = 1
+            sorted_justification.get('entry').set('pooled', 1)
             K -= 1
         return selected_justifications
 
     def add(self, responses):
+        self.get('responses')[responses.get('runid')] = responses
         for input_filepath in responses:
             query_id = os.path.basename(input_filepath).replace('.rq.tsv', '')
             if query_id not in self.get('queries_to_pool'):
@@ -263,6 +270,7 @@ class Task2Pool(Object):
 
     def write_output(self, output_dir):
         os.mkdir(output_dir)
+        self.write_pooled_responses()
         self.write_setting_files(output_dir)
         self.write_pool(output_dir)
         self.write_kits(output_dir)
@@ -338,6 +346,15 @@ class Task2Pool(Object):
             output.write(pretty_line)
             self.increment_last_response_id(query_id)
         output.close()
+
+    def write_pooled_responses(self):
+        for run_id in self.get('responses'):
+            run_responses = self.get('responses').get(run_id)
+            pooled_output_dir = run_responses.get('path').replace('VALID', 'POOLED')
+            if os.path.exists(pooled_output_dir):
+                self.record_event('DEFAULT_CRITICAL_ERROR', 'Path {} exists.'.format(pooled_output_dir))
+            print('--writing pooled output from run \'{}\' to {}'.format(run_id, pooled_output_dir))
+            run_responses.write_pooled_responses(pooled_output_dir)
 
     def write_setting_files(self, output_dir):
         for settings_file in ['runs_to_pool_file', 'queries_to_pool_file']:

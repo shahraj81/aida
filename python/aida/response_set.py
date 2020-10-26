@@ -552,6 +552,19 @@ class ResponseSet(Container):
     def get_video_boundaries(self):
         return self.get('document_boundaries').get('video')
 
+    def write_pooled_responses(self, output_dir):
+        os.mkdir(output_dir)
+        for input_filename in self:
+            output_filename = input_filename.replace(self.get('path'), output_dir)
+            file_container = self.get(input_filename)
+            output_fh = open(output_filename, 'w')
+            output_fh.write('{}\n'.format(file_container.get('header').get('line')))
+            for linenum in sorted(file_container, key=int):
+                entry = self.get(input_filename).get(str(linenum))
+                if not entry.get('pooled'): continue
+                output_fh.write(entry.__str__())
+            output_fh.close()
+
     def write_valid_responses(self, output_dir):
         method_name = 'write_valid_responses_{task}'.format(task=self.get('task'))
         method = self.get('method', method_name)
