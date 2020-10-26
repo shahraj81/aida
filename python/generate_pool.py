@@ -41,7 +41,7 @@ def check_paths(args):
                  args.runs_to_pool,
                  args.input
                  ])
-    check_for_paths_non_existance([args.output])
+    check_for_paths_non_existance(['{}-{}'.format(args.output, args.batch_id)])
 
 def check_for_paths_existance(paths):
     for path in paths:
@@ -76,7 +76,7 @@ def main(args):
         }
 
     pool = Task2Pool(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.runs_to_pool, args.queries, args.kit_size, args.batch_id, args.input, args.previous_pools)
-    pool.write_output(args.output)
+    pool.write_output('{}-{}'.format(args.output, args.batch_id))
 
     exit(ALLOK_EXIT_CODE)
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('runs_to_pool', type=str, help='File containing IDs of runs to be included in the pool')
     parser.add_argument('queries', type=str, help='File containing query-specific number of clusters and number of documents per cluster to be included in the pool (queries.txt file produced by queries generator)')
     parser.add_argument('input', type=str, help='Directory containing all the runs (this directory contains the output of AIDA evaluation docker when applied to the runs)')
-    parser.add_argument('output', type=str, help='Specify a directory to which the output should be written')
+    parser.add_argument('output', type=str, help='Specify the directory (prefix) to which the output should be written')
     args = parser.parse_args()
     check_paths(args)
     main(args)

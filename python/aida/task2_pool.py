@@ -296,7 +296,7 @@ class Task2Pool(Object):
                     languages = self.get('languages', line)
                     if ',' in languages:
                         message = 'Multiple languages {} found for document \'{}\''.format(languages, line.get('DOCUMENT_ID'))
-                        print('--WARNING: {}'.format(message))
+                        print('************** WARNING: {}'.format(message))
                         self.record_event('DEFAULT_WARNING', message)
                     for language in languages.split(','):
                         kit_language_map.get(kit_filename)[language] = 1
@@ -355,7 +355,7 @@ class Task2Pool(Object):
     def write_pooled_responses(self):
         for run_id in self.get('responses'):
             run_responses = self.get('responses').get(run_id)
-            pooled_output_dir = run_responses.get('path').replace('VALID', 'POOLED')
+            pooled_output_dir = run_responses.get('path').replace('VALID', 'POOLED-{batch_id}'.format(batch_id=self.get('batch_id')))
             if os.path.exists(pooled_output_dir):
                 self.record_event('DEFAULT_CRITICAL_ERROR', 'Path {} exists.'.format(pooled_output_dir))
             print('--writing pooled output from run \'{}\' to {}'.format(run_id, pooled_output_dir))
