@@ -84,7 +84,7 @@ class Task2Pool(Object):
                                       self.get('document_mappings'),
                                       self.get('document_boundaries'))
 
-    def get_language(self, line):
+    def get_languages(self, line):
         return self.get('document_mappings').get('language', line.get('DOCUMENT_ID'))
 
     def get_last_response_id(self, query_id):
@@ -293,8 +293,13 @@ class Task2Pool(Object):
                 output = open('{ldc_package_dir}/kits/{kit_filename}'.format(ldc_package_dir=ldc_package_dir,
                                                                              kit_filename=kit_filename), 'w')
                 for line in query_kit:
-                    language = self.get('language', line)
-                    kit_language_map.get(kit_filename)[language] = 1
+                    languages = self.get('languages', line)
+                    if ',' in languages:
+                        message = 'Multiple languages {} found for document \'{}\''.format(languages, line.get('DOCUMENT_ID'))
+                        print('--WARNING: {}'.format(message))
+                        self.record_event('DEFAULT_WARNING', message)
+                    for language in languages.split(','):
+                        kit_language_map.get(kit_filename)[language] = 1
                     output.write(self.get('line', line))
                 output.close()
         kit_language_map_filepath = '{ldc_package_dir}/task2_pool_{batchid}.klm'.format(ldc_package_dir=ldc_package_dir,
