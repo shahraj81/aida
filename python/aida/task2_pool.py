@@ -56,7 +56,8 @@ class Task2Pool(Object):
     def generate_ldc_package(self, output_dir):
         ldc_package_dir = '{output_dir}/task2_pool_{batchid}'.format(output_dir=output_dir,
                                                               batchid=self.get('batch_id').lower())
-        os.system('tar -zcf {ldc_package_dir}.tgz.txt {ldc_package_dir}'.format(ldc_package_dir=ldc_package_dir))
+        os.system('cd {output_dir} && tar -zcf task2_pool_{batchid}.tgz.txt task2_pool_{batchid}'.format(output_dir=output_dir,
+                                                                                                         batchid=self.get('batch_id').lower()))
         result = subprocess.run(['md5', '-q', '{}.tgz.txt'.format(ldc_package_dir)], stdout=subprocess.PIPE)
         md5hash = result.stdout.decode('utf-8').strip()
         ctime = os.path.getctime('{ldc_package_dir}.tgz.txt'.format(ldc_package_dir=ldc_package_dir))
