@@ -86,7 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--kit_size', default=200, type=int, help='Specify the maximum number of entries in a kit (default: %(default)s)')
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-p', '--previous_pools', help='Specify comma-separated list of the directories containing previous pool(s), if any')
-    parser.add_argument('-t', '--task', default='task1', choices=['task1', 'task2'], help='Specify task1 or task2 (default: %(default)s)')
+    parser.add_argument('-t', '--task', default='task2', choices=['task1', 'task2'], help='Specify task1 or task2 (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
