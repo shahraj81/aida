@@ -115,6 +115,7 @@ class Task2Pool(Object):
             entry = query_responses.get(str(linenum))
             if not entry.get('valid'):
                 self.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
+            self.validate_descriptor(entry)
             cluster_id = entry.get('cluster_id')
             if cluster_id not in cluster_responses:
                 cluster_responses[cluster_id] = []
@@ -143,6 +144,9 @@ class Task2Pool(Object):
         justifications = []
         document_justifications = {}
         for entry in cluster_responses:
+            if not entry.get('valid'):
+                self.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
+            self.validate_descriptor(entry)
             document_id = entry.get('document_id')
             justification = entry.get('mention_span_text')
             confidence = trim_cv(entry.get('justification_confidence'))
@@ -165,7 +169,9 @@ class Task2Pool(Object):
     def add(self, responses):
         for input_filepath in responses:
             query_id = os.path.basename(input_filepath).replace('.rq.tsv', '')
-            if query_id not in self.get('queries_to_pool'): continue
+            if query_id not in self.get('queries_to_pool'):
+                self.record_event('DEFAULT_INFO', 'Query {} is not in queries_to_pool file (skipping {})'.format(query_id, input_filepath))
+                continue
             if query_id not in self.get('pool'):
                 self.get('pool')[query_id] = {}
             query_pool = self.get('pool').get(query_id)
@@ -235,6 +241,24 @@ class Task2Pool(Object):
         if justification not in self.get('previous_pool').get(query_id):
             return True
         return False
+
+    def validate_descriptor(self, entry):
+        query_id = os.path.basename(entry.get('filename')).replace('.rq.tsv', '')
+        query_link_target = entry.get('query_link_target')
+        link_target = entry.get('link_target')
+        valid = True
+        if query_link_target != link_target:
+            valid = False
+        if query_link_target != self.get('queries_to_pool').get(query_id).get('entrypoint'):
+            valid = False
+        if not valid:
+            self.record_event('UNEXPECTED_ENTRYPOINT_DESCRIPTOR',
+                              query_link_target,
+                              link_target,
+                              self.get('queries_to_pool').get(query_id).get('entrypoint'),
+                              query_id,
+                              self.get('queries_to_pool_file'),
+                              entry.get('filename'))
 
     def write_output(self, output_dir):
         os.mkdir(output_dir)

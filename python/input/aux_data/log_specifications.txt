@@ -46,6 +46,7 @@ CRITICAL  NO_SPECS                        No specifications available for '{}'
 INFO      NO_TEMPORAL_CONSTRAINT          Gold cluster {} in document {} has no temporal constraint
 ERROR     NOT_AN_NUMBER                   '{}' is not a number
 ERROR     NOTHING_TO_SCORE                Nothing to score.
+CRITICAL  OUT_OF_DATE_FILE                Out of date file '{}' (missing {} '{}')
 CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
 INFO      SKIPPING_FILE                   Skipping '{}'
@@ -68,6 +69,7 @@ CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} clu
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
+CRITICAL  UNEXPECTED_ENTRYPOINT_DESCRIPTOR Different values of entrypoint descriptors {}, {}, {} found for query {} in files {} and {}
 ERROR     UNEXPECTED_FILENAME             Unexpected filename (expected one from '{}', provided '{}')
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
