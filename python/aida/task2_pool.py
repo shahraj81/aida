@@ -308,7 +308,7 @@ class Task2Pool(Object):
                     'DOCUMENT_ID'        : mention.get('document_id'),
                     'FQEC'               : 'NIL',
                     'MENTION_TYPE'       : 'NIL',
-                    'MENTION_SOURCE'     : mention.get('modality'),
+                    'MENTION_SOURCE'     : mention.get('modality').upper(),
                     'QUERY_ID'           : query_id,
                     'RESPONSE_ID'        : '<ID>',
                     'MENTION_SPAN'       : '{doceid}:{span}'.format(doceid=mention.get('document_element_id'),
