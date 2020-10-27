@@ -38,6 +38,24 @@ def check_for_paths_non_existance(paths):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
 
+def clean(name_variant):
+    cleaned_name_variant = name_variant.split(' (')[0]
+    return cleaned_name_variant.strip()
+
+def get_entrypoints(entry):
+    entrypoints = {'name': {entry.get('entity_name').strip(): 1}}
+    if entry.get('kbids') != 'N/A':
+        entrypoints['kbid'] = {}
+        kbids = entry.get('kbids')
+        for kbid in kbids.split('|'):
+            entrypoints['kbid'][kbid.strip()] = 1
+    name_variants = entry.get('name_variants').strip()
+    if name_variants != '':
+        for name_variant in name_variants.split(','):
+            cleaned_name_variant = clean(name_variant)
+            entrypoints['name'][cleaned_name_variant] = 1
+    return entrypoints
+
 def get_kbid_sparql_query_template():
     template = '''
 PREFIX ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#>
@@ -241,40 +259,42 @@ def get_sparql(logger, query_id, entrypoint_type, entrypoint):
 
 def main(args):
     logger = Logger(args.log, args.log_specifications, sys.argv)
-
     os.mkdir(args.sparql)
-
-    columns = ['query_id', 'entrypoint_type', 'entrypoint', 'clusters', 'documents']
-
+    columns = ['query_id', 'entity_id', 'entrypoint_type', 'entrypoint', 'clusters', 'documents']
     queries_fh = open(args.queries, 'w')
     queries_fh.write('{}\n'.format('\t'.join(columns)))
     query_num = 0
     for entry in FileHandler(logger, args.input):
-        query_num += 1
-        values = {
-            'documents'      : args.documents,
-            'entrypoint_type': entry.get('entrypoint_type'),
-            'entrypoint'     : entry.get('entrypoint'),
-            'num_clusters'   : entry.get('num_clusters'),
-            'query_id'       : '{prefix}{query_num}'.format(prefix=args.prefix, query_num=augment(query_num))
-            }
-        line = '\t'.join([values[column] for column in columns])
-        queries_fh.write('{}\n'.format(line))
-        
-        sparql_query_fh = open('{dir}/{query_id}.rq'.format(dir=args.sparql, query_id=values['query_id']), 'w')
-        sparql_query_fh.write(get_sparql(logger,
-                                         values['query_id'],
-                                         values['entrypoint_type'],
-                                         values['entrypoint']))
-        sparql_query_fh.close()
-        
+        entity_id = entry.get('entity_id')
+        entrypoints = get_entrypoints(entry)
+        for entrypoint_type in entrypoints:
+            for entrypoint in entrypoints[entrypoint_type]:
+                query_num += 1
+                if entrypoint_type == 'kbid':
+                    entrypoint = 'REFKB:{}'.format(entrypoint)
+                values = {
+                    'documents'      : args.documents,
+                    'entity_id'      : entity_id,
+                    'entrypoint_type': entrypoint_type,
+                    'entrypoint'     : entrypoint,
+                    'clusters'       : args.clusters,
+                    'query_id'       : '{prefix}{query_num}'.format(prefix=args.prefix, query_num=augment(query_num))
+                    }
+                line = '\t'.join([values[column] for column in columns])
+                queries_fh.write('{}\n'.format(line))
+                sparql_query_fh = open('{dir}/{query_id}.rq'.format(dir=args.sparql, query_id=values['query_id']), 'w')
+                sparql_query_fh.write(get_sparql(logger,
+                                                 values['query_id'],
+                                                 values['entrypoint_type'],
+                                                 values['entrypoint']))
+                sparql_query_fh.close()
     queries_fh.close()
-
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Align system and gold clusters")
-    parser.add_argument('-d', '--documents', default='10', help='Specify the depth to be used for pooling (default: %(default)s)')
+    parser.add_argument('-c', '--clusters', default='1', help='Specify the number of clusters to be used for pooling (default: %(default)s)')
+    parser.add_argument('-d', '--documents', default='10', help='Specify the number of documents per cluster to be used for pooling (default: %(default)s)')
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-p', '--prefix', default='AIDA_P2_TA2_P', help='Specify the prefix of SPARQL query files.')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
