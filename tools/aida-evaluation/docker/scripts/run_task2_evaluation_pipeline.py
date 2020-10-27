@@ -89,6 +89,7 @@ def main(args):
     image_boundaries        = '/data/AUX-data/{}.image_boundaries.txt'.format(ldc_package_id)
     keyframe_boundaries     = '/data/AUX-data/{}.keyframe_boundaries.txt'.format(ldc_package_id)
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
+    sparql_kb_source        = '{output}/SPARQL-KB-source'.format(output=args.output)
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_valid_output     = '{output}/SPARQL-VALID-output'.format(output=args.output)
@@ -104,6 +105,7 @@ def main(args):
     #############################################################################################
 
     record_and_display_message(logger, 'Inspecting the input directory.')
+    call_system('mkdir {destination}'.format(destination=sparql_kb_source))
     items = [f for f in os.listdir(args.input)]
     if len(items) != 1:
         logger.record_event('UNEXPECTED_NUM_FILES_IN_INPUT', 1, len(items))
@@ -124,6 +126,7 @@ def main(args):
                 credentials.write('[default]\n')
                 credentials.write('aws_access_key_id = {}\n'.format(args.aws_access_key_id))
                 credentials.write('aws_secret_access_key = {}\n'.format(args.aws_secret_access_key))
+            call_system('cp {path}/{filename} {destination}/source.txt'.format(path=args.input, filename=filename, destination=sparql_kb_source))
             with open('{path}/{filename}'.format(path=args.input, filename=filename)) as fh:
                 lines = fh.readlines()
                 if len(lines) != 1:
@@ -135,6 +138,7 @@ def main(args):
                     exit(ERROR_EXIT_CODE)
                 s3_filename = s3_location.split('/')[-1]
                 call_system('mkdir /tmp/s3_run/')
+                record_and_display_message(logger, 'Downloading {s3_filename}'.format(s3_filename=s3_filename))
                 call_system('aws s3 cp {s3_location} /tmp/s3_run/'.format(s3_location=s3_location))
                 uncompress_command = None
                 if s3_filename.endswith('.zip'):
@@ -148,6 +152,8 @@ def main(args):
                 # get the file from s3
                 # place it in the SPARQL-KB-input directory
         else:
+            with open('{destination}/source.txt'.format(destination=sparql_kb_source), 'w') as fh:
+                fh.write('Direct mount.')
             call_system('cp {input}/task2_kb.ttl {destination}'.format(input=args.input, destination=sparql_kb_input))
             # place the task2_kb.ttl in the SPARQL-KB-input directory
 
