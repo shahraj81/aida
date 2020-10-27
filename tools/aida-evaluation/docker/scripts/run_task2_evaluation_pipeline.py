@@ -138,7 +138,7 @@ def main(args):
                     exit(ERROR_EXIT_CODE)
                 s3_filename = s3_location.split('/')[-1]
                 call_system('mkdir /tmp/s3_run/')
-                record_and_display_message(logger, 'Downloading {s3_filename}'.format(s3_filename=s3_filename))
+                record_and_display_message(logger, 'Downloading {s3_location}'.format(s3_location=s3_location))
                 call_system('aws s3 cp {s3_location} /tmp/s3_run/'.format(s3_location=s3_location))
                 uncompress_command = None
                 if s3_filename.endswith('.zip'):
