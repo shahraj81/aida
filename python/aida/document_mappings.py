@@ -79,6 +79,18 @@ class DocumentMappings(Object):
         """
         Returns the language of the document element whose ID matches the parameter
         """
+        if ID in self.get('documents'):
+            languages = {}
+            for document_element in self.get('documents').get(ID).get('document_elements'):
+                language = self.get('document_elements').get(document_element).get('language')
+                if language != 'N/A':
+                    languages[language] = 1
+            if len(languages) == 0:
+                return
+            elif len(languages) == 1:
+                return list(languages.keys())[0]
+            else:
+                self.record_event('MULTIPLE_LANGUAGES_IN_A_DOCUMENT', ','.join(languages), ID)
         if ID not in self.get('document_elements'):
             return None
         return self.get('document_elements').get(ID).get('language')

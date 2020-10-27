@@ -170,5 +170,9 @@ class Logger:
         """
         Record how this program was invoked.
         """
-        debug_message = "Execution begins {current_dir:" + self.path_name + ", script_name:" + self.file_name + ", arguments:" + self.arguments +"}"  
+        arguments = self.arguments.split()
+        if '--aws_access_key_id' in arguments and '--aws_secret_access_key' in arguments:
+            arguments[arguments.index('--aws_access_key_id')+1] = '__XXXXXXXXX__'
+            arguments[arguments.index('--aws_secret_access_key')+1] = '__XXXXXXXXX__'
+        debug_message = "Execution begins {current_dir:" + self.path_name + ", script_name:" + self.file_name + ", arguments:" + ' '.join(arguments) +"}"
         self.logger_object.info(debug_message)

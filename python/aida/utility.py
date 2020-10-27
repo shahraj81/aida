@@ -8,7 +8,6 @@ __date__    = "28 January 2020"
 
 from aida.span import Span
 from aida.object import Object
-import copy
 import hashlib
 import re
 import sys
