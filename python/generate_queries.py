@@ -295,7 +295,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--clusters', default='1', help='Specify the number of clusters to be used for pooling (default: %(default)s)')
     parser.add_argument('-d', '--documents', default='10', help='Specify the number of documents per cluster to be used for pooling (default: %(default)s)')
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
-    parser.add_argument('-p', '--prefix', default='AIDA_P2_TA2_P', help='Specify the prefix of SPARQL query files.')
+    parser.add_argument('-p', '--prefix', default='AIDA_P2_TA2_E', help='Specify the prefix of SPARQL query files (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('input', type=str, help='Input file containing information needed for generation of queries')
