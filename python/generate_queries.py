@@ -53,7 +53,8 @@ def get_entrypoints(entry):
     if name_variants != '':
         for name_variant in name_variants.split(','):
             cleaned_name_variant = clean(name_variant)
-            entrypoints['name'][cleaned_name_variant] = 1
+            if cleaned_name_variant != '':
+                entrypoints['name'][cleaned_name_variant] = 1
     return entrypoints
 
 def get_kbid_sparql_query_template():
