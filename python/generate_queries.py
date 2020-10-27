@@ -47,8 +47,8 @@ def get_entrypoints(entry):
     if entry.get('kbids') != 'N/A':
         entrypoints['kbid'] = {}
         kbids = entry.get('kbids')
-        for kbid in kbids.split('|'):
-            entrypoints['kbid'][kbid.strip()] = 1
+        augmented_kbids = '|'.join(['REFKB:{}'.format(kbid.strip()) for kbid in kbids.split('|')])
+        entrypoints['kbid'][augmented_kbids] = 1
     name_variants = entry.get('name_variants').strip()
     if name_variants != '':
         for name_variant in name_variants.split(','):
@@ -270,8 +270,6 @@ def main(args):
         for entrypoint_type in entrypoints:
             for entrypoint in entrypoints[entrypoint_type]:
                 query_num += 1
-                if entrypoint_type == 'kbid':
-                    entrypoint = 'REFKB:{}'.format(entrypoint)
                 values = {
                     'documents'      : args.documents,
                     'entity_id'      : entity_id,
