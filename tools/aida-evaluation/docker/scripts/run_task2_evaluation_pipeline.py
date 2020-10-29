@@ -133,8 +133,8 @@ def main(args):
                     logger.record_event('UNEXPECTED_NUM_LINES_IN_INPUT', 1, len(lines))
                     exit(ERROR_EXIT_CODE)
                 s3_location = lines[0].strip()
-                if not s3_location.startswith('s3://aida-phase2-ta-performers/'):
-                    logger.record_event('UNEXPECTED_S3_LOCATION', 's3://aida-phase2-ta-performers/...', s3_location)
+                if not s3_location.startswith('s3://aida-') and not s3_location.endswith('.tgz'):
+                    logger.record_event('UNEXPECTED_S3_LOCATION', 's3://aida-*/*.tgz', s3_location)
                     exit(ERROR_EXIT_CODE)
                 s3_filename = s3_location.split('/')[-1]
                 call_system('mkdir /tmp/s3_run/')
