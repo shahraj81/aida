@@ -147,7 +147,32 @@ def main(args):
                     uncompress_command = 'tar -zxf'
                 call_system('cd /tmp/s3_run && {uncompress_command} {s3_filename}'.format(s3_filename=s3_filename,
                                                                                           uncompress_command=uncompress_command))
-                call_system('cp /tmp/s3_run/*/NIST/*.ttl {destination}/task2_kb.ttl'.format(destination=sparql_kb_input))
+
+                valid_kbs = {}
+
+                for dirpath, dirnames, filenames in os.walk('/tmp/s3_run/'):
+                    for kb_filename in [f for f in filenames if f.endswith('.ttl')]:
+                        if len(dirpath.split('/')) == 6 and os.path.basename(dirpath) == 'NIST':
+                            kb_filename_including_path = os.path.join(dirpath, kb_filename)
+                            # consider all kbs valid
+                            valid_kbs[kb_filename_including_path] = 1
+                            # include only valid KBs
+#                             validation_report_file_with_path = kb_filename_including_path.replace('.ttl', '-report.txt')
+#                             if not os.path.exists(validation_report_file_with_path):
+#                                 valid_kbs[kb_filename_including_path] = 1
+
+                if len(valid_kbs) == 0:
+                    record_and_display_message(logger, 'Nothing to score.')
+                    exit(ERROR_EXIT_CODE)
+
+                if len(valid_kbs) > 1:
+                    record_and_display_message(logger, 'More than one task2 KBs found (not sure what to do).')
+                    exit(ERROR_EXIT_CODE)
+
+                valid_kb_filename_including_path = list(valid_kbs.keys())[0]
+                call_system('cp {valid_kb_filename_including_path} {destination}/task2_kb.ttl'.format(valid_kb_filename_including_path=valid_kb_filename_including_path,
+                                                                                                      destination=sparql_kb_input))
+
                 call_system('rm -rf /tmp/s3_run')
                 # get the file from s3
                 # place it in the SPARQL-KB-input directory
