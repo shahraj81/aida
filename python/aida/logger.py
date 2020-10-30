@@ -95,7 +95,7 @@ class Logger:
         """
         Return a tuple (num_warnings, num_errors)
         """
-        return (self.num_warnings, self.num_errors)    
+        return (self.num_warnings, self.num_errors)
 
     def load_event_specs(self):
         """
