@@ -55,6 +55,7 @@ def check_for_paths_non_existance(paths):
 def validate_responses(args):
     logger = Logger(args.log, args.log_specifications, sys.argv)
 
+    logger.record_event('DEFAULT_INFO', 'validation started')
     ontology_type_mappings = OntologyTypeMappings(logger, args.ontology_type_mappings)
     slot_mappings = SlotMappings(logger, args.slot_mappings)
     document_mappings = DocumentMappings(logger,
@@ -74,6 +75,12 @@ def validate_responses(args):
 
     responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.input, args.runid, args.task)
     responses.write_valid_responses(args.output)
+    num_warnings, num_errors = logger.get('stats')
+    closing_message = 'validation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
+    logger.record_event('DEFAULT_INFO', closing_message)
+    print(closing_message)
+    if num_errors > 0:
+        exit(ERROR_EXIT_CODE)
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':

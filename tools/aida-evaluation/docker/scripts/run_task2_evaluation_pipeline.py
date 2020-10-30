@@ -280,10 +280,17 @@ def main(args):
             if 'ERROR' in line:
                 num_errors += 1
 
+    num_validated_files_written = 0
+    for dirpath, dirnames, filenames in os.walk('sparql_valid_output'.format(sparql_valid_output=sparql_valid_output)):
+        for filename in [f for f in filenames if f.endswith('.rq.tsv')]:
+            num_validated_files_written += 1
+
     message = 'SPARQL output had no errors.'
-    if num_errors:
+    if num_validated_files_written == 0:
+        message = '*** Unable to write validated output files ***'
+    elif num_errors:
         message = 'SPARQL output had {} error(s).'.format(num_errors)
-    record_and_display_message(logger, '\n{}\n'.format(message))
+    record_and_display_message(logger, '{}\n'.format(message))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply AIDA M36 task2 evaluation pipeline to the KB.")
