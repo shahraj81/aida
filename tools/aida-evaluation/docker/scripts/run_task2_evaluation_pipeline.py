@@ -149,7 +149,6 @@ def main(args):
                                                                                           uncompress_command=uncompress_command))
 
                 valid_kbs = {}
-
                 for dirpath, dirnames, filenames in os.walk('/tmp/s3_run/'):
                     for kb_filename in [f for f in filenames if f.endswith('.ttl')]:
                         if len(dirpath.split('/')) == 6 and os.path.basename(dirpath) == 'NIST':
@@ -170,6 +169,7 @@ def main(args):
                     exit(ERROR_EXIT_CODE)
 
                 valid_kb_filename_including_path = list(valid_kbs.keys())[0]
+                record_and_display_message(logger, 'Using KB: \'{}\''.format(kb_filename_including_path.replace('/tmp/s3_run/', '')))
                 call_system('cp {valid_kb_filename_including_path} {destination}/task2_kb.ttl'.format(valid_kb_filename_including_path=valid_kb_filename_including_path,
                                                                                                       destination=sparql_kb_input))
 
