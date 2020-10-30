@@ -281,7 +281,7 @@ def main(args):
                 num_errors += 1
 
     num_validated_files_written = 0
-    for dirpath, dirnames, filenames in os.walk('sparql_valid_output'.format(sparql_valid_output=sparql_valid_output)):
+    for dirpath, dirnames, filenames in os.walk('{sparql_valid_output}'.format(sparql_valid_output=sparql_valid_output)):
         for filename in [f for f in filenames if f.endswith('.rq.tsv')]:
             num_validated_files_written += 1
 
