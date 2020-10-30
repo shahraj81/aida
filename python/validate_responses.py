@@ -75,7 +75,7 @@ def validate_responses(args):
 
     responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.input, args.runid, args.task)
     responses.write_valid_responses(args.output)
-    num_warnings, num_errors = logger.get('stats')
+    num_warnings, num_errors = logger.get_stats()
     closing_message = 'validation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
     logger.record_event('DEFAULT_INFO', closing_message)
     print(closing_message)
