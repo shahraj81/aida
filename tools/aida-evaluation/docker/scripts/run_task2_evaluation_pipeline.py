@@ -147,7 +147,7 @@ def main(args):
                     uncompress_command = 'tar -zxf'
                 call_system('cd /tmp/s3_run && {uncompress_command} {s3_filename}'.format(s3_filename=s3_filename,
                                                                                           uncompress_command=uncompress_command))
-                call_system('cp /tmp/s3_run/*/NIST/*.ttl {destination}/task2_kb.ttl'.format(destination=sparql_kb_input))
+                call_system('cp /tmp/s3_run/*/*/NIST/*.ttl {destination}/task2_kb.ttl'.format(destination=sparql_kb_input))
                 call_system('rm -rf /tmp/s3_run')
                 # get the file from s3
                 # place it in the SPARQL-KB-input directory
