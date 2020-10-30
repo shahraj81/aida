@@ -283,7 +283,7 @@ def main(args):
     message = 'SPARQL output had no errors.'
     if num_errors:
         message = 'SPARQL output had {} error(s).'.format(num_errors)
-    record_and_display_message(logger, '\n{}\n'.format(message))
+    record_and_display_message(logger, '{}\n'.format(message))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply AIDA M36 task2 evaluation pipeline to the KB.")
