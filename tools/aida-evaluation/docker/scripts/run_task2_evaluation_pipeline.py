@@ -287,7 +287,7 @@ def main(args):
 
     message = 'SPARQL output had no errors.'
     if num_validated_files_written == 0:
-        message = '*** Unable to write validated output files ***'
+        message = '*** Unable to find validated output files ***'
     elif num_errors:
         message = 'SPARQL output had {} error(s).'.format(num_errors)
     record_and_display_message(logger, '{}\n'.format(message))
