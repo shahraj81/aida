@@ -5,7 +5,7 @@ MAINTAINER shahzad.rajput@nist.gov
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
 
 # Install system packages
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt update && apt-get install -y \
     curl \
     git \
     make \
