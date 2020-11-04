@@ -291,12 +291,17 @@ class Task2Pool(Object):
                                                                              kit_filename=kit_filename), 'w')
                 for line in query_kit:
                     languages = self.get('languages', line)
-                    if ',' in languages:
+                    if languages is None:
+                        message = 'No language found for document \'{}\''.format(line.get('DOCUMENT_ID'))
+                        print('************** WARNING: {}'.format(message))
+                        self.record_event('DEFAULT_WARNING', message)
+                    elif ',' in languages:
                         message = 'Multiple languages {} found for document \'{}\''.format(languages, line.get('DOCUMENT_ID'))
                         print('************** WARNING: {}'.format(message))
                         self.record_event('DEFAULT_WARNING', message)
-                    for language in languages.split(','):
-                        kit_language_map.get(kit_filename)[language] = 1
+                    if languages is not None:
+                        for language in languages.split(','):
+                            kit_language_map.get(kit_filename)[language] = 1
                     output.write(self.get('line', line))
                 output.close()
         kit_language_map_filepath = '{ldc_package_dir}/task2_pool_{batchid}.klm'.format(ldc_package_dir=ldc_package_dir,
@@ -304,6 +309,7 @@ class Task2Pool(Object):
         with open(kit_language_map_filepath, 'w') as output:
             for kit_filename in kit_language_map:
                 languages = ','.join(sorted(kit_language_map.get(kit_filename)))
+                languages = 'N/A' if languages == '' else languages
                 output.write('{kit_filename}\t{languages}\n'.format(kit_filename=kit_filename,
                                                                   languages=languages))
 
