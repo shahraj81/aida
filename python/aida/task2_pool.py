@@ -114,8 +114,7 @@ class Task2Pool(Object):
 
     def get_top_C_clusters(self, query_responses, C):
         cluster_responses = {}
-        linking_confidences = {}
-        clusters = []
+        clusters = {}
         for linenum in query_responses:
             entry = query_responses.get(str(linenum))
             if not entry.get('valid'):
@@ -126,16 +125,13 @@ class Task2Pool(Object):
                 cluster_responses[cluster_id] = []
             cluster_responses[cluster_id].append(entry)
             linking_confidence = trim_cv(entry.get('linking_confidence'))
-            if cluster_id not in linking_confidences:
-                linking_confidences[cluster_id] = linking_confidence
-            if linking_confidence != linking_confidences[cluster_id]:
-                self.record_event('MULTIPLE_CLUSTER_LINKING_CONFIDENCES', linking_confidence, linking_confidences[cluster_id], cluster_id, entry.get('where'))
-            clusters.append({
-                'cluster_id': cluster_id,
-                'linking_confidence': linking_confidence
-                })
-        sorted_clusters = multisort(clusters, (('linking_confidence', True),
-                                               ('cluster_id', False)))
+            if cluster_id not in clusters or linking_confidence > clusters[cluster_id]['linking_confidence']:
+                clusters[cluster_id] = {
+                    'cluster_id': cluster_id,
+                    'linking_confidence': linking_confidence
+                    }
+        sorted_clusters = multisort(list(clusters.values()), (('linking_confidence', True),
+                                                              ('cluster_id', False)))
         selected_clusters = {}
         for sorted_cluster in sorted_clusters:
             if C==0: break
@@ -146,8 +142,7 @@ class Task2Pool(Object):
         return selected_clusters
 
     def get_top_K_cluster_justifications(self, cluster_responses, K):
-        justifications = []
-        document_justifications = {}
+        justifications = {}
         for entry in cluster_responses:
             if not entry.get('valid'):
                 self.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
@@ -155,16 +150,14 @@ class Task2Pool(Object):
             document_id = entry.get('document_id')
             justification = entry.get('mention_span_text')
             confidence = trim_cv(entry.get('justification_confidence'))
-            justifications.append({
-                'justification': justification,
-                'confidence': confidence,
-                'entry': entry
-                })
-            if document_id in document_justifications:
-                self.record_event('MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT', justification, document_justifications[document_id], document_id, entry.get('where'))
-            document_justifications[document_id] = justification
-        sorted_justifications = multisort(justifications, (('confidence', True),
-                                                           ('justification', False)))
+            if document_id not in justifications or confidence > justifications[document_id]['confidence']:
+                justifications[document_id] = {
+                    'justification': justification,
+                    'confidence': confidence,
+                    'entry': entry
+                    }
+        sorted_justifications = multisort(list(justifications.values()), (('confidence', True),
+                                                                          ('justification', False)))
         selected_justifications = {}
         for sorted_justification in sorted_justifications:
             if K == 0: break
