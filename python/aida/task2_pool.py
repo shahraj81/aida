@@ -255,10 +255,14 @@ class Task2Pool(Object):
         query_link_target = entry.get('query_link_target')
         link_target = entry.get('link_target')
         valid = True
-        if query_link_target != link_target:
-            valid = False
         if query_link_target != self.get('queries_to_pool').get(query_id).get('entrypoint'):
             valid = False
+        if 'REFKB' not in self.get('queries_to_pool').get(query_id).get('entrypoint'):
+            if query_link_target != link_target:
+                valid = False
+        else:
+            if link_target not in query_link_target:
+                valid = False
         if not valid:
             self.record_event('UNEXPECTED_ENTRYPOINT_DESCRIPTOR',
                               query_link_target,
