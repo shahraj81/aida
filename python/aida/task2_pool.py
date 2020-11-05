@@ -222,6 +222,9 @@ class Task2Pool(Object):
         for entry in FileHandler(logger, runs_to_pool_file):
             run_id = entry.get('run_id')
             run_dir = '{input}/{run_id}/SPARQL-VALID-output'.format(input=self.get('input_dir'), run_id=run_id)
+            message = 'loading run \'{}\' into pool'.format(run_id)
+            print('--{}'.format(message))
+            logger.record_event('DEFAULT_INFO', message)
             responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, run_dir, run_id, 'task2')
             self.add(responses)
 
