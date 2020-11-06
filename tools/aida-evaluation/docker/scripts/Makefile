@@ -20,6 +20,9 @@ ifeq ($(TASK), task1)
 else ifeq ($(TASK), task2)
 	python3 run_task2_evaluation_pipeline.py \
 	  --run $(RUNID) --runtype $(RUNTYPE) $(AWS_ACCESS_KEY_ID_ARG) $(AWS_SECRET_ACCESS_KEY_ARG)
+else ifeq ($(TASK), task3)
+	python3 run_task3_evaluation_pipeline.py \
+	  --run $(RUNID) --runtype $(RUNTYPE) $(AWS_ACCESS_KEY_ID_ARG) $(AWS_SECRET_ACCESS_KEY_ARG)
 else
 	@echo "unexpected value of environment variable TASK"
 endif
