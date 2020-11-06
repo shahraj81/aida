@@ -165,7 +165,7 @@ def main(args):
             if os.path.isfile(os.path.join(args.input, item)):
                 num_files += 1
                 logger.record_event('DEFAULT_INFO', 'Copying {input}/{filename}'.format(input=args.input, filename=item))
-                call_system('cp -r {input}/{filename}.ttl {destination}'.format(input=args.input, filename=item, destination=sparql_kb_input))
+                call_system('cp -r {input}/{filename} {destination}'.format(input=args.input, filename=item, destination=sparql_kb_input))
     
     if num_files == 0:
         logger.record_event('NOTHING_TO_SCORE')
