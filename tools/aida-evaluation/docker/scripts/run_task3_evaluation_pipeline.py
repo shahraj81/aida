@@ -204,7 +204,7 @@ def main(args):
         logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
         call_system('mkdir -p {}'.format(intermediate))
         # load KB into GraphDB
-        logger.record_event('DEFAULT_INFO', 'Loading {kb_filename} into GraphDB.'.format(kb_filename))
+        logger.record_event('DEFAULT_INFO', 'Loading {kb_filename} into GraphDB.'.format(kb_filename=kb_filename))
         input_kb = '{kb_filename_including_path}'.format(kb_filename_including_path=kb_filename_including_path)
         call_system('{loadrdf} -c {config} -f -m parallel {input}'.format(loadrdf=loadrdf, config=config, input=input_kb))
         # start GraphDB
