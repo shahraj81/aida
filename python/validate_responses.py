@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Validate responses.")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
-    parser.add_argument('-t', '--task', default='task1', choices=['task1', 'task2'], help='Specify task1 or task2 (default: %(default)s)')
+    parser.add_argument('-t', '--task', default='task1', choices=['task1', 'task2', 'task3'], help='Specify task1 or task2 or task3 (default: %(default)s)')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
     parser.add_argument('slot_mappings', type=str, help='File containing slot mappings')

@@ -56,8 +56,8 @@ attributes = {
     'date': {
         'dependencies': ['start', 'end', 'subject_cluster'],
         'name': 'date',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
         'generate': 'generate_date_start_and_end',
         'validate': 'validate_date_start_and_end',
         'years': [2020],
@@ -65,17 +65,24 @@ attributes = {
     'document_id': {
         'dependencies': ['kb_document_id'],
         'name': 'document_id',
-        'tasks': ['task1', 'task2'],
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'tasks': ['task1', 'task2', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE'],
         'validate': 'validate_document_id',
         'generate': 'generate_document_id',
+        'years': [2020],
+        },
+    'edge_importance_value': {
+        'name': 'edge_importance_value',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_importance_value',
         'years': [2020],
         },
     'end': {
         'dependencies': ['end_after', 'end_before'],
         'name': 'end',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
         'generate': 'generate_end',
         'validate': 'validate_date_range',
         'years': [2020],
@@ -83,55 +90,62 @@ attributes = {
     'end_before': {
         'dependencies': ['end_before_month', 'end_before_day', 'end_before_year'],
         'name': 'end_before',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
         'generate': 'generate_end_before',
         'validate': 'validate_date',
         'years': [2020],
         },
     'end_before_day': {
         'name': 'end_before_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'end_before_month': {
         'name': 'end_before_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'end_before_year': {
         'name': 'end_before_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'end_after': {
         'dependencies': ['end_after_month', 'end_after_day', 'end_after_year'],
         'name': 'end_after',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
         'generate': 'generate_end_after',
         'validate': 'validate_date',
         'years': [2020],
         },
     'end_after_day': {
         'name': 'end_after_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'end_after_month': {
         'name': 'end_after_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'end_after_year': {
         'name': 'end_after_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'years': [2020],
+        },
+    'hypothesis_importance_value': {
+        'name': 'hypothesis_importance_value',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_importance_value',
         'years': [2020],
         },
     'justification_confidence': {
@@ -192,17 +206,50 @@ attributes = {
         'validate': 'validate_entries_in_cluster',
         'years': [2020],
         },
+    'object_cluster_handle': {
+        'name': 'object_cluster_handle',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2020],
+        },
     'object_cluster_id': {
         'name': 'object_cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'years': [2020],
+        },
+    'object_cluster_member_id' : {
+        'name': 'object_cluster_member_id',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2020],
+        },
+    'object_cluster_membership_confidence': {
+        'name': 'object_cluster_membership_confidence',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_confidence',
+        'years': [2020],
+        },
+    'object_informative_justification_span_text': {
+        'name': 'object_informative_justification_span_text',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_value_provenance_triple',
+        'years': [2020],
+        },
+    'object_type': {
+        'name': 'object_type',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_object_type',
         'years': [2020],
         },
     'predicate': {
         'dependencies': ['subject_cluster'],
         'name': 'predicate',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'validate': 'validate_predicate',
         'years': [2020],
         },
@@ -215,8 +262,8 @@ attributes = {
         },
     'predicate_justification_confidence': {
         'name': 'predicate_justification_confidence',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'validate': 'validate_confidence',
         'years': [2020],
         },
@@ -229,8 +276,8 @@ attributes = {
     'start': {
         'dependencies': ['start_after', 'start_before'],
         'name': 'start',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
         'generate': 'generate_start',
         'validate': 'validate_date_range',
         'years': [2020],
@@ -238,70 +285,111 @@ attributes = {
     'start_before': {
         'dependencies': ['start_before_month', 'start_before_day', 'start_before_year'],
         'name': 'start_before',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
         'generate': 'generate_start_before',
         'validate': 'validate_date',
         'years': [2020],
         },
     'start_before_day': {
         'name': 'start_before_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'start_before_month': {
         'name': 'start_before_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'start_before_year': {
         'name': 'start_before_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'start_after': {
         'dependencies': ['start_after_month', 'start_after_day', 'start_after_year'],
         'name': 'start_after',
-        'tasks': ['task1'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
         'generate': 'generate_start_after',
         'validate': 'validate_date',
         'years': [2020],
         },
     'start_after_day': {
         'name': 'start_after_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'start_after_month': {
         'name': 'start_after_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'start_after_year': {
         'name': 'start_after_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'years': [2020],
         },
     'subject_cluster': {
         'dependencies': ['subject_cluster_id', 'document_id'],
         'generate': 'generate_subject_cluster',
         'name': 'subject_cluster',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
         'validate': 'validate_entries_in_cluster',
         'years': [2020],
         },
     'subject_cluster_id': {
         'name': 'subject_cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
-        'tasks': ['task1'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'years': [2020],
+        },
+    'subject_cluster_importance_value': {
+        'name': 'subject_cluster_importance_value',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_importance_value',
+        'years': [2020],
+        },
+    'subject_cluster_member_id' : {
+        'name': 'subject_cluster_member_id',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2020],
+        },
+    'subject_cluster_membership_confidence': {
+        'name': 'subject_cluster_membership_confidence',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_confidence',
+        'years': [2020],
+        },
+    'subject_informative_justification_confidence': {
+        'name': 'subject_informative_justification_confidence',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_confidence',
+        'years': [2020],
+        },
+    'subject_informative_justification_span_text': {
+        'name': 'subject_informative_justification_span_text',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_value_provenance_triple',
+        'years': [2020],
+        },
+    'subject_type': {
+        'name': 'subject_type',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_subject_type',
         'years': [2020],
         },
     'type_statement_confidence': {
@@ -380,10 +468,63 @@ schemas = {
             'linking_confidence'
             ]
         },
+    'AIDA_PHASE2_TASK3_GR_RESPONSE': {
+        'name': 'AIDA_PHASE2_TASK3_GR_RESPONSE',
+        'year': 2020,
+        'task': 'task3',
+        'header': ['?docid', '?edge_type', '?object_cluster', '?objectmo', '?oinf_j_span', '?object_type', 
+                   '?subject_cluster', '?subjectmo', '?sinf_j_span', '?subject_type', '?ej_span',
+                   '?hypothesis_iv', '?subjectc_iv', '?edge_iv', '?objectc_handle', '?edge_cj_cv', '?oinf_j_cv',
+                   '?obcm_cv', '?sinf_j_cv', '?sbcm_cv'],
+        'columns': [
+            'document_id',
+            'predicate',
+            'object_cluster_id',
+            'object_cluster_member_id',
+            'object_informative_justification_span_text',
+            'object_type',
+            'subject_cluster_id',
+            'subject_cluster_member_id',
+            'subject_informative_justification_span_text',
+            'subject_type',
+            'predicate_justification_span_text',
+            'hypothesis_importance_value',
+            'subject_cluster_importance_value',
+            'edge_importance_value',
+            'object_cluster_handle',
+            'predicate_justification_confidence',
+            'object_informative_justification_confidence',
+            'object_cluster_membership_confidence',
+            'subject_informative_justification_confidence',
+            'subject_cluster_membership_confidence'
+            ]
+        },
+    'AIDA_PHASE2_TASK3_TM_RESPONSE': {
+        'name': 'AIDA_PHASE2_TASK3_TM_RESPONSE',
+        'year': 2020,
+        'task': 'task3',
+        'header': ['?cluster', '?sa_month', '?sa_day', '?sa_year', '?sb_month', '?sb_day', '?sb_year', '?ea_month', '?ea_day', '?ea_year', '?eb_month', '?eb_day', '?eb_year'],
+        'columns': [
+            'subject_cluster_id',
+            'start_after_month',
+            'start_after_day',
+            'start_after_year',
+            'start_before_month',
+            'start_before_day',
+            'start_before_year',
+            'end_after_month',
+            'end_after_day',
+            'end_after_year',
+            'end_before_month',
+            'end_before_day',
+            'end_before_year'
+            ]
+        },
     }
 
-def identify_file_schema(fh):
+def identify_file_schema(fh, task):
     for schema in schemas.values():
+        if schema.get('task') != task: continue
         found = 1
         if fh.get('header') is None:
             fh.record_event('EMPTY_FILE_WITHOUT_HEADER', fh.get('filename'), '\t'.join(schema['header']))
@@ -439,7 +580,7 @@ class ResponseSet(Container):
             for filename in sorted(os.listdir(subdir), key=order):
                 filename_including_path = '{}/{}'.format(subdir, filename)
                 fh = FileHandler(logger, filename_including_path)
-                schema = identify_file_schema(fh)
+                schema = identify_file_schema(fh, self.get('task'))
                 if schema is None:
                     logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
                 else:
@@ -451,11 +592,23 @@ class ResponseSet(Container):
         for filename in sorted(os.listdir(path)):
             filename_including_path = '{}/{}'.format(path, filename)
             fh = FileHandler(logger, filename_including_path, encoding='utf-8')
-            schema = identify_file_schema(fh)
+            schema = identify_file_schema(fh, self.get('task'))
             if schema is None:
                 logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
             else:
                 self.load_file(fh, schema)
+
+    def load_responses_task3(self):
+        logger = self.get('logger')
+        for subdir in ['{}/{}'.format(self.get('path'), d) for d in os.listdir(self.get('path'))]:
+            for filename in os.listdir(subdir):
+                filename_including_path = '{}/{}'.format(subdir, filename)
+                fh = FileHandler(logger, filename_including_path)
+                schema = identify_file_schema(fh, self.get('task'))
+                if schema is None:
+                    logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
+                else:
+                    self.load_file(fh, schema)
 
     def load_file(self, fh, schema):
         logger = self.get('logger')
@@ -600,3 +753,6 @@ class ResponseSet(Container):
                 if not entry.get('valid'): continue
                 output_fh.write(entry.__str__())
             output_fh.close()
+
+    def write_valid_responses_task3(self, output_dir):
+        print("--TODO: write_valid_responses_task3")

@@ -77,6 +77,15 @@ class Validator(Object):
             self.record_event('UNEXPECTED_ENTITY_TYPE', entity_type_in_query, query_entity_type_in_response, entry.get('where'))
         return True
 
+    def validate_importance_value(self, responses, schema, entry, attribute):
+        importance_value = entry.get(attribute.get('name'))
+        try:
+            value = trim_cv(importance_value)
+        except ValueError:
+            self.record_event('INVALID_IMPORTANCE_VALUE', importance_value, entry.get('where'))
+            return False
+        return True
+
     def validate_metatype(self, responses, schema, entry, attribute):
         allowed_metatypes = ['Entity', 'Relation', 'Event']
         metatype = entry.get(attribute.get('name'))
@@ -91,6 +100,18 @@ class Validator(Object):
             return False
         return True
 
+    def validate_object_type(self, responses, schema, entry, attribute):
+        logger = self.get('logger')
+        object_type = entry.get(attribute.get('name'))
+        valid_object_type = False
+        for metatype in ['Event', 'Relation', 'Entity']:
+                if responses.get('ontology_type_mappings').has(metatype, object_type):
+                    valid_object_type = True
+        if not valid_object_type:
+            logger.record_event('UNKNOWN_TYPE', object_type, entry.get('where'))
+            return False
+        return True
+
     def validate_predicate(self, responses, schema, entry, attribute):
         logger = self.get('logger')
         predicate = entry.get(attribute.get('name'))
@@ -101,14 +122,33 @@ class Validator(Object):
             self.record_event('INVALID_PREDICATE_NO_UNDERSCORE', predicate, entry.get('where'))
             return False
         subject_type, rolename = predicate.split('_')
-        if not responses.get('ontology_type_mappings').has(entry.get('metatype'), subject_type):
+        valid_subject_type = False
+        if schema.get('task') == 'task3':
+            for metatype in ['Event', 'Relation']:
+                if responses.get('ontology_type_mappings').has(metatype, subject_type):
+                    valid_subject_type = True
+        elif responses.get('ontology_type_mappings').has(entry.get('metatype'), subject_type):
+            valid_subject_type = True
+        if not valid_subject_type:
             logger.record_event('UNKNOWN_TYPE', subject_type, entry.get('where'))
             return False
-        if subject_type not in entry.get('subject_cluster').get('types'):
+        if schema.get('task')!= 'task3' and subject_type not in entry.get('subject_cluster').get('types'):
             logger.record_event('UNEXPECTED_SUBJECT_TYPE', subject_type, entry.get('subject_cluster').get('ID'), entry.get('where'))
             return False
         if entry.get('metatype') == 'Relation'and entry.get('subject_cluster').get('frame').get('number_of_fillers') > 2:
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
+        return True
+
+    def validate_subject_type(self, responses, schema, entry, attribute):
+        logger = self.get('logger')
+        subject_type = entry.get(attribute.get('name'))
+        valid_object_type = False
+        for metatype in ['Event', 'Relation']:
+                if responses.get('ontology_type_mappings').has(metatype, subject_type):
+                    valid_object_type = True
+        if not valid_object_type:
+            logger.record_event('UNKNOWN_TYPE', subject_type, entry.get('where'))
+            return False
         return True
 
     def validate_entries_in_cluster(self, responses, schema, entry, attribute):
@@ -135,7 +175,7 @@ class Validator(Object):
                         problem_field = 'day'
                         valid = False
         if not valid:
-            self.record_event('INVALID_DATE_RANGE', entry.get('cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
+            self.record_event('INVALID_DATE_RANGE', entry.get('subject_cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
         return valid
 
     def validate_date_start_and_end(self, responses, schema, entry, attribute):
@@ -183,6 +223,10 @@ class Validator(Object):
         where = entry.get('where')
 
         provenance = entry.get(attribute.get('name'))
+
+        if schema.get('task') == 'task3' and attribute.get('name') == 'subject_informative_justification_span_text' and provenance == 'NULL':
+            return True
+
         if len(provenance.split(':')) != 3:
             self.record_event('INVALID_PROVENANCE_FORMAT', provenance, where)
             return False
@@ -283,14 +327,15 @@ class Validator(Object):
         return True
     
     def validate_confidence(self, responses, schema, entry, attribute):
+        confidence_value = entry.get(attribute.get('name'))
+        if schema.get('task') == 'task3' and schema.get('name') == 'AIDA_PHASE2_TASK3_GR_RESPONSE' and attribute.get('name') == 'predicate_justification_confidence' and confidence_value == 'NULL':
+            return True
         try:
-            value = trim_cv(entry.get(attribute.get('name')))
+            value = trim_cv(confidence_value)
         except ValueError:
             self.record_event('INVALID_CONFIDENCE', entry.get(attribute.get('name')), entry.get('where'))
             value = 1.0
             entry.set(attribute.get('name'), '"{value}"'.format(value=value))
-        if schema.get('task') == 'task3' and schema.get('query_type') == 'GraphQuery' and value == 'NULL' and attribute.get('name') == 'edge_compound_justification_confidence':
-            return True
         if not 0 < value <= 1:
             self.record_event('INVALID_CONFIDENCE', value, entry.get('where'))
             value = 1.0
