@@ -197,9 +197,9 @@ def main(args):
     for kb_filename in kb_filenames:
         kb_filename_including_path = os.path.join(sparql_kb_input, kb_filename)
         count += 1
-        record_and_display_message(logger, 'Applying queries to {kb_filename_including_path} ... {count} of {num_total}.'.format(count=count,
-                                                                                                                                 num_total=len(kb_filenames),
-                                                                                                                                 kb_filename_including_path=kb_filename_including_path))
+        record_and_display_message(logger, 'Applying queries to {kb_filename} ... {count} of {num_total}.'.format(count=count,
+                                                                                                                  num_total=len(kb_filenames),
+                                                                                                                  kb_filename=kb_filename))
         # create the intermediate directory
         logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
         call_system('mkdir -p {}'.format(intermediate))
