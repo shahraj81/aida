@@ -1,0 +1,146 @@
+PREFIX ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#>
+PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT
+       ?docid           # sourceDocument
+       ?edge_type       # edge type
+       ?object_cluster  # object cluster ID
+       ?objectmo        # prototype of object cluster
+       ?oinf_j_span     # informativeJustification of ?objectmo
+       ?object_type     # type of the object
+       ?subject_cluster # subject cluster ID
+       ?subjectmo       # prototype of subject cluster
+       ?sinf_j_span     # informativeJustification of ?subjectmo is not needed by LDC; will be NILL
+       ?subject_type    # type of the subject
+       ?ej_span         # CompoundJustification span(s) for argument assertion
+       ?hypothesis_iv   # the importance value of hypothesis
+       ?subjectc_iv     # the importance value of subject prototype
+       ?edge_iv         # the importance value of edge
+       ?objectc_handle  # the handle of object cluster
+       ?edge_cj_cv      # confidence of a compound justification for the argument assertion
+       ?oinf_j_cv       # confidence of object informativeJustification
+       ?obcm_cv         # cluster membership confidence of the object (always 1.0 because it's the prototype)
+       ?sinf_j_cv       # confidence of subject informativeJustification (always 1.0)
+       ?sbcm_cv         # cluster membership confidence of the subject (always 1.0 because it's the prototype)
+
+WHERE {
+    # informativeJustification of ?subjectmo is not needed by LDC; will be NILL
+    BIND( "NULL" AS ?sinf_j_span) .
+    BIND( "1.0" AS ?sinf_j_cv) .
+    BIND( "1.0" AS ?sbcm_cv) .
+    BIND( "1.0" AS ?obcm_cv) .
+
+    # Get the hypothesis importance value
+    ?hypothesis           a                             aida:Hypothesis .
+    ?hypothesis           aida:importance               ?hypothesis_iv .
+
+    # Get the subject cluster, its prototype and importance value
+    ?subject_cluster      a                             aida:SameAsCluster .
+    ?subject_cluster      aida:prototype                ?subjectmo .
+    ?subjectmo            aida:importance               ?subjectc_iv .
+
+    # Get the subject informativeJustification
+    # ?subjectmo            aida:informativeJustification ?sinf_justification .
+    # ?sinf_justification   aida:sourceDocument           ?docid .
+    # ?sinf_justification   aida:source                   ?sinf_j_doceid .
+    # ?sinf_justification   aida:confidence               ?sinf_j_confidence .
+    # ?sinf_j_confidence    aida:confidenceValue          ?sinf_j_cv .
+
+    # Get the edge and its importance value
+    ?statement2           rdf:object                    ?objectmo .
+    ?statement2           rdf:predicate                 ?edge_type .
+    ?statement2           rdf:subject                   ?subjectmo .
+    ?statement2           aida:importance               ?edge_iv .
+
+    # Get the object cluster and prototype
+    ?object_cluster       a                             aida:SameAsCluster .
+    ?object_cluster       aida:prototype                ?objectmo .
+
+    # Get the object handle
+    OPTIONAL {
+      ?objectmo           aida:handle                   ?objectc_handle .
+    }
+
+    # Get the object informativeJustification
+    ?objectmo             aida:informativeJustification ?oinf_justification .
+    ?oinf_justification   aida:sourceDocument           ?docid .
+    ?oinf_justification   aida:source                   ?oinf_j_doceid .
+    ?oinf_justification   aida:confidence               ?oinf_j_confidence .
+    ?oinf_j_confidence    aida:confidenceValue          ?oinf_j_cv .
+
+    # Get the type of object
+    ?statement4           a                             rdf:Statement .
+    ?statement4           rdf:object                    ?object_type .
+    ?statement4           rdf:predicate                 rdf:type .
+    ?statement4           rdf:subject                   ?objectmo .
+
+    # Get the type of subject
+    ?statement5           a                             rdf:Statement .
+    ?statement5           rdf:object                    ?subject_type .
+    ?statement5           rdf:predicate                 rdf:type .
+    ?statement5           rdf:subject                   ?subjectmo .
+
+    # Verify if the edge is valid
+    FILTER(cfn:validEdge(str(?subject_type), str(?edge_type), str(?object_type)))
+
+    FILTER NOT EXISTS {
+      ?statement2           aida:justifiedBy              ?compoundedge_just .
+    }
+
+    # Get object's informative justification span
+    OPTIONAL {
+           ?oinf_justification a                           aida:TextJustification .
+           ?oinf_justification aida:startOffset            ?oso .
+           ?oinf_justification aida:endOffsetInclusive     ?oeo
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:ImageJustification .
+           ?oinf_justification aida:boundingBox            ?obb1  .
+           ?obb1               aida:boundingBoxUpperLeftX  ?oulx1 .
+           ?obb1               aida:boundingBoxUpperLeftY  ?ouly1 .
+           ?obb1               aida:boundingBoxLowerRightX ?olrx1 .
+           ?obb1               aida:boundingBoxLowerRightY ?olry1
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:KeyFrameVideoJustification .
+           ?oinf_justification aida:keyFrame               ?okfid .
+           ?oinf_justification aida:boundingBox            ?obb2  .
+           ?obb2               aida:boundingBoxUpperLeftX  ?oulx2 .
+           ?obb2               aida:boundingBoxUpperLeftY  ?ouly2 .
+           ?obb2               aida:boundingBoxLowerRightX ?olrx2 .
+           ?obb2               aida:boundingBoxLowerRightY ?olry2
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:ShotVideoJustification .
+           ?oinf_justification aida:shot                   ?osid
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:AudioJustification .
+           ?oinf_justification aida:startTimestamp         ?ost1 .
+           ?oinf_justification aida:endTimestamp           ?oet1
+    }
+    OPTIONAL {
+           ?oinf_justification a                           aida:VideoJustification .
+           ?oinf_justification aida:startTimestamp         ?ost2 .
+           ?oinf_justification aida:endTimestamp           ?oet2
+    }
+
+    BIND( IF( BOUND(?osid), ?osid, "__NULL__") AS ?_osid) .
+    BIND( IF( BOUND(?okfid), ?okfid, "__NULL__") AS ?_okfid) .
+    BIND( IF( BOUND(?oso), ?oso, "__NULL__") AS ?_oso) .
+    BIND( IF( BOUND(?oeo), ?oeo, "__NULL__") AS ?_oeo) .
+    BIND( COALESCE(?ost1, ?ost2, "__NULL__") AS ?_ost) .
+    BIND( COALESCE(?oet1, ?oet2, "__NULL__") AS ?_oet) .
+    BIND( COALESCE(?oulx1, ?oulx2, "__NULL__") AS ?_oulx) .
+    BIND( COALESCE(?ouly1, ?ouly2, "__NULL__") AS ?_ouly) .
+    BIND( COALESCE(?olrx1, ?olrx2, "__NULL__") AS ?_olrx) .
+    BIND( COALESCE(?olry1, ?olry2, "__NULL__") AS ?_olry) .
+
+    BIND( cfn:getSpan(str(?docid), str(?oinf_j_doceid), str(?_osid), str(?_okfid), str(?_oso), str(?_oeo), str(?_oulx), str(?_ouly), str(?_olrx), str(?_olry), str(?_ost), str(?_oet) ) AS ?oinf_j_span ) .
+
+    BIND( "NULL" AS ?ej_span)
+    BIND( "NULL" AS ?edge_cj_cv)
+}
