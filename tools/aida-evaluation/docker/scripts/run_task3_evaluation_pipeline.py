@@ -220,6 +220,7 @@ def main(args):
                                                                                   intermediate=intermediate))
         # generate the SPARQL output directory corresponding to the KB
         logger.record_event('DEFAULT_INFO', 'Creating SPARQL output directory corresponding to the KB')
+        call_system('mkdir {output}/{kb_filename}'.format(output=sparql_output, kb_filename=kb_filename))
         # move output out of intermediate into the output corresponding to the KB
         logger.record_event('DEFAULT_INFO', 'Moving output out of the intermediate directory')
         call_system('mv {intermediate}/*/* {output}/{kb_filename}'.format(intermediate=intermediate,
