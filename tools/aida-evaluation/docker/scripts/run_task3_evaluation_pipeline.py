@@ -265,6 +265,7 @@ def main(args):
             python3 augment_output.py \
             merge \
             --log {log_file} \
+            --task task3 \
             {log_specifications} \
             {sparql_clean_output} \
             {sparql_merged_output}'.format(python_scripts=python_scripts,
