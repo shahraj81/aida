@@ -297,8 +297,8 @@ def main(args):
             {keyframe_boundaries} \
             {video_boundaries} \
             {run_id} \
-            {sparql_output} \
-            {sparql_merged_output}'.format(python_scripts=python_scripts,
+            {sparql_merged_output} \
+            {sparql_valid_output}'.format(python_scripts=python_scripts,
                                            log_file=log_file,
                                            log_specifications=log_specifications,
                                            ontology_type_mappings=ontology_type_mappings,
