@@ -260,6 +260,13 @@ attributes = {
         'validate': 'validate_value_provenance_triple',
         'years': [2020],
         },
+    'predicate_justification_spans_text': {
+        'name': 'predicate_justification_spans_text',
+        'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_value_provenance_triples',
+        'years': [2020],
+        },
     'predicate_justification_confidence': {
         'name': 'predicate_justification_confidence',
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE'],
@@ -340,8 +347,8 @@ attributes = {
         'dependencies': ['subject_cluster_id', 'document_id'],
         'generate': 'generate_subject_cluster',
         'name': 'subject_cluster',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK3_TM_RESPONSE'],
-        'tasks': ['task1', 'task3'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'tasks': ['task1'],
         'validate': 'validate_entries_in_cluster',
         'years': [2020],
         },
@@ -487,7 +494,7 @@ schemas = {
             'subject_cluster_member_id',
             'subject_informative_justification_span_text',
             'subject_type',
-            'predicate_justification_span_text',
+            'predicate_justification_spans_text',
             'hypothesis_importance_value',
             'subject_cluster_importance_value',
             'edge_importance_value',
@@ -646,7 +653,9 @@ class ResponseSet(Container):
                     valid_attribute = self.get('validator').validate(self, validator_name, schema, entry, attribute)
                     if not valid_attribute: valid = False
             entry.set('valid', valid)
-            if entry.get('document_id') in self.get('document_mappings').get('documents') and self.get('document_mappings').get('documents').get(entry.get('document_id')).get('is_core'):
+            if self.get('task') == 'task3':
+                self.get(filename).add(key=str(lineno), value=entry)
+            elif entry.get('document_id') in self.get('document_mappings').get('documents') and self.get('document_mappings').get('documents').get(entry.get('document_id')).get('is_core'):
                 self.get(filename).add(key=str(lineno), value=entry)
 
     def attribute_required(self, attribute, schema):
@@ -755,4 +764,4 @@ class ResponseSet(Container):
             output_fh.close()
 
     def write_valid_responses_task3(self, output_dir):
-        print("--TODO: write_valid_responses_task3")
+        self.write_valid_responses_task1(output_dir)

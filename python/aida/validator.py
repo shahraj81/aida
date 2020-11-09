@@ -23,6 +23,22 @@ class Validator(Object):
     def __init__(self, logger):
         super().__init__(logger)
 
+    def parse_provenance(self, provenance):
+        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
+        match = pattern.match(provenance)
+        if not match: return
+        document_id = match.group(1)
+        document_element_id = match.group(2)
+        start_x, start_y, end_x, end_y = map(lambda ID: match.group(ID), [3, 4, 5, 6])
+
+        # if provided, obtain keyframe_id and update document_element_id
+        pattern = re.compile('^(\w*?)_(\d+)$')
+        match = pattern.match(document_element_id)
+        keyframe_num = match.group(2) if match else None
+        document_element_id = match.group(1) if match else document_element_id
+
+        return document_id, document_element_id, keyframe_num, start_x, start_y, end_x, end_y
+
     def validate(self, responses, method_name, schema, entry, attribute):
         method = self.get_method(method_name)
         if method is None:
@@ -35,6 +51,20 @@ class Validator(Object):
         if not responses.get('ontology_type_mappings').has(entry.get('metatype'), cluster_type):
             logger.record_event('UNKNOWN_TYPE', cluster_type, entry.get('where'))
             return False
+        return True
+
+    def validate_coordinates(self, provenance, start_x, start_y, end_x, end_y, where):
+        for coordinate in [start_x, start_y, end_x, end_y]:
+            if not is_number(coordinate):
+                self.record_event('NOT_A_NUMBER', coordinate, where)
+                return False
+            if float(coordinate) < 0:
+                self.record_event('NEGATIVE_NUMBER', coordinate, where)
+                return False
+        for start, end in [(start_x, end_x), (start_y, end_y)]:
+            if float(start) > float(end):
+                self.record_event('START_BIGGER_THAN_END', start, end, provenance, where)
+                return False
         return True
 
     def validate_document_id(self, responses, schema, entry, attribute):
@@ -139,6 +169,17 @@ class Validator(Object):
                 self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
         return True
 
+    def validate_provenance_format(self, provenance, where):
+        if len(provenance.split(':')) != 3:
+            self.record_event('INVALID_PROVENANCE_FORMAT', provenance, where)
+            return False
+        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
+        match = pattern.match(provenance)
+        if not match:
+            self.record_event('INVALID_PROVENANCE_FORMAT', provenance, where)
+            return False
+        return True
+
     def validate_subject_type(self, responses, schema, entry, attribute):
         logger = self.get('logger')
         subject_type = entry.get(attribute.get('name'))
@@ -220,49 +261,59 @@ class Validator(Object):
         return valid
 
     def validate_value_provenance_triple(self, responses, schema, entry, attribute):
+        return self.validate_provenance(responses,
+                                         schema,
+                                         entry,
+                                         attribute.get('name'),
+                                         entry.get(attribute.get('name')),
+                                         apply_correction=True)
+
+    def validate_value_provenance_triples(self, responses, schema, entry, attribute):
+        provenances = entry.get(attribute.get('name')).split(';')
+        if len(provenances) > 2:
+            self.record_event('IMPROPER_COMPOUND_JUSTIFICATION', entry.get(attribute.get('name')), entry.get('where'))
+            return False
+        for provenance in provenances:
+            if not self.validate_provenance(responses,
+                                            schema,
+                                            entry,
+                                            attribute.get('name'),
+                                            provenance,
+                                            apply_correction=False):
+                return False
+        return True
+
+    def validate_provenance(self, responses, schema, entry, attribute_name, provenance, apply_correction):
         where = entry.get('where')
 
-        provenance = entry.get(attribute.get('name'))
-
-        if schema.get('task') == 'task3' and attribute.get('name') == 'subject_informative_justification_span_text' and provenance == 'NULL':
+        if schema.get('task') == 'task3' and attribute_name == 'subject_informative_justification_span_text' and provenance == 'NULL':
             return True
 
-        if len(provenance.split(':')) != 3:
-            self.record_event('INVALID_PROVENANCE_FORMAT', provenance, where)
+        if not self.validate_provenance_format(provenance, where):
             return False
 
-        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
-        match = pattern.match(provenance)
-        if not match:
-            self.record_event('INVALID_PROVENANCE_FORMAT', provenance, where)
-            return False
+        document_id, document_element_id, keyframe_num, start_x, start_y, end_x, end_y = self.parse_provenance(provenance)
 
-        document_id = match.group(1)
-        document_element_id = match.group(2)
-        start_x, start_y, end_x, end_y = map(lambda ID: match.group(ID), [3, 4, 5, 6])
-        
-        # if provided, obtain keyframe_id and update document_element_id
-        pattern = re.compile('^(\w*?)_(\d+)$')
-        match = pattern.match(document_element_id)
-        keyframe_num = match.group(2) if match else None
-        document_element_id = match.group(1) if match else document_element_id
-        
         # check if the document element has file extension appended to it
         # if so, report warning, and apply correction
         extensions = tuple(['.' + extension for extension in responses.get('document_mappings').get('encodings')])
         if document_element_id.endswith(extensions):
-            self.record_event('ID_WITH_EXTENSION', 'document element id', document_element_id, where)
-            document_element_id = os.path.splitext(document_element_id)[0]
-            provenance = '{}:{}:({},{})-({},{})'.format(document_id, document_element_id, start_x, start_y, end_x, end_y)
-            entry.set(attribute.get('name'), provenance)
-        
+            if apply_correction:
+                self.record_event('ID_WITH_EXTENSION', 'document element id', document_element_id, where)
+                document_element_id = os.path.splitext(document_element_id)[0]
+                provenance = '{}:{}:({},{})-({},{})'.format(document_id, document_element_id, start_x, start_y, end_x, end_y)
+                entry.set(attribute_name, provenance)
+            else:
+                self.record_event('ID_WITH_EXTENSION_ERROR', 'document element id', document_element_id, where)
+                return False
+
         if document_id != entry.get('document_id'):
             self.record_event('MULTIPLE_DOCUMENTS', document_id, entry.get('document_id'), where)
             return False
-        
+
         documents = responses.get('document_mappings').get('documents')
         document_elements = responses.get('document_mappings').get('document_elements')
-        
+
         if document_id not in documents:
             self.record_event('UNKNOWN_ITEM', 'document', document_id, where)
             return False
@@ -290,18 +341,8 @@ class Validator(Object):
             self.record_event('PARENT_CHILD_RELATION_FAILURE', document_element_id, document_id, where)
             return False
 
-        for coordinate in [start_x, start_y, end_x, end_y]:
-            if not is_number(coordinate):
-                self.record_event('NOT_A_NUMBER', coordinate, where)
-                return False
-            if float(coordinate) < 0:
-                self.record_event('NEGATIVE_NUMBER', coordinate, where)
-                return False
-
-        for start, end in [(start_x, end_x), (start_y, end_y)]:
-            if float(start) > float(end):
-                self.record_event('START_BIGGER_THAN_END', start, end, provenance, where)
-                return False
+        if not self.validate_coordinates(provenance, start_x, start_y, end_x, end_y, where):
+            return False
 
         # An entry in the coreference metric output file is invalid if:
         #  (a) a video mention of an entity was asserted using VideoJustification, or
@@ -318,11 +359,11 @@ class Validator(Object):
         span = Span(self.logger, start_x, start_y, end_x, end_y)
         if not document_element_boundary.validate(span):
             corrected_span = document_element_boundary.get('corrected_span', span)
-            if corrected_span is None:
+            if corrected_span is None or not apply_correction:
                 self.record_event('SPAN_OFF_BOUNDARY_ERROR', span, document_element_boundary, document_element_id, where)
                 return False
             corrected_provenance = '{}:{}:{}'.format(document_id, keyframe_id if keyframe_id else document_element_id, corrected_span.__str__())
-            entry.set(attribute.get('name'), corrected_provenance)
+            entry.set(attribute_name, corrected_provenance)
             self.record_event('SPAN_OFF_BOUNDARY_CORRECTED', span, corrected_span, document_element_boundary, document_element_id, where)
         return True
     
