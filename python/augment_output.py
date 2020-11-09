@@ -39,8 +39,7 @@ class Merge(Object):
     """
 
     def __init__(self, log_filename, log_specifications, task, input_dir, output_dir):
-        check_for_paths_existance([log_filename,
-                                   log_specifications,
+        check_for_paths_existance([log_specifications,
                                    input_dir])
         check_for_paths_non_existance([output_dir])
         self.log_filename = log_filename
