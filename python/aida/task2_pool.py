@@ -321,17 +321,18 @@ class Task2Pool(Object):
         for query_id in self.get('pool'):
             for mention_span in self.get('pool').get(query_id):
                 mention = self.get('mention', mention_span)
+                document_id, document_element_or_keyframe_id, span = mention_span.split(':')
                 line = {
                     'CORRECTNESS'        : 'NIL',
                     'DESCRIPTOR'         : self.get('queries_to_pool').get(query_id).get('entrypoint'),
-                    'DOCUMENT_ID'        : mention.get('document_id'),
+                    'DOCUMENT_ID'        : document_id,
                     'FQEC'               : 'NIL',
                     'MENTION_TYPE'       : 'NIL',
                     'MENTION_SOURCE'     : mention.get('modality').upper(),
                     'QUERY_ID'           : query_id,
                     'RESPONSE_ID'        : '<ID>',
-                    'MENTION_SPAN'       : '{doceid}:{span}'.format(doceid=mention.get('document_element_id'),
-                                                                span=mention.get('span').__str__()),
+                    'MENTION_SPAN'       : '{document_element_or_keyframe_id}:{span}'.format(document_element_or_keyframe_id=document_element_or_keyframe_id,
+                                                                                             span=span),
                     'DOCUMENT_ELEMENT_ID': mention.get('document_element_id'),
                     'START_X'            : float(mention.get('span').get('start_x')),
                     'START_Y'            : float(mention.get('span').get('start_y')),
