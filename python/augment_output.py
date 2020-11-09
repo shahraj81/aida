@@ -113,7 +113,7 @@ class Merge(Object):
         parser.add_argument('log_specifications', type=str, help='File containing error specifications')
         parser.add_argument('input_dir', type=str, help='Input directory')
         parser.add_argument('output_dir', type=str, help='Output directory')
-        parser.add_argument('-t', '--task', default='task1', choices=['task1', 'task2', 'task3'], help='Specify task1 or task2 or task3 (default: %(default)s)')
+        parser.add_argument('-t', '--task', default='task3', choices=['task1', 'task2', 'task3'], help='Specify task1 or task2 or task3 (default: %(default)s)')
         parser.set_defaults(myclass=myclass)
         return parser
 
