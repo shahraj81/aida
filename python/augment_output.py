@@ -106,7 +106,7 @@ class Handle(Object):
         pattern = re.compile('^<SEG id=".*?" start_char="(\d+)" end_char="(\d+)">$')
         span_text = None
         with open('{ltf}/{doceid}.ltf.xml'.format(ltf=self.get('ltf_directory'),
-                                                  doceid=document_element_id)) as doc_text:
+                                                  doceid=document_element_id), encoding='utf-8') as doc_text:
             lines = doc_text.readlines()
             found = False
             segment_start = None
