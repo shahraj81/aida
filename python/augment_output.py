@@ -13,10 +13,11 @@ from aida.object import Object
 
 import argparse
 import os
-import sys
-import traceback
 import re
+import subprocess
+import sys
 import textwrap
+import traceback
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
@@ -32,6 +33,114 @@ def check_for_paths_non_existance(paths):
         if os.path.exists(path):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
+
+class Handle(Object):
+    """
+    Replace handle spans with handle text in the system output, if provided.
+    """
+
+    def __init__(self, log_filename, log_specifications, task, ltf, input_dir, output_dir):
+        check_for_paths_existance([log_specifications,
+                                   ltf,
+                                   input_dir])
+        check_for_paths_non_existance([output_dir])
+        self.log_filename = log_filename
+        self.log_specification = log_specifications
+        self.task = task
+        self.ltf_directory = ltf
+        self.input_dir = input_dir
+        self.output_dir = output_dir
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specification'),
+                        sys.argv)
+
+    def augment_file(self, input_file, output_file):
+        print('--augmenting ...')
+        print('--input:{}'.format(input_file))
+        print('--output:{}'.format(output_file))
+
+        fh = FileHandler(self.get('logger'), input_file, encoding='utf-8')
+        with open(output_file, 'w', encoding='utf-8') as program_output:
+            program_output.write('{header}\n'.format(header=fh.get('header').get('line')))
+            for entry in fh:
+                line = entry.get('line')
+                handle = entry.get('?objectc_handle')
+                if handle and len(handle.split(':')) == 3:
+                    pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
+                    match = pattern.match(handle)
+                    if match:
+                        document_element_id = match.group(2)
+                        start_x, start_y, end_x, end_y = map(lambda ID: int(match.group(ID)), [3, 4, 5, 6])
+                        handle_text = self.get('handle_text', document_element_id, start_x, start_y, end_x, end_y)
+                        if handle_text:
+                            entry.set('?objectc_handle', handle_text)
+                            self.record_event('DEFAULT_INFO', 'replacing handle span \'{}\' with text \'{}\'', entry.get('where'))
+                        line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
+                program_output.write('{line}'.format(line=line))
+
+    def augment_task1_sparql_output(self):
+        self.record_event('DEFAULT_INFO', 'Nothing to do.')
+
+    def augment_task2_sparql_output(self):
+        self.record_event('DEFAULT_INFO', 'Nothing to do.')
+
+    def augment_task3_sparql_output(self):
+        os.mkdir(self.get('output_dir'))
+        directories = []
+        for root, dirs, files in os.walk(self.get('input_dir')):
+            directories.extend([os.path.join(root, d) for d in dirs if d.endswith('.ttl')])
+
+        for directory in directories:
+            output_directory = directory.replace(self.get('input_dir'), self.get('output_dir'))
+            if not os.path.exists(output_directory):
+                os.mkdir(output_directory)
+            input_file = '{i}/AIDA_P2_TA3_GR_0001.rq.tsv'.format(i=directory)
+            output_file = '{o}/AIDA_P2_TA3_GR_0001.rq.tsv'.format(o=output_directory)
+            self.augment_file(input_file, output_file)
+
+            input_file = '{i}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(i=directory)
+            output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
+            self.augment_file(input_file, output_file)
+
+    def get_handle_text(self, document_element_id, start_x, start_y, end_x, end_y):
+        pattern = re.compile('^<SEG id=".*?" start_char="(\d+)" end_char="(\d+)">$')
+        span_text = None
+        with open('{ltf}/{doceid}.ltf.xml'.format(ltf=self.get('ltf_directory'),
+                                                  doceid=document_element_id)) as doc_text:
+            lines = doc_text.readlines()
+            found = False
+            segment_start = None
+            for line in lines:
+                if line.startswith('<ORIGINAL_TEXT>') and found:
+                    found_line = line.replace('<ORIGINAL_TEXT>', '').replace('<\/ORIGINAL_TEXT>', '')
+                    span_text = found_line[start_x-segment_start:end_x-segment_start+1]
+                    break
+                match = pattern.match(line)
+                if match:
+                    segment_start = int(match.group(1))
+                    segment_end = int(match.group(2))
+                    if segment_start <= start_x <= segment_end and segment_start <= end_x <= segment_end:
+                        found = True
+        return span_text
+
+    def __call__(self):
+        method_name = 'augment_{task}_sparql_output'.format(task=self.get('task'))
+        method = self.get_method(method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name)
+        return method()
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-l', '--log_filename', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-t', '--task', default='task3', choices=['task1', 'task2', 'task3'], help='Specify task1 or task2 or task3 (default: %(default)s)')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('log_specifications', type=str, help='File containing error specifications')
+        parser.add_argument('ltf', type=str, help='Directory containing lft files')
+        parser.add_argument('input_dir', type=str, help='Input directory')
+        parser.add_argument('output_dir', type=str, help='Output directory')
+        parser.set_defaults(myclass=myclass)
+        return parser
 
 class Merge(Object):
     """
@@ -71,13 +180,6 @@ class Merge(Object):
                 for entry in fh:
                     program_output.write('{line}'.format(line=entry.get('line')))
 
-    def merge_sparql_output(self):
-        method_name = 'merge_{task}_sparql_output'.format(task=self.get('task'))
-        method = self.get_method(method_name)
-        if method is None:
-            self.record_event('UNDEFINED_METHOD', method_name)
-        return method()
-
     def merge_task1_sparql_output(self):
         self.record_event('DEFAULT_INFO', 'Nothing to do.')
 
@@ -104,21 +206,26 @@ class Merge(Object):
             self.merge_files([input_file], output_file)
 
     def __call__(self):
-        self.merge_sparql_output()
+        method_name = 'merge_{task}_sparql_output'.format(task=self.get('task'))
+        method = self.get_method(method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name)
+        return method()
 
     @classmethod
     def add_arguments(myclass, parser):
         parser.add_argument('-l', '--log_filename', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-t', '--task', default='task3', choices=['task1', 'task2', 'task3'], help='Specify task1 or task2 or task3 (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('log_specifications', type=str, help='File containing error specifications')
         parser.add_argument('input_dir', type=str, help='Input directory')
         parser.add_argument('output_dir', type=str, help='Output directory')
-        parser.add_argument('-t', '--task', default='task3', choices=['task1', 'task2', 'task3'], help='Specify task1 or task2 or task3 (default: %(default)s)')
         parser.set_defaults(myclass=myclass)
         return parser
 
 myclasses = [
-    Merge,
+    Handle,
+    Merge
     ]
 
 def main(args=sys.argv[1:]):
