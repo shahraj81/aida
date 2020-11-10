@@ -89,6 +89,7 @@ def main(args):
     image_boundaries        = '/data/AUX-data/{}.image_boundaries.txt'.format(ldc_package_id)
     keyframe_boundaries     = '/data/AUX-data/{}.keyframe_boundaries.txt'.format(ldc_package_id)
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
+    ltf_directory           = '/data/ltf'
     sparql_kb_source        = '{output}/SPARQL-KB-source'.format(output=args.output)
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
@@ -332,7 +333,7 @@ def main(args):
         message = '*** Unable to find validated output files ***'
     elif num_errors:
         message = 'SPARQL output had {} error(s).'.format(num_errors)
-    record_and_display_message(logger, '{}\n'.format(message))
+    record_and_display_message(logger, '{}'.format(message))
 
     #############################################################################################
     # Replacing handle-span with text, if provided
@@ -347,14 +348,16 @@ def main(args):
             --log {log_file} \
             --task task3 \
             {log_specifications} \
+            {ltf_directory} \
             {sparql_valid_output} \
             {sparql_augmented_output}'.format(python_scripts=python_scripts,
                                               log_file=log_file,
                                               log_specifications=log_specifications,
+                                              ltf_directory=ltf_directory,
                                               sparql_valid_output = sparql_valid_output,
                                               sparql_augmented_output = sparql_augmented_output)
     call_system(cmd)
-    record_and_display_message(logger, 'Done.\n')
+    record_and_display_message(logger, 'Done.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply AIDA M36 task2 evaluation pipeline to the KB.")
