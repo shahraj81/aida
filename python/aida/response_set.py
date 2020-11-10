@@ -610,7 +610,7 @@ class ResponseSet(Container):
         for subdir in ['{}/{}'.format(self.get('path'), d) for d in os.listdir(self.get('path'))]:
             for filename in os.listdir(subdir):
                 filename_including_path = '{}/{}'.format(subdir, filename)
-                fh = FileHandler(logger, filename_including_path)
+                fh = FileHandler(logger, filename_including_path, encoding='utf-8')
                 schema = identify_file_schema(fh, self.get('task'))
                 if schema is None:
                     logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
@@ -764,4 +764,17 @@ class ResponseSet(Container):
             output_fh.close()
 
     def write_valid_responses_task3(self, output_dir):
-        self.write_valid_responses_task1(output_dir)
+        os.mkdir(output_dir)
+        for input_filename in self:
+            output_filename = input_filename.replace(self.get('path'), output_dir)
+            dirname = os.path.dirname(output_filename)
+            if not os.path.exists(dirname):
+                os.mkdir(dirname)
+            file_container = self.get(input_filename)
+            output_fh = open(output_filename, 'w', encoding='utf-8')
+            output_fh.write('{}\n'.format(file_container.get('header').get('line')))
+            for linenum in sorted(file_container, key=int):
+                entry = self.get(input_filename).get(str(linenum))
+                if not entry.get('valid'): continue
+                output_fh.write(entry.__str__())
+            output_fh.close()
