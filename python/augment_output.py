@@ -74,7 +74,7 @@ class Handle(Object):
                         handle_text = self.get('handle_text', document_element_id, start_x, start_y, end_x, end_y)
                         if handle_text:
                             entry.set('?objectc_handle', handle_text)
-                            self.record_event('DEFAULT_INFO', 'replacing handle span \'{}\' with text \'{}\'', entry.get('where'))
+                            self.record_event('DEFAULT_INFO', 'replacing handle span \'{}\' with text \'{}\''.format(handle, handle_text), entry.get('where'))
                         line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
                 program_output.write('{line}'.format(line=line))
 
