@@ -114,8 +114,7 @@ class Task2Pool(Object):
 
     def get_top_C_clusters(self, query_responses, C):
         cluster_responses = {}
-        linking_confidences = {}
-        clusters = []
+        clusters = {}
         for linenum in query_responses:
             entry = query_responses.get(str(linenum))
             if not entry.get('valid'):
@@ -126,16 +125,13 @@ class Task2Pool(Object):
                 cluster_responses[cluster_id] = []
             cluster_responses[cluster_id].append(entry)
             linking_confidence = trim_cv(entry.get('linking_confidence'))
-            if cluster_id not in linking_confidences:
-                linking_confidences[cluster_id] = linking_confidence
-            if linking_confidence != linking_confidences[cluster_id]:
-                self.record_event('MULTIPLE_CLUSTER_LINKING_CONFIDENCES', linking_confidence, linking_confidences[cluster_id], cluster_id, entry.get('where'))
-            clusters.append({
-                'cluster_id': cluster_id,
-                'linking_confidence': linking_confidence
-                })
-        sorted_clusters = multisort(clusters, (('linking_confidence', True),
-                                               ('cluster_id', False)))
+            if cluster_id not in clusters or linking_confidence > clusters[cluster_id]['linking_confidence']:
+                clusters[cluster_id] = {
+                    'cluster_id': cluster_id,
+                    'linking_confidence': linking_confidence
+                    }
+        sorted_clusters = multisort(list(clusters.values()), (('linking_confidence', True),
+                                                              ('cluster_id', False)))
         selected_clusters = {}
         for sorted_cluster in sorted_clusters:
             if C==0: break
@@ -146,8 +142,7 @@ class Task2Pool(Object):
         return selected_clusters
 
     def get_top_K_cluster_justifications(self, cluster_responses, K):
-        justifications = []
-        document_justifications = {}
+        justifications = {}
         for entry in cluster_responses:
             if not entry.get('valid'):
                 self.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
@@ -155,16 +150,14 @@ class Task2Pool(Object):
             document_id = entry.get('document_id')
             justification = entry.get('mention_span_text')
             confidence = trim_cv(entry.get('justification_confidence'))
-            justifications.append({
-                'justification': justification,
-                'confidence': confidence,
-                'entry': entry
-                })
-            if document_id in document_justifications:
-                self.record_event('MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT', justification, document_justifications[document_id], document_id, entry.get('where'))
-            document_justifications[document_id] = justification
-        sorted_justifications = multisort(justifications, (('confidence', True),
-                                                           ('justification', False)))
+            if document_id not in justifications or confidence > justifications[document_id]['confidence']:
+                justifications[document_id] = {
+                    'justification': justification,
+                    'confidence': confidence,
+                    'entry': entry
+                    }
+        sorted_justifications = multisort(list(justifications.values()), (('confidence', True),
+                                                                          ('justification', False)))
         selected_justifications = {}
         for sorted_justification in sorted_justifications:
             if K == 0: break
@@ -229,6 +222,9 @@ class Task2Pool(Object):
         for entry in FileHandler(logger, runs_to_pool_file):
             run_id = entry.get('run_id')
             run_dir = '{input}/{run_id}/SPARQL-VALID-output'.format(input=self.get('input_dir'), run_id=run_id)
+            message = 'loading run \'{}\' into pool'.format(run_id)
+            print('--{}'.format(message))
+            logger.record_event('DEFAULT_INFO', message)
             responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, run_dir, run_id, 'task2')
             self.add(responses)
 
@@ -255,10 +251,14 @@ class Task2Pool(Object):
         query_link_target = entry.get('query_link_target')
         link_target = entry.get('link_target')
         valid = True
-        if query_link_target != link_target:
-            valid = False
         if query_link_target != self.get('queries_to_pool').get(query_id).get('entrypoint'):
             valid = False
+        if 'REFKB' not in self.get('queries_to_pool').get(query_id).get('entrypoint'):
+            if query_link_target != link_target:
+                valid = False
+        else:
+            if link_target not in query_link_target:
+                valid = False
         if not valid:
             self.record_event('UNEXPECTED_ENTRYPOINT_DESCRIPTOR',
                               query_link_target,
@@ -294,12 +294,17 @@ class Task2Pool(Object):
                                                                              kit_filename=kit_filename), 'w')
                 for line in query_kit:
                     languages = self.get('languages', line)
-                    if ',' in languages:
+                    if languages is None:
+                        message = 'No language found for document \'{}\''.format(line.get('DOCUMENT_ID'))
+                        print('************** WARNING: {}'.format(message))
+                        self.record_event('DEFAULT_WARNING', message)
+                    elif ',' in languages:
                         message = 'Multiple languages {} found for document \'{}\''.format(languages, line.get('DOCUMENT_ID'))
                         print('************** WARNING: {}'.format(message))
                         self.record_event('DEFAULT_WARNING', message)
-                    for language in languages.split(','):
-                        kit_language_map.get(kit_filename)[language] = 1
+                    if languages is not None:
+                        for language in languages.split(','):
+                            kit_language_map.get(kit_filename)[language] = 1
                     output.write(self.get('line', line))
                 output.close()
         kit_language_map_filepath = '{ldc_package_dir}/task2_pool_{batchid}.klm'.format(ldc_package_dir=ldc_package_dir,
@@ -307,6 +312,7 @@ class Task2Pool(Object):
         with open(kit_language_map_filepath, 'w') as output:
             for kit_filename in kit_language_map:
                 languages = ','.join(sorted(kit_language_map.get(kit_filename)))
+                languages = 'N/A' if languages == '' else languages
                 output.write('{kit_filename}\t{languages}\n'.format(kit_filename=kit_filename,
                                                                   languages=languages))
 
@@ -315,17 +321,18 @@ class Task2Pool(Object):
         for query_id in self.get('pool'):
             for mention_span in self.get('pool').get(query_id):
                 mention = self.get('mention', mention_span)
+                document_id, document_element_or_keyframe_id, span = mention_span.split(':')
                 line = {
                     'CORRECTNESS'        : 'NIL',
                     'DESCRIPTOR'         : self.get('queries_to_pool').get(query_id).get('entrypoint'),
-                    'DOCUMENT_ID'        : mention.get('document_id'),
+                    'DOCUMENT_ID'        : document_id,
                     'FQEC'               : 'NIL',
                     'MENTION_TYPE'       : 'NIL',
                     'MENTION_SOURCE'     : mention.get('modality').upper(),
                     'QUERY_ID'           : query_id,
                     'RESPONSE_ID'        : '<ID>',
-                    'MENTION_SPAN'       : '{doceid}:{span}'.format(doceid=mention.get('document_element_id'),
-                                                                span=mention.get('span').__str__()),
+                    'MENTION_SPAN'       : '{document_element_or_keyframe_id}:{span}'.format(document_element_or_keyframe_id=document_element_or_keyframe_id,
+                                                                                             span=span),
                     'DOCUMENT_ELEMENT_ID': mention.get('document_element_id'),
                     'START_X'            : float(mention.get('span').get('start_x')),
                     'START_Y'            : float(mention.get('span').get('start_y')),

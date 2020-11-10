@@ -106,7 +106,7 @@ class Logger:
         header = lines[0].strip().split(None, 2)
         for line in lines[1:]:
             line_dict = dict(zip(header, line.strip().split(None, 2)))
-            self.event_specs[line_dict['code']] = line_dict        
+            self.event_specs[line_dict['code']] = line_dict
 
     def record_event(self, event_code, *args):
         """

@@ -29,8 +29,8 @@ def check_for_paths_existance(args):
 
 def clean_a_sparql_output_file(logger, input_filename, output_filename):
     logger.record_event('DEFAULT_INFO', 'cleaning: {}, output: {}'.format(input_filename, output_filename))
-    input_fh = open(input_filename)
-    output_fh = open(output_filename, 'w')
+    input_fh = open(input_filename, encoding='utf-8')
+    output_fh = open(output_filename, 'w', encoding='utf-8')
     for input_line in input_fh.readlines():
         elements = input_line.rstrip('\r\n').split('\t')
         clean_elements = []
