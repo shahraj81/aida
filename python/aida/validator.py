@@ -289,6 +289,9 @@ class Validator(Object):
         if schema.get('task') == 'task3' and attribute_name == 'subject_informative_justification_span_text' and provenance == 'NULL':
             return True
 
+        if schema.get('task') == 'task3' and attribute_name == 'predicate_justification_spans_text' and provenance == 'NULL':
+            return True
+
         if not self.validate_provenance_format(provenance, where):
             return False
 
