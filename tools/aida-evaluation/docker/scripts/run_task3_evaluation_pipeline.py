@@ -247,7 +247,7 @@ def main(args):
     record_and_display_message(logger, 'Cleaning SPARQL output.')
 
     cmd = 'cd {python_scripts} && \
-            python3 clean_sparql_output.py \
+            python3.9 clean_sparql_output.py \
             {log_specifications} \
             {sparql_output} \
             {sparql_clean_output}'.format(python_scripts=python_scripts,
@@ -264,7 +264,7 @@ def main(args):
 
     log_file = '{logs_directory}/merge-output.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 augment_output.py \
+            python3.9 augment_output.py \
             merge \
             --log {log_file} \
             --task task3 \
@@ -285,7 +285,7 @@ def main(args):
 
     log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 validate_responses.py \
+            python3.9 validate_responses.py \
             --log {log_file} \
             --task task3 \
             {log_specifications} \
@@ -343,7 +343,7 @@ def main(args):
 
     log_file = '{logs_directory}/augment-handle-output.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 augment_output.py \
+            python3.9 augment_output.py \
             handle \
             --log {log_file} \
             --task task3 \

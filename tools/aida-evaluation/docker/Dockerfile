@@ -41,6 +41,22 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 RUN dpkg-reconfigure -f noninteractive tzdata
 
 #-------------------------------------------------------------
+#  Upgrade python to version 3.9.0
+#-------------------------------------------------------------
+
+RUN apt-get install build-essential checkinstall -y
+RUN apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev \
+    libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev wget -y
+WORKDIR /opt
+RUN wget https://www.python.org/ftp/python/3.9.0/Python-3.9.0.tgz
+RUN tar xzf Python-3.9.0.tgz
+WORKDIR /opt/Python-3.9.0
+RUN ./configure --enable-optimizations
+RUN make altinstall
+WORKDIR /opt
+RUN rm -rf Python-3.9.0.tgz Python-3.9.0
+
+#-------------------------------------------------------------
 #  Install GraphDB
 #  Taken from the Dockerfile for GraphDB docker available at:
 #  https://github.com/Ontotext-AD/graphdb-docker
@@ -80,11 +96,9 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone https://github.com/shahraj81/aida.git
+RUN git clone -b AIDAED-v2020.3.0 https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
-
-RUN git checkout AIDAED-v2020.3.0
 
 RUN cp /scripts/aida/python/input/aux_data/log_specifications.txt /scripts/
 RUN cp /scripts/aida/python/aida/logger.py /scripts/
