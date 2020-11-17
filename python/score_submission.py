@@ -114,7 +114,14 @@ class Task1(Object):
         system_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, self.get('system'), self.get('runid'))
         cluster_alignment = ClusterAlignment(logger, self.get('alignment'))
         cluster_self_similarities = ClusterSelfSimilarities(logger, self.get('similarities'))
-        scores = ScoresManager(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, self.get('separator'))
+        arguments = {
+            'annotated_regions': annotated_regions,
+            'gold_responses': gold_responses,
+            'system_responses': system_responses,
+            'cluster_alignment': cluster_alignment,
+            'cluster_self_similarities': cluster_self_similarities,
+            }
+        scores = ScoresManager(logger, 'task1', arguments, self.get('separator'))
         scores.print_scores(self.get('scores'))
         exit(ALLOK_EXIT_CODE)
 
@@ -140,6 +147,7 @@ class Task1(Object):
         parser.add_argument('similarities', type=str, help='Directory containing similarity information.')
         parser.add_argument('runid', type=str, help='Run ID of the system being scored')
         parser.add_argument('scores', type=str, help='Specify a directory to which the scores should be written.')
+        parser.set_defaults(myclass=myclass)
         return parser
 
 myclasses = [

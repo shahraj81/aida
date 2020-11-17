@@ -24,25 +24,26 @@ class ScoresManager(Object):
     """
     AIDA class for managing scores.
     """
-    
-    metrics = {
-        'ArgumentMetricV1': ArgumentMetricScorerV1,
-        'ArgumentMetricV2': ArgumentMetricScorerV2,
-        'CoreferenceMetric': CoreferenceMetricScorer,
-        'FrameMetric': FrameMetricScorer,
-        'TemporalMetric': TemporalMetricScorer,
-        'TypeMetric': TypeMetricScorer,
+
+    task_metrics = {
+        'task1': {
+            'ArgumentMetricV1': ArgumentMetricScorerV1,
+            'ArgumentMetricV2': ArgumentMetricScorerV2,
+            'CoreferenceMetric': CoreferenceMetricScorer,
+            'FrameMetric': FrameMetricScorer,
+            'TemporalMetric': TemporalMetricScorer,
+            'TypeMetric': TypeMetricScorer,
+            }
         }
 
-    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator = None):
+    def __init__(self, logger, task, arguments, separator = None):
         super().__init__(logger)
-        self.annotated_regions = annotated_regions
-        self.gold_responses = gold_responses
-        self.system_responses = system_responses
-        self.cluster_alignment = cluster_alignment
-        self.cluster_self_similarities = cluster_self_similarities
+        for key in arguments:
+            self.set(key, arguments[key])
+        self.metrics = self.task_metrics[task]
         self.separator = separator
         self.scores = Container(logger)
+        self.set_metrics()
         self.score_responses()
 
     def score_responses(self):
