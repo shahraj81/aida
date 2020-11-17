@@ -38,24 +38,25 @@ class ScoresManager(Object):
 
     def __init__(self, logger, task, arguments, separator = None):
         super().__init__(logger)
+        self.task = task
         for key in arguments:
             self.set(key, arguments[key])
         self.metrics = self.task_metrics[task]
         self.separator = separator
         self.scores = Container(logger)
-        self.set_metrics()
         self.score_responses()
 
     def score_responses(self):
-        for metric in self.get('metrics'):
-            scorer = self.get('metrics')[metric](self.get('logger'),
-                                    self.get('annotated_regions'),
-                                    self.get('gold_responses'),
-                                    self.get('system_responses'),
-                                    self.get('cluster_alignment'),
-                                    self.get('cluster_self_similarities'),
-                                    self.get('separator'))
-            self.get('scores').add(key=metric, value=scorer)
+        if self.get('task') == 'task1':
+            for metric in self.get('metrics'):
+                scorer = self.get('metrics')[metric](self.get('logger'),
+                                        self.get('annotated_regions'),
+                                        self.get('gold_responses'),
+                                        self.get('system_responses'),
+                                        self.get('cluster_alignment'),
+                                        self.get('cluster_self_similarities'),
+                                        self.get('separator'))
+                self.get('scores').add(key=metric, value=scorer)
 
     def print_scores(self, output_directory):
         os.mkdir(output_directory)
