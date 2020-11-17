@@ -50,7 +50,7 @@ class Task1(Object):
     """
     Class representing Task1 scorer.
     """
-    def __init__(self, log_specifications, ontology_type_mappings, slot_mappings, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, regions, gold, system, alignment, similarities, scores):
+    def __init__(self, log, separator, runid, log_specifications, ontology_type_mappings, slot_mappings, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, regions, gold, system, alignment, similarities, scores):
         check_for_paths_existance([
                  log_specifications,
                  ontology_type_mappings,
@@ -69,6 +69,9 @@ class Task1(Object):
                  similarities
                  ])
         check_for_paths_non_existance([scores])
+        self.log_filename = log
+        self.separator = separator
+        self.runid = runid
         self.log_specifications = log_specifications
         self.ontology_type_mappings = ontology_type_mappings
         self.slot_mappings = slot_mappings
