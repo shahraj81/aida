@@ -9,7 +9,7 @@ endif
 all:
 
 ifeq ($(TASK), task1)
-	python3 run_task1_evaluation_pipeline.py \
+	python3.9 run_task1_evaluation_pipeline.py \
 	  --run $(RUNID) \
 	  --runtype $(RUNTYPE) \
 	  $(ENG_TEXT_IOU_THRESHOLD) \
@@ -18,7 +18,7 @@ ifeq ($(TASK), task1)
 	  $(IMAGE_IOU_THRESHOLD) \
 	  $(VIDEO_IOU_THRESHOLD)
 else ifeq ($(TASK), task2)
-	python3 run_task2_evaluation_pipeline.py \
+	python3.9 run_task2_evaluation_pipeline.py \
 	  --run $(RUNID) --runtype $(RUNTYPE) $(AWS_ACCESS_KEY_ID_ARG) $(AWS_SECRET_ACCESS_KEY_ARG)
 else ifeq ($(TASK), task3)
 	python3.9 run_task3_evaluation_pipeline.py \
