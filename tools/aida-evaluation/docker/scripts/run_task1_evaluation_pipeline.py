@@ -671,7 +671,7 @@ def main(args):
 
     log_file = '{logs_directory}/score_submission.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3.9 score_submission.py \
+            python3.9 score_submission.py task1 \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
