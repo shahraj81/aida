@@ -9,24 +9,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     make \
-    python3 \
-    python3-pip \
     unzip \
     perlbrew \
     tzdata \
     vim
-
-#-------------------------------------------------------------
-# Install munkres
-#-------------------------------------------------------------
-
-RUN pip3 install munkres
-
-#-------------------------------------------------------------
-#  Install awscli
-#-------------------------------------------------------------
-
-RUN pip3 --no-cache-dir install --upgrade awscli
 
 #-------------------------------------------------------------
 #  Install Java OpenJDK 8
@@ -55,6 +41,24 @@ RUN ./configure --enable-optimizations
 RUN make altinstall
 WORKDIR /opt
 RUN rm -rf Python-3.9.0.tgz Python-3.9.0
+
+#-------------------------------------------------------------
+# Upgrade pip and install munkres
+#-------------------------------------------------------------
+
+RUN python3.9 -m pip install --upgrade pip
+
+#-------------------------------------------------------------
+# Install munkres
+#-------------------------------------------------------------
+
+RUN pip3.9 install munkres
+
+#-------------------------------------------------------------
+#  Install awscli
+#-------------------------------------------------------------
+
+RUN pip3.9 --no-cache-dir install --upgrade awscli
 
 #-------------------------------------------------------------
 #  Install GraphDB
