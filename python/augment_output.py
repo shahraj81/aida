@@ -45,13 +45,13 @@ class Handle(Object):
                                    input_dir])
         check_for_paths_non_existance([output_dir])
         self.log_filename = log_filename
-        self.log_specification = log_specifications
+        self.log_specifications = log_specifications
         self.task = task
         self.ltf_directory = ltf
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.logger = Logger(self.get('log_filename'),
-                        self.get('log_specification'),
+                        self.get('log_specifications'),
                         sys.argv)
 
     def augment_file(self, input_file, output_file):
@@ -152,12 +152,12 @@ class Merge(Object):
                                    input_dir])
         check_for_paths_non_existance([output_dir])
         self.log_filename = log_filename
-        self.log_specification = log_specifications
+        self.log_specifications = log_specifications
         self.task = task
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.logger = Logger(self.get('log_filename'),
-                        self.get('log_specification'),
+                        self.get('log_specifications'),
                         sys.argv)
 
     def merge_files(self, input_files, output_file):
