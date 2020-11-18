@@ -89,7 +89,7 @@ class Task1(Object):
         self.similarities = similarities
         self.scores = scores
         self.logger = Logger(self.get('log_filename'),
-                        self.get('log_specification'),
+                        self.get('log_specifications'),
                         sys.argv)
 
     def __call__(self):
