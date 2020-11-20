@@ -59,23 +59,39 @@ class Handle(Object):
         print('--input:{}'.format(input_file))
         print('--output:{}'.format(output_file))
 
+        missing_handles = ['[unknown]', '', '""']
+
         fh = FileHandler(self.get('logger'), input_file, encoding='utf-8')
         with open(output_file, 'w', encoding='utf-8') as program_output:
             program_output.write('{header}\n'.format(header=fh.get('header').get('line')))
             for entry in fh:
                 line = entry.get('line')
-                handle = entry.get('?objectc_handle')
-                if handle and len(handle.split(':')) == 3:
-                    pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
-                    match = pattern.match(handle)
-                    if match:
-                        document_element_id = match.group(2)
-                        start_x, start_y, end_x, end_y = map(lambda ID: int(match.group(ID)), [3, 4, 5, 6])
-                        handle_text = self.get('handle_text', document_element_id, start_x, start_y, end_x, end_y)
-                        if handle_text:
-                            entry.set('?objectc_handle', handle_text)
-                            self.record_event('DEFAULT_INFO', 'replacing handle span \'{}\' with text \'{}\''.format(handle, handle_text), entry.get('where'))
-                        line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
+                handle_text = entry.get('?objectc_handle')
+                if handle_text is not None:
+                    if handle_text in missing_handles:
+                        corrected_handle_text = self.get('handle_text', entry.get('?oinf_j_span'))
+                        if corrected_handle_text:
+                            entry.set('?objectc_handle', corrected_handle_text)
+                            self.record_event('DEFAULT_INFO',
+                                              'replacing missing handle \'{}\' with text \'{}\''.format(handle_text, corrected_handle_text),
+                                              entry.get('where'))
+                            line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
+                        else:
+                            self.record_event('DEFAULT_INFO', "handle \'{}\' found to be missing but no replacements made".format(handle_text), entry.get('where'))
+                    elif len(handle_text.split(':')) == 3:
+                        handle_span = handle_text
+                        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
+                        match = pattern.match(handle_span)
+                        if match:
+                            handle_text_from_span = self.get('handle_text', handle_span)
+                            if handle_text_from_span:
+                                entry.set('?objectc_handle', handle_text_from_span)
+                                self.record_event('DEFAULT_INFO',
+                                                  'replacing handle span \'{}\' with text \'{}\''.format(handle_span, handle_text_from_span),
+                                                  entry.get('where'))
+                                line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
+                            else:
+                                self.record_event('DEFAULT_INFO', "handle span \'{}\' found but not replaced with text".format(handle_text), entry.get('where'))
                 program_output.write('{line}'.format(line=line))
 
     def augment_task1_sparql_output(self):
@@ -102,7 +118,12 @@ class Handle(Object):
             output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
             self.augment_file(input_file, output_file)
 
-    def get_handle_text(self, document_element_id, start_x, start_y, end_x, end_y):
+    def get_handle_text(self, document_span):
+        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
+        match = pattern.match(document_span)
+        document_element_id = match.group(2)
+        start_x, end_x = map(lambda ID: int(match.group(ID)), [3, 5])
+
         pattern = re.compile('^<SEG id=".*?" start_char="(\d+)" end_char="(\d+)">$')
         span_text = None
         with open('{ltf}/{doceid}.ltf.xml'.format(ltf=self.get('ltf_directory'),
