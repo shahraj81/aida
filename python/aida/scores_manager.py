@@ -49,13 +49,13 @@ class ScoresManager(Object):
     def score_responses(self):
         if self.get('task') == 'task1':
             for metric in self.get('metrics'):
-                scorer = self.get('metrics')[metric](self.get('logger'),
-                                        self.get('annotated_regions'),
-                                        self.get('gold_responses'),
-                                        self.get('system_responses'),
-                                        self.get('cluster_alignment'),
-                                        self.get('cluster_self_similarities'),
-                                        self.get('separator'))
+                scorer = self.get('metrics')[metric](logger=self.get('logger'),
+                                        annotated_regions=self.get('annotated_regions'),
+                                        gold_responses=self.get('gold_responses'),
+                                        system_responses=self.get('system_responses'),
+                                        cluster_alignment=self.get('cluster_alignment'),
+                                        cluster_self_similarities=self.get('cluster_self_similarities'),
+                                        separator=self.get('separator'))
                 self.get('scores').add(key=metric, value=scorer)
 
     def print_scores(self, output_directory):
