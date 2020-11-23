@@ -8,6 +8,7 @@ __version__ = "1.0.0.1"
 __date__    = "17 August 2020"
 
 from aida.annotated_regions import AnnotatedRegions
+from aida.assessments import Assessments
 from aida.cluster_alignment import ClusterAlignment
 from aida.cluster_self_similarities import ClusterSelfSimilarities
 from aida.core_documents import CoreDocuments
@@ -153,8 +154,100 @@ class Task1(Object):
         parser.set_defaults(myclass=myclass)
         return parser
 
+class Task2(Object):
+    """
+    Class representing Task2 scorer.
+    """
+    def __init__(self, log, separator, runid, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, assessments, responses, scores):
+        check_for_paths_existance([
+                 log_specifications,
+                 ontology_types,
+                 slots,
+                 encodings,
+                 core_documents,
+                 parent_children,
+                 sentence_boundaries,
+                 image_boundaries,
+                 keyframe_boundaries,
+                 video_boundaries,
+                 assessments,
+                 responses,
+                 ])
+        check_for_paths_non_existance([scores])
+        self.log_filename = log
+        self.separator = separator
+        self.runid = runid
+        self.log_specifications = log_specifications
+        self.ontology_types = ontology_types
+        self.slots = slots
+        self.encodings = encodings
+        self.core_documents = core_documents
+        self.parent_children = parent_children
+        self.sentence_boundaries = sentence_boundaries
+        self.image_boundaries = image_boundaries
+        self.keyframe_boundaries = keyframe_boundaries
+        self.video_boundaries = video_boundaries
+        self.assessments = assessments
+        self.responses = responses
+        self.scores = scores
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specifications'),
+                        sys.argv)
+
+    def __call__(self):
+        logger = self.get('logger')
+        ontology_types = OntologyTypeMappings(logger, self.get('ontology_types'))
+        slots = SlotMappings(logger, self.get('slots'))
+        document_mappings = DocumentMappings(logger,
+                                             self.get('parent_children'),
+                                             Encodings(logger, self.get('encodings')),
+                                             CoreDocuments(logger, self.get('core_documents')))
+        text_boundaries = TextBoundaries(logger, self.get('sentence_boundaries'))
+        image_boundaries = ImageBoundaries(logger, self.get('image_boundaries'))
+        video_boundaries = VideoBoundaries(logger, self.get('video_boundaries'))
+        keyframe_boundaries = KeyFrameBoundaries(logger, self.get('keyframe_boundaries'))
+        document_boundaries = {
+            'text': text_boundaries,
+            'image': image_boundaries,
+            'keyframe': keyframe_boundaries,
+            'video': video_boundaries
+            }
+
+        assessments = Assessments(logger, self.get('assessments'))
+        system_responses = ResponseSet(logger, ontology_types, slots, document_mappings, document_boundaries, self.get('system'), self.get('runid'), task='task2')
+        arguments = {
+            'assessments': assessments,
+            'system_responses': system_responses,
+            }
+        scores = ScoresManager(logger, 'task2', arguments, self.get('separator'))
+        scores.print_scores(self.get('scores'))
+        exit(ALLOK_EXIT_CODE)
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('-S', '--separator', default='pretty', choices=['pretty', 'tab', 'space'], help='Column separator for scorer output? (default: %(default)s)')
+        parser.add_argument('log_specifications', type=str, help='File containing error specifications')
+        parser.add_argument('ontology_types', type=str, help='File containing all types in the ontology')
+        parser.add_argument('slots', type=str, help='File containing slot mappings')
+        parser.add_argument('encodings', type=str, help='File containing list of encoding-to-modality mappings')
+        parser.add_argument('core_documents', type=str, help='File containing list of core documents')
+        parser.add_argument('parent_children', type=str, help='File containing parent-to-child document ID mappings')
+        parser.add_argument('sentence_boundaries', type=str, help='File containing sentence boundaries')
+        parser.add_argument('image_boundaries', type=str, help='File containing image bounding boxes')
+        parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
+        parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
+        parser.add_argument('assessments', type=str, help='Directory containing assessments')
+        parser.add_argument('responses', type=str, help='Directory containing system responses')
+        parser.add_argument('runid', type=str, help='ID of the system being scored')
+        parser.add_argument('scores', type=str, help='Directory to which the scores should be written')
+        parser.set_defaults(myclass=myclass)
+        return parser
+
 myclasses = [
-    Task1
+    Task1,
+    Task2
     ]
 
 def main(args=sys.argv[1:]):
