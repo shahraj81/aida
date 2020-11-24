@@ -523,7 +523,7 @@ def main(args):
         python_scripts = '/scripts/aida/python'
 
         cmd = 'cd {python_scripts} && \
-                python3 clean_sparql_output.py \
+                python3.9 clean_sparql_output.py \
                 {log_specifications} \
                 {sparql_output} \
                 {sparql_clean_output}'.format(python_scripts=python_scripts,
@@ -540,7 +540,7 @@ def main(args):
 
     log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 validate_responses.py \
+            python3.9 validate_responses.py \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
@@ -579,7 +579,7 @@ def main(args):
 
     log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 filter_responses.py \
+            python3.9 filter_responses.py \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
@@ -620,7 +620,7 @@ def main(args):
 
     log_file = '{logs_directory}/align-clusters.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 align_clusters.py \
+            python3.9 align_clusters.py \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
@@ -671,7 +671,7 @@ def main(args):
 
     log_file = '{logs_directory}/score_submission.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 score_submission.py \
+            python3.9 score_submission.py task1 \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \

@@ -242,7 +242,7 @@ def main(args):
 
     log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 validate_responses.py \
+            python3.9 validate_responses.py \
             --log {log_file} \
             --task task2 \
             {log_specifications} \

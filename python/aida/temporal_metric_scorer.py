@@ -26,8 +26,8 @@ class TemporalMetricScorer(Scorer):
                       {'name': 'system_cluster_id','header': 'SystemClusterID', 'format': 's',    'justify': 'L'},
                       {'name': 'similarity',       'header': 'Similarity',      'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
-    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
-        super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
+    def __init__(self, logger, separator=None, **kwargs):
+        super().__init__(logger, separator=separator, **kwargs)
 
     def order(self, k):
         language, metatype = k.split(':')
