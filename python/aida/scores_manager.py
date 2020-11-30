@@ -11,6 +11,7 @@ __date__    = "3 February 2020"
 from aida.object import Object
 from aida.container import Container
 
+from aida.across_documents_correference_metric_scorer import AcrossDocumentsCoreferenceMetricScorer
 from aida.argument_metric_v1_scorer import ArgumentMetricScorerV1
 from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
@@ -33,10 +34,13 @@ class ScoresManager(Object):
             'FrameMetric': FrameMetricScorer,
             'TemporalMetric': TemporalMetricScorer,
             'TypeMetric': TypeMetricScorer,
+            },
+        'task2': {
+            'AcrossDocumentsCoreferenceMetric': AcrossDocumentsCoreferenceMetricScorer
             }
         }
 
-    def __init__(self, logger, task, arguments, separator = None):
+    def __init__(self, logger, task, arguments, separator=None):
         super().__init__(logger)
         self.task = task
         for key in arguments:
@@ -50,12 +54,21 @@ class ScoresManager(Object):
         if self.get('task') == 'task1':
             for metric in self.get('metrics'):
                 scorer = self.get('metrics')[metric](logger=self.get('logger'),
-                                        annotated_regions=self.get('annotated_regions'),
-                                        gold_responses=self.get('gold_responses'),
-                                        system_responses=self.get('system_responses'),
-                                        cluster_alignment=self.get('cluster_alignment'),
-                                        cluster_self_similarities=self.get('cluster_self_similarities'),
-                                        separator=self.get('separator'))
+                                                     annotated_regions=self.get('annotated_regions'),
+                                                     gold_responses=self.get('gold_responses'),
+                                                     system_responses=self.get('system_responses'),
+                                                     cluster_alignment=self.get('cluster_alignment'),
+                                                     cluster_self_similarities=self.get('cluster_self_similarities'),
+                                                     separator=self.get('separator'))
+                self.get('scores').add(key=metric, value=scorer)
+        if self.get('task') == 'task2':
+            for metric in self.get('metrics'):
+                scorer = self.get('metrics')[metric](logger=self.get('logger'),
+                                                     run_id=self.get('run_id'),
+                                                     responses=self.get('responses'),
+                                                     assessments=self.get('assessments'),
+                                                     queries_to_score=self.get('queries_to_score'),
+                                                     separator=self.get('separator'))
                 self.get('scores').add(key=metric, value=scorer)
 
     def print_scores(self, output_directory):

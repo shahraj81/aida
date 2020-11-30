@@ -1,6 +1,7 @@
 """
 Main AIDA scoring script.
 """
+from aida.file_handler import FileHandler
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -158,7 +159,7 @@ class Task2(Object):
     """
     Class representing Task2 scorer.
     """
-    def __init__(self, log, separator, runid, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, assessments, responses, scores):
+    def __init__(self, log, separator, runid, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries_to_score, assessments, responses, scores):
         check_for_paths_existance([
                  log_specifications,
                  ontology_types,
@@ -170,6 +171,7 @@ class Task2(Object):
                  image_boundaries,
                  keyframe_boundaries,
                  video_boundaries,
+                 queries_to_score,
                  assessments,
                  responses,
                  ])
@@ -187,6 +189,7 @@ class Task2(Object):
         self.image_boundaries = image_boundaries
         self.keyframe_boundaries = keyframe_boundaries
         self.video_boundaries = video_boundaries
+        self.queries_to_score = queries_to_score
         self.assessments = assessments
         self.responses = responses
         self.scores = scores
@@ -212,12 +215,17 @@ class Task2(Object):
             'keyframe': keyframe_boundaries,
             'video': video_boundaries
             }
+        queries_to_score = {}
+        for entry in FileHandler(logger, self.get('queries_to_score')):
+            queries_to_score[entry.get('query_id')] = entry
 
-        assessments = Assessments(logger, self.get('assessments'))
-        system_responses = ResponseSet(logger, ontology_types, slots, document_mappings, document_boundaries, self.get('system'), self.get('runid'), task='task2')
+        assessments = Assessments(logger, 'task2', self.get('assessments'))
+        responses = ResponseSet(logger, ontology_types, slots, document_mappings, document_boundaries, self.get('responses'), self.get('runid'), task='task2')
         arguments = {
+            'run_id': self.get('runid'),
             'assessments': assessments,
-            'system_responses': system_responses,
+            'responses': responses,
+            'queries_to_score': queries_to_score
             }
         scores = ScoresManager(logger, 'task2', arguments, self.get('separator'))
         scores.print_scores(self.get('scores'))
@@ -238,6 +246,7 @@ class Task2(Object):
         parser.add_argument('image_boundaries', type=str, help='File containing image bounding boxes')
         parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
         parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
+        parser.add_argument('queries_to_score', type=str, help='File containing list of queryids to be scored.')
         parser.add_argument('assessments', type=str, help='Directory containing assessments')
         parser.add_argument('responses', type=str, help='Directory containing system responses')
         parser.add_argument('runid', type=str, help='ID of the system being scored')
