@@ -723,7 +723,7 @@ class ResponseSet(Container):
             output_fh.write('{}\n'.format(file_container.get('header').get('line')))
             for linenum in sorted(file_container, key=int):
                 entry = self.get(input_filename).get(str(linenum))
-                if not entry.get('pooled'): continue
+                if not entry.get('is_pooled'): continue
                 output_fh.write(entry.__str__())
             output_fh.close()
 
