@@ -105,6 +105,10 @@ class Generator(Object):
         entry.set('end_before', self.get('date', responses, entry, 'end_before'))
 
     def generate_kb_document_id(self, responses, entry):
+        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK3_GR_RESPONSE':
+            return
+        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK2_ZH_RESPONSE':
+            return
         kb_document_id = get_kb_document_id_from_filename(entry.get('filename'))
         entry.set('kb_document_id', kb_document_id)
 
