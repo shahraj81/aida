@@ -36,15 +36,6 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         responses = self.get('query_responses', query_id)
         assessments = self.get('query_assessments', query_id)
 
-        # bind assessment to responses
-        for response in responses.values():
-            assessment = None
-            mention_span_text = response.get('mention_span_text')
-            if mention_span_text in assessments:
-                assessment = assessments.get(mention_span_text)
-            response.set('ASSESSMENT', assessment)
-            response.set('POOLED', False)
-
         # set if the response was pooled
         # this should be independent of what the assessment file says
         # because LDC might have accidently removed an entry
@@ -57,9 +48,15 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 selected_justifications = pooler.get('top_K_cluster_justifications', cluster_responses, K=num_documents)
                 for selected_justification in selected_justifications:
                     for response in responses.values():
+                        if not response.get('is_pooled'): continue
+                        mention_span_text = response.get('mention_span_text')
+                        if mention_span_text in assessments:
+                            response.set('assessment', assessments.get(mention_span_text))
+                        else:
+                            logger.record_event('EXPECTED_POOLED_ITEM_NOT_ASSESSED', mention_span_text, response.get('where'))
                         if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
-                            response.set('POOLED', True)
-
+                            response.set('response_rank', selected_justifications[selected_justification]['response_rank'])
+                            response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
         # Dummy method
         # TODO: write actual method
         print("TODO: finish get_score")
