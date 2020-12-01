@@ -21,11 +21,10 @@ class Task2Pool(Object):
     Class representing pool of task2 responses.
     """
 
-    def __init__(self, logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, runs_to_pool_file, queries_to_pool_file, max_kit_size, batch_id, input_dir, previous_pools):
+    def __init__(self, logger, **kwargs):
         super().__init__(logger)
-        self.batch_id = batch_id
-        self.document_boundaries = document_boundaries
-        self.document_mappings = document_mappings
+        for key in kwargs:
+            self.set(key, kwargs[key])
         self.header = [
             'QUERY_ID',
             'DESCRIPTOR',
@@ -37,19 +36,12 @@ class Task2Pool(Object):
             'MENTION_TYPE',
             'FQEC'
             ]
-        self.input_dir = input_dir
-        self.max_kit_size = max_kit_size
         self.last_response_ids = {}
-        self.ontology_type_mappings = ontology_type_mappings
         self.previous_pool = {}
-        self.previous_pool_dirs = previous_pools
         self.pool = {}
         self.queries_to_pool = {}
-        self.queries_to_pool_file = queries_to_pool_file
         self.query_kits = {}
         self.responses = {}
-        self.runs_to_pool_file = runs_to_pool_file
-        self.slot_mappings = slot_mappings
         self.load_queries_to_pool_file()
         self.load_previous_pools()
         self.load_responses()
@@ -219,6 +211,7 @@ class Task2Pool(Object):
         document_mappings = self.get('document_mappings')
         document_boundaries = self.get('document_boundaries')
         runs_to_pool_file = self.get('runs_to_pool_file')
+        if runs_to_pool_file is None: return
         for entry in FileHandler(logger, runs_to_pool_file):
             run_id = entry.get('run_id')
             run_dir = '{input}/{run_id}/SPARQL-VALID-output'.format(input=self.get('input_dir'), run_id=run_id)
@@ -231,7 +224,9 @@ class Task2Pool(Object):
     def load_queries_to_pool_file(self):
         logger = self.get('logger')
         queries_to_pool = self.get('queries_to_pool')
-        for entry in FileHandler(logger, self.get('queries_to_pool_file')):
+        queries_to_pool_file = self.get('queries_to_pool_file')
+        if queries_to_pool_file is None: return
+        for entry in FileHandler(logger, queries_to_pool_file):
             queries_to_pool[entry.get('query_id')] = {
                 'query_id'  : entry.get('query_id'),
                 'entrypoint': entry.get('entrypoint'),
@@ -247,6 +242,7 @@ class Task2Pool(Object):
         return False
 
     def validate_descriptor(self, entry):
+        if self.get('DONOT_VALIDATE_DESCRIPTOR'): return
         query_id = os.path.basename(entry.get('filename')).replace('.rq.tsv', '')
         query_link_target = entry.get('query_link_target')
         link_target = entry.get('link_target')
