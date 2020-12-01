@@ -8,9 +8,11 @@ __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "23 November 2020"
 
+from aida.across_documents_correference_metric_score import AcrossDocumentsCoreferenceMetricScore
+from aida.container import Container
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
-from aida.across_documents_correference_metric_score import AcrossDocumentsCoreferenceMetricScore
+from aida.task2_pool import Task2Pool
 from aida.utility import multisort
 
 class AcrossDocumentsCoreferenceMetricScorer(Scorer):
@@ -30,14 +32,50 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         return k
 
     def get_score(self, query_id):
+        logger = self.get('logger')
         responses = self.get('query_responses', query_id)
         assessments = self.get('query_assessments', query_id)
+
+        # bind assessment to responses
+        for response in responses.values():
+            assessment = None
+            mention_span_text = response.get('mention_span_text')
+            if mention_span_text in assessments:
+                assessment = assessments.get(mention_span_text)
+            response.set('ASSESSMENT', assessment)
+            response.set('POOLED', False)
+
+        # set if the response was pooled
+        # this should be independent of what the assessment file says
+        # because LDC might have accidently removed an entry
+        pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
+        num_clusters = int(self.get('queries_to_score').get(query_id).get('clusters'))
+        num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
+        selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters)
+        for cluster_id in selected_clusters:
+                cluster_responses = selected_clusters[cluster_id]
+                selected_justifications = pooler.get('top_K_cluster_justifications', cluster_responses, K=num_documents)
+                for selected_justification in selected_justifications:
+                    for response in responses.values():
+                        if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
+                            response.set('POOLED', True)
+
+        # Dummy method
+        # TODO: write actual method
+        print("TODO: finish get_score")
+
         average_precision = int(query_id[-4:])*0.0001
         return average_precision
 
     def get_entity_id(self, query_id):
-        entity_id = int(query_id[-1:])+200
-        return str(entity_id)
+        return str(self.get('queries_to_score').get(query_id).get('entity_id'))
+
+    def get_query_assessments(self, query_id):
+        return self.get('assessments').get(query_id)
+
+    def get_query_responses(self, query_id):
+        return self.get('responses').get('{path}/{query_id}.rq.tsv'.format(path=self.get('responses').get('path'),
+                                                                           query_id=query_id))
 
     def score_responses(self):
         scores = []
