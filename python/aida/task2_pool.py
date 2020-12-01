@@ -125,20 +125,26 @@ class Task2Pool(Object):
         sorted_clusters = multisort(list(clusters.values()), (('linking_confidence', True),
                                                               ('cluster_id', False)))
         selected_clusters = {}
+        cluster_rank = 1
         for sorted_cluster in sorted_clusters:
             if C==0: break
             cluster_id = sorted_cluster.get('cluster_id')
             if cluster_id not in selected_clusters:
-                selected_clusters[cluster_id] = cluster_responses[cluster_id]
+                selected_clusters[cluster_id] = {
+                    'cluster_responses': cluster_responses[cluster_id],
+                    'cluster_rank': cluster_rank
+                    }
                 C -= 1
+                cluster_rank += 1
         return selected_clusters
 
     def get_top_K_cluster_justifications(self, cluster_responses, K):
         justifications = {}
-        for entry in cluster_responses:
+        for entry in cluster_responses['cluster_responses']:
             if not entry.get('valid'):
                 self.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
             self.validate_descriptor(entry)
+            entry.set('is_pooled', False)
             document_id = entry.get('document_id')
             justification = entry.get('mention_span_text')
             confidence = trim_cv(entry.get('justification_confidence'))
@@ -151,11 +157,16 @@ class Task2Pool(Object):
         sorted_justifications = multisort(list(justifications.values()), (('confidence', True),
                                                                           ('justification', False)))
         selected_justifications = {}
+        response_rank = 1
         for sorted_justification in sorted_justifications:
             if K == 0: break
-            selected_justifications[sorted_justification.get('justification')] = 1
-            sorted_justification.get('entry').set('pooled', 1)
+            selected_justifications[sorted_justification.get('justification')] = {
+                'response_rank': response_rank,
+                'cluster_rank': cluster_responses['cluster_rank']
+                }
+            sorted_justification.get('entry').set('is_pooled', True)
             K -= 1
+            response_rank += 1
         return selected_justifications
 
     def add(self, responses):
