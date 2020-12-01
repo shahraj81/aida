@@ -41,6 +41,16 @@ class Assessments(Container):
         self.assessments_dir = assessments_dir
         self.load()
 
+    def exists(self, key):
+        num_splits = len(key.split(':'))
+        if num_splits == 4:
+            queryid, docid, mention_span = key.split(':', 2)
+            if queryid not in self.get('store'): return False
+            if ':'.join([docid,mention_span]) not in self.get(queryid): return False
+        else:
+            if key not in self.get('store'): return False
+        return True
+
     def normalize(self, key, value):
         normalize = {'correct': 'CORRECT', 'wrong': 'INCORRECT', 'yes': 'YES', 'no': 'NO'}
         keys_to_normalize = ['assessment', 'object_linkability', 'predicate_justification_correctness']
@@ -84,8 +94,11 @@ class Assessments(Container):
                 assessment_entry.set('fqec_read', fqec_read)
                 assessment_entry.set('fqec', fqec)
                 assessment_entry.set('where', where)
-                if not self.exists(key):
-                    self.add(key=key, value=assessment_entry)
+
+                if not self.exists(queryid):
+                    self.add(key=queryid, value=Container(self.get('logger')))
+                self.get(queryid).add(key=':'.join(key.split(':')[1:]), value=assessment_entry)
+
                 line = 'QUERYID={} DOCID={} MENTION={} ASSESSMENT={} FQEC_READ={} FQEC={}'.format(
                     queryid, docid, mention_span, assessment, fqec_read, fqec)
                 self.logger.record_event('GROUND_TRUTH', line, where)
