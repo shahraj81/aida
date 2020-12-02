@@ -39,6 +39,10 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         # set if the response was pooled
         # this should be independent of what the assessment file says
         # because LDC might have accidently removed an entry
+        stats = {
+            'clusters': {},
+            'equivalence_classes': {}
+            }
         pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
         num_clusters = int(self.get('queries_to_score').get(query_id).get('clusters'))
         num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
@@ -57,6 +61,8 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
                             response.set('response_rank', selected_justifications[selected_justification]['response_rank'])
                             response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
+                            stats['clusters'][response.get('cluster_id')] = 1
+                            stats['equivalence_classes'][response.get('assessment').get('fqec')] = 1
         # Dummy method
         # TODO: write actual method
         print("TODO: finish get_score")
