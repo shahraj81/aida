@@ -32,6 +32,32 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         return k
 
     def get_score(self, query_id):
+        def order(r):
+            if r.get('is_pooled'):
+                if r.get('assessment').get('assessment') == 'CORRECT':
+                    return r.get('response_rank')
+            return 0
+        def get_num_ground_truth(assessments, fqec):
+            correct_documents = {}
+            for assessment in assessments.values():
+                if assessment.get('assessment') == 'CORRECT' and assessment.get('fqec') == fqec:
+                    correct_documents[assessment.get('docid')] = 1
+            return len(correct_documents)
+        def compute_AP(assessment, responses, cluster_id, fqec):
+            print('TODO: compute weighted AP')
+            num_responses = 0
+            num_correct = 0
+            sum_precision = 0
+            num_ground_truth = get_num_ground_truth(assessments, fqec)
+            for response in sorted(responses.values(), key=order):
+                if response.get('is_pooled'):
+                    assessment = response.get('assessment').get('assessment')
+                    response_fqec = response.get('assessment').get('fqec')
+                    num_responses += 1
+                    if assessment == 'CORRECT' and fqec == response_fqec:
+                        num_correct += 1
+                        sum_precision += num_correct/num_responses
+            return sum_precision/num_ground_truth if num_ground_truth else 0
         logger = self.get('logger')
         responses = self.get('query_responses', query_id)
         assessments = self.get('query_assessments', query_id)
@@ -39,7 +65,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         # set if the response was pooled
         # this should be independent of what the assessment file says
         # because LDC might have accidently removed an entry
-        stats = {
+        ids = {
             'clusters': {},
             'equivalence_classes': {}
             }
@@ -61,10 +87,15 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
                             response.set('response_rank', selected_justifications[selected_justification]['response_rank'])
                             response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
-                            stats['clusters'][response.get('cluster_id')] = 1
-                            stats['equivalence_classes'][response.get('assessment').get('fqec')] = 1
+                            ids['clusters'][response.get('cluster_id')] = 1
+                            ids['equivalence_classes'][response.get('assessment').get('fqec')] = 1
         # Dummy method
         # TODO: write actual method
+        APs = {}
+        for cluster_id in ids['clusters']:
+            for fqec in ids['equivalence_classes']:
+                id = '{}:{}'.format(cluster_id, fqec)
+                APs[id] = compute_AP(assessments, responses, cluster_id, fqec)
         print("TODO: finish get_score")
 
         average_precision = int(query_id[-4:])*0.0001
