@@ -93,6 +93,7 @@ class Assessments(Container):
                 assessment_entry.set('mention_span', mention_span)
                 assessment_entry.set('fqec_read', fqec_read)
                 assessment_entry.set('fqec', fqec)
+                assessment_entry.set('line', entry.get('line'))
                 assessment_entry.set('where', where)
 
                 if not self.exists(queryid):
