@@ -117,29 +117,31 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 index += 1
 
         alignment = {'cluster_to_fqec': {}, 'fqec_to_cluster': {}}
-        cost_matrix = get_cost_matrix(APs, mappings, type_a='clusters', type_b='equivalence_classes')
-        for cluster_index, fqec_index in Munkres().compute(cost_matrix):
-            cluster_id = mappings['clusters']['index_to_id'][cluster_index]
-            fqec = mappings['equivalence_classes']['index_to_id'][fqec_index]
-            AP = lookup_AP(APs, cluster_id, fqec)
-            if AP > 0:
-                alignment.get('cluster_to_fqec')[cluster_id] = {
-                        'aligned_to': fqec,
-                        'AP': AP
-                    }
-                alignment.get('fqec_to_cluster')[fqec] = {
-                        'aligned_to': cluster_id,
-                        'AP': AP
-                    }
+        if len(APs):
+            cost_matrix = get_cost_matrix(APs, mappings, type_a='clusters', type_b='equivalence_classes')
+            for cluster_index, fqec_index in Munkres().compute(cost_matrix):
+                cluster_id = mappings['clusters']['index_to_id'][cluster_index]
+                fqec = mappings['equivalence_classes']['index_to_id'][fqec_index]
+                AP = lookup_AP(APs, cluster_id, fqec)
+                if AP > 0:
+                    alignment.get('cluster_to_fqec')[cluster_id] = {
+                            'aligned_to': fqec,
+                            'AP': AP
+                        }
+                    alignment.get('fqec_to_cluster')[fqec] = {
+                            'aligned_to': cluster_id,
+                            'AP': AP
+                        }
 
         sum_average_precision = 0
+        num_clusters_returned = len(ids['clusters'])
         for cluster_id in ids['clusters']:
             average_precision = 0
             if cluster_id in alignment.get('cluster_to_fqec'):
                 average_precision = alignment.get('cluster_to_fqec').get(cluster_id).get('AP')
             sum_average_precision += average_precision
 
-        score = sum_average_precision/num_clusters if num_clusters > 0 else 0
+        score = sum_average_precision/num_clusters_returned if num_clusters_returned > 0 else 0
         return score
 
     def get_entity_id(self, query_id):
