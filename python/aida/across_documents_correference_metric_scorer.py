@@ -32,24 +32,28 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         return k
 
     def get_score(self, query_id):
+
         def order(r):
             if r.get('is_pooled'):
                 if r.get('assessment').get('assessment') == 'CORRECT':
                     return r.get('response_rank')
             return 0
+
         def get_num_ground_truth(assessments, fqec):
             correct_documents = {}
             for assessment in assessments.values():
                 if assessment.get('assessment') == 'CORRECT' and assessment.get('fqec') == fqec:
                     correct_documents[assessment.get('docid')] = 1
             return len(correct_documents)
-        def compute_AP(assessment, responses, cluster_id, fqec):
+
+        def compute_AP(assessments, responses, cluster_id, fqec):
             print('TODO: compute weighted AP')
             num_responses = 0
             num_correct = 0
             sum_precision = 0
             num_ground_truth = get_num_ground_truth(assessments, fqec)
             for response in sorted(responses.values(), key=order):
+                if response.get('cluster_id') != cluster_id: continue
                 if response.get('is_pooled'):
                     assessment = response.get('assessment').get('assessment')
                     response_fqec = response.get('assessment').get('fqec')
@@ -58,13 +62,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         num_correct += 1
                         sum_precision += num_correct/num_responses
             return sum_precision/num_ground_truth if num_ground_truth else 0
+
         logger = self.get('logger')
         responses = self.get('query_responses', query_id)
         assessments = self.get('query_assessments', query_id)
 
         # set if the response was pooled
-        # this should be independent of what the assessment file says
-        # because LDC might have accidently removed an entry
         ids = {
             'clusters': {},
             'equivalence_classes': {}
@@ -74,21 +77,21 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
         selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters)
         for cluster_id in selected_clusters:
-                cluster_responses = selected_clusters[cluster_id]
-                selected_justifications = pooler.get('top_K_cluster_justifications', cluster_responses, K=num_documents)
-                for selected_justification in selected_justifications:
-                    for response in responses.values():
-                        if not response.get('is_pooled'): continue
-                        mention_span_text = response.get('mention_span_text')
-                        if mention_span_text in assessments:
-                            response.set('assessment', assessments.get(mention_span_text))
-                        else:
-                            logger.record_event('EXPECTED_POOLED_ITEM_NOT_ASSESSED', mention_span_text, response.get('where'))
-                        if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
-                            response.set('response_rank', selected_justifications[selected_justification]['response_rank'])
-                            response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
-                            ids['clusters'][response.get('cluster_id')] = 1
-                            ids['equivalence_classes'][response.get('assessment').get('fqec')] = 1
+            cluster_responses = selected_clusters[cluster_id]
+            selected_justifications = pooler.get('top_K_cluster_justifications', cluster_responses, K=num_documents)
+            for selected_justification in selected_justifications:
+                for response in responses.values():
+                    if not response.get('is_pooled'): continue
+                    mention_span_text = response.get('mention_span_text')
+                    if mention_span_text in assessments:
+                        response.set('assessment', assessments.get(mention_span_text))
+                    else:
+                        logger.record_event('EXPECTED_POOLED_ITEM_NOT_ASSESSED', mention_span_text, response.get('where'))
+                    if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
+                        response.set('response_rank', selected_justifications[selected_justification]['response_rank'])
+                        response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
+                        ids['clusters'][response.get('cluster_id')] = 1
+                        ids['equivalence_classes'][response.get('assessment').get('fqec')] = 1
         # Dummy method
         # TODO: write actual method
         APs = {}
