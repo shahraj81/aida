@@ -9,11 +9,11 @@ __version__ = "0.0.0.1"
 __date__    = "23 November 2020"
 
 from aida.across_documents_correference_metric_score import AcrossDocumentsCoreferenceMetricScore
-from aida.container import Container
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.task2_pool import Task2Pool
-from aida.utility import multisort
+from aida.utility import multisort, get_cost_matrix
+from munkres import Munkres
 
 class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     """
@@ -63,6 +63,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         sum_precision += num_correct/num_responses
             return sum_precision/num_ground_truth if num_ground_truth else 0
 
+        def lookup_AP(APs, item_a, item_b):
+            if item_a in APs:
+                if item_b in APs.get(item_a):
+                    return APs.get(item_a).get(item_b)
+            return 0
+
         logger = self.get('logger')
         responses = self.get('query_responses', query_id)
         assessments = self.get('query_assessments', query_id)
@@ -96,13 +102,45 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         # TODO: write actual method
         APs = {}
         for cluster_id in ids['clusters']:
+            if cluster_id not in APs:
+                APs[cluster_id] = {}
             for fqec in ids['equivalence_classes']:
-                id = '{}:{}'.format(cluster_id, fqec)
-                APs[id] = compute_AP(assessments, responses, cluster_id, fqec)
-        print("TODO: finish get_score")
+                APs[cluster_id][fqec] = compute_AP(assessments, responses, cluster_id, fqec)
 
-        average_precision = int(query_id[-4:])*0.0001
-        return average_precision
+        mappings = {}
+        for item_type in ['clusters', 'equivalence_classes']:
+            mappings[item_type] = {'id_to_index': {}, 'index_to_id': {}}
+            index = 0
+            for item_id in sorted(ids.get(item_type)):
+                mappings[item_type]['id_to_index'][item_id] = index
+                mappings[item_type]['index_to_id'][index] = item_id
+                index += 1
+
+        alignment = {'cluster_to_fqec': {}, 'fqec_to_cluster': {}}
+        cost_matrix = get_cost_matrix(APs, mappings, type_a='clusters', type_b='equivalence_classes')
+        for cluster_index, fqec_index in Munkres().compute(cost_matrix):
+            cluster_id = mappings['clusters']['index_to_id'][cluster_index]
+            fqec = mappings['equivalence_classes']['index_to_id'][fqec_index]
+            AP = lookup_AP(APs, cluster_id, fqec)
+            if AP > 0:
+                alignment.get('cluster_to_fqec')[cluster_id] = {
+                        'aligned_to': fqec,
+                        'AP': AP
+                    }
+                alignment.get('fqec_to_cluster')[fqec] = {
+                        'aligned_to': cluster_id,
+                        'AP': AP
+                    }
+
+        sum_average_precision = 0
+        for cluster_id in ids['clusters']:
+            average_precision = 0
+            if cluster_id in alignment.get('cluster_to_fqec'):
+                average_precision = alignment.get('cluster_to_fqec').get(cluster_id).get('AP')
+            sum_average_precision += average_precision
+
+        score = sum_average_precision/num_clusters if num_clusters > 0 else 0
+        return score
 
     def get_entity_id(self, query_id):
         return str(self.get('queries_to_score').get(query_id).get('entity_id'))

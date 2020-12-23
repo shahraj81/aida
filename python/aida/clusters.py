@@ -273,7 +273,7 @@ class Clusters(Object):
         mappings = {}
         for filetype in ['gold', 'system']:
             mappings[filetype] = {'id_to_index': {}, 'index_to_id': {}}
-            index = 0;
+            index = 0
             for cluster_id in sorted(self.get('clusters').get(filetype)):
                 if self.get('cluster', filetype, cluster_id).get('metatype') == 'Relation':
                     continue

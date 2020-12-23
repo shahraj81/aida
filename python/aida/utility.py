@@ -20,14 +20,14 @@ def get_max_similarity(similarities):
                 max_similarity = similarities[i][j]
     return max_similarity
 
-def get_cost_matrix(similarities, mappings):
+def get_cost_matrix(similarities, mappings, type_a='gold', type_b='system'):
     max_similarity = get_max_similarity(similarities)
     cost_matrix = []
-    for gold_index in sorted(mappings['gold']['index_to_id']):
+    for gold_index in sorted(mappings[type_a]['index_to_id']):
         cost_row = []
-        gold_id = mappings['gold']['index_to_id'][gold_index]
-        for system_index in sorted(mappings['system']['index_to_id']):
-            system_id = mappings['system']['index_to_id'][system_index]
+        gold_id = mappings[type_a]['index_to_id'][gold_index]
+        for system_index in sorted(mappings[type_b]['index_to_id']):
+            system_id = mappings[type_b]['index_to_id'][system_index]
             similarity = 0
             if gold_id in similarities and system_id in similarities[gold_id]:
                 similarity = similarities[gold_id][system_id]
