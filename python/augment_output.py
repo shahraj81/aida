@@ -219,8 +219,10 @@ class Merge(Object):
                 os.mkdir(output_directory)
             input_file1 = '{i}/AIDA_P2_TA3_GR_0001A.rq.tsv'.format(i=directory)
             input_file2 = '{i}/AIDA_P2_TA3_GR_0001B.rq.tsv'.format(i=directory)
+            input_file3 = '{i}/AIDA_P2_TA3_GR_0001C.rq.tsv'.format(i=directory)
+            input_file4 = '{i}/AIDA_P2_TA3_GR_0001D.rq.tsv'.format(i=directory)
             output_file = '{o}/AIDA_P2_TA3_GR_0001.rq.tsv'.format(o=output_directory)
-            self.merge_files([input_file1, input_file2], output_file)
+            self.merge_files([input_file1, input_file2, input_file3, input_file4], output_file)
 
             input_file = '{i}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(i=directory)
             output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
