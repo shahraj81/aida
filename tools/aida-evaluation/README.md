@@ -322,7 +322,11 @@ The `task3` logs directory contains the following log files:
 
 # Revision History
 
-## 11/10/2020
+## 12/29/2020:
+* Additional Task3 queries added to pick up edges between members of clusters.
+* Task3 script to merge SPARQL output, across different variants of graph queries, modified to remove duplicates.
+
+## 11/10/2020:
 * Evaluation pipeline modified to work on Task3 input. This README has been revised accordingly.
 
 ## 10/20/2020:
