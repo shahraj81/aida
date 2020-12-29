@@ -194,12 +194,16 @@ class Merge(Object):
             if header != fh.get('header').get('line').strip():
                 self.record_event('DEFAULT_CRITICAL_ERROR', 'Input file headers do not match')
             fhs[filename_with_path] = fh
+        written = {}
         with open(output_file, 'w', encoding='utf-8') as program_output:
             program_output.write('{header}\n'.format(header=header))
             for filename_with_path in fhs:
                 fh = fhs[filename_with_path]
                 for entry in fh:
-                    program_output.write('{line}'.format(line=entry.get('line')))
+                    line = entry.get('line')
+                    if line not in written:
+                        program_output.write('{line}'.format(line=line))
+                        written[line] = 1
 
     def merge_task1_sparql_output(self):
         self.record_event('DEFAULT_INFO', 'Nothing to do.')
