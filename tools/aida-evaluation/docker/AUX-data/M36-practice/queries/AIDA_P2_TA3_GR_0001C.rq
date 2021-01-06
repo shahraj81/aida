@@ -8,11 +8,11 @@ SELECT DISTINCT
        ?docid           # sourceDocument
        ?edge_type       # edge type
        ?object_cluster  # object cluster ID
-       ?objectmo        # prototype of object cluster
+       ?objectmo        # member of object cluster
        ?oinf_j_span     # informativeJustification of ?objectmo
        ?object_type     # type of the object
        ?subject_cluster # subject cluster ID
-       ?subjectmo       # prototype of subject cluster
+       ?subjectmo       # member of subject cluster
        ?sinf_j_span     # informativeJustification of ?subjectmo is not needed by LDC; will be NILL
        ?subject_type    # type of the subject
        ?ej_span         # CompoundJustification span(s) for argument assertion
@@ -101,13 +101,13 @@ WHERE {
 
     # The first contained justification
     ?compoundedge_just    aida:containedJustification   ?edge_justification1 .
-    ?edge_justification1  aida:sourceDocument           ?docid .
+    ?edge_justification1  aida:sourceDocument           ?edgecj1_docid .
     ?edge_justification1  aida:source                   ?edgecj1_doceid .
     ?edge_justification1  aida:confidence               ?edgecj1_j_confidence .
     ?edgecj1_j_confidence aida:confidenceValue          ?edgecj1_j_cv .
     # The second contained justification
     ?compoundedge_just    aida:containedJustification   ?edge_justification2 .
-    ?edge_justification2  aida:sourceDocument           ?docid .
+    ?edge_justification2  aida:sourceDocument           ?edgecj2_docid .
     ?edge_justification2  aida:source                   ?edgecj2_doceid .
     ?edge_justification2  aida:confidence               ?edgecj2_j_confidence .
     ?edgecj2_j_confidence aida:confidenceValue          ?edgecj2_j_cv .
@@ -276,7 +276,7 @@ WHERE {
     BIND( COALESCE(?ej1lrx1, ?ej1lrx2, "__NULL__") AS ?_ej1lrx) .
     BIND( COALESCE(?ej1lry1, ?ej1lry2, "__NULL__") AS ?_ej1lry) .
 
-    BIND( IF( BOUND(?compoundedge_just), cfn:getSpan(str(?docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) , "__NOT_BOUND__") AS ?ej1_span ) .
+    BIND( IF( BOUND(?compoundedge_just), cfn:getSpan(str(?edgecj1_docid), str(?edgecj1_doceid), str(?_ej1sid), str(?_ej1kfid), str(?_ej1so), str(?_ej1eo), str(?_ej1ulx), str(?_ej1uly), str(?_ej1lrx), str(?_ej1lry), str(?_ej1st), str(?_ej1et) ) , "__NOT_BOUND__") AS ?ej1_span ) .
 
     # Get edge's justification span # 2
     OPTIONAL {
@@ -327,11 +327,11 @@ WHERE {
     BIND( COALESCE(?ej2lrx1, ?ej2lrx2, "__NULL__") AS ?_ej2lrx) .
     BIND( COALESCE(?ej2lry1, ?ej2lry2, "__NULL__") AS ?_ej2lry) .
 
-    BIND( IF( BOUND(?compoundedge_just), cfn:getSpan(str(?docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) , "") AS ?ej2_span ) .
+    BIND( IF( BOUND(?compoundedge_just), cfn:getSpan(str(?edgecj2_docid), str(?edgecj2_doceid), str(?_ej2sid), str(?_ej2kfid), str(?_ej2so), str(?_ej2eo), str(?_ej2ulx), str(?_ej2uly), str(?_ej2lrx), str(?_ej2lry), str(?_ej2st), str(?_ej2et) ) , "") AS ?ej2_span ) .
 
     BIND( IF(?edge_num_cjs = 1, "", ?ej2_span) AS ?ej2_span)
     FILTER(?ej1_span > ?ej2_span)
     BIND( IF(?edge_num_cjs = 1, ?ej1_span, CONCAT(CONCAT(?ej2_span,";"),?ej1_span)) AS ?ej_span)
-    BIND( IF( BOUND(?ej_span), ?ej_span, "NULL") AS ?ej_span)
+    BIND( IF( BOUND(?ej_span) && (?docid = ?edgecj1_docid || ?docid = ?edgecj2_docid), ?_edge_cj_cv, "NULL") AS ?edge_cj_cv)
     BIND( IF( BOUND(?_edge_cj_cv), ?_edge_cj_cv, "NULL") AS ?edge_cj_cv)
 }
