@@ -34,7 +34,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     def get_score(self, query_id):
 
         def order(r):
-            if r.get('is_pooled'):
+            if r.get('is_pooled') and r.get('assessment') is not None:
                 if r.get('assessment').get('assessment') == 'CORRECT':
                     return r.get('response_rank')
             return 0
@@ -54,7 +54,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
             num_ground_truth = get_num_ground_truth(assessments, fqec)
             for response in sorted(responses.values(), key=order):
                 if response.get('cluster_id') != cluster_id: continue
-                if response.get('is_pooled'):
+                if response.get('is_pooled') and response.get('assessment') is not None:
                     assessment = response.get('assessment').get('assessment')
                     response_fqec = response.get('assessment').get('fqec')
                     num_responses += 1
@@ -93,6 +93,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         response.set('assessment', assessments.get(mention_span_text))
                     else:
                         logger.record_event('EXPECTED_POOLED_ITEM_NOT_ASSESSED', mention_span_text, response.get('where'))
+                        continue
                     if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
                         response.set('response_rank', selected_justifications[selected_justification]['response_rank'])
                         response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
