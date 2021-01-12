@@ -12,7 +12,7 @@ from aida.across_documents_correference_metric_score import AcrossDocumentsCoref
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.task2_pool import Task2Pool
-from aida.utility import multisort, get_cost_matrix
+from aida.utility import multisort, get_cost_matrix, trim_cv
 from munkres import Munkres
 
 class AcrossDocumentsCoreferenceMetricScorer(Scorer):
@@ -46,12 +46,24 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     correct_documents[assessment.get('docid')] = 1
             return len(correct_documents)
 
+        def normalize_confidences(responses):
+            max_confidence = None
+            for response in responses.values():
+                justification_confidence = trim_cv(response.get('justification_confidence'))
+                if max_confidence is None:
+                    max_confidence = justification_confidence
+                if justification_confidence > max_confidence:
+                    max_confidence = justification_confidence
+            for response in responses.values():
+                normalized_confidence_value = trim_cv(response.get('justification_confidence'))/max_confidence
+                response.set('normalized_justification_confidence', normalized_confidence_value)
+
         def compute_AP(assessments, responses, cluster_id, fqec):
-            print('TODO: compute weighted AP')
             num_responses = 0
             num_correct = 0
             sum_precision = 0
             num_ground_truth = get_num_ground_truth(assessments, fqec)
+            normalize_confidences(responses)
             for response in sorted(responses.values(), key=order):
                 if response.get('cluster_id') != cluster_id: continue
                 if response.get('is_pooled') and response.get('assessment') is not None:
@@ -59,7 +71,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     response_fqec = response.get('assessment').get('fqec')
                     num_responses += 1
                     if assessment == 'CORRECT' and fqec == response_fqec:
-                        num_correct += 1
+                        num_correct += response.get('normalized_justification_confidence')
                         sum_precision += num_correct/num_responses
             return sum_precision/num_ground_truth if num_ground_truth else 0
 
@@ -81,7 +93,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
         num_clusters = int(self.get('queries_to_score').get(query_id).get('clusters'))
         num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
-        selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters)
+        selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters) if responses else []
         for cluster_id in selected_clusters:
             cluster_responses = selected_clusters[cluster_id]
             selected_justifications = pooler.get('top_K_cluster_justifications', cluster_responses, K=num_documents)
