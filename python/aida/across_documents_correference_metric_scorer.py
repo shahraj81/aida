@@ -58,12 +58,13 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 normalized_confidence_value = trim_cv(response.get('justification_confidence'))/max_confidence
                 response.set('normalized_justification_confidence', normalized_confidence_value)
 
-        def compute_AP(assessments, responses, cluster_id, fqec):
+        def compute_AP(assessments, responses, cluster_id, fqec, APPLY_NORMALIZATION, APPLY_WEIGHTS):
             num_responses = 0
             num_correct = 0
             sum_precision = 0
             num_ground_truth = get_num_ground_truth(assessments, fqec)
-            normalize_confidences(responses)
+            if APPLY_NORMALIZATION:
+                normalize_confidences(responses)
             for response in sorted(responses.values(), key=order):
                 if response.get('cluster_id') != cluster_id: continue
                 if response.get('is_pooled') and response.get('assessment') is not None:
@@ -71,7 +72,13 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     response_fqec = response.get('assessment').get('fqec')
                     num_responses += 1
                     if assessment == 'CORRECT' and fqec == response_fqec:
-                        num_correct += response.get('normalized_justification_confidence')
+                        weight = 1
+                        if APPLY_WEIGHTS:
+                            if APPLY_NORMALIZATION:
+                                weight = response.get('normalized_justification_confidence')
+                            else:
+                                weight = trim_cv(response.get('justification_confidence'))
+                        num_correct += weight
                         sum_precision += num_correct/num_responses
             return sum_precision/num_ground_truth if num_ground_truth else 0
 
@@ -116,7 +123,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
             if cluster_id not in APs:
                 APs[cluster_id] = {}
             for fqec in ids['equivalence_classes']:
-                APs[cluster_id][fqec] = compute_AP(assessments, responses, cluster_id, fqec)
+                APs[cluster_id][fqec] = compute_AP(assessments,
+                                                   responses,
+                                                   cluster_id,
+                                                   fqec,
+                                                   APPLY_NORMALIZATION=self.get('normalize'),
+                                                   APPLY_WEIGHTS=self.get('weighted'))
         mappings = {}
         for item_type in ['clusters', 'equivalence_classes']:
             mappings[item_type] = {'id_to_index': {}, 'index_to_id': {}}

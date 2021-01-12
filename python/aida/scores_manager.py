@@ -65,6 +65,8 @@ class ScoresManager(Object):
             for metric in self.get('metrics'):
                 scorer = self.get('metrics')[metric](logger=self.get('logger'),
                                                      run_id=self.get('run_id'),
+                                                     normalize=self.get('normalize'),
+                                                     weighted=self.get('weighted'),
                                                      responses=self.get('responses'),
                                                      assessments=self.get('assessments'),
                                                      queries_to_score=self.get('queries_to_score'),
