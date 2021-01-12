@@ -111,15 +111,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
                         ids['clusters'][response.get('cluster_id')] = 1
                         ids['equivalence_classes'][response.get('assessment').get('fqec')] = 1
-        # Dummy method
-        # TODO: write actual method
         APs = {}
         for cluster_id in ids['clusters']:
             if cluster_id not in APs:
                 APs[cluster_id] = {}
             for fqec in ids['equivalence_classes']:
                 APs[cluster_id][fqec] = compute_AP(assessments, responses, cluster_id, fqec)
-
         mappings = {}
         for item_type in ['clusters', 'equivalence_classes']:
             mappings[item_type] = {'id_to_index': {}, 'index_to_id': {}}
@@ -128,7 +125,6 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 mappings[item_type]['id_to_index'][item_id] = index
                 mappings[item_type]['index_to_id'][index] = item_id
                 index += 1
-
         alignment = {'cluster_to_fqec': {}, 'fqec_to_cluster': {}}
         if len(APs):
             cost_matrix = get_cost_matrix(APs, mappings, type_a='clusters', type_b='equivalence_classes')
@@ -145,7 +141,6 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                             'aligned_to': cluster_id,
                             'AP': AP
                         }
-
         sum_average_precision = 0
         num_clusters_returned = len(ids['clusters'])
         for cluster_id in ids['clusters']:
@@ -153,7 +148,6 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
             if cluster_id in alignment.get('cluster_to_fqec'):
                 average_precision = alignment.get('cluster_to_fqec').get(cluster_id).get('AP')
             sum_average_precision += average_precision
-
         score = sum_average_precision/num_clusters_returned if num_clusters_returned > 0 else 0
         return score
 
