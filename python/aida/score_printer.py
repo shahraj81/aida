@@ -35,7 +35,7 @@ class ScorePrinter(Container):
                 field_name = field.get('name')
                 value = score.get(field_name)
                 format_spec = field.get('mean_format') if score.get('summary') and field.get('mean_format') else field.get('format')
-                text = '{0:{1}}'.format(value, format_spec)
+                text = '{0:{1}}'.format(value, 's' if value=='' else format_spec)
                 elements_to_print[field_name] = text
                 widths[field_name] = len(text) if len(text)>widths[field_name] else widths[field_name]
             self.get('lines').append(elements_to_print)

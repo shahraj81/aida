@@ -3,6 +3,7 @@ AIDA class for across documents coreference metric scorer.
 
 V1 refers to the variant where we ignore correctness of argument assertion justification.
 """
+
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
@@ -23,7 +24,19 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     printing_specs = [{'name': 'entity_id',         'header': 'EntityID', 'format': 's',    'justify': 'L'},
                       {'name': 'run_id',            'header': 'RunID',    'format': 's',    'justify': 'L'},
                       {'name': 'query_id',          'header': 'QueryID',  'format': 's',    'justify': 'L'},
-                      {'name': 'average_precision', 'header': 'AvgPrec',  'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
+                      {'name': 'num_rel_documents', 'header': 'Relevant', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_submitted',     'header': 'Submitted','format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_valid',         'header': 'Valid',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_invalid',       'header': 'Invalid',  'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_notpooled',     'header': 'NotPooled','format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_pooled',        'header': 'Pooled',   'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_assessed',      'header': 'Assessed', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_correct',       'header': 'Correct',  'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_incorrect',     'header': 'Incorrect','format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_right',         'header': 'Right',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_wrong',         'header': 'Wrong',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_ignored',       'header': 'Ignored',  'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'average_precision', 'header': 'AvgPrec',  'format': '6.4f', 'justify': 'R'}]
 
     def __init__(self, logger, separator=None, **kwargs):
         super().__init__(logger, separator=separator, **kwargs)
@@ -31,7 +44,32 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     def order(self, k):
         return k
 
-    def get_score(self, query_id):
+    def get_counts(self, query_id):
+        def apply_normalization_and_compute_weights(responses, cluster_id, APPLY_NORMALIZATION, APPLY_WEIGHTS):
+            def compute_weights(responses, APPLY_NORMALIZATION, APPLY_WEIGHTS):
+                for response in responses.values():
+                    weight = 1
+                    if APPLY_WEIGHTS:
+                        if APPLY_NORMALIZATION:
+                            weight = response.get('normalized_justification_confidence')
+                        else:
+                            weight = trim_cv(response.get('justification_confidence'))
+                    response.set('weight', weight)
+            def normalize_confidences(responses, cluster_id):
+                max_confidence = None
+                for response in responses.values():
+                    if response.get('cluster_id') != cluster_id: continue
+                    justification_confidence = trim_cv(response.get('justification_confidence'))
+                    if max_confidence is None:
+                        max_confidence = justification_confidence
+                    if justification_confidence > max_confidence:
+                        max_confidence = justification_confidence
+                for response in responses.values():
+                    normalized_confidence_value = trim_cv(response.get('justification_confidence'))/max_confidence
+                    response.set('normalized_justification_confidence', normalized_confidence_value)
+            if APPLY_NORMALIZATION:
+                normalize_confidences(responses, cluster_id)
+            compute_weights(responses, APPLY_NORMALIZATION, APPLY_WEIGHTS)
 
         def order(r):
             if r.get('is_pooled') and r.get('assessment') is not None:
@@ -40,47 +78,29 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
             return 0
 
         def get_num_ground_truth(assessments, fqec):
-            correct_documents = {}
+            correct_documents = set()
             for assessment in assessments.values():
                 if assessment.get('assessment') == 'CORRECT' and assessment.get('fqec') == fqec:
-                    correct_documents[assessment.get('docid')] = 1
+                    correct_documents.add(assessment.get('docid'))
             return len(correct_documents)
 
-        def normalize_confidences(responses):
-            max_confidence = None
-            for response in responses.values():
-                justification_confidence = trim_cv(response.get('justification_confidence'))
-                if max_confidence is None:
-                    max_confidence = justification_confidence
-                if justification_confidence > max_confidence:
-                    max_confidence = justification_confidence
-            for response in responses.values():
-                normalized_confidence_value = trim_cv(response.get('justification_confidence'))/max_confidence
-                response.set('normalized_justification_confidence', normalized_confidence_value)
-
-        def compute_AP(assessments, responses, cluster_id, fqec, APPLY_NORMALIZATION, APPLY_WEIGHTS):
+        def compute_AP(logger, query_id, assessments, responses, cluster_id, fqec):
             num_responses = 0
             num_correct = 0
             sum_precision = 0
             num_ground_truth = get_num_ground_truth(assessments, fqec)
-            if APPLY_NORMALIZATION:
-                normalize_confidences(responses)
             for response in sorted(responses.values(), key=order):
                 if response.get('cluster_id') != cluster_id: continue
-                if response.get('is_pooled') and response.get('assessment') is not None:
+                if response.get('is_pooled') and response.get('valid') and response.get('assessment') is not None:
                     assessment = response.get('assessment').get('assessment')
                     response_fqec = response.get('assessment').get('fqec')
                     num_responses += 1
                     if assessment == 'CORRECT' and fqec == response_fqec:
-                        weight = 1
-                        if APPLY_WEIGHTS:
-                            if APPLY_NORMALIZATION:
-                                weight = response.get('normalized_justification_confidence')
-                            else:
-                                weight = trim_cv(response.get('justification_confidence'))
-                        num_correct += weight
+                        num_correct += response.get('weight')
                         sum_precision += num_correct/num_responses
-            return sum_precision/num_ground_truth if num_ground_truth else 0
+            ap = sum_precision/num_ground_truth if num_ground_truth else 0
+            logger.record_event('PAIR_WISE_AP', query_id, cluster_id, fqec, ap)
+            return ap
 
         def lookup_AP(APs, item_a, item_b):
             if item_a in APs:
@@ -88,47 +108,107 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     return APs.get(item_a).get(item_b)
             return 0
 
+        def record_categorized_response(categorized_responses, policy, category_name, response):
+            categorized_responses.get(policy).setdefault(category_name, list()).append(response)
+            if response.get('categorization') is None:
+                response.set('categorization', {'PRE_POLICY': set(), 'POST_POLICY': set()})
+            response.get('categorization').get(policy).add(category_name)
+
+        def categorize_responses(responses, selected_clusters, categorized_responses, ids):
+            if responses is None: return
+            selected_cluster_justifications = {}
+            for cluster_id in selected_clusters:
+                selected_cluster_justifications[cluster_id] = pooler.get('top_K_cluster_justifications', selected_clusters[cluster_id], K=num_documents)
+            for response in responses.values():
+                record_categorized_response(categorized_responses, 'PRE_POLICY', 'SUBMITTED', response)
+                if response.get('cluster_id') in selected_clusters:
+                    if response.get('valid'):
+                        record_categorized_response(categorized_responses, 'PRE_POLICY', 'VALID', response)
+                        if response.get('is_pooled'):
+                            record_categorized_response(categorized_responses, 'PRE_POLICY', 'POOLED', response)
+                        else:
+                            record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTPOOLED', response)
+                            record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
+                            continue
+                    else:
+                        record_categorized_response(categorized_responses, 'PRE_POLICY', 'INVALID', response)
+                        record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTPOOLED', response)
+                        record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
+                        continue
+                else:
+                    if response.get('valid'):
+                        record_categorized_response(categorized_responses, 'PRE_POLICY', 'VALID', response)
+                    else:
+                        record_categorized_response(categorized_responses, 'PRE_POLICY', 'INVALID', response)
+                    record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTPOOLED', response)
+                    record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
+                    continue
+                mention_span_text = response.get('mention_span_text')
+                pre_policy_assessment = None
+                if mention_span_text in assessments:
+                    response.set('assessment', assessments.get(mention_span_text))
+                    pre_policy_assessment = assessments.get(mention_span_text).get('assessment')
+                    post_policy_assessment = 'RIGHT' if pre_policy_assessment == 'CORRECT' else 'WRONG'
+                    record_categorized_response(categorized_responses, 'PRE_POLICY', pre_policy_assessment, response)
+                    record_categorized_response(categorized_responses, 'POST_POLICY', post_policy_assessment, response)
+                else:
+                    record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTASSESSED', response)
+                    record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
+                    logger.record_event('EXPECTED_POOLED_ITEM_NOT_ASSESSED', mention_span_text, response.get('where'))
+                    continue
+                selected_justifications = selected_cluster_justifications[response.get('cluster_id')]
+                if mention_span_text in selected_justifications:
+                    response.set('response_rank', selected_justifications[mention_span_text]['response_rank'])
+                    response.set('cluster_rank', selected_justifications[mention_span_text]['cluster_rank'])
+                    ids['clusters'][response.get('cluster_id')] = 1
+                    if pre_policy_assessment == 'CORRECT':
+                        ids['equivalence_classes'][response.get('assessment').get('fqec')] = 1
+            for response in responses.values():
+                logger.record_event('RESPONSE_CATEGORIZATION_INFO',
+                                    query_id,
+                                    response.get('cluster_id'),
+                                    response.get('mention_span_text'),
+                                    response.get('linking_confidence'),
+                                    response.get('cluster_rank'),
+                                    response.get('justification_confidence'),
+                                    response.get('weight'),
+                                    response.get('response_rank'),
+                                    ','.join(sorted(response.get('categorization').get('PRE_POLICY'))),
+                                    ','.join(sorted(response.get('categorization').get('POST_POLICY'))),
+                                    response.get('where')
+                                    )
+
         logger = self.get('logger')
         responses = self.get('query_responses', query_id)
         assessments = self.get('query_assessments', query_id)
 
-        # set if the response was pooled
-        ids = {
-            'clusters': {},
-            'equivalence_classes': {}
-            }
         pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
         num_clusters = int(self.get('queries_to_score').get(query_id).get('clusters'))
         num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
         selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters) if responses else []
         for cluster_id in selected_clusters:
-            cluster_responses = selected_clusters[cluster_id]
-            selected_justifications = pooler.get('top_K_cluster_justifications', cluster_responses, K=num_documents)
-            for selected_justification in selected_justifications:
-                for response in responses.values():
-                    if not response.get('is_pooled'): continue
-                    mention_span_text = response.get('mention_span_text')
-                    if mention_span_text in assessments:
-                        response.set('assessment', assessments.get(mention_span_text))
-                    else:
-                        logger.record_event('EXPECTED_POOLED_ITEM_NOT_ASSESSED', mention_span_text, response.get('where'))
-                        continue
-                    if response.get('mention_span_text') == selected_justification and response.get('cluster_id') == cluster_id:
-                        response.set('response_rank', selected_justifications[selected_justification]['response_rank'])
-                        response.set('cluster_rank', selected_justifications[selected_justification]['cluster_rank'])
-                        ids['clusters'][response.get('cluster_id')] = 1
-                        ids['equivalence_classes'][response.get('assessment').get('fqec')] = 1
+            apply_normalization_and_compute_weights(responses,
+                                                    cluster_id,
+                                                    APPLY_NORMALIZATION=self.get('normalize'),
+                                                    APPLY_WEIGHTS=self.get('weighted'))
+        ids = {
+            'clusters': {},
+            'equivalence_classes': {}
+            }
+        categorized_responses = {'PRE_POLICY': {}, 'POST_POLICY': {}}
+        categorize_responses(responses, selected_clusters, categorized_responses, ids)
+
         APs = {}
         for cluster_id in ids['clusters']:
             if cluster_id not in APs:
                 APs[cluster_id] = {}
             for fqec in ids['equivalence_classes']:
-                APs[cluster_id][fqec] = compute_AP(assessments,
+                APs[cluster_id][fqec] = compute_AP(logger,
+                                                   query_id,
+                                                   assessments,
                                                    responses,
                                                    cluster_id,
-                                                   fqec,
-                                                   APPLY_NORMALIZATION=self.get('normalize'),
-                                                   APPLY_WEIGHTS=self.get('weighted'))
+                                                   fqec)
         mappings = {}
         for item_type in ['clusters', 'equivalence_classes']:
             mappings[item_type] = {'id_to_index': {}, 'index_to_id': {}}
@@ -153,6 +233,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                             'aligned_to': cluster_id,
                             'AP': AP
                         }
+                    logger.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
         sum_average_precision = 0
         num_clusters_returned = len(ids['clusters'])
         for cluster_id in ids['clusters']:
@@ -161,10 +242,85 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 average_precision = alignment.get('cluster_to_fqec').get(cluster_id).get('AP')
             sum_average_precision += average_precision
         score = sum_average_precision/num_clusters_returned if num_clusters_returned > 0 else 0
-        return score
+
+        counts = {'average_precision': score,
+                  'num_rel_documents': self.get('num_rel_documents', query_id)}
+        for field_name in [s.get('name') for s in self.get('printing_specs') if s.get('name').startswith('num_')]:
+            counts[field_name] = counts[field_name] if field_name in counts else self.get(field_name, categorized_responses)
+        return counts
 
     def get_entity_id(self, query_id):
         return str(self.get('queries_to_score').get(query_id).get('entity_id'))
+
+    def get_num_rel_documents(self, the_query_id):
+        relevant_documents = set()
+        entity_id = self.get('queries_to_score').get(the_query_id).get('entity_id')
+        for query_id in self.get('queries_to_score'):
+            if self.get('queries_to_score').get(query_id).get('entity_id') == entity_id:
+                for entry in self.get('assessments').get(query_id).values():
+                    if entry.get('assessment') == 'CORRECT':
+                        relevant_documents.add(entry.get('docid'))
+        return len(relevant_documents)
+
+    def get_num_submitted(self, cr):
+        key = 'SUBMITTED'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_valid(self, cr):
+        key = 'VALID'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_invalid(self, cr):
+        key = 'INVALID'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_notpooled(self, cr):
+        key = 'NOTPOOLED'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_pooled(self, cr):
+        key = 'POOLED'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_assessed(self, cr):
+        num_pooled = self.get('num_pooled', cr)
+        num_notassessed = self.get('num_notassessed', cr)
+        return num_pooled - num_notassessed
+
+    def get_num_notassessed(self, cr):
+        key = 'NOTASSESSED'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_correct(self, cr):
+        key = 'CORRECT'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_incorrect(self, cr):
+        key = 'INCORRECT'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_right(self, cr):
+        key = 'RIGHT'
+        policy = 'POST_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_wrong(self, cr):
+        key = 'WRONG'
+        policy = 'POST_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_ignored(self, cr):
+        key = 'IGNORED'
+        policy = 'POST_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
 
     def get_query_assessments(self, query_id):
         return self.get('assessments').get(query_id)
@@ -175,52 +331,31 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
 
     def score_responses(self):
         scores = []
-        mean_average_precisions = {}
-        counts = {}
+        sum_average_precision = 0
         for query_id in self.get('queries_to_score'):
             entity_id = self.get('entity_id', query_id)
-            average_precision = self.get('score', query_id)
-            for query_id_key in ['ALL-Micro', query_id]:
-                for entity_id_key in ['Summary', entity_id]:
-                    aggregate_key = '{entity_id_key}:{query_id_key}'.format(entity_id_key=entity_id_key, query_id_key=query_id_key)
-                    mean_average_precisions[aggregate_key] = mean_average_precisions.get(aggregate_key, 0) + average_precision
-                    counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
+            counts = self.get('counts', query_id)
+            sum_average_precision += counts['average_precision']
             score = AcrossDocumentsCoreferenceMetricScore(self.get('logger'),
-                                                          self.get('run_id'),
-                                                          query_id,
-                                                          entity_id,
-                                                          average_precision)
+                                                          run_id=self.get('run_id'),
+                                                          query_id=query_id,
+                                                          entity_id=entity_id,
+                                                          **counts)
             scores.append(score)
 
-        macro_average_precision = 0
-        macro_average_precision_count = 0
-        for key in sorted(mean_average_precisions, key=self.order):
-            entity_id_key, query_id_key = key.split(':')
-            if query_id_key != 'ALL-Micro': continue
-            mean_average_precision = mean_average_precisions[key] / counts[key] if counts[key] else 0
-            if entity_id_key != 'Summary':
-                macro_average_precision += mean_average_precision
-                macro_average_precision_count += 1
-            mean_score = AcrossDocumentsCoreferenceMetricScore(self.get('logger'),
-                                                               self.get('run_id'),
-                                                               query_id_key,
-                                                               entity_id_key,
-                                                               mean_average_precision,
-                                                               summary = True)
-            scores.append(mean_score)
+        macro_counts = {'average_precision': sum_average_precision/len(self.get('queries_to_score'))}
+        for field_name in [s.get('name') for s in self.get('printing_specs') if s.get('name').startswith('num_')]:
+            macro_counts[field_name] = macro_counts[field_name] if field_name in macro_counts else ''
+        macro_average_score = AcrossDocumentsCoreferenceMetricScore(self.get('logger'),
+                                                                    run_id=self.get('run_id'),
+                                                                    query_id='ALL-Macro',
+                                                                    entity_id='Summary',
+                                                                    summary=True,
+                                                                    **macro_counts)
 
         scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
         for score in multisort(scores, (('entity_id', False),
                                         ('query_id', False))):
             scores_printer.add(score)
-
-        macro_average_precision = macro_average_precision/macro_average_precision_count if macro_average_precision_count else 0
-        macro_average_score = AcrossDocumentsCoreferenceMetricScore(self.get('logger'),
-                                                                    self.get('run_id'),
-                                                                    'ALL-Macro',
-                                                                    entity_id_key,
-                                                                    macro_average_precision,
-                                                                    summary = True)
         scores_printer.add(macro_average_score)
-
         self.scores = scores_printer

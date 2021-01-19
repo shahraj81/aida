@@ -12,10 +12,8 @@ class AcrossDocumentsCoreferenceMetricScore(Score):
     """
     AIDA class for AIDA class for across documents coreference metric score.
     """
-    def __init__(self, logger, run_id, query_id, entity_id, average_precision, summary=False):
+    def __init__(self, logger, summary=False, **kwargs):
         super().__init__(logger)
-        self.run_id = run_id
-        self.query_id = query_id
-        self.entity_id = entity_id
-        self.average_precision = average_precision
-        self.summary = summary
+        self.set('summary', summary)
+        for key in kwargs:
+            self.set(key, kwargs[key])

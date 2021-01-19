@@ -1,4 +1,5 @@
 type      code                            message
+INFO      ALIGNMENT_INFO                  QUERY_ID: {} CLUSTER_ID: {} FQEC: {}
 INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 INFO      CLUSTER_NOT_ANNOTATED           Response line skipped because all mentions of cluster '{}' were outside annotated regions
 ERROR     DEFAULT_ERROR                   Error encountered {} {}
@@ -52,7 +53,9 @@ ERROR     NOT_AN_NUMBER                   '{}' is not a number
 ERROR     NOTHING_TO_SCORE                Nothing to score.
 CRITICAL  OUT_OF_DATE_FILE                Out of date file '{}' (missing {} '{}')
 CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.
+INFO      PAIR_WISE_AP                    QUERY_ID: {} CLUSTER_ID: {} FQEC: {} AP: {}
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
+INFO      RESPONSE_CATEGORIZATION_INFO    QUERY_ID:{} CLUSTER_ID:{} MENTION:{} LINK_CONFIDENCE:{} CLUSTER_RANK:{} JUSTIFICATION_CONFIDENCE:{} WEIGHT:{} RESPONSE_RANK:{} PRE_POLICY:{} POST_POLICY:{}
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
 INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
