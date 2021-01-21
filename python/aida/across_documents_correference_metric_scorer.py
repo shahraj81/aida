@@ -10,6 +10,7 @@ __version__ = "0.0.0.1"
 __date__    = "23 November 2020"
 
 from aida.across_documents_correference_metric_score import AcrossDocumentsCoreferenceMetricScore
+from aida.container import Container
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.task2_pool import Task2Pool
@@ -180,7 +181,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
 
         logger = self.get('logger')
         responses = self.get('query_responses', query_id)
-        assessments = self.get('query_assessments', query_id)
+        assessments = self.get('entity_assessments', query_id)
 
         pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
         num_clusters = int(self.get('queries_to_score').get(query_id).get('clusters'))
@@ -322,8 +323,18 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         policy = 'POST_POLICY'
         return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
 
-    def get_query_assessments(self, query_id):
-        return self.get('assessments').get(query_id)
+    def get_entity_assessments(self, the_query_id):
+        entity_assessments = Container(self.get('logger'))
+        entity_id = self.get('entity_id', the_query_id)
+        for query_id in self.get('queries_to_score'):
+            if self.get('queries_to_score').get(query_id).get('entity_id') == entity_id:
+                for key in self.get('assessments').get(query_id):
+                    value = self.get('assessments').get(query_id).get(key)
+                    if key not in entity_assessments:
+                        entity_assessments.add(value, key)
+                    elif value.get('assessment') != entity_assessments.get(key).get('assessment'):
+                        self.record_event('CONFLICTING_ASSESSMENTS', key, query_id, entity_assessments.get(key).get('query_id'))
+        return entity_assessments
 
     def get_query_responses(self, query_id):
         return self.get('responses').get('{path}/{query_id}.rq.tsv'.format(path=self.get('responses').get('path'),

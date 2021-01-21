@@ -2,6 +2,7 @@ type      code                            message
 INFO      ALIGNMENT_INFO                  QUERY_ID: {} CLUSTER_ID: {} FQEC: {}
 INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 INFO      CLUSTER_NOT_ANNOTATED           Response line skipped because all mentions of cluster '{}' were outside annotated regions
+ERROR     CONFLICTING_ASSESSMENTS         Conflicting assessment for '{}' in kits corresponding to queries {},{}
 ERROR     DEFAULT_ERROR                   Error encountered {} {}
 WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
