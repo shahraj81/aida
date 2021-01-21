@@ -21,22 +21,22 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     AIDA class for across documents coreference metric scorer.
     """
 
-    printing_specs = [{'name': 'entity_id',         'header': 'EntityID', 'format': 's',    'justify': 'L'},
-                      {'name': 'run_id',            'header': 'RunID',    'format': 's',    'justify': 'L'},
-                      {'name': 'query_id',          'header': 'QueryID',  'format': 's',    'justify': 'L'},
-                      {'name': 'num_rel_documents', 'header': 'Relevant', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_submitted',     'header': 'Submitted','format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_valid',         'header': 'Valid',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_invalid',       'header': 'Invalid',  'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_notpooled',     'header': 'NotPooled','format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_pooled',        'header': 'Pooled',   'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_assessed',      'header': 'Assessed', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_correct',       'header': 'Correct',  'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_incorrect',     'header': 'Incorrect','format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_right',         'header': 'Right',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_wrong',         'header': 'Wrong',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_ignored',       'header': 'Ignored',  'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'average_precision', 'header': 'AvgPrec',  'format': '6.4f', 'justify': 'R'}]
+    printing_specs = [{'name': 'entity_id',         'header': 'EntityID',              'format': 's',    'justify': 'L'},
+                      {'name': 'run_id',            'header': 'RunID',                 'format': 's',    'justify': 'L'},
+                      {'name': 'query_id',          'header': 'QueryID',               'format': 's',    'justify': 'L'},
+                      {'name': 'num_rel_documents', 'header': 'Relevant',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_submitted',     'header': 'Submitted',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_valid',         'header': 'Valid',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_invalid',       'header': 'Invalid',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_notpooled',     'header': 'NotMetPoolingCriteria', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_pooled',        'header': 'MetPoolingCriteria',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_assessed',      'header': 'Assessed',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_correct',       'header': 'Correct',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_incorrect',     'header': 'Incorrect',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_right',         'header': 'Right',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_wrong',         'header': 'Wrong',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_ignored',       'header': 'Ignored',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'average_precision', 'header': 'AvgPrec',               'format': '6.4f', 'justify': 'R'}]
 
     def __init__(self, logger, separator=None, **kwargs):
         super().__init__(logger, separator=separator, **kwargs)
@@ -125,14 +125,14 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if response.get('valid'):
                         record_categorized_response(categorized_responses, 'PRE_POLICY', 'VALID', response)
                         if response.get('is_pooled'):
-                            record_categorized_response(categorized_responses, 'PRE_POLICY', 'POOLED', response)
+                            record_categorized_response(categorized_responses, 'PRE_POLICY', 'METPOOLINGCRITERIA', response)
                         else:
-                            record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTPOOLED', response)
+                            record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTMETPOOLINGCRITERIA', response)
                             record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
                             continue
                     else:
                         record_categorized_response(categorized_responses, 'PRE_POLICY', 'INVALID', response)
-                        record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTPOOLED', response)
+                        record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTMETPOOLINGCRITERIA', response)
                         record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
                         continue
                 else:
@@ -140,7 +140,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         record_categorized_response(categorized_responses, 'PRE_POLICY', 'VALID', response)
                     else:
                         record_categorized_response(categorized_responses, 'PRE_POLICY', 'INVALID', response)
-                    record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTPOOLED', response)
+                    record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTMETPOOLINGCRITERIA', response)
                     record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
                     continue
                 mention_span_text = response.get('mention_span_text')
@@ -154,7 +154,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 else:
                     record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTASSESSED', response)
                     record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
-                    logger.record_event('EXPECTED_POOLED_ITEM_NOT_ASSESSED', mention_span_text, response.get('where'))
+                    logger.record_event('ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED', mention_span_text, response.get('where'))
                     continue
                 selected_justifications = selected_cluster_justifications[response.get('cluster_id')]
                 if mention_span_text in selected_justifications:
@@ -278,12 +278,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
 
     def get_num_notpooled(self, cr):
-        key = 'NOTPOOLED'
+        key = 'NOTMETPOOLINGCRITERIA'
         policy = 'PRE_POLICY'
         return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
 
     def get_num_pooled(self, cr):
-        key = 'POOLED'
+        key = 'METPOOLINGCRITERIA'
         policy = 'PRE_POLICY'
         return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
 
