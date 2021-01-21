@@ -221,7 +221,7 @@ class Task2(Object):
         for entry in FileHandler(logger, self.get('queries_to_score')):
             queries_to_score[entry.get('query_id')] = entry
 
-        assessments = Assessments(logger, 'task2', self.get('assessments'))
+        assessments = Assessments(logger, 'task2', queries_to_score, self.get('assessments'))
         responses = ResponseSet(logger, ontology_types, slots, document_mappings, document_boundaries, self.get('responses'), self.get('runid'), task='task2')
         arguments = {
             'run_id': self.get('runid'),

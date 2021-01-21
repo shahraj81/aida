@@ -35,9 +35,10 @@ class Assessments(Container):
     AIDA assessments class.
     """
     
-    def __init__(self, logger, task, assessments_dir):
+    def __init__(self, logger, task, queries_to_score, assessments_dir):
         super().__init__(logger)
         self.task = task
+        self.queries_to_score = queries_to_score
         self.assessments_dir = assessments_dir
         self.load()
 
@@ -75,6 +76,7 @@ class Assessments(Container):
                     lambda key: entry.get(key),
                     ['queryid', 'docid', 'mention_span', 'assessment', 'fqec', 'where']
                     )
+                entity_id = self.get('queries_to_score').get(queryid).get('entity_id')
                 assessment = self.normalize('assessment', assessment_read)
                 query_and_document = '{}:{}'.format(queryid, docid)
                 key = '{}:{}'.format(query_and_document, mention_span)
@@ -100,8 +102,8 @@ class Assessments(Container):
                     self.add(key=queryid, value=Container(self.get('logger')))
                 self.get(queryid).add(key=':'.join(key.split(':')[1:]), value=assessment_entry)
 
-                line = 'QUERYID={} DOCID={} MENTION={} ASSESSMENT={} FQEC_READ={} FQEC={}'.format(
-                    queryid, docid, mention_span, assessment, fqec_read, fqec)
+                line = 'ENTITYID={} QUERYID={} DOCID={} MENTION={} ASSESSMENT={} FQEC_READ={} FQEC={}'.format(
+                    entity_id, queryid, docid, mention_span, assessment, fqec_read, fqec)
                 self.logger.record_event('GROUND_TRUTH', line, where)
 
     def load_classquery_assessments(self): 
