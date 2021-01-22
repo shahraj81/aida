@@ -236,13 +236,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                         }
                     logger.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
         sum_average_precision = 0
-        num_clusters_returned = len(ids['clusters'])
-        for cluster_id in ids['clusters']:
-            average_precision = 0
-            if cluster_id in alignment.get('cluster_to_fqec'):
-                average_precision = alignment.get('cluster_to_fqec').get(cluster_id).get('AP')
-            sum_average_precision += average_precision
-        score = sum_average_precision/num_clusters_returned if num_clusters_returned > 0 else 0
+        denominator_for_mean = len(ids['equivalence_classes'])
+        if denominator_for_mean > num_clusters:
+            denominator_for_mean = num_clusters
+        for cluster_id in alignment.get('cluster_to_fqec'):
+            sum_average_precision += alignment.get('cluster_to_fqec').get(cluster_id).get('AP')
+        score = sum_average_precision/denominator_for_mean if denominator_for_mean != 0 else 0
 
         counts = {'average_precision': score,
                   'num_rel_documents': self.get('num_rel_documents', query_id)}
