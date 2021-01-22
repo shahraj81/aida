@@ -333,7 +333,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if key not in entity_assessments:
                         entity_assessments.add(value, key)
                     elif value.get('assessment') != entity_assessments.get(key).get('assessment'):
-                        self.record_event('CONFLICTING_ASSESSMENTS', key, query_id, entity_assessments.get(key).get('query_id'))
+                        self.record_event('CONFLICTING_ASSESSMENTS', key, query_id, entity_assessments.get(key).get('queryid'))
         return entity_assessments
 
     def get_query_responses(self, query_id):
