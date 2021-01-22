@@ -159,7 +159,7 @@ class Task2(Object):
     """
     Class representing Task2 scorer.
     """
-    def __init__(self, log, separator, runid, normalize, weighted, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries_to_score, assessments, responses, scores):
+    def __init__(self, log, separator, runid, cutoff, normalize, weighted, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries_to_score, assessments, responses, scores):
         check_for_paths_existance([
                  log_specifications,
                  ontology_types,
@@ -179,6 +179,7 @@ class Task2(Object):
         self.log_filename = log
         self.separator = separator
         self.runid = runid
+        self.cutoff = cutoff
         self.normalize = normalize
         self.weighted = weighted
         self.log_specifications = log_specifications
@@ -225,6 +226,7 @@ class Task2(Object):
         responses = ResponseSet(logger, ontology_types, slots, document_mappings, document_boundaries, self.get('responses'), self.get('runid'), task='task2')
         arguments = {
             'run_id': self.get('runid'),
+            'cutoff': self.get('cutoff'),
             'normalize': self.get('normalize'),
             'weighted': self.get('weighted'),
             'assessments': assessments,
@@ -239,6 +241,7 @@ class Task2(Object):
     def add_arguments(myclass, parser):
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('-C', '--cutoff', action='store_true', help='Apply cutoff?')
         parser.add_argument('-N', '--normalize', action='store_true', help='Normalize confidences?')
         parser.add_argument('-S', '--separator', default='pretty', choices=['pretty', 'tab', 'space'], help='Column separator for scorer output? (default: %(default)s)')
         parser.add_argument('-W', '--weighted', action='store_true', help='Use weighted Value for AP computation?')

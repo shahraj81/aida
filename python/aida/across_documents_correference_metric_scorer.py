@@ -22,22 +22,23 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     AIDA class for across documents coreference metric scorer.
     """
 
-    printing_specs = [{'name': 'entity_id',         'header': 'EntityID',              'format': 's',    'justify': 'L'},
-                      {'name': 'run_id',            'header': 'RunID',                 'format': 's',    'justify': 'L'},
-                      {'name': 'query_id',          'header': 'QueryID',               'format': 's',    'justify': 'L'},
-                      {'name': 'num_rel_documents', 'header': 'Relevant',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_submitted',     'header': 'Submitted',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_valid',         'header': 'Valid',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_invalid',       'header': 'Invalid',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_notpooled',     'header': 'NotMetPoolingCriteria', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_pooled',        'header': 'MetPoolingCriteria',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_assessed',      'header': 'Assessed',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_correct',       'header': 'Correct',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_incorrect',     'header': 'Incorrect',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_right',         'header': 'Right',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_wrong',         'header': 'Wrong',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_ignored',       'header': 'Ignored',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'average_precision', 'header': 'AvgPrec',               'format': '6.4f', 'justify': 'R'}]
+    printing_specs = [{'name': 'entity_id',                 'header': 'EntityID',              'format': 's',    'justify': 'L'},
+                      {'name': 'run_id',                    'header': 'RunID',                 'format': 's',    'justify': 'L'},
+                      {'name': 'query_id',                  'header': 'QueryID',               'format': 's',    'justify': 'L'},
+                      {'name': 'num_rel_documents',         'header': 'Relevant',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_rel_documents_counted', 'header': 'RelevantCounted',       'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_submitted',             'header': 'Submitted',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_valid',                 'header': 'Valid',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_invalid',               'header': 'Invalid',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_notpooled',             'header': 'NotMetPoolingCriteria', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_pooled',                'header': 'MetPoolingCriteria',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_assessed',              'header': 'Assessed',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_correct',               'header': 'Correct',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_incorrect',             'header': 'Incorrect',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_right',                 'header': 'Right',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_wrong',                 'header': 'Wrong',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_ignored',               'header': 'Ignored',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'average_precision',         'header': 'AvgPrec',               'format': '6.4f', 'justify': 'R'}]
 
     def __init__(self, logger, separator=None, **kwargs):
         super().__init__(logger, separator=separator, **kwargs)
@@ -78,23 +79,17 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     return r.get('response_rank')
             return 0
 
-        def get_num_ground_truth(assessments, fqec):
-            correct_documents = set()
-            for assessment in assessments.values():
-                if assessment.get('assessment') == 'CORRECT' and assessment.get('fqec') == fqec:
-                    correct_documents.add(assessment.get('docid'))
-            return len(correct_documents)
-
-        def compute_AP(logger, query_id, assessments, responses, cluster_id, fqec):
+        def compute_AP(logger, query_id, num_ground_truth, responses, cluster_id, fqec, TRUNCATE):
             num_responses = 0
             num_correct = 0
             sum_precision = 0
-            num_ground_truth = get_num_ground_truth(assessments, fqec)
             for response in sorted(responses.values(), key=order):
                 if response.get('cluster_id') != cluster_id: continue
                 if response.get('is_pooled') and response.get('valid') and response.get('assessment') is not None:
                     assessment = response.get('assessment').get('assessment')
                     response_fqec = response.get('assessment').get('fqec')
+                    if TRUNCATE and num_responses == TRUNCATE:
+                        break
                     num_responses += 1
                     if assessment == 'CORRECT' and fqec == response_fqec:
                         num_correct += response.get('weight')
@@ -199,6 +194,14 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         categorized_responses = {'PRE_POLICY': {}, 'POST_POLICY': {}}
         categorize_responses(responses, selected_clusters, categorized_responses, ids)
 
+        num_rel_documents = self.get('num_rel_documents', query_id)
+        num_rel_documents_counted = num_rel_documents
+        truncate = False
+        if self.get('cutoff'):
+            truncate = num_documents
+            if num_rel_documents_counted > num_documents:
+                num_rel_documents_counted = num_documents
+
         APs = {}
         for cluster_id in ids['clusters']:
             if cluster_id not in APs:
@@ -206,10 +209,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
             for fqec in ids['equivalence_classes']:
                 APs[cluster_id][fqec] = compute_AP(logger,
                                                    query_id,
-                                                   assessments,
+                                                   num_rel_documents_counted,
                                                    responses,
                                                    cluster_id,
-                                                   fqec)
+                                                   fqec,
+                                                   truncate)
+
         mappings = {}
         for item_type in ['clusters', 'equivalence_classes']:
             mappings[item_type] = {'id_to_index': {}, 'index_to_id': {}}
@@ -235,6 +240,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                             'AP': AP
                         }
                     logger.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
+
         sum_average_precision = 0
         denominator_for_mean = len(ids['equivalence_classes'])
         if denominator_for_mean > num_clusters:
@@ -244,7 +250,8 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         score = sum_average_precision/denominator_for_mean if denominator_for_mean != 0 else 0
 
         counts = {'average_precision': score,
-                  'num_rel_documents': self.get('num_rel_documents', query_id)}
+                  'num_rel_documents': num_rel_documents,
+                  'num_rel_documents_counted': num_rel_documents_counted}
         for field_name in [s.get('name') for s in self.get('printing_specs') if s.get('name').startswith('num_')]:
             counts[field_name] = counts[field_name] if field_name in counts else self.get(field_name, categorized_responses)
         return counts
