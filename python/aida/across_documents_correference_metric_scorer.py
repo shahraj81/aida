@@ -94,6 +94,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if assessment == 'CORRECT' and fqec == response_fqec:
                         num_correct += response.get('weight')
                         sum_precision += num_correct/num_responses
+                    logger.record_event('AP_RANKED_LIST', query_id, num_ground_truth, cluster_id, fqec, num_responses, response.get('mention_span_text'), assessment, response.get('weight'), sum_precision, response.get('where'))
             ap = sum_precision/num_ground_truth if num_ground_truth else 0
             logger.record_event('PAIR_WISE_AP', query_id, cluster_id, fqec, ap)
             return ap
@@ -156,9 +157,9 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 if mention_span_text in selected_justifications:
                     response.set('response_rank', selected_justifications[mention_span_text]['response_rank'])
                     response.set('cluster_rank', selected_justifications[mention_span_text]['cluster_rank'])
-                    ids['clusters'][response.get('cluster_id')] = 1
+                    ids['clusters'].add(response.get('cluster_id'))
                     if pre_policy_assessment == 'CORRECT':
-                        ids['equivalence_classes'][response.get('assessment').get('fqec')] = 1
+                        ids['equivalence_classes'].add(response.get('assessment').get('fqec'))
             for response in responses.values():
                 logger.record_event('RESPONSE_CATEGORIZATION_INFO',
                                     query_id,
@@ -188,8 +189,8 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                                                     APPLY_NORMALIZATION=self.get('normalize'),
                                                     APPLY_WEIGHTS=self.get('weighted'))
         ids = {
-            'clusters': {},
-            'equivalence_classes': {}
+            'clusters': set(),
+            'equivalence_classes': self.get('equivalence_classes', query_id)
             }
         categorized_responses = {'PRE_POLICY': {}, 'POST_POLICY': {}}
         categorize_responses(responses, selected_clusters, categorized_responses, ids)
@@ -258,6 +259,16 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
 
     def get_entity_id(self, query_id):
         return str(self.get('queries_to_score').get(query_id).get('entity_id'))
+
+    def get_equivalence_classes(self, the_query_id):
+        equivalence_classes = set()
+        entity_id = self.get('queries_to_score').get(the_query_id).get('entity_id')
+        for query_id in self.get('queries_to_score'):
+            if self.get('queries_to_score').get(query_id).get('entity_id') == entity_id:
+                for entry in self.get('assessments').get(query_id).values():
+                    if entry.get('assessment') == 'CORRECT':
+                        equivalence_classes.add(entry.get('fqec'))
+        return equivalence_classes
 
     def get_num_rel_documents(self, the_query_id):
         relevant_documents = set()
