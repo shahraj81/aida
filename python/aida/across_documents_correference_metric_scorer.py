@@ -3,6 +3,7 @@ AIDA class for across documents coreference metric scorer.
 
 V1 refers to the variant where we ignore correctness of argument assertion justification.
 """
+from xmlrpc.client import MAXINT
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -75,9 +76,8 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
 
         def order(r):
             if r.get('is_pooled') and r.get('assessment') is not None:
-                if r.get('assessment').get('assessment') == 'CORRECT':
-                    return r.get('response_rank')
-            return 0
+                return r.get('response_rank')
+            return MAXINT
 
         def compute_AP(logger, query_id, num_ground_truth, responses, cluster_id, fqec, TRUNCATE):
             num_responses = 0
