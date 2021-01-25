@@ -323,15 +323,35 @@ The `task3` logs directory contains the following log files:
 
 # Scoring
 
-## Task1 Scoring
+## The Scorer and its Prerequisites
 
-### Prerequisites
-* Python version 3.9.0 or later
+The scorer is located at: `../../python/score_submission.py`. In order to successfully run the scorer you would need the following installed:
+
+* Python version 3.9.0 or later, and
 * Python package `munkres`
+
+### Usage of the Scorer
+
+~~~
+python score_submission.py -h
+usage: score_submission [-h] {task1,task2} ...
+
+Score an AIDA submission
+
+positional arguments:
+  {task1,task2}
+    task1
+    task2
+
+optional arguments:
+  -h, --help     show this help message and exit
+~~~
+
+## Task1 Scoring
 
 ### How to score a Task1 Submission
 
-Task1 evaluation pipeline generates scores for the submission as the final step of the pipeline and placed inside the `task1` output directory specified when invoking the docker. Performers should not need to run the scorer outside of the evaluation pipeline, however, for the sake of completeness, usage of the scoring script, located at: `../../python/score_submission.py`, is given below.
+Task1 evaluation pipeline generates scores for the submission as the final step of the pipeline, and places the scores inside the `task1` output directory specified when invoking the docker. Performers should not need to run the scorer outside of the evaluation pipeline, however, for the sake of completeness, usage of the scoring script is given below.
 
 #### Usage of the Task1 Scorer
 
