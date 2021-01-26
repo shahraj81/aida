@@ -531,25 +531,25 @@ The number of entries in the submission that met the pooling criteria and were a
 #### Column # 12: NtAssd
 The number of entries in the submission that met the pooling criteria but were not assessed. This would be non-zero if and only if the submision being scored was not part of the pool assessed.
 
-#### Column # 12: Crct
+#### Column # 13: Crct
 The number of assessed responses that were correct.
 
-#### Column # 13: Inexct
+#### Column # 14: Inexct
 The number of assessed responses that were inexact.
 
-#### Column # 14: Incrct
+#### Column # 15: Incrct
 The number of assessed responses that were incorrect.
 
-#### Column # 15: Right
+#### Column # 16: Right
 The number of assessed responses that were counted as right for the purpose of computing average precision. The default scoring policy counts `Crct` and `Inexct` responses as `Right`.
 
-#### Column # 16: Wrong
+#### Column # 17: Wrong
 The number of assessed responses that were counted as wrong for the purpose of computing average precision. The default scoring policy counts `Incrct` responses as `Wrong`.
 
-#### Column # 17: Ignored
+#### Column # 18: Ignored
 The number of responses ignored. This count is the sum of `NtMtPlgCrt` and `NtAssd`.
 
-#### Column # 18: AvgPrec
+#### Column # 19: AvgPrec
 The average precision, corresponding to the query, computed as described in the evaluation plan.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
