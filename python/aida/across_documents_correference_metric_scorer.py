@@ -23,23 +23,25 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     AIDA class for across documents coreference metric scorer.
     """
 
-    printing_specs = [{'name': 'entity_id',                 'header': 'EntityID',              'format': 's',    'justify': 'L'},
-                      {'name': 'run_id',                    'header': 'RunID',                 'format': 's',    'justify': 'L'},
-                      {'name': 'query_id',                  'header': 'QueryID',               'format': 's',    'justify': 'L'},
-                      {'name': 'num_rel_documents',         'header': 'Relevant',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_rel_documents_counted', 'header': 'RelevantCounted',       'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_submitted',             'header': 'Submitted',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_valid',                 'header': 'Valid',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_invalid',               'header': 'Invalid',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_notpooled',             'header': 'NotMetPoolingCriteria', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_pooled',                'header': 'MetPoolingCriteria',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_assessed',              'header': 'Assessed',              'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_correct',               'header': 'Correct',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_incorrect',             'header': 'Incorrect',             'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_right',                 'header': 'Right',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_wrong',                 'header': 'Wrong',                 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'num_ignored',               'header': 'Ignored',               'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'average_precision',         'header': 'AvgPrec',               'format': '6.4f', 'justify': 'R'}]
+    printing_specs = [{'name': 'entity_id',                 'header': 'Entity',     'format': 's',    'justify': 'L'},
+                      {'name': 'run_id',                    'header': 'RunID',      'format': 's',    'justify': 'L'},
+                      {'name': 'query_id',                  'header': 'QueryID',    'format': 's',    'justify': 'L'},
+                      {'name': 'num_rel_documents',         'header': 'Rel',        'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_rel_documents_counted', 'header': 'RelCntd',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_submitted',             'header': 'Sub',        'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_valid',                 'header': 'Valid',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_invalid',               'header': 'Invld',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_notpooled',             'header': 'NtMtPlgCrt', 'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_pooled',                'header': 'MtPlgCrt',   'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_assessed',              'header': 'Assd',       'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_notassessed',           'header': 'NtAssd',     'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_correct',               'header': 'Crct',       'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_inexact',               'header': 'Inexct',     'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_incorrect',             'header': 'Incrct',     'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_right',                 'header': 'Right',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_wrong',                 'header': 'Wrong',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'num_ignored',               'header': 'Ignrd',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
+                      {'name': 'average_precision',         'header': 'AvgPrec',    'format': '6.4f', 'justify': 'R'}]
 
     def __init__(self, logger, separator=None, **kwargs):
         super().__init__(logger, separator=separator, **kwargs)
@@ -81,20 +83,20 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
 
         def compute_AP(logger, query_id, num_ground_truth, responses, cluster_id, fqec, TRUNCATE):
             num_responses = 0
-            num_correct = 0
+            num_right = 0
             sum_precision = 0
             for response in sorted(responses.values(), key=order):
                 if response.get('cluster_id') != cluster_id: continue
                 if response.get('is_pooled') and response.get('valid') and response.get('assessment') is not None:
-                    assessment = response.get('assessment').get('assessment')
+                    post_policy_assessment = response.get('categorization').get('POST_POLICY')
                     response_fqec = response.get('assessment').get('fqec')
                     if TRUNCATE and num_responses == TRUNCATE:
                         break
                     num_responses += 1
-                    if assessment == 'CORRECT' and fqec == response_fqec:
-                        num_correct += response.get('weight')
-                        sum_precision += num_correct/num_responses
-                    logger.record_event('AP_RANKED_LIST', query_id, num_ground_truth, cluster_id, fqec, num_responses, response.get('mention_span_text'), assessment, response.get('weight'), sum_precision, response.get('where'))
+                    if post_policy_assessment == 'RIGHT' and fqec == response_fqec:
+                        num_right += response.get('weight')
+                        sum_precision += num_right/num_responses
+                    logger.record_event('AP_RANKED_LIST', query_id, num_ground_truth, cluster_id, fqec, num_responses, response.get('mention_span_text'), post_policy_assessment, response.get('weight'), sum_precision, response.get('where'))
             ap = sum_precision/num_ground_truth if num_ground_truth else 0
             logger.record_event('PAIR_WISE_AP', query_id, cluster_id, fqec, ap)
             return ap
@@ -108,8 +110,18 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         def record_categorized_response(categorized_responses, policy, category_name, response):
             categorized_responses.get(policy).setdefault(category_name, list()).append(response)
             if response.get('categorization') is None:
-                response.set('categorization', {'PRE_POLICY': set(), 'POST_POLICY': set()})
-            response.get('categorization').get(policy).add(category_name)
+                response.set('categorization', {'PRE_POLICY': set(), 'POST_POLICY': None})
+            if policy == 'PRE_POLICY':
+                response.get('categorization').get(policy).add(category_name)
+            else:
+                # ['RIGHT', 'WRONG', 'IGNORE'] are the only allowed values
+                if category_name not in ['RIGHT', 'WRONG', 'IGNORED']:
+                    response.record_event('INVALID_POSTPOLICY_CATEGORIZATION', category_name, response.get('where'))
+                if response.get('categorization').get(policy) is None:
+                    response.get('categorization')['POST_POLICY'] = category_name
+                # Overwriting POST_POLICY assessment with a different value is not allowed
+                elif response.get('categorization').get(policy) != category_name:
+                    response.record_event('OVERWRITING_POSTPOLICY_CATEGORIZATION', response.get('categorization').get(policy), category_name, response.get('where'))
 
         def categorize_responses(responses, selected_clusters, categorized_responses, ids):
             if responses is None: return
@@ -141,11 +153,12 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
                     continue
                 mention_span_text = response.get('mention_span_text')
+
                 pre_policy_assessment = None
                 if mention_span_text in assessments:
                     response.set('assessment', assessments.get(mention_span_text))
                     pre_policy_assessment = assessments.get(mention_span_text).get('assessment')
-                    post_policy_assessment = 'RIGHT' if pre_policy_assessment == 'CORRECT' else 'WRONG'
+                    post_policy_assessment = 'RIGHT' if pre_policy_assessment in ['CORRECT', 'INEXACT'] else 'WRONG'
                     record_categorized_response(categorized_responses, 'PRE_POLICY', pre_policy_assessment, response)
                     record_categorized_response(categorized_responses, 'POST_POLICY', post_policy_assessment, response)
                 else:
@@ -158,7 +171,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     response.set('response_rank', selected_justifications[mention_span_text]['response_rank'])
                     response.set('cluster_rank', selected_justifications[mention_span_text]['cluster_rank'])
                     ids['clusters'].add(response.get('cluster_id'))
-                    if pre_policy_assessment == 'CORRECT':
+                    if post_policy_assessment == 'RIGHT':
                         ids['equivalence_classes'].add(response.get('assessment').get('fqec'))
             for response in responses.values():
                 logger.record_event('RESPONSE_CATEGORIZATION_INFO',
@@ -266,7 +279,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         for query_id in self.get('queries_to_score'):
             if self.get('queries_to_score').get(query_id).get('entity_id') == entity_id:
                 for entry in self.get('assessments').get(query_id).values():
-                    if entry.get('assessment') == 'CORRECT':
+                    if entry.get('assessment') in ['CORRECT', 'INEXACT']:
                         equivalence_classes.add(entry.get('fqec'))
         return equivalence_classes
 
@@ -276,7 +289,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         for query_id in self.get('queries_to_score'):
             if self.get('queries_to_score').get(query_id).get('entity_id') == entity_id:
                 for entry in self.get('assessments').get(query_id).values():
-                    if entry.get('assessment') == 'CORRECT':
+                    if entry.get('assessment') in ['CORRECT', 'INEXACT']:
                         relevant_documents.add(entry.get('docid'))
         return len(relevant_documents)
 
@@ -287,6 +300,11 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
 
     def get_num_valid(self, cr):
         key = 'VALID'
+        policy = 'PRE_POLICY'
+        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+
+    def get_num_inexact(self, cr):
+        key = 'INEXACT'
         policy = 'PRE_POLICY'
         return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
 

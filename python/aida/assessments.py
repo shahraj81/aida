@@ -53,7 +53,7 @@ class Assessments(Container):
         return True
 
     def normalize(self, key, value):
-        normalize = {'correct': 'CORRECT', 'wrong': 'INCORRECT', 'yes': 'YES', 'no': 'NO'}
+        normalize = {'correct': 'CORRECT', 'wrong': 'INCORRECT', 'inexact': 'INEXACT', 'yes': 'YES', 'no': 'NO'}
         keys_to_normalize = ['assessment', 'object_linkability', 'predicate_justification_correctness']
         value = normalize[value] if key in keys_to_normalize and value in normalize else value
         return value
