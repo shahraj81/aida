@@ -423,6 +423,135 @@ This file reports Temportal Metric scores for each document computed (as describ
 
 Using the alignment of system clusters and gold clusters from CEAF, this file reports for each document: Type Precision, Type Recall, and Type F1 on the types for each pair of aligned system and gold clusters; unaligned system clusters and gold clusters each have F1=0. For the final score, NIST will report Macro-Averaged Type F1, which is the mean F1 over the unaligned clusters and the pairs of aligned clusters.
 
+## Task2 Scoring
+
+### How to score a Task2 Submission
+
+Since Task2 scores are based on manual assessments of submissions, the scores cannot be generated as part of the AIDA evaluation pipeline. The Task2 evaluation pipeline only applies SPARQL queries to the KB, and validates the SPARQL output.
+
+In order to generate a Task2 score, you would need to run the scorer whose usage is described below.
+
+#### Usage of the Task2 Scorer
+
+~~~
+python score_submission.py task2 -h
+usage: score_submission task2 [-h] [-l LOG] [-v] [-C] [-N] [-S {pretty,tab,space}] [-W]
+                              log_specifications ontology_types slots encodings core_documents parent_children sentence_boundaries image_boundaries keyframe_boundaries
+                              video_boundaries queries_to_score assessments responses runid scores
+
+Class representing Task2 scorer.
+
+positional arguments:
+  log_specifications    File containing error specifications
+  ontology_types        File containing all types in the ontology
+  slots                 File containing slot mappings
+  encodings             File containing list of encoding-to-modality mappings
+  core_documents        File containing list of core documents
+  parent_children       File containing parent-to-child document ID mappings
+  sentence_boundaries   File containing sentence boundaries
+  image_boundaries      File containing image bounding boxes
+  keyframe_boundaries   File containing keyframe bounding boxes
+  video_boundaries      File containing length of videos
+  queries_to_score      File containing list of queryids to be scored
+  assessments           Directory containing assessments
+  responses             Directory containing system responses
+  runid                 ID of the system being scored
+  scores                Directory to which the scores should be written
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l LOG, --log LOG     Specify a file to which log output should be redirected (default: log.txt)
+  -v, --version         Print version number and exit
+  -C, --cutoff          Apply cutoff?
+  -N, --normalize       Normalize confidences?
+  -S {pretty,tab,space}, --separator {pretty,tab,space}
+                        Column separator for scorer output? (default: pretty)
+  -W, --weighted        Use weighted Value for AP computation?
+~~~
+
+Note that:
+
+* The argument `responses` should point to `SPARQL-VALID-output` as produced by the AIDA evaluation docker,
+* In order to produce official scores use the following optional arguments: `--cutoff`
+
+### Understanding the Task2 Scores
+
+Task2 scorer produces a number of counts in addition to average precision for each query. This section describes all the counts whereas the description of computation of average precision can be found in the evaluation plan.
+
+#### Column # 1: Entity
+
+ID given to the real world entity at the time of selecting entities for evaluation.
+
+#### Column # 2: RunID
+
+The name of the submission.
+
+#### Column # 3: QueryID
+
+The identifier of the query.
+
+#### Column # 4: Rel
+
+The number of documents containing mention of the `Entity`.
+
+#### Column # 5: RelCntd
+
+##### When the switch `--cutoff` is used:
+`RelCntd` is the:
+* number of relevant documents used in the denominator for computing average precision, and
+* rank beyond which the ranked list of responses (for each cluster) is truncated.
+
+##### When the switch `--cutoff` is NOT used:
+`RelCntd` is the same as `Rel`.
+
+#### Column # 6: Sub
+The number of entries in the validated SPARQL output. This count can be thought of as distinct (cluster, document) in the validated SPARQL output.
+
+#### Column # 7: Valid
+The number of valid entries in the validated SPARQL output. This count should be the same as `Sub`.
+
+#### Column # 8: Invld
+The number of invalid entries in the validated SPARQL output. These values should be all zeros, any non-zero value indicates a problem in the AIDA evaluation pipeline or its execution.
+
+#### Column # 9: NtMtPlgCrt
+The number of entries in the submission that didn't meet the pooling criteria.
+
+#### Column # 10: MtPlgCrt
+The number of entries in the submission that met the pooling criteria.
+
+#### Column # 11: Assd
+The number of entries in the submission that met the pooling criteria and were assessed.
+
+##### If the system was included in the pool:
+  `MtPlgCrt` should be the same as `Assd`
+
+##### If the system was NOT included in the pool:
+  `NtMtPlgCrt` could be greater can `Assd`
+
+#### Column # 12: NtAssd
+The number of entries in the submission that met the pooling criteria but were not assessed. This would be non-zero if and only if the submision being scored was not part of the pool assessed.
+
+#### Column # 12: Crct
+The number of assessed responses that were correct.
+
+#### Column # 13: Inexct
+The number of assessed responses that were inexact.
+
+#### Column # 14: Incrct
+The number of assessed responses that were incorrect.
+
+#### Column # 15: Right
+The number of assessed responses that were counted as right for the purpose of computing average precision. The default scoring policy counts `Crct` and `Inexct` responses as `Right`.
+
+#### Column # 16: Wrong
+The number of assessed responses that were counted as wrong for the purpose of computing average precision. The default scoring policy counts `Incrct` responses as `Wrong`.
+
+#### Column # 17: Ignored
+The number of responses ignored. This count is the sum of `NtMtPlgCrt` and `NtAssd`.
+
+#### Column # 18: AvgPrec
+The average precision, corresponding to the query, computed as described in the evaluation plan.
+
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
