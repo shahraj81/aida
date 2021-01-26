@@ -174,6 +174,7 @@ class Task2(Object):
                  queries_to_score,
                  assessments,
                  responses,
+                 '{}/SPARQL-VALID-output'.format(responses)
                  ])
         check_for_paths_non_existance([scores])
         self.log_filename = log
@@ -194,7 +195,7 @@ class Task2(Object):
         self.video_boundaries = video_boundaries
         self.queries_to_score = queries_to_score
         self.assessments = assessments
-        self.responses = responses
+        self.responses = '{}/SPARQL-VALID-output'.format(responses)
         self.scores = scores
         self.logger = Logger(self.get('log_filename'),
                         self.get('log_specifications'),
@@ -255,9 +256,9 @@ class Task2(Object):
         parser.add_argument('image_boundaries', type=str, help='File containing image bounding boxes')
         parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
         parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
-        parser.add_argument('queries_to_score', type=str, help='File containing list of queryids to be scored.')
+        parser.add_argument('queries_to_score', type=str, help='File containing list of queryids to be scored')
         parser.add_argument('assessments', type=str, help='Directory containing assessments')
-        parser.add_argument('responses', type=str, help='Directory containing system responses')
+        parser.add_argument('responses', type=str, help='Directory containing output of AIDA evaluation docker')
         parser.add_argument('runid', type=str, help='ID of the system being scored')
         parser.add_argument('scores', type=str, help='Directory to which the scores should be written')
         parser.set_defaults(myclass=myclass)
