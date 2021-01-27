@@ -77,7 +77,8 @@ class Handle(Object):
                                               entry.get('where'))
                             line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
                         else:
-                            self.record_event('DEFAULT_INFO', "handle \'{}\' found to be missing but no replacements made".format(handle_text), entry.get('where'))
+                            entry.set('?objectc_handle', entry.get('?oinf_j_span'))
+                            self.record_event('DEFAULT_INFO', "handle \'{}\' found to be missing but no text found; replacing with object informative justification span {}".format(handle_text, entry.get('?oinf_j_span')), entry.get('where'))
                     elif len(handle_text.split(':')) == 3:
                         handle_span = handle_text
                         pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
@@ -126,8 +127,11 @@ class Handle(Object):
 
         pattern = re.compile('^<SEG id=".*?" start_char="(\d+)" end_char="(\d+)">$')
         span_text = None
-        with open('{ltf}/{doceid}.ltf.xml'.format(ltf=self.get('ltf_directory'),
-                                                  doceid=document_element_id), encoding='utf-8') as doc_text:
+        xml_filename = '{ltf}/{doceid}.ltf.xml'.format(ltf=self.get('ltf_directory'),
+                                                       doceid=document_element_id)
+        if not os.path.isfile(xml_filename):
+            return span_text
+        with open(xml_filename, encoding='utf-8') as doc_text:
             lines = doc_text.readlines()
             found = False
             segment_start = None
