@@ -78,6 +78,7 @@ class Handle(Object):
                             line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
                         else:
                             entry.set('?objectc_handle', entry.get('?oinf_j_span'))
+                            line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
                             self.record_event('DEFAULT_INFO', "handle \'{}\' found to be missing but no text found; replacing with object informative justification span {}".format(handle_text, entry.get('?oinf_j_span')), entry.get('where'))
                     elif len(handle_text.split(':')) == 3:
                         handle_span = handle_text
