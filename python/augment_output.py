@@ -118,6 +118,7 @@ class Handle(Object):
             input_file = '{i}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(i=directory)
             output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
             self.augment_file(input_file, output_file)
+        self.record_event('DEFAULT_INFO', 'Done.')
 
     def get_handle_text(self, document_span):
         pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
@@ -229,6 +230,7 @@ class Merge(Object):
             input_file = '{i}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(i=directory)
             output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
             self.merge_files([input_file], output_file)
+        self.record_event('DEFAULT_INFO', 'Done.')
 
     def __call__(self):
         method_name = 'merge_{task}_sparql_output'.format(task=self.get('task'))
