@@ -526,7 +526,7 @@ Assd is the number of entries in the submission over which AP is computed.
 Assd is the number of entries in the submission that were assessed and that met the pooling criteria (where the pooling criteria is applied only to assessed entries). We recommend to always use the switch `--cutoff` when running the scorer.
 
 ##### If the system was included in the pool:
-`MtPlgCrt` should be the same as `Assd`
+`MtPlgCrt` should be the same as `Assd`.
 
 ##### If the system was NOT included in the pool:
 `MtPlgCrt` could be greater can `Assd` because `MtPlgCrt` is the number of entries (both assessed and unassessed) in the submission that met the pooling condition.
