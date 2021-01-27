@@ -520,13 +520,16 @@ The number of entries in the submission that didn't meet the pooling criteria.
 The number of entries in the submission that met the pooling criteria.
 
 #### Column # 11: Assd
-The number of entries in the submission that met the pooling criteria and were assessed.
+Assd is the number of entries in the submission over which AP is computed.
+
+##### When the switch `--cutoff` is used:
+Assd is the number of entries in the submission that were assessed and that met the pooling criteria (where the pooling criteria is applied only to assessed entries). We recommend to always use the switch `--cutoff` when running the scorer.
 
 ##### If the system was included in the pool:
-  `MtPlgCrt` should be the same as `Assd`
+`MtPlgCrt` should be the same as `Assd`
 
 ##### If the system was NOT included in the pool:
-  `NtMtPlgCrt` could be greater can `Assd`
+`MtPlgCrt` could be greater can `Assd` because `MtPlgCrt` is the number of entries (both assessed and unassessed) in the submission that met the pooling condition.
 
 #### Column # 12: NtAssd
 The number of entries in the submission that met the pooling criteria but were not assessed. This would be non-zero if and only if the submision being scored was not part of the pool assessed.
