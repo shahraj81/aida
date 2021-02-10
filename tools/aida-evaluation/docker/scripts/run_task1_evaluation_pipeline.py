@@ -276,6 +276,7 @@ def generate_results_file_and_exit(logger, logs_directory):
 
     fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
+    scores['RunID'] = args.run
     scores['Total'] = scores['FrameMetric_F1']
     scores['Errors'] = num_problems
     scores['ErrorStats'] = problem_stats
