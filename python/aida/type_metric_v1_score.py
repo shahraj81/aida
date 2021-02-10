@@ -8,7 +8,7 @@ __date__    = "18 August 2020"
 
 from aida.score import Score
 
-class TypeMetricScore(Score):
+class TypeMetricScoreV1(Score):
     """
     AIDA class for type metric score.
     """

@@ -8,10 +8,10 @@ __date__    = "18 August 2020"
 
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
-from aida.type_metric_score import TypeMetricScore
+from aida.type_metric_v1_score import TypeMetricScoreV1
 from aida.utility import get_precision_recall_and_f1, get_augmented_types_utility, multisort
 
-class TypeMetricScorer(Scorer):
+class TypeMetricScorerV1(Scorer):
     """
     AIDA class for class query scores.
     """
@@ -70,16 +70,16 @@ class TypeMetricScorer(Scorer):
                         system_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
                     augmented_gold_types = self.get('augmented_types', document_id, gold_types)
                     augmented_system_types = self.get('augmented_types', document_id, system_types)
-                    self.record_event('TEMPORAL_METRIC_SCORE_INFO', 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(gold_types), system_cluster_id, ','.join(system_types))
-                    self.record_event('TEMPORAL_METRIC_SCORE_INFO', 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(augmented_gold_types), system_cluster_id, ','.join(augmented_system_types))
+                    self.record_event('TYPE_METRIC_SCORE_INFO', 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(gold_types), system_cluster_id, ','.join(system_types))
+                    self.record_event('TYPE_METRIC_SCORE_INFO', 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(augmented_gold_types), system_cluster_id, ','.join(augmented_system_types))
                     precision, recall, f1 = get_precision_recall_and_f1(augmented_gold_types, augmented_system_types)
                 for metatype_key in ['ALL', metatype]:
                     for language_key in ['ALL', language]:
                         key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
                         mean_f1s[key] = mean_f1s.get(key, 0) + f1
                         counts[key] = counts.get(key, 0) + 1
-                score = TypeMetricScore(self.logger,
-                                        self.get('runid'),
+                score = TypeMetricScoreV1(self.logger,
+                                        self.get('run_id'),
                                         document_id,
                                         language,
                                         metatype,
@@ -105,8 +105,8 @@ class TypeMetricScorer(Scorer):
                                 key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
                                 mean_f1s[key] = mean_f1s.get(key, 0) + f1
                                 counts[key] = counts.get(key, 0) + 1
-                        score = TypeMetricScore(self.logger,
-                                                self.get('runid'),
+                        score = TypeMetricScoreV1(self.logger,
+                                                self.get('run_id'),
                                                 document_id,
                                                 language,
                                                 metatype,
@@ -128,8 +128,8 @@ class TypeMetricScorer(Scorer):
         for key in sorted(mean_f1s, key=self.order):
             mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
             language, metatype = key.split(':')
-            mean_score = TypeMetricScore(self.logger,
-                                       self.get('runid'),
+            mean_score = TypeMetricScoreV1(self.logger,
+                                       self.get('run_id'),
                                        'Summary',
                                        language,
                                        metatype,

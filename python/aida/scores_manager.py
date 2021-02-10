@@ -6,8 +6,6 @@ __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "3 February 2020"
 
-# TODO: to be retired
-
 from aida.object import Object
 from aida.container import Container
 
@@ -17,7 +15,9 @@ from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
 from aida.frame_metric_scorer import FrameMetricScorer
 from aida.temporal_metric_scorer import TemporalMetricScorer
-from aida.type_metric_scorer import TypeMetricScorer
+from aida.type_metric_v1_scorer import TypeMetricScorerV1
+from aida.type_metric_v2_scorer import TypeMetricScorerV2
+from aida.type_metric_v3_scorer import TypeMetricScorerV3
 
 import os
 
@@ -33,7 +33,9 @@ class ScoresManager(Object):
             'CoreferenceMetric': CoreferenceMetricScorer,
             'FrameMetric': FrameMetricScorer,
             'TemporalMetric': TemporalMetricScorer,
-            'TypeMetric': TypeMetricScorer,
+            'TypeMetricV1': TypeMetricScorerV1,
+            'TypeMetricV2': TypeMetricScorerV2,
+            'TypeMetricV3': TypeMetricScorerV3,
             },
         'task2': {
             'AcrossDocumentsCoreferenceMetric': AcrossDocumentsCoreferenceMetricScorer

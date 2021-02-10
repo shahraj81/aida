@@ -43,15 +43,19 @@ class Cluster(Object):
         For all the types asserted for the cluster, return a union
         of corresponding expanded types.
         """
-        types = []
-        for cluster_type in self.get('types'):
+        types = {}
+        for entry in self.get('entries').values():
+            cluster_type = entry.get('?type')
             expanded_types = get_expanded_types(self.get('metatype'), cluster_type)
-            types.extend(expanded_types)
-        return list({cluster_type:1 for cluster_type in types}.keys())
+            for expanded_type in expanded_types:
+                if expanded_type not in types:
+                    types[expanded_type] = []
+                types.get(expanded_type).append(entry)
+        return types
 
     def add(self, entry):
         self.add_metatype(entry.get('?metatype'), entry.get('where'))
-        self.add_type(entry.get('?type'))
+        self.add_type(entry)
         self.add_mention(entry.get('?mention_span'),
                          trim_cv(entry.get('?type_statement_confidence')),
                          trim_cv(entry.get('?cluster_membership_confidence')),
@@ -65,8 +69,12 @@ class Cluster(Object):
         if metatype != self.get('metatype'):
             self.get('logger').record_event('MULTIPLE_METATYPES', metatype, self.get('metatype'), self.get('ID'), where)
 
-    def add_type(self, cluster_type):
-        self.get('types').add(cluster_type, cluster_type)
+    def add_type(self, entry):
+        cluster_type = entry.get('?type')
+        if cluster_type not in self.get('types'):
+            self.get('types').add(key=cluster_type, value=[entry])
+        else:
+            self.get('types').get(cluster_type).append(entry)
 
     def add_mention(self, span_string, t_cv, cm_cv, j_cv, where):
         logger = self.get('logger')
