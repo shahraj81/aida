@@ -120,6 +120,7 @@ class Task1(Object):
         cluster_alignment = ClusterAlignment(logger, self.get('alignment'))
         cluster_self_similarities = ClusterSelfSimilarities(logger, self.get('similarities'))
         arguments = {
+            'run_id': self.get('runid'),
             'annotated_regions': annotated_regions,
             'gold_responses': gold_responses,
             'system_responses': system_responses,

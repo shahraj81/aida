@@ -82,7 +82,7 @@ class CoreferenceMetricScorer(Scorer):
                 recall = max_total_similarity / total_self_similarity_gold
                 f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
                 score = CoreferenceMetricScore(self.logger,
-                                       self.get('runid'),
+                                       self.get('run_id'),
                                        document_id,
                                        language,
                                        metatype_key,
@@ -104,7 +104,7 @@ class CoreferenceMetricScorer(Scorer):
             mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
             language, metatype = key.split(':')
             mean_score = CoreferenceMetricScore(self.logger,
-                                                self.get('runid'),
+                                                self.get('run_id'),
                                                 'Summary',
                                                 language,
                                                 metatype,

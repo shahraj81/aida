@@ -54,6 +54,7 @@ class ScoresManager(Object):
         if self.get('task') == 'task1':
             for metric in self.get('metrics'):
                 scorer = self.get('metrics')[metric](logger=self.get('logger'),
+                                                     run_id=self.get('run_id'),
                                                      annotated_regions=self.get('annotated_regions'),
                                                      gold_responses=self.get('gold_responses'),
                                                      system_responses=self.get('system_responses'),
