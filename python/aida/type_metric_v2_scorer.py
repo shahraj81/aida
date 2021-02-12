@@ -43,6 +43,7 @@ class TypeMetricScorerV2(Scorer):
                 }
             type_weights.append(type_weight)
 
+        num_ground_truth = len(entity_types.get('gold'))
         rank = 0
         num_correct = 0
         sum_precision = 0.0
@@ -54,9 +55,9 @@ class TypeMetricScorerV2(Scorer):
                 label = 'RIGHT'
                 num_correct += self.get('relevance_weight', type_weight.get('weight'))
                 sum_precision += (num_correct/rank)
-            self.record_event('TYPE_METRIC_AP_RANKED_LIST', self.__class__.__name__, document_id, gold_cluster_id, system_cluster_id, rank, type_weight.get('type'), label, type_weight.get('weight'), num_correct, sum_precision)
+            self.record_event('TYPE_METRIC_AP_RANKED_LIST', self.__class__.__name__, document_id, gold_cluster_id, system_cluster_id, num_ground_truth, rank, type_weight.get('type'), label, type_weight.get('weight'), num_correct, sum_precision)
 
-        average_precision = sum_precision/len(entity_types.get('gold')) if len(entity_types.get('gold')) else 0
+        average_precision = (sum_precision/num_ground_truth) if num_ground_truth else 0
         return average_precision
 
     def get_augmented_types(self, document_id, types):
