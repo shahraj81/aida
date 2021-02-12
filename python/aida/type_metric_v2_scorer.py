@@ -33,7 +33,7 @@ class TypeMetricScorerV2(Scorer):
         language = '_ALL' if language == 'ALL' else language
         return '{language}:{metatype}'.format(metatype=metatype, language=language)
 
-    def get_average_precision(self, augmented_gold_types, augmented_system_types):
+    def get_average_precision(self, gold_cluster_id, augmented_gold_types, system_cluster_id, augmented_system_types):
         entity_types = {'gold': augmented_gold_types, 'system': augmented_system_types}
         type_weights = list()
         for entity_type in entity_types.get('system'):
@@ -54,7 +54,7 @@ class TypeMetricScorerV2(Scorer):
                 label = 'RIGHT'
                 num_correct += self.get('relevance_weight', type_weight.get('weight'))
                 sum_precision += (num_correct/rank)
-            self.record_event('TYPE_METRIC_AP_RANKED_LIST', self.__class__.__name__, rank, type_weight.get('type'), label, type_weight.get('weight'), num_correct, sum_precision)
+            self.record_event('TYPE_METRIC_AP_RANKED_LIST', self.__class__.__name__, gold_cluster_id, system_cluster_id, rank, type_weight.get('type'), label, type_weight.get('weight'), num_correct, sum_precision)
 
         average_precision = sum_precision/len(entity_types.get('gold')) if len(entity_types.get('gold')) else 0
         return average_precision
@@ -112,7 +112,7 @@ class TypeMetricScorerV2(Scorer):
                     augmented_system_types = self.get('augmented_types', document_id, system_types)
                     self.record_event('TYPE_METRIC_SCORE_INFO', 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(gold_types), system_cluster_id, ','.join(system_types))
                     self.record_event('TYPE_METRIC_SCORE_INFO', 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(augmented_gold_types), system_cluster_id, ','.join(augmented_system_types))
-                    average_precision = self.get('average_precision', augmented_gold_types, augmented_system_types)
+                    average_precision = self.get('average_precision', gold_cluster_id, augmented_gold_types, system_cluster_id, augmented_system_types)
                 for metatype_key in ['ALL', metatype]:
                     for language_key in ['ALL', language]:
                         key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
