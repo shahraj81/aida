@@ -1,5 +1,5 @@
 """
-AIDA class for type metric scores.
+Class for variant # 2 of the type metric scores.
 """
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -13,9 +13,13 @@ from aida.utility import get_augmented_type, multisort
 
 class TypeMetricScorerV2(Scorer):
     """
-    AIDA class for class query scores.
+    Class for variant # 2 of the type metric scores.
+
+    This variant of the scorer ranks the types asserted on the cluster, and computes AP where:
+        * ranking is induced using weights on types, and
+        * the weights on a type is the number of mention-spans asserting that type.
     """
-    
+
     printing_specs = [{'name': 'document_id',      'header': 'DocID',           'format': 's',    'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',           'format': 's',    'justify': 'L'},
                       {'name': 'language',         'header': 'Language',        'format': 's',    'justify': 'L'},

@@ -1,5 +1,5 @@
 """
-AIDA class for type metric scores.
+Class for variant # 1 of the type metric scores.
 """
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -13,9 +13,12 @@ from aida.utility import get_precision_recall_and_f1, get_augmented_types_utilit
 
 class TypeMetricScorerV1(Scorer):
     """
-    AIDA class for class query scores.
+    Class for variant # 1 of the type metric scores.
+
+    This variant of the scorer considers all types asserted on the cluster as a set, and uses this set to compute
+    precision, recall and F1.
     """
-    
+
     printing_specs = [{'name': 'document_id',      'header': 'DocID',           'format': 's',    'justify': 'L'},
                       {'name': 'run_id',           'header': 'RunID',           'format': 's',    'justify': 'L'},
                       {'name': 'language',         'header': 'Language',        'format': 's',    'justify': 'L'},

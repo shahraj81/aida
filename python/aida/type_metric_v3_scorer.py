@@ -1,5 +1,5 @@
 """
-AIDA class for type metric scores.
+Class for variant # 3 of the type metric scores.
 """
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -11,7 +11,11 @@ from aida.utility import trim_cv
 
 class TypeMetricScorerV3(TypeMetricScorerV2):
     """
-    AIDA class for class query scores.
+    Class for variant # 3 of the type metric scores.
+
+    This variant of the scorer ranks the types asserted on the cluster, and computes AP where:
+        * ranking is induced using weights on types, and
+        * the weight on a type is computed as max over the aggregate confidences on mentions asserting that type.
     """
 
     def __init__(self, logger, separator=None, **kwargs):
