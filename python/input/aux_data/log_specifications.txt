@@ -67,7 +67,7 @@ INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textVal
 WARNING   SPAN_OFF_BOUNDARY_CORRECTED     Correcting span '{}' to '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     SPAN_OFF_BOUNDARY_ERROR         Cannot correct therefore removing span '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
-INFO      TYPE_METRIC_SCORE_INFO          {} DOCUMENT:{} GOLD_CLUSTER:{} TYPES:{} SYSTEM_CLUSTER:{} TYPES:{}
+INFO      TYPE_METRIC_SCORE_INFO          {} {} DOCUMENT:{} GOLD_CLUSTER:{} TYPES:{} SYSTEM_CLUSTER:{} TYPES:{}
 INFO      ANNOTATED_TYPES_INFO            ANNOTATED_TYPES_INFO: DOCUMENT: {} TYPES_ANNOTATED: {}
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
