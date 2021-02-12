@@ -17,9 +17,6 @@ class TypeMetricScorerV3(TypeMetricScorerV2):
     def __init__(self, logger, separator=None, **kwargs):
         super().__init__(logger, separator=separator, **kwargs)
 
-    def get_relevance_weight(self, type_weight):
-        return type_weight
-
     def get_aggregate_confidence(self, entry):
         field_names = ['type_statement_confidence', 'cluster_membership_confidence', 'mention_type_justification_confidence'] 
         confidence = 1.0
