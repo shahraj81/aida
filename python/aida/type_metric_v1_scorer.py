@@ -70,8 +70,8 @@ class TypeMetricScorerV1(Scorer):
                         system_types = set(self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types'))
                     augmented_gold_types = self.get('augmented_types', document_id, gold_types)
                     augmented_system_types = self.get('augmented_types', document_id, system_types)
-                    self.record_event('TYPE_METRIC_SCORE_INFO', 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(gold_types), system_cluster_id, ','.join(system_types))
-                    self.record_event('TYPE_METRIC_SCORE_INFO', 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(augmented_gold_types), system_cluster_id, ','.join(augmented_system_types))
+                    self.record_event('TYPE_METRIC_SCORE_INFO', self.__class__.__name__, 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(gold_types), system_cluster_id, ','.join(system_types))
+                    self.record_event('TYPE_METRIC_SCORE_INFO', self.__class__.__name__, 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(augmented_gold_types), system_cluster_id, ','.join(augmented_system_types))
                     precision, recall, f1 = get_precision_recall_and_f1(augmented_gold_types, augmented_system_types)
                 for metatype_key in ['ALL', metatype]:
                     for language_key in ['ALL', language]:
