@@ -152,7 +152,7 @@ class ArgumentMetricScorerV1(Scorer):
                     aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
                     mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
                     counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
-                score = ArgumentMetricScore(self.logger, self.get('runid'), document_id, language, metatype_key,
+                score = ArgumentMetricScore(self.logger, self.get('run_id'), document_id, language, metatype_key,
                                      precision, recall, f1)
                 scores.append(score)
 
@@ -164,7 +164,7 @@ class ArgumentMetricScorerV1(Scorer):
         for key in sorted(mean_f1s, key=self.order):
             mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
             language, metatype = key.split(':')
-            mean_score = ArgumentMetricScore(self.logger, self.get('runid'), 'Summary', language, metatype, '', '', mean_f1, summary = True)
+            mean_score = ArgumentMetricScore(self.logger, self.get('run_id'), 'Summary', language, metatype, '', '', mean_f1, summary = True)
             scores_printer.add(mean_score)
 
         self.scores = scores_printer

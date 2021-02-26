@@ -123,24 +123,64 @@ def generate_results_file_and_exit(logger, logs_directory):
           TemporalMetric-scores.txt    TemporalMetric_SPA_Relations_S      Language:SPA,Metatype:Relation Similarity
 
         # ---
-        # TypeMetric
+        # TypeMetricV1
         #
-          TypeMetric-scores.txt        TypeMetric_F1                       Language:ALL,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_F1                       Language:ALL,Metatype:ALL      F1
 
-          TypeMetric-scores.txt        TypeMetric_Events_F1                Language:ALL,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_Entities_F1              Language:ALL,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_Events_F1                Language:ALL,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_Entities_F1              Language:ALL,Metatype:Entity   F1
 
-          TypeMetric-scores.txt        TypeMetric_ENG_F1                   Language:ENG,Metatype:ALL      F1
-          TypeMetric-scores.txt        TypeMetric_ENG_Events_F1            Language:ENG,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_ENG_Entities_F1          Language:ENG,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_ENG_F1                   Language:ENG,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_ENG_Events_F1            Language:ENG,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_ENG_Entities_F1          Language:ENG,Metatype:Entity   F1
 
-          TypeMetric-scores.txt        TypeMetric_RUS_F1                   Language:RUS,Metatype:ALL      F1
-          TypeMetric-scores.txt        TypeMetric_RUS_Events_F1            Language:RUS,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_RUS_Entities_F1          Language:RUS,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_RUS_F1                   Language:RUS,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_RUS_Events_F1            Language:RUS,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_RUS_Entities_F1          Language:RUS,Metatype:Entity   F1
 
-          TypeMetric-scores.txt        TypeMetric_SPA_F1                   Language:SPA,Metatype:ALL      F1
-          TypeMetric-scores.txt        TypeMetric_SPA_Events_F1            Language:SPA,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_SPA_Entities_F1          Language:SPA,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_SPA_F1                   Language:SPA,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_SPA_Events_F1            Language:SPA,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_SPA_Entities_F1          Language:SPA,Metatype:Entity   F1
+
+        # ---
+        # TypeMetricV2
+        #
+          TypeMetricV2-scores.txt        TypeMetricV2_MAP                       Language:ALL,Metatype:ALL      AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_Events_MAP                Language:ALL,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_Entities_MAP              Language:ALL,Metatype:Entity   AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_ENG_MAP                   Language:ENG,Metatype:ALL      AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_ENG_Events_MAP            Language:ENG,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_ENG_Entities_MAP          Language:ENG,Metatype:Entity   AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_RUS_MAP                   Language:RUS,Metatype:ALL      AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_RUS_Events_MAP            Language:RUS,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_RUS_Entities_MAP          Language:RUS,Metatype:Entity   AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_SPA_MAP                   Language:SPA,Metatype:ALL      AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_SPA_Events_MAP            Language:SPA,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_SPA_Entities_MAP          Language:SPA,Metatype:Entity   AvgPrec
+
+        # ---
+        # TypeMetricV3
+        #
+          TypeMetricV3-scores.txt        TypeMetricV3_MAP                       Language:ALL,Metatype:ALL      AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_Events_MAP                Language:ALL,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_Entities_MAP              Language:ALL,Metatype:Entity   AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_ENG_MAP                   Language:ENG,Metatype:ALL      AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_ENG_Events_MAP            Language:ENG,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_ENG_Entities_MAP          Language:ENG,Metatype:Entity   AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_RUS_MAP                   Language:RUS,Metatype:ALL      AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_RUS_Events_MAP            Language:RUS,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_RUS_Entities_MAP          Language:RUS,Metatype:Entity   AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_SPA_MAP                   Language:SPA,Metatype:ALL      AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_SPA_Events_MAP            Language:SPA,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_SPA_Entities_MAP          Language:SPA,Metatype:Entity   AvgPrec
 
         # ---
         # FrameMetric
@@ -236,6 +276,7 @@ def generate_results_file_and_exit(logger, logs_directory):
 
     fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
+    scores['RunID'] = args.run
     scores['Total'] = scores['FrameMetric_F1']
     scores['Errors'] = num_problems
     scores['ErrorStats'] = problem_stats

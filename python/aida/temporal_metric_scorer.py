@@ -134,13 +134,13 @@ class TemporalMetricScorer(Scorer):
                         mean_similarities[key] = mean_similarities.get(key, 0) + similarity
                         counts[key] = counts.get(key, 0) + 1
                 score = TemporalMetricScore(self.logger,
-                                           self.get('runid'),
-                                           document_id,
-                                           language,
-                                           metatype,
-                                           gold_cluster_id,
-                                           system_cluster_id,
-                                           similarity)
+                                            self.get('run_id'),
+                                            document_id,
+                                            language,
+                                            metatype,
+                                            gold_cluster_id,
+                                            system_cluster_id,
+                                            similarity)
                 scores.append(score)
 
         scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
@@ -153,13 +153,13 @@ class TemporalMetricScorer(Scorer):
             mean_similarity = mean_similarities[key] / counts[key] if counts[key] else 0
             language, metatype = key.split(':')
             mean_score = TemporalMetricScore(self.logger,
-                                            self.get('runid'),
-                                            'Summary',
-                                            language,
-                                            metatype,
-                                            '',
-                                            '',
-                                            mean_similarity,
-                                            summary = True)
+                                             self.get('run_id'),
+                                             'Summary',
+                                             language,
+                                             metatype,
+                                             '',
+                                             '',
+                                             mean_similarity,
+                                             summary = True)
             scores_printer.add(mean_score)
         self.scores = scores_printer
