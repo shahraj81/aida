@@ -15,12 +15,13 @@ class ConfidenceIntervals(Object):
     """
     AIDA class for bootstrap resampling BCA confidence intervals.
     """
-    def __init__(self, logger, run_id, metric_name, scores):
+    def __init__(self, logger, run_id, metric_name, scores, seed_value=None):
         super().__init__(logger)
         self.run_id = run_id
         self.metric_name = metric_name
         self.confidence_intervals = {}
         self.scores = scores
+        self.seed_value = seed_value
         self.compute_confidence_intervals()
 
     def compute_confidence_intervals(self):
@@ -40,7 +41,8 @@ class ConfidenceIntervals(Object):
             for size in [0.90, 0.95, 0.99]:
                 self.get('confidence_intervals')[group_by][size] = self.get('confidence_interval',
                                                                             scores=scores[group_by],
-                                                                            ci_size=size)
+                                                                            ci_size=size,
+                                                                            seed_value=self.get('seed_value'))
 
     def get_confidence_interval(self, scores, ci_method='bca', ci_tail='two', ci_size=0.95, seed_value=None):
         def score(x):

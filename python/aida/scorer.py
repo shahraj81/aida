@@ -21,11 +21,12 @@ class Scorer(Object):
         for key in kwargs:
             self.set(key, kwargs[key])
         self.separator = separator
+        self.seed_value = 12345
         self.score_responses()
         self.compute_confidence_intervals()
 
     def compute_confidence_intervals(self):
-        self.set('confidence_intervals', ConfidenceIntervals(self.get('logger'), self.get('run_id'), self.__class__.__name__, self.get('scores')))
+        self.set('confidence_intervals', ConfidenceIntervals(self.get('logger'), self.get('run_id'), self.__class__.__name__, self.get('scores'), self.get('seed_value')))
 
     def get_cluster(self, system_or_gold, document_id, cluster_id):
         cluster = None
