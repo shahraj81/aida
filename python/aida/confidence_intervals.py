@@ -63,7 +63,56 @@ class ConfidenceIntervals(Object):
                 'confidence_over': 'f1',
                 'header': ['RunID', 'Language', 'Metatype'],
                 'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                }
+                },
+            'ArgumentMetricScorerV2': {
+                'key': 'document_id',
+                'group_by': ['language', 'metatype'],
+                'confidence_over': 'f1',
+                'header': ['RunID', 'Language', 'Metatype'],
+                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
+                },
+            'CoreferenceMetricScorer': {
+                'key': 'document_id',
+                'group_by': ['language', 'metatype'],
+                'confidence_over': 'f1',
+                'header': ['RunID', 'Language', 'Metatype'],
+                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
+                },
+            'FrameMetricScorer': {
+                'key': 'document_id',
+                'group_by': ['language', 'metatype'],
+                'confidence_over': 'f1',
+                'header': ['RunID', 'Language', 'Metatype'],
+                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
+                },
+            'TemporalMetricScorer': {
+                'key': 'document_id',
+                'group_by': ['language', 'metatype'],
+                'confidence_over': 'similarity',
+                'header': ['RunID', 'Language', 'Metatype'],
+                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
+                },
+            'TypeMetricScorerV1': {
+                'key': 'document_id',
+                'group_by': ['language', 'metatype'],
+                'confidence_over': 'f1',
+                'header': ['RunID', 'Language', 'Metatype'],
+                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
+                },
+            'TypeMetricScorerV2': {
+                'key': 'document_id',
+                'group_by': ['language', 'metatype'],
+                'confidence_over': 'average_precision',
+                'header': ['RunID', 'Language', 'Metatype'],
+                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
+                },
+            'TypeMetricScorerV3': {
+                'key': 'document_id',
+                'group_by': ['language', 'metatype'],
+                'confidence_over': 'average_precision',
+                'header': ['RunID', 'Language', 'Metatype'],
+                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
+                },
             }
         return specs[metric_name] if metric_name in specs else None
 
@@ -87,6 +136,10 @@ class ConfidenceIntervals(Object):
                 spaces_postfix = ' ' * num_spaces if justify[field_name] == 'L' else ''
                 text = '{}{}{}{}'.format(text, spaces_prefix, value, spaces_postfix)
             return text
+        def order(line):
+            language = line.get('Language')
+            metatype = '_ALL' if line.get('Metatype') == 'ALL' else line.get('Metatype')
+            return '{language}:{metatype}'.format(metatype=metatype, language=language)
         retVal = ''
         spec = self.get('spec', self.get('metric_name'))
         if spec is None:
@@ -111,6 +164,6 @@ class ConfidenceIntervals(Object):
             lines.append(line)
         widths = get_widths(header, lines)
         retVal = get_line(widths, header, justify)
-        for line in lines:
+        for line in sorted(lines, key=order):
             retVal = '{}\n{}'.format(retVal, get_line(widths, header, justify, line))
         return retVal
