@@ -20,6 +20,7 @@ class ConfidenceIntervals(Object):
         self.run_id = run_id
         self.metric_name = metric_name
         self.confidence_intervals = {}
+        self.summary_scores = {}
         self.scores = scores
         self.seed_value = seed_value
         self.compute_confidence_intervals()
@@ -31,8 +32,10 @@ class ConfidenceIntervals(Object):
             return
         scores = {}
         for score in self.get('scores').values():
-            if score.get('summary'): continue
             group_by = '.'.join([score.get(field_name) for field_name in spec.get('group_by')])
+            if score.get('summary'):
+                self.get('summary_scores')[group_by] = '{:0.4f}'.format(score.get(spec.get('confidence_over')))
+                continue
             if group_by not in scores:
                 scores[group_by] = {}
             scores[group_by][score.get(spec.get('key'))] = score.get(spec.get('confidence_over'))
@@ -147,7 +150,7 @@ class ConfidenceIntervals(Object):
         if spec is None:
             self.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', 'spec', self.get('metric_name'), self.get('code_location'))
             return retVal
-        ci_sizes = ['90%(', '95%(', '99%(', ')99%', ')95%', ')90%']
+        ci_sizes = ['90%(', '95%(', '99%(', 'score', ')99%', ')95%', ')90%']
         justify = spec['justify']
         header = spec['header']
         header.extend(ci_sizes)
@@ -163,6 +166,8 @@ class ConfidenceIntervals(Object):
                 line['){size}%'.format(size=int(size*100))] = self.get('confidence_intervals')[group_by][size]['upper']
                 justify['{size}%('.format(size=int(size*100))] = 'R'
                 justify['){size}%'.format(size=int(size*100))] = 'R'
+            line['score'] = self.get('summary_scores')[group_by]
+            justify['score'] = 'R'
             lines.append(line)
         widths = get_widths(header, lines)
         retVal = get_line(widths, header, justify)
