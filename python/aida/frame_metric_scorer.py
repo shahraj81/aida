@@ -26,8 +26,8 @@ class FrameMetricScorer(Scorer):
                       {'name': 'recall',           'header': 'Recall',          'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'f1',               'header': 'F1',              'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
-    def __init__(self, logger, separator=None, **kwargs):
-        super().__init__(logger, separator=separator, **kwargs)
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger, **kwargs)
 
     def order(self, k):
         language, metatype = k.split(':')
@@ -113,7 +113,7 @@ class FrameMetricScorer(Scorer):
                     elif aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
 
-        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores_printer = ScorePrinter(self.logger, self.printing_specs)
         for score in multisort(scores, (('document_id', False),
                                         ('metatype', False),
                                         ('gold_cluster_id', False),

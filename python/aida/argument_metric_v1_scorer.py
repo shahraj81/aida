@@ -30,8 +30,8 @@ class ArgumentMetricScorerV1(Scorer):
                       {'name': 'recall',           'header': 'Recall',          'format': '6.4f', 'justify': 'R', 'mean_format': 's'},
                       {'name': 'f1',               'header': 'F1',              'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
-    def __init__(self, logger, separator=None, **kwargs):
-        super().__init__(logger, separator=separator, **kwargs)
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger, **kwargs)
 
     def align_trfs(self, document_id, gold_trfs, system_trfs):
         for gold_trf in gold_trfs.values():
@@ -156,7 +156,7 @@ class ArgumentMetricScorerV1(Scorer):
                                      precision, recall, f1)
                 scores.append(score)
 
-        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores_printer = ScorePrinter(self.logger, self.printing_specs)
         for score in multisort(scores, (('document_id', False),
                                         ('metatype_sortkey', False))):
             scores_printer.add(score)

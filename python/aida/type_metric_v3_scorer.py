@@ -18,8 +18,8 @@ class TypeMetricScorerV3(TypeMetricScorerV2):
         * the weight on a type is computed as max over the aggregate confidences on mentions asserting that type.
     """
 
-    def __init__(self, logger, separator=None, **kwargs):
-        super().__init__(logger, separator=separator, **kwargs)
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger, **kwargs)
 
     def get_aggregate_confidence(self, entry):
         field_names = ['type_statement_confidence', 'cluster_membership_confidence', 'mention_type_justification_confidence'] 

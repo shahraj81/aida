@@ -14,12 +14,10 @@ class Scorer(Object):
     AIDA Scorer class.
     """
 
-    def __init__(self, logger, separator=None, **kwargs):
+    def __init__(self, logger, **kwargs):
         super().__init__(logger)
-        self.separator = separator
         for key in kwargs:
             self.set(key, kwargs[key])
-        self.separator = separator
         self.score_responses()
 
     def get_cluster(self, system_or_gold, document_id, cluster_id):
@@ -39,10 +37,9 @@ class Scorer(Object):
     def get_core_documents(self):
         return self.get('gold_responses').get('document_mappings').get('core_documents')
 
-    def print_scores(self, filename):
+    def print_scores(self, filename, separator):
+        scores = self.get('scores')
+        scores.set('separator', separator)
         fh = open(filename, 'w')
-        fh.write(self.__str__())
+        fh.write(scores.__str__())
         fh.close()
-
-    def __str__(self):
-        return self.get('scores').__str__()

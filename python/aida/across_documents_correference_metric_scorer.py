@@ -43,8 +43,8 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                       {'name': 'num_ignored',               'header': 'Ignrd',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'average_precision',         'header': 'AvgPrec',    'format': '6.4f', 'justify': 'R'}]
 
-    def __init__(self, logger, separator=None, **kwargs):
-        super().__init__(logger, separator=separator, **kwargs)
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger, **kwargs)
 
     def order(self, k):
         return k
@@ -399,7 +399,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                                                                     summary=True,
                                                                     **macro_counts)
 
-        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores_printer = ScorePrinter(self.logger, self.printing_specs)
         for score in multisort(scores, (('entity_id', False),
                                         ('query_id', False))):
             scores_printer.add(score)

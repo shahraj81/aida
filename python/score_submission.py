@@ -52,7 +52,7 @@ class Task1(Object):
     """
     Class representing Task1 scorer.
     """
-    def __init__(self, log, separator, runid, log_specifications, ontology_type_mappings, slot_mappings, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, regions, gold, system, alignment, similarities, scores):
+    def __init__(self, log, runid, log_specifications, ontology_type_mappings, slot_mappings, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, regions, gold, system, alignment, similarities, scores):
         check_for_paths_existance([
                  log_specifications,
                  ontology_type_mappings,
@@ -72,7 +72,6 @@ class Task1(Object):
                  ])
         check_for_paths_non_existance([scores])
         self.log_filename = log
-        self.separator = separator
         self.runid = runid
         self.log_specifications = log_specifications
         self.ontology_type_mappings = ontology_type_mappings
@@ -127,7 +126,7 @@ class Task1(Object):
             'cluster_alignment': cluster_alignment,
             'cluster_self_similarities': cluster_self_similarities,
             }
-        scores = ScoresManager(logger, 'task1', arguments, self.get('separator'))
+        scores = ScoresManager(logger, 'task1', arguments)
         scores.print_scores(self.get('scores'))
         exit(ALLOK_EXIT_CODE)
 
@@ -135,7 +134,6 @@ class Task1(Object):
     def add_arguments(myclass, parser):
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
-        parser.add_argument('-S', '--separator', default='pretty', choices=['pretty', 'tab', 'space'], help='Column separator for scorer output? (default: %(default)s)')
         parser.add_argument('log_specifications', type=str, help='File containing error specifications')
         parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
         parser.add_argument('slot_mappings', type=str, help='File containing slot mappings')
@@ -160,7 +158,7 @@ class Task2(Object):
     """
     Class representing Task2 scorer.
     """
-    def __init__(self, log, separator, runid, cutoff, normalize, weighted, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries_to_score, assessments, responses, scores):
+    def __init__(self, log, runid, cutoff, normalize, weighted, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries_to_score, assessments, responses, scores):
         check_for_paths_existance([
                  log_specifications,
                  ontology_types,
@@ -179,7 +177,6 @@ class Task2(Object):
                  ])
         check_for_paths_non_existance([scores])
         self.log_filename = log
-        self.separator = separator
         self.runid = runid
         self.cutoff = cutoff
         self.normalize = normalize
@@ -235,7 +232,7 @@ class Task2(Object):
             'responses': responses,
             'queries_to_score': queries_to_score
             }
-        scores = ScoresManager(logger, 'task2', arguments, self.get('separator'))
+        scores = ScoresManager(logger, 'task2', arguments)
         scores.print_scores(self.get('scores'))
         exit(ALLOK_EXIT_CODE)
 
@@ -245,7 +242,6 @@ class Task2(Object):
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('-C', '--cutoff', action='store_true', help='Apply cutoff?')
         parser.add_argument('-N', '--normalize', action='store_true', help='Normalize confidences?')
-        parser.add_argument('-S', '--separator', default='pretty', choices=['pretty', 'tab', 'space'], help='Column separator for scorer output? (default: %(default)s)')
         parser.add_argument('-W', '--weighted', action='store_true', help='Use weighted Value for AP computation?')
         parser.add_argument('log_specifications', type=str, help='File containing error specifications')
         parser.add_argument('ontology_types', type=str, help='File containing all types in the ontology')

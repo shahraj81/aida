@@ -42,13 +42,12 @@ class ScoresManager(Object):
             }
         }
 
-    def __init__(self, logger, task, arguments, separator=None):
+    def __init__(self, logger, task, arguments):
         super().__init__(logger)
         self.task = task
         for key in arguments:
             self.set(key, arguments[key])
         self.metrics = self.task_metrics[task]
-        self.separator = separator
         self.scores = Container(logger)
         self.score_responses()
 
@@ -61,8 +60,7 @@ class ScoresManager(Object):
                                                      gold_responses=self.get('gold_responses'),
                                                      system_responses=self.get('system_responses'),
                                                      cluster_alignment=self.get('cluster_alignment'),
-                                                     cluster_self_similarities=self.get('cluster_self_similarities'),
-                                                     separator=self.get('separator'))
+                                                     cluster_self_similarities=self.get('cluster_self_similarities'))
                 self.get('scores').add(key=metric, value=scorer)
         if self.get('task') == 'task2':
             for metric in self.get('metrics'):
@@ -73,8 +71,7 @@ class ScoresManager(Object):
                                                      weighted=self.get('weighted'),
                                                      responses=self.get('responses'),
                                                      assessments=self.get('assessments'),
-                                                     queries_to_score=self.get('queries_to_score'),
-                                                     separator=self.get('separator'))
+                                                     queries_to_score=self.get('queries_to_score'))
                 self.get('scores').add(key=metric, value=scorer)
 
     def print_scores(self, output_directory):
@@ -82,4 +79,6 @@ class ScoresManager(Object):
         for metric in self.get('scores'):
             scores = self.get('scores').get(metric)
             output_file = '{}/{}-scores.txt'.format(output_directory, metric)
-            scores.print_scores(output_file)
+            scores.print_scores(output_file, 'pretty')
+            output_file = '{}/{}-scores.tab'.format(output_directory, metric)
+            scores.print_scores(output_file, 'tab')

@@ -19,14 +19,16 @@ class ScorePrinter(Container):
         'space': ' '
         }
     
-    def __init__(self, logger, printing_specs, separator=None):
+    def __init__(self, logger, printing_specs):
         super().__init__(logger)
         self.printing_specs = printing_specs
-        self.separator = separator
+        self.separator = None
         self.widths = {column.get('name'):len(column.get('header')) for column in printing_specs}
-        self.lines = []
-        
+
     def prepare_lines(self):
+        self.lines = []
+        if self.get('separator') is None:
+            self.record_event('DEFAULT_CRITICAL', 'separator is None')
         widths = self.get('widths')
         scores = self.values()
         for score in scores:
