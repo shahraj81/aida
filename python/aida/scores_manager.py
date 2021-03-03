@@ -83,5 +83,3 @@ class ScoresManager(Object):
             scores = self.get('scores').get(metric)
             output_file = '{}/{}-scores.txt'.format(output_directory, metric)
             scores.print_scores(output_file)
-            output_file = '{}/{}-ci.txt'.format(output_directory, metric)
-            scores.print_confidence_intervals(output_file)
