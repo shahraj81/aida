@@ -1,6 +1,8 @@
 """
 AIDA class for bootstrap resampling based two-sided BCA confidence intervals.
 """
+from aida.file_handler import FileHandler
+from aida.container import Container
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
@@ -15,162 +17,151 @@ class ConfidenceIntervals(Object):
     """
     AIDA class for bootstrap resampling BCA confidence intervals.
     """
-    def __init__(self, logger, run_id, metric_name, scores, seed_value=None):
+    def __init__(self, logger, **kwargs):
+        """
+        Arguments
+            input:         Input file containing scores (required).
+
+            primary_key:   Comma-separated list of column-names to be used for
+                           generating confidence intervals (required).
+
+                           If provided, confidence intervals will be separately
+                           generated corresponding to each value of the primary_key
+                           in the input file.
+
+                           If left blank, confidence scores corresponding to all
+                           non-summary lines will be used for generating confidence
+                           intervals.
+
+            score:         Name of the column containing the scores to be used for
+                           generating confidence intervals.
+
+            aggregate:     Dictionary containing key-value pairs used to identify
+                           aggregate score lines in the input file.
+
+            run_id_col:    Name of the column from input file containing
+                           RunID. (required).
+
+            sizes:         Comma-separated list of confidence sizes (optional).
+                           Default value: "0.9, 0.95, 0.99".
+
+            seed_value:    Seed value for computing confidence interval (optional).
+        """
         super().__init__(logger)
-        self.run_id = run_id
-        self.metric_name = metric_name
-        self.confidence_intervals = {}
-        self.summary_scores = {}
-        self.scores = scores
-        self.seed_value = seed_value
-        self.compute_confidence_intervals()
+        for key in kwargs:
+            self.set(key, kwargs[key])
+        self.scores = FileHandler(logger, self.get('input'))
+        self.categorized_entries = Container(logger)
+        self.confidence_intervals = Container(logger)
+        self.widths = {}
+        self.categorize_entries()
+        self.compute_confidences()
 
-    def compute_confidence_intervals(self):
-        spec = self.get('spec', self.get('metric_name'))
-        if spec is None:
-            self.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', 'spec', self.get('metric_name'), self.get('code_location'))
-            return
-        scores = {}
-        for score in self.get('scores').values():
-            group_by = '.'.join([score.get(field_name) for field_name in spec.get('group_by')])
-            if score.get('summary'):
-                self.get('summary_scores')[group_by] = '{:0.4f}'.format(score.get(spec.get('confidence_over')))
-                continue
-            if group_by not in scores:
-                scores[group_by] = {}
-            scores[group_by][score.get(spec.get('key'))] = score.get(spec.get('confidence_over'))
-        for group_by in scores:
-            self.get('confidence_intervals')[group_by] = {}
-            for size in [0.90, 0.95, 0.99]:
-                self.get('confidence_intervals')[group_by][size] = self.get('confidence_interval',
-                                                                            scores=scores[group_by],
-                                                                            ci_size=size,
-                                                                            seed_value=self.get('seed_value'))
+    def get_primary_key_values(self, entry):
+        values = []
+        for primary_key in self.get('primary_key').split(','):
+            value = entry.get(primary_key)
+            if value is None:
+                self.record_event('MISSING_ITEM_WITH_KEY', 'Column name', primary_key, entry.get('where'))
+            else:
+                values.append(value)
+        return '.'.join(values)
 
-    def get_confidence_interval(self, scores, ci_method='bca', ci_tail='two', ci_size=0.95, seed_value=None):
+    def get_entry_score(self, entry):
+        score_column = self.get('score')
+        value = entry.get(score_column)
+        if value is None:
+            self.record_event('MISSING_ITEM_WITH_KEY', 'Column name', score_column, entry.get('where'))
+        return value
+
+    def is_aggregate(self, entry):
+        for key, value in self.get('aggregate').items():
+            if entry.get(key) != value:
+                return False
+        return True
+
+    def categorize_entries(self):
+        logger = self.get('logger')
+        for entry in self.get('scores'):
+            aggregate = 'aggregate' if self.is_aggregate(entry) else 'non-aggregate'
+            primary_key_values = self.get('primary_key_values', entry)
+            entry_score = self.get('entry_score', entry)
+            self.get('categorized_entries').get(aggregate, default=Container(logger)).get(primary_key_values, default=Container(logger)).add(entry_score)
+
+    def get_confidence_interval_sizes(self):
+        return sorted([float(size) for size in self.get('sizes').split(',')])
+
+    def get_confidence_interval(self, scores, ci_method='bca', ci_size=0.95, seed_value=None):
+        """
+        Compute two sided bootstrap confidence interval
+        """
         def score(x):
             return np.array([x.mean()])
-        data = np.array(list(scores.values()))
+        data = np.array(list(scores))
         if min(data) == max(data):
-            return {'lower': '{:0.4f}'.format(min(data)), 'upper': '{:0.4f}'.format(max(data))}
+            return tuple([min(data), max(data)])
         bs = IIDBootstrap(data)
         if seed_value is not None:
             bs.seed(seed_value)
-        ci = bs.conf_int(score, 1000, method=ci_method, size=ci_size, tail=ci_tail)
-        confidence_interval = {'lower': '{:0.4f}'.format(ci[0][0]), 'upper': '{:0.4f}'.format(ci[1][0])} 
-        return confidence_interval
+        ci = bs.conf_int(score, 1000, method=ci_method, size=ci_size, tail='two')
+        return tuple([ci[0][0], ci[1][0]])
 
-    def get_spec(self, metric_name):
-        specs = {
-            'ArgumentMetricScorerV1': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'f1',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            'ArgumentMetricScorerV2': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'f1',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            'CoreferenceMetricScorer': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'f1',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            'FrameMetricScorer': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'f1',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            'TemporalMetricScorer': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'similarity',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            'TypeMetricScorerV1': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'f1',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            'TypeMetricScorerV2': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'average_precision',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            'TypeMetricScorerV3': {
-                'key': 'document_id',
-                'group_by': ['language', 'metatype'],
-                'confidence_over': 'average_precision',
-                'header': ['RunID', 'Language', 'Metatype'],
-                'justify': {'RunID':'L', 'Language':'L', 'Metatype':'L'},
-                },
-            }
-        return specs[metric_name] if metric_name in specs else None
+    def compute_confidences(self):
+        logger = self.get('logger')
+        for primary_key_value in self.get('categorized_entries').get('non-aggregate'):
+            scores = self.get('categorized_entries').get('non-aggregate').get(primary_key_value).values()
+            for size in [float(s.strip()) for s in self.get('sizes').split(',')]:
+                confidence_interval = self.get('confidence_interval', scores, ci_size=size, seed_value=self.get('seed_value'))
+                self.get('confidence_intervals').get(primary_key_value, default=Container(logger)).add(key=str(size), value=confidence_interval)
 
-    def __str__(self):
-        def get_widths(header, lines):
-            widths = {}
-            for column_name in header:
-                if column_name not in widths:
-                    widths[column_name] = len(column_name)
-                for line in lines:
-                    value = line[column_name]
-                    if len(value) > widths[column_name]:
-                        widths[column_name] = len(value)
-            return widths
-        def get_line(widths, header, justify, line=None):
-            text = ''
-            for field_name in header:
-                value = field_name if line is None else line[field_name]
-                num_spaces = widths[field_name] - len(str(value)) + 1
-                spaces_prefix = ' ' * num_spaces if justify[field_name] == 'R' else ''
-                spaces_postfix = ' ' * num_spaces if justify[field_name] == 'L' else ''
-                text = '{}{}{}{}'.format(text, spaces_prefix, value, spaces_postfix)
-            return text
-        def order(line):
-            language = line.get('Language')
-            metatype = '_ALL' if line.get('Metatype') == 'ALL' else line.get('Metatype')
-            return '{language}:{metatype}'.format(metatype=metatype, language=language)
-        retVal = ''
-        spec = self.get('spec', self.get('metric_name'))
-        if spec is None:
-            self.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', 'spec', self.get('metric_name'), self.get('code_location'))
-            return retVal
-        ci_sizes = ['90%(', '95%(', '99%(', 'score', ')99%', ')95%', ')90%']
-        justify = spec['justify']
-        header = spec['header']
-        header.extend(ci_sizes)
-        lines = []
-        for group_by in self.get('confidence_intervals'):
-            line = {
-                header[0]: self.get('run_id'),
-                header[1]: group_by.split('.')[0],
-                header[2]: group_by.split('.')[1]
-                }
-            for size in self.get('confidence_intervals')[group_by]:
-                line['{size}%('.format(size=int(size*100))] = self.get('confidence_intervals')[group_by][size]['lower']
-                line['){size}%'.format(size=int(size*100))] = self.get('confidence_intervals')[group_by][size]['upper']
-                justify['{size}%('.format(size=int(size*100))] = 'R'
-                justify['){size}%'.format(size=int(size*100))] = 'R'
-            line['score'] = self.get('summary_scores')[group_by]
-            justify['score'] = 'R'
-            lines.append(line)
-        widths = get_widths(header, lines)
-        retVal = get_line(widths, header, justify)
-        for line in sorted(lines, key=order):
-            retVal = '{}\n{}'.format(retVal, get_line(widths, header, justify, line))
-        return retVal
+    def prepare_lines(self):
+        self.lines = []
+        # prepare lines
+        for primary_key_value in self.get('categorized_entries').get('aggregate'):
+            primary_key_split = self.get('primary_key').split('.')
+            primary_key_value_split = primary_key_value.split('.')
+            line = {primary_key_split[i]:primary_key_value_split[i] for i in range(len(primary_key_split))}
+            line['score'] = self.get('aggregate_score', primary_key_value)
+            self.add_confidence_intervals(line, primary_key_value)
+            self.get('lines').append(line)
+        # prepare widths
+        widths = self.get('widths')
+        for field_name in self.get('header'):
+            widths[field_name] = len(field_name)
+            format_spec = self.get('format_spec', field_name)
+            for line in self.get('lines'):
+                value = line.get(field_name)
+                text = '{0:{1}}'.format(value, 's' if value=='' else format_spec)
+                widths[field_name] = len(text) if len(text)>widths[field_name] else widths[field_name]
+
+    def add_confidence_intervals(self, line, primary_key_value):
+        confidence_intervals = self.get('confidence_intervals').get(primary_key_value)
+        for size in [float(s.strip()) for s in self.get('sizes').split(',')]:
+            lower_key, upper_key = '{s}%('.format(s=size*100), '){s}%'.format(s=size*100)
+            lower_value, upper_value = confidence_intervals.get(str(size))
+            line[lower_key] = lower_value
+            line[upper_key] = upper_value
+
+    def get_header_text(self):
+        return self.get('line_text')
+
+    def get_line_text(self, line=None):
+        text = ''
+        separator = ''
+        for field_name in self.get('header'):
+            text += separator
+            value = line.get(field_name) if line is not None else field_name
+            num_spaces = 0 if self.separators[self.get('separator')] is not None else self.widths[field_name] - len(str(value))
+            spaces_prefix = ' ' * num_spaces if self.get('justify', field_name) == 'R' and self.separators[self.get('separator')] is None else ''
+            spaces_postfix = ' ' * num_spaces if self.get('justify', field_name) == 'L' and self.separators[self.get('separator')] is None else ''
+            text = '{}{}{}{}'.format(text, spaces_prefix, value, spaces_postfix)
+            separator = ' ' if self.separators[self.get('separator')] is None else self.separators[self.get('separator')]
+        return text
+
+    def get_output(self, separator):
+        self.set('separator', separator)
+        self.prepare_lines()
+        string = self.get('header_text')
+        for line in self.get('lines'):
+            string = '{}\n{}'.format(string, self.get_line_text(line))
+        return string
