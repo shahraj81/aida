@@ -121,7 +121,7 @@ class ConfidenceIntervals(Object):
         """
         def score(x):
             return np.array([x.mean()])
-        data = np.array(list(scores))
+        data = np.array([float(score) for score in scores])
         if min(data) == max(data):
             return tuple([min(data), max(data)])
         bs = IIDBootstrap(data)
@@ -161,8 +161,7 @@ class ConfidenceIntervals(Object):
         return header
 
     def get_format_spec(self, field_name):
-        #return 's' if field_name in self.get('primary_key_col').split(',') else '0.4f'
-        return 's'
+        return 's' if field_name in self.get('primary_key_col').split(',') else '6.4f'
 
     def get_field_value(self, line, field_name):
         return line[field_name]
@@ -173,7 +172,7 @@ class ConfidenceIntervals(Object):
         for aggregate_entry in self.filter_entries(aggregate=True, primary_key=None):
             line = self.get('primary_key', aggregate_entry)
             primary_key_str = '.'.join([line[fn] for fn in self.get('primary_key_col').split(',')])
-            line['score'] = aggregate_entry.get(self.get('score'))
+            line['score'] = float(aggregate_entry.get(self.get('score')))
             self.add_confidence_intervals(line, primary_key_str)
             self.get('lines').append(line)
         # prepare widths
@@ -184,6 +183,7 @@ class ConfidenceIntervals(Object):
             for line in self.get('lines'):
                 value = self.get('field_value', line, field_name)
                 text = '{0:{1}}'.format(value, 's' if value=='' else format_spec)
+                line[field_name] = text
                 widths[field_name] = len(text) if len(text)>widths[field_name] else widths[field_name]
 
     def add_confidence_intervals(self, line, primary_key_value):
