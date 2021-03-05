@@ -17,55 +17,60 @@ class ConfidenceIntervals(Object):
     """
     AIDA class for bootstrap resampling BCA confidence intervals.
     """
+
+    separators = {
+        'pretty': None,
+        'tab': '\t',
+        'space': ' '
+        }
+
     def __init__(self, logger, **kwargs):
         """
         Arguments
-            input:         Input file containing scores (required).
+            input:           Input file containing scores (required).
 
-            primary_key:   Comma-separated list of column-names to be used for
-                           generating confidence intervals (required).
+            primary_key_col: Comma-separated list of column-names to be used for
+                             generating confidence intervals (required).
 
-                           If provided, confidence intervals will be separately
-                           generated corresponding to each value of the primary_key
-                           in the input file.
+                             If provided, confidence intervals will be separately
+                             generated corresponding to each value of the primary_key
+                             in the input file.
 
-                           If left blank, confidence scores corresponding to all
-                           non-summary lines will be used for generating confidence
-                           intervals.
+                             If left blank, confidence scores corresponding to all
+                             non-summary lines will be used for generating confidence
+                             intervals.
 
-            score:         Name of the column containing the scores to be used for
-                           generating confidence intervals.
+            score:           Name of the column containing the scores to be used for
+                             generating confidence intervals.
 
-            aggregate:     Dictionary containing key-value pairs used to identify
-                           aggregate score lines in the input file.
+            aggregate:       Dictionary containing key-value pairs used to identify
+                             aggregate score lines in the input file.
 
-            run_id_col:    Name of the column from input file containing
-                           RunID. (required).
+            run_id_col:      Name of the column from input file containing
+                             RunID. (required).
 
-            sizes:         Comma-separated list of confidence sizes (optional).
-                           Default value: "0.9, 0.95, 0.99".
+            sizes:           Comma-separated list of confidence sizes (optional).
+                             Default value: "0.9, 0.95, 0.99".
 
-            seed_value:    Seed value for computing confidence interval (optional).
+            seed_value:      Seed value for computing confidence interval (optional).
         """
         super().__init__(logger)
         for key in kwargs:
             self.set(key, kwargs[key])
         self.scores = FileHandler(logger, self.get('input'))
-        self.categorized_entries = Container(logger)
         self.confidence_intervals = Container(logger)
         self.widths = {}
-        self.categorize_entries()
         self.compute_confidences()
 
-    def get_primary_key_values(self, entry):
-        values = []
-        for primary_key in self.get('primary_key').split(','):
-            value = entry.get(primary_key)
+    def get_primary_key(self, entry):
+        primary_key = {}
+        for field_name in self.get('primary_key_col').split(','):
+            value = entry.get(field_name)
             if value is None:
-                self.record_event('MISSING_ITEM_WITH_KEY', 'Column name', primary_key, entry.get('where'))
+                self.record_event('MISSING_ITEM_WITH_KEY', 'Column name', field_name, entry.get('where'))
             else:
-                values.append(value)
-        return '.'.join(values)
+                primary_key[field_name] = value
+        return primary_key
 
     def get_entry_score(self, entry):
         score_column = self.get('score')
@@ -80,13 +85,47 @@ class ConfidenceIntervals(Object):
                 return False
         return True
 
-    def categorize_entries(self):
-        logger = self.get('logger')
+    def get_custom_filter_strategy_columns(self, primary_key):
+        columns = [k for k,v in primary_key.items() if v=='ALL'] if primary_key is not None else []
         for entry in self.get('scores'):
-            aggregate = 'aggregate' if self.is_aggregate(entry) else 'non-aggregate'
-            primary_key_values = self.get('primary_key_values', entry)
-            entry_score = self.get('entry_score', entry)
-            self.get('categorized_entries').get(aggregate, default=Container(logger)).get(primary_key_values, default=Container(logger)).add(entry_score)
+            if not self.is_aggregate(entry):
+                for field_name in columns:
+                    if entry.get(field_name) == 'ALL':
+                        columns.remove(field_name)
+        return columns
+
+    def filter_entries(self, aggregate=None, primary_key=None):
+        entries = []
+        custom_filter_strategy_fields = self.get('custom_filter_strategy_columns', primary_key)
+        for entry in self.get('scores'):
+            if aggregate is not None and aggregate != self.is_aggregate(entry):
+                continue
+            if primary_key is not None:
+                entry_primary_key = self.get('primary_key', entry)
+                filter_out = False
+                for field_name in primary_key:
+                    if field_name not in custom_filter_strategy_fields:
+                        if primary_key[field_name] != entry_primary_key[field_name]:
+                            filter_out = True
+                if filter_out:
+                    continue
+            entries.append(entry)
+        return entries
+
+    def display(self, aggregate, primary_key, entries):
+        aggregate_message = 'either aggregate or non-aggregate'
+        if aggregate is not None:
+            aggregate_message = 'only aggregate' if aggregate else 'only non-aggregate'
+        print('Find :')
+        print('  - {} entries'.format(aggregate_message))
+        if primary_key:
+            for key, value in primary_key.items():
+                print('  - entries where {} = {}'.format(key, value))
+        print('\n\nA total of {} entries that matched the above criteria{}\n'.format(len(entries),
+                                                                                     ': ' if len(entries) else ''))
+        for entry in entries:
+            print(entry.get('line').strip())
+
 
     def get_confidence_interval_sizes(self):
         return sorted([float(size) for size in self.get('sizes').split(',')])
@@ -108,21 +147,49 @@ class ConfidenceIntervals(Object):
 
     def compute_confidences(self):
         logger = self.get('logger')
-        for primary_key_value in self.get('categorized_entries').get('non-aggregate'):
-            scores = self.get('categorized_entries').get('non-aggregate').get(primary_key_value).values()
+        for aggregate_entry in self.filter_entries(aggregate=True, primary_key=None):
+            primary_key = self.get('primary_key', aggregate_entry)
+            primary_key_str = '.'.join([primary_key[fn] for fn in self.get('primary_key_col').split(',')])
+            scores = [entry.get(self.get('score')) for entry in self.filter_entries(aggregate=False,
+                                                                                    primary_key=primary_key)]
             for size in [float(s.strip()) for s in self.get('sizes').split(',')]:
                 confidence_interval = self.get('confidence_interval', scores, ci_size=size, seed_value=self.get('seed_value'))
-                self.get('confidence_intervals').get(primary_key_value, default=Container(logger)).add(key=str(size), value=confidence_interval)
+                self.get('confidence_intervals').get(primary_key_str, default=Container(logger)).add(key=str(size), value=confidence_interval)
+
+    def get_score_header(self, header, score=None, sizes=None):
+        if score is None and len(sizes) == 0:
+            return header
+        if score is not None:
+            header.append(score)
+            return self.get('score_header', header, score=None, sizes=sizes)
+        else:
+            size = sizes.pop()
+            size_left = '{}%('.format(float(size)*100)
+            size_right = '){}%'.format(float(size)*100)
+            header.insert(0, size_left)
+            header.append(size_right)
+            return self.get('score_header', header, score=None, sizes=sizes)
+
+    def get_header(self):
+        header = self.get('score_header', [], 'score', self.get('sizes').split(','))
+        header = [field_name for field_name in self.get('primary_key_col').split(',')] + header
+        return header
+
+    def get_format_spec(self, field_name):
+        #return 's' if field_name in self.get('primary_key_col').split(',') else '0.4f'
+        return 's'
+
+    def get_field_value(self, line, field_name):
+        return line[field_name]
 
     def prepare_lines(self):
         self.lines = []
         # prepare lines
-        for primary_key_value in self.get('categorized_entries').get('aggregate'):
-            primary_key_split = self.get('primary_key').split('.')
-            primary_key_value_split = primary_key_value.split('.')
-            line = {primary_key_split[i]:primary_key_value_split[i] for i in range(len(primary_key_split))}
-            line['score'] = self.get('aggregate_score', primary_key_value)
-            self.add_confidence_intervals(line, primary_key_value)
+        for aggregate_entry in self.filter_entries(aggregate=True, primary_key=None):
+            line = self.get('primary_key', aggregate_entry)
+            primary_key_str = '.'.join([line[fn] for fn in self.get('primary_key_col').split(',')])
+            line['score'] = aggregate_entry.get(self.get('score'))
+            self.add_confidence_intervals(line, primary_key_str)
             self.get('lines').append(line)
         # prepare widths
         widths = self.get('widths')
@@ -130,7 +197,7 @@ class ConfidenceIntervals(Object):
             widths[field_name] = len(field_name)
             format_spec = self.get('format_spec', field_name)
             for line in self.get('lines'):
-                value = line.get(field_name)
+                value = self.get('field_value', line, field_name)
                 text = '{0:{1}}'.format(value, 's' if value=='' else format_spec)
                 widths[field_name] = len(text) if len(text)>widths[field_name] else widths[field_name]
 
@@ -144,6 +211,9 @@ class ConfidenceIntervals(Object):
 
     def get_header_text(self):
         return self.get('line_text')
+
+    def get_justify(self, field_name):
+        return 'L' if field_name in [self.get('primary_key_col').split(',')] else 'R'
 
     def get_line_text(self, line=None):
         text = ''
