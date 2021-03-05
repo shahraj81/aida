@@ -112,21 +112,6 @@ class ConfidenceIntervals(Object):
             entries.append(entry)
         return entries
 
-    def display(self, aggregate, primary_key, entries):
-        aggregate_message = 'either aggregate or non-aggregate'
-        if aggregate is not None:
-            aggregate_message = 'only aggregate' if aggregate else 'only non-aggregate'
-        print('Find :')
-        print('  - {} entries'.format(aggregate_message))
-        if primary_key:
-            for key, value in primary_key.items():
-                print('  - entries where {} = {}'.format(key, value))
-        print('\n\nA total of {} entries that matched the above criteria{}\n'.format(len(entries),
-                                                                                     ': ' if len(entries) else ''))
-        for entry in entries:
-            print(entry.get('line').strip())
-
-
     def get_confidence_interval_sizes(self):
         return sorted([float(size) for size in self.get('sizes').split(',')])
 
