@@ -37,7 +37,7 @@ def get_problems(logs_directory):
         fh.close()
     return num_errors, stats
 
-def generate_results_file_and_exit(logger, logs_directory):
+def get_metric_classes_specs():
 
     metric_classes_specs = """
         # Filename                     Metric                              ColumnValuePairs               ScoreColumn
@@ -203,7 +203,10 @@ def generate_results_file_and_exit(logger, logs_directory):
           FrameMetric-scores.txt       FrameMetric_SPA_Relations_F1        Language:SPA,Metatype:Relation F1
 
     """
+    return metric_classes_specs
 
+def generate_results_file_and_exit(logger, logs_directory):
+    metric_classes_specs = get_metric_classes_specs()
     metric_column_value_pairs = {}
     metric_classes = {}
     for line in metric_classes_specs.split('\n'):
@@ -757,6 +760,7 @@ def main(args):
 
     record_and_display_message(logger, 'Generating confidence intervals.')
     log_file = '{logs_directory}/confidence_intervals.log'.format(logs_directory=logs_directory)
+    metric_classes_specs = get_metric_classes_specs()
     for line in metric_classes_specs.split('\n'):
         line = line.strip()
         if line == '': continue
