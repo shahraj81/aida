@@ -761,12 +761,14 @@ def main(args):
     record_and_display_message(logger, 'Generating confidence intervals.')
     log_file = '{logs_directory}/confidence_intervals.log'.format(logs_directory=logs_directory)
     metric_classes_specs = get_metric_classes_specs()
+    processed = {}
     for line in metric_classes_specs.split('\n'):
         line = line.strip()
         if line == '': continue
         if line.startswith('#'): continue
         filename, metricname, column_value_pairs, score_columnname = line.split()
         scorer_name = filename.split('-')[0]
+        if processed[scorer_name]: continue
         cmd = 'cd {python_scripts} && \
             python3.9 generate_confidence_intervals.py \
             --log {log_file} \
@@ -784,9 +786,10 @@ def main(args):
                                 score_columnname=score_columnname,
                                 aggregate='DocID:Summary',
                                 run_id='RunID',
-                                input='{}-scores.tab'.format(scorer_name),
-                                pretty_output='{}-ci.txt'.format(scorer_name),
-                                tab_output='{}-ci.tab'.format(scorer_name))
+                                input='{}/{}-scores.tab'.format(scores, scorer_name),
+                                pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
+                                tab_output='{}/{}-ci.tab'.format(scores, scorer_name))
+        processed{scorer_name} = 1
         call_system(cmd)
 
     #############################################################################################
