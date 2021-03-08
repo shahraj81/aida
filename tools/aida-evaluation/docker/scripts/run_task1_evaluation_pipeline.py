@@ -751,7 +751,44 @@ def main(args):
                                 scores=scores)
     call_system(cmd)
 
+    #############################################################################################
+    # generate confidence intervals
+    #############################################################################################
+
+    record_and_display_message(logger, 'Generating confidence intervals.')
+    log_file = '{logs_directory}/confidence_intervals.log'.format(logs_directory=logs_directory)
+    for line in metric_classes_specs.split('\n'):
+        line = line.strip()
+        if line == '': continue
+        if line.startswith('#'): continue
+        filename, metricname, column_value_pairs, score_columnname = line.split()
+        scorer_name = filename.split('-')[0]
+        cmd = 'cd {python_scripts} && \
+            python3.9 generate_confidence_intervals.py \
+            --log {log_file} \
+            {log_specifications} \
+            {primary_key} \
+            {score_columnname} \
+            {aggregate} \
+            {run_id} \
+            {input} \
+            {pretty_output} \
+            {tab_output}'.format(python_scripts=python_scripts,
+                                log_file=log_file,
+                                log_specifications=log_specifications,
+                                primary_key='RunID,Language,Metatype',
+                                score_columnname=score_columnname,
+                                aggregate='DocID:Summary',
+                                run_id='RunID',
+                                input='{}-scores.tab'.format(scorer_name),
+                                pretty_output='{}-ci.txt'.format(scorer_name),
+                                tab_output='{}-ci.tab'.format(scorer_name))
+        call_system(cmd)
+
+    #############################################################################################
     # generate results.json file
+    #############################################################################################
+
     record_and_display_message(logger, 'Generating results.json file.')
     generate_results_file_and_exit(logger, logs_directory)
 
