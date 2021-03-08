@@ -789,7 +789,7 @@ def main(args):
                                 input='{}/{}-scores.tab'.format(scores, scorer_name),
                                 pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
                                 tab_output='{}/{}-ci.tab'.format(scores, scorer_name))
-        processed{scorer_name} = 1
+        processed[scorer_name] = 1
         call_system(cmd)
 
     #############################################################################################
