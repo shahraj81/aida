@@ -768,7 +768,7 @@ def main(args):
         if line.startswith('#'): continue
         filename, metricname, column_value_pairs, score_columnname = line.split()
         scorer_name = filename.split('-')[0]
-        if processed[scorer_name]: continue
+        if scorer_name in processed: continue
         cmd = 'cd {python_scripts} && \
             python3.9 generate_confidence_intervals.py \
             --log {log_file} \
