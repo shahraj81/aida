@@ -127,7 +127,7 @@ class ConfidenceIntervals(Object):
         bs = IIDBootstrap(data)
         if seed_value is not None:
             bs.seed(seed_value)
-        ci = bs.conf_int(score, 1000, method=ci_method, size=ci_size, tail='two')
+        ci = bs.conf_int(score, 10000, method=ci_method, size=ci_size, tail='two')
         return tuple([ci[0][0], ci[1][0]])
 
     def compute_confidences(self):
