@@ -113,7 +113,7 @@ class ConfidenceIntervals(Object):
         return entries
 
     def get_confidence_interval_sizes(self):
-        return sorted([float(size) for size in self.get('sizes').split(',')])
+        return sorted([float(size) for size in self.get('sizes').split(',')], reverse=True)
 
     def get_confidence_interval(self, scores, ci_method='bca', ci_size=0.95, seed_value=None):
         """
@@ -156,7 +156,7 @@ class ConfidenceIntervals(Object):
             return self.get('score_header', header, score=None, sizes=sizes)
 
     def get_header(self):
-        header = self.get('score_header', [], 'score', self.get('sizes').split(','))
+        header = self.get('score_header', [], 'score', self.get('confidence_interval_sizes'))
         header = [field_name for field_name in self.get('primary_key_col').split(',')] + header
         return header
 
