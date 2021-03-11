@@ -115,7 +115,7 @@ class ConfidenceIntervals(Object):
     def get_confidence_interval_sizes(self):
         return sorted([float(size) for size in self.get('sizes').split(',')], reverse=True)
 
-    def get_confidence_interval(self, scores, ci_method='bca', ci_size=0.95, seed_value=None):
+    def get_confidence_interval(self, scores, ci_method='bca', ci_size=0.95, replications=100000, seed_value=None):
         """
         Compute two sided bootstrap confidence interval
         """
@@ -127,8 +127,13 @@ class ConfidenceIntervals(Object):
         bs = IIDBootstrap(data)
         if seed_value is not None:
             bs.seed(seed_value)
-        ci = bs.conf_int(score, 10000, method=ci_method, size=ci_size, tail='two')
+        ci = bs.conf_int(score, replications, method=ci_method, size=ci_size, tail='two')
         return tuple([ci[0][0], ci[1][0]])
+
+    def get_num_replications(self, size):
+        if size == 0.99:
+            return 10000000
+        return 100000
 
     def compute_confidences(self):
         logger = self.get('logger')
@@ -138,7 +143,7 @@ class ConfidenceIntervals(Object):
             scores = [entry.get(self.get('score')) for entry in self.filter_entries(aggregate=False,
                                                                                     primary_key=primary_key)]
             for size in [float(s.strip()) for s in self.get('sizes').split(',')]:
-                confidence_interval = self.get('confidence_interval', scores, ci_size=size, seed_value=self.get('seed_value'))
+                confidence_interval = self.get('confidence_interval', scores, ci_size=size, replications=self.get('num_replications', size), seed_value=self.get('seed_value'))
                 self.get('confidence_intervals').get(primary_key_str, default=Container(logger)).add(key=str(size), value=confidence_interval)
 
     def get_score_header(self, header, score=None, sizes=None):
