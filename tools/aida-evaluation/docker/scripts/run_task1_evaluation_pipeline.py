@@ -762,6 +762,7 @@ def main(args):
     record_and_display_message(logger, 'Generating confidence intervals.')
     log_file = '{logs_directory}/confidence_intervals.log'.format(logs_directory=logs_directory)
     metric_classes_specs = get_metric_classes_specs()
+    added = {}
     cmds = []
     for line in metric_classes_specs.split('\n'):
         line = line.strip()
@@ -769,7 +770,7 @@ def main(args):
         if line.startswith('#'): continue
         filename, metricname, column_value_pairs, score_columnname = line.split()
         scorer_name = filename.split('-')[0]
-        if scorer_name in processed: continue
+        if scorer_name in added: continue
         cmd = 'cd {python_scripts} && \
             python3.9 generate_confidence_intervals.py \
             --log {log_file} \
@@ -791,6 +792,7 @@ def main(args):
                                 pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
                                 tab_output='{}/{}-ci.tab'.format(scores, scorer_name))
         cmds.append(cmd)
+        added[scorer_name] = 1
         with Pool(4) as p:
             p.map(call_system, cmds)
 
