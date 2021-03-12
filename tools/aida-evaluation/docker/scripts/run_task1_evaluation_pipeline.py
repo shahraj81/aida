@@ -793,8 +793,8 @@ def main(args):
                                 tab_output='{}/{}-ci.tab'.format(scores, scorer_name))
         cmds.append(cmd)
         added[scorer_name] = 1
-        with Pool(4) as p:
-            p.map(call_system, cmds)
+    with Pool(8) as p:
+        p.map(call_system, cmds)
 
     #############################################################################################
     # generate results.json file
