@@ -10,6 +10,7 @@ __version__ = "2019.1.0"
 __date__    = "21 Aug 2020"
 
 from logger import Logger
+from multiprocessing import Pool
 import argparse
 import json
 import os
@@ -761,7 +762,7 @@ def main(args):
     record_and_display_message(logger, 'Generating confidence intervals.')
     log_file = '{logs_directory}/confidence_intervals.log'.format(logs_directory=logs_directory)
     metric_classes_specs = get_metric_classes_specs()
-    processed = {}
+    cmds = []
     for line in metric_classes_specs.split('\n'):
         line = line.strip()
         if line == '': continue
@@ -789,8 +790,9 @@ def main(args):
                                 input='{}/{}-scores.tab'.format(scores, scorer_name),
                                 pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
                                 tab_output='{}/{}-ci.tab'.format(scores, scorer_name))
-        processed[scorer_name] = 1
-        call_system(cmd)
+        cmds.append(cmd)
+        with Pool(4) as p:
+            p.map(lambda cmd: call_system(cmd), cmds)
 
     #############################################################################################
     # generate results.json file
