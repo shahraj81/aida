@@ -62,7 +62,7 @@ if __name__ == '__main__':
                               be redirected (default: %(default)s)')
     parser.add_argument('-s', '--seed', type=int, default=None,
                         help='Seed value for computing confidence interval (default: %(default)s).')
-    parser.add_argument('-S', '--sizes', type=str, default='0.9,0.95,0.99',
+    parser.add_argument('-S', '--sizes', type=str, default='0.7,0.8,0.9,0.95',
                         help='Comma-separated list of confidence sizes (default: %(default)s).')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
                         help='Print version number and exit')
