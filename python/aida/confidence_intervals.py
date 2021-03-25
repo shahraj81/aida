@@ -154,8 +154,8 @@ class ConfidenceIntervals(Object):
             return self.get('score_header', header, score=None, sizes=sizes)
         else:
             size = sizes.pop()
-            size_left = '{}%('.format(float(size)*100)
-            size_right = '){}%'.format(float(size)*100)
+            size_left = '{}%('.format(int(float(size)*100))
+            size_right = '){}%'.format(int(float(size)*100))
             header.insert(0, size_left)
             header.append(size_right)
             return self.get('score_header', header, score=None, sizes=sizes)
