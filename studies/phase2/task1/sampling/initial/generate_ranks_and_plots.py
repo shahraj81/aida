@@ -241,6 +241,8 @@ class Scores(Container):
                                           value=self.get('entries', metric_name, filename))
     def load(self, scores_dir):
         for submission in os.listdir(scores_dir):
+            if not os.path.isdir(os.path.join(scores_dir, submission)):
+                continue
             submission_scores = '{}/scores'.format(submission)
             submission_scores_dir = os.path.join(scores_dir, submission_scores)
             for metric_ci in os.listdir(submission_scores_dir):
