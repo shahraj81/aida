@@ -1,17 +1,17 @@
 """
 AIDA class for bootstrap resampling based two-sided BCA confidence intervals.
 """
-from aida.file_handler import FileHandler
-from aida.container import Container
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "26 February 2021"
 
-import numpy as np
-
 from aida.object import Object
+from aida.file_handler import FileHandler
+from aida.container import Container
 from arch.bootstrap import IIDBootstrap
+
+import numpy as np
 
 class ConfidenceIntervals(Object):
     """

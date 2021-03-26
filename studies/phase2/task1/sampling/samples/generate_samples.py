@@ -10,7 +10,6 @@ __date__    = "26 March 2021"
 import random
 import argparse
 import os
-import sys
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
