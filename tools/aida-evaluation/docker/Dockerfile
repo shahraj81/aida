@@ -32,15 +32,15 @@ RUN dpkg-reconfigure -f noninteractive tzdata
 
 RUN apt-get install build-essential checkinstall -y
 RUN apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev \
-    libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev wget -y
+    libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev liblzma-dev wget -y
 WORKDIR /opt
-RUN wget https://www.python.org/ftp/python/3.9.0/Python-3.9.0.tgz
-RUN tar xzf Python-3.9.0.tgz
-WORKDIR /opt/Python-3.9.0
+RUN wget https://www.python.org/ftp/python/3.9.2/Python-3.9.2.tgz
+RUN tar xzf Python-3.9.2.tgz
+WORKDIR /opt/Python-3.9.2
 RUN ./configure --enable-optimizations
 RUN make altinstall
 WORKDIR /opt
-RUN rm -rf Python-3.9.0.tgz Python-3.9.0
+RUN rm -rf Python-3.9.2.tgz Python-3.9.2
 
 #-------------------------------------------------------------
 # Upgrade pip and install munkres
@@ -59,6 +59,18 @@ RUN pip3.9 install munkres
 #-------------------------------------------------------------
 
 RUN pip3.9 --no-cache-dir install --upgrade awscli
+
+#-------------------------------------------------------------
+#  Install arch
+#-------------------------------------------------------------
+
+RUN pip3.9 install arch
+
+#-------------------------------------------------------------
+#  Install numpy
+#-------------------------------------------------------------
+
+RUN pip3.9 install numpy
 
 #-------------------------------------------------------------
 #  Install GraphDB
