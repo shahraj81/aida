@@ -194,7 +194,7 @@ class ConfidenceIntervals(Object):
     def add_confidence_intervals(self, line, primary_key_value):
         confidence_intervals = self.get('confidence_intervals').get(primary_key_value)
         for size in [float(s.strip()) for s in self.get('sizes').split(',')]:
-            lower_key, upper_key = '{s}%('.format(s=size*100), '){s}%'.format(s=size*100)
+            lower_key, upper_key = '{s}%('.format(s=int(size*100)), '){s}%'.format(s=int(size*100))
             lower_value, upper_value = confidence_intervals.get(str(size))
             line[lower_key] = lower_value
             line[upper_key] = upper_value
