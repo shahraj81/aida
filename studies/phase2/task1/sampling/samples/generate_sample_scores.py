@@ -1,5 +1,5 @@
 """
-AIDA main script generating samples for the study.
+AIDA main script for generating sample scores for the study.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -20,7 +20,8 @@ def check_path(args):
                                args.logs,
                                args.runs,
                                args.samples,
-                               args.aux_data])
+                               args.aux_data,
+                               args.gold])
     check_for_paths_non_existance([args.output])
 
 def check_for_paths_existance(paths):
@@ -115,7 +116,6 @@ def call_system(cmd):
 
 def generate_sample_scores(args):
     os.mkdir(args.output)
-    i = 1
     cmds = []
     for runid in os.listdir(args.runs):
         rundir = os.path.join(args.runs, runid)
@@ -140,7 +140,7 @@ def generate_sample_scores(args):
         p.map(call_system, cmds)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Generate samples for the study.")
+    parser = argparse.ArgumentParser(description="Generate sample scores for the study.")
     parser.add_argument('-l', '--ldc_package_id', default='LDC2020R17', help='Specify the LDC Package ID to be used as a prefix of the output filenames (default: %(default)s).')
     parser.add_argument('python_scripts', type=str, help='Specify the directory containing scoring scripts.')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
