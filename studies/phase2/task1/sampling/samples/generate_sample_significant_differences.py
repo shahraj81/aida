@@ -1,8 +1,11 @@
+import math
 import os
 import statistics
-from arch.bootstrap import IIDBootstrap
-
 import numpy as np
+
+from arch.bootstrap import IIDBootstrap
+from scipy.stats import  kendalltau, pearsonr, spearmanr
+from inspect import currentframe, getouterframes
 
 class Object(object):
     """
@@ -286,6 +289,26 @@ class Rankings(Container):
                 rank += 1
                 entry.set('rank', rank)
 
+def get_correlations(sample_ranking, official_ranking):
+    scores = {}
+    rankings = {'sample': sample_ranking, 'official': official_ranking}
+    for ranking_name in rankings:
+        for entry in rankings[ranking_name].values():
+            runid = entry.get('runid')
+            score = entry.get('score')
+            if runid not in scores:
+                scores[runid] = {}
+            scores[runid][ranking_name] = float(score)
+    lists = {'sample': [], 'official': []}
+    for runid in scores:
+        for ranking_name in scores[runid]:
+            lists[ranking_name].append(scores[runid][ranking_name])
+    methods = {'kendalltau':kendalltau, 'pearsonr':pearsonr, 'spearmanr':spearmanr}
+    correlations = {}
+    for method in methods:
+        correlations[method], _ = methods[method](lists['sample'], lists['official'])
+    return correlations
+
 def get_significant_differences_score(rankings, topk = None):
     def is_significantly_different(entry1, entry2):
         def get_linear_overlap(start1, end1, start2, end2, text_modality=False):
@@ -337,20 +360,44 @@ def get_stats(scores_container):
         if n < 1:
             raise ValueError('mean requires at least one data point')
         return sum(data)/n
-    scores = list(scores_container.values())
-    stats = {
-        'min': min(scores),
-        'max': max(scores),
-        'mean': mean(scores),
-        'median': statistics.median(scores),
-        'stdev': statistics.stdev(scores),
-        'variance': statistics.stdev(scores) ** 2,
-        'ci': get_confidence_interval(scores)
+    score_lists = {}
+    for score in scores_container.values():
+        for score_name in score:
+            if score_name not in score_lists:
+                score_lists[score_name] = []
+            score_lists[score_name].append(score[score_name])
+    methods = {
+        'min': lambda s: min(s),
+        'max': lambda s: max(s),
+        'mean': lambda s: mean(s),
+        'median': lambda s: statistics.median(s),
+        'stdev': lambda s: statistics.stdev(s),
+        'variance': lambda s: statistics.stdev(s),
+        'ci': lambda s: get_confidence_interval(s),
         }
+    stats = {}
+    for score_name in score_lists:
+        stats[score_name] = {}
+        scores = score_lists[score_name]
+        for method in methods:
+            stats[score_name][method] = methods[method](scores)
     return stats
 
-sd_scores = Container()
+# number of top system to be considered for study
+topk = 8
+
 group_by = 'confidence_interval_size::metric::language::metatype'
+
+## BEGIN
+# load data to support generating rank correlation between:
+#   subsample-rankings and official rankings
+
+official_scores_dir = '../initial/scores'
+official_scores = Scores(scores_dir=official_scores_dir, FIX_HEADER=True)
+official_rankings = Rankings(scores=official_scores, group_by=group_by)
+## END
+
+sd_scores = Container()
 samples_scores_dir = './sample_scores'
 for sample_id in sorted(os.listdir(samples_scores_dir)):
     sample_size, sample_num = sample_id.split('-')
@@ -380,13 +427,18 @@ for sample_id in sorted(os.listdir(samples_scores_dir)):
                     if metatype not in language_rankings:
                         continue
                     ranking = language_rankings.get(metatype)
-                    sd_score = get_significant_differences_score(ranking, topk=8)
+                    official_ranking = official_rankings.get('::'.join([confidence_interval_size,
+                                                                        metric,
+                                                                        language,
+                                                                        metatype]))
+                    sample_stats = get_correlations(ranking, official_ranking)
+                    sample_stats['sd_score'] = get_significant_differences_score(ranking, topk=topk)
                     sd_scores.get(language, default=Container()) \
                         .get(metatype, default=Container()) \
                         .get(metric, default=Container()) \
                         .get(confidence_interval_size, default=Container()) \
                         .get(sample_size, default=Container()) \
-                            .add(key=sample_num, value=sd_score)
+                            .add(key=sample_num, value=sample_stats)
 
 program_output = open('sampling_study_output.txt', 'w')
 entire_sample_significant_differences_filename = '../initial/significant_difference.txt'
@@ -401,25 +453,34 @@ with open(entire_sample_significant_differences_filename) as fh:
             subsample_sd_scores = sd_scores.get(language).get(metatype).get(metric).get(confidence_interval_size)
             for subsample_size in subsample_sd_scores:
                 subsample_sd_scores_stats = get_stats(subsample_sd_scores.get(subsample_size))
-                output = '{metric:15} {language} {metatype:7} {confidence_interval_size} {sd_score} {subsample_size} '
-                output = output + '{min} {max} {mean} {median} {stdev} {variance} {sci_size}%({lower},{upper})\n'
-                output = output.format(
-                    metric=metric,
-                    language=language,
-                    metatype=metatype,
-                    confidence_interval_size=confidence_interval_size,
-                    sd_score=sd_score,
-                    subsample_size=subsample_size,
-                    min='{}'.format(int(subsample_sd_scores_stats['min']*100)),
-                    max='{}'.format(int(subsample_sd_scores_stats['max']*100)),
-                    mean='{}'.format(int(subsample_sd_scores_stats['mean']*100)),
-                    median='{}'.format(int(subsample_sd_scores_stats['median']*100)),
-                    stdev='{:0.4f}'.format(subsample_sd_scores_stats['stdev']),
-                    variance='{:0.4f}'.format(subsample_sd_scores_stats['variance']),
-                    sci_size='{}'.format(int(subsample_sd_scores_stats['ci']['size']*100)),
-                    lower='{:0.1f}'.format(subsample_sd_scores_stats['ci']['lower']*100),
-                    upper='{:0.1f}'.format(subsample_sd_scores_stats['ci']['upper']*100)
-                    )
+                output_dict = {
+                    'metric': metric,
+                    'language': language,
+                    'metatype': metatype,
+                    'ci_size': confidence_interval_size,
+                    'sd_score': sd_score,
+                    'subsample_size': subsample_size
+                    }
+                header = list(output_dict.keys())
+                stats_submetrics = ['min', 'max', 'mean', 'median', 'stdev', 'variance']
+                for submetric_name in subsample_sd_scores_stats:
+                    for stats_submetric in stats_submetrics:
+                        key = '{}_{}'.format(submetric_name, stats_submetric)
+                        header.append(key)
+                        output_dict[key] = subsample_sd_scores_stats[submetric_name][stats_submetric]
+                    key = '{}_sci'.format(submetric_name)
+                    header.append(key)
+                    output_dict[key] = '{sci_size}%({lower}.{upper})'.format(
+                        sci_size=int(subsample_sd_scores_stats[submetric_name]['ci']['size']*100),
+                        lower='{:0.1f}'.format(subsample_sd_scores_stats[submetric_name]['ci']['lower']*100),
+                        upper='{:0.1f}'.format(subsample_sd_scores_stats[submetric_name]['ci']['upper']*100)
+                        )
+                output = ''
+                for key in header:
+                    if output != '':
+                        output = output + ' '
+                    output = output + '{' + '{}'.format(key) + '}'
+                output = output.format(**output_dict)
                 print(output)
                 program_output.write(output)
 program_output.close()
