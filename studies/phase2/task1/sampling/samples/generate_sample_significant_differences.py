@@ -347,7 +347,7 @@ def get_stats(scores_container):
         def score(x):
             return np.array([x.mean()])
         data = np.array([float(score) for score in scores])
-        if min(data) == max(data):
+        if max(data)-min(data) < 0.000001:
             return {'size': ci_size, 'lower': min(data), 'upper': max(data)}
         bs = IIDBootstrap(data)
         if seed_value is not None:
