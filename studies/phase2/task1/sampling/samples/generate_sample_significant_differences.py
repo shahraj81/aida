@@ -346,7 +346,9 @@ def get_stats(scores_container):
         """
         def score(x):
             return np.array([x.mean()])
-        data = np.array([float(score) for score in scores])
+        data = np.array([float(score) for score in scores if not math.isnan(score)])
+        if len(data) == 0:
+            return {'size': ci_size, 'lower': float('nan'), 'upper': float('nan')}
         if max(data)-min(data) < 0.000001:
             return {'size': ci_size, 'lower': min(data), 'upper': max(data)}
         bs = IIDBootstrap(data)
