@@ -362,6 +362,16 @@ def get_stats(scores_container):
         if n < 1:
             raise ValueError('mean requires at least one data point')
         return sum(data)/n
+    def format_score(score_name, method_name, value):
+        if isinstance(value, dict):
+            return value
+        methods = {
+            'kendalltau': lambda v: '{:0.4f}'.format(v),
+            'pearsonr': lambda v: '{:0.4f}'.format(v),
+            'spearmanr': lambda v: '{:0.4f}'.format(v),
+            'sdscore': lambda v: '{:0.2f}'.format(v),
+            }
+        return methods[score_name](value)
     score_lists = {}
     for score in scores_container.values():
         for score_name in score:
@@ -374,7 +384,7 @@ def get_stats(scores_container):
         'mean': lambda s: mean(s),
         'median': lambda s: statistics.median(s),
         'stdev': lambda s: statistics.stdev(s),
-        'variance': lambda s: statistics.stdev(s),
+        'variance': lambda s: statistics.stdev(s)**2,
         'ci': lambda s: get_confidence_interval(s),
         }
     stats = {}
@@ -382,7 +392,7 @@ def get_stats(scores_container):
         stats[score_name] = {}
         scores = score_lists[score_name]
         for method in methods:
-            stats[score_name][method] = methods[method](scores)
+            stats[score_name][method] = format_score(score_name, method, methods[method](scores))
     return stats
 
 # number of top system to be considered for study
@@ -434,7 +444,7 @@ for sample_id in sorted(os.listdir(samples_scores_dir)):
                                                                         language,
                                                                         metatype]))
                     sample_stats = get_correlations(ranking, official_ranking)
-                    sample_stats['sd_score'] = get_significant_differences_score(ranking, topk=topk)
+                    sample_stats['sdscore'] = get_significant_differences_score(ranking, topk=topk)*100
                     sd_scores.get(language, default=Container()) \
                         .get(metatype, default=Container()) \
                         .get(metric, default=Container()) \
@@ -445,6 +455,7 @@ for sample_id in sorted(os.listdir(samples_scores_dir)):
 program_output = open('sampling_study_output.txt', 'w')
 entire_sample_significant_differences_filename = '../initial/significant_difference.txt'
 header = None
+header_printed = False
 with open(entire_sample_significant_differences_filename) as fh:
     for line in fh.readlines():
         line = line.strip()
@@ -455,13 +466,15 @@ with open(entire_sample_significant_differences_filename) as fh:
             subsample_sd_scores = sd_scores.get(language).get(metatype).get(metric).get(confidence_interval_size)
             for subsample_size in subsample_sd_scores:
                 subsample_sd_scores_stats = get_stats(subsample_sd_scores.get(subsample_size))
+                num_subsamples = len(subsample_sd_scores.get(subsample_size))
                 output_dict = {
                     'metric': metric,
                     'language': language,
                     'metatype': metatype,
                     'ci_size': confidence_interval_size,
-                    'sd_score': sd_score,
-                    'subsample_size': subsample_size
+                    'sdscore': sd_score,
+                    'subsample_size': subsample_size,
+                    'num_subsamples': num_subsamples
                     }
                 header = list(output_dict.keys())
                 stats_submetrics = ['min', 'max', 'mean', 'median', 'stdev', 'variance']
@@ -472,16 +485,37 @@ with open(entire_sample_significant_differences_filename) as fh:
                         output_dict[key] = subsample_sd_scores_stats[submetric_name][stats_submetric]
                     key = '{}_sci'.format(submetric_name)
                     header.append(key)
-                    output_dict[key] = '{sci_size}%({lower}.{upper})'.format(
-                        sci_size=int(subsample_sd_scores_stats[submetric_name]['ci']['size']*100),
-                        lower='{:0.1f}'.format(subsample_sd_scores_stats[submetric_name]['ci']['lower']*100),
-                        upper='{:0.1f}'.format(subsample_sd_scores_stats[submetric_name]['ci']['upper']*100)
+                    sci_size=int(subsample_sd_scores_stats[submetric_name]['ci']['size']*100)
+                    ci = {'lower':subsample_sd_scores_stats[submetric_name]['ci']['lower'],
+                          'upper':subsample_sd_scores_stats[submetric_name]['ci']['upper']
+                          }
+                    for side in ci:
+                        ci[side] = '{:0.2f}'.format(ci[side]) if submetric_name=='sdscore' else '{:0.4f}'.format(ci[side])
+                    output_dict[key] = '{sci_size}%({lower},{upper})'.format(
+                        sci_size=sci_size,
+                        lower=ci['lower'],
+                        upper=ci['upper']
                         )
                 output = ''
+                formats = {'metric': 17, 'language':9, 'metatype': 9, 'ci_size': '>8', 'sdscore': '>8', 'subsample_size': '>15',
+                           'num_subsamples': 15}
+                for submetric_name in subsample_sd_scores_stats:
+                    for stats_submetric in stats_submetrics:
+                        key = '{}_{}'.format(submetric_name, stats_submetric)
+                        formats[key] = '>{}'.format(len(key))
+                    key = '{}_sci'.format(submetric_name)
+                    formats[key] = 20
                 for key in header:
                     if output != '':
                         output = output + ' '
+                    if key in formats:
+                        key = '{}:{}'.format(key, formats[key])
                     output = output + '{' + '{}'.format(key) + '}'
+                if not header_printed:
+                    header_line = output.format(**{v:v for v in header})
+                    print(header_line)
+                    program_output.write(header_line)
+                    header_printed = True
                 output = output.format(**output_dict)
                 print(output)
                 program_output.write(output)
