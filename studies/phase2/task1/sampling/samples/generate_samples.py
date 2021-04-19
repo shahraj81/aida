@@ -68,7 +68,7 @@ def generate_samples(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate samples for the study.")
     parser.add_argument('-l', '--ldc_package_id', default='LDC2020R17', help='Specify the LDC Package ID to be used as a prefix of the output filenames (default: %(default)s).')
-    parser.add_argument('input', type=str, help='File containing list of core documents from which samples are drawn.')
+    parser.add_argument('input', type=str, help='File containing list of core documents from which samples are to be drawn.')
     parser.add_argument('sizes', type=str, help='Comma-separated list of sample sizes in percentage, e.g. use 90 for a 90% sample.')
     parser.add_argument('count', type=int, help='Specify the number of samples of a particular size should be generated.')
     parser.add_argument('output', type=str, help='Specify a directory to which the output samples should be written.')
