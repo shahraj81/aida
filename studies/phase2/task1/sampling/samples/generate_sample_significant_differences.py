@@ -518,5 +518,5 @@ with open(entire_sample_significant_differences_filename) as fh:
                     header_printed = True
                 output = output.format(**output_dict)
                 print(output)
-                program_output.write(output)
+                program_output.write(output + '\n')
 program_output.close()
