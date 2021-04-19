@@ -514,7 +514,7 @@ with open(entire_sample_significant_differences_filename) as fh:
                 if not header_printed:
                     header_line = output.format(**{v:v for v in header})
                     print(header_line)
-                    program_output.write(header_line)
+                    program_output.write(header_line + '\n')
                     header_printed = True
                 output = output.format(**output_dict)
                 print(output)
