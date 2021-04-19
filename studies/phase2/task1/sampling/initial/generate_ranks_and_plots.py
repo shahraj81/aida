@@ -182,6 +182,7 @@ class Container(Object):
             else:
                 d[k] = v
         return d
+
 class Entry(Object):
     def __init__(self, metricname, filename, header_line, data_lineno, data_line):
         entry = dict(zip(header_line.split('\t'), data_line.split('\t')))
