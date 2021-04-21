@@ -8,6 +8,7 @@ __version__ = "0.0.0.1"
 __date__    = "3 February 2020"
 
 from aida.object import Object
+from aida.container import Container
 
 class Scorer(Object):
     """
@@ -36,6 +37,27 @@ class Scorer(Object):
 
     def get_core_documents(self):
         return self.get('gold_responses').get('document_mappings').get('core_documents')
+
+    def aggregate_scores(self, scores, score_class):
+        aggregates = {}
+        for score in scores.values():
+            languages = [score.get('language'), 'ALL']
+            metatypes = [score.get('metatype'), 'ALL']
+            for language in languages:
+                for metatype in metatypes:
+                    group_by = language + ',' + metatype
+                    if group_by not in aggregates:
+                        aggregates[group_by] = score_class(self.get('logger'),
+                                                           aggregate=True,
+                                                           language=language,
+                                                           metatype=metatype,
+                                                           run_id=self.get('run_id'),
+                                                           summary=True,
+                                                           elements=Container(self.get('logger')))
+                    aggregate_scores = aggregates[group_by]
+                    aggregate_scores.get('elements').add(score)
+        for score in sorted(aggregates.values(), key=self.order):
+            scores.add(score)
 
     def print_scores(self, filename, separator):
         scores = self.get('scores')

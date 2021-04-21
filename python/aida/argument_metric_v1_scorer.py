@@ -66,7 +66,7 @@ class ArgumentMetricScorerV1(Scorer):
         return False
 
     def order(self, k):
-        language, metatype = k.split(':')
+        language, metatype = k.get('language'), k.get('metatype')
         metatype = '_ALL' if metatype == 'ALL' else metatype
         language = '_ALL' if language == 'ALL' else language
         return '{language}:{metatype}'.format(metatype=metatype, language=language)
@@ -138,8 +138,6 @@ class ArgumentMetricScorerV1(Scorer):
             'Relation': ['Relation']
             }
         scores = []
-        mean_f1s = {}
-        counts = {}
         for document_id in self.get('core_documents'):
             language = self.get('gold_responses').get('document_mappings').get('documents').get(document_id).get('language')
             gold_trfs = self.get('document_type_role_fillers', 'gold', document_id)
@@ -148,23 +146,19 @@ class ArgumentMetricScorerV1(Scorer):
             for metatype_key in metatypes:
                 num_gold_trf, num_system_trf, precision, recall, f1 = self.get('score', gold_trfs, system_trfs, metatypes[metatype_key])
                 if num_gold_trf + num_system_trf == 0: continue
-                for language_key in ['ALL', language]:
-                    aggregate_key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
-                    mean_f1s[aggregate_key] = mean_f1s.get(aggregate_key, 0) + f1
-                    counts[aggregate_key] = counts.get(aggregate_key, 0) + 1
-                score = ArgumentMetricScore(self.logger, self.get('run_id'), document_id, language, metatype_key,
-                                     precision, recall, f1)
+                score = ArgumentMetricScore(logger=self.logger,
+                                            run_id=self.get('run_id'),
+                                            document_id=document_id,
+                                            language=language,
+                                            metatype=metatype_key,
+                                            precision=precision,
+                                            recall=recall,
+                                            f1=f1)
                 scores.append(score)
 
         scores_printer = ScorePrinter(self.logger, self.printing_specs)
         for score in multisort(scores, (('document_id', False),
                                         ('metatype_sortkey', False))):
             scores_printer.add(score)
-
-        for key in sorted(mean_f1s, key=self.order):
-            mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
-            language, metatype = key.split(':')
-            mean_score = ArgumentMetricScore(self.logger, self.get('run_id'), 'Summary', language, metatype, '', '', mean_f1, summary = True)
-            scores_printer.add(mean_score)
-
+        self.aggregate_scores(scores_printer, ArgumentMetricScore)
         self.scores = scores_printer
