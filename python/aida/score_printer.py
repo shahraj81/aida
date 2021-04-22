@@ -44,7 +44,7 @@ class ScorePrinter(Container):
             self.get('lines').append(elements_to_print)
         for score in scores:
             if score.get('summary'):
-                for aggregate_type in ['Micro', 'Macro']:
+                for aggregate_type in ['ALL-Micro', 'ALL-Macro']:
                     elements_to_print = {}
                     for field in self.printing_specs:
                         field_name = field.get('name')

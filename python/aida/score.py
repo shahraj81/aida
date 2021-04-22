@@ -45,8 +45,8 @@ class Score(Object):
             return aggregate_type
         if field_name in ['precision', 'recall', 'gold_cluster_id', 'system_cluster_id']:
             return ''
-        if aggregate_type == 'Micro':
+        if aggregate_type == 'ALL-Micro':
             return micro(self.get('elements'), field_name)
-        if aggregate_type == 'Macro':
+        if aggregate_type == 'ALL-Macro':
             return macro(self.get('elements'), field_name)
         return None
