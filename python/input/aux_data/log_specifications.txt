@@ -32,6 +32,7 @@ ERROR     INVALID_PROVENANCE_FORMAT       Invalid provenance '{}'
 WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is invalid
 INFO      KB_STATS                        Input directory contains {} KBs in total. (valid {}, invalid {})
 CRITICAL  KEY_IS_NONE                     key 'None' used
+INFO      MACRO_SCORES                    DOCID:{} MACRO_SCORE:{} INPUT:{}
 INFO      MENTION_NOT_ANNOTATED           Response skipped because mention '{}' is outside the annotated regions
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
 ERROR     MISSING_AWS_CREDENTIALS         AWS credentials missing

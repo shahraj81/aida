@@ -12,6 +12,7 @@ from aida.container import Container
 from arch.bootstrap import IIDBootstrap
 
 import numpy as np
+import os
 
 class ConfidenceIntervals(Object):
     """
@@ -148,9 +149,9 @@ class ConfidenceIntervals(Object):
                                                 'score': None,
                                                 'elements':[]}
             document_scores[document_id]['elements'].append(float(score.get(self.get('score'))))
-
         for document_id in document_scores:
             document_scores[document_id]['score'] = mean_score(document_scores[document_id]['elements'])
+            self.record_event('MACRO_SCORES', document_id, document_scores[document_id]['score'], self.get('input'))
         return [document_scores[d]['score'] for d in document_scores]
 
     def get_micro_scores(self, scores):
