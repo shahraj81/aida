@@ -27,12 +27,6 @@ class CoreferenceMetricScorer(Scorer):
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
 
-    def order(self, k):
-        language, metatype = k.get('language'), k.get('metatype')
-        metatype = '_ALL' if metatype == 'ALL' else metatype
-        language = '_ALL' if language == 'ALL' else language
-        return '{language}:{metatype}'.format(metatype=metatype, language=language)
-
     def get_max_total_similarity(self, document_id, metatypes):
         max_total_similarity = 0
         for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):

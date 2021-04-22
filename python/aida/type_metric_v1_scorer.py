@@ -32,12 +32,6 @@ class TypeMetricScorerV1(Scorer):
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
 
-    def order(self, k):
-        language, metatype = k.get('language'), k.get('metatype')
-        metatype = '_ALL' if metatype == 'ALL' else metatype
-        language = '_ALL' if language == 'ALL' else language
-        return '{language}:{metatype}'.format(metatype=metatype, language=language)
-
     def get_augmented_types(self, document_id, types):
         region_types = self.get('annotated_regions').get('types_annotated_for_document', document_id)
         augmented_types = get_augmented_types_utility(region_types, types)

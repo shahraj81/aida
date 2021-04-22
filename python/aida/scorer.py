@@ -59,6 +59,12 @@ class Scorer(Object):
         for score in sorted(aggregates.values(), key=self.order):
             scores.add(score)
 
+    def order(self, k):
+        language, metatype = k.get('language'), k.get('metatype')
+        metatype = '_ALL' if metatype == 'ALL' else metatype
+        language = '_ALL' if language == 'ALL' else language
+        return '{language}:{metatype}'.format(metatype=metatype, language=language)
+
     def print_scores(self, filename, separator):
         scores = self.get('scores')
         scores.set('separator', separator)

@@ -29,12 +29,6 @@ class FrameMetricScorer(Scorer):
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
 
-    def order(self, k):
-        language, metatype = k.get('language'), k.get('metatype')
-        metatype = '_ALL' if metatype == 'ALL' else metatype
-        language = '_ALL' if language == 'ALL' else language
-        return '{language}:{metatype}'.format(metatype=metatype, language=language)
-
     def score_responses(self):
         scores = []
         for document_id in self.get('core_documents'):

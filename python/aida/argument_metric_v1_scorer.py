@@ -65,12 +65,6 @@ class ArgumentMetricScorerV1(Scorer):
             return True
         return False
 
-    def order(self, k):
-        language, metatype = k.get('language'), k.get('metatype')
-        metatype = '_ALL' if metatype == 'ALL' else metatype
-        language = '_ALL' if language == 'ALL' else language
-        return '{language}:{metatype}'.format(metatype=metatype, language=language)
-
     def get_document_type_role_fillers(self, system_or_gold, document_id):
         logger = self.get('logger')
         type_role_fillers = Container(logger)

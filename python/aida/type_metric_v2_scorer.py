@@ -31,12 +31,6 @@ class TypeMetricScorerV2(Scorer):
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
 
-    def order(self, k):
-        language, metatype = k.get('language'), k.get('metatype')
-        metatype = '_ALL' if metatype == 'ALL' else metatype
-        language = '_ALL' if language == 'ALL' else language
-        return '{language}:{metatype}'.format(metatype=metatype, language=language)
-
     def get_average_precision(self, document_id, gold_cluster_id, augmented_gold_types, system_cluster_id, augmented_system_types):
         entity_types = {'gold': augmented_gold_types, 'system': augmented_system_types}
         type_weights = list()
