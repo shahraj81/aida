@@ -42,9 +42,9 @@ class ScorePrinter(Container):
                 elements_to_print[field_name] = text
                 widths[field_name] = len(text) if len(text)>widths[field_name] else widths[field_name]
             self.get('lines').append(elements_to_print)
-        for score in scores:
-            if score.get('summary'):
-                for aggregate_type in ['ALL-Micro', 'ALL-Macro']:
+        for aggregate_type in ['ALL-Micro', 'ALL-Macro']:
+            for score in scores:
+                if score.get('summary'):
                     elements_to_print = {}
                     for field in self.printing_specs:
                         field_name = field.get('name')
