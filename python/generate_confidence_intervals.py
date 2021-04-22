@@ -39,12 +39,16 @@ def generate_confidence_intervals(args):
     aggregate = {}
     for element in args.aggregate.split(','):
         key, value = element.split(':')
-        aggregate[key] = value
+        if key not in aggregate:
+            aggregate[key] = []
+        aggregate[key].append(value)
     confidence_interval = ConfidenceIntervals(logger,
+                                              macro=args.macro,
                                               input=args.input,
                                               primary_key_col=args.primary_key,
                                               score=args.score,
                                               aggregate=aggregate,
+                                              document_id_col=args.document_id,
                                               run_id_col=args.run_id,
                                               sizes=args.sizes,
                                               seed_value=args.seed)
@@ -60,6 +64,8 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log', default='log.txt',
                         help='Specify a file to which log output should \
                               be redirected (default: %(default)s)')
+    parser.add_argument('-m', '--macro', action='store_true',
+                        help='Use macro averages')
     parser.add_argument('-s', '--seed', type=int, default=None,
                         help='Seed value for computing confidence interval (default: %(default)s).')
     parser.add_argument('-S', '--sizes', type=str, default='0.7,0.8,0.9,0.95',
@@ -83,6 +89,8 @@ if __name__ == '__main__':
     parser.add_argument('aggregate', type=str,
                         help='Comma-separated list of colon-separated key-value pairs \
                               used to identify aggregate score lines in the input file.')
+    parser.add_argument('document_id', type=str,
+                        help='Name of the column containing DocID in the input file.')
     parser.add_argument('run_id', type=str,
                         help='Name of the column containing RunID in the input file.')
     parser.add_argument('input', type=str,

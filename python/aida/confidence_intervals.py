@@ -80,8 +80,12 @@ class ConfidenceIntervals(Object):
         return value
 
     def is_aggregate(self, entry):
-        for key, value in self.get('aggregate').items():
-            if entry.get(key) != value:
+        for key, values in self.get('aggregate').items():
+            match = False
+            for value in values:
+                if entry.get(key) == value:
+                    match = True
+            if not match:
                 return False
         return True
 
@@ -130,6 +134,28 @@ class ConfidenceIntervals(Object):
         ci = bs.conf_int(score, replications, method=ci_method, size=ci_size, tail='two')
         return tuple([ci[0][0], ci[1][0]])
 
+    def get_macro_scores(self, scores):
+        def mean_score(scores):
+            sum_scores = 0
+            for score in scores:
+                sum_scores += score
+            return sum_scores/len(scores)
+        document_scores = {}
+        for score in scores:
+            document_id = score.get(self.get('document_id_col'))
+            if document_id not in document_scores:
+                document_scores[document_id] = {'document_id': document_id,
+                                                'score': None,
+                                                'elements':[]}
+            document_scores[document_id]['elements'].append(float(score.get(self.get('score'))))
+
+        for document_id in document_scores:
+            document_scores[document_id]['score'] = mean_score(document_scores[document_id]['elements'])
+        return [document_scores[d]['score'] for d in document_scores]
+
+    def get_micro_scores(self, scores):
+        return [entry.get(self.get('score')) for entry in scores]
+
     def get_num_replications(self, size):
         if size == 0.99:
             return 10000000
@@ -137,14 +163,20 @@ class ConfidenceIntervals(Object):
 
     def compute_confidences(self):
         logger = self.get('logger')
+        processed = {}
         for aggregate_entry in self.filter_entries(aggregate=True, primary_key=None):
             primary_key = self.get('primary_key', aggregate_entry)
             primary_key_str = '.'.join([primary_key[fn] for fn in self.get('primary_key_col').split(',')])
-            scores = [entry.get(self.get('score')) for entry in self.filter_entries(aggregate=False,
-                                                                                    primary_key=primary_key)]
+            if primary_key_str in processed: continue
+            scores = self.filter_entries(aggregate=False, primary_key=primary_key)
+            if self.get('macro'):
+                scores = self.get('macro_scores', scores)
+            else:
+                scores = self.get('micro_scores', scores)
             for size in [float(s.strip()) for s in self.get('sizes').split(',')]:
                 confidence_interval = self.get('confidence_interval', scores, ci_size=size, replications=self.get('num_replications', size), seed_value=self.get('seed_value'))
                 self.get('confidence_intervals').get(primary_key_str, default=Container(logger)).add(key=str(size), value=confidence_interval)
+            processed[primary_key_str] = True
 
     def get_score_header(self, header, score=None, sizes=None):
         if score is None and len(sizes) == 0:

@@ -773,11 +773,13 @@ def main(args):
         if scorer_name in added: continue
         cmd = 'cd {python_scripts} && \
             python3.9 generate_confidence_intervals.py \
+            --macro \
             --log {log_file} \
             {log_specifications} \
             {primary_key} \
             {score_columnname} \
             {aggregate} \
+            {document_id} \
             {run_id} \
             {input} \
             {pretty_output} \
@@ -786,7 +788,8 @@ def main(args):
                                 log_specifications=log_specifications,
                                 primary_key='RunID,Language,Metatype',
                                 score_columnname=score_columnname,
-                                aggregate='DocID:Summary',
+                                aggregate='DocID:ALL-Micro,DocID:ALL-Macro',
+                                document_id='DocID',
                                 run_id='RunID',
                                 input='{}/{}-scores.tab'.format(scores, scorer_name),
                                 pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
