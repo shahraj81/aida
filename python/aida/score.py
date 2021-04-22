@@ -28,15 +28,13 @@ class Score(Object):
             for score in scores.values():
                 document_id = score.get('document_id')
                 if document_id not in document_scores:
-                    document_scores[document_id] = {'document_id': document_id,
-                                                    'score': None,
-                                                    'elements':[]}
-                document_scores[document_id]['elements'].append(score.get(field_name))
+                    document_scores[document_id] = []
+                document_scores[document_id].append(score.get(field_name))
             count = 0
             sum_score = 0
             for document_id in document_scores:
                 count += 1
-                sum_score += mean_score(document_scores[document_id]['elements'])
+                sum_score += mean_score(document_scores[document_id])
             return sum_score/count
         retVal = self.get(field_name)
         if retVal:
