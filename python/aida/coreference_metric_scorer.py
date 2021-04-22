@@ -28,7 +28,7 @@ class CoreferenceMetricScorer(Scorer):
         super().__init__(logger, **kwargs)
 
     def order(self, k):
-        language, metatype = k.split(':')
+        language, metatype = k.get('language'), k.get('metatype')
         metatype = '_ALL' if metatype == 'ALL' else metatype
         language = '_ALL' if language == 'ALL' else language
         return '{language}:{metatype}'.format(metatype=metatype, language=language)
@@ -68,8 +68,6 @@ class CoreferenceMetricScorer(Scorer):
             'Event': ['Event']
             }
         scores = []
-        mean_f1s = {}
-        counts = {}
         for document_id in self.get('core_documents'):
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
             language = document.get('language')
@@ -81,36 +79,19 @@ class CoreferenceMetricScorer(Scorer):
                 precision = max_total_similarity / total_self_similarity_system if total_self_similarity_system else 0
                 recall = max_total_similarity / total_self_similarity_gold
                 f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
-                score = CoreferenceMetricScore(self.logger,
-                                       self.get('run_id'),
-                                       document_id,
-                                       language,
-                                       metatype_key,
-                                       precision,
-                                       recall,
-                                       f1)
-                for language_key in ['ALL', language]:
-                    key = '{language}:{metatype}'.format(language=language_key, metatype=metatype_key)
-                    mean_f1s[key] = mean_f1s.get(key, 0) + f1
-                    counts[key] = counts.get(key, 0) + 1
+                score = CoreferenceMetricScore(logger=self.logger,
+                                               run_id=self.get('run_id'),
+                                               document_id=document_id,
+                                               language=language,
+                                               metatype=metatype_key,
+                                               precision=precision,
+                                               recall=recall,
+                                               f1=f1)
                 scores.append(score)
 
         scores_printer = ScorePrinter(self.logger, self.printing_specs)
         for score in multisort(scores, (('document_id', False),
                                         ('metatype_sortkey', False))):
             scores_printer.add(score)
-
-        for key in sorted(mean_f1s, key=self.order):
-            mean_f1 = mean_f1s[key] / counts[key] if counts[key] else 0
-            language, metatype = key.split(':')
-            mean_score = CoreferenceMetricScore(self.logger,
-                                                self.get('run_id'),
-                                                'Summary',
-                                                language,
-                                                metatype,
-                                                '',
-                                                '',
-                                                mean_f1,
-                                                summary = True)
-            scores_printer.add(mean_score)
+        self.aggregate_scores(scores_printer, CoreferenceMetricScore)
         self.scores = scores_printer
