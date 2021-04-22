@@ -32,7 +32,7 @@ class TypeMetricScorerV2(Scorer):
         super().__init__(logger, **kwargs)
 
     def order(self, k):
-        language, metatype = k.split(':')
+        language, metatype = k.get('language'), k.get('metatype')
         metatype = '_ALL' if metatype == 'ALL' else metatype
         language = '_ALL' if language == 'ALL' else language
         return '{language}:{metatype}'.format(metatype=metatype, language=language)
@@ -87,8 +87,6 @@ class TypeMetricScorerV2(Scorer):
 
     def score_responses(self):
         scores = []
-        mean_average_precisions = {}
-        counts = {}
         for document_id in self.get('core_documents'):
             # add scores corresponding to all gold clusters
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
@@ -118,19 +116,14 @@ class TypeMetricScorerV2(Scorer):
                     self.record_event('TYPE_METRIC_SCORE_INFO', self.__class__.__name__, 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(sorted(gold_types)), system_cluster_id, ','.join(sorted(system_types)))
                     self.record_event('TYPE_METRIC_SCORE_INFO', self.__class__.__name__, 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(sorted(augmented_gold_types)), system_cluster_id, ','.join(sorted(augmented_system_types)))
                     average_precision = self.get('average_precision', document_id, gold_cluster_id, augmented_gold_types, system_cluster_id, augmented_system_types)
-                for metatype_key in ['ALL', metatype]:
-                    for language_key in ['ALL', language]:
-                        key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
-                        mean_average_precisions[key] = mean_average_precisions.get(key, 0) + average_precision
-                        counts[key] = counts.get(key, 0) + 1
-                score = TypeMetricScoreV23(self.logger,
-                                        self.get('run_id'),
-                                        document_id,
-                                        language,
-                                        metatype,
-                                        gold_cluster_id,
-                                        system_cluster_id,
-                                        average_precision)
+                score = TypeMetricScoreV23(logger=self.logger,
+                                           run_id=self.get('run_id'),
+                                           document_id=document_id,
+                                           language=language,
+                                           metatype=metatype,
+                                           gold_cluster_id=gold_cluster_id,
+                                           system_cluster_id=system_cluster_id,
+                                           average_precision=average_precision)
                 scores.append(score)
             # add scores unaligned system clusters
             document_system_to_gold = self.get('cluster_alignment').get('system_to_gold').get(document_id)
@@ -143,19 +136,14 @@ class TypeMetricScorerV2(Scorer):
                     if metatype not in ['Entity', 'Event']: continue
                     if gold_cluster_id == 'None':
                         average_precision = 0
-                        for metatype_key in ['ALL', metatype]:
-                            for language_key in ['ALL', language]:
-                                key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
-                                mean_average_precisions[key] = mean_average_precisions.get(key, 0) + average_precision
-                                counts[key] = counts.get(key, 0) + 1
-                        score = TypeMetricScoreV23(self.logger,
-                                                self.get('run_id'),
-                                                document_id,
-                                                language,
-                                                metatype,
-                                                gold_cluster_id,
-                                                system_cluster_id,
-                                                average_precision)
+                        score = TypeMetricScoreV23(logger=self.logger,
+                                                   run_id=self.get('run_id'),
+                                                   document_id=document_id,
+                                                   language=language,
+                                                   metatype=metatype,
+                                                   gold_cluster_id=gold_cluster_id,
+                                                   system_cluster_id=system_cluster_id,
+                                                   average_precision=average_precision)
                         scores.append(score)
                     elif aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
@@ -165,17 +153,5 @@ class TypeMetricScorerV2(Scorer):
                                         ('gold_cluster_id', False),
                                         ('system_cluster_id', False))):
             scores_printer.add(score)
-        for key in sorted(mean_average_precisions, key=self.order):
-            mean_average_precision = mean_average_precisions[key] / counts[key] if counts[key] else 0
-            language, metatype = key.split(':')
-            mean_score = TypeMetricScoreV23(self.logger,
-                                       self.get('run_id'),
-                                       'Summary',
-                                       language,
-                                       metatype,
-                                       '',
-                                       '',
-                                       mean_average_precision,
-                                       summary = True)
-            scores_printer.add(mean_score)
+        self.aggregate_scores(scores_printer, TypeMetricScoreV23)
         self.scores = scores_printer

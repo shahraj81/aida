@@ -12,15 +12,19 @@ class TypeMetricScoreV1(Score):
     """
     AIDA class for type metric score.
     """
-    def __init__(self, logger, run_id, document_id, language, metatype, gold_cluster_id, system_cluster_id, precision, recall, f1, summary=False):
+    def __init__(self, logger, **kwargs):
         super().__init__(logger)
-        self.run_id = run_id
-        self.document_id = document_id
-        self.language = language
-        self.metatype = metatype
-        self.gold_cluster_id = gold_cluster_id if gold_cluster_id is not None else 'None'
-        self.system_cluster_id = system_cluster_id if system_cluster_id is not None else 'None'
-        self.precision = precision
-        self.recall = recall
-        self.f1 = f1
-        self.summary = summary
+        for key in kwargs:
+            self.set(key, kwargs[key])
+        self.metatype_sortkey = '_ALL' if self.get('metatype') == 'ALL' else self.get('metatype')
+        self.set_defaults()
+
+    def set_defaults(self):
+        defaults = {
+            'summary': False,
+            'gold_cluster_id': 'None',
+            'system_cluster_id': 'None'
+            }
+        for key in defaults:
+            if not self.get(key):
+                self.set(key, defaults[key])
