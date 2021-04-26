@@ -41,7 +41,7 @@ class Scorer(Object):
     def get_languages(self, score, scores):
         languages = [score.get('language')]
         flag = True
-        for element in scores:
+        for element in scores.values():
             if element.get('language') == 'ALL':
                 flag = False
         if flag:
@@ -51,7 +51,7 @@ class Scorer(Object):
     def get_metatypes(self, score, scores):
         metatypes = [score.get('metatype')]
         flag = True
-        for element in scores:
+        for element in scores.values():
             if element.get('metatype') == 'ALL':
                 flag = False
         if flag:
@@ -63,7 +63,6 @@ class Scorer(Object):
         for score in scores.values():
             languages = self.get('languages', score, scores)
             metatypes = self.get('metatypes', score, scores)
-            self.fix_metatypes(metatypes, scores)
             for language in languages:
                 for metatype in metatypes:
                     group_by = language + ',' + metatype
