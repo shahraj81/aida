@@ -38,11 +38,32 @@ class Scorer(Object):
     def get_core_documents(self):
         return self.get('gold_responses').get('document_mappings').get('core_documents')
 
+    def get_languages(self, score, scores):
+        languages = [score.get('language')]
+        flag = True
+        for element in scores:
+            if element.get('language') == 'ALL':
+                flag = False
+        if flag:
+            languages.append('ALL')
+        return languages
+
+    def get_metatypes(self, score, scores):
+        metatypes = [score.get('metatype')]
+        flag = True
+        for element in scores:
+            if element.get('metatype') == 'ALL':
+                flag = False
+        if flag:
+            metatypes.append('ALL')
+        return metatypes
+
     def aggregate_scores(self, scores, score_class):
         aggregates = {}
         for score in scores.values():
-            languages = [score.get('language'), 'ALL']
-            metatypes = [score.get('metatype'), 'ALL']
+            languages = self.get('languages', score, scores)
+            metatypes = self.get('metatypes', score, scores)
+            self.fix_metatypes(metatypes, scores)
             for language in languages:
                 for metatype in metatypes:
                     group_by = language + ',' + metatype
