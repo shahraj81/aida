@@ -208,6 +208,8 @@ class ConfidenceIntervals(Object):
         self.lines = []
         # prepare lines
         for aggregate_entry in self.filter_entries(aggregate=True, primary_key=None):
+            if self.get('macro') and aggregate_entry.get(self.get('document_id_col')) == 'ALL-Micro': continue
+            if self.get('micro') and aggregate_entry.get(self.get('document_id_col')) == 'ALL-Macro': continue
             line = self.get('primary_key', aggregate_entry)
             primary_key_str = '.'.join([line[fn] for fn in self.get('primary_key_col').split(',')])
             line['score'] = float(aggregate_entry.get(self.get('score')))
