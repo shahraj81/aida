@@ -1,8 +1,7 @@
-import numpy as np
-import os
 import json
 import matplotlib.pyplot as plt
 import re
+import statistics
 
 from inspect import currentframe, getouterframes
 
@@ -361,6 +360,40 @@ def get_row_column_indexes(metric, metatype):
         }
     return metrics[metatype][metric]
 
+def get_initial_ranking_stats(ranking, topk=8):
+    def mean(data):
+        """Return the sample arithmetic mean of data."""
+        n = len(data)
+        if n < 1:
+            raise ValueError('mean requires at least one data point')
+        return sum(data)/n
+    methods = {
+        'min': lambda s: min(s),
+        'max': lambda s: max(s),
+        'mean': lambda s: mean(s),
+        'median': lambda s: statistics.median(s),
+        'stdev': lambda s: statistics.stdev(s),
+        'variance': lambda s: statistics.stdev(s)**2,
+        }
+    scores = []
+    for rank in ranking['ranking']:
+        if int(rank) > topk: continue
+        scores.append(float(ranking['ranking'][rank]['score']))
+    stats = ranking
+    stats['stats'] = {}
+    for method in methods:
+        stats['stats'][method] = '{:0.4f}'.format(methods[method](scores))
+    return stats
+
+initial_rankings = None
+with open('../initial/rankings.json') as fh:
+    initial_rankings = json.load(fh)
+initial_rankings_parsed = {}
+key_fields = 'metric,language,metatype,confidence_interval_size'
+for entry in initial_rankings:
+    key = '::'.join([entry.get(field) for field in key_fields.split(',')])
+    initial_rankings_parsed[key] = get_initial_ranking_stats(entry)
+
 sampling_study_output_file='./sampling_study_output.txt'
 
 scores = [e for e in FileHandler(filename=sampling_study_output_file, separator='\s+')]
@@ -403,7 +436,26 @@ for ci_size in grouped_scores:
                     ys.append(y)
                     yerrs.append(yerr)
                     sdscores.append(sdscore)
+                key = '::'.join([metric, language, metatype, ci_size])
+                minv = float(initial_rankings_parsed[key]['stats']['min'])
+                maxv = float(initial_rankings_parsed[key]['stats']['max'])
+                meanv = float(initial_rankings_parsed[key]['stats']['mean'])
+                medianv = float(initial_rankings_parsed[key]['stats']['median'])
+                stdevv = float(initial_rankings_parsed[key]['stats']['stdev'])
+                variancev = float(initial_rankings_parsed[key]['stats']['variance'])
                 axs[row_idx, col_idx].plot(xs, sdscores)
+                axs[row_idx, col_idx].text(1, 95, 'min', style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(1, 90, 'max', style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(1, 85, 'mean', style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(5, 95, 'median', style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(5, 90, 'stdev', style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(5, 85, 'var', style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(2, 95, '{:0.4f}'.format(minv), style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(2, 90, '{:0.4f}'.format(maxv), style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(2, 85, '{:0.4f}'.format(meanv), style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(6.5, 95, '{:0.4f}'.format(medianv), style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(6.5, 90, '{:0.4f}'.format(stdevv), style='italic', fontsize=3)
+                axs[row_idx, col_idx].text(6.5, 85, '{:0.4f}'.format(variancev), style='italic', fontsize=3)
                 axs[row_idx, col_idx].errorbar(xs, ys, yerr=yerrs, capsize=2, fmt='.', ms=1)
                 axs[row_idx, col_idx].set_title('Metric: {}'.format(metric), fontsize=5)
                 axs[row_idx, col_idx].set_yticks([y*10 for y in range(0,11)])
@@ -414,14 +466,13 @@ for ci_size in grouped_scores:
             plt.savefig('plots/sdscores/{}_{}_{}.pdf'.format(ci_size, language, metatype))
             plt.close()
 
-
 for ci_size in grouped_scores:
     for language in grouped_scores.get(ci_size):
         for metatype in grouped_scores.get(ci_size).get(language):
             # generate a plot containing 8 subplots - one for each metric
             num_rows, num_columns = get_num_rows_and_columns(metatype)
             fig = plt.figure()
-            fig.suptitle('Language: {} Metatype: {} - {} CI over Score - 95% CI over Kendall\'s Tau'.format(language, metatype, ci_size), fontsize=10)
+            fig.suptitle('Language: {} Metatype: {} - 95% CI over Kendall\'s Tau'.format(language, metatype), fontsize=10)
             fig.text(0.5, 0.04, 'Subsample size (%)', ha='center')
             fig.text(0.04, 0.5, 'Kendall\'s Tau', va='center', rotation='vertical')
             gs = fig.add_gridspec(num_rows, num_columns, hspace=0.4, wspace=0.1)
@@ -449,5 +500,6 @@ for ci_size in grouped_scores:
                 # axs[row_idx, col_idx].set_ylim([-10, 100])
                 axs[row_idx, col_idx].tick_params(axis='x', labelsize=5)
                 axs[row_idx, col_idx].tick_params(axis='y', labelsize=5)
-            plt.savefig('plots/kendallstau/{}_{}_{}.pdf'.format(ci_size, language, metatype))
+            plt.savefig('plots/kendallstau/{}_{}.pdf'.format(language, metatype))
             plt.close()
+    break
