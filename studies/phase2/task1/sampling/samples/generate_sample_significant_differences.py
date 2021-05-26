@@ -310,6 +310,14 @@ def get_correlations(sample_ranking, official_ranking):
     return correlations
 
 def get_significant_differences_score(rankings, topk = None):
+    def check_zeros(rankings, topk):
+        for entry in rankings.values():
+            if entry.get('rank') > topk: continue
+            confidence_interval = entry.get('confidence_interval')
+            for ci_element in confidence_interval:
+                if ci_element != '0.0000':
+                    return False
+        return True
     def is_significantly_different(entry1, entry2):
         def get_linear_overlap(start1, end1, start2, end2, text_modality=False):
             s1 = float(start1)
@@ -322,11 +330,15 @@ def get_significant_differences_score(rankings, topk = None):
             return overlap
         ci1 = entry1.get('confidence_interval')
         ci2 = entry2.get('confidence_interval')
+        if ci1[0] == ci1[1] and ci2[0] == ci2[1] and ci1[0] == ci2[0]:
+            return False
         if get_linear_overlap(ci1[0], ci1[1], ci2[0], ci2[1]) > 0:
             return False
         return True
     if topk is None:
         topk = len(rankings)
+    if check_zeros(rankings, topk):
+        return 0
     num_total_pairs = 0
     num_significantly_different_pairs = 0
     for entry1 in rankings.values():
@@ -390,7 +402,7 @@ def get_stats(scores_container):
     stats = {}
     for score_name in score_lists:
         stats[score_name] = {}
-        scores = score_lists[score_name]
+        scores = sorted(score_lists[score_name])
         for method in methods:
             stats[score_name][method] = format_score(score_name, method, methods[method](scores))
     return stats
@@ -412,6 +424,7 @@ official_rankings = Rankings(scores=official_scores, group_by=group_by)
 sd_scores = Container()
 samples_scores_dir = './sample_scores'
 for sample_id in sorted(os.listdir(samples_scores_dir)):
+    print(sample_id)
     sample_size, sample_num = sample_id.split('-')
     sample_score_dir = os.path.join(samples_scores_dir, sample_id)
     scores = Scores(scores_dir=sample_score_dir)
@@ -434,6 +447,7 @@ for sample_id in sorted(os.listdir(samples_scores_dir)):
             for row_idx in range(num_rows):
                 language = rows[row_idx]
                 language_rankings = metric_rankings.get(language)
+                if language_rankings is None: continue
                 col_idx = 0
                 for metatype in columns:
                     if metatype not in language_rankings:
