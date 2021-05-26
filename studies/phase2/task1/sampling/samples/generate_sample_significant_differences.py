@@ -324,7 +324,7 @@ def get_significant_differences_score(rankings, topk = None):
             e1 = float(end1)
             s2 = float(start2)
             e2 = float(end2)
-            overlap = 0
+            overlap = -1
             if s2 <= s1 <= e2 or s2 <= e1 <= e2 or s1 <= s2 <= e1 or s1 <= e2 <= e1:
                 overlap = min(e1, e2) - max(s1, s2)
             return overlap
@@ -332,7 +332,7 @@ def get_significant_differences_score(rankings, topk = None):
         ci2 = entry2.get('confidence_interval')
         if ci1[0] == ci1[1] and ci2[0] == ci2[1] and ci1[0] == ci2[0]:
             return False
-        if get_linear_overlap(ci1[0], ci1[1], ci2[0], ci2[1]) > 0:
+        if get_linear_overlap(ci1[0], ci1[1], ci2[0], ci2[1]) >= 0:
             return False
         return True
     if topk is None:
