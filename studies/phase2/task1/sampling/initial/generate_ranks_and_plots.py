@@ -287,23 +287,33 @@ class Rankings(Container):
                 entry.set('rank', rank)
 
 def get_significant_differences_score(rankings, topk = None):
+    def check_zeros(rankings, topk):
+        for entry in rankings.values():
+            if entry.get('rank') > topk: continue
+            confidence_interval = entry.get('confidence_interval')
+            for ci_element in confidence_interval:
+                if ci_element != '0.0000':
+                    return False
+        return True
     def is_significantly_different(entry1, entry2):
         def get_linear_overlap(start1, end1, start2, end2, text_modality=False):
             s1 = float(start1)
             e1 = float(end1)
             s2 = float(start2)
             e2 = float(end2)
-            overlap = 0
+            overlap = -1
             if s2 <= s1 <= e2 or s2 <= e1 <= e2 or s1 <= s2 <= e1 or s1 <= e2 <= e1:
                 overlap = min(e1, e2) - max(s1, s2)
             return overlap
         ci1 = entry1.get('confidence_interval')
         ci2 = entry2.get('confidence_interval')
-        if get_linear_overlap(ci1[0], ci1[1], ci2[0], ci2[1]) > 0:
+        if get_linear_overlap(ci1[0], ci1[1], ci2[0], ci2[1]) >= 0:
             return False
         return True
     if topk is None:
         topk = len(rankings)
+    if check_zeros(rankings, topk):
+        return 0
     num_total_pairs = 0
     num_significantly_different_pairs = 0
     for entry1 in rankings.values():
