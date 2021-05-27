@@ -218,10 +218,12 @@ def get_commands(python_scripts, log_specifications, logs_directory, sample_id, 
             cmd = 'cd {python_scripts} && \
                     python generate_confidence_intervals.py \
                     --log {log_file} \
+                    --macro \
                     {log_specifications} \
                     {primary_key} \
                     {score_columnname} \
                     {aggregate} \
+                    {docid_columnname} \
                     {run_id} \
                     {input} \
                     {pretty_output} \
@@ -230,7 +232,8 @@ def get_commands(python_scripts, log_specifications, logs_directory, sample_id, 
                                         log_specifications=log_specifications,
                                         primary_key='RunID,Language,Metatype',
                                         score_columnname=score_columnname,
-                                        aggregate='DocID:Summary',
+                                        aggregate='DocID:ALL-Macro,DocID:ALL-Micro',
+                                        docid_columnname='DocID',
                                         run_id='RunID',
                                         input='{}/{}-scores.tab'.format(scores, scorer_name),
                                         pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
