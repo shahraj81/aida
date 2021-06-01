@@ -43,6 +43,7 @@ In order to run the second step of the study, follow the steps given below:
 
   1. Generate subsamples:
     Run the following command to generate subsamples:
+
     ~~~
     python generate_samples.py \
       /path/to/aida/tools/aida-evaluation/docker/AUX-data/M36-evaluation/AUX-data/LDC2020R17.coredocs-xx.txt \
@@ -50,6 +51,7 @@ In order to run the second step of the study, follow the steps given below:
       100 \
       /path/to/aida/studies/phase2/task1/sampling/samples/samples/output/samples/
     ~~~
+
   2. Generate scores:
     In order to generate scores, you may run the following command:
 
