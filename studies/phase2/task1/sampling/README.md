@@ -133,3 +133,10 @@ In order to run the second step of the study, follow the steps given below:
     ~~~
 
   5. Generate plots:
+    In order to generate plots, you may run the following command:
+
+    ~~~
+    python3.9 generate_plots.py
+    ~~~
+
+    This script will read the following two files as input: `../initial/rankings.json` and `./sampling_study_output.txt`, and will generate plots in the directory named `./plots`.
