@@ -133,6 +133,7 @@ In order to run the second step of the study, follow the steps given below:
     ~~~
 
   5. Generate plots:
+
     In order to generate plots, you may run the following command:
 
     ~~~
