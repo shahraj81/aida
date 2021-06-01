@@ -43,6 +43,7 @@ In order to run the second step of the study, follow the steps given below:
 
   1. Generate subsamples:
     Run the following command to generate subsamples:
+
     ~~~
     python generate_samples.py \
       /path/to/aida/tools/aida-evaluation/docker/AUX-data/M36-evaluation/AUX-data/LDC2020R17.coredocs-xx.txt \
@@ -52,6 +53,7 @@ In order to run the second step of the study, follow the steps given below:
     ~~~
   2. Generate scores:
     In order to generate scores, you may run the following command:
+
     ~~~
     python generate_sample_scores.py \
       /path/to/aida/python/ \
@@ -65,6 +67,7 @@ In order to run the second step of the study, follow the steps given below:
     ~~~
   3. Generate confidence intervals:
     You may run the following command to generate confidence intervals:
+
     ~~~
     python generate_sample_confidence_intervals.py \
       /path/to/Code/aida/python/ \
@@ -74,11 +77,15 @@ In order to run the second step of the study, follow the steps given below:
     ~~~
   4. Generate significant differences:
     In order to generate significant differences, run the following command:
+
     ~~~
     generate_sample_significant_differences.py
     ~~~
+
     This will generate a file named `sampling_study_output.txt` as output.
+
     Following is the description of the columns in this file:
+
     ~~~
     Column #1: metric
      Name of the metric.
