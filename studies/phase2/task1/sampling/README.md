@@ -32,7 +32,7 @@ This script will generate the following output:
     This file contains the same information as in `significant_difference.txt` but in JSON format.
   5. plots:
     This directory contains plots for each metric and confidence level pair. An example of one such plot is shown below:
-    ![Example # 1](images/step1/FrameMetric_70%.png)
+    ![Example # 1](images/step1/FrameMetric_70\%.png)
   6. significant_difference_plots:
     This directory contains plots for each language and metatype. An example of one such plot is shown below:
     ![Example # 2](images/step1/ENG_Event.png)
