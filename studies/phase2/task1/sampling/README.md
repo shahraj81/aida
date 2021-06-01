@@ -140,3 +140,12 @@ In order to run the second step of the study, follow the steps given below:
     ~~~
 
     This script will read the following two files as input: `../initial/rankings.json` and `./sampling_study_output.txt`, and will generate plots in the directory named `./plots`.
+
+  6. Generate summary:
+
+    In order to generate summary, you may run the following command:
+
+    ~~~
+    python3.9 summarize_kendalltau.py
+    python3.9 summarize_sdscore.py
+    ~~~
