@@ -32,10 +32,10 @@ This script will generate the following output:
     This file contains the same information as in `significant_difference.txt` but in JSON format.
   5. plots:
     This directory contains plots for each metric and confidence level pair. An example of one such plot is shown below:
-    ![Example # 1](images/step1/FrameMetric_70.png)
+    ![Image # 1](images/step1/FrameMetric_70.png)
   6. significant_difference_plots:
     This directory contains plots for each language and metatype. An example of one such plot is shown below:
-    ![Example # 2](images/step1/ENG_Event.png)
+    ![Image # 2](images/step1/ENG_Event.png)
 
 ## Step 2: How good is a subsample compared to the entire set of annotated documents?
 
@@ -142,6 +142,15 @@ In order to run the second step of the study, follow the steps given below:
     ~~~
 
     This script will read the following two files as input: `../initial/rankings.json` and `./sampling_study_output.txt`, and will generate plots in the directory named `./plots`.
+
+    Plots based on the following are generated:
+
+      1. Kendall's Tau:
+          An example of these plots is shown below:
+          ![Image # 3](images/step2/kendallstau/ENG_event.png)
+      2. Significance difference:
+          An example of these plots is shown below:
+          ![Image # 4](images/step2/sdscores/70_ENG_Event.png)
 
   6. Generate summary:
 
