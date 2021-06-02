@@ -82,13 +82,11 @@ python generate_sample_confidence_intervals.py \
     In order to generate significant differences, run the following command:
 
 ~~~
-generate_sample_significant_differences.py
+python3.9 generate_sample_significant_differences.py
 ~~~
+   This will generate a file named `sampling_study_output.txt` as output.
 
-    This will generate a file named `sampling_study_output.txt` as output.
-
-    Following is the description of the columns in this file:
-
+   Following is the description of the columns in this file:
 ~~~
 Column #1: metric
  Name of the metric.
@@ -144,7 +142,7 @@ python3.9 generate_plots.py
     Plots based on the following are generated:
       1. Kendall's Tau:
           An example of these plots is shown below:
-          ![Image # 3](images/step2/kendallstau/ENG_event.png)
+      ![Image # 3](images/step2/kendallstau/ENG_Event.png)
       2. Significance difference:
           An example of these plots is shown below:
           ![Image # 4](images/step2/sdscores/70_ENG_Event.png)
