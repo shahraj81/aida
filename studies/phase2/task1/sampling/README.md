@@ -138,14 +138,15 @@ Column #14,21,28,35,: [kendalltau|pearsonr|spearmanr|sdscore]_sci
 ~~~
 python3.9 generate_plots.py
 ~~~
-    This script will read the following two files as input: `../initial/rankings.json` and `./sampling_study_output.txt`, and will generate plots in the directory named `./plots`.
+   This script will read the following two files as input: `../initial/rankings.json` and `./sampling_study_output.txt`, and will generate plots in the directory named `./plots`.
     Plots based on the following are generated:
-      1. Kendall's Tau:
+    
+   a. Kendall's Tau:
           An example of these plots is shown below:
-      ![Image # 3](images/step2/kendallstau/ENG_Event.png)
-      2. Significance difference:
+   ![Image # 3](images/step2/kendallstau/ENG_Event.png)
+   b. Significance difference:
           An example of these plots is shown below:
-          ![Image # 4](images/step2/sdscores/70_ENG_Event.png)
+   ![Image # 4](images/step2/sdscores/70_ENG_Event.png)
 
   6. Generate summary:
     In order to generate summary, you may run the following command:
