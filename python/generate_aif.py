@@ -1,6 +1,7 @@
 """
 Script for generating AIF from LDCs annotations
 """
+from aida import document
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -83,6 +84,19 @@ class AIFObject(Object):
                     AIF_triples.append(AIF_triple)
         return AIF_triples
 
+    def has(self, *args, **kwargs):
+        key = args[0]
+        if key is None:
+            self.get('logger').record_event('KEY_IS_NONE', self.get('code_location'))
+        method_name = "has_{}".format(key)
+        method = self.get_method(method_name)
+        if method is not None:
+            args = args[1:]
+            method(*args, **kwargs)
+            return self
+        else:
+            self.record_event('METHOD_NOT_FOUND', method_name)
+
     def __str__(self):
         return self.get('id')
 
@@ -108,7 +122,8 @@ class ClaimComponent(AIFStatement):
             componentTypes.append(AIFScalar(logger, id=componentType))
         self.set('componentTypes', componentTypes)
 
-    def get_AIF(self):
+    def get_AIF(self, document_id=None):
+        # ignore document_id and generate AIF
         componentProvenance = self.get('componentProvenance')
         if componentProvenance is not None:
             componentProvenance = None if componentProvenance == 'EMPTY_NA' else componentProvenance
@@ -236,7 +251,7 @@ class ERECluster(AIFObject):
     def get_IRI(self):
         return 'ldc:cluster-{}'.format(self.get('id'))
 
-    def get_AIF(self):
+    def get_AIF(self, document_id=None):
         logger = self.get('logger')
         predicates = {
             'a': 'aida:SameAsCluster',
@@ -245,6 +260,8 @@ class ERECluster(AIFObject):
             }
         AIF_triples = self.get('coreAIF', predicates)
         for mention in self.get('mentions'):
+            if document_id is not None and document_id != mention.get('document_id'):
+                continue
             AIF_triples.extend(mention.get('AIF'))
             AIF_triples.extend(
                 ClusterMembershipStatement(
@@ -258,9 +275,15 @@ class ERECluster(AIFObject):
             for frame in mentionframes:
                 for rolename in frame:
                     for argument in frame.get(rolename):
-                        AIF_triples.extend(argument.get('AIF'))
-        AIF_triples.extend(self.get('prototype').get('AIF'))
+                        AIF_triples.extend(argument.get('AIF', document_id=document_id))
+        AIF_triples.extend(self.get('prototype').get('AIF', document_id=document_id))
         return AIF_triples
+
+    def has_member_from(self, document_id):
+        for mention in self.get('mentions'):
+            if mention.get('document_id') == document_id:
+                return True
+        return False
 
 class EventCluster(ERECluster):
     def __init__(self, logger, cluster_id):
@@ -285,9 +308,11 @@ class ClusterPrototype(AIFObject):
     def get_id(self):
         return '{}-prototype'.format(self.get('cluster').get('id'))
 
-    def get_informativejustifications(self):
+    def get_informativejustifications(self, document_id=None):
         document_informativejustifications = {}
         for mention in self.get('cluster').get('mentions'):
+            if document_id is not None and mention.get('document_id') != document_id:
+                continue
             document_informativejustifications[mention.get('document_id')] = mention.get('justifiedBy')
         return list(document_informativejustifications.values())
 
@@ -354,23 +379,27 @@ class ClusterPrototype(AIFObject):
                           'justifiedBy': mention_type_justification})
         return types
 
-    def get_AIF(self):
+    def get_AIF(self, document_id=None):
         logger = self.get('logger')
         predicates = {
             'a': 'aida:{}'.format(self.get('EREType')),
             'aida:attributes': self.get('attributes'),
-            'aida:informativeJustification': self.get('informativejustifications'),
+            'aida:informativeJustification': self.get('informativejustifications', document_id=document_id),
             'aida:link': self.get('link'),
             'aida:ldcTime': self.get('time'),
             'aida:system': System(self.get('logger'))
             }
         AIF_triples = self.get('coreAIF', predicates)
         for cluster_type_and_justification in self.get('types'):
+            cluster_type = cluster_type_and_justification.get('type')
+            cluster_type_justification = cluster_type_and_justification.get('justifiedBy')
+            if document_id is not None and cluster_type_justification.get('document_id') != document_id:
+                continue
             AIF_triples.extend(
                 TypeStatement(logger,
                               subject=self,
-                              type=cluster_type_and_justification.get('type'),
-                              justifiedBy=cluster_type_and_justification.get('justifiedBy'),
+                              type=cluster_type,
+                              justifiedBy=cluster_type_justification,
                               confidence=Confidence(logger),
                               system=System(logger)).get('AIF'))
         mentionframes = self.get('mentionframes')
@@ -379,7 +408,7 @@ class ClusterPrototype(AIFObject):
                 for rolename in frame:
                     for argument in frame.get(rolename):
                         prototypeargument = self.get('prototypeargument', argument)
-                        AIF_triples.extend(prototypeargument.get('AIF'))
+                        AIF_triples.extend(prototypeargument.get('AIF', document_id=document_id))
         if self.get('link') is not None:
             AIF_triples.extend(self.get('link').get('AIF'))
         return AIF_triples
@@ -420,7 +449,7 @@ class EREMention(AIFObject):
 
     def get_justifiedBy(self):
         return DocumentJustification(self.get('logger'),
-                                     documentID=self.get('root_uid'),
+                                     sourceDocument=self.get('root_uid'),
                                      confidence=Confidence(self.get('logger'))
                                      )
 
@@ -506,10 +535,14 @@ class EventOrRelationArgument(AIFObject):
         self.attributes = []
         self.set_attributes()
 
-    def get_prototypeAIF(self):
+    def get_prototypeAIF(self, document_id=None):
         AIF_triples = []
         for subject_cluster in self.get('subject').get('clusters'):
+            if not subject_cluster.has('member_from', document_id):
+                continue
             for object_cluster in self.get('object').get('clusters'):
+                if not object_cluster.has('member_from', document_id):
+                    continue
                 predicates = {
                     'a': 'aida:ArgumentStatement',
                     'aida:object': object_cluster.get('prototype'),
@@ -525,7 +558,7 @@ class EventOrRelationArgument(AIFObject):
                 AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
 
-    def get_AIF(self):
+    def get_AIF(self, document_id=None):
         predicates = {
             'a': 'aida:ArgumentStatement',
             'aida:object': self.get('object'),
@@ -536,7 +569,13 @@ class EventOrRelationArgument(AIFObject):
             'aida:confidence': self.get('confidence'),
             'aida:system': self.get('system'),
             }
-        AIF_triples = self.get('coreAIF', predicates)
+        AIF_triples = []
+        if document_id is not None:
+            if self.get('object').get('document_id') != document_id:
+                return AIF_triples
+            if self.get('subject').get('document_id') != document_id:
+                return AIF_triples
+        AIF_triples.extend(self.get('coreAIF', predicates))
         AIF_triples.extend(self.get('justifiedBy').get('AIF'))
         AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
@@ -555,7 +594,7 @@ class EventOrRelationArgument(AIFObject):
         return CompoundJustification(self.get('logger'),
                                      justification1=DocumentJustification(
                                          self.get('logger'),
-                                         documentID=self.get('root_uid'),
+                                         sourceDocument=self.get('root_uid'),
                                          confidence=Confidence(self.get('logger'))),
                                      justification2=None,
                                      confidence=Confidence(self.get('logger')))
@@ -603,8 +642,8 @@ class EventPrototypeArgument(EventArgument):
     def get_id(self):
         return self.get('prototypeid')
 
-    def get_AIF(self):
-        return self.get('prototypeAIF')
+    def get_AIF(self, document_id=None):
+        return self.get('prototypeAIF', document_id=None)
 
 class RelationPrototypeArgument(RelationArgument):
     def __init__(self, logger, entry):
@@ -613,14 +652,20 @@ class RelationPrototypeArgument(RelationArgument):
     def get_id(self):
         return self.get('prototypeid')
 
-    def get_AIF(self):
-        return self.get('prototypeAIF')
+    def get_AIF(self, document_id=None):
+        return self.get('prototypeAIF', document_id=None)
 
 class Justification(AIFObject):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger)
         for k,v in kwargs.items():
             self.set(key=k, value=v)
+
+    def get_document_id(self):
+        document_id = self.get('sourceDocument')
+        if document_id is None:
+            self.record_event('DOCUMENTID_IS_NONE', self.get('code_location'))
+        return document_id
 
     def get_system(self):
         return System(self.get('logger'))
@@ -632,12 +677,12 @@ class DocumentJustification(Justification):
     def get_id(self):
         return '{}-{}'.format(
             'documentJustification',
-            self.get('documentID'))
+            self.get('sourceDocument'))
 
     def get_AIF(self):
         predicates = {
             'a': 'aida:DocumentJustification',
-            'aida:sourceDocument': '"{}"'.format(self.get('documentID')),
+            'aida:sourceDocument': '"{}"'.format(self.get('sourceDocument')),
             'aida:confidence': self.get('confidence'),
             'aida:system': self.get('system'),
             }
@@ -771,7 +816,10 @@ class Claim(AIFObject):
                               componentIdentity=self.get('qnode_x_variable_identity'),
                               componentTypes=self.get('qnode_x_variable_type'))
 
-    def get_AIF(self):
+    def get_AIF(self, document_id=None):
+        AIF_triples = []
+        if document_id is not None and self.get('document_id') != document_id:
+            return AIF_triples
         predicates = {
             'a': 'aida:Claim',
             'aida:sourceDocument': '"{}"'.format(self.get('document_id')),
@@ -801,15 +849,14 @@ class Claim(AIFObject):
             # 'aida:confidence': self.get('confidence'),
             # 'aida:system': self.get('system'),
             }
-        AIF_triples = self.get('coreAIF', predicates)
-        AIF_triples.extend(self.get('xVariable').get('AIF'))
-        AIF_triples.extend(self.get('claimer_claimcomponent').get('AIF'))
-        AIF_triples.extend(self.get('claimDateTime').get('AIF'))
-        AIF_triples.extend(self.get('claimLocation').get('AIF'))
+        AIF_triples.extend(self.get('coreAIF', predicates))
+        scalar_fields = ['xVariable', 'claimer_claimcomponent', 'claimDateTime', 'claimLocation']
+        for field in scalar_fields:
+            AIF_triples.extend(self.get(field).get('AIF', document_id=document_id))
         list_fields = ['claimerAffiliations', 'associatedKEs']
-        for list_field in list_fields:
-            for item in self.get(list_field):
-                AIF_triples.extend(item.get('AIF'))
+        for field in list_fields:
+            for item in self.get(field):
+                AIF_triples.extend(item.get('AIF', document_id=document_id))
         return AIF_triples
 
     def get_IRI(self):
@@ -1182,7 +1229,8 @@ class LDCTimeRange(AIFObject):
     def get_ends(self):
         return [self.get('end_time_before'), self.get('end_time_after')]
 
-    def get_AIF(self):
+    def get_AIF(self, document_id=None):
+        # ignore document_id and generate AIF
         AIF_triples = []
         if not self.is_invalid():
             predicates = {
@@ -1345,14 +1393,14 @@ class AIF(Object):
         return [TBD(self.get('logger'), 'TBD1'),
                 TBD(self.get('logger'), 'TBD4')]
 
-    def get_AIF(self):
-        AIF_triples = self.get('system').get('AIF')
-        AIF_triples.extend(self.get('prefix_triples'))
-        for cluster in self.get('clusters').values():
-            AIF_triples.extend(cluster.get('AIF'))
-        for claim in self.get('claims').values():
-            AIF_triples.extend(claim.get('AIF'))
-        return AIF_triples
+    # def get_AIF(self):
+    #     AIF_triples = self.get('system').get('AIF')
+    #     AIF_triples.extend(self.get('prefix_triples'))
+    #     for cluster in self.get('clusters').values():
+    #         AIF_triples.extend(cluster.get('AIF'))
+    #     for claim in self.get('claims').values():
+    #         AIF_triples.extend(claim.get('AIF'))
+    #     return AIF_triples
 
     def get_prefix_triples(self):
         """
@@ -1446,15 +1494,21 @@ class AIF(Object):
             patched_output = patched_output.replace(str_to_replace, str_to_replace_by)
         return patched_output
 
-    def write_output(self, filename):
-        with open(filename, 'w') as program_output:
-            raw = False
-            graph = '\n'.join(sorted({e:1 for e in self.get('AIF')}))
-            if not raw:
-                g = Graph()
-                g.parse(data=graph, format="turtle")
-                graph = self.patch(g.serialize(format="turtle"))
-            program_output.write(graph)
+    def write_output(self, directory):
+        os.mkdir(directory)
+        for claim in self.get('claims').values():
+            filename = os.path.join(directory, claim.get('id'))
+            with open(filename, 'w') as program_output:
+                raw = False
+                AIF_triples = self.get('system').get('AIF')
+                AIF_triples.extend(self.get('prefix_triples'))
+                AIF_triples.extend(claim.get('AIF', document_id=claim.get('document_id')))
+                graph = '\n'.join(sorted({e:1 for e in AIF_triples}))
+                if not raw:
+                    g = Graph()
+                    g.parse(data=graph, format="turtle")
+                    graph = self.patch(g.serialize(format="turtle"))
+                program_output.write(graph)
 
 def check_paths(args):
     check_for_paths_existance([
