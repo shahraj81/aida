@@ -83,14 +83,14 @@ class AIFObject(Object):
                     AIF_triples.append(AIF_triple)
         return AIF_triples
 
+    def __str__(self):
+        return self.get('id')
+
 class AIFStatement(AIFObject):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger)
         for k,v in kwargs.items():
             self.set(key=k, value=v)
-
-    def __str__(self):
-        return self.get('id')
 
 class AIFScalar(AIFStatement):
     def __init__(self, logger, *args, **kwargs):
@@ -456,9 +456,6 @@ class EREMention(AIFObject):
         # TODO: set attributes here
         self.get('attributes').append(Attribute(self.get('logger')))
 
-    def __str__(self):
-        return self.get('id')
-
 class EventMention(EREMention):
     def __init__(self, logger, entry):
         super().__init__(logger, entry)
@@ -627,9 +624,6 @@ class Justification(AIFObject):
 
     def get_system(self):
         return System(self.get('logger'))
-
-    def __str__(self):
-        return self.get('id')
 
 class DocumentJustification(Justification):
     def __init__(self, logger, *args, **kwargs):
@@ -871,9 +865,6 @@ class ReferenceKBLink(AIFObject):
 
     def get_IRI(self):
         return '_:lt-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
-
-    def __str__(self):
-        return self.get('id')
 
 class Confidence(AIFObject):
     def __init__(self, logger, confidenceValue="'XSD_DOUBLE(1.0)'"):
