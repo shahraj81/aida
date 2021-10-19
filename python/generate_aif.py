@@ -1462,7 +1462,6 @@ class AIF(Object):
             if not raw:
                 g = Graph()
                 g.parse(data=graph, format="turtle")
-                # graph = self.patch(g.serialize(format="turtle").decode('utf-8'))
                 graph = self.patch(g.serialize(format="turtle"))
             program_output.write(graph)
 
