@@ -321,8 +321,7 @@ class ClusterPrototype(AIFObject):
         elif True in negation_status:
             negated = Attribute(self.get('logger'), 'negated')
             attributes[negated.get('id')] = negated
-        for attribute in attributes.values():
-            self.get('attributes').append(attribute)
+        return list(attributes.values())
 
     def get_id(self):
         return '{}-prototype'.format(self.get('cluster').get('id'))
