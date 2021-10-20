@@ -574,8 +574,6 @@ class EventOrRelationArgument(AIFObject):
                 AIF_triples.extend(self.get('coreAIF', predicates))
                 AIF_triples.extend(self.get('justifiedBy').get('AIF'))
                 AIF_triples.extend(self.get('confidence').get('AIF'))
-                AIF_triples.extend(object_cluster.get('AIF', document_id=document_id))
-                AIF_triples.extend(object_cluster.get('prototype').get('AIF', document_id=document_id))
         return AIF_triples
 
     def get_AIF(self, document_id=None):
