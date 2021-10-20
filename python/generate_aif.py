@@ -1,7 +1,6 @@
 """
 Script for generating AIF from LDCs annotations
 """
-from aida import document
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -302,8 +301,28 @@ class ClusterPrototype(AIFObject):
     def __init__(self, logger, cluster):
         super().__init__(logger)
         self.cluster = cluster
-        self.attributes = []
-        self.set_attributes()
+
+    def get_attributes(self, document_id=None):
+        attributes = {}
+        negation_status = {}
+        for mention in self.get('cluster').get('mentions'):
+            if document_id is not None and document_id != mention.get('document_id'):
+                continue
+            is_negated = False
+            for attribute in mention.get('attributes'):
+                if attribute == Attribute(self.get('logger'), 'negated'):
+                    is_negated = True
+                else:
+                    attributes[attribute.get('id')] = attribute
+            negation_status[is_negated] = 1
+        if True in negation_status and False in negation_status:
+            mixed = Attribute(self.get('logger'), 'mixed')
+            attributes[mixed.get('id')] = mixed
+        elif True in negation_status:
+            negated = Attribute(self.get('logger'), 'negated')
+            attributes[negated.get('id')] = negated
+        for attribute in attributes.values():
+            self.get('attributes').append(attribute)
 
     def get_id(self):
         return '{}-prototype'.format(self.get('cluster').get('id'))
@@ -426,10 +445,6 @@ class ClusterPrototype(AIFObject):
     def get_IRI(self):
         return 'ldc:{}'.format(self.get('id'))
 
-    def set_attributes(self):
-        # TODO: set attributes here
-        self.get('attributes').append(Attribute(self.get('logger')))
-
 class EREMention(AIFObject):
     def __init__(self, logger, entry):
         super().__init__(logger)
@@ -482,8 +497,9 @@ class EREMention(AIFObject):
         return 'ldc:{}'.format(self.get('id'))
 
     def set_attributes(self):
-        # TODO: set attributes here
-        self.get('attributes').append(Attribute(self.get('logger')))
+        attribute = self.get('attribute')
+        if attribute is not None and attribute != 'EMPTY_NA':
+            self.get('attributes').append(Attribute(self.get('logger'), attribute))
 
 class EventMention(EREMention):
     def __init__(self, logger, entry):
@@ -618,8 +634,9 @@ class EventOrRelationArgument(AIFObject):
         return '_:aa-{}'.format(hashlib.md5(self.get('id').encode('utf-8')).hexdigest())
 
     def set_attributes(self):
-        # TODO: set attributes here
-        self.get('attributes').append(Attribute(self.get('logger')))
+        attribute = self.get('attribute')
+        if attribute is not None and attribute != 'EMPTY_NA':
+            self.get('attributes').append(Attribute(self.get('logger'), attribute))
 
 class EventArgument(EventOrRelationArgument):
     def __init__(self, logger, entry):
@@ -939,32 +956,27 @@ class TBD(AIFObject):
         return 'aida:{}'.format(self.get('id'))
 
 class Attribute(AIFObject):
-    def __init__(self, logger):
+    def __init__(self, logger, attribute):
         super().__init__(logger)
+        self.attribute = attribute
+
+    def get_id(self):
+        allowed_attributes = {
+            'negated': 'Negated',
+            'hedged': 'Hedged',
+            'irrealis': 'Irrealis',
+            'generic': 'Generic',
+            'mixed': 'Mixed'
+            }
+        if self.get('attribute') not in allowed_attributes:
+            self.record_event('UNEXPECTED_ATTRIBUTE', self.get('attribute'))
+        return allowed_attributes.get(self.get('attribute'))
 
     def get_IRI(self):
         return 'aida:{}'.format(self.__str__())
 
-    def __str__(self):
-        if isinstance(self, Attribute):
-            return 'TBD'
-        return self.get('classname')
-
-class Negated(Attribute):
-    def __init__(self, logger):
-        super().__init__(logger)
-
-class Hedged(Attribute):
-    def __init__(self, logger):
-        super().__init__(logger)
-
-class Irrealis(Attribute):
-    def __init__(self, logger):
-        super().__init__(logger)
-
-class Generic(Attribute):
-    def __init__(self, logger):
-        super().__init__(logger)
+    def __eq__(self, other):
+        return self.get('id') == other.get('id')
 
 class LDCTimeField(AIFObject):
     """
@@ -1465,7 +1477,7 @@ class AIF(Object):
     def generate(self):
         print('--TODO: generate a file per claim in output')
         print('--TODO: generate a single cluster prototype by accumulation attributes from members')
-        print('--TODO: add attributes using the set_attributes methods (note there are three such methods)')
+        print('--TODO: test attributes on mentions, arguments, and prototypes (specially the mixed one)')
         print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
         print('--TODO: pick prototype informative justification not arbitrarily')
         print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
