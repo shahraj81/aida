@@ -467,7 +467,10 @@ class EREMention(AIFObject):
                                      confidence=Confidence(self.get('logger'))
                                      )
 
-    def get_AIF(self):
+    def get_AIF(self, document_id=None):
+        AIF_triples = []
+        if document_id is not None and self.get('document_id') != document_id:
+            return AIF_triples
         logger = self.get('logger')
         handle = self.get('handle')
         predicates = {
@@ -479,7 +482,7 @@ class EREMention(AIFObject):
             'aida:ldcTime': self.get('time'),
             'aida:system': self.get('system'),
             }
-        AIF_triples = self.get('coreAIF', predicates)
+        AIF_triples.extend(self.get('coreAIF', predicates))
         AIF_triples.extend(
             TypeStatement(logger,
                           subject=self,
@@ -593,6 +596,7 @@ class EventOrRelationArgument(AIFObject):
         AIF_triples.extend(self.get('coreAIF', predicates))
         AIF_triples.extend(self.get('justifiedBy').get('AIF'))
         AIF_triples.extend(self.get('confidence').get('AIF'))
+        AIF_triples.extend(self.get('object').get('AIF', document_id=document_id))
         return AIF_triples
 
     def get_confidence(self):
