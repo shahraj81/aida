@@ -324,7 +324,7 @@ class ClusterPrototype(AIFObject):
         return list(attributes.values())
 
     def get_id(self):
-        return '{}-prototype'.format(self.get('cluster').get('id'))
+        return 'cluster-{}-prototype'.format(self.get('cluster').get('id'))
 
     def get_informativejustifications(self, document_id=None):
         document_informativejustifications = {}
