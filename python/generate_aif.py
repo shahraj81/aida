@@ -388,15 +388,18 @@ class ClusterPrototype(AIFObject):
 
     def get_AIF(self, document_id=None):
         logger = self.get('logger')
+        time = self.get('time')
         predicates = {
             'a': 'aida:{}'.format(self.get('EREType')),
             'aida:attributes': self.get('attributes'),
             'aida:informativeJustification': self.get('informativejustifications', document_id=document_id),
             'aida:link': self.get('link'),
-            'aida:ldcTime': self.get('time'),
+            'aida:ldcTime': time,
             'aida:system': System(self.get('logger'))
             }
         AIF_triples = self.get('coreAIF', predicates)
+        if time:
+            AIF_triples.extend(time.get('AIF'))
         for cluster_type_and_justification in self.get('types'):
             cluster_type = cluster_type_and_justification.get('type')
             cluster_type_justification = cluster_type_and_justification.get('justifiedBy')
