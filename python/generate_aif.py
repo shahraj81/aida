@@ -304,23 +304,12 @@ class ClusterPrototype(AIFObject):
 
     def get_attributes(self, document_id=None):
         attributes = {}
-        negation_status = {}
         for mention in self.get('cluster').get('mentions'):
             if document_id is not None and document_id != mention.get('document_id'):
                 continue
-            is_negated = False
             for attribute in mention.get('attributes'):
-                if attribute == Attribute(self.get('logger'), 'negated'):
-                    is_negated = True
-                else:
+                if attribute != Attribute(self.get('logger'), 'negated'):
                     attributes[attribute.get('id')] = attribute
-            negation_status[is_negated] = 1
-        if True in negation_status and False in negation_status:
-            mixed = Attribute(self.get('logger'), 'mixed')
-            attributes[mixed.get('id')] = mixed
-        elif True in negation_status:
-            negated = Attribute(self.get('logger'), 'negated')
-            attributes[negated.get('id')] = negated
         return list(attributes.values())
 
     def get_id(self):
