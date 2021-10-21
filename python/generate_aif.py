@@ -804,7 +804,7 @@ class Claim(AIFObject):
         return self.get('root_uid')
 
     def get_epistemic(self):
-        return self.get('epistemic_status')
+        return EpistemicStatus(self.get('logger'), self.get('epistemic_status'))
 
     def get_id(self):
         return self.get('claim_id')
@@ -971,6 +971,26 @@ class Attribute(AIFObject):
 
     def __eq__(self, other):
         return self.get('id') == other.get('id')
+
+class EpistemicStatus(AIFObject):
+    def __init__(self, logger, epistemic_status):
+        super().__init__(logger)
+        self.epistemic_status = epistemic_status
+
+    def get_id(self):
+        allowed = {
+            'true-certain': 'EpistemicTrueCertain',
+            'true-uncertain': 'EpistemicTrueUncertain',
+            'false-certain': 'EpistemicFalseCertain',
+            'false-uncertain': 'EpistemicFalseUncertain',
+            'unknown': 'EpistemicUnknown',
+            }
+        if self.get('epistemic_status') not in allowed:
+            self.record_event('UNEXPECTED_ATTRIBUTE', self.get('attribute'))
+        return allowed.get(self.get('epistemic_status'))
+
+    def get_IRI(self):
+        return 'aida:{}'.format(self.__str__())
 
 class LDCTimeField(AIFObject):
     """
