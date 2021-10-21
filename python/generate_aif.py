@@ -794,6 +794,8 @@ class Claim(AIFObject):
         return LDCTimeRange(logger, time)
 
     def get_claimLocation(self):
+        if self.get('claim_location') == 'EMPTY_NA':
+            return
         return ClaimComponent(self.get('logger'),
                               componentName=self.get('claim_location'),
                               componentIdentity=self.get('qnode_claim_location_identity'),
@@ -863,7 +865,9 @@ class Claim(AIFObject):
         AIF_triples.extend(self.get('coreAIF', predicates))
         scalar_fields = ['xVariable', 'claimer_claimcomponent', 'claimDateTime', 'claimLocation']
         for field in scalar_fields:
-            AIF_triples.extend(self.get(field).get('AIF', document_id=document_id))
+            value = self.get(field)
+            if value:
+                AIF_triples.extend(value.get('AIF', document_id=document_id))
         list_fields = ['claimerAffiliations', 'associatedKEs']
         for field in list_fields:
             for item in self.get(field):
