@@ -1534,6 +1534,8 @@ class AIF(Object):
                     g = Graph()
                     g.parse(data=graph, format="turtle")
                     graph = self.patch(g.serialize(format="turtle"))
+                if 'EMPTY_NA' in graph:
+                    self.record_event('EMPTY_NA_IN_OUTPUT', self.get('code_location'))
                 program_output.write(graph)
 
 def check_paths(args):
