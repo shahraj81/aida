@@ -845,7 +845,7 @@ class Claim(AIFObject):
             'aida:claimSemantics': self.get('claimSemantics'),
             'aida:claimer': self.get('claimer_claimcomponent'),
             'aida:claimerAffiliation': self.get('claimerAffiliations'),
-            'aida:epistemic': '"{}"'.format(self.get('epistemic')),
+            'aida:epistemic': self.get('epistemic'),
             'aida:sentiment': '"{}"'.format(self.get('sentiment')),
             'aida:claimDateTime': self.get('claimDateTime'),
             'aida:claimLocation': self.get('claimLocation'),
