@@ -388,7 +388,7 @@ class ClusterPrototype(AIFObject):
 
     def get_AIF(self, document_id=None):
         logger = self.get('logger')
-        time = self.get('time')
+        time = self.get('time', document_id=document_id)
         predicates = {
             'a': 'aida:{}'.format(self.get('EREType')),
             'aida:attributes': self.get('attributes'),
