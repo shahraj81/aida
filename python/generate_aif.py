@@ -824,7 +824,7 @@ class Claim(AIFObject):
         return '"TBD"'
 
     def get_sentiment(self):
-        return self.get('sentiment_status')
+        return SentimentStatus(self.get('logger'), self.get('sentiment_status'))
 
     def get_xVariable(self):
         return ClaimComponent(self.get('logger'),
@@ -851,7 +851,7 @@ class Claim(AIFObject):
             'aida:claimer': self.get('claimer_claimcomponent'),
             'aida:claimerAffiliation': self.get('claimerAffiliations'),
             'aida:epistemic': self.get('epistemic'),
-            'aida:sentiment': '"{}"'.format(self.get('sentiment')),
+            'aida:sentiment': self.get('sentiment'),
             'aida:claimDateTime': self.get('claimDateTime'),
             'aida:claimLocation': self.get('claimLocation'),
             'aida:associatedKEs': self.get('associatedKEs'),
@@ -993,8 +993,27 @@ class EpistemicStatus(AIFObject):
             'unknown': 'EpistemicUnknown',
             }
         if self.get('epistemic_status') not in allowed:
-            self.record_event('UNEXPECTED_ATTRIBUTE', self.get('attribute'))
+            self.record_event('UNEXPECTED_EPISTEMIC_STATUS', self.get('epistemic_status'))
         return allowed.get(self.get('epistemic_status'))
+
+    def get_IRI(self):
+        return 'aida:{}'.format(self.__str__())
+
+class SentimentStatus(AIFObject):
+    def __init__(self, logger, sentiment_status):
+        super().__init__(logger)
+        self.sentiment_status = sentiment_status
+
+    def get_id(self):
+        allowed = {
+            'positive': 'SentimentPositive',
+            'negative': 'SentimentNegative',
+            'mixed': 'SentimentMixed',
+            'neutral-unknown': 'SentimentNeutralUnknown',
+            }
+        if self.get('sentiment_status') not in allowed:
+            self.record_event('UNEXPECTED_SENTIMENT_STATUS', self.get('sentiment_status'))
+        return allowed.get(self.get('sentiment_status'))
 
     def get_IRI(self):
         return 'aida:{}'.format(self.__str__())
