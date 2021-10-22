@@ -308,7 +308,7 @@ class ClusterPrototype(AIFObject):
             if document_id is not None and document_id != mention.get('document_id'):
                 continue
             for attribute in mention.get('attributes'):
-                if attribute != Attribute(self.get('logger'), 'negated'):
+                if attribute != Attribute(self.get('logger'), 'not'):
                     attributes[attribute.get('id')] = attribute
         return list(attributes.values())
 
@@ -493,7 +493,8 @@ class EREMention(AIFObject):
     def set_attributes(self):
         attribute = self.get('attribute')
         if attribute is not None and attribute != 'EMPTY_NA':
-            self.get('attributes').append(Attribute(self.get('logger'), attribute))
+            for a in attribute.split(','):
+                self.get('attributes').append(Attribute(self.get('logger'), a.strip()))
 
 class EventMention(EREMention):
     def __init__(self, logger, entry):
@@ -633,7 +634,8 @@ class EventOrRelationArgument(AIFObject):
     def set_attributes(self):
         attribute = self.get('attribute')
         if attribute is not None and attribute != 'EMPTY_NA':
-            self.get('attributes').append(Attribute(self.get('logger'), attribute))
+            for a in attribute.split(','):
+                self.get('attributes').append(Attribute(self.get('logger'), a.strip()))
 
 class EventArgument(EventOrRelationArgument):
     def __init__(self, logger, entry):
@@ -963,11 +965,10 @@ class Attribute(AIFObject):
 
     def get_id(self):
         allowed_attributes = {
-            'negated': 'Negated',
+            'not': 'Negated',
             'hedged': 'Hedged',
             'irrealis': 'Irrealis',
             'generic': 'Generic',
-            'mixed': 'Mixed'
             }
         if self.get('attribute') not in allowed_attributes:
             self.record_event('UNEXPECTED_ATTRIBUTE', self.get('attribute'))
@@ -1521,7 +1522,8 @@ class AIF(Object):
         print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
         print('--TODO: pick prototype informative justification not arbitrarily')
         print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
-        print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentiosn')
+        print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
+        print('--TODO: handle case when multiple |-separated claim location types are included in the claim')
         for sheet_name in self.get('worksheets'):
             for entry in self.get('worksheet', sheet_name):
                 self.add('annotation_entry', sheet_name, entry)
