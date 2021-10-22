@@ -223,6 +223,7 @@ class ERECluster(AIFObject):
         super().__init__(logger)
         self.system = System(logger)
         self.id = cluster_id
+        self.attributes = []
         self.mentions = []
         self.mentionframes = []
 
@@ -230,6 +231,7 @@ class ERECluster(AIFObject):
         if self.get('link') is not None:
             if link.get('qnode_kb_id_identity') != self.get('link').get('qnode_kb_id_identity'):
                 self.record_event('MULTIPLE_REFKB_LINKS_ON_CLUSTER', self.get('id'))
+        self.set_attributes(link)
         self.set('link', link)
 
     def add_mention(self, mention):
@@ -284,6 +286,11 @@ class ERECluster(AIFObject):
                 return True
         return False
 
+    def set_attributes(self, link):
+        generic_status = link.get('generic_status')
+        if generic_status != 'EMPTY_NA':
+            self.get('attributes').append(Attribute(self.get('logger'), generic_status))
+
 class EventCluster(ERECluster):
     def __init__(self, logger, cluster_id):
         super().__init__(logger, cluster_id)
@@ -302,15 +309,8 @@ class ClusterPrototype(AIFObject):
         super().__init__(logger)
         self.cluster = cluster
 
-    def get_attributes(self, document_id=None):
-        attributes = {}
-        for mention in self.get('cluster').get('mentions'):
-            if document_id is not None and document_id != mention.get('document_id'):
-                continue
-            for attribute in mention.get('attributes'):
-                if attribute != Attribute(self.get('logger'), 'not'):
-                    attributes[attribute.get('id')] = attribute
-        return list(attributes.values())
+    def get_attributes(self):
+        return self.get('cluster').get('attributes')
 
     def get_id(self):
         return 'cluster-{}-prototype'.format(self.get('cluster').get('id'))
@@ -1509,6 +1509,7 @@ class AIF(Object):
                     elif isinstance(mention, EntityMention):
                         cluster = EntityCluster(self.get('logger'), cluster_id)  \
                                     .add('mention', mention)
+                    cluster.add('link', link)
                     self.get('clusters')[cluster.get('id')] = cluster
                 mention.add('cluster', cluster)
         for mention in self.get('mentions').values():
