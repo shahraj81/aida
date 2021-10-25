@@ -389,11 +389,14 @@ class ClusterPrototype(AIFObject):
     def get_AIF(self, document_id=None):
         logger = self.get('logger')
         time = self.get('time', document_id=document_id)
+        link = self.get('link')
+        if link is not None and link.__str__().startswith('NIL'):
+            link = None
         predicates = {
             'a': 'aida:{}'.format(self.get('EREType')),
             'aida:attributes': self.get('attributes'),
             'aida:informativeJustification': self.get('informativejustifications', document_id=document_id),
-            'aida:link': self.get('link'),
+            'aida:link': link,
             'aida:ldcTime': time,
             'aida:system': System(self.get('logger'))
             }
@@ -419,8 +422,8 @@ class ClusterPrototype(AIFObject):
                     for argument in frame.get(rolename):
                         prototypeargument = self.get('prototypeargument', argument)
                         AIF_triples.extend(prototypeargument.get('AIF', document_id=document_id))
-        if self.get('link') is not None:
-            AIF_triples.extend(self.get('link').get('AIF'))
+        if link is not None:
+            AIF_triples.extend(link.get('AIF'))
         return AIF_triples
 
     def get_EREType(self):
@@ -914,7 +917,7 @@ class ReferenceKBLink(AIFObject):
         return Confidence(self.get('logger'))
 
     def get_linkTarget(self):
-        return 'TBD'
+        return self.get('qnode_kb_id_identity')
 
     def get_referenceKB(self):
         return
