@@ -956,7 +956,7 @@ class TBD(AIFObject):
         self.id = tbd_id
 
     def get_IRI(self):
-        return 'aida:{}'.format(self.get('id'))
+        return 'ldc:{}'.format(self.get('id'))
 
 class Attribute(AIFObject):
     def __init__(self, logger, attribute):
