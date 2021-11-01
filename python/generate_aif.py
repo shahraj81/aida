@@ -463,10 +463,17 @@ class EREMention(AIFObject):
         return self.get('qnode_type_id')
 
     def get_justifiedBy(self):
-        return DocumentJustification(self.get('logger'),
-                                     sourceDocument=self.get('root_uid'),
-                                     confidence=Confidence(self.get('logger'))
-                                     )
+        parentDocument = self.get('root_uid')
+        childDocument = self.get('child_uid')
+        if childDocument == 'EMPTY_NA':
+            childDocument = self.get('document_mappings').get('text_document', parentDocument)
+        modality = childDocument.get('modality')
+        if modality == 'text':
+            return TextJustification(self.get('logger'),
+                                     sourceDocument=parentDocument,
+                                     source=childDocument.get('ID'))
+        else:
+            self.record_event('UNHANDLED_MODALITY')
 
     def get_AIF(self, document_id=None):
         AIF_triples = []
@@ -606,6 +613,9 @@ class EventOrRelationArgument(AIFObject):
     def get_confidence(self):
         return Confidence(self.get('logger'))
 
+    def get_document_mappings(self):
+        return self.get('subject').get('document_mappings')
+
     def get_id(self):
         return '{}-{}-{}-{}'.format(
             self.get('object').get('id'),
@@ -614,16 +624,22 @@ class EventOrRelationArgument(AIFObject):
             self.get('justifiedBy').get('id'))
 
     def get_justifiedBy(self):
-        return CompoundJustification(self.get('logger'),
-                                     justification1=DocumentJustification(
-                                         self.get('logger'),
-                                         sourceDocument=self.get('root_uid'),
-                                         confidence=Confidence(self.get('logger'))),
-                                     justification2=None,
-                                     confidence=Confidence(self.get('logger')))
-
-    def get_document_mappings(self):
-        return self.get('subject').get('document_mappings')
+        parentDocument = self.get('root_uid')
+        childDocument = self.get('child_uid')
+        if childDocument is None or childDocument == 'EMPTY_NA':
+            childDocument = self.get('document_mappings').get('text_document', parentDocument)
+        modality = childDocument.get('modality')
+        if modality == 'text':
+            return CompoundJustification(self.get('logger'),
+                                         caller=self,
+                                         justification1=TextJustification(
+                                             self.get('logger'),
+                                             sourceDocument=parentDocument,
+                                             source=childDocument.get('ID')),
+                                         justification2=None,
+                                         confidence=Confidence(self.get('logger')))
+        else:
+            self.record_event('UNHANDLED_MODALITY')
 
     def get_predicate(self):
         return Predicate(self.get('logger'),
@@ -724,6 +740,12 @@ class DocumentJustification(Justification):
 class TextJustification(Justification):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger, *args, **kwargs)
+        if self.get('startOffset') is None:
+            self.set('startOffset', 0)
+        if self.get('endOffsetInclusive') is None:
+            self.set('endOffsetInclusive', 0)
+        if self.get('confidence') is None:
+            self.set('confidence', Confidence(self.get('logger')))
 
     def get_id(self):
         return '{}-{}-{}-{}-{}'.format(
