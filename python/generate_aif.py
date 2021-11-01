@@ -897,7 +897,8 @@ class Claim(AIFObject):
                               componentIdentity=self.get('qnode_x_variable_identity'),
                               componentTypes=self.get('qnode_x_variable_type'))
 
-    def get_AIF(self, document_id=None):
+    def get_AIF(self, document_id=None, noKEs=False):
+        noKEs_omits = ['claimSemantics', 'associatedKEs']
         AIF_triples = []
         if document_id is not None and self.get('document_id') != document_id:
             return AIF_triples
@@ -912,14 +913,14 @@ class Claim(AIFObject):
             'aida:claimTemplate': '"{}"'.format(self.get('claim_template')),
             'aida:xVariable': self.get('xVariable'),
             'aida:naturalLanguageDescription': '"{}"'.format(self.get('naturalLanguageDescription')),
-            'aida:claimSemantics': self.get('claimSemantics'),
+            'aida:claimSemantics': None,
             'aida:claimer': self.get('claimer_claimcomponent'),
             'aida:claimerAffiliation': self.get('claimerAffiliations'),
             'aida:epistemic': self.get('epistemic'),
             'aida:sentiment': self.get('sentiment'),
             'aida:claimDateTime': self.get('claimDateTime'),
             'aida:claimLocation': self.get('claimLocation'),
-            'aida:associatedKEs': self.get('associatedKEs'),
+            'aida:associatedKEs': None,
             # 'aida:originalClaimProvenance': self.get('originalClaimProvenance'),
             # 'aida:identicalClaimSemantics': self.get('identicalClaimSemantics'),
             'aida:identicalClaims': self.get('identicalClaims'),
@@ -930,14 +931,19 @@ class Claim(AIFObject):
             # 'aida:confidence': self.get('confidence'),
             # 'aida:system': self.get('system'),
             }
+        if not noKEs:
+            predicates['aida:associatedKEs'] = self.get('associatedKEs')
+            predicates['aida:claimSemantics'] = self.get('claimSemantics')
         AIF_triples.extend(self.get('coreAIF', predicates))
         scalar_fields = ['xVariable', 'claimer_claimcomponent', 'claimDateTime', 'claimLocation']
         for field in scalar_fields:
             value = self.get(field)
             if value:
                 AIF_triples.extend(value.get('AIF', document_id=document_id))
-        list_fields = ['claimerAffiliations', 'associatedKEs']
+        list_fields = ['claimerAffiliations', 'claimSemantics', 'associatedKEs']
         for field in list_fields:
+            if field in noKEs_omits and noKEs:
+                continue
             for item in self.get(field):
                 AIF_triples.extend(item.get('AIF', document_id=document_id))
         return AIF_triples
@@ -1400,10 +1406,11 @@ class Predicate(AIFObject):
             self.get('rolename'))
 
 class AIF(Object):
-    def __init__(self, logger, annotations, document_mappings):
+    def __init__(self, logger, annotations, document_mappings, noKEs):
         super().__init__(logger)
         self.document_mappings = document_mappings
         self.annotations = annotations
+        self.noKEs = noKEs
         self.system = System(logger)
         self.claims = {}
         self.clusters = {}
@@ -1624,7 +1631,7 @@ class AIF(Object):
                 raw = False
                 AIF_triples = self.get('system').get('AIF')
                 AIF_triples.extend(self.get('prefix_triples'))
-                AIF_triples.extend(claim.get('AIF', document_id=claim.get('document_id')))
+                AIF_triples.extend(claim.get('AIF', document_id=claim.get('document_id'), noKEs=self.get('noKEs')))
                 graph = '\n'.join(sorted({e:1 for e in AIF_triples}))
                 if not raw:
                     g = Graph()
@@ -1681,7 +1688,7 @@ def main(args):
     annotations = Annotations(logger, args.annotations, include_worksheets=include_worksheets)
     encodings = Encodings(logger, args.encodings_filename)
     document_mappings = DocumentMappings(logger, args.parent_children, encodings)
-    aif = AIF(logger, annotations, document_mappings)
+    aif = AIF(logger, annotations, document_mappings, args.noKEs)
     aif.write_output(args.output)
     exit(ALLOK_EXIT_CODE)
 
@@ -1690,6 +1697,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate AIF")
     parser.add_argument('-l', '--log', default='log.txt', 
                         help='Specify a file to which log output should be redirected (default: %(default)s)')
+    parser.add_argument('-n', '--noKEs', action='store_true',
+                        help='Don\'t generate KEs')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
                         help='Print version number and exit')
     parser.add_argument('errors', type=str,
