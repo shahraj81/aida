@@ -51,6 +51,11 @@ class Document(Object):
             language = list(languages.keys())[0]
         return language
 
+    def get_child_text_document(self):
+        for document_element in self.get('document_elements'):
+            if document_element.get('modality') == 'text':
+                return document_element
+
     def add_document_element(self, document_element):
         """
         Adds the document element to this document.

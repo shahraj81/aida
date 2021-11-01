@@ -9,7 +9,9 @@ __date__    = "7 February 2020"
 
 from aida.object import Object
 from aida.logger import Logger
+from aida.encodings import Encodings
 from aida.excel_workbook import ExcelWorkbook
+from aida.document_mappings import DocumentMappings
 from calendar import monthrange
 from rdflib import Graph
 from re import findall, compile
@@ -443,12 +445,16 @@ class EREMention(AIFObject):
     def __init__(self, logger, entry):
         super().__init__(logger)
         self.entry = entry
+        self.document_mappings = None
         self.clusters = []
         self.attributes = []
         self.set_attributes()
 
     def add_cluster(self, cluster):
         self.get('clusters').append(cluster)
+
+    def add_document_mappings(self, document_mappings):
+        self.document_mappings = document_mappings
 
     def get_document_id(self):
         return self.get('root_uid')
@@ -615,6 +621,9 @@ class EventOrRelationArgument(AIFObject):
                                          confidence=Confidence(self.get('logger'))),
                                      justification2=None,
                                      confidence=Confidence(self.get('logger')))
+
+    def get_document_mappings(self):
+        return self.get('subject').get('document_mappings')
 
     def get_predicate(self):
         return Predicate(self.get('logger'),
@@ -1340,8 +1349,9 @@ class Predicate(AIFObject):
             self.get('rolename'))
 
 class AIF(Object):
-    def __init__(self, logger, annotations):
+    def __init__(self, logger, annotations, document_mappings):
         super().__init__(logger)
+        self.document_mappings = document_mappings
         self.annotations = annotations
         self.system = System(logger)
         self.claims = {}
@@ -1376,7 +1386,10 @@ class AIF(Object):
             }
         method = methods[sheet_name]['method'] if sheet_name in methods else None
         if method:
-                self.add(methods[sheet_name]['entry_type'], method(self.get('logger'), entry))
+            obj = method(self.get('logger'), entry)
+            if methods[sheet_name]['entry_type'] == 'mention':
+                obj.add('document_mappings', self.get('document_mappings'))
+            self.add(methods[sheet_name]['entry_type'], obj)
         else:
             self.record_event('METHOD_NOT_FOUND', methods[sheet_name]['method'], self.get('code_location'))
 
@@ -1615,7 +1628,9 @@ def main(args):
         'ClaimFrameTemplate Examples': 'claims'
         }
     annotations = Annotations(logger, args.annotations, include_worksheets=include_worksheets)
-    aif = AIF(logger, annotations)
+    encodings = Encodings(logger, args.encodings_filename)
+    document_mappings = DocumentMappings(logger, args.parent_children, encodings)
+    aif = AIF(logger, annotations, document_mappings)
     aif.write_output(args.output)
     exit(ALLOK_EXIT_CODE)
 
@@ -1628,6 +1643,10 @@ if __name__ == '__main__':
                         help='Print version number and exit')
     parser.add_argument('errors', type=str,
                         help='File containing error specifications')
+    parser.add_argument('encodings_filename', type=str,
+                        help='File containing list of encoding to modality mappings')
+    parser.add_argument('parent_children', type=str,
+                        help='parent_children.tab file as received from LDC')
     parser.add_argument('annotations', type=str,
                         help='Directory containing annotations package as received from LDC')
     parser.add_argument('output', type=str,
