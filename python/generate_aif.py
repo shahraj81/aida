@@ -721,6 +721,35 @@ class DocumentJustification(Justification):
     def get_IRI(self):
         return '_:bdj-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
 
+class TextJustification(Justification):
+    def __init__(self, logger, *args, **kwargs):
+        super().__init__(logger, *args, **kwargs)
+
+    def get_id(self):
+        return '{}-{}-{}-{}-{}'.format(
+            'textJustification',
+            self.get('sourceDocument'),
+            self.get('source'),
+            self.get('startOffset'),
+            self.get('endOffsetInclusive'))
+
+    def get_AIF(self):
+        predicates = {
+            'a': 'aida:TextJustification',
+            'aida:sourceDocument': '"{}"'.format(self.get('sourceDocument')),
+            'aida:source': '"{}"'.format(self.get('source')),
+            'aida:startOffset': '"{}"^^xsd:int'.format(self.get('startOffset')),
+            'aida:endOffsetInclusive': '"{}"^^xsd:int'.format(self.get('endOffsetInclusive')),
+            'aida:confidence': self.get('confidence'),
+            'aida:system': self.get('system'),
+            }
+        AIF_triples = self.get('coreAIF', predicates)
+        AIF_triples.extend(self.get('confidence').get('AIF'))
+        return AIF_triples
+
+    def get_IRI(self):
+        return '_:btj-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
+
 class CompoundJustification(Justification):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger, *args, **kwargs)
