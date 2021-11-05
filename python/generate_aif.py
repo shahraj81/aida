@@ -21,6 +21,8 @@ import hashlib
 import os
 import re
 import sys
+import textwrap
+import traceback
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
@@ -1670,47 +1672,95 @@ def check_for_paths_non_existance(paths):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
 
-def main(args):
+class Task3(Object):
     """
-    The main program for generating AIF
+    Generate Task3 AIF.
     """
-    check_paths(args)
-    logger = Logger(args.log, args.errors, sys.argv)
-    include_worksheets = {
-        'TA3_arg_KEs':                 'argument_KEs',
-        'TA3_evt_KEs':                 'event_KEs',
-        'TA3_rel_KEs':                 'relation_KEs',
-        'TA3_evt_slots':               'event_slots',
-        'TA3_rel_slots':               'relation_slots',
-        'TA3_kb_linking':              'kb_links',
-        'ClaimFrameTemplate Examples': 'claims'
-        }
-    annotations = Annotations(logger, args.annotations, include_worksheets=include_worksheets)
-    encodings = Encodings(logger, args.encodings_filename)
-    document_mappings = DocumentMappings(logger, args.parent_children, encodings)
-    aif = AIF(logger, annotations, document_mappings, args.noKEs)
-    aif.write_output(args.output)
-    exit(ALLOK_EXIT_CODE)
+    def __init__(self, log, noKEs, errors, encodings_filename, parent_children, annotations, output):
+        check_for_paths_existance([
+                 errors,
+                 encodings_filename,
+                 parent_children,
+                 annotations,
+                 ])
+        check_for_paths_non_existance([output])
+        self.log_filename = log
+        self.noKEs = noKEs
+        self.log_specifications = errors
+        self.encodings_filename = encodings_filename
+        self.parent_children = parent_children
+        self.annotations_dir = annotations
+        self.output = output
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specifications'),
+                        sys.argv)
+
+    def __call__(self):
+        logger = self.get('logger')
+        include_worksheets = {
+            'TA3_arg_KEs':                 'argument_KEs',
+            'TA3_evt_KEs':                 'event_KEs',
+            'TA3_rel_KEs':                 'relation_KEs',
+            'TA3_evt_slots':               'event_slots',
+            'TA3_rel_slots':               'relation_slots',
+            'TA3_kb_linking':              'kb_links',
+            'ClaimFrameTemplate Examples': 'claims'
+            }
+        annotations = Annotations(logger, self.get('annotations_dir'), include_worksheets=include_worksheets)
+        encodings = Encodings(logger, self.get('encodings_filename'))
+        document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
+        aif = AIF(logger, annotations, document_mappings, self.get('noKEs'))
+        aif.write_output(self.get('output'))
+        exit(ALLOK_EXIT_CODE)
+
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-n', '--noKEs', action='store_true', help='Don\'t generate KEs')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('errors', type=str, help='File containing error specifications')
+        parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
+        parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
+        parser.add_argument('annotations', type=str, help='Directory containing annotations package as received from LDC')
+        parser.add_argument('output', type=str, help='Specify a directory to which output should be written')
+        parser.set_defaults(myclass=myclass)
+        return parser
+
+myclasses = [
+    Task3
+    ]
+
+def main(args=sys.argv[1:]):
+    parser = argparse.ArgumentParser(prog='generate_aif',
+                                description='Generate AIF from LDC annotations')
+    subparser = parser.add_subparsers()
+    subparsers = {}
+    for myclass in myclasses:
+        hyphened_name = re.sub('([A-Z])', r'-\1', myclass.__name__).lstrip('-').lower()
+        help_text = myclass.__doc__.split('\n')[0]
+        desc = textwrap.dedent(myclass.__doc__.rstrip())
+
+        class_subparser = subparser.add_parser(hyphened_name,
+                            help=help_text,
+                            description=desc,
+                            formatter_class=argparse.RawDescriptionHelpFormatter)
+        myclass.add_arguments(class_subparser)
+        subparsers[myclass] = class_subparser
+
+    namespace = vars(parser.parse_args(args))
+    try:
+        myclass = namespace.pop('myclass')
+    except KeyError:
+        parser.print_help()
+        return
+    try:
+        obj = myclass(**namespace)
+    except ValueError as e:
+        subparsers[myclass].error(str(e) + "\n" + traceback.format_exc())
+    result = obj()
+    if result is not None:
+        print(result)
 
 if __name__ == '__main__':
-    # create a parse and add command line arguments
-    parser = argparse.ArgumentParser(description="Generate AIF")
-    parser.add_argument('-l', '--log', default='log.txt', 
-                        help='Specify a file to which log output should be redirected (default: %(default)s)')
-    parser.add_argument('-n', '--noKEs', action='store_true',
-                        help='Don\'t generate KEs')
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, 
-                        help='Print version number and exit')
-    parser.add_argument('errors', type=str,
-                        help='File containing error specifications')
-    parser.add_argument('encodings_filename', type=str,
-                        help='File containing list of encoding to modality mappings')
-    parser.add_argument('parent_children', type=str,
-                        help='parent_children.tab file as received from LDC')
-    parser.add_argument('annotations', type=str,
-                        help='Directory containing annotations package as received from LDC')
-    parser.add_argument('output', type=str,
-                        help='Specify a directory to which output should be written')
-    # parse the argument and call main
-    args = parser.parse_args()
-    main(args)
+    main()
