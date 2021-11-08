@@ -1082,7 +1082,7 @@ class Attribute(AIFObject):
 
     def get_id(self):
         allowed_attributes = {
-            'not': 'Negated',
+            'negated': 'Negated',
             'hedged': 'Hedged',
             'irrealis': 'Irrealis',
             'generic': 'Generic',
