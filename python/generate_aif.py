@@ -556,7 +556,7 @@ class EREMention(AIFObject):
 
     def set_attributes(self):
         attribute = self.get('attribute')
-        if attribute is not None and attribute != 'EMPTY_NA' and attribute is not 'none':
+        if attribute is not None and attribute != 'EMPTY_NA' and attribute != 'none':
             for a in attribute.split(','):
                 self.get('attributes').append(Attribute(self.get('logger'), a.strip()))
 
@@ -709,7 +709,7 @@ class EventOrRelationArgument(AIFObject):
 
     def set_attributes(self):
         attribute = self.get('attribute')
-        if attribute is not None and attribute != 'EMPTY_NA' and attribute is not 'none':
+        if attribute is not None and attribute != 'EMPTY_NA' and attribute != 'none':
             for a in attribute.split(','):
                 self.get('attributes').append(Attribute(self.get('logger'), a.strip()))
 
