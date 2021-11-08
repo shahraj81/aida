@@ -502,6 +502,8 @@ class EREMention(AIFObject):
         childDocument = self.get('child_uid')
         if childDocument == 'EMPTY_NA':
             childDocument = self.get('document_mappings').get('text_document', parentDocument)
+        else:
+            childDocument = self.get('document_mappings').get('document_elements').get(childDocument)
         modality = childDocument.get('modality')
         if modality == 'text':
             return TextJustification(self.get('logger'),
