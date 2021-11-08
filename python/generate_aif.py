@@ -1,6 +1,7 @@
 """
 Script for generating AIF from LDCs annotations
 """
+from aida.file_handler import FileHandler
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -208,17 +209,32 @@ class TypeStatement(AIFStatement):
         return '_:bcm-{}'.format(hashlib.md5(s).hexdigest())
 
 class Annotations(AIFObject):
-    def __init__(self, logger, filename, include_worksheets=None):
+    def __init__(self, logger, path, include_items=None):
         super().__init__(logger)
-        self.filename = filename
+        self.path = path
+        self.include_items = include_items
+        self.load()
+
+class TA3Annotations(Annotations):
+    def __init__(self, logger, path, include_items=None):
+        super().__init__(logger, path, include_items=include_items)
+
+    def get_filename(self):
+        return self.get('path')
+
+    def get_include_worksheets(self):
+        return self.get('include_items')
+
+    def load(self):
         workbook = ExcelWorkbook(self.get('logger'), self.get('filename'))
         self.worksheets = workbook.get('worksheets')
+        include_worksheets = self.get('include_worksheets')
         if include_worksheets is not None:
             worksheets = {}
             for worksheet in include_worksheets:
                 mapped_name = include_worksheets.get(worksheet)
                 if worksheet not in workbook.get('worksheets'):
-                    self.record_event('WORKSHEET_NOT_FOUND', worksheet, where={'filename': filename})
+                    self.record_event('WORKSHEET_NOT_FOUND', worksheet, where={'filename': self.get('filename')})
                 worksheets[mapped_name] = workbook.get('worksheets').get(worksheet)
             self.worksheets = worksheets
 
@@ -1408,11 +1424,10 @@ class Predicate(AIFObject):
             self.get('rolename'))
 
 class AIF(Object):
-    def __init__(self, logger, annotations, document_mappings, noKEs):
+    def __init__(self, logger, annotations, document_mappings):
         super().__init__(logger)
         self.document_mappings = document_mappings
         self.annotations = annotations
-        self.noKEs = noKEs
         self.system = System(logger)
         self.claims = {}
         self.clusters = {}
@@ -1470,9 +1485,6 @@ class AIF(Object):
             self.get('mentionframes')[subjectmention_id][slot_type] = []
         self.get('mentionframes').get(subjectmention_id).get(slot_type).append(argument)
 
-    def add_claim(self, claim):
-        self.get('claims')[claim.get('claim_id')] = claim
-
     def add_link(self, link):
         links = self.get('links')
         qnode_kb_id_entity = link.get('qnode_kb_id_identity')
@@ -1480,56 +1492,11 @@ class AIF(Object):
             links[qnode_kb_id_entity] = []
         links[qnode_kb_id_entity].append(link)
 
-    def augment_claims(self):
-        for claim in self.get('claims').values():
-            for mention_id in claim.get('claim_semantics').split(','):
-                mention_id = mention_id.strip()
-                for cluster in self.get('mention', mention_id).get('clusters'):
-                    claim.add('claimSemantics', cluster)
-            for mention_id in claim.get('associated_kes').split(','):
-                mention_id = mention_id.strip()
-                for cluster in self.get('mention', mention_id).get('clusters'):
-                    claim.add('associatedKEs', cluster)
-            print('--TODO: add identicalClaims, relatedClaims, supportingClaims, refutingClaims')
-            relatedness = ['identical', 'related', 'supporting', 'refuting']
-            for relatedness_type in relatedness:
-                for related_claim in self.get('{}Claims'.format(relatedness_type), claim):
-                    claim.add('{}Claims'.format(relatedness_type), related_claim)
-
     def get_mention(self, mention_id):
         return self.get('mentions').get(mention_id)
 
     def get_mentionframe(self, mention_id):
         return self.get('mentionframes').get(mention_id)
-
-    def get_identicalClaims(self, claim):
-        print('--TODO: get_identicalClaims')
-        return [TBD(self.get('logger'), 'TBD1'),
-                TBD(self.get('logger'), 'TBD2')]
-
-    def get_relatedClaims(self, claim):
-        print('--TODO: get_relatedClaims')
-        return [TBD(self.get('logger'), 'TBD1'),
-                TBD(self.get('logger'), 'TBD3')]
-
-    def get_supportingClaims(self, claim):
-        print('--TODO: get_supportingClaims')
-        return [TBD(self.get('logger'), 'TBD2'),
-                TBD(self.get('logger'), 'TBD3')]
-
-    def get_refutingClaims(self, claim):
-        print('--TODO: get_refutingClaims')
-        return [TBD(self.get('logger'), 'TBD1'),
-                TBD(self.get('logger'), 'TBD4')]
-
-    # def get_AIF(self):
-    #     AIF_triples = self.get('system').get('AIF')
-    #     AIF_triples.extend(self.get('prefix_triples'))
-    #     for cluster in self.get('clusters').values():
-    #         AIF_triples.extend(cluster.get('AIF'))
-    #     for claim in self.get('claims').values():
-    #         AIF_triples.extend(claim.get('AIF'))
-    #     return AIF_triples
 
     def get_prefix_triples(self):
         """
@@ -1592,21 +1559,6 @@ class AIF(Object):
             if not len(mention.get('clusters')):
                 self.record_event('MENTION_NOT_IN_CLUSTER', mention.get('id'))
 
-    def generate(self):
-        print('--TODO: generate a file per claim in output')
-        print('--TODO: generate a single cluster prototype by accumulation attributes from members')
-        print('--TODO: test attributes on mentions, arguments, and prototypes (specially the mixed one)')
-        print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
-        print('--TODO: pick prototype informative justification not arbitrarily')
-        print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
-        print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
-        print('--TODO: handle case when multiple |-separated claim location types are included in the claim')
-        for sheet_name in self.get('worksheets'):
-            for entry in self.get('worksheet', sheet_name):
-                self.add('annotation_entry', sheet_name, entry)
-        self.generate_clusters()
-        self.augment_claims()
-
     def patch(self, serialized_output):
         """
         Applies patch to the serialized output, and returns the updated string.
@@ -1624,6 +1576,65 @@ class AIF(Object):
             str_to_replace_by = '"{double_val}"^^xsd:double'.format(double_val=double_val)
             patched_output = patched_output.replace(str_to_replace, str_to_replace_by)
         return patched_output
+
+class TA3AIF(AIF):
+    def __init__(self, logger, annotations, document_mappings, noKEs):
+        super().__init__(logger, annotations, document_mappings)
+        self.noKEs = noKEs
+
+    def add_claim(self, claim):
+        self.get('claims')[claim.get('claim_id')] = claim
+
+    def augment_claims(self):
+        for claim in self.get('claims').values():
+            for mention_id in claim.get('claim_semantics').split(','):
+                mention_id = mention_id.strip()
+                for cluster in self.get('mention', mention_id).get('clusters'):
+                    claim.add('claimSemantics', cluster)
+            for mention_id in claim.get('associated_kes').split(','):
+                mention_id = mention_id.strip()
+                for cluster in self.get('mention', mention_id).get('clusters'):
+                    claim.add('associatedKEs', cluster)
+            print('--TODO: add identicalClaims, relatedClaims, supportingClaims, refutingClaims')
+            relatedness = ['identical', 'related', 'supporting', 'refuting']
+            for relatedness_type in relatedness:
+                for related_claim in self.get('{}Claims'.format(relatedness_type), claim):
+                    claim.add('{}Claims'.format(relatedness_type), related_claim)
+
+    def generate(self):
+        print('--TODO: generate a file per claim in output')
+        print('--TODO: generate a single cluster prototype by accumulation attributes from members')
+        print('--TODO: test attributes on mentions, arguments, and prototypes (specially the mixed one)')
+        print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
+        print('--TODO: pick prototype informative justification not arbitrarily')
+        print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
+        print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
+        print('--TODO: handle case when multiple |-separated claim location types are included in the claim')
+        for sheet_name in self.get('worksheets'):
+            for entry in self.get('worksheet', sheet_name):
+                self.add('annotation_entry', sheet_name, entry)
+        self.generate_clusters()
+        self.augment_claims()
+
+    def get_identicalClaims(self, claim):
+        print('--TODO: get_identicalClaims')
+        return [TBD(self.get('logger'), 'TBD1'),
+                TBD(self.get('logger'), 'TBD2')]
+
+    def get_relatedClaims(self, claim):
+        print('--TODO: get_relatedClaims')
+        return [TBD(self.get('logger'), 'TBD1'),
+                TBD(self.get('logger'), 'TBD3')]
+
+    def get_supportingClaims(self, claim):
+        print('--TODO: get_supportingClaims')
+        return [TBD(self.get('logger'), 'TBD2'),
+                TBD(self.get('logger'), 'TBD3')]
+
+    def get_refutingClaims(self, claim):
+        print('--TODO: get_refutingClaims')
+        return [TBD(self.get('logger'), 'TBD1'),
+                TBD(self.get('logger'), 'TBD4')]
 
     def write_output(self, directory):
         os.mkdir(directory)
@@ -1689,7 +1700,7 @@ class Task3(Object):
         self.log_specifications = errors
         self.encodings_filename = encodings_filename
         self.parent_children = parent_children
-        self.annotations_dir = annotations
+        self.annotations = annotations
         self.output = output
         self.logger = Logger(self.get('log_filename'),
                         self.get('log_specifications'),
@@ -1706,13 +1717,12 @@ class Task3(Object):
             'TA3_kb_linking':              'kb_links',
             'ClaimFrameTemplate Examples': 'claims'
             }
-        annotations = Annotations(logger, self.get('annotations_dir'), include_worksheets=include_worksheets)
+        annotations = TA3Annotations(logger, self.get('annotations'), include_items=include_worksheets)
         encodings = Encodings(logger, self.get('encodings_filename'))
         document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
-        aif = AIF(logger, annotations, document_mappings, self.get('noKEs'))
+        aif = TA3AIF(logger, annotations, document_mappings, self.get('noKEs'))
         aif.write_output(self.get('output'))
         exit(ALLOK_EXIT_CODE)
-
 
     @classmethod
     def add_arguments(myclass, parser):
@@ -1722,7 +1732,7 @@ class Task3(Object):
         parser.add_argument('errors', type=str, help='File containing error specifications')
         parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
         parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
-        parser.add_argument('annotations', type=str, help='Directory containing annotations package as received from LDC')
+        parser.add_argument('annotations', type=str, help='Excel workbook containing Task3 annotations as received from LDC')
         parser.add_argument('output', type=str, help='Specify a directory to which output should be written')
         parser.set_defaults(myclass=myclass)
         return parser
