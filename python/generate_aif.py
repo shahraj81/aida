@@ -1,7 +1,6 @@
 """
 Script for generating AIF from LDCs annotations
 """
-from aida.file_handler import FileHandler
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -12,6 +11,7 @@ from aida.object import Object
 from aida.logger import Logger
 from aida.encodings import Encodings
 from aida.excel_workbook import ExcelWorkbook
+from aida.file_handler import FileHandler
 from aida.document_mappings import DocumentMappings
 from calendar import monthrange
 from rdflib import Graph
@@ -1366,6 +1366,8 @@ class LDCTimeRange(AIFObject):
         logger = self.get('logger')
         where = self.get('where')
         date_type = self.get('{}_date_type'.format(start_or_end))
+        date_after = '0001-01-01'
+        date_before = '9999-12-31'
         if date_type == '{}after'.format(start_or_end):
             date_after = self.get('{}_date'.format(start_or_end))
             date_before = '9999-12-31'
@@ -1376,8 +1378,9 @@ class LDCTimeRange(AIFObject):
             date_after = self.get('{}_date'.format(start_or_end))
             date_before = self.get('{}_date'.format(start_or_end))
         elif date_type == '{}unk'.format(start_or_end):
-            date_after = '0001-01-01'
-            date_before = '9999-12-31'
+            pass
+        else:
+            self.record_event('UNHANDLED_DATE_TYPE', date_type)
         return [LDCTime(logger, date_before, start_or_end, 'BEFORE', where), LDCTime(logger, date_after, start_or_end, 'AFTER', where)]
 
     def get_starts(self):
