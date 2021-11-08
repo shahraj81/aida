@@ -215,6 +215,23 @@ class Annotations(AIFObject):
         self.include_items = include_items
         self.load()
 
+class TA1Annotations(Annotations):
+    def __init__(self, logger, path, include_items=None):
+        self.worksheets = {}
+        super().__init__(logger, path, include_items=include_items)
+
+    def get_directory(self):
+        return self.get('path')
+
+    def get_include_files(self):
+        return self.get('include_items')
+
+    def load(self):
+        directory = self.get('directory')
+        for filename in self.get('include_files'):
+            sheet_name = self.get('include_files').get(filename)
+            self.get('worksheets')[sheet_name] = FileHandler(self.get('logger'), os.path.join(directory, filename))
+
 class TA3Annotations(Annotations):
     def __init__(self, logger, path, include_items=None):
         super().__init__(logger, path, include_items=include_items)
@@ -1568,6 +1585,59 @@ class AIF(Object):
             patched_output = patched_output.replace(str_to_replace, str_to_replace_by)
         return patched_output
 
+class TA1AIF(AIF):
+    def __init__(self, logger, annotations, document_mappings):
+        super().__init__(logger, annotations, document_mappings)
+
+    def generate(self):
+        print('--TODO: generate a file per claim in output')
+        print('--TODO: generate a single cluster prototype by accumulation attributes from members')
+        print('--TODO: test attributes on mentions, arguments, and prototypes (specially the mixed one)')
+        print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
+        print('--TODO: pick prototype informative justification not arbitrarily')
+        print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
+        print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
+        print('--TODO: handle case when multiple |-separated claim location types are included in the claim')
+        for sheet_name in self.get('worksheets'):
+            for entry in self.get('worksheet', sheet_name):
+                self.add('annotation_entry', sheet_name, entry)
+        self.generate_clusters()
+
+    def get_methods(self):
+        methods = {
+            'argument_KEs':   {'method': EntityMention, 'entry_type': 'mention'},
+            'event_KEs':      {'method': EventMention, 'entry_type': 'mention'},
+            'relation_KEs':   {'method': RelationMention, 'entry_type': 'mention'},
+            'event_slots':    {'method': EventArgument, 'entry_type': 'argument'},
+            'relation_slots': {'method': RelationArgument, 'entry_type': 'argument'},
+            'kb_links':       {'method': ReferenceKBLink, 'entry_type': 'link'}
+            }
+        return methods
+
+    def write_output(self, directory):
+        pass
+
+class TA2AIF(TA1AIF):
+    def __init__(self, logger, annotations, document_mappings):
+        super().__init__(logger, annotations, document_mappings)
+
+    def write_output(self, directory, raw=False):
+        os.mkdir(directory)
+        filename = os.path.join(directory, 'task2_kb.ttl')
+        with open(filename, 'w') as program_output:
+            AIF_triples = self.get('system').get('AIF')
+            AIF_triples.extend(self.get('prefix_triples'))
+            for cluster in self.get('clusters').values():
+                AIF_triples.extend(cluster.get('AIF'))
+            graph = '\n'.join(sorted({e:1 for e in AIF_triples}))
+            if not raw:
+                g = Graph()
+                g.parse(data=graph, format="turtle")
+                graph = self.patch(g.serialize(format="turtle"))
+            if 'EMPTY_NA' in graph:
+                self.record_event('EMPTY_NA_IN_OUTPUT', self.get('code_location'))
+            program_output.write(graph)
+
 class TA3AIF(AIF):
     def __init__(self, logger, annotations, document_mappings, noKEs):
         self.noKEs = noKEs
@@ -1687,6 +1757,108 @@ def check_for_paths_non_existance(paths):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
 
+class Task1(Object):
+    """
+    Generate Task1 AIF.
+    """
+    def __init__(self, log, errors, encodings_filename, parent_children, annotations, output):
+        check_for_paths_existance([
+                 errors,
+                 encodings_filename,
+                 parent_children,
+                 annotations,
+                 ])
+        check_for_paths_non_existance([output])
+        self.log_filename = log
+        self.log_specifications = errors
+        self.encodings_filename = encodings_filename
+        self.parent_children = parent_children
+        self.annotations = annotations
+        self.output = output
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specifications'),
+                        sys.argv)
+
+    def __call__(self):
+        logger = self.get('logger')
+        include_files = {
+            'arg_mentions.tab':            'argument_KEs',
+            'evt_mentions.tab':            'event_KEs',
+            'rel_mentions.tab':            'relation_KEs',
+            'evt_slots.tab':               'event_slots',
+            'rel_slots.tab':               'relation_slots',
+            'kb_linking.tab':              'kb_links',
+            }
+        annotations = TA1Annotations(logger, self.get('annotations'), include_items=include_files)
+        encodings = Encodings(logger, self.get('encodings_filename'))
+        document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
+        aif = TA1AIF(logger, annotations, document_mappings)
+        aif.write_output(self.get('output'))
+        exit(ALLOK_EXIT_CODE)
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('errors', type=str, help='File containing error specifications')
+        parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
+        parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
+        parser.add_argument('annotations', type=str, help='Directory containing Task1 annotations as received from LDC')
+        parser.add_argument('output', type=str, help='Specify a directory to which output should be written')
+        parser.set_defaults(myclass=myclass)
+        return parser
+
+class Task2(Object):
+    """
+    Generate Task2 AIF.
+    """
+    def __init__(self, log, errors, encodings_filename, parent_children, annotations, output):
+        check_for_paths_existance([
+                 errors,
+                 encodings_filename,
+                 parent_children,
+                 annotations,
+                 ])
+        check_for_paths_non_existance([output])
+        self.log_filename = log
+        self.log_specifications = errors
+        self.encodings_filename = encodings_filename
+        self.parent_children = parent_children
+        self.annotations = annotations
+        self.output = output
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specifications'),
+                        sys.argv)
+
+    def __call__(self):
+        logger = self.get('logger')
+        include_files = {
+            'arg_mentions.tab':            'argument_KEs',
+            'evt_mentions.tab':            'event_KEs',
+            'rel_mentions.tab':            'relation_KEs',
+            'evt_slots.tab':               'event_slots',
+            'rel_slots.tab':               'relation_slots',
+            'kb_linking.tab':              'kb_links',
+            }
+        annotations = TA1Annotations(logger, self.get('annotations'), include_items=include_files)
+        encodings = Encodings(logger, self.get('encodings_filename'))
+        document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
+        aif = TA2AIF(logger, annotations, document_mappings)
+        aif.write_output(self.get('output'))
+        exit(ALLOK_EXIT_CODE)
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('errors', type=str, help='File containing error specifications')
+        parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
+        parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
+        parser.add_argument('annotations', type=str, help='Directory containing Task1 annotations as received from LDC')
+        parser.add_argument('output', type=str, help='Specify a directory to which output should be written')
+        parser.set_defaults(myclass=myclass)
+        return parser
+
 class Task3(Object):
     """
     Generate Task3 AIF.
@@ -1742,6 +1914,8 @@ class Task3(Object):
         return parser
 
 myclasses = [
+    Task1,
+    Task2,
     Task3
     ]
 
