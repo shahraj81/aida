@@ -1429,7 +1429,6 @@ class AIF(Object):
         self.document_mappings = document_mappings
         self.annotations = annotations
         self.system = System(logger)
-        self.claims = {}
         self.clusters = {}
         self.links = {}
         self.mentions = {}
@@ -1450,15 +1449,7 @@ class AIF(Object):
             self.record_event('METHOD_NOT_FOUND', method_name)
 
     def add_annotation_entry(self, sheet_name, entry):
-        methods = {
-            'argument_KEs':   {'method': EntityMention, 'entry_type': 'mention'},
-            'event_KEs':      {'method': EventMention, 'entry_type': 'mention'},
-            'relation_KEs':   {'method': RelationMention, 'entry_type': 'mention'},
-            'event_slots':    {'method': EventArgument, 'entry_type': 'argument'},
-            'relation_slots': {'method': RelationArgument, 'entry_type': 'argument'},
-            'kb_links':       {'method': ReferenceKBLink, 'entry_type': 'link'},
-            'claims':         {'method': Claim, 'entry_type': 'claim'}
-            }
+        methods = self.get('methods')
         method = methods[sheet_name]['method'] if sheet_name in methods else None
         if method:
             obj = method(self.get('logger'), entry)
@@ -1579,8 +1570,9 @@ class AIF(Object):
 
 class TA3AIF(AIF):
     def __init__(self, logger, annotations, document_mappings, noKEs):
-        super().__init__(logger, annotations, document_mappings)
         self.noKEs = noKEs
+        self.claims = {}
+        super().__init__(logger, annotations, document_mappings)
 
     def add_claim(self, claim):
         self.get('claims')[claim.get('claim_id')] = claim
@@ -1620,6 +1612,18 @@ class TA3AIF(AIF):
         print('--TODO: get_identicalClaims')
         return [TBD(self.get('logger'), 'TBD1'),
                 TBD(self.get('logger'), 'TBD2')]
+
+    def get_methods(self):
+        methods = {
+            'argument_KEs':   {'method': EntityMention, 'entry_type': 'mention'},
+            'event_KEs':      {'method': EventMention, 'entry_type': 'mention'},
+            'relation_KEs':   {'method': RelationMention, 'entry_type': 'mention'},
+            'event_slots':    {'method': EventArgument, 'entry_type': 'argument'},
+            'relation_slots': {'method': RelationArgument, 'entry_type': 'argument'},
+            'kb_links':       {'method': ReferenceKBLink, 'entry_type': 'link'},
+            'claims':         {'method': Claim, 'entry_type': 'claim'}
+            }
+        return methods
 
     def get_relatedClaims(self, claim):
         print('--TODO: get_relatedClaims')
