@@ -506,6 +506,17 @@ class EREMention(AIFObject):
             childDocument = self.get('document_mappings').get('document_elements').get(childDocument)
         modality = childDocument.get('modality')
         if modality == 'text':
+            print('TODO: Use start and end offsets')
+            return TextJustification(self.get('logger'),
+                                     sourceDocument=parentDocument,
+                                     source=childDocument.get('ID'))
+        elif modality == 'image':
+            print('TODO: Use ImageJustification')
+            return TextJustification(self.get('logger'),
+                                     sourceDocument=parentDocument,
+                                     source=childDocument.get('ID'))
+        elif modality == 'video':
+            print('TODO: Use VideoJustification or KeyFrameVideoJustification')
             return TextJustification(self.get('logger'),
                                      sourceDocument=parentDocument,
                                      source=childDocument.get('ID'))
