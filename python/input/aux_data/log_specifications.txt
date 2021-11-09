@@ -99,3 +99,4 @@ ERROR     UNEXPECTED_SUBJECT_TYPE         Type '{}' of subject '{}' used in pred
 WARNING   MISSING_SPAN_FOR_MENTION        No span for mention '{}'
 WARNING   ARBITRARY_INF_JUSTIFICATION     Unable to select a single informative justification deterministically for node/mention '{}'; picking one arbitrarily
 CRITICAL  UNEXPECTED_NUM_INF_JUSTIFICATIONS Unexpected number of informative justifications
+WARNING   UNHANDLED_DATE_TYPE             Unknown datetype '{}' found
