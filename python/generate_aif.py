@@ -275,6 +275,8 @@ class ERECluster(AIFObject):
         self.get('mentions').append(mention)
 
     def add_frame(self, mentionframe):
+        if mentionframe is None:
+            print('4j')
         self.get('mentionframes').append(mentionframe)
 
     def get_mention(self, mention_id):
@@ -1567,15 +1569,15 @@ class AIF(Object):
                 else:
                     if isinstance(mention, EventMention):
                         cluster = EventCluster(self.get('logger'), cluster_id)  \
-                                    .add('mention', mention) \
-                                    .add('frame', mentionframe)
+                                    .add('mention', mention)
                     elif isinstance(mention, RelationMention):
                         cluster = RelationCluster(self.get('logger'), cluster_id)  \
-                                    .add('mention', mention) \
-                                    .add('frame', mentionframe)
+                                    .add('mention', mention)
                     elif isinstance(mention, EntityMention):
                         cluster = EntityCluster(self.get('logger'), cluster_id)  \
                                     .add('mention', mention)
+                    if mentionframe is not None:
+                        cluster.add('frame', mentionframe)
                     cluster.add('link', link)
                     self.get('clusters')[cluster.get('id')] = cluster
                 mention.add('cluster', cluster)
