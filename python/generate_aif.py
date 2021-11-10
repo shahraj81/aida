@@ -1630,8 +1630,25 @@ class TA1AIF(AIF):
             }
         return methods
 
-    def write_output(self, directory):
-        pass
+    def write_output(self, directory, raw=False):
+        os.mkdir(directory)
+        for document in self.get('document_mappings').get('documents').values():
+            document_id = document.get('ID')
+            filename = os.path.join(directory, document_id)
+            with open(filename, 'w') as program_output:
+                AIF_triples = self.get('system').get('AIF')
+                AIF_triples.extend(self.get('prefix_triples'))
+                for cluster in self.get('clusters').values():
+                    if cluster.has('member_from', document_id):
+                        AIF_triples.extend(cluster.get('AIF', document_id=document_id))
+                graph = '\n'.join(sorted({e:1 for e in AIF_triples}))
+                if not raw:
+                    g = Graph()
+                    g.parse(data=graph, format="turtle")
+                    graph = self.patch(g.serialize(format="turtle"))
+                if 'EMPTY_NA' in graph:
+                    self.record_event('EMPTY_NA_IN_OUTPUT', self.get('code_location'))
+                program_output.write(graph)
 
 class TA2AIF(TA1AIF):
     def __init__(self, logger, annotations, document_mappings):
