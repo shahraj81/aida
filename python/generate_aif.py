@@ -317,7 +317,7 @@ class ERECluster(AIFObject):
         AIF_triples.extend(self.get('prototype').get('AIF', document_id=document_id))
         return AIF_triples
 
-    def has_member_from(self, document_id):
+    def has_a_member_from(self, document_id):
         for mention in self.get('mentions'):
             if mention.get('document_id') == document_id:
                 return True
@@ -613,10 +613,10 @@ class EventOrRelationArgument(AIFObject):
     def get_prototypeAIF(self, document_id=None):
         AIF_triples = []
         for subject_cluster in self.get('subject').get('clusters'):
-            if not subject_cluster.has('member_from', document_id):
+            if not subject_cluster.has('a_member_from', document_id):
                 continue
             for object_cluster in self.get('object').get('clusters'):
-                if not object_cluster.has('member_from', document_id):
+                if not object_cluster.has('a_member_from', document_id):
                     continue
                 predicates = {
                     'a': 'aida:ArgumentStatement',
@@ -1639,7 +1639,7 @@ class TA1AIF(AIF):
                 AIF_triples = self.get('system').get('AIF')
                 AIF_triples.extend(self.get('prefix_triples'))
                 for cluster in self.get('clusters').values():
-                    if cluster.has('member_from', document_id):
+                    if cluster.has('a_member_from', document_id):
                         AIF_triples.extend(cluster.get('AIF', document_id=document_id))
                 graph = '\n'.join(sorted({e:1 for e in AIF_triples}))
                 if not raw:
