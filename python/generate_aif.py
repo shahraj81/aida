@@ -1103,7 +1103,7 @@ class Attribute(AIFObject):
             'generic': 'Generic',
             }
         if self.get('attribute') not in allowed_attributes:
-            self.record_event('UNEXPECTED_ATTRIBUTE', self.get('attribute'), self.get('where'))
+            self.record_event('UKNOWN_ATTRIBUTE', self.get('attribute'), self.get('where'))
         return allowed_attributes.get(self.get('attribute'))
 
     def get_IRI(self):

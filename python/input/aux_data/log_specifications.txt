@@ -101,3 +101,4 @@ WARNING   ARBITRARY_INF_JUSTIFICATION     Unable to select a single informative 
 CRITICAL  UNEXPECTED_NUM_INF_JUSTIFICATIONS Unexpected number of informative justifications
 WARNING   UNHANDLED_DATE_TYPE             Unknown datetype '{}' found
 WARNING   INVALID_EVENT_OR_RELATION_ARGUMENT Event or relation argument is invalid.
+CRITICAL  UKNOWN_ATTRIBUTE                Unknown attribute '{}'
