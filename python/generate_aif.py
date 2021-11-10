@@ -325,7 +325,7 @@ class ERECluster(AIFObject):
     def set_attributes(self, link):
         generic_status = link.get('generic_status')
         if generic_status != 'EMPTY_NA':
-            self.get('attributes').append(Attribute(self.get('logger'), generic_status))
+            self.get('attributes').append(Attribute(self.get('logger'), generic_status, link.get('where')))
 
 class EventCluster(ERECluster):
     def __init__(self, logger, cluster_id):
@@ -562,7 +562,7 @@ class EREMention(AIFObject):
         attribute = self.get('attribute')
         if attribute is not None and attribute != 'EMPTY_NA' and attribute != 'none':
             for a in attribute.split(','):
-                self.get('attributes').append(Attribute(self.get('logger'), a.strip()))
+                self.get('attributes').append(Attribute(self.get('logger'), a.strip(), self.get('where')))
 
 class EventMention(EREMention):
     def __init__(self, logger, entry):
@@ -725,7 +725,7 @@ class EventOrRelationArgument(AIFObject):
         attribute = self.get('attribute')
         if attribute is not None and attribute != 'EMPTY_NA' and attribute != 'none':
             for a in attribute.split(','):
-                self.get('attributes').append(Attribute(self.get('logger'), a.strip()))
+                self.get('attributes').append(Attribute(self.get('logger'), a.strip(), self.get('where')))
 
 class EventArgument(EventOrRelationArgument):
     def __init__(self, logger, entry):
@@ -1090,9 +1090,10 @@ class TBD(AIFObject):
         return 'ldc:{}'.format(self.get('id'))
 
 class Attribute(AIFObject):
-    def __init__(self, logger, attribute):
+    def __init__(self, logger, attribute, where):
         super().__init__(logger)
         self.attribute = attribute
+        self.where = where
 
     def get_id(self):
         allowed_attributes = {
@@ -1102,7 +1103,7 @@ class Attribute(AIFObject):
             'generic': 'Generic',
             }
         if self.get('attribute') not in allowed_attributes:
-            self.record_event('UNEXPECTED_ATTRIBUTE', self.get('attribute'))
+            self.record_event('UNEXPECTED_ATTRIBUTE', self.get('attribute'), self.get('where'))
         return allowed_attributes.get(self.get('attribute'))
 
     def get_IRI(self):
