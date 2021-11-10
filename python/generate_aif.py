@@ -1467,9 +1467,7 @@ class Predicate(AIFObject):
         return True
 
     def __str__(self):
-        return '"{}:{}"'.format(
-            self.get('subject_type'),
-            self.get('rolename'))
+        return '"{}"'.format(self.get('rolename'))
 
 class AIF(Object):
     def __init__(self, logger, annotations, document_mappings):
