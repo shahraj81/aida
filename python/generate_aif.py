@@ -275,8 +275,6 @@ class ERECluster(AIFObject):
         self.get('mentions').append(mention)
 
     def add_frame(self, mentionframe):
-        if mentionframe is None:
-            print('4j')
         self.get('mentionframes').append(mentionframe)
 
     def get_mention(self, mention_id):
