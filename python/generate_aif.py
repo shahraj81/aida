@@ -1743,12 +1743,11 @@ class TA3AIF(AIF):
         return [TBD(self.get('logger'), 'TBD1'),
                 TBD(self.get('logger'), 'TBD4')]
 
-    def write_output(self, directory):
+    def write_output(self, directory, raw=False):
         os.mkdir(directory)
         for claim in self.get('claims').values():
             filename = os.path.join(directory, claim.get('id'))
             with open(filename, 'w') as program_output:
-                raw = False
                 AIF_triples = self.get('system').get('AIF')
                 AIF_triples.extend(self.get('prefix_triples'))
                 AIF_triples.extend(claim.get('AIF', document_id=claim.get('document_id'), noKEs=self.get('noKEs')))
