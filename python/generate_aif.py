@@ -96,7 +96,7 @@ class AIFObject(Object):
         method = self.get_method(method_name)
         if method is not None:
             args = args[1:]
-            method(*args, **kwargs)
+            return method(*args, **kwargs)
         else:
             self.record_event('METHOD_NOT_FOUND', method_name)
 
