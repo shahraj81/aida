@@ -612,6 +612,8 @@ class EventOrRelationArgument(AIFObject):
 
     def get_prototypeAIF(self, document_id=None):
         AIF_triples = []
+        if not self.is_valid():
+            return AIF_triples
         for subject_cluster in self.get('subject').get('clusters'):
             if not subject_cluster.has('a_member_from', document_id):
                 continue
@@ -645,6 +647,8 @@ class EventOrRelationArgument(AIFObject):
             'aida:system': self.get('system'),
             }
         AIF_triples = []
+        if not self.is_valid():
+            return AIF_triples
         if document_id is not None:
             if self.get('object').get('document_id') != document_id:
                 return AIF_triples
@@ -706,6 +710,12 @@ class EventOrRelationArgument(AIFObject):
 
     def get_IRI(self):
         return '_:aa-{}'.format(hashlib.md5(self.get('id').encode('utf-8')).hexdigest())
+
+    def is_valid(self):
+        isv = self.get('predicate').is_valid()
+        if not isv:
+            self.record_event('INVALID_EVENT_OR_RELATION_ARGUMENT', self.get('where'))
+        return isv
 
     def set_attributes(self):
         attribute = self.get('attribute')
@@ -1450,6 +1460,11 @@ class Predicate(AIFObject):
 
     def get_IRI(self):
         return self.__str__()
+
+    def is_valid(self):
+        if self.get('rolename') == 'EMPTY_TBD':
+            return False
+        return True
 
     def __str__(self):
         return '"{}:{}"'.format(
