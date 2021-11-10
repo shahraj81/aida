@@ -44,7 +44,7 @@ class Worksheet(Object):
         for i, row in self.get('data_frame').iterrows():
             where = {'filename': ':'.join([self.get('filename'),
                                            self.get('sheet_name')]),
-                     'line_no': i+1
+                     'lineno': i+1
                      }
             entry = WorksheetEntry(self.get('logger'), where)
             entry.set('header', self.get('header'))
