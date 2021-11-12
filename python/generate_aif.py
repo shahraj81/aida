@@ -526,11 +526,6 @@ class EREMention(AIFObject):
                                      boundingBoxLowerRightX=end_x,
                                      boundingBoxLowerRightY=end_y
                                      )
-        elif modality == 'video':
-            print('TODO: Use VideoJustification or KeyFrameVideoJustification')
-            return TextJustification(self.get('logger'),
-                                     sourceDocument=parentDocument,
-                                     source=childDocument.get('ID'))
         else:
             self.record_event('UNHANDLED_MODALITY')
 
