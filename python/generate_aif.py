@@ -515,10 +515,17 @@ class EREMention(AIFObject):
                                      startOffset=startOffset,
                                      endOffsetInclusive=endOffsetInclusive)
         elif modality == 'image':
-            print('TODO: Use ImageJustification')
-            return TextJustification(self.get('logger'),
+            pattern = re.compile('^(\d+),(\d+),(\d+),(\d+)$')
+            m = pattern.match(self.get('mediamention_coordinates'))
+            start_x, start_y, end_x, end_y = map(lambda i : m.group(i), range(1, 5))
+            return ImageJustification(self.get('logger'),
                                      sourceDocument=parentDocument,
-                                     source=childDocument.get('ID'))
+                                     source=childDocument.get('ID'),
+                                     boundingBoxUpperLeftX=start_x,
+                                     boundingBoxUpperLeftY=start_y,
+                                     boundingBoxLowerRightX=end_x,
+                                     boundingBoxLowerRightY=end_y
+                                     )
         elif modality == 'video':
             print('TODO: Use VideoJustification or KeyFrameVideoJustification')
             return TextJustification(self.get('logger'),
@@ -834,6 +841,43 @@ class TextJustification(Justification):
     def get_IRI(self):
         return '_:btj-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
 
+class ImageJustification(Justification):
+    def __init__(self, logger, *args, **kwargs):
+        super().__init__(logger, *args, **kwargs)
+        if self.get('confidence') is None:
+            self.set('confidence', Confidence(self.get('logger')))
+
+    def get_boundingBox(self):
+        return BoundingBox(self.get('logger'),
+                           self.get('boundingBoxUpperLeftX'),
+                           self.get('boundingBoxUpperLeftY'),
+                           self.get('boundingBoxLowerRightX'),
+                           self.get('boundingBoxLowerRightY'))
+
+    def get_id(self):
+        return '{}-{}-{}-{}'.format(
+            'imageJustification',
+            self.get('sourceDocument'),
+            self.get('source'),
+            self.get('boundingBox').get('id'))
+
+    def get_AIF(self):
+        predicates = {
+            'a': 'aida:ImageJustification',
+            'aida:sourceDocument': '"{}"'.format(self.get('sourceDocument')),
+            'aida:source': '"{}"'.format(self.get('source')),
+            'aida:boundingBox': self.get('boundingBox'),
+            'aida:confidence': self.get('confidence'),
+            'aida:system': self.get('system'),
+            }
+        AIF_triples = self.get('coreAIF', predicates)
+        AIF_triples.extend(self.get('boundingBox').get('AIF'))
+        AIF_triples.extend(self.get('confidence').get('AIF'))
+        return AIF_triples
+
+    def get_IRI(self):
+        return '_:bij-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
+
 class CompoundJustification(Justification):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger, *args, **kwargs)
@@ -1063,6 +1107,35 @@ class ReferenceKBLink(AIFObject):
 
     def get_IRI(self):
         return '_:lt-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
+
+class BoundingBox(AIFObject):
+    def __init__(self, logger, boundingBoxUpperLeftX, boundingBoxUpperLeftY, boundingBoxLowerRightX, boundingBoxLowerRightY):
+        super().__init__(logger)
+        self.boundingBoxUpperLeftX = boundingBoxUpperLeftX
+        self.boundingBoxUpperLeftY = boundingBoxUpperLeftY
+        self.boundingBoxLowerRightX = boundingBoxLowerRightX
+        self.boundingBoxLowerRightY = boundingBoxLowerRightY
+
+    def get_id(self):
+        return '{}-{}-{}-{}'.format(
+            self.get('boundingBoxUpperLeftX'),
+            self.get('boundingBoxUpperLeftY'),
+            self.get('boundingBoxLowerRightX'),
+            self.get('boundingBoxLowerRightY'),
+            )
+
+    def get_AIF(self):
+        predicates = {
+            'a': 'aida:BoundingBox',
+            'aida:boundingBoxUpperLeftX': "'{}'^^xsd:int".format(self.get('boundingBoxUpperLeftX')),
+            'aida:boundingBoxUpperLeftY': "'{}'^^xsd:int".format(self.get('boundingBoxUpperLeftY')),
+            'aida:boundingBoxLowerRightX': "'{}'^^xsd:int".format(self.get('boundingBoxLowerRightX')),
+            'aida:boundingBoxLowerRightY': "'{}'^^xsd:int".format(self.get('boundingBoxLowerRightY')),
+            }
+        return self.get('coreAIF', predicates)
+
+    def get_IRI(self):
+        return '_:bb-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
 
 class Confidence(AIFObject):
     def __init__(self, logger, confidenceValue="'XSD_DOUBLE(1.0)'"):
