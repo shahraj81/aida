@@ -2001,16 +2001,7 @@ class Task3(Object):
 
     def __call__(self):
         logger = self.get('logger')
-        include_worksheets = {
-            'TA3_arg_KEs':                 'argument_KEs',
-            'TA3_evt_KEs':                 'event_KEs',
-            'TA3_rel_KEs':                 'relation_KEs',
-            'TA3_evt_slots':               'event_slots',
-            'TA3_rel_slots':               'relation_slots',
-            'TA3_kb_linking':              'kb_links',
-            'ClaimFrameTemplate Examples': 'claims'
-            }
-        annotations = TA3Annotations(logger, self.get('annotations'), include_items=include_worksheets)
+        annotations = self.load_annotations(self.get('annotations'))
         encodings = Encodings(logger, self.get('encodings_filename'))
         document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
         aif = TA3AIF(logger, annotations, document_mappings, self.get('noKEs'))
@@ -2029,6 +2020,33 @@ class Task3(Object):
         parser.add_argument('output', type=str, help='Specify a directory to which output should be written')
         parser.set_defaults(myclass=myclass)
         return parser
+
+    def load_annotations(self, path):
+        if os.path.isfile(path) and path.endswith('xlsx'):
+            include_worksheets = {
+                'TA3_arg_KEs':                 'argument_KEs',
+                'TA3_evt_KEs':                 'event_KEs',
+                'TA3_rel_KEs':                 'relation_KEs',
+                'TA3_evt_slots':               'event_slots',
+                'TA3_rel_slots':               'relation_slots',
+                'TA3_kb_linking':              'kb_links',
+                'ClaimFrameTemplate Examples': 'claims'
+                }
+            return TA3Annotations(self.get('logger'), self.get('annotations'), include_items=include_worksheets)
+        elif os.path.isdir(path):
+            include_files = {
+                'claim_frames.tab':            'claims',
+                'arg_kes.tab':                 'argument_KEs',
+                'evt_kes.tab':                 'event_KEs',
+                'rel_kes.tab':                 'relation_KEs',
+                'evt_slots.tab':               'event_slots',
+                'rel_slots.tab':               'relation_slots',
+                'kb_linking.tab':              'kb_links',
+                }
+            return TA1Annotations(self.get('logger'), self.get('annotations'), include_items=include_files)
+        else:
+            self.record_event('UNEXPECTED_PATH', path)
+
 
 myclasses = [
     Task1,
