@@ -28,6 +28,9 @@ import traceback
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
+def escape(s):
+    return s.replace('"', '\\"') if '"' in s else s
+
 class AIFObject(Object):
     def __init__(self, logger):
         super().__init__(logger)
@@ -984,7 +987,7 @@ class Claim(AIFObject):
         return "'XSD_DOUBLE(1.0)'"
 
     def get_naturalLanguageDescription(self):
-        return self.get('description')
+        return escape(self.get('description'))
 
     def get_queryid(self):
         return '"TBD"'
