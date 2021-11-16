@@ -1692,7 +1692,6 @@ class TA1AIF(AIF):
         super().__init__(logger, annotations, document_mappings)
 
     def generate(self):
-        print('--TODO: generate a file per claim in output')
         print('--TODO: generate a single cluster prototype by accumulation attributes from members')
         print('--TODO: test attributes on mentions, arguments, and prototypes (specially the mixed one)')
         print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
