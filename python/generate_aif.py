@@ -1016,13 +1016,10 @@ class Claim(AIFObject):
             'aida:claimDateTime': self.get('claimDateTime'),
             'aida:claimLocation': self.get('claimLocation'),
             'aida:associatedKEs': None,
-            # 'aida:originalClaimProvenance': self.get('originalClaimProvenance'),
-            # 'aida:identicalClaimSemantics': self.get('identicalClaimSemantics'),
             'aida:identicalClaims': self.get('identicalClaims'),
             'aida:relatedClaims': self.get('relatedClaims'),
             'aida:supportingClaims': self.get('supportingClaims'),
             'aida:refutingClaims': self.get('refutingClaims'),
-            # 'aida:confidence': self.get('confidence'),
             'aida:system': System(self.get('logger')),
             }
         if not noKEs:
