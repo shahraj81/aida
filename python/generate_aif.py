@@ -1700,7 +1700,7 @@ class TA1AIF(AIF):
         os.mkdir(directory)
         for document in self.get('document_mappings').get('documents').values():
             document_id = document.get('ID')
-            print('--processing {}'.format(document_id))
+            print('--writing {}'.format(document_id))
             filename = os.path.join(directory, '{}.ttl'.format(document_id))
             with open(filename, 'w') as program_output:
                 AIF_triples = self.get('system').get('AIF')
@@ -1813,7 +1813,9 @@ class TA3AIF(AIF):
     def write_output(self, directory, raw=False):
         os.mkdir(directory)
         for claim in self.get('claims').values():
-            filename = os.path.join(directory, '{}.ttl'.format(claim.get('id')))
+            claim_id = claim.get('id')
+            print('--writing {}'.format(claim_id))
+            filename = os.path.join(directory, '{}.ttl'.format(claim_id))
             with open(filename, 'w') as program_output:
                 AIF_triples = self.get('system').get('AIF')
                 AIF_triples.extend(self.get('prefix_triples'))
