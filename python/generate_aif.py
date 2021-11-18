@@ -27,7 +27,7 @@ import traceback
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
-GENERATE_BLANK_NODE = False
+GENERATE_BLANK_NODE = True
 
 def escape(s):
     return s.replace('"', '\\"') if '"' in s else s
@@ -1862,7 +1862,7 @@ class Task1(Object):
     """
     Generate Task1 AIF.
     """
-    def __init__(self, log, errors, encodings_filename, parent_children, annotations, output):
+    def __init__(self, log, noBlank, errors, encodings_filename, parent_children, annotations, output):
         check_for_paths_existance([
                  errors,
                  encodings_filename,
@@ -1871,6 +1871,7 @@ class Task1(Object):
                  ])
         check_for_paths_non_existance([output])
         self.log_filename = log
+        self.noBlank = noBlank
         self.log_specifications = errors
         self.encodings_filename = encodings_filename
         self.parent_children = parent_children
@@ -1882,6 +1883,9 @@ class Task1(Object):
 
     def __call__(self):
         logger = self.get('logger')
+        global GENERATE_BLANK_NODE
+        if self.get('noBlank'):
+            GENERATE_BLANK_NODE = False
         include_files = {
             'arg_mentions.tab':            'argument_KEs',
             'evt_mentions.tab':            'event_KEs',
@@ -1900,6 +1904,7 @@ class Task1(Object):
 
     @classmethod
     def add_arguments(myclass, parser):
+        parser.add_argument('-b', '--noBlank', action='store_true', help='Don\'t generate blank nodes.')
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('errors', type=str, help='File containing error specifications')
@@ -1914,7 +1919,7 @@ class Task2(Object):
     """
     Generate Task2 AIF.
     """
-    def __init__(self, log, errors, encodings_filename, parent_children, annotations, output):
+    def __init__(self, log, noBlank, errors, encodings_filename, parent_children, annotations, output):
         check_for_paths_existance([
                  errors,
                  encodings_filename,
@@ -1923,6 +1928,7 @@ class Task2(Object):
                  ])
         check_for_paths_non_existance([output])
         self.log_filename = log
+        self.noBlank = noBlank
         self.log_specifications = errors
         self.encodings_filename = encodings_filename
         self.parent_children = parent_children
@@ -1934,6 +1940,9 @@ class Task2(Object):
 
     def __call__(self):
         logger = self.get('logger')
+        global GENERATE_BLANK_NODE
+        if self.get('noBlank'):
+            GENERATE_BLANK_NODE = False
         include_files = {
             'arg_mentions.tab':            'argument_KEs',
             'evt_mentions.tab':            'event_KEs',
@@ -1952,6 +1961,7 @@ class Task2(Object):
 
     @classmethod
     def add_arguments(myclass, parser):
+        parser.add_argument('-b', '--noBlank', action='store_true', help='Don\'t generate blank nodes.')
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('errors', type=str, help='File containing error specifications')
@@ -1966,7 +1976,7 @@ class Task3(Object):
     """
     Generate Task3 AIF.
     """
-    def __init__(self, log, noKEs, errors, encodings_filename, parent_children, annotations, output):
+    def __init__(self, log, noBlank, noKEs, errors, encodings_filename, parent_children, annotations, output):
         check_for_paths_existance([
                  errors,
                  encodings_filename,
@@ -1975,6 +1985,7 @@ class Task3(Object):
                  ])
         check_for_paths_non_existance([output])
         self.log_filename = log
+        self.noBlank = noBlank
         self.noKEs = noKEs
         self.log_specifications = errors
         self.encodings_filename = encodings_filename
@@ -1987,6 +1998,9 @@ class Task3(Object):
 
     def __call__(self):
         logger = self.get('logger')
+        global GENERATE_BLANK_NODE
+        if self.get('noBlank'):
+            GENERATE_BLANK_NODE = False
         annotations = self.load_annotations(self.get('annotations'))
         encodings = Encodings(logger, self.get('encodings_filename'))
         document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
@@ -1997,6 +2011,7 @@ class Task3(Object):
 
     @classmethod
     def add_arguments(myclass, parser):
+        parser.add_argument('-b', '--noBlank', action='store_true', help='Don\'t generate blank nodes.')
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-n', '--noKEs', action='store_true', help='Don\'t generate KEs')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
@@ -2033,7 +2048,6 @@ class Task3(Object):
             return TA1Annotations(self.get('logger'), self.get('annotations'), include_items=include_files)
         else:
             self.record_event('UNEXPECTED_PATH', path)
-
 
 myclasses = [
     Task1,
