@@ -1945,6 +1945,7 @@ class Task2(Object):
         document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
         aif = TA2AIF(logger, annotations, document_mappings)
         aif.write_output(self.get('output'))
+        print('--done.')
         exit(ALLOK_EXIT_CODE)
 
     @classmethod
@@ -1989,6 +1990,7 @@ class Task3(Object):
         document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
         aif = TA3AIF(logger, annotations, document_mappings, self.get('noKEs'))
         aif.write_output(self.get('output'))
+        print('--done.')
         exit(ALLOK_EXIT_CODE)
 
     @classmethod
