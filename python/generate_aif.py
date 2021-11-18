@@ -27,6 +27,7 @@ import traceback
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
+GENERATE_BLANK_NODE = False
 
 def escape(s):
     return s.replace('"', '\\"') if '"' in s else s
@@ -92,6 +93,7 @@ class AIFObject(Object):
         return AIF_triples
 
     def get_pIRI(self, prefix='_', separator=':', code=None, s=None, md5=True):
+        prefix = 'ldc' if not GENERATE_BLANK_NODE and prefix=='_' else prefix
         code = self.get('classname') if code is None else code
         s = self.__str__() if s is None else s
         if md5:
@@ -1891,6 +1893,7 @@ class Task1(Object):
         document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
         aif = TA1AIF(logger, annotations, document_mappings)
         aif.write_output(self.get('output'))
+        print('--done.')
         exit(ALLOK_EXIT_CODE)
 
     @classmethod
