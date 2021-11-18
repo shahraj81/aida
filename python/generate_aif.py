@@ -1021,10 +1021,9 @@ class Claim(AIFObject):
             'aida:identicalClaims': self.get('identicalClaims'),
             'aida:relatedClaims': self.get('relatedClaims'),
             'aida:supportingClaims': self.get('supportingClaims'),
-            'aida:refutingClaims': self.get('refutingClaims')
-            
+            'aida:refutingClaims': self.get('refutingClaims'),
             # 'aida:confidence': self.get('confidence'),
-            # 'aida:system': self.get('system'),
+            'aida:system': System(self.get('logger')),
             }
         if not noKEs:
             predicates['aida:associatedKEs'] = self.get('associatedKEs')
