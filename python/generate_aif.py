@@ -91,6 +91,19 @@ class AIFObject(Object):
                     AIF_triples.append(AIF_triple)
         return AIF_triples
 
+    def get_pIRI(self, prefix='_', separator=':', code=None, s=None, md5=True):
+        code = self.get('classname') if code is None else code
+        s = self.__str__() if s is None else s
+        if md5:
+            s = hashlib.md5(s.encode('utf-8')).hexdigest()
+        return '{prefix}{separator}{code}{s}'.format(prefix=prefix,
+                                                     separator=separator,
+                                                     code=code,
+                                                     s=s)
+
+    def get_IRI(self):
+        return self.get('pIRI')
+
     def has(self, *args, **kwargs):
         key = args[0]
         if key is None:
@@ -117,7 +130,7 @@ class AIFScalar(AIFStatement):
         super().__init__(logger, *args, **kwargs)
 
     def get_IRI(self):
-        return '"{}"'.format(self.__str__())
+        return self.get('pIRI', prefix='', separator='', code='', s='"{}"'.format(self.__str__()), md5=False)
 
 class ClaimComponent(AIFStatement):
     def __init__(self, logger, *args, **kwargs):
@@ -156,11 +169,6 @@ class ClaimComponent(AIFStatement):
             componentTypes,
             componentProvenance)
 
-    def get_IRI(self):
-        return '_:cc{}'.format(
-            hashlib.md5(
-                self.__str__().encode('utf-8')).hexdigest())
-
 class ClusterMembershipStatement(AIFStatement):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger, *args, **kwargs)
@@ -177,12 +185,10 @@ class ClusterMembershipStatement(AIFStatement):
         AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
 
-    def get_IRI(self):
-        s = '{}-{}-{}'.format(
-            'clusterMembership',
-            self.get('cluster').get('IRI'),
-            self.get('clusterMember').get('IRI')).encode('utf-8')
-        return '_:bcm-{}'.format(hashlib.md5(s).hexdigest())
+    def __str__(self):
+        return '{}-{}'.format(
+            self.get('cluster'),
+            self.get('clusterMember'))
 
 class TypeStatement(AIFStatement):
     def __init__(self, logger, *args, **kwargs):
@@ -203,12 +209,10 @@ class TypeStatement(AIFStatement):
         AIF_triples.extend(self.get('justifiedBy').get('AIF'))
         return AIF_triples
 
-    def get_IRI(self):
-        s = '{}-{}-{}'.format(
-            'typeStatement',
-            self.get('subject').get('IRI'),
-            self.get('type')).encode('utf-8')
-        return '_:bcm-{}'.format(hashlib.md5(s).hexdigest())
+    def __str__(self):
+        return '{}-{}'.format(
+            self.get('subject'),
+            self.get('type'))
 
 class Annotations(AIFObject):
     def __init__(self, logger, path, include_items=None):
@@ -289,7 +293,7 @@ class ERECluster(AIFObject):
         return ClusterPrototype(self.get('logger'), self)
 
     def get_IRI(self):
-        return 'ldc:cluster-{}'.format(self.get('id'))
+        return self.get('pIRI', prefix='ldc', code='cluster-', md5=False)
 
     def get_AIF(self, document_id=None):
         logger = self.get('logger')
@@ -476,7 +480,7 @@ class ClusterPrototype(AIFObject):
                 return instances[classname]
 
     def get_IRI(self):
-        return 'ldc:{}'.format(self.get('id'))
+        return self.get('pIRI', prefix='ldc', code='', md5=False)
 
 class EREMention(AIFObject):
     def __init__(self, logger, entry):
@@ -561,7 +565,7 @@ class EREMention(AIFObject):
         return AIF_triples
 
     def get_IRI(self):
-        return 'ldc:{}'.format(self.get('id'))
+        return self.get('pIRI', prefix='ldc', code='', md5=False)
 
     def set_attributes(self):
         attribute = self.get('attribute')
@@ -717,9 +721,6 @@ class EventOrRelationArgument(AIFObject):
     def get_system(self):
         return System(self.get('logger'))
 
-    def get_IRI(self):
-        return '_:aa-{}'.format(hashlib.md5(self.get('id').encode('utf-8')).hexdigest())
-
     def is_valid(self):
         isv = self.get('predicate').is_valid()
         if not isv:
@@ -801,9 +802,6 @@ class DocumentJustification(Justification):
         AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
 
-    def get_IRI(self):
-        return '_:bdj-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
-
 class TextJustification(Justification):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger, *args, **kwargs)
@@ -835,9 +833,6 @@ class TextJustification(Justification):
         AIF_triples = self.get('coreAIF', predicates)
         AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
-
-    def get_IRI(self):
-        return '_:btj-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
 
 class ImageJustification(Justification):
     def __init__(self, logger, *args, **kwargs):
@@ -873,9 +868,6 @@ class ImageJustification(Justification):
         AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
 
-    def get_IRI(self):
-        return '_:bij-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
-
 class CompoundJustification(Justification):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger, *args, **kwargs)
@@ -896,9 +888,6 @@ class CompoundJustification(Justification):
         AIF_triples = self.get('coreAIF', predicates)
         AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
-
-    def get_IRI(self):
-        return '_:bcj-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
 
 class Claim(AIFObject):
     def __init__(self, logger, entry):
@@ -1053,7 +1042,7 @@ class Claim(AIFObject):
         return AIF_triples
 
     def get_IRI(self):
-        return 'ldc:claim-{}'.format(self.get('id'))
+        return self.get('pIRI', prefix='ldc', code='claim-', md5=False)
 
 class System(AIFObject):
     def __init__(self, logger, system='LDCModelGenerator'):
@@ -1103,9 +1092,6 @@ class ReferenceKBLink(AIFObject):
         AIF_triples.extend(self.get('confidence').get('AIF'))
         return AIF_triples
 
-    def get_IRI(self):
-        return '_:lt-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
-
 class BoundingBox(AIFObject):
     def __init__(self, logger, boundingBoxUpperLeftX, boundingBoxUpperLeftY, boundingBoxLowerRightX, boundingBoxLowerRightY):
         super().__init__(logger)
@@ -1132,9 +1118,6 @@ class BoundingBox(AIFObject):
             }
         return self.get('coreAIF', predicates)
 
-    def get_IRI(self):
-        return '_:bb-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
-
 class Confidence(AIFObject):
     def __init__(self, logger, confidenceValue="'XSD_DOUBLE(1.0)'"):
         super().__init__(logger)
@@ -1150,7 +1133,7 @@ class Confidence(AIFObject):
         return self.get('coreAIF', predicates)
 
     def get_IRI(self):
-        return 'ldc:confidence'
+        return self.get('pIRI', prefix='ldc', code='', s='confidence', md5=False)
 
 class TBD(AIFObject):
     def __init__(self, logger, tbd_id):
@@ -1158,7 +1141,7 @@ class TBD(AIFObject):
         self.id = tbd_id
 
     def get_IRI(self):
-        return 'ldc:{}'.format(self.get('id'))
+        return self.get('pIRI', prefix='ldc', code='', md5=False)
 
 class Attribute(AIFObject):
     def __init__(self, logger, attribute, where):
@@ -1178,7 +1161,7 @@ class Attribute(AIFObject):
         return allowed_attributes.get(self.get('attribute'))
 
     def get_IRI(self):
-        return 'aida:{}'.format(self.__str__())
+        return self.get('pIRI', prefix='aida', code='', md5=False)
 
     def __eq__(self, other):
         return self.get('id') == other.get('id')
@@ -1201,7 +1184,7 @@ class EpistemicStatus(AIFObject):
         return allowed.get(self.get('epistemic_status'))
 
     def get_IRI(self):
-        return 'aida:{}'.format(self.__str__())
+        return self.get('pIRI', prefix='aida', code='', md5=False)
 
 class SentimentStatus(AIFObject):
     def __init__(self, logger, sentiment_status):
@@ -1220,7 +1203,7 @@ class SentimentStatus(AIFObject):
         return allowed.get(self.get('sentiment_status'))
 
     def get_IRI(self):
-        return 'aida:{}'.format(self.__str__())
+        return self.get('pIRI', prefix='aida', code='', md5=False)
 
 class LDCTimeField(AIFObject):
     """
@@ -1415,9 +1398,6 @@ class LDCTime(AIFObject):
             }
         return self.get('coreAIF', predicates)
 
-    def get_IRI(self):
-        return '_:tc-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
-
     def __lt__(self, other):
         return self.get('date_object') < other.get('date_object')
 
@@ -1507,9 +1487,6 @@ class LDCTimeRange(AIFObject):
                         AIF_triples.extend(end.get('AIF'))
         return AIF_triples
 
-    def get_IRI(self):
-        return '_:bcm-{}'.format(hashlib.md5(self.__str__().encode('utf-8')).hexdigest())
-
     def is_invalid(self):
         T1 = self.get('start_time_after')
         T2 = self.get('start_time_before')
@@ -1535,7 +1512,7 @@ class Predicate(AIFObject):
         self.rolename = rolename
 
     def get_IRI(self):
-        return self.__str__()
+        return self.get('pIRI', prefix='', separator='', code='', md5=False)
 
     def is_valid(self):
         if self.get('rolename') == 'EMPTY_TBD':
@@ -1676,7 +1653,6 @@ class AIF(Object):
         """
         Applies patch to the serialized output, and returns the updated string.
         """
-        print('--patching output')
         # apply patch to year in the output
         patched_output = serialized_output.replace('-01-01"^^xsd:gYear', '"^^xsd:gYear')
         # apply patch to xsd:double in the output
@@ -1722,6 +1698,7 @@ class TA1AIF(AIF):
         os.mkdir(directory)
         for document in self.get('document_mappings').get('documents').values():
             document_id = document.get('ID')
+            print('--processing {}'.format(document_id))
             filename = os.path.join(directory, '{}.ttl'.format(document_id))
             with open(filename, 'w') as program_output:
                 AIF_triples = self.get('system').get('AIF')
