@@ -757,7 +757,7 @@ class EventPrototypeArgument(EventArgument):
         return self.get('prototypeid')
 
     def get_AIF(self, document_id=None):
-        return self.get('prototypeAIF', document_id=None)
+        return self.get('prototypeAIF', document_id=document_id)
 
 class RelationPrototypeArgument(RelationArgument):
     def __init__(self, logger, entry):
