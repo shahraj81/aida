@@ -463,8 +463,8 @@ class ClusterPrototype(AIFObject):
         mentionframes = self.get('mentionframes')
         if mentionframes and len(mentionframes):
             for frame in mentionframes:
-                for rolename in frame:
-                    for argument in frame.get(rolename):
+                for ldc_rolename in frame:
+                    for argument in frame.get(ldc_rolename):
                         prototypeargument = self.get('prototypeargument', argument)
                         AIF_triples.extend(prototypeargument.get('AIF', document_id=document_id))
         if link is not None:
