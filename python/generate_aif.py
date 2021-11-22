@@ -1509,6 +1509,9 @@ class Predicate(AIFObject):
         self.subject_type = subject_type
         self.rolename = rolename
 
+    def get_id(self):
+        return self.get('rolename')
+
     def get_IRI(self):
         return self.get('pIRI', prefix='', separator='', code='', md5=False)
 
@@ -1518,7 +1521,7 @@ class Predicate(AIFObject):
         return True
 
     def __str__(self):
-        return '"{}"'.format(self.get('rolename'))
+        return '"{}"'.format(self.get('id'))
 
 class AIF(Object):
     def __init__(self, logger, annotations, document_mappings):
