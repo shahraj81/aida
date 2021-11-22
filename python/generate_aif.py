@@ -629,6 +629,7 @@ class EventOrRelationArgument(AIFObject):
         AIF_triples = []
         if not self.is_valid():
             return AIF_triples
+        print('TODO: check for case when document_id is None - potentially broken for that case')
         for subject_cluster in self.get('subject').get('clusters'):
             if not subject_cluster.has('a_member_from', document_id):
                 continue
