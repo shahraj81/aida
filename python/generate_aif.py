@@ -637,9 +637,9 @@ class EventOrRelationArgument(AIFObject):
                     continue
                 predicates = {
                     'a': 'aida:ArgumentStatement',
-                    'aida:object': object_cluster.get('prototype'),
-                    'aida:predicate': self.get('predicate'),
-                    'aida:subject': subject_cluster.get('prototype'),
+                    'rdf:object': object_cluster.get('prototype'),
+                    'rdf:predicate': self.get('predicate'),
+                    'rdf:subject': subject_cluster.get('prototype'),
                     'aida:attributes': self.get('attributes'),
                     'aida:justifiedBy': self.get('justifiedBy'),
                     'aida:confidence': self.get('confidence'),
@@ -653,9 +653,9 @@ class EventOrRelationArgument(AIFObject):
     def get_AIF(self, document_id=None):
         predicates = {
             'a': 'aida:ArgumentStatement',
-            'aida:object': self.get('object'),
-            'aida:predicate': self.get('predicate'),
-            'aida:subject': self.get('subject'),
+            'rdf:object': self.get('object'),
+            'rdf:predicate': self.get('predicate'),
+            'rdf:subject': self.get('subject'),
             'aida:attributes': self.get('attributes'),
             'aida:justifiedBy': self.get('justifiedBy'),
             'aida:confidence': self.get('confidence'),
