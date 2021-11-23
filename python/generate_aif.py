@@ -767,7 +767,7 @@ class RelationPrototypeArgument(RelationArgument):
         return self.get('prototypeid')
 
     def get_AIF(self, document_id=None):
-        return self.get('prototypeAIF', document_id=None)
+        return self.get('prototypeAIF', document_id=document_id)
 
 class Justification(AIFObject):
     def __init__(self, logger, *args, **kwargs):
