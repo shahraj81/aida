@@ -279,11 +279,19 @@ class ERECluster(AIFObject):
 
     def get_attributes(self, document_id=None):
         attributes = []
+        num_of_mentions = 0
+        num_of_negated_mentions = 0
         for mention in self.get('mentions'):
             if document_id is not None and document_id != mention.get('document_id'):
                 continue
+            num_of_mentions += 1
             for attribute in mention.get('attributes'):
-                attributes.append(attribute)
+                if attribute == Attribute(self.get('logger'), 'negated', attribute.get('where')):
+                    num_of_negated_mentions += 1
+                else:
+                    attributes.append(attribute)
+        if num_of_mentions == num_of_negated_mentions:
+            attributes.append(Attribute(self.get('logger'), 'negated', attribute.get('where')))
         return attributes
 
     def get_link(self, document_id=None):
