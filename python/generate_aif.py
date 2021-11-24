@@ -268,22 +268,35 @@ class ERECluster(AIFObject):
         super().__init__(logger)
         self.system = System(logger)
         self.id = cluster_id
-        self.attributes = []
         self.mentions = []
         self.mentionframes = []
-
-    def add_link(self, link):
-        if self.get('link') is not None:
-            if link.get('qnode_kb_id_identity') != self.get('link').get('qnode_kb_id_identity'):
-                self.record_event('MULTIPLE_REFKB_LINKS_ON_CLUSTER', self.get('id'))
-        self.set_attributes(link)
-        self.set('link', link)
 
     def add_mention(self, mention):
         self.get('mentions').append(mention)
 
     def add_frame(self, mentionframe):
         self.get('mentionframes').append(mentionframe)
+
+    def get_attributes(self, document_id=None):
+        attributes = []
+        for mention in self.get('mentions'):
+            if document_id is not None and document_id != mention.get('document_id'):
+                continue
+            for attribute in mention.get('attributes'):
+                attributes.append(attribute)
+        return attributes
+
+    def get_link(self, document_id=None):
+        link = None
+        for mention in self.get('mentions'):
+            if document_id is not None and document_id != mention.get('document_id'):
+                continue
+            for mlink in mention.get('links'):
+                if link is None:
+                    link = mlink
+                if link.get('qnode_kb_id_identity') != mlink.get('qnode_kb_id_identity'):
+                    self.record_event('MULTIPLE_REFKB_LINKTARGETS', self.get('id'))
+        return link
 
     def get_mention(self, mention_id):
         for mention in self.get('mentions'):
@@ -331,11 +344,6 @@ class ERECluster(AIFObject):
                 return True
         return False
 
-    def set_attributes(self, link):
-        generic_status = link.get('generic_status')
-        if generic_status != 'EMPTY_NA':
-            self.get('attributes').append(Attribute(self.get('logger'), generic_status, link.get('where')))
-
 class EventCluster(ERECluster):
     def __init__(self, logger, cluster_id):
         super().__init__(logger, cluster_id)
@@ -354,8 +362,8 @@ class ClusterPrototype(AIFObject):
         super().__init__(logger)
         self.cluster = cluster
 
-    def get_attributes(self):
-        return self.get('cluster').get('attributes')
+    def get_attributes(self, document_id=None):
+        return self.get('cluster').get('attributes', document_id=document_id)
 
     def get_id(self):
         return 'cluster-{}-prototype'.format(self.get('cluster').get('id'))
@@ -368,8 +376,8 @@ class ClusterPrototype(AIFObject):
             document_informativejustifications[mention.get('document_id')] = mention.get('justifiedBy')
         return list(document_informativejustifications.values())
 
-    def get_link(self):
-        return self.get('cluster').get('link')
+    def get_link(self, document_id=None):
+        return self.get('cluster').get('link', document_id=document_id)
 
     def get_mentionframes(self):
         return self.get('cluster').get('mentionframes')
@@ -434,12 +442,12 @@ class ClusterPrototype(AIFObject):
     def get_AIF(self, document_id=None):
         logger = self.get('logger')
         time = self.get('time', document_id=document_id)
-        link = self.get('link')
+        link = self.get('link', document_id=document_id)
         if link is not None and link.__str__().startswith('NIL'):
             link = None
         predicates = {
             'a': 'aida:{}'.format(self.get('EREType')),
-            'aida:attributes': self.get('attributes'),
+            'aida:attributes': self.get('attributes', document_id=document_id),
             'aida:informativeJustification': self.get('informativejustifications', document_id=document_id),
             'aida:link': link,
             'aida:ldcTime': time,
@@ -489,8 +497,9 @@ class EREMention(AIFObject):
         super().__init__(logger)
         self.entry = entry
         self.document_mappings = None
-        self.clusters = []
         self.attributes = []
+        self.clusters = []
+        self.links = []
         self.set_attributes()
 
     def add_cluster(self, cluster):
@@ -498,6 +507,11 @@ class EREMention(AIFObject):
 
     def add_document_mappings(self, document_mappings):
         self.document_mappings = document_mappings
+
+    def add_link(self, link):
+        if len(self.get('links')):
+            self.record_event('LINK_EXISTS', self.get('where'))
+        self.get('links').append(link)
 
     def get_document_id(self):
         return self.get('root_uid')
@@ -1622,13 +1636,13 @@ class AIF(Object):
             for link in self.get('links').get(cluster_id):
                 mention_id = link.get('mention_id')
                 mention = self.get('mention', mention_id)
+                mention.add('link', link)
                 mentionframe = self.get('mentionframe', mention_id)
                 if mention.get('cluster') is not None:
                     self.record_event('MENTION_CLUSTER_EXISTS', mention_id, cluster_id, link.get('where'))
                 cluster = self.get('cluster', cluster_id)
                 if cluster:
                     cluster.add('mention', mention)
-                    cluster.add('link', link)
                     if mentionframe:
                         cluster.add('frame', mentionframe)
                 else:
@@ -1643,7 +1657,6 @@ class AIF(Object):
                                     .add('mention', mention)
                     if mentionframe is not None:
                         cluster.add('frame', mentionframe)
-                    cluster.add('link', link)
                     self.get('clusters')[cluster.get('id')] = cluster
                 mention.add('cluster', cluster)
         for mention in self.get('mentions').values():
