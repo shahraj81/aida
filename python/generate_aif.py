@@ -662,6 +662,8 @@ class EntityMention(EREMention):
         handle = self.get('text_string')
         handle = None if isinstance(handle, float) else handle
         handle = None if handle in omits else handle
+        handle = self.get('description') if handle is None else handle
+        handle = None if handle in omits else handle
         return handle
 
 class EventOrRelationArgument(AIFObject):
