@@ -365,6 +365,25 @@ class EntityCluster(ERECluster):
         super().__init__(logger, cluster_id)
         del self.mentionframes
 
+    def get_handle(self, document_id=None):
+        handle = None
+        for mention in self.get('mentions'):
+            if document_id is not None and mention.get('document_id') != document_id:
+                continue
+            mention_handle = mention.get('handle')
+            if mention_handle is not None:
+                if handle is None:
+                    handle = mention_handle
+                else:
+                    if len(mention_handle) > len(handle):
+                        handle = mention_handle
+                    elif len(mention_handle) > len(handle):
+                        if mention_handle > handle:
+                            handle = mention_handle
+        if handle is None:
+            self.record_event('HANDLE_MISSING', self.get('id'), self.get('where'))
+        return handle
+
 class ClusterPrototype(AIFObject):
     def __init__(self, logger, cluster):
         super().__init__(logger)
@@ -372,6 +391,9 @@ class ClusterPrototype(AIFObject):
 
     def get_attributes(self, document_id=None):
         return self.get('cluster').get('attributes', document_id=document_id)
+
+    def get_handle(self, document_id=None):
+        return self.get('cluster').get('handle', document_id=document_id)
 
     def get_id(self):
         return 'cluster-{}-prototype'.format(self.get('cluster').get('id'))
@@ -449,6 +471,7 @@ class ClusterPrototype(AIFObject):
 
     def get_AIF(self, document_id=None):
         logger = self.get('logger')
+        handle = self.get('handle', document_id=document_id)
         time = self.get('time', document_id=document_id)
         link = self.get('link', document_id=document_id)
         if link is not None and link.__str__().startswith('NIL'):
@@ -457,6 +480,7 @@ class ClusterPrototype(AIFObject):
             'a': 'aida:{}'.format(self.get('EREType')),
             'aida:attributes': self.get('attributes', document_id=document_id),
             'aida:informativeJustification': self.get('informativejustifications', document_id=document_id),
+            'aida:handle': '"{}"'.format(handle) if handle is not None else None,
             'aida:link': link,
             'aida:ldcTime': time,
             'aida:system': System(self.get('logger'))
