@@ -399,12 +399,28 @@ class ClusterPrototype(AIFObject):
         return 'cluster-{}-prototype'.format(self.get('cluster').get('id'))
 
     def get_informativejustifications(self, document_id=None):
-        document_informativejustifications = {}
+        informative_justifications = {}
         for mention in self.get('cluster').get('mentions'):
-            if document_id is not None and mention.get('document_id') != document_id:
+            mention_document_id = mention.get('document_id')
+            mention_justification = mention.get('justifiedBy')
+            informative_justification = informative_justifications.get(mention_document_id)
+            if document_id is not None and mention_document_id != document_id:
                 continue
-            document_informativejustifications[mention.get('document_id')] = mention.get('justifiedBy')
-        return list(document_informativejustifications.values())
+            if informative_justification is None or \
+                (informative_justification.get('classname') != 'TextJustification' and \
+                    mention_justification.get('classname') == 'TextJustification'):
+                informative_justification = mention_justification
+            elif mention_justification.get('classname') == 'TextJustification':
+                mention_justification_len = len(mention_justification)
+                informative_justification_len = len(informative_justification)
+                if mention_justification_len > informative_justification_len:
+                    informative_justification = mention_justification
+                elif mention_justification_len < informative_justification_len:
+                    pass
+                elif mention_justification.get('startOffset') < informative_justification.get('startOffset'):
+                    informative_justification = mention_justification
+            informative_justifications[mention_document_id] = informative_justification
+        return list(informative_justifications.values())
 
     def get_link(self, document_id=None):
         return self.get('cluster').get('link', document_id=document_id)
@@ -861,6 +877,9 @@ class TextJustification(Justification):
             self.set('endOffsetInclusive', 0)
         if self.get('confidence') is None:
             self.set('confidence', Confidence(self.get('logger')))
+
+    def __len__(self):
+        return self.get('endOffsetInclusive') - self.get('startOffset')
 
     def get_id(self):
         return '{}-{}-{}-{}-{}'.format(
