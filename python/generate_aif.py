@@ -1738,12 +1738,8 @@ class TA1AIF(AIF):
         super().__init__(logger, annotations, document_mappings)
 
     def generate(self):
-        print('--TODO: test attributes on mentions, arguments, and prototypes (specially the mixed one)')
-        print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
-        print('--TODO: pick prototype informative justification not arbitrarily')
         print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
         print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
-        print('--TODO: handle case when multiple |-separated claim location types are included in the claim')
         for sheet_name in self.get('worksheets'):
             for entry in self.get('worksheet', sheet_name):
                 self.add('annotation_entry', sheet_name, entry)
@@ -1828,12 +1824,8 @@ class TA3AIF(AIF):
                     claim.add('{}Claims'.format(relatedness_type), related_claim)
 
     def generate(self):
-        print('--TODO: test attributes on mentions, arguments, and prototypes (specially the mixed one)')
-        print('--TODO: handle case where componentType is a list - determine exactly how LDC will represent it')
-        print('--TODO: pick prototype informative justification not arbitrarily')
         print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
         print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
-        print('--TODO: handle case when multiple |-separated claim location types are included in the claim')
         for sheet_name in self.get('worksheets'):
             for entry in self.get('worksheet', sheet_name):
                 self.add('annotation_entry', sheet_name, entry)
