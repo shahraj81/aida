@@ -137,7 +137,7 @@ class AIFScalar(AIFStatement):
 class ClaimComponent(AIFStatement):
     def __init__(self, logger, *args, **kwargs):
         super().__init__(logger, *args, **kwargs)
-        componentTypes_ = self.get('componentTypes').split(',')
+        componentTypes_ = self.get('componentTypes').split('|')
         componentTypes = []
         for componentType in componentTypes_:
             componentTypes.append(AIFScalar(logger, id=componentType))
