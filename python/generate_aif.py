@@ -1109,6 +1109,11 @@ class Claim(AIFObject):
     def get_IRI(self):
         return self.get('pIRI', prefix='ldc', code='claim-', md5=False)
 
+class CrossClaimRelation(AIFObject):
+    def __init__(self, logger, entry):
+        super().__init__(logger)
+        self.entry = entry
+
 class System(AIFObject):
     def __init__(self, logger, system='LDCModelGenerator'):
         super().__init__(logger)
@@ -1800,10 +1805,31 @@ class TA3AIF(AIF):
     def __init__(self, logger, annotations, document_mappings, noKEs):
         self.noKEs = noKEs
         self.claims = {}
+        self.cross_claim_relations = {
+            'identical': {},
+            'related': {},
+            'supported_by': {},
+            'refuted_by': {}
+            }
         super().__init__(logger, annotations, document_mappings)
 
     def add_claim(self, claim):
         self.get('claims')[claim.get('claim_id')] = claim
+
+    def add_cross_claim_relation(self, the_cross_claim_relation):
+        claim_id_1 = the_cross_claim_relation.get('claim_id_1')
+        relation = the_cross_claim_relation.get('relation')
+        claim_id_2 = the_cross_claim_relation.get('claim_id_2')
+        cross_claim_relations = self.get('cross_claim_relations')
+        if relation not in cross_claim_relations:
+            self.record_event('UNKNOWN_RELATION', relation, the_cross_claim_relation.get('where'))
+        cross_claim_relation = cross_claim_relations.get(relation)
+        if claim_id_1 not in cross_claim_relation:
+            cross_claim_relation[claim_id_1] = {claim_id_2: [the_cross_claim_relation]}
+        elif claim_id_2 not in cross_claim_relation.get(claim_id_1):
+            cross_claim_relation.get(claim_id_1)[claim_id_2] = [the_cross_claim_relation]
+        else:
+            cross_claim_relation.get(claim_id_1).get(claim_id_2).append(the_cross_claim_relation)
 
     def augment_claims(self):
         for claim in self.get('claims').values():
@@ -1833,9 +1859,14 @@ class TA3AIF(AIF):
         self.augment_claims()
 
     def get_identicalClaims(self, claim):
-        print('--TODO: get_identicalClaims')
-        return [TBD(self.get('logger'), 'TBD1'),
-                TBD(self.get('logger'), 'TBD2')]
+        return self.get('matchingClaims', claim, 'identical')
+
+    def get_matchingClaims(self, claim, criteria):
+        logger = self.get('logger')
+        matchingClaims = self.get('cross_claim_relations').get(criteria).get(claim.get('id'))
+        if matchingClaims:
+            return [AIFScalar(logger, id=c) for c in matchingClaims]
+        return []
 
     def get_methods(self):
         methods = {
@@ -1845,24 +1876,19 @@ class TA3AIF(AIF):
             'event_slots':    {'method': EventArgument, 'entry_type': 'argument'},
             'relation_slots': {'method': RelationArgument, 'entry_type': 'argument'},
             'kb_links':       {'method': ReferenceKBLink, 'entry_type': 'link'},
-            'claims':         {'method': Claim, 'entry_type': 'claim'}
+            'claims':         {'method': Claim, 'entry_type': 'claim'},
+            'cross_claim_relations': {'method': CrossClaimRelation, 'entry_type': 'cross_claim_relation'},
             }
         return methods
 
     def get_relatedClaims(self, claim):
-        print('--TODO: get_relatedClaims')
-        return [TBD(self.get('logger'), 'TBD1'),
-                TBD(self.get('logger'), 'TBD3')]
+        return self.get('matchingClaims', claim, 'related')
 
     def get_supportingClaims(self, claim):
-        print('--TODO: get_supportingClaims')
-        return [TBD(self.get('logger'), 'TBD2'),
-                TBD(self.get('logger'), 'TBD3')]
+        return self.get('matchingClaims', claim, 'supported_by')
 
     def get_refutingClaims(self, claim):
-        print('--TODO: get_refutingClaims')
-        return [TBD(self.get('logger'), 'TBD1'),
-                TBD(self.get('logger'), 'TBD4')]
+        return self.get('matchingClaims', claim, 'refuted_by')
 
     def write_output(self, directory, raw=False):
         os.mkdir(directory)
@@ -2086,7 +2112,8 @@ class Task3(Object):
                 'TA3_evt_slots':               'event_slots',
                 'TA3_rel_slots':               'relation_slots',
                 'TA3_kb_linking':              'kb_links',
-                'ClaimFrameTemplate Examples': 'claims'
+                'ClaimFrameTemplate Examples': 'claims',
+                'TA3_cross_claim_relations.tab E': 'cross_claim_relations'
                 }
             return TA3Annotations(self.get('logger'), self.get('annotations'), include_items=include_worksheets)
         elif os.path.isdir(path):
@@ -2098,6 +2125,7 @@ class Task3(Object):
                 'evt_slots.tab':               'event_slots',
                 'rel_slots.tab':               'relation_slots',
                 'kb_linking.tab':              'kb_links',
+                'cross_claim_relations.tab':   'cross_claim_relations'
                 }
             return TA1Annotations(self.get('logger'), self.get('annotations'), include_items=include_files)
         else:
