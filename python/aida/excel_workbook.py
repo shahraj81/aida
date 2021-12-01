@@ -49,7 +49,7 @@ class Worksheet(Object):
             entry = WorksheetEntry(self.get('logger'), where)
             entry.set('header', self.get('header'))
             for j, column in row.iteritems():
-                entry.set(j, column)
+                entry.set(j.strip(), column)
             self.get('entries').append(entry)
 
     def __iter__(self):
