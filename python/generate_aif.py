@@ -1851,7 +1851,6 @@ class TA3AIF(AIF):
                 mention_id = mention_id.strip()
                 for cluster in self.get('mention', mention_id).get('clusters'):
                     claim.add('associatedKEs', cluster)
-            print('--TODO: add identicalClaims, relatedClaims, supportingClaims, refutingClaims')
             relatedness = ['identical', 'related', 'supporting', 'refuting']
             for relatedness_type in relatedness:
                 for related_claim in self.get('{}Claims'.format(relatedness_type), claim):
