@@ -1032,6 +1032,15 @@ class Claim(AIFObject):
                               componentTypes=self.get('qnode_claim_location_type'),
                               componentProvenance=self.get('claim_location_provenance'))
 
+    def get_claimMedium(self):
+        if self.get('claim_medium') == 'EMPTY_NA':
+            return
+        return ClaimComponent(self.get('logger'),
+                              componentName=self.get('claim_medium'),
+                              componentIdentity=self.get('qnode_claim_medium_identity'),
+                              componentTypes=self.get('qnode_claim_medium_type'),
+                              componentProvenance=self.get('claim_medium_provenance'))
+
     def get_document_id(self):
         return self.get('root_uid')
 
@@ -1078,6 +1087,7 @@ class Claim(AIFObject):
             'aida:claimSemantics': None,
             'aida:claimer': self.get('claimer_claimcomponent'),
             'aida:claimerAffiliation': self.get('claimerAffiliations'),
+            'aida:claimMedium': self.get('claimMedium'),
             'aida:epistemic': self.get('epistemic'),
             'aida:sentiment': self.get('sentiment'),
             'aida:claimDateTime': self.get('claimDateTime'),
@@ -1093,7 +1103,7 @@ class Claim(AIFObject):
             predicates['aida:associatedKEs'] = self.get('associatedKEs')
             predicates['aida:claimSemantics'] = self.get('claimSemantics')
         AIF_triples.extend(self.get('coreAIF', predicates))
-        scalar_fields = ['xVariable', 'claimer_claimcomponent', 'claimDateTime', 'claimLocation']
+        scalar_fields = ['xVariable', 'claimer_claimcomponent', 'claimDateTime', 'claimLocation', 'claimMedium']
         for field in scalar_fields:
             value = self.get(field)
             if value:
@@ -1851,7 +1861,6 @@ class TA3AIF(AIF):
         print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
         print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
         print('--TODO: determine if LDC would provide information about which other claims support, refute, relate to, or are identical to a claims')
-        print('--TODO: determine how LDC would specify information about claimMedium in their annotations')
         for sheet_name in self.get('worksheets'):
             for entry in self.get('worksheet', sheet_name):
                 self.add('annotation_entry', sheet_name, entry)
