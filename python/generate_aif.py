@@ -1858,7 +1858,6 @@ class TA3AIF(AIF):
                     claim.add('{}Claims'.format(relatedness_type), related_claim)
 
     def generate(self):
-        print('--TODO: determine how LDC would specify multiple X variables in the annotations; handle accordingly')
         print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
         print('--TODO: determine if LDC would provide information about which other claims support, refute, relate to, or are identical to a claims')
         for sheet_name in self.get('worksheets'):
