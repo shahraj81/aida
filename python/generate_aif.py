@@ -1859,7 +1859,6 @@ class TA3AIF(AIF):
 
     def generate(self):
         print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
-        print('--TODO: determine if LDC would provide information about which other claims support, refute, relate to, or are identical to a claims')
         for sheet_name in self.get('worksheets'):
             for entry in self.get('worksheet', sheet_name):
                 self.add('annotation_entry', sheet_name, entry)
