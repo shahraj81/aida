@@ -1862,7 +1862,8 @@ class TA3AIF(AIF):
             for entry in self.get('worksheet', sheet_name):
                 self.add('annotation_entry', sheet_name, entry)
         self.generate_clusters()
-        self.augment_claims()
+        if not self.get('noKEs'):
+            self.augment_claims()
 
     def get_identicalClaims(self, claim):
         return self.get('matchingClaims', claim, 'identical')
