@@ -1056,9 +1056,6 @@ class Claim(AIFObject):
     def get_naturalLanguageDescription(self):
         return escape(self.get('description'))
 
-    def get_queryid(self):
-        return '"TBD"'
-
     def get_sentiment(self):
         return SentimentStatus(self.get('logger'), self.get('sentiment_status'))
 
@@ -1077,7 +1074,6 @@ class Claim(AIFObject):
             'a': 'aida:Claim',
             'aida:sourceDocument': '"{}"'.format(self.get('document_id')),
             'aida:claimId': '"{}"'.format(self.get('id')),
-            'aida:queryId': self.get('queryid'),
             'aida:importance': self.get('importance'),
             'aida:topic': '"{}"'.format(self.get('topic')),
             'aida:subtopic': '"{}"'.format(self.get('subtopic')),
