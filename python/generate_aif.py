@@ -1857,7 +1857,6 @@ class TA3AIF(AIF):
                     claim.add('{}Claims'.format(relatedness_type), related_claim)
 
     def generate(self):
-        print('--TODO: determine if claimSemantics/associatedKEs would include cluster IDs or mentions')
         for sheet_name in self.get('worksheets'):
             for entry in self.get('worksheet', sheet_name):
                 self.add('annotation_entry', sheet_name, entry)
