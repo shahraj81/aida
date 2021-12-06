@@ -948,14 +948,17 @@ class CompoundJustification(Justification):
                 [j.__str__() for j in self.get('containedJustifications')]))
 
     def get_AIF(self):
+        containedJustifications = self.get('containedJustifications')
         predicates = {
             'a': 'aida:CompoundJustification',
-            'aida:containedJustification': self.get('containedJustifications'),
+            'aida:containedJustification': containedJustifications,
             'aida:confidence': self.get('confidence'),
             'aida:system': self.get('system'),
             }
         AIF_triples = self.get('coreAIF', predicates)
         AIF_triples.extend(self.get('confidence').get('AIF'))
+        for containedJustification in containedJustifications:
+            AIF_triples.extend(containedJustification.get('AIF'))
         return AIF_triples
 
 class Claim(AIFObject):
