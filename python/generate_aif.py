@@ -755,22 +755,16 @@ class EventOrRelationArgument(AIFObject):
             self.get('justifiedBy').get('id'))
 
     def get_justifiedBy(self):
-        parentDocument = self.get('root_uid')
-        childDocument = self.get('child_uid')
-        if childDocument is None or childDocument == 'EMPTY_NA':
-            childDocument = self.get('document_mappings').get('text_document', parentDocument)
-        modality = childDocument.get('modality')
-        if modality == 'text':
-            return CompoundJustification(self.get('logger'),
-                                         caller=self,
-                                         justification1=TextJustification(
-                                             self.get('logger'),
-                                             sourceDocument=parentDocument,
-                                             source=childDocument.get('ID')),
-                                         justification2=None,
-                                         confidence=Confidence(self.get('logger')))
-        else:
-            self.record_event('UNHANDLED_MODALITY')
+        justifications = {}
+        for argument_endpoint in [self.get(ep) for ep in ['subject', 'object']]:
+            justification = argument_endpoint.get('justifiedBy')
+            justifications[justification.get('id')] = justification
+        justifications = [justification for justification in justifications.values()]
+        return CompoundJustification(self.get('logger'),
+                                     caller=self,
+                                     justification1=justifications[0],
+                                     justification2=justifications[1] if len(justifications) == 2 else None,
+                                     confidence=Confidence(self.get('logger')))
 
     def get_predicate(self):
         return Predicate(self.get('logger'),
