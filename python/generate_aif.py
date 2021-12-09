@@ -286,12 +286,16 @@ class ERECluster(AIFObject):
                 continue
             num_of_mentions += 1
             for attribute in mention.get('attributes'):
+                if attribute == Attribute(self.get('logger'), 'generic', attribute.get('where')):
+                    continue
                 if attribute == Attribute(self.get('logger'), 'negated', attribute.get('where')):
                     num_of_negated_mentions += 1
                 else:
                     attributes.append(attribute)
         if num_of_mentions == num_of_negated_mentions:
-            attributes.append(Attribute(self.get('logger'), 'negated', attribute.get('where')))
+            attributes.append(Attribute(self.get('logger'), 'negated', self.get('code_location')))
+        if self.get('generic_status') == 'generic':
+            attributes.append(Attribute(self.get('logger'), 'generic', self.get('code_location')))
         return attributes
 
     def get_link(self, document_id=None):
@@ -1706,6 +1710,8 @@ class AIF(Object):
                     cluster.add('mention', mention)
                     if mentionframe:
                         cluster.add('frame', mentionframe)
+                    if link.get('generic_status') != cluster.get('generic_status'):
+                        self.record_event('UNEXPECTED_GENERIC_STATUS', cluster_id, cluster.get('generic_status'), link.get('generic_status'), link.get('where'))
                 else:
                     if isinstance(mention, EventMention):
                         cluster = EventCluster(self.get('logger'), cluster_id)  \
@@ -1718,6 +1724,7 @@ class AIF(Object):
                                     .add('mention', mention)
                     if mentionframe is not None:
                         cluster.add('frame', mentionframe)
+                    cluster.set('generic_status', link.get('generic_status'))
                     self.get('clusters')[cluster.get('id')] = cluster
                 mention.add('cluster', cluster)
         for mention in self.get('mentions').values():
