@@ -760,7 +760,8 @@ class EventOrRelationArgument(AIFObject):
 
     def get_justifiedBy(self):
         justifications = {}
-        for argument_endpoint in [self.get(ep) for ep in ['subject', 'object']]:
+        end_points = ['subject'] if self.get('single_span') else ['subject', 'object']
+        for argument_endpoint in [self.get(ep) for ep in end_points]:
             justification = argument_endpoint.get('justifiedBy')
             justifications[justification.get('id')] = justification
         justifications = [justification for justification in justifications.values()]
@@ -1602,7 +1603,7 @@ class Predicate(AIFObject):
     def __str__(self):
         return '"{}"'.format(self.get('id'))
 
-class AIF(Object):
+class AIF(AIFObject):
     def __init__(self, logger, annotations, document_mappings):
         super().__init__(logger)
         self.document_mappings = document_mappings
@@ -1654,6 +1655,8 @@ class AIF(Object):
         if slot_type not in self.get('mentionframes').get(subjectmention_id):
             self.get('mentionframes')[subjectmention_id][slot_type] = []
         self.get('mentionframes').get(subjectmention_id).get(slot_type).append(argument)
+        if self.get('classname') == 'TA1AIF':
+            argument.set('single_span', True)
 
     def add_link(self, link):
         links = self.get('links')
