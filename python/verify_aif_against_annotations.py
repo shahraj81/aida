@@ -253,9 +253,9 @@ class AIFProjections(Object):
         store = self.get('projection').get('prototype_argument_assertions_attributes.rq.tsv')
         for kb in store:
             for entry in store.get(kb):
-                aa_subject = self.get('prototype', 'projection', entry.get('?subject_mention_id'))
+                aa_subject = entry.get('?subject_mention_id')
                 predicate = entry.get('?predicate')
-                aa_object = self.get('prototype', 'projection', entry.get('?object_mention_id'))
+                aa_object = entry.get('?object_mention_id')
                 attributes = entry.get('?attributes')
                 if attributes == 'none':
                     continue
