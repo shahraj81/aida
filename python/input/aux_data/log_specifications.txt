@@ -102,3 +102,23 @@ CRITICAL  UNEXPECTED_NUM_INF_JUSTIFICATIONS Unexpected number of informative jus
 WARNING   UNHANDLED_DATE_TYPE             Unknown datetype '{}' found
 WARNING   INVALID_EVENT_OR_RELATION_ARGUMENT Event or relation argument is invalid.
 CRITICAL  UKNOWN_ATTRIBUTE                Unknown attribute '{}'
+ERROR     MISSING_MENTION                 Mention '{}' present in {} but missing from {}
+INFO      MISSING_MENTION_COUNT           {} mentions missing.
+ERROR     UNEXPECTED_ATTRIBUTES           {} has unexpected attributes in SPARQL output (found: '{}', expected: '{}')
+INFO      UNEXPECTED_MENTION_ATTRIBUTES_COUNT {} attributes mismatched.
+ERROR     UNEXPECTED_TYPES                {} has unexpected types found ({}: '{}', {}: '{}')
+INFO      UNEXPECTED_MENTION_TYPES_COUNT  {} mention types mismatched.
+ERROR     UNEXPECTED_PROTOTYPE_ID         Unexpected prototype ID (found: {}, expect: {})
+ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (found: {}, expected: {})
+ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
+ERROR     MISSING_ARGUMENT_ASSERTION      Argument assertion '{}' not found in {}
+INFO      MISSING_ARGUMENT_ASSERTION_COUNT {} argument assertions missing.
+ERROR     MISSING_SUBJECT_JUSTIFICATION   Subject justification '{}' not found in {}
+INFO      MISSING_SUBJECT_JUSTIFICATION_COUNT {} subject justifications missing.
+INFO      MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT {} prototype argument assertions missing.
+ERROR     MISSING_ARGUMENT_ASSERTION_ATTRIBUTE Argument assertion attribute '{}' not found in {}
+INFO      MISSING_ARGUMENT_ASSERTION_ATTRIBUTE_COUNT {} argument assertion attributes missing.
+INFO      MISSING_PROTOTYPE_ARGUMENT_ASSERTION_ATTRIBUTE_COUNT {} prototype argument assertion attributes missing.
+ERROR     UNEXPECTED_NUM_ARGUMENTS         Unexpected number of arguments for {} (found: {})
+ERROR     UNEXPECTED_DATE                  Unexpected date for {} (found {} and {})
+INFO      UNEXPECTED_DATE_COUNT            {} unexpected dates.
