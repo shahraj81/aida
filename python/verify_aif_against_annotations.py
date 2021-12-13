@@ -169,7 +169,6 @@ class AIFProjections(Object):
     def verify(self, annotation):
         self.compare_event_relation_dates(annotation)
         self.compare_mention_argument_assertions(annotation)
-        self.compare_subject_justification(annotation)
         self.compare_prototype_argument_assertions(annotation)
         self.compare_mention_argument_assetion_attributes(annotation)
         self.check_num_arguments(annotation)
@@ -180,6 +179,8 @@ class AIFProjections(Object):
         self.compare_mention_spans(annotation)
         self.compare_mention_attributes(annotation)
         self.compare_mention_types(annotation)
+        if self.get('task') == 'task1':
+            self.compare_subject_justification(annotation)
 
     def compare_event_relation_dates(self, annotation):
         logger = self.get('logger')
@@ -630,14 +631,17 @@ class AIFProjections(Object):
 class TA1AIFProjections(AIFProjections):
     def __init__(self, logger, projections):
         super().__init__(logger, projections)
+        self.task = 'task1'
 
 class TA2AIFProjections(AIFProjections):
     def __init__(self, logger, projections):
         super().__init__(logger, projections)
+        self.task = 'task2'
 
 class TA3AIFProjections(AIFProjections):
     def __init__(self, logger, projections):
         super().__init__(logger, projections)
+        self.task = 'task3'
 
 def check_paths(args):
     check_for_paths_existance([
