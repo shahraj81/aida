@@ -1313,11 +1313,15 @@ class LDCTimeField(AIFObject):
         return not self.is_unspecified()
 
     def is_unspecified(self):
-        unspecified = {'day':'xx', 'month':'xx', 'year':'xxxx'}
-
         field_name = self.get('field_name')
         field_value = self.get('field_value')
-        if field_value == unspecified[field_name]:
+        if 'x' in field_value:
+            return True
+        if field_name == 'month' and (int(field_value) > 12 or int(field_value) < 1):
+            self.record_event('DEFAULT_WARNING', 'Invalid value for {} {}'.format(field_name, field_value), self.get('where'))
+            return True
+        if field_name == 'day' and (int(field_value) > 31 or int(field_value) < 1):
+            self.record_event('DEFAULT_WARNING', 'Invalid value for {} {}'.format(field_name, field_value), self.get('where'))
             return True
         return False
 
