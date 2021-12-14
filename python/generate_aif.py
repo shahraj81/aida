@@ -30,7 +30,7 @@ ERROR_EXIT_CODE = 255
 GENERATE_BLANK_NODE = True
 
 def escape(s):
-    return s.replace('"', '\\\"') if '"' in s else s
+    return s.replace('"', '\\"') if '"' in s else s
 
 class AIFObject(Object):
     def __init__(self, logger):
@@ -374,7 +374,7 @@ class EntityCluster(ERECluster):
         for mention in self.get('mentions'):
             if document_id is not None and mention.get('document_id') != document_id:
                 continue
-            mention_handle = escape(mention.get('handle'))
+            mention_handle = mention.get('handle')
             if mention_handle is not None:
                 if handle is None:
                     handle = mention_handle
