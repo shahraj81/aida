@@ -562,7 +562,7 @@ class EREMention(AIFObject):
 
     def add_link(self, link):
         if len(self.get('links')):
-            self.record_event('LINK_EXISTS', self.get('where'))
+            self.record_event('LINK_EXISTS', link.get('qnode_kb_id_identity'), self.get('id'), self.get('where'))
         self.get('links').append(link)
 
     def get_document_id(self):

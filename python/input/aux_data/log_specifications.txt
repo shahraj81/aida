@@ -122,3 +122,4 @@ INFO      MISSING_PROTOTYPE_ARGUMENT_ASSERTION_ATTRIBUTE_COUNT {} prototype argu
 ERROR     UNEXPECTED_NUM_ARGUMENTS         Unexpected number of arguments for {} (found: {})
 ERROR     UNEXPECTED_DATE                  Unexpected date for {} (found {} and {})
 INFO      UNEXPECTED_DATE_COUNT            {} unexpected dates.
+ERROR     LINK_EXISTS                      link '{}' exists on mention '{}'
