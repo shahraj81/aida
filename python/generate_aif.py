@@ -374,7 +374,7 @@ class EntityCluster(ERECluster):
         for mention in self.get('mentions'):
             if document_id is not None and mention.get('document_id') != document_id:
                 continue
-            mention_handle = mention.get('handle')
+            mention_handle = escape(mention.get('handle'))
             if mention_handle is not None:
                 if handle is None:
                     handle = mention_handle
@@ -679,10 +679,10 @@ class EntityMention(EREMention):
 
     def get_handle(self):
         omits = ['EMPTY_NA']
-        handle = self.get('text_string')
+        handle = escape(self.get('text_string'))
         handle = None if isinstance(handle, float) else handle
         handle = None if handle in omits else handle
-        handle = self.get('description') if handle is None else handle
+        handle = escape(self.get('description')) if handle is None else handle
         handle = None if handle in omits else handle
         return handle
 
