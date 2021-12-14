@@ -30,7 +30,7 @@ ERROR_EXIT_CODE = 255
 GENERATE_BLANK_NODE = True
 
 def escape(s):
-    return s.replace('"', '\\"') if '"' in s else s
+    return s.replace('"', '\\\"') if '"' in s else s
 
 class AIFObject(Object):
     def __init__(self, logger):
