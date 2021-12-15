@@ -496,8 +496,8 @@ class AIFProjections(Object):
             clusters.get(cluster_id).get('annotation').add(generic_status)
 
         for cluster_id in clusters:
-            projection_generic_status = clusters.get(cluster_id).get('projection')
-            annotation_generic_status = clusters.get(cluster_id).get('annotation')
+            projection_generic_status = list().append(clusters.get(cluster_id).get('projection'))
+            annotation_generic_status = list().append(clusters.get(cluster_id).get('annotation'))
             if projection_generic_status != annotation_generic_status:
                 self.record_event('UNEXPECTED_CLUSTER_GENERIC_STATUS', cluster_id, ','.join(projection_generic_status), ','.join(annotation_generic_status))
 
@@ -522,8 +522,8 @@ class AIFProjections(Object):
             clusters.get(cluster_id).get('annotation').add(member_id)
 
         for cluster_id in clusters:
-            projection_members = clusters.get(cluster_id).get('projection')
-            annotation_members = clusters.get(cluster_id).get('annotation')
+            projection_members = list().append(clusters.get(cluster_id).get('projection'))
+            annotation_members = list().append(clusters.get(cluster_id).get('annotation'))
             if projection_members != annotation_members:
                 self.record_event('UNEXPECTED_CLUSTER_MEMBERS', cluster_id, ','.join(projection_members), ','.join(annotation_members))
 
