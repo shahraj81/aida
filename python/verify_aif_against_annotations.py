@@ -10,6 +10,8 @@ __date__    = "7 December 2021"
 from aida.object import Object
 from aida.logger import Logger
 from generate_aif import TA1Annotations, TA3Annotations, LDCTimeRange
+from aida.document_mappings import DocumentMappings
+from aida.encodings import Encodings
 from aida.file_handler import FileHandler
 import argparse
 import os
@@ -22,9 +24,10 @@ ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
 class Mention(Object):
-    def __init__(self, logger, entry):
+    def __init__(self, logger, document_mappings, entry):
         super().__init__(logger)
         self.entry = entry
+        self.document_mappings = document_mappings
         self.augment()
         self.fields = {
             'docid': ['?root_uid', 'root_uid'],
@@ -37,6 +40,8 @@ class Mention(Object):
         self.span = {'start_y': '0', 'end_y': '0'}
         self.where = entry.get('where')
         self.load()
+        if self.is_empty():
+            self.record_event('EMPTY_MENTION', self.get('mention_id'), self.get('where'))
 
     def get_mention_id(self):
         field_names = ['argmention_id', 'eventmention_id', 'relationmention_id']
@@ -67,8 +72,20 @@ class Mention(Object):
                 value = self.get('entry').get(field_name)
                 if value and value != 'EMPTY_NA':
                     self.get('span')[key] = trim(value)
+        if self.is_empty():
+            self.get('entry').set('child_uid', self.get('document_mappings').get('text_document', self.get('entry').get('root_uid')).get('ID'))
+            self.get('entry').set('textoffset_startchar', 0)
+            self.get('entry').set('textoffset_endchar', 0)
+
+    def is_empty(self):
+        for field_name in self.get('fields'):
+            value = self.get('span').get(field_name)
+            if value is None or value == 'EMPTY_NA':
+                return True
 
     def __str__(self):
+        if self.is_empty():
+            return
         predicate_justification = self.get('entry').get('?predicate_justification')
         if predicate_justification:
             return predicate_justification
@@ -146,9 +163,10 @@ class LDCTimeRangeWrapper(Object):
         return self.__str__() == other.__str__()
 
 class AIFProjections(Object):
-    def __init__(self, logger, projection):
+    def __init__(self, logger, projection, document_mappings):
         super().__init__(logger)
         self.path = projection
+        self.document_mappings = document_mappings
         self.projection = {}
         self.load_projection()
 
@@ -198,7 +216,7 @@ class AIFProjections(Object):
         annotation_dates = dates.get('annotation')
         for store_name in ['event_KEs', 'relation_KEs']:
             for entry in annotation.get('worksheets').get(store_name):
-                mention = Mention(logger, entry)
+                mention = Mention(logger, self.get('document_mappings'), entry)
                 missing = False
                 for field_name in ['{}_date'.format(start_or_end) for start_or_end in ['start', 'end']]:
                     if entry.get(field_name) == 'EMPTY_MIS':
@@ -349,7 +367,7 @@ class AIFProjections(Object):
         for kb in store:
             for entry in store.get(kb):
                 subject = entry.get('?subject_mention_id')
-                justification = Mention(logger, entry)
+                justification = Mention(logger, self.get('document_mappings'), entry)
                 subject_and_justification = '{}::{}'.format(subject, justification.__str__())
                 justifications.get('projection').add(subject_and_justification)
         mentions = set()
@@ -359,7 +377,7 @@ class AIFProjections(Object):
                 mentions.add(mention_id)
         for store_name in ['event_KEs', 'relation_KEs']:
             for entry in annotation.get('worksheets').get(store_name):
-                mention = Mention(logger, entry)
+                mention = Mention(logger, self.get('document_mappings'), entry)
                 subject = mention.get('mention_id')
                 if subject in mentions:
                     subject_and_justification = '{}::{}'.format(subject, mention.__str__())
@@ -593,12 +611,12 @@ class AIFProjections(Object):
             store = self.get('projection').get(store_name)
             for kb in store:
                 for entry in store.get(kb):
-                    mention = Mention(logger, entry)
+                    mention = Mention(logger, self.get('document_mappings'), entry)
                     mentions['projection'][mention.__str__()] = mention
 
         for store_name in ['argument_KEs', 'event_KEs', 'relation_KEs']:
             for entry in annotation.get('worksheets').get(store_name):
-                mention = Mention(logger, entry)
+                mention = Mention(logger, self.get('document_mappings'), entry)
                 mentions['annotation'][mention.__str__()] = mention
 
         c1 = self.report_missing_mention_spans(mentions, present_in='projection', missing_from='annotation')
@@ -629,18 +647,18 @@ class AIFProjections(Object):
         return count
 
 class TA1AIFProjections(AIFProjections):
-    def __init__(self, logger, projections):
-        super().__init__(logger, projections)
+    def __init__(self, logger, projections, document_mappings):
+        super().__init__(logger, projections, document_mappings)
         self.task = 'task1'
 
 class TA2AIFProjections(AIFProjections):
-    def __init__(self, logger, projections):
-        super().__init__(logger, projections)
+    def __init__(self, logger, projections, document_mappings):
+        super().__init__(logger, projections, document_mappings)
         self.task = 'task2'
 
 class TA3AIFProjections(AIFProjections):
-    def __init__(self, logger, projections):
-        super().__init__(logger, projections)
+    def __init__(self, logger, projections, document_mappings):
+        super().__init__(logger, projections, document_mappings)
         self.task = 'task3'
 
 def check_paths(args):
@@ -676,15 +694,19 @@ class Task1(Object):
     """
     Generate Task1 AIF.
     """
-    def __init__(self, log, errors, annotations, projections):
+    def __init__(self, log, errors, encodings_filename, parent_children, annotations, projections):
         check_for_paths_existance([
                  errors,
+                 encodings_filename,
+                 parent_children,
                  annotations,
                  projections,
                  ])
         check_for_paths_non_existance([])
         self.log_filename = log
         self.log_specifications = errors
+        self.encodings_filename = encodings_filename
+        self.parent_children = parent_children
         self.annotations = annotations
         self.projections = projections
         self.logger = Logger(self.get('log_filename'),
@@ -701,8 +723,10 @@ class Task1(Object):
             'rel_slots.tab':               'relation_slots',
             'kb_linking.tab':              'kb_links',
             }
+        encodings = Encodings(logger, self.get('encodings_filename'))
+        document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
         annotations =  TA1Annotations(logger, self.get('annotations'), include_items=include_files)
-        projections = TA1AIFProjections(logger, self.get('projections'))
+        projections = TA1AIFProjections(logger, self.get('projections'), document_mappings)
         projections.verify(annotations)
         print('--done.')
         exit(ALLOK_EXIT_CODE)
@@ -712,6 +736,8 @@ class Task1(Object):
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('errors', type=str, help='File containing error specifications')
+        parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
+        parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
         parser.add_argument('annotations', type=str, help='Task3 annotations as received from LDC')
         parser.add_argument('projections', type=str, help='Projections from AIF generated from annotations as received from LDC')
         parser.set_defaults(myclass=myclass)
@@ -721,15 +747,19 @@ class Task2(Object):
     """
     Generate Task2 AIF.
     """
-    def __init__(self, log, errors, annotations, projections):
+    def __init__(self, log, errors, encodings_filename, parent_children, annotations, projections):
         check_for_paths_existance([
                  errors,
+                 encodings_filename,
+                 parent_children,
                  annotations,
                  projections,
                  ])
         check_for_paths_non_existance([])
         self.log_filename = log
         self.log_specifications = errors
+        self.encodings_filename = encodings_filename
+        self.parent_children = parent_children
         self.annotations = annotations
         self.projections = projections
         self.logger = Logger(self.get('log_filename'),
@@ -746,8 +776,10 @@ class Task2(Object):
             'rel_slots.tab':               'relation_slots',
             'kb_linking.tab':              'kb_links',
             }
+        encodings = Encodings(logger, self.get('encodings_filename'))
+        document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
         annotations =  TA1Annotations(logger, self.get('annotations'), include_items=include_files)
-        projections = TA2AIFProjections(logger, self.get('projections'))
+        projections = TA2AIFProjections(logger, self.get('projections'), document_mappings)
         projections.verify(annotations)
         print('--done.')
         exit(ALLOK_EXIT_CODE)
@@ -757,6 +789,8 @@ class Task2(Object):
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('errors', type=str, help='File containing error specifications')
+        parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
+        parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
         parser.add_argument('annotations', type=str, help='Task3 annotations as received from LDC')
         parser.add_argument('projections', type=str, help='Projections from AIF generated from annotations as received from LDC')
         parser.set_defaults(myclass=myclass)
@@ -766,15 +800,19 @@ class Task3(Object):
     """
     Generate Task3 AIF.
     """
-    def __init__(self, log, errors, annotations, projections):
+    def __init__(self, log, errors, encodings_filename, parent_children, annotations, projections):
         check_for_paths_existance([
                  errors,
+                 encodings_filename,
+                 parent_children,
                  annotations,
                  projections,
                  ])
         check_for_paths_non_existance([])
         self.log_filename = log
         self.log_specifications = errors
+        self.encodings_filename = encodings_filename
+        self.parent_children = parent_children
         self.annotations = annotations
         self.projections = projections
         self.logger = Logger(self.get('log_filename'),
@@ -783,8 +821,10 @@ class Task3(Object):
 
     def __call__(self):
         logger = self.get('logger')
+        encodings = Encodings(logger, self.get('encodings_filename'))
+        document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
         annotations = self.load_annotations(self.get('annotations'))
-        projections = TA3AIFProjections(logger, self.get('projections'))
+        projections = TA3AIFProjections(logger, self.get('projections'), document_mappings)
         projections.verify(annotations)
         print('--done.')
         exit(ALLOK_EXIT_CODE)
@@ -794,6 +834,8 @@ class Task3(Object):
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('errors', type=str, help='File containing error specifications')
+        parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
+        parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
         parser.add_argument('annotations', type=str, help='Task3 annotations as received from LDC')
         parser.add_argument('projections', type=str, help='Projections from AIF generated from annotations as received from LDC')
         parser.set_defaults(myclass=myclass)
