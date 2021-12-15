@@ -123,3 +123,5 @@ ERROR     UNEXPECTED_NUM_ARGUMENTS         Unexpected number of arguments for {}
 ERROR     UNEXPECTED_DATE                  Unexpected date for {} (found {} and {})
 INFO      UNEXPECTED_DATE_COUNT            {} unexpected dates.
 ERROR     LINK_EXISTS                      link '{}' exists on mention '{}'
+ERROR     INVALID_TIME_FIELD_VALUE         Invalid {} {}
+ERROR     EMPTY_MENTION                    Empty mention {}

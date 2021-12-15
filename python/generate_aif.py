@@ -1318,10 +1318,10 @@ class LDCTimeField(AIFObject):
         if 'x' in field_value:
             return True
         if field_name == 'month' and (int(field_value) > 12 or int(field_value) < 1):
-            self.record_event('DEFAULT_WARNING', 'Invalid value for {} {}'.format(field_name, field_value), self.get('where'))
+            self.record_event('INVALID_TIME_FIELD_VALUE', field_name, field_value, self.get('where'))
             return True
         if field_name == 'day' and (int(field_value) > 31 or int(field_value) < 1):
-            self.record_event('DEFAULT_WARNING', 'Invalid value for {} {}'.format(field_name, field_value), self.get('where'))
+            self.record_event('INVALID_TIME_FIELD_VALUE', field_name, field_value, self.get('where'))
             return True
         return False
 
