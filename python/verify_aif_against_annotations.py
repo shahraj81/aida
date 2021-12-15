@@ -139,6 +139,7 @@ class Types(Object):
 
 class LDCTimeRangeWrapper(Object):
     def __init__(self, logger, projection_or_annotation, entry):
+        self.logger = logger
         self.projection_or_annotation = projection_or_annotation
         self.entry = entry
 
