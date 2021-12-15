@@ -74,8 +74,9 @@ class Mention(Object):
                     self.get('span')[key] = trim(value)
         if self.is_empty():
             self.get('entry').set('child_uid', self.get('document_mappings').get('text_document', self.get('entry').get('root_uid')).get('ID'))
-            self.get('entry').set('textoffset_startchar', 0)
-            self.get('entry').set('textoffset_endchar', 0)
+            self.get('entry').set('textoffset_startchar', '0')
+            self.get('entry').set('textoffset_endchar', '0')
+            self.load()
 
     def is_empty(self):
         for field_name in self.get('fields'):
