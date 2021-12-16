@@ -78,7 +78,7 @@ class AIFObject(Object):
         AIF_triples = []
         AIF_subject = self.get('IRI')
         for predicate, AIF_object in predicates.items():
-            if AIF_object:
+            if AIF_object is not None:
                 if isinstance(AIF_object, list):
                     for o in AIF_object:
                         if not isinstance(o, str):
