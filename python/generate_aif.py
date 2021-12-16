@@ -1035,7 +1035,7 @@ class Claim(AIFObject):
                               componentProvenance=self.get('claim_location_provenance'))
 
     def get_claimMedium(self):
-        if self.get('claim_medium') == 'EMPTY_NA':
+        if self.get('claim_medium') is None or self.get('claim_medium') == 'EMPTY_NA':
             return
         return ClaimComponent(self.get('logger'),
                               componentName=self.get('claim_medium'),
