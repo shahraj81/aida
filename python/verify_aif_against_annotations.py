@@ -663,97 +663,22 @@ class TA3AIFProjections(AIFProjections):
         super().__init__(logger, projections, document_mappings)
         self.task = 'task3'
 
-    def compare_prototype_argument_assertions_2(self, annotation):
-        clusters = {'projection': set(), 'annotation': set()}
-        count = 0
-        for entry in annotation.get('worksheets').get('claims'):
-            claim_id = entry.get('claim_id')
-            associated_kes = set()
-            for associated_ke in entry.get('associated_kes').split(','):
-                associated_kes.add(associated_ke.strip())
-            for store_name in ['event_slots', 'relation_slots']:
-                for entry in annotation.get('worksheets').get(store_name):
-                    aa_subject_mention_id = entry.get('eventmention_id') or entry.get('relationmention_id')
-                    aa_object_mention_id = entry.get('argmention_id')
-                    present = False
-                    for mention_id in [aa_subject_mention_id, aa_object_mention_id]:
-                        if mention_id in associated_kes:
-                            present = True
-                    if present:
-                        for mention_id in [aa_subject_mention_id, aa_object_mention_id]:
-                            associated_kes.add(mention_id)
-
-            store = self.get('projection').get('mention_argument_assertions_justifications.rq.tsv')
-            for entry in store.get('{}.ttl'.format(claim_id)):
+    def compare_prototype_argument_assertions(self, annotation):
+        clusters = {'projection': {}, 'annotation': {}}
+        store = self.get('projection').get('mention_argument_assertions_justifications.rq.tsv')
+        for kb in store:
+            for entry in store.get(kb):
                 aa_subject_mention_id = entry.get('?subject_mention_id')
                 aa_subject = self.get('prototype', 'projection', aa_subject_mention_id)
                 predicate = entry.get('?predicate')
                 aa_object_mention_id = entry.get('?object_mention_id')
                 aa_object = self.get('prototype', 'projection', aa_object_mention_id)
-                if aa_subject_mention_id in associated_kes or aa_object_mention_id in associated_kes:
-                    argument_assertion = '{subject}::{predicate}::{object}'.format(
-                        subject = aa_subject,
-                        predicate = predicate,
-                        object = aa_object
-                        )
-                    clusters.get('projection').add(argument_assertion)
-
-            for store_name in ['event_slots', 'relation_slots']:
-                for entry in annotation.get('worksheets').get(store_name):
-                    aa_subject_mention_id = entry.get('eventmention_id') or entry.get('relationmention_id')
-                    aa_subject = self.get('prototype', 'annotation', aa_subject_mention_id, annotation=annotation)
-                    predicate = entry.get('general_slot_type')
-                    aa_object_mention_id = entry.get('argmention_id')
-                    aa_object = self.get('prototype', 'annotation', aa_object_mention_id, annotation=annotation)
-                    if aa_subject_mention_id in associated_kes or aa_object_mention_id in associated_kes:
-                        argument_assertion = '{subject}::{predicate}::{object}'.format(
-                            subject = aa_subject,
-                            predicate = predicate,
-                            object = aa_object,
-                            )
-                        clusters.get('annotation').add(argument_assertion)
-    
-            union = clusters.get('projection').union(clusters.get('annotation'))
-            intersection = clusters.get('projection').intersection(clusters.get('annotation'))
-            missings = union - intersection
-            for missing in missings:
-                count += 1
-                stores = ['projection', 'annotation']
-                for store in stores:
-                    if missing not in clusters.get(store):
-                        self.record_event('MISSING_ARGUMENT_ASSERTION', missing, store)
-        self.record_event('MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
-
-
-    def compare_prototype_argument_assertions(self, annotation):
-        clusters = {'projection': set(), 'annotation': set()}
-        associated_kes = set()
-        for entry in annotation.get('worksheets').get('claims'):
-            for associated_ke in entry.get('associated_kes').split(','):
-                associated_kes.add(associated_ke.strip())
-        for store_name in ['event_slots', 'relation_slots']:
-            for entry in annotation.get('worksheets').get(store_name):
-                aa_subject_mention_id = entry.get('eventmention_id') or entry.get('relationmention_id')
-                aa_object_mention_id = entry.get('argmention_id')
-                present = False
-                for mention_id in [aa_subject_mention_id, aa_object_mention_id]:
-                    if mention_id in associated_kes:
-                        present = True
-                if present:
-                    for mention_id in [aa_subject_mention_id, aa_object_mention_id]:
-                        associated_kes.add(mention_id)
-        store = self.get('projection').get('mention_argument_assertions_justifications.rq.tsv')
-        for kb in store:
-            for entry in store.get(kb):
-                aa_subject = self.get('prototype', 'projection', entry.get('?subject_mention_id'))
-                predicate = entry.get('?predicate')
-                aa_object = self.get('prototype', 'projection', entry.get('?object_mention_id'))
                 argument_assertion = '{subject}::{predicate}::{object}'.format(
                     subject = aa_subject,
                     predicate = predicate,
                     object = aa_object
                     )
-                clusters.get('projection').add(argument_assertion)
+                clusters.get('projection').setdefault(aa_subject_mention_id, set()).add(argument_assertion)
 
         for store_name in ['event_slots', 'relation_slots']:
             for entry in annotation.get('worksheets').get(store_name):
@@ -762,80 +687,85 @@ class TA3AIFProjections(AIFProjections):
                 predicate = entry.get('general_slot_type')
                 aa_object_mention_id = entry.get('argmention_id')
                 aa_object = self.get('prototype', 'annotation', aa_object_mention_id, annotation=annotation)
-                if aa_subject_mention_id in associated_kes or aa_object_mention_id in associated_kes:
-                    argument_assertion = '{subject}::{predicate}::{object}'.format(
-                        subject = aa_subject,
-                        predicate = predicate,
-                        object = aa_object,
-                        )
-                    clusters.get('annotation').add(argument_assertion)
-
-        union = clusters.get('projection').union(clusters.get('annotation'))
-        intersection = clusters.get('projection').intersection(clusters.get('annotation'))
-        missings = union - intersection
-        count = 0
-        for missing in missings:
-            count += 1
-            stores = ['projection', 'annotation']
-            for store in stores:
-                if missing not in clusters.get(store):
-                    self.record_event('MISSING_ARGUMENT_ASSERTION', missing, store)
-        self.record_event('MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
-
-    def compare_mention_argument_assertions(self, annotation):
-        clusters = {'projection': set(), 'annotation': set()}
-        associated_kes = set()
-        for entry in annotation.get('worksheets').get('claims'):
-            for associated_ke in entry.get('associated_kes').split(','):
-                associated_kes.add(associated_ke.strip())
-        for store_name in ['event_slots', 'relation_slots']:
-            for entry in annotation.get('worksheets').get(store_name):
-                aa_subject_mention_id = entry.get('eventmention_id') or entry.get('relationmention_id')
-                aa_object_mention_id = entry.get('argmention_id')
-                present = False
-                for mention_id in [aa_subject_mention_id, aa_object_mention_id]:
-                    if mention_id in associated_kes:
-                        present = True
-                if present:
-                    for mention_id in [aa_subject_mention_id, aa_object_mention_id]:
-                        associated_kes.add(mention_id)
-        store = self.get('projection').get('mention_argument_assertions_justifications.rq.tsv')
-        for kb in store:
-            for entry in store.get(kb):
-                aa_subject = entry.get('?subject_mention_id')
-                predicate = entry.get('?predicate')
-                aa_object = entry.get('?object_mention_id')
                 argument_assertion = '{subject}::{predicate}::{object}'.format(
                     subject = aa_subject,
                     predicate = predicate,
-                    object = aa_object
+                    object = aa_object,
                     )
-                clusters.get('projection').add(argument_assertion)
+                clusters.get('annotation').setdefault(aa_subject_mention_id, set()).add(argument_assertion)
+
+        count = 0
+        for entry in annotation.get('worksheets').get('claims'):
+            claim_id = entry.get('claim_id')
+            associated_mentions = set()
+            for mention_id in entry.get('associated_kes').split(','):
+                associated_mentions.add(mention_id.strip())
+            argument_assertions = {'projection': set(), 'annotation': set()}
+            for mention_id in associated_mentions:
+                for key in argument_assertions:
+                    if clusters.get(key).get(mention_id):
+                        argument_assertions.get(key).update(clusters.get(key).get(mention_id))
+
+            union = argument_assertions.get('projection').union(argument_assertions.get('annotation'))
+            intersection = argument_assertions.get('projection').intersection(argument_assertions.get('annotation'))
+            missings = union - intersection
+            for missing in missings:
+                count += 1
+                stores = ['projection', 'annotation']
+                for store in stores:
+                    if missing not in clusters.get(store):
+                        self.record_event('MISSING_CLAIM_ARGUMENT_ASSERTION', missing, claim_id, store)
+        self.record_event('MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
+
+    def compare_mention_argument_assertions(self, annotation):
+        clusters = {'projection': {}, 'annotation': {}}
+        store = self.get('projection').get('mention_argument_assertions_justifications.rq.tsv')
+        for kb in store:
+            for entry in store.get(kb):
+                aa_subject_mention_id = entry.get('?subject_mention_id')
+                predicate = entry.get('?predicate')
+                aa_object_mention_id = entry.get('?object_mention_id')
+                argument_assertion = '{subject}::{predicate}::{object}'.format(
+                    subject = aa_subject_mention_id,
+                    predicate = predicate,
+                    object = aa_object_mention_id
+                    )
+                clusters.get('projection').setdefault(aa_subject_mention_id, set()).add(argument_assertion)
 
         for store_name in ['event_slots', 'relation_slots']:
             for entry in annotation.get('worksheets').get(store_name):
-                aa_subject = entry.get('eventmention_id') or entry.get('relationmention_id')
+                aa_subject_mention_id = entry.get('eventmention_id') or entry.get('relationmention_id')
                 predicate = entry.get('general_slot_type')
-                aa_object = entry.get('argmention_id')
-                if aa_subject in associated_kes or aa_object in associated_kes:
-                    argument_assertion = '{subject}::{predicate}::{object}'.format(
-                        subject = aa_subject,
-                        predicate = predicate,
-                        object = aa_object,
-                        )
-                    clusters.get('annotation').add(argument_assertion)
+                aa_object_mention_id = entry.get('argmention_id')
+                argument_assertion = '{subject}::{predicate}::{object}'.format(
+                    subject = aa_subject_mention_id,
+                    predicate = predicate,
+                    object = aa_object_mention_id,
+                    )
+                clusters.get('annotation').setdefault(aa_subject_mention_id, set()).add(argument_assertion)
 
-        union = clusters.get('projection').union(clusters.get('annotation'))
-        intersection = clusters.get('projection').intersection(clusters.get('annotation'))
-        missings = union - intersection
         count = 0
-        for missing in missings:
-            count += 1
-            stores = ['projection', 'annotation']
-            for store in stores:
-                if missing not in clusters.get(store):
-                    self.record_event('MISSING_ARGUMENT_ASSERTION', missing, store)
-        self.record_event('MISSING_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
+        for entry in annotation.get('worksheets').get('claims'):
+            claim_id = entry.get('claim_id')
+            associated_mentions = set()
+            for mention_id in entry.get('associated_kes').split(','):
+                associated_mentions.add(mention_id.strip())
+            argument_assertions = {'projection': set(), 'annotation': set()}
+            for mention_id in associated_mentions:
+                for key in argument_assertions:
+                    if clusters.get(key).get(mention_id):
+                        argument_assertions.get(key).update(clusters.get(key).get(mention_id))
+
+            union = argument_assertions.get('projection').union(argument_assertions.get('annotation'))
+            intersection = argument_assertions.get('projection').intersection(argument_assertions.get('annotation'))
+            missings = union - intersection
+            for missing in missings:
+                count += 1
+                stores = ['projection', 'annotation']
+                for store in stores:
+                    if missing not in clusters.get(store):
+                        self.record_event('MISSING_CLAIM_ARGUMENT_ASSERTION', missing, claim_id, store)
+        self.record_event('MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
 
 def check_paths(args):
     check_for_paths_existance([

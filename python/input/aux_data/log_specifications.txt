@@ -111,7 +111,7 @@ INFO      UNEXPECTED_MENTION_TYPES_COUNT  {} mention types mismatched.
 ERROR     UNEXPECTED_PROTOTYPE_ID         Unexpected prototype ID (found: {}, expect: {})
 ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (found: {}, expected: {})
 ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
-ERROR     MISSING_ARGUMENT_ASSERTION      Argument assertion '{}' not found in {}
+ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION      Argument assertion '{}' for claim {}  not found in {}
 INFO      MISSING_ARGUMENT_ASSERTION_COUNT {} argument assertions missing.
 ERROR     MISSING_SUBJECT_JUSTIFICATION   Subject justification '{}' not found in {}
 INFO      MISSING_SUBJECT_JUSTIFICATION_COUNT {} subject justifications missing.
