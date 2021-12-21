@@ -9,7 +9,7 @@ __date__    = "7 December 2021"
 
 from aida.object import Object
 from aida.logger import Logger
-from generate_aif import TA1Annotations, TA3Annotations, LDCTimeRange
+from generate_aif import TA1Annotations, TA3Annotations, LDCTimeRange, LDCTime
 from aida.document_mappings import DocumentMappings
 from aida.encodings import Encodings
 from aida.file_handler import FileHandler
@@ -22,6 +22,242 @@ import traceback
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
+
+def dequotify(s):
+    return None if s is None else s.replace('"', '')
+
+class Claims(Object):
+    def __init__(self, logger, datatype, annotation_or_projection):
+        self.logger = logger
+        self.claims = {}
+        if datatype == 'annotation':
+            self.load_annotation(annotation_or_projection)
+        elif datatype == 'projection':
+            self.load_projection(annotation_or_projection)
+        else:
+            self.record_event('UNKNOWN_DATATYPE', datatype)
+
+    def get_claim(self, claim_id):
+        return self.get('claims').get(claim_id)
+
+    def load_annotation(self, annotation):
+        for entry in annotation.get('worksheets').get('claims'):
+            claim = Claim(self.get('logger'), 'annotation', entry)
+            claim.load_components()
+            claim.load_date()
+            self.get('claims')[claim.get('claim_id')] = claim
+
+    def load_projection(self, projection):
+        for entries in projection.get('projection').get('TA3_queryA.rq.tsv').values():
+            for entry in entries:
+                claim = Claim(self.get('logger'), 'projection', entry)
+                self.get('claims')[claim.get('claim_id')] = claim
+        for claim_components in projection.get('projection').get('TA3_queryB.rq.tsv').values():
+            for claim_component in claim_components:
+                claim_id = claim_component.get('?claim_id')
+                component_type = claim_component.get('?component_type')
+                name = dequotify(claim_component.get('?name'))
+                qnode_id = claim_component.get('?qnode_id')
+                qnode_type = claim_component.get('?qnode_type')
+                provenance = dequotify(claim_component.get('?provenance'))
+                ke = claim_component.get('?ke')
+                self.get('claim', claim_id).add_component(component_type,
+                                                          name,
+                                                          qnode_id,
+                                                          qnode_type,
+                                                          provenance,
+                                                          ke)
+        claims = projection.get('projection').get('TA3_queryC.rq.tsv')
+        for kb_id in claims:
+            claim_id = kb_id.replace('.ttl', '')
+            claim_dates = claims.get(kb_id)
+            for claim_date in claim_dates:
+                self.get('claim', claim_id).add_date(claim_date)
+
+class Claim(Object):
+    def __init__(self, logger, datatype, entry):
+        self.logger = logger
+        self.datatype = datatype
+        self.entry = entry
+        self.date = None
+        self.components = {}
+
+    def get_claim_id(self):
+        claim_id = self.get('entry').get('claim_id') or self.get('entry').get('?claim_id')
+        if claim_id is not None:
+            return claim_id
+        self.record_event('CLAIM_ID_MISSING')
+
+    def add_component(self, component_type, name, qnode_id, qnode_type, provenance, ke):
+        logger = self.get('logger')
+        key = '{}:{}'.format(component_type, name)
+        component = self.get('components').setdefault(key, ClaimComponent(logger))
+        component.update(component_type=component_type,
+                         name=name,
+                         qnode_id=qnode_id,
+                         qnode_type=qnode_type,
+                         provenance=provenance,
+                         ke=ke)
+
+    def add_date(self, date):
+        if self.get('date') is None:
+            self.date = ClaimDateTime(self.get('logger'), 'projection', date)
+        else:
+            self.record_event('MULTIPLE_CLAIM_DATES', self.get('claim_id'))
+
+    def load_components(self):
+        def get_claim_component(entry, component_type, postfix):
+            return {
+                'componentName': dequotify(entry.get('{}{}'.format(component_type, postfix))),
+                'componentIdentity': entry.get('qnode_{}_identity{}'.format(component_type, postfix)),
+                'componentTypes': entry.get('qnode_{}_type{}'.format(component_type, postfix)),
+                'componentProvenance': dequotify(entry.get('{}_provenance{}'.format(component_type, postfix))),
+                'componentKE': entry.get('{}_ke{}'.format(component_type, postfix))
+                }
+        components = {
+            'claimer':               {'key':'claimer',               'component':{}, 'postfixes': ['']},
+            'claimer_affiliation':   {'key':'claimerAffiliation',    'component':{}, 'postfixes': ['', '_1', '_2']},
+            'claim_location':        {'key':'claimLocation',         'component':{}, 'postfixes': ['']},
+            'claim_medium':          {'key':'claimMedium',           'component':{}, 'postfixes': ['']},
+            'x_variable':            {'key':'xVariable',             'component':{}, 'postfixes': ['']},
+            }
+        for component_type in components:
+            key = components.get(component_type).get('key')
+            postfixes = components.get(component_type).get('postfixes')
+            for postfix in postfixes:
+                component = get_claim_component(self.get('entry'), component_type, postfix)
+                if component.get('componentName') == 'EMPTY_NA':
+                    continue
+                self.add_component(component_type=key,
+                                   name=component.get('componentName'),
+                                   qnode_id=component.get('componentIdentity'),
+                                   qnode_type=component.get('componentTypes'),
+                                   provenance=component.get('componentProvenance'),
+                                   ke=component.get('componentKE'))
+
+    def load_date(self):
+        logger = self.get('logger')
+        self.date = ClaimDateTime(logger, 'annotation', self.get('entry'))
+
+    def __eq__(self, other):
+        def getvalue(fields_to_compare, mapping, key, claim):
+            def descape(s):
+                return s.replace('\\', '').replace('"','')
+            value = None
+            for field_name in fields_to_compare.get(key):
+                value = claim.get('entry').get(field_name)
+                if value is not None:
+                    return mapping.get(value) if value in mapping else descape(value)
+        mapping = {
+            'EpistemicTrueCertain': 'true-certain',
+            'EpistemicFalseCertain': 'false-certain',
+            'EpistemicTrueUncertain': 'true-uncertain',
+            'EpistemicFalseUncertain': 'false-uncertain',
+            'EpistemicUnknown': 'unknown',
+            'SentimentPositive': 'positive',
+            'SentimentNegative': 'negative',
+            'SentimentMixed': 'mixed',
+            'SentimentNeutralUnknown': 'neutral-unknown'
+            }
+        fields_to_compare = {
+            'claim_template': ['claim_template', '?claim_template'],
+            'description': ['description', '?description'],
+            'epistemic_status': ['epistemic_status', '?epistemic_status'],
+            'root_uid': ['root_uid', '?root_uid'],
+            'sentiment_status': ['sentiment_status', '?sentiment_status'],
+            'subtopic': ['subtopic', '?subtopic'],
+            'topic': ['topic', '?topic']
+            }
+        for key in fields_to_compare:
+            myvalue = getvalue(fields_to_compare, mapping, key, self)
+            othervalue = getvalue(fields_to_compare, mapping, key, other)
+            if myvalue != othervalue:
+                return False
+        mycomponents = self.get('components')
+        othercomponents = other.get('components')
+        keys = set(mycomponents.keys()).union(set(othercomponents.keys()))
+        for key in keys:
+            mycomponent = mycomponents.get(key)
+            othercomponent = othercomponents.get(key)
+            if mycomponent is None or othercomponent is None:
+                return False
+            subkeys = set(mycomponent.get('values').keys()).union(othercomponent.get('values').keys())
+            for subkey in subkeys:
+                myvalues = mycomponent.get('values').get(subkey)
+                othervalues = othercomponent.get('values').get(subkey)
+                if (myvalues is None or myvalues == set(['EMPTY_NA'])) and (othervalues is None or othervalues == set(['EMPTY_NA'])):
+                    continue
+                if myvalues is None or othervalues is None:
+                    return False
+                if myvalues != othervalues:
+                    return False
+        if self.get('date') != other.get('date'):
+            return False
+        return True
+
+class ClaimComponent(Object):
+    def __init__(self, logger):
+        self.logger = logger
+        self.values = {}
+
+    def update(self, *args, **kwargs):
+        for key, value in kwargs.items():
+            self.update_field(key, value)
+
+    def update_field(self, key, value):
+        if value is not None:
+            self.get('values').setdefault(key, set()).add(value)
+
+class ClaimDateTime(Object):
+    def __init__(self, logger, annotation_or_projection, entry):
+        self.logger = logger
+        self.annotation_or_projection = annotation_or_projection
+        self.entry = entry
+        self.datetime = None
+        if annotation_or_projection == 'annotation':
+            self.load_date_from_annotation()
+        elif annotation_or_projection == 'projection':
+            self.load_date_from_projection()
+        else:
+            self.record_event('UNKNOWN_TYPE')
+
+    def load_date_from_projection(self):
+        entry = self.get('entry')
+        date_types = {
+            'start_after':  '?sa_',
+            'end_after':    '?ea_',
+            'start_before': '?sb_',
+            'end_before':   '?eb_',
+            }
+        range_fields = {}
+        for date_type in date_types:
+            day = '{}day'.format(date_types.get(date_type))
+            month = '{}month'.format(date_types.get(date_type))
+            year = '{}year'.format(date_types.get(date_type))
+            d = '{y}-{m}-{d}'.format(d=entry.get(day),
+                                     m=entry.get(month),
+                                     y=entry.get(year))
+            range_fields[date_type] = d
+        datetime_str = '(AFTER-{start_after},BEFORE-{start_before})-(AFTER-{end_after},BEFORE-{end_before})'
+        self.datetime = dequotify(datetime_str.format(**range_fields))
+
+    def load_date_from_annotation(self):
+        logger = self.get('logger')
+        elements = self.get('entry').get('claim_datetime').split(' ')
+        attribute = elements[0]
+        if attribute == 'unknown':
+            attribute = 'unk'
+        datestring = elements[1] if len(elements) == 2 else 'EMPTY_NA'
+        time =  Object(logger)
+        time.set('start_date', datestring)
+        time.set('start_date_type', 'start{}'.format(attribute))
+        time.set('end_date', datestring)
+        time.set('end_date_type', 'end{}'.format(attribute))
+        time.set('where', self.get('where'))
+        self.datetime = LDCTimeRange(logger, time).__str__()
+
+    def __eq__(self, other):
+        return self.get('datetime') == other.get('datetime')
 
 class Mention(Object):
     def __init__(self, logger, document_mappings, entry):
@@ -187,6 +423,7 @@ class AIFProjections(Object):
         return
 
     def verify(self, annotation):
+        self.compare_claims(annotation)
         self.compare_event_relation_dates(annotation)
         self.compare_mention_argument_assertions(annotation)
         self.compare_prototype_argument_assertions(annotation)
@@ -201,6 +438,11 @@ class AIFProjections(Object):
         self.compare_mention_types(annotation)
         if self.get('task') == 'task1':
             self.compare_subject_justification(annotation)
+
+    def compare_claims(self, annotation):
+        # Nothing to do for task1 and task2
+        # Method overridden for task3
+        pass
 
     def compare_event_relation_dates(self, annotation):
         logger = self.get('logger')
@@ -662,6 +904,22 @@ class TA3AIFProjections(AIFProjections):
     def __init__(self, logger, projections, document_mappings):
         super().__init__(logger, projections, document_mappings)
         self.task = 'task3'
+
+    def compare_claims(self, annotation):
+        annotation_claims = Claims(self.get('logger'), 'annotation', annotation)
+        projection_claims = Claims(self.get('logger'), 'projection', self)
+
+        mismatched = set()
+        for claim_id, annotation_claim in annotation_claims.get('claims').items():
+            projection_claim = projection_claims.get('claims').get(claim_id)
+            if annotation_claim != projection_claim:
+                mismatched.add(claim_id)
+        for claim_id, projection_claim in projection_claims.get('claims').items():
+            annotation_claim = annotation_claims.get('claims').get(claim_id)
+            if annotation_claim != projection_claim:
+                mismatched.add(claim_id)
+        for claim_id in mismatched:
+            self.record_event('CLAIM_MISMATCHED', claim_id)
 
     def compare_prototype_argument_assertions(self, annotation):
         clusters = {'projection': {}, 'annotation': {}}

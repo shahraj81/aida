@@ -125,3 +125,4 @@ INFO      UNEXPECTED_DATE_COUNT            {} unexpected dates.
 ERROR     LINK_EXISTS                      link '{}' exists on mention '{}'
 ERROR     INVALID_TIME_FIELD_VALUE         Invalid {} {}
 ERROR     EMPTY_MENTION                    Empty mention {}
+ERROR     CLAIM_MISMATCHED                 Claim {} mismatched
