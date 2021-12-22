@@ -130,3 +130,4 @@ ERROR     EMPTY_MENTION                    Empty mention {}
 ERROR     CLAIM_MISMATCHED                 Claim {} mismatched
 ERROR     CLAIM_FIELD_MISMATCHED           Claim {}: value for field '{}' mismatched (found: '{}' in annotation and '{}' in SPARQL output)
 ERROR     CLAIM_FIELD_MISSING              Claim {}: field '{}' missing in {}
+ERROR     MENTION_NOT_IN_CLUSTER           Mention '{}' is not in any cluster

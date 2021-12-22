@@ -1708,6 +1708,9 @@ class AIF(AIFObject):
             for link in self.get('links').get(cluster_id):
                 mention_id = link.get('mention_id')
                 mention = self.get('mention', mention_id)
+                if mention is None:
+                    self.record_event('MISSING_ITEM_WITH_KEY', 'mention', mention_id)
+                    continue
                 mention.add('link', link)
                 mentionframe = self.get('mentionframe', mention_id)
                 if mention.get('cluster') is not None:
