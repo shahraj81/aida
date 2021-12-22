@@ -185,6 +185,8 @@ class Claim(Object):
             for subkey in subkeys:
                 myvalues = mycomponent.get('values').get(subkey)
                 othervalues = othercomponent.get('values').get(subkey)
+                if subkey in ['provenance', 'ke'] and othervalues == set(['']):
+                    othervalues = None
                 if (myvalues is None or myvalues == set(['EMPTY_NA'])) and (othervalues is None or othervalues == set(['EMPTY_NA'])):
                     continue
                 if myvalues is None or othervalues is None:
