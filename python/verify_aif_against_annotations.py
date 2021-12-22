@@ -245,7 +245,7 @@ class ClaimDateTime(Object):
         logger = self.get('logger')
         elements = self.get('entry').get('claim_datetime').split(' ')
         attribute = elements[0]
-        if attribute == 'unknown':
+        if attribute == 'unknown' or attribute == 'EMPTY_NA':
             attribute = 'unk'
         datestring = elements[1] if len(elements) == 2 else 'EMPTY_NA'
         time =  Object(logger)
