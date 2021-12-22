@@ -111,7 +111,8 @@ INFO      UNEXPECTED_MENTION_TYPES_COUNT  {} mention types mismatched.
 ERROR     UNEXPECTED_PROTOTYPE_ID         Unexpected prototype ID (found: {}, expect: {})
 ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (found: {}, expected: {})
 ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
-ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION      Argument assertion '{}' for claim {}  not found in {}
+ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' for claim {} not found in {}
+WARNING   MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' for claim {} not found in {}
 INFO      MISSING_ARGUMENT_ASSERTION_COUNT {} argument assertions missing.
 ERROR     MISSING_SUBJECT_JUSTIFICATION   Subject justification '{}' not found in {}
 INFO      MISSING_SUBJECT_JUSTIFICATION_COUNT {} subject justifications missing.
@@ -119,10 +120,13 @@ INFO      MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT {} prototype argument asser
 ERROR     MISSING_ARGUMENT_ASSERTION_ATTRIBUTE Argument assertion attribute '{}' not found in {}
 INFO      MISSING_ARGUMENT_ASSERTION_ATTRIBUTE_COUNT {} argument assertion attributes missing.
 INFO      MISSING_PROTOTYPE_ARGUMENT_ASSERTION_ATTRIBUTE_COUNT {} prototype argument assertion attributes missing.
-ERROR     UNEXPECTED_NUM_ARGUMENTS         Unexpected number of arguments for {} (found: {})
+WARNING   UNEXPECTED_NUM_ARGUMENTS_WARNING Unexpected number of arguments for {} (found: {})
+ERROR     UNEXPECTED_NUM_ARGUMENTS_ERROR   Unexpected number of arguments for {} (found: {})
 ERROR     UNEXPECTED_DATE                  Unexpected date for {} (found {} and {})
 INFO      UNEXPECTED_DATE_COUNT            {} unexpected dates.
 ERROR     LINK_EXISTS                      link '{}' exists on mention '{}'
 ERROR     INVALID_TIME_FIELD_VALUE         Invalid {} {}
 ERROR     EMPTY_MENTION                    Empty mention {}
 ERROR     CLAIM_MISMATCHED                 Claim {} mismatched
+ERROR     CLAIM_FIELD_MISMATCHED           Claim {}: value for field '{}' mismatched (found: '{}' in annotation and '{}' in SPARQL output)
+ERROR     CLAIM_FIELD_MISSING              Claim {}: field '{}' missing in {}

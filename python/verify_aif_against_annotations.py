@@ -172,6 +172,7 @@ class Claim(Object):
             myvalue = getvalue(fields_to_compare, mapping, key, self)
             othervalue = getvalue(fields_to_compare, mapping, key, other)
             if myvalue != othervalue:
+                self.record_event('CLAIM_FIELD_MISMATCHED', self.get('claim_id'), key, myvalue, othervalue)
                 return False
         mycomponents = self.get('components')
         othercomponents = other.get('components')
@@ -179,8 +180,10 @@ class Claim(Object):
         for key in keys:
             mycomponent = mycomponents.get(key)
             othercomponent = othercomponents.get(key)
-            if mycomponent is None or othercomponent is None:
-                return False
+            for component, annotation_or_projection in [(mycomponent, 'annotation'), (othercomponent, 'SPARQL output')]:
+                if component is None:
+                    self.record_event('CLAIM_FIELD_MISSING', self.get('claim_id'), key, annotation_or_projection)
+                    return False
             subkeys = set(mycomponent.get('values').keys()).union(othercomponent.get('values').keys())
             for subkey in subkeys:
                 myvalues = mycomponent.get('values').get(subkey)
@@ -189,11 +192,12 @@ class Claim(Object):
                     othervalues = None
                 if (myvalues is None or myvalues == set(['EMPTY_NA'])) and (othervalues is None or othervalues == set(['EMPTY_NA'])):
                     continue
-                if myvalues is None or othervalues is None:
-                    return False
-                if myvalues != othervalues:
+                if myvalues is None or othervalues is None or myvalues != othervalues:
+                    field_name = '{}:{}'.format(key, subkey)
+                    self.record_event('CLAIM_FIELD_MISMATCHED', self.get('claim_id'), field_name, myvalues, othervalues)
                     return False
         if self.get('date') != other.get('date'):
+            self.record_event('CLAIM_FIELD_MISMATCHED', self.get('claim_id'), 'date', self.get('date').__str__(), other.get('date').__str__())
             return False
         return True
 
@@ -260,6 +264,9 @@ class ClaimDateTime(Object):
 
     def __eq__(self, other):
         return self.get('datetime') == other.get('datetime')
+
+    def __str__(self):
+        return self.get('datetime').__str__()
 
 class Mention(Object):
     def __init__(self, logger, document_mappings, entry):
@@ -510,7 +517,8 @@ class AIFProjections(Object):
             for mention_id in events_or_relations_mentions:
                 mention_slot_types = events_or_relations_mentions.get(mention_id)
                 if len(mention_slot_types) < num_arguments:
-                    self.record_event('UNEXPECTED_NUM_ARGUMENTS', mention_id, len(mention_slot_types), num_arguments)
+                    error_code = 'UNEXPECTED_NUM_ARGUMENTS_WARNING' if events_or_relation == 'event' else 'UNEXPECTED_NUM_ARGUMENTS_ERROR'
+                    self.record_event(error_code, mention_id, len(mention_slot_types), num_arguments)
 
     def compare_prototype_argument_assertion_attributes(self, annotation):
         argument_assertions = {'projection': set(), 'annotation': set()}
@@ -974,7 +982,8 @@ class TA3AIFProjections(AIFProjections):
                 stores = ['projection', 'annotation']
                 for store in stores:
                     if missing not in clusters.get(store):
-                        self.record_event('MISSING_CLAIM_ARGUMENT_ASSERTION', missing, claim_id, store)
+                        error_code = 'MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING' if '::EMPTY_TBD::' in missing else 'MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR'
+                        self.record_event(error_code, missing, claim_id, store)
         self.record_event('MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
 
     def compare_mention_argument_assertions(self, annotation):
@@ -1024,7 +1033,8 @@ class TA3AIFProjections(AIFProjections):
                 stores = ['projection', 'annotation']
                 for store in stores:
                     if missing not in clusters.get(store):
-                        self.record_event('MISSING_CLAIM_ARGUMENT_ASSERTION', missing, claim_id, store)
+                        error_code = 'MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING' if '::EMPTY_TBD::' in missing else 'MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR'
+                        self.record_event(error_code, missing, claim_id, store)
         self.record_event('MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
 
 def check_paths(args):
