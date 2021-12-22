@@ -113,6 +113,8 @@ ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (fo
 ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
 ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' for claim {} not found in {}
 WARNING   MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' for claim {} not found in {}
+ERROR     MISSING_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' not found in {}
+WARNING   MISSING_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' not found in {}
 INFO      MISSING_ARGUMENT_ASSERTION_COUNT {} argument assertions missing.
 ERROR     MISSING_SUBJECT_JUSTIFICATION   Subject justification '{}' not found in {}
 INFO      MISSING_SUBJECT_JUSTIFICATION_COUNT {} subject justifications missing.

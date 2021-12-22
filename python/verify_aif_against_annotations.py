@@ -684,7 +684,8 @@ class AIFProjections(Object):
             stores = ['projection', 'annotation']
             for store in stores:
                 if missing not in clusters.get(store):
-                    self.record_event('MISSING_ARGUMENT_ASSERTION', missing, store)
+                    error_code = 'MISSING_ARGUMENT_ASSERTION_WARNING' if '::EMPTY_TBD::' in missing else 'MISSING_ARGUMENT_ASSERTION_ERROR'
+                    self.record_event(error_code, missing, store)
         self.record_event('MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
 
     def compare_mention_argument_assertions(self, annotation):
@@ -723,7 +724,8 @@ class AIFProjections(Object):
             stores = ['projection', 'annotation']
             for store in stores:
                 if missing not in clusters.get(store):
-                    self.record_event('MISSING_ARGUMENT_ASSERTION', missing, store)
+                    error_code = 'MISSING_ARGUMENT_ASSERTION_WARNING' if '::EMPTY_TBD::' in missing else 'MISSING_ARGUMENT_ASSERTION_ERROR'
+                    self.record_event(error_code, missing, store)
         self.record_event('MISSING_ARGUMENT_ASSERTION_COUNT', count if count else 'No')
 
     def compare_cluster_generic_status(self, annotation):
