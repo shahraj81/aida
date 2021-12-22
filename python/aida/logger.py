@@ -50,7 +50,7 @@ class Logger:
                     DEBUG = 10
                     NOTSET = 0                
         """
-        
+        self.recorded = {}
         self.log_filename = log_filename
         self.event_specs_filename = event_specs_filename
         self.path_name = os.getcwd()
@@ -143,6 +143,9 @@ class Logger:
             event_type = event_object['type']
             event_message = event_object['message'].format(*argslst)
             event_message = '{code} - {message}'.format(code=event_code, message=event_message)
+            if event_message in self.recorded:
+                return
+            self.recorded[event_message] = 1
             if where is not None:
                 event_message += " at " + where['filename'] + ":" + str(where['lineno'])
             if event_type.upper() == "CRITICAL":
