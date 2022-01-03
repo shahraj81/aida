@@ -1,0 +1,40 @@
+PREFIX ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#>
+PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+PREFIX ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#>
+
+SELECT
+	?subject_mention_id
+	?predicate
+	?object_mention_id
+	(GROUP_CONCAT(DISTINCT ?attribute ; SEPARATOR = ",") AS ?attributes)
+WHERE {
+    
+    SELECT DISTINCT
+           ?subject_mention_id
+           ?predicate
+           ?object_mention_id
+           ?attribute
+    WHERE {
+        ?statement1           a                             aida:ClusterMembership .
+        ?statement1           aida:cluster                  ?subject_cluster .
+        ?statement1           aida:clusterMember            ?subject .    
+
+        ?statement2           a                             aida:ClusterMembership .
+        ?statement2           aida:cluster                  ?object_cluster .
+        ?statement2           aida:clusterMember            ?object .    
+
+        ?statement3           rdf:subject                   ?subject .
+        ?statement3           rdf:predicate                 ?predicate .
+        ?statement3           rdf:object                    ?object .
+		OPTIONAL{?statement3           aida:attributes               ?_attribute .}
+
+        BIND( IF( BOUND(?_attribute), strafter(str(?_attribute),str(aida:)), "none") AS ?attribute) .
+        BIND(strafter(str(?subject),str(ldc:)) as ?subject_mention_id)
+        BIND(strafter(str(?object),str(ldc:)) as ?object_mention_id)
+    }
+    ORDER BY ?subject_mention_id ?predicate ?object_mention_id ?attribute
+}
+GROUP BY ?subject_mention_id ?predicate ?object_mention_id
