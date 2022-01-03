@@ -1,0 +1,22 @@
+PREFIX aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#>
+
+select distinct
+	?claim_id
+	?component_type
+	?name
+	?qnode_id
+	?qnode_type
+	?provenance
+	?ke
+
+where {
+    ?claim a aida:Claim .
+    ?claim aida:claimId ?claim_id .
+    ?claim ?component_type ?component .
+    ?component a aida:ClaimComponent .
+		?component aida:componentName ?name .
+    ?component aida:componentIdentity ?qnode_id .
+    ?component aida:componentType ?qnode_type .
+    OPTIONAL { ?component aida:componentProvenance ?provenance . }
+    OPTIONAL { ?component aida:componentKE ?ke .}
+}

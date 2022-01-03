@@ -1,0 +1,35 @@
+PREFIX ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#>
+PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+PREFIX ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#>
+SELECT
+  ?cluster
+  ?prototype
+  ?member
+  (GROUP_CONCAT(DISTINCT ?attribute ; SEPARATOR = ",") AS ?attributes)
+WHERE {
+    SELECT DISTINCT
+      ?cluster
+      ?prototype
+      ?member
+      ?attribute
+
+    WHERE {
+
+        ?_cluster             a                             aida:SameAsCluster .
+        ?_cluster             aida:prototype                ?_prototype .    
+
+        ?statement           a                             aida:ClusterMembership .
+        ?statement           aida:cluster                  ?_cluster .
+        ?statement           aida:clusterMember            ?_member .
+
+        OPTIONAL{?_prototype           aida:attributes               ?_attribute .}
+        BIND( IF( BOUND(?_attribute), strafter(str(?_attribute),str(aida:)), "none") AS ?attribute) .
+        bind(strafter(str(?_cluster),str(ldc:)) as ?cluster)
+        bind(strafter(str(?_prototype),str(ldc:)) as ?prototype)
+        bind(strafter(str(?_member),str(ldc:)) as ?member)
+    }
+}
+GROUP BY ?cluster ?prototype ?member
