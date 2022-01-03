@@ -194,7 +194,7 @@ def main(args):
     # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /data/queries/AIDA_P2_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
+    call_system('cp /data/queries/AIDA_P3_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
 
     count = 0
     kb_filenames = os.listdir(sparql_kb_input)
