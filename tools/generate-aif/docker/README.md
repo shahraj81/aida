@@ -1,6 +1,7 @@
 # How to generate AIF
 
 In order to generate AIF follow the steps given below:
+
 	1. Build the generate-aif docker image,
 	2. Modify paths in Makefile to reflect your system specific locations
 	3. Run the docker, and
