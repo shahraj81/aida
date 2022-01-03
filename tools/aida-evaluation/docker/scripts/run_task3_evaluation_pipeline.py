@@ -65,6 +65,7 @@ def main(args):
     #############################################################################################
 
     runtypes = {
+        'develop': 'developmental',
         'practice': 'LDC2020E11',
         'evaluation': 'LDC2020R17'}
     if args.runtype not in runtypes:
