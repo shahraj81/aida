@@ -1,9 +1,9 @@
 ROOT=/absolute/path/to/aida/tools/generate-aif
 ANNOTATIONS_DIR=/absolute/path/to/annotations
-TA1ANNOTATIONS=LDC2021E15_AIDA_Phase_3_TA1_Practice_Topic_Annotation_V3.0
+TA1ANNOTATIONS=LDC2021E15_AIDA_Phase_3_TA1_Practice_Topic_Annotation_V1.0
 TA2ANNOTATIONS=$(TA1ANNOTATIONS)
 TA3ANNOTATIONS=LDC2021E16_AIDA_Phase_3_TA3_Practice_Topic_Annotation_V2.0
-HOST_OUTPUT_DIR=$(ROOT)/output/$(ANNOTATIONS)
+OUTPUT_DIR=$(ROOT)/output
 
 GRAPHDB_VERSION=9.3.3
 GRAPHDB_EDITION=free
