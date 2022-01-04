@@ -258,27 +258,6 @@ def main(args):
     call_system(cmd)
 
     #############################################################################################
-    # Merge SPARQL output
-    #############################################################################################
-
-    record_and_display_message(logger, 'Merging SPARQL output.')
-
-    log_file = '{logs_directory}/merge-output.log'.format(logs_directory=logs_directory)
-    cmd = 'cd {python_scripts} && \
-            python3.9 augment_output.py \
-            merge \
-            --log {log_file} \
-            --task task3 \
-            {log_specifications} \
-            {sparql_clean_output} \
-            {sparql_merged_output}'.format(python_scripts=python_scripts,
-                                           log_file=log_file,
-                                           log_specifications=log_specifications,
-                                           sparql_clean_output = sparql_clean_output,
-                                           sparql_merged_output = sparql_merged_output)
-    call_system(cmd)
-
-    #############################################################################################
     # Validate SPARQL output
     #############################################################################################
 
