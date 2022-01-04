@@ -369,6 +369,16 @@ class EntityCluster(ERECluster):
         super().__init__(logger, cluster_id)
         del self.mentionframes
 
+    def get_hasNames(self, document_id=None):
+        hasNames = set()
+        for mention in self.get('mentions'):
+            if document_id is not None and mention.get('document_id') != document_id:
+                continue
+            mention_hasName = mention.get('hasName')
+            if mention_hasName is not None:
+                hasNames.add(mention_hasName)
+        return None if len(hasNames) == 0 else list(hasNames)
+
     def get_handle(self, document_id=None):
         handle = None
         for mention in self.get('mentions'):
@@ -398,6 +408,9 @@ class ClusterPrototype(AIFObject):
 
     def get_handle(self, document_id=None):
         return self.get('cluster').get('handle', document_id=document_id)
+
+    def get_hasNames(self, document_id=None):
+        return self.get('cluster').get('hasNames', document_id=document_id)
 
     def get_id(self):
         return 'cluster-{}-prototype'.format(self.get('cluster').get('id'))
@@ -492,6 +505,9 @@ class ClusterPrototype(AIFObject):
     def get_AIF(self, document_id=None):
         logger = self.get('logger')
         handle = self.get('handle', document_id=document_id)
+        hasNames = self.get('hasNames', document_id=document_id)
+        if hasNames is not None:
+            hasNames = ['"{}"'.format(n) for n in hasNames]
         time = self.get('time', document_id=document_id)
         link = self.get('link', document_id=document_id)
         if link is not None and link.__str__().startswith('NIL'):
@@ -501,6 +517,7 @@ class ClusterPrototype(AIFObject):
             'aida:attributes': self.get('attributes', document_id=document_id),
             'aida:informativeJustification': self.get('informativejustifications', document_id=document_id),
             'aida:handle': '"{}"'.format(handle) if handle is not None else None,
+            'aida:hasName': hasNames,
             'aida:link': link,
             'aida:ldcTime': time,
             'aida:system': System(self.get('logger'))
@@ -610,11 +627,13 @@ class EREMention(AIFObject):
             return AIF_triples
         logger = self.get('logger')
         handle = self.get('handle')
+        hasName = self.get('hasName')
         predicates = {
             'a': 'aida:{}'.format(self.get('EREtype')),
             'aida:informativeJustification': self.get('justifiedBy'),
             'aida:justifiedBy': self.get('justifiedBy'),
             'aida:handle': '"{}"'.format(handle) if handle is not None else None,
+            'aida:hasName': '"{}"'.format(hasName) if hasName is not None else None,
             'aida:attributes': self.get('attributes'),
             'aida:ldcTime': self.get('time'),
             'aida:system': self.get('system'),
@@ -677,14 +696,24 @@ class EntityMention(EREMention):
     def get_id(self):
         return self.get('argmention_id')
 
+    def get_hasName(self):
+        if self.get('entry').get('level') == 'nam':
+            omits = self.get('omits')
+            hasName = escape(self.get('text_string'))
+            hasName = None if hasName in omits else hasName
+            return hasName
+
     def get_handle(self):
-        omits = ['EMPTY_NA']
+        omits = self.get('omits')
         handle = escape(self.get('text_string'))
         handle = None if isinstance(handle, float) else handle
         handle = None if handle in omits else handle
         handle = escape(self.get('description')) if handle is None else handle
         handle = None if handle in omits else handle
         return handle
+
+    def get_omits(self):
+        return ['EMPTY_NA']
 
 class EventOrRelationArgument(AIFObject):
     def __init__(self, logger, entry):
