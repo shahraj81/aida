@@ -621,7 +621,7 @@ class AIFProjections(Object):
         for kb in store:
             for entry in store.get(kb):
                 subject = entry.get('?subject_mention_id')
-                justification = Mention(logger, self.get('document_mappings'), entry)
+                justification = entry.get('?predicate_justification')
                 subject_and_justification = '{}::{}'.format(subject, justification.__str__())
                 justifications.get('projection').add(subject_and_justification)
         mentions = set()
