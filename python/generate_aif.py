@@ -391,7 +391,7 @@ class EntityCluster(ERECluster):
                 else:
                     if len(mention_handle) > len(handle):
                         handle = mention_handle
-                    elif len(mention_handle) > len(handle):
+                    elif len(mention_handle) == len(handle):
                         if mention_handle > handle:
                             handle = mention_handle
         if handle is None:
