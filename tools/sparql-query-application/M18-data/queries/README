@@ -1,5 +1,0 @@
-# 7/2/2019
-
-Queries included in this package have been generated using: LDC2019E07_AIDA_Phase_1_Evaluation_Practice_Topic_Annotations_V6.0
-
-This version also incorporates changes to task1, task2 and task3 graph queries such that spans in compound justification are joined using semicolon (;) instead of comma (,).

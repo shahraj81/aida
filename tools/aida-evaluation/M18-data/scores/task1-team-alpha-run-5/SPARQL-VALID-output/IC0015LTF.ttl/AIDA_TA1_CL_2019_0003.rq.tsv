@@ -1,3 +1,0 @@
-?docid	?query_type	?cluster	?type	?infj_span	?t_cv	?cm_cv	?j_cv
-IC0015LTF	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#GPE.Country>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-2017370>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#GPE.Country.Country>	IC0015LTF:HC000030J:(859,0)-(865,0)	1.000000000000	1.000000000000	1.000000000000
-IC0015LTF	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#GPE.Country>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LdcAnnotations#cluster-690791>	<https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#GPE.Country.Country>	IC0015LTF:HC000030J:(992,0)-(1000,0)	1.000000000000	1.000000000000	1.000000000000

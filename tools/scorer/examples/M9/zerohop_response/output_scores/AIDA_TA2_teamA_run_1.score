@@ -1,4 +1,0 @@
-QID/EC          Node  Mode RunID                  GT  Sub NtAssd Correct  Dup Incrct Cntd Right Wrong Ignrd Prec   Recall F1    
-AIDA_ZH_2018_37 E0632 TEXT AIDA_TA2_teamA_run_1   21    8      4       3    0      1    4     3     1     4 0.7500 0.1429 0.2400
-AIDA_ZH_2018_81 E0635 TEXT AIDA_TA2_teamA_run_1   24   14      8       5    1      1    5     4     1     9 0.8000 0.1667 0.2759
-ALL-Micro                  AIDA_TA2_teamA_run_1   45   22     12       8    1      2    9     7     2    13 0.7778 0.1556 0.2593

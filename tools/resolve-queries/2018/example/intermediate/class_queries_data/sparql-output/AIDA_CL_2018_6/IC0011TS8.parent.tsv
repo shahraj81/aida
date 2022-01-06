@@ -1,6 +1,0 @@
-?doceid	?sid	?kfid	?so	?eo	?ulx	?uly	?lrx	?lry	?st	?et	?cv
-"IC0011TSA"					"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>			"1.0"^^<http://www.w3.org/2001/XMLSchema#double>
-"IC0011TSC"					"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>			"1.0"^^<http://www.w3.org/2001/XMLSchema#double>
-"HC00038RQ"			"1246"^^<http://www.w3.org/2001/XMLSchema#int>	"1257"^^<http://www.w3.org/2001/XMLSchema#int>							"1.0"^^<http://www.w3.org/2001/XMLSchema#double>
-"IC0011TSD"					"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>	"0"^^<http://www.w3.org/2001/XMLSchema#int>			"1.0"^^<http://www.w3.org/2001/XMLSchema#double>
-"HC00038RQ"			"98"^^<http://www.w3.org/2001/XMLSchema#int>	"126"^^<http://www.w3.org/2001/XMLSchema#int>							"1.0"^^<http://www.w3.org/2001/XMLSchema#double>

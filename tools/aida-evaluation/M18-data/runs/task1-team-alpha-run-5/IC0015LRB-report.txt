@@ -1,3 +1,0 @@
-A dummy file.
-
-The presence of this file inside this directory tells the aida-evaluation docker that this the corresponding KB is not valid according to the AIF validator therefore the invalid will not be processed by the docker.
