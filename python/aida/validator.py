@@ -49,21 +49,21 @@ class Validator(Object):
         claim_id = entry.get(attribute.get('name'))
         kb_claim_id = entry.get('kb_claim_id')
         if claim_id != kb_claim_id:
-            self.record_event('UNEXPECTED_CLAIM_ID', kb_claim_id, claim_id, entry.get('where'))
+            self.record_event('UNEXPECTED_CLAIM_ID', claim_id, kb_claim_id, entry.get('where'))
         if claim_id not in responses.get('claims'):
             self.record_event('UNKNOWN_CLAIM_ID', claim_id, entry.get('where'))
 
     def validate_claim_component_type(self, responses, schema, entry, attribute):
         allowed_values = ['claimMedium', 'claimer', 'claimerAffiliation', 'claimLocation', 'xVariable']
-        return self.get('validate_set_membership', 'component_type', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        return self.validate_set_membership('component_type', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
 
     def validate_claim_epistemic_status(self, responses, schema, entry, attribute):
         allowed_values = ['EpistemicTrueCertain', 'EpistemicTrueUncertain', 'EpistemicFalseCertain', 'EpistemicFalseUncertain', 'EpistemicUnknown']
-        return self.get('validate_set_membership', 'epistemic_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        return self.validate_set_membership('epistemic_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
 
     def validate_claim_sentiment_status(self, responses, schema, entry, attribute):
         allowed_values = ['SentimentPositive', 'SentimentNegative', 'SentimentMixed', 'SentimentNeutralUnknown']
-        return self.get('validate_set_membership', 'sentiment_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        return self.validate_set_membership('sentiment_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
 
     def validate_cluster_type(self, responses, schema, entry, attribute):
         logger = self.get('logger')
@@ -158,7 +158,7 @@ class Validator(Object):
 
     def validate_negation_status(self, responses, schema, entry, attribute):
         allowed_values = ['Negated', 'NotNegated']
-        return self.get('validate_set_membership', 'negation_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        return self.validate_set_membership('negation_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
 
     def validate_object_type(self, responses, schema, entry, attribute):
         # Do not validate object type in Phase 3
@@ -204,7 +204,7 @@ class Validator(Object):
 
     def validate_set_membership(self, name, allowed_values, value, where):
         if value not in allowed_values:
-            self.record_event('UNKNOWN_VALUE', name, value, ','.join(sorted(allowed_values)), where)
+            self.record_event('UNKNOWN_VALUE', name, value, ', '.join(sorted(allowed_values)), where)
             return False
         return True
 
