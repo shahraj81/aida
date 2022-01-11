@@ -10,7 +10,7 @@ __date__    = "24 January 2020"
 from aida.container import Container
 from aida.ldc_time import LDCTime
 from aida.object import Object
-from aida.utility import get_kb_document_id_from_filename, spanstring_to_object, trim
+from aida.utility import get_kb_claim_id_from_filename, get_kb_document_id_from_filename, spanstring_to_object, trim
 
 class Generator(Object):
     """
@@ -41,7 +41,20 @@ class Generator(Object):
                 present = True
                 date_object.set(field_name, entry.get(field_name))
         entry.set('date', date_object if present else None)
-        entry.get('subject_cluster').get('dates').add(entry.get('date'))
+        if entry.get('schema').get('name') in ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE']:
+            entry.get('subject_cluster').get('dates').add(entry.get('date'))
+
+    def generate_claim(self, responses, entry):
+        claim_id = entry.get('claim_id')
+        claim = responses.get('claim', claim_id)
+        claim.update(entry)
+        entry.set('claim', claim)
+
+    def generate_claim_id(self, responses, entry):
+        claim_id = None
+        if claim_id is None:
+            claim_id = entry.get('kb_claim_id')
+        entry.set('claim_id', claim_id)
 
     def generate_document_id(self, responses, entry):
         document_id = None
@@ -104,6 +117,10 @@ class Generator(Object):
     def generate_end_before(self, responses, entry):
         entry.set('end_before', self.get('date', responses, entry, 'end_before'))
 
+    def generate_kb_claim_id(self, responses, entry):
+        kb_claim_id = get_kb_claim_id_from_filename(entry.get('filename'))
+        entry.set('kb_claim_id', kb_claim_id)
+
     def generate_kb_document_id(self, responses, entry):
         if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK3_GR_RESPONSE':
             return
@@ -127,6 +144,8 @@ class Generator(Object):
         entry.set('start_before', self.get('date', responses, entry, 'start_before'))
 
     def generate_subject_cluster(self, responses, entry):
+        if entry.get('schema').get('name') not in ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE']:
+            return
         cluster_id = entry.get('subject_cluster_id')
         cluster = responses.get('cluster', cluster_id, entry)
         if not cluster.get('frame'):

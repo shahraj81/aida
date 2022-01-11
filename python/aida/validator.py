@@ -45,6 +45,26 @@ class Validator(Object):
             self.record_event('UNDEFINED_METHOD', method_name)
         return method(responses, schema, entry, attribute)
 
+    def validate_claim_id(self, responses, schema, entry, attribute):
+        claim_id = entry.get(attribute.get('name'))
+        kb_claim_id = entry.get('kb_claim_id')
+        if claim_id != kb_claim_id:
+            self.record_event('UNEXPECTED_CLAIM_ID', kb_claim_id, claim_id, entry.get('where'))
+        if claim_id not in responses.get('claims'):
+            self.record_event('UNKNOWN_CLAIM_ID', claim_id, entry.get('where'))
+
+    def validate_claim_component_type(self, responses, schema, entry, attribute):
+        allowed_values = ['claimMedium', 'claimer', 'claimerAffiliation', 'claimLocation', 'xVariable']
+        return self.get('validate_set_membership', 'component_type', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+
+    def validate_claim_epistemic_status(self, responses, schema, entry, attribute):
+        allowed_values = ['EpistemicTrueCertain', 'EpistemicTrueUncertain', 'EpistemicFalseCertain', 'EpistemicFalseUncertain', 'EpistemicUnknown']
+        return self.get('validate_set_membership', 'epistemic_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+
+    def validate_claim_sentiment_status(self, responses, schema, entry, attribute):
+        allowed_values = ['SentimentPositive', 'SentimentNegative', 'SentimentMixed', 'SentimentNeutralUnknown']
+        return self.get('validate_set_membership', 'sentiment_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+
     def validate_cluster_type(self, responses, schema, entry, attribute):
         logger = self.get('logger')
         cluster_type = entry.get(attribute.get('name'))
@@ -88,7 +108,10 @@ class Validator(Object):
                 self.record_event('UNEXPECTED_DOCUMENT', kb_document_id, document_id, entry.get('where'))
                 return False
         return True
-    
+
+    def validate_kb_claim_id(self, responses, schema, entry, attribute):
+        return self.validate_claim_id(responses, schema, entry, attribute)
+
     def validate_kb_document_id(self, responses, schema, entry, attribute):
         return self.validate_document_id(responses, schema, entry, attribute)
 
@@ -122,6 +145,9 @@ class Validator(Object):
         if metatype not in allowed_metatypes:
             self.record_event('INVALID_METATYPE', metatype, ','.join(allowed_metatypes), entry.get('where'))
             return False
+        if attribute.get('name') == 'subject_cluster_member_metatype' and metatype == 'Entity':
+            self.record_event('UNEXPECTED_VALUE', 'metatype', metatype, entry.get('where'))
+            return False
         cluster = entry.get('cluster')
         if cluster and cluster.get('metatype') != metatype:
             return False
@@ -130,16 +156,12 @@ class Validator(Object):
             return False
         return True
 
+    def validate_negation_status(self, responses, schema, entry, attribute):
+        allowed_values = ['Negated', 'NotNegated']
+        return self.get('validate_set_membership', 'negation_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+
     def validate_object_type(self, responses, schema, entry, attribute):
-        logger = self.get('logger')
-        object_type = entry.get(attribute.get('name'))
-        valid_object_type = False
-        for metatype in ['Event', 'Relation', 'Entity']:
-                if responses.get('ontology_type_mappings').has(metatype, object_type):
-                    valid_object_type = True
-        if not valid_object_type:
-            logger.record_event('UNKNOWN_TYPE', object_type, entry.get('where'))
-            return False
+        # Do not validate object type in Phase 3
         return True
 
     def validate_predicate(self, responses, schema, entry, attribute):
@@ -180,16 +202,14 @@ class Validator(Object):
             return False
         return True
 
-    def validate_subject_type(self, responses, schema, entry, attribute):
-        logger = self.get('logger')
-        subject_type = entry.get(attribute.get('name'))
-        valid_object_type = False
-        for metatype in ['Event', 'Relation']:
-                if responses.get('ontology_type_mappings').has(metatype, subject_type):
-                    valid_object_type = True
-        if not valid_object_type:
-            logger.record_event('UNKNOWN_TYPE', subject_type, entry.get('where'))
+    def validate_set_membership(self, name, allowed_values, value, where):
+        if value not in allowed_values:
+            self.record_event('UNKNOWN_VALUE', name, value, ','.join(sorted(allowed_values)), where)
             return False
+        return True
+
+    def validate_subject_type(self, responses, schema, entry, attribute):
+        # Do not validate subject type in Phase 3
         return True
 
     def validate_entries_in_cluster(self, responses, schema, entry, attribute):
@@ -270,6 +290,7 @@ class Validator(Object):
 
     def validate_value_provenance_triples(self, responses, schema, entry, attribute):
         provenances = entry.get(attribute.get('name')).split(';')
+        apply_correction = True if len(provenances) == 1 else False
         if len(provenances) > 2:
             self.record_event('IMPROPER_COMPOUND_JUSTIFICATION', entry.get(attribute.get('name')), entry.get('where'))
             return False
@@ -279,7 +300,7 @@ class Validator(Object):
                                             entry,
                                             attribute.get('name'),
                                             provenance,
-                                            apply_correction=False):
+                                            apply_correction=apply_correction):
                 return False
         return True
 
