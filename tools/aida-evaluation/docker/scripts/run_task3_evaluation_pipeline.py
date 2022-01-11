@@ -81,8 +81,6 @@ def main(args):
 
     python_scripts          = '/scripts/aida/python'
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
-    ontology_type_mappings  = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
-    slotname_mappings       = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
     encoding_modality       = '/data/AUX-data/encoding_modality.txt'
     coredocs                = '/data/AUX-data/{}.coredocs.txt'.format(ldc_package_id)
     parent_children         = '/data/AUX-data/{}.parent_children.tsv'.format(ldc_package_id)
@@ -290,8 +288,6 @@ def main(args):
             --log {log_file} \
             --task task3 \
             {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -304,8 +300,6 @@ def main(args):
             {sparql_valid_output}'.format(python_scripts=python_scripts,
                                            log_file=log_file,
                                            log_specifications=log_specifications,
-                                           ontology_type_mappings=ontology_type_mappings,
-                                           slotname_mappings=slotname_mappings,
                                            encoding_modality=encoding_modality,
                                            coredocs=coredocs,
                                            parent_children=parent_children,
