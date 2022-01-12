@@ -330,28 +330,6 @@ def main(args):
         message = 'SPARQL output had {} error(s).'.format(num_errors)
     record_and_display_message(logger, '{}'.format(message))
 
-    #############################################################################################
-    # Replacing handle-span with text, if provided
-    #############################################################################################
-
-    record_and_display_message(logger, 'Replacing handle-span with text, if provided.')
-
-    log_file = '{logs_directory}/augment-handle-output.log'.format(logs_directory=logs_directory)
-    cmd = 'cd {python_scripts} && \
-            python3.9 augment_output.py \
-            handle \
-            --log {log_file} \
-            --task task3 \
-            {log_specifications} \
-            {ltf_directory} \
-            {sparql_valid_output} \
-            {sparql_augmented_output}'.format(python_scripts=python_scripts,
-                                              log_file=log_file,
-                                              log_specifications=log_specifications,
-                                              ltf_directory=ltf_directory,
-                                              sparql_valid_output = sparql_valid_output,
-                                              sparql_augmented_output = sparql_augmented_output)
-    call_system(cmd)
     record_and_display_message(logger, 'Done.')
 
 if __name__ == '__main__':
