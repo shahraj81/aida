@@ -9,24 +9,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     make \
-    python3 \
-    python3-pip \
     unzip \
     perlbrew \
     tzdata \
     vim
-
-#-------------------------------------------------------------
-# Install munkres
-#-------------------------------------------------------------
-
-RUN pip3 install munkres
-
-#-------------------------------------------------------------
-#  Install awscli
-#-------------------------------------------------------------
-
-RUN pip3 --no-cache-dir install --upgrade awscli
 
 #-------------------------------------------------------------
 #  Install Java OpenJDK 8
@@ -46,15 +32,45 @@ RUN dpkg-reconfigure -f noninteractive tzdata
 
 RUN apt-get install build-essential checkinstall -y
 RUN apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev \
-    libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev wget -y
+    libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev liblzma-dev wget -y
 WORKDIR /opt
-RUN wget https://www.python.org/ftp/python/3.9.0/Python-3.9.0.tgz
-RUN tar xzf Python-3.9.0.tgz
-WORKDIR /opt/Python-3.9.0
+RUN wget https://www.python.org/ftp/python/3.9.2/Python-3.9.2.tgz
+RUN tar xzf Python-3.9.2.tgz
+WORKDIR /opt/Python-3.9.2
 RUN ./configure --enable-optimizations
 RUN make altinstall
 WORKDIR /opt
-RUN rm -rf Python-3.9.0.tgz Python-3.9.0
+RUN rm -rf Python-3.9.2.tgz Python-3.9.2
+
+#-------------------------------------------------------------
+# Upgrade pip and install munkres
+#-------------------------------------------------------------
+
+RUN python3.9 -m pip install --upgrade pip
+
+#-------------------------------------------------------------
+# Install munkres
+#-------------------------------------------------------------
+
+RUN pip3.9 install munkres
+
+#-------------------------------------------------------------
+#  Install awscli
+#-------------------------------------------------------------
+
+RUN pip3.9 --no-cache-dir install --upgrade awscli
+
+#-------------------------------------------------------------
+#  Install arch
+#-------------------------------------------------------------
+
+RUN pip3.9 install arch
+
+#-------------------------------------------------------------
+#  Install numpy
+#-------------------------------------------------------------
+
+RUN pip3.9 install numpy
 
 #-------------------------------------------------------------
 #  Install GraphDB
@@ -63,7 +79,7 @@ RUN rm -rf Python-3.9.0.tgz Python-3.9.0
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=9.3.3
+ARG version=9.10.1
 ARG edition=free
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
@@ -96,7 +112,7 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b AIDAED-v2020.3.0 https://github.com/shahraj81/aida.git
+RUN git clone -b skr-develop https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 

@@ -21,11 +21,10 @@ class Task2Pool(Object):
     Class representing pool of task2 responses.
     """
 
-    def __init__(self, logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, runs_to_pool_file, queries_to_pool_file, max_kit_size, batch_id, input_dir, previous_pools):
+    def __init__(self, logger, **kwargs):
         super().__init__(logger)
-        self.batch_id = batch_id
-        self.document_boundaries = document_boundaries
-        self.document_mappings = document_mappings
+        for key in kwargs:
+            self.set(key, kwargs[key])
         self.header = [
             'QUERY_ID',
             'DESCRIPTOR',
@@ -37,19 +36,12 @@ class Task2Pool(Object):
             'MENTION_TYPE',
             'FQEC'
             ]
-        self.input_dir = input_dir
-        self.max_kit_size = max_kit_size
         self.last_response_ids = {}
-        self.ontology_type_mappings = ontology_type_mappings
         self.previous_pool = {}
-        self.previous_pool_dirs = previous_pools
         self.pool = {}
         self.queries_to_pool = {}
-        self.queries_to_pool_file = queries_to_pool_file
         self.query_kits = {}
         self.responses = {}
-        self.runs_to_pool_file = runs_to_pool_file
-        self.slot_mappings = slot_mappings
         self.load_queries_to_pool_file()
         self.load_previous_pools()
         self.load_responses()
@@ -133,20 +125,26 @@ class Task2Pool(Object):
         sorted_clusters = multisort(list(clusters.values()), (('linking_confidence', True),
                                                               ('cluster_id', False)))
         selected_clusters = {}
+        cluster_rank = 1
         for sorted_cluster in sorted_clusters:
             if C==0: break
             cluster_id = sorted_cluster.get('cluster_id')
             if cluster_id not in selected_clusters:
-                selected_clusters[cluster_id] = cluster_responses[cluster_id]
+                selected_clusters[cluster_id] = {
+                    'cluster_responses': cluster_responses[cluster_id],
+                    'cluster_rank': cluster_rank
+                    }
                 C -= 1
+                cluster_rank += 1
         return selected_clusters
 
     def get_top_K_cluster_justifications(self, cluster_responses, K):
         justifications = {}
-        for entry in cluster_responses:
+        for entry in cluster_responses['cluster_responses']:
             if not entry.get('valid'):
                 self.record_event('EXPECTING_VALID_ENTRY', entry.get('where'))
             self.validate_descriptor(entry)
+            entry.set('is_pooled', False)
             document_id = entry.get('document_id')
             justification = entry.get('mention_span_text')
             confidence = trim_cv(entry.get('justification_confidence'))
@@ -159,11 +157,16 @@ class Task2Pool(Object):
         sorted_justifications = multisort(list(justifications.values()), (('confidence', True),
                                                                           ('justification', False)))
         selected_justifications = {}
+        response_rank = 1
         for sorted_justification in sorted_justifications:
             if K == 0: break
-            selected_justifications[sorted_justification.get('justification')] = 1
-            sorted_justification.get('entry').set('pooled', 1)
+            selected_justifications[sorted_justification.get('justification')] = {
+                'response_rank': response_rank,
+                'cluster_rank': cluster_responses['cluster_rank']
+                }
+            sorted_justification.get('entry').set('is_pooled', True)
             K -= 1
+            response_rank += 1
         return selected_justifications
 
     def add(self, responses):
@@ -219,6 +222,7 @@ class Task2Pool(Object):
         document_mappings = self.get('document_mappings')
         document_boundaries = self.get('document_boundaries')
         runs_to_pool_file = self.get('runs_to_pool_file')
+        if runs_to_pool_file is None: return
         for entry in FileHandler(logger, runs_to_pool_file):
             run_id = entry.get('run_id')
             run_dir = '{input}/{run_id}/SPARQL-VALID-output'.format(input=self.get('input_dir'), run_id=run_id)
@@ -231,7 +235,9 @@ class Task2Pool(Object):
     def load_queries_to_pool_file(self):
         logger = self.get('logger')
         queries_to_pool = self.get('queries_to_pool')
-        for entry in FileHandler(logger, self.get('queries_to_pool_file')):
+        queries_to_pool_file = self.get('queries_to_pool_file')
+        if queries_to_pool_file is None: return
+        for entry in FileHandler(logger, queries_to_pool_file):
             queries_to_pool[entry.get('query_id')] = {
                 'query_id'  : entry.get('query_id'),
                 'entrypoint': entry.get('entrypoint'),
@@ -247,6 +253,7 @@ class Task2Pool(Object):
         return False
 
     def validate_descriptor(self, entry):
+        if self.get('DONOT_VALIDATE_DESCRIPTOR'): return
         query_id = os.path.basename(entry.get('filename')).replace('.rq.tsv', '')
         query_link_target = entry.get('query_link_target')
         link_target = entry.get('link_target')

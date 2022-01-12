@@ -8,21 +8,17 @@ __version__ = "0.0.0.1"
 __date__    = "3 February 2020"
 
 from aida.object import Object
+from aida.container import Container
 
 class Scorer(Object):
     """
     AIDA Scorer class.
     """
 
-    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
+    def __init__(self, logger, **kwargs):
         super().__init__(logger)
-        self.annotated_regions = annotated_regions
-        self.runid = system_responses.get('runid')
-        self.gold_responses = gold_responses
-        self.system_responses = system_responses
-        self.cluster_alignment = cluster_alignment
-        self.cluster_self_similarities = cluster_self_similarities
-        self.separator = separator
+        for key in kwargs:
+            self.set(key, kwargs[key])
         self.score_responses()
 
     def get_cluster(self, system_or_gold, document_id, cluster_id):
@@ -39,14 +35,59 @@ class Scorer(Object):
                 frame = self.get('{}_responses'.format(system_or_gold)).get('document_frames').get(document_id).get(cluster_id)
         return frame
 
-
     def get_core_documents(self):
         return self.get('gold_responses').get('document_mappings').get('core_documents')
 
-    def print_scores(self, filename):
-        fh = open(filename, 'w')
-        fh.write(self.__str__())
-        fh.close()
+    def get_languages(self, score, scores):
+        languages = [score.get('language')]
+        flag = True
+        for element in scores.values():
+            if element.get('language') == 'ALL':
+                flag = False
+        if flag:
+            languages.append('ALL')
+        return languages
 
-    def __str__(self):
-        return self.get('scores').__str__()
+    def get_metatypes(self, score, scores):
+        metatypes = [score.get('metatype')]
+        flag = True
+        for element in scores.values():
+            if element.get('metatype') == 'ALL':
+                flag = False
+        if flag:
+            metatypes.append('ALL')
+        return metatypes
+
+    def aggregate_scores(self, scores, score_class):
+        aggregates = {}
+        for score in scores.values():
+            languages = self.get('languages', score, scores)
+            metatypes = self.get('metatypes', score, scores)
+            for language in languages:
+                for metatype in metatypes:
+                    group_by = language + ',' + metatype
+                    if group_by not in aggregates:
+                        aggregates[group_by] = score_class(self.get('logger'),
+                                                           aggregate=True,
+                                                           language=language,
+                                                           metatype=metatype,
+                                                           run_id=self.get('run_id'),
+                                                           summary=True,
+                                                           elements=Container(self.get('logger')))
+                    aggregate_scores = aggregates[group_by]
+                    aggregate_scores.get('elements').add(score)
+        for score in sorted(aggregates.values(), key=self.order):
+            scores.add(score)
+
+    def order(self, k):
+        language, metatype = k.get('language'), k.get('metatype')
+        metatype = '_ALL' if metatype == 'ALL' else metatype
+        language = '_ALL' if language == 'ALL' else language
+        return '{language}:{metatype}'.format(metatype=metatype, language=language)
+
+    def print_scores(self, filename, separator):
+        scores = self.get('scores')
+        scores.set('separator', separator)
+        fh = open(filename, 'w')
+        fh.write(scores.__str__())
+        fh.close()

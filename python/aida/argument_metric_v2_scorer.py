@@ -18,8 +18,8 @@ class ArgumentMetricScorerV2(ArgumentMetricScorerV1):
     V2 refers to the variant where we take into account the correctness of the argument assertion justification.
     """
 
-    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
-        super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger, **kwargs)
 
     def is_predicate_justification_correct(self, system_predicate_justifications, gold_predicate_justifications):
         document_mappings = self.get('gold_responses').get('document_mappings')

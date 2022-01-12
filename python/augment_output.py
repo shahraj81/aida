@@ -5,8 +5,8 @@ from aida.file_handler import FileHandler
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
-__version__ = "0.0.0.1"
-__date__    = "9 November 2020"
+__version__ = "2022.0.0.1"
+__date__    = "10 January 2022"
 
 from aida.logger import Logger
 from aida.object import Object
@@ -45,13 +45,13 @@ class Handle(Object):
                                    input_dir])
         check_for_paths_non_existance([output_dir])
         self.log_filename = log_filename
-        self.log_specification = log_specifications
+        self.log_specifications = log_specifications
         self.task = task
         self.ltf_directory = ltf
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.logger = Logger(self.get('log_filename'),
-                        self.get('log_specification'),
+                        self.get('log_specifications'),
                         sys.argv)
 
     def augment_file(self, input_file, output_file):
@@ -59,23 +59,39 @@ class Handle(Object):
         print('--input:{}'.format(input_file))
         print('--output:{}'.format(output_file))
 
+        missing_handles = ['[unknown]', '', '""']
+
         fh = FileHandler(self.get('logger'), input_file, encoding='utf-8')
         with open(output_file, 'w', encoding='utf-8') as program_output:
             program_output.write('{header}\n'.format(header=fh.get('header').get('line')))
             for entry in fh:
                 line = entry.get('line')
-                handle = entry.get('?objectc_handle')
-                if handle and len(handle.split(':')) == 3:
-                    pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
-                    match = pattern.match(handle)
-                    if match:
-                        document_element_id = match.group(2)
-                        start_x, start_y, end_x, end_y = map(lambda ID: int(match.group(ID)), [3, 4, 5, 6])
-                        handle_text = self.get('handle_text', document_element_id, start_x, start_y, end_x, end_y)
-                        if handle_text:
-                            entry.set('?objectc_handle', handle_text)
-                            self.record_event('DEFAULT_INFO', 'replacing handle span \'{}\' with text \'{}\''.format(handle, handle_text), entry.get('where'))
-                        line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
+                handle_text = entry.get('?objectc_handle')
+                if handle_text is not None:
+                    if handle_text in missing_handles:
+                        corrected_handle_text = self.get('handle_text', entry.get('?oinf_j_span'))
+                        if corrected_handle_text:
+                            entry.set('?objectc_handle', corrected_handle_text)
+                            self.record_event('DEFAULT_INFO',
+                                              'replacing missing handle \'{}\' with text \'{}\''.format(handle_text, corrected_handle_text),
+                                              entry.get('where'))
+                            line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
+                        else:
+                            self.record_event('DEFAULT_INFO', "handle \'{}\' found to be missing but no replacements made".format(handle_text), entry.get('where'))
+                    elif len(handle_text.split(':')) == 3:
+                        handle_span = handle_text
+                        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
+                        match = pattern.match(handle_span)
+                        if match:
+                            handle_text_from_span = self.get('handle_text', handle_span)
+                            if handle_text_from_span:
+                                entry.set('?objectc_handle', handle_text_from_span)
+                                self.record_event('DEFAULT_INFO',
+                                                  'replacing handle span \'{}\' with text \'{}\''.format(handle_span, handle_text_from_span),
+                                                  entry.get('where'))
+                                line = '{}\n'.format('\t'.join([entry.get(column) for column in entry.get('header').get('columns')]))
+                            else:
+                                self.record_event('DEFAULT_INFO', "handle span \'{}\' found but not replaced with text".format(handle_text), entry.get('where'))
                 program_output.write('{line}'.format(line=line))
 
     def augment_task1_sparql_output(self):
@@ -102,7 +118,12 @@ class Handle(Object):
             output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
             self.augment_file(input_file, output_file)
 
-    def get_handle_text(self, document_element_id, start_x, start_y, end_x, end_y):
+    def get_handle_text(self, document_span):
+        pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')
+        match = pattern.match(document_span)
+        document_element_id = match.group(2)
+        start_x, end_x = map(lambda ID: int(match.group(ID)), [3, 5])
+
         pattern = re.compile('^<SEG id=".*?" start_char="(\d+)" end_char="(\d+)">$')
         span_text = None
         with open('{ltf}/{doceid}.ltf.xml'.format(ltf=self.get('ltf_directory'),
@@ -152,12 +173,12 @@ class Merge(Object):
                                    input_dir])
         check_for_paths_non_existance([output_dir])
         self.log_filename = log_filename
-        self.log_specification = log_specifications
+        self.log_specifications = log_specifications
         self.task = task
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.logger = Logger(self.get('log_filename'),
-                        self.get('log_specification'),
+                        self.get('log_specifications'),
                         sys.argv)
 
     def merge_files(self, input_files, output_file):
@@ -196,14 +217,15 @@ class Merge(Object):
             output_directory = directory.replace(self.get('input_dir'), self.get('output_dir'))
             if not os.path.exists(output_directory):
                 os.mkdir(output_directory)
-            input_file1 = '{i}/AIDA_P2_TA3_GR_0001A.rq.tsv'.format(i=directory)
-            input_file2 = '{i}/AIDA_P2_TA3_GR_0001B.rq.tsv'.format(i=directory)
-            output_file = '{o}/AIDA_P2_TA3_GR_0001.rq.tsv'.format(o=output_directory)
+            input_file1 = '{i}/AIDA_P3_TA3_GR_0001A.rq.tsv'.format(i=directory)
+            input_file2 = '{i}/AIDA_P3_TA3_GR_0001B.rq.tsv'.format(i=directory)
+            output_file = '{o}/AIDA_P3_TA3_GR_0001.rq.tsv'.format(o=output_directory)
             self.merge_files([input_file1, input_file2], output_file)
 
-            input_file = '{i}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(i=directory)
-            output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
-            self.merge_files([input_file], output_file)
+            for code in ['CC', 'CT', 'OC', 'TM']:
+                input_file = '{i}/AIDA_P3_TA3_{c}_0001.rq.tsv'.format(i=directory, c=code)
+                output_file = '{o}/AIDA_P3_TA3_{c}_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')), c=code)
+                self.merge_files([input_file], output_file)
 
     def __call__(self):
         method_name = 'merge_{task}_sparql_output'.format(task=self.get('task'))

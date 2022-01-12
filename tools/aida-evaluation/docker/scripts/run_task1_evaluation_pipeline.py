@@ -10,6 +10,7 @@ __version__ = "2019.1.0"
 __date__    = "21 Aug 2020"
 
 from logger import Logger
+from multiprocessing import Pool
 import argparse
 import json
 import os
@@ -37,7 +38,7 @@ def get_problems(logs_directory):
         fh.close()
     return num_errors, stats
 
-def generate_results_file_and_exit(logger, logs_directory):
+def get_metric_classes_specs():
 
     metric_classes_specs = """
         # Filename                     Metric                              ColumnValuePairs               ScoreColumn
@@ -123,24 +124,64 @@ def generate_results_file_and_exit(logger, logs_directory):
           TemporalMetric-scores.txt    TemporalMetric_SPA_Relations_S      Language:SPA,Metatype:Relation Similarity
 
         # ---
-        # TypeMetric
+        # TypeMetricV1
         #
-          TypeMetric-scores.txt        TypeMetric_F1                       Language:ALL,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_F1                       Language:ALL,Metatype:ALL      F1
 
-          TypeMetric-scores.txt        TypeMetric_Events_F1                Language:ALL,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_Entities_F1              Language:ALL,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_Events_F1                Language:ALL,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_Entities_F1              Language:ALL,Metatype:Entity   F1
 
-          TypeMetric-scores.txt        TypeMetric_ENG_F1                   Language:ENG,Metatype:ALL      F1
-          TypeMetric-scores.txt        TypeMetric_ENG_Events_F1            Language:ENG,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_ENG_Entities_F1          Language:ENG,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_ENG_F1                   Language:ENG,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_ENG_Events_F1            Language:ENG,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_ENG_Entities_F1          Language:ENG,Metatype:Entity   F1
 
-          TypeMetric-scores.txt        TypeMetric_RUS_F1                   Language:RUS,Metatype:ALL      F1
-          TypeMetric-scores.txt        TypeMetric_RUS_Events_F1            Language:RUS,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_RUS_Entities_F1          Language:RUS,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_RUS_F1                   Language:RUS,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_RUS_Events_F1            Language:RUS,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_RUS_Entities_F1          Language:RUS,Metatype:Entity   F1
 
-          TypeMetric-scores.txt        TypeMetric_SPA_F1                   Language:SPA,Metatype:ALL      F1
-          TypeMetric-scores.txt        TypeMetric_SPA_Events_F1            Language:SPA,Metatype:Event    F1
-          TypeMetric-scores.txt        TypeMetric_SPA_Entities_F1          Language:SPA,Metatype:Entity   F1
+          TypeMetricV1-scores.txt        TypeMetricV1_SPA_F1                   Language:SPA,Metatype:ALL      F1
+          TypeMetricV1-scores.txt        TypeMetricV1_SPA_Events_F1            Language:SPA,Metatype:Event    F1
+          TypeMetricV1-scores.txt        TypeMetricV1_SPA_Entities_F1          Language:SPA,Metatype:Entity   F1
+
+        # ---
+        # TypeMetricV2
+        #
+          TypeMetricV2-scores.txt        TypeMetricV2_MAP                       Language:ALL,Metatype:ALL      AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_Events_MAP                Language:ALL,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_Entities_MAP              Language:ALL,Metatype:Entity   AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_ENG_MAP                   Language:ENG,Metatype:ALL      AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_ENG_Events_MAP            Language:ENG,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_ENG_Entities_MAP          Language:ENG,Metatype:Entity   AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_RUS_MAP                   Language:RUS,Metatype:ALL      AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_RUS_Events_MAP            Language:RUS,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_RUS_Entities_MAP          Language:RUS,Metatype:Entity   AvgPrec
+
+          TypeMetricV2-scores.txt        TypeMetricV2_SPA_MAP                   Language:SPA,Metatype:ALL      AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_SPA_Events_MAP            Language:SPA,Metatype:Event    AvgPrec
+          TypeMetricV2-scores.txt        TypeMetricV2_SPA_Entities_MAP          Language:SPA,Metatype:Entity   AvgPrec
+
+        # ---
+        # TypeMetricV3
+        #
+          TypeMetricV3-scores.txt        TypeMetricV3_MAP                       Language:ALL,Metatype:ALL      AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_Events_MAP                Language:ALL,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_Entities_MAP              Language:ALL,Metatype:Entity   AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_ENG_MAP                   Language:ENG,Metatype:ALL      AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_ENG_Events_MAP            Language:ENG,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_ENG_Entities_MAP          Language:ENG,Metatype:Entity   AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_RUS_MAP                   Language:RUS,Metatype:ALL      AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_RUS_Events_MAP            Language:RUS,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_RUS_Entities_MAP          Language:RUS,Metatype:Entity   AvgPrec
+
+          TypeMetricV3-scores.txt        TypeMetricV3_SPA_MAP                   Language:SPA,Metatype:ALL      AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_SPA_Events_MAP            Language:SPA,Metatype:Event    AvgPrec
+          TypeMetricV3-scores.txt        TypeMetricV3_SPA_Entities_MAP          Language:SPA,Metatype:Entity   AvgPrec
 
         # ---
         # FrameMetric
@@ -163,7 +204,10 @@ def generate_results_file_and_exit(logger, logs_directory):
           FrameMetric-scores.txt       FrameMetric_SPA_Relations_F1        Language:SPA,Metatype:Relation F1
 
     """
+    return metric_classes_specs
 
+def generate_results_file_and_exit(logger, logs_directory):
+    metric_classes_specs = get_metric_classes_specs()
     metric_column_value_pairs = {}
     metric_classes = {}
     for line in metric_classes_specs.split('\n'):
@@ -236,6 +280,7 @@ def generate_results_file_and_exit(logger, logs_directory):
 
     fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
+    scores['RunID'] = args.run
     scores['Total'] = scores['FrameMetric_F1']
     scores['Errors'] = num_problems
     scores['ErrorStats'] = problem_stats
@@ -523,7 +568,7 @@ def main(args):
         python_scripts = '/scripts/aida/python'
 
         cmd = 'cd {python_scripts} && \
-                python3 clean_sparql_output.py \
+                python3.9 clean_sparql_output.py \
                 {log_specifications} \
                 {sparql_output} \
                 {sparql_clean_output}'.format(python_scripts=python_scripts,
@@ -540,7 +585,7 @@ def main(args):
 
     log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 validate_responses.py \
+            python3.9 validate_responses.py \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
@@ -579,7 +624,7 @@ def main(args):
 
     log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 filter_responses.py \
+            python3.9 filter_responses.py \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
@@ -620,7 +665,7 @@ def main(args):
 
     log_file = '{logs_directory}/align-clusters.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 align_clusters.py \
+            python3.9 align_clusters.py \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
@@ -671,7 +716,7 @@ def main(args):
 
     log_file = '{logs_directory}/score_submission.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3 score_submission.py \
+            python3.9 score_submission.py task1 \
             --log {log_file} \
             {log_specifications} \
             {ontology_type_mappings} \
@@ -710,7 +755,54 @@ def main(args):
                                 scores=scores)
     call_system(cmd)
 
+    #############################################################################################
+    # generate confidence intervals
+    #############################################################################################
+
+    record_and_display_message(logger, 'Generating confidence intervals.')
+    log_file = '{logs_directory}/confidence_intervals.log'.format(logs_directory=logs_directory)
+    metric_classes_specs = get_metric_classes_specs()
+    added = {}
+    cmds = []
+    for line in metric_classes_specs.split('\n'):
+        line = line.strip()
+        if line == '': continue
+        if line.startswith('#'): continue
+        filename, metricname, column_value_pairs, score_columnname = line.split()
+        scorer_name = filename.split('-')[0]
+        if scorer_name in added: continue
+        cmd = 'cd {python_scripts} && \
+            python3.9 generate_confidence_intervals.py \
+            --macro \
+            --log {log_file} \
+            {log_specifications} \
+            {primary_key} \
+            {score_columnname} \
+            {aggregate} \
+            {document_id} \
+            {run_id} \
+            {input} \
+            {pretty_output} \
+            {tab_output}'.format(python_scripts=python_scripts,
+                                log_file=log_file,
+                                log_specifications=log_specifications,
+                                primary_key='RunID,Language,Metatype',
+                                score_columnname=score_columnname,
+                                aggregate='DocID:ALL-Micro,DocID:ALL-Macro',
+                                document_id='DocID',
+                                run_id='RunID',
+                                input='{}/{}-scores.tab'.format(scores, scorer_name),
+                                pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
+                                tab_output='{}/{}-ci.tab'.format(scores, scorer_name))
+        cmds.append(cmd)
+        added[scorer_name] = 1
+    with Pool(8) as p:
+        p.map(call_system, cmds)
+
+    #############################################################################################
     # generate results.json file
+    #############################################################################################
+
     record_and_display_message(logger, 'Generating results.json file.')
     generate_results_file_and_exit(logger, logs_directory)
 

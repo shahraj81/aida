@@ -12,14 +12,10 @@ class ArgumentMetricScore(Score):
     """
     AIDA class for Argument Extraction evaluation metric score.
     """
-    def __init__(self, logger, run_id, document_id, language, metatype, precision, recall, f1, summary=False):
+    def __init__(self, logger, **kwargs):
         super().__init__(logger)
-        self.run_id = run_id
-        self.document_id = document_id
-        self.language = language
-        self.metatype = metatype
-        self.metatype_sortkey = '_ALL' if metatype == 'ALL' else metatype
-        self.precision = precision
-        self.recall = recall
-        self.f1 = f1
-        self.summary = summary
+        for key in kwargs:
+            self.set(key, kwargs[key])
+        if 'summary' not in kwargs:
+            self.set('summary', False)
+        self.metatype_sortkey = '_ALL' if self.get('metatype') == 'ALL' else self.get('metatype')

@@ -1,0 +1,4 @@
+?claim_id	?component_type	?name	?qnode_id	?qnode_type	?provenance	?ke
+CLL0C0496PB.000082	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimMedium>	Twitter	Q918	Q3220391	Twitter	
+CLL0C0496PB.000082	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimer>	Piers Corbyn	Q1992717	Q2310145	Piers Corbyn	
+CLL0C0496PB.000082	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#xVariable>	the world’s population	EMPTY_TBD	Q11188		

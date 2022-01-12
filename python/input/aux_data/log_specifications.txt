@@ -1,6 +1,10 @@
 type      code                            message
+INFO      ALIGNMENT_INFO                  QUERY_ID:{} CLUSTER_ID:{} FQEC:{}
+INFO      AP_RANKED_LIST                  QUERY_ID:{} NUM_GROUND_TRUTH:{} CLUSTER_ID:{} FQEC:{} RANK:{} MENTION:{} POST_POLICY_ASSESSMENT:{} WEIGHT:{} SUM_PRECISION:{}
+INFO      TYPE_METRIC_AP_RANKED_LIST      METRIC:{} DOCUMENT_ID:{} GOLD_CLUSTER:{} SYSTEM_CLUSTER:{} NUM_GROUND_TRUTH:{} RANK:{} TYPE:{} LABEL:{} WEIGHT:{} NUM_CORRECT:{} SUM_PRECISION:{}
 INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 INFO      CLUSTER_NOT_ANNOTATED           Response line skipped because all mentions of cluster '{}' were outside annotated regions
+ERROR     CONFLICTING_ASSESSMENTS         Conflicting assessment for '{}' in kits corresponding to queries {},{}
 ERROR     DEFAULT_ERROR                   Error encountered {} {}
 WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
@@ -9,6 +13,7 @@ CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
 CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
+WARNING   ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED '{}' met pooling criteria but was not assessed
 ERROR     EXPECTING_VALID_ENTRY           Code expected entry to be valid but it was not. This happens when either the code is not run on the output of the response validator or when the response validator did not remove an invalid entry.
 INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
@@ -21,11 +26,13 @@ ERROR     INVALID_DATE                    Cluster {} has invalid {} {}
 ERROR     INVALID_DATE_RANGE              Cluster {} has invalid date range: {} > {}
 ERROR     INVALID_IMPORTANCE_VALUE        Invalid importance value '{}'
 ERROR     INVALID_METATYPE                Invalid metatype (expected one from '{}', provided '{}')
+CRITICAL  INVALID_POSTPOLICY_CATEGORIZATION Invalid value for post-policy response categorization '{}'
 ERROR     INVALID_PREDICATE_NO_UNDERSCORE No underscore provided in predicate '{}'
 ERROR     INVALID_PROVENANCE_FORMAT       Invalid provenance '{}'
 WARNING   INVALID_TIME_RANGE              Time range '{}' for mention '{}' is invalid
 INFO      KB_STATS                        Input directory contains {} KBs in total. (valid {}, invalid {})
 CRITICAL  KEY_IS_NONE                     key 'None' used
+INFO      MACRO_SCORES                    DOCID:{} MACRO_SCORE:{} INPUT:{}
 INFO      MENTION_NOT_ANNOTATED           Response skipped because mention '{}' is outside the annotated regions
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
 ERROR     MISSING_AWS_CREDENTIALS         AWS credentials missing
@@ -51,14 +58,17 @@ ERROR     NOT_AN_NUMBER                   '{}' is not a number
 ERROR     NOTHING_TO_SCORE                Nothing to score.
 CRITICAL  OUT_OF_DATE_FILE                Out of date file '{}' (missing {} '{}')
 CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.
+CRITICAL  OVERWRITING_POSTPOLICY_CATEGORIZATION Attempting to overwrite post-policy categorization '{}' by '{}'
+INFO      PAIR_WISE_AP                    QUERY_ID: {} CLUSTER_ID: {} FQEC: {} AP: {}
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
+INFO      RESPONSE_CATEGORIZATION_INFO    QUERY_ID:{} CLUSTER_ID:{} MENTION:{} LINK_CONFIDENCE:{} CLUSTER_RANK:{} JUSTIFICATION_CONFIDENCE:{} WEIGHT:{} RESPONSE_RANK:{} PRE_POLICY:{} POST_POLICY:{}
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
 INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
 WARNING   SPAN_OFF_BOUNDARY_CORRECTED     Correcting span '{}' to '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     SPAN_OFF_BOUNDARY_ERROR         Cannot correct therefore removing span '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
-INFO      TEMPORAL_METRIC_SCORE_INFO      TEMPORAL_METRIC_SCORE_INFO: {}: DOCUMENT: {} GOLD_CLUSTER: {} TYPES: {} SYSTEM_CLUSTER: {} TYPES:{}
+INFO      TYPE_METRIC_SCORE_INFO          {} {} DOCUMENT:{} GOLD_CLUSTER:{} TYPES:{} SYSTEM_CLUSTER:{} TYPES:{}
 INFO      ANNOTATED_TYPES_INFO            ANNOTATED_TYPES_INFO: DOCUMENT: {} TYPES_ANNOTATED: {}
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
@@ -68,7 +78,9 @@ ERROR     UNKNOWN_PREDICATE               Unknown predicate '{}'
 ERROR     UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
 ERROR     UNKNOWN_RUNTYPE                 Unknown runtype {} (expected one from: {})
 ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
+ERROR     UNKNOWN_VALUE                   Unknown {} '{}' (expected one from '{}')
 CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} cluster '{}' is aligned to gold {} cluster '{}'
+ERROR     UNEXPECTED_CLAIM_ID             Unexpected claim ID '{}' (expected '{}')
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
@@ -89,3 +101,37 @@ ERROR     UNEXPECTED_SUBJECT_TYPE         Type '{}' of subject '{}' used in pred
 WARNING   MISSING_SPAN_FOR_MENTION        No span for mention '{}'
 WARNING   ARBITRARY_INF_JUSTIFICATION     Unable to select a single informative justification deterministically for node/mention '{}'; picking one arbitrarily
 CRITICAL  UNEXPECTED_NUM_INF_JUSTIFICATIONS Unexpected number of informative justifications
+WARNING   UNHANDLED_DATE_TYPE             Unknown datetype '{}' found
+WARNING   INVALID_EVENT_OR_RELATION_ARGUMENT Event or relation argument is invalid.
+CRITICAL  UKNOWN_ATTRIBUTE                Unknown attribute '{}'
+ERROR     MISSING_MENTION                 Mention '{}' present in {} but missing from {}
+INFO      MISSING_MENTION_COUNT           {} mentions missing.
+ERROR     UNEXPECTED_ATTRIBUTES           {} has unexpected attributes in SPARQL output (found: '{}', expected: '{}')
+INFO      UNEXPECTED_MENTION_ATTRIBUTES_COUNT {} attributes mismatched.
+ERROR     UNEXPECTED_TYPES                {} has unexpected types found ({}: '{}', {}: '{}')
+INFO      UNEXPECTED_MENTION_TYPES_COUNT  {} mention types mismatched.
+ERROR     UNEXPECTED_PROTOTYPE_ID         Unexpected prototype ID (found: {}, expect: {})
+ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (found: {}, expected: {})
+ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
+ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' for claim {} not found in {}
+WARNING   MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' for claim {} not found in {}
+ERROR     MISSING_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' not found in {}
+WARNING   MISSING_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' not found in {}
+INFO      MISSING_ARGUMENT_ASSERTION_COUNT {} argument assertions missing.
+ERROR     MISSING_SUBJECT_JUSTIFICATION   Subject justification '{}' not found in {}
+INFO      MISSING_SUBJECT_JUSTIFICATION_COUNT {} subject justifications missing.
+INFO      MISSING_PROTOTYPE_ARGUMENT_ASSERTION_COUNT {} prototype argument assertions missing.
+ERROR     MISSING_ARGUMENT_ASSERTION_ATTRIBUTE Argument assertion attribute '{}' not found in {}
+INFO      MISSING_ARGUMENT_ASSERTION_ATTRIBUTE_COUNT {} argument assertion attributes missing.
+INFO      MISSING_PROTOTYPE_ARGUMENT_ASSERTION_ATTRIBUTE_COUNT {} prototype argument assertion attributes missing.
+WARNING   UNEXPECTED_NUM_ARGUMENTS_WARNING Unexpected number of arguments for {} (found: {})
+ERROR     UNEXPECTED_NUM_ARGUMENTS_ERROR   Unexpected number of arguments for {} (found: {})
+ERROR     UNEXPECTED_DATE                  Unexpected date for {} (found {} and {})
+INFO      UNEXPECTED_DATE_COUNT            {} unexpected dates.
+ERROR     LINK_EXISTS                      link '{}' exists on mention '{}'
+ERROR     INVALID_TIME_FIELD_VALUE         Invalid {} {}
+ERROR     EMPTY_MENTION                    Empty mention {}
+ERROR     CLAIM_MISMATCHED                 Claim {} mismatched
+ERROR     CLAIM_FIELD_MISMATCHED           Claim {}: value for field '{}' mismatched (found: '{}' in annotation and '{}' in SPARQL output)
+ERROR     CLAIM_FIELD_MISSING              Claim {}: field '{}' missing in {}
+ERROR     MENTION_NOT_IN_CLUSTER           Mention '{}' is not in any cluster

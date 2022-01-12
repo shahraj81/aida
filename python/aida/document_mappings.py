@@ -75,6 +75,9 @@ class DocumentMappings(Object):
                 document_element.set('language', delang)
                 document.add_document_element(document_element)
 
+    def get_text_document(self, ID):
+        return self.get('documents').get(ID).get('text_document')
+
     def get_language(self, ID):
         """
         Returns the language of the document element whose ID matches the parameter

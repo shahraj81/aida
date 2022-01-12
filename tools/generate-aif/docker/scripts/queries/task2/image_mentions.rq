@@ -1,0 +1,39 @@
+PREFIX ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#>
+PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+# All mentions in images
+
+PREFIX ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#>
+SELECT DISTINCT
+  (?docid as ?root_uid)
+  ?mention_id
+  (?doceid as ?child_uid)
+  (CONCAT(str(?ulx), ",", str(?uly), ",", str(?lrx), ",", str(?lry)) as ?mediamention_coordinates)
+  ?type
+
+WHERE {
+
+    ?statement2           a                             aida:ClusterMembership .
+    ?statement2           aida:cluster                  ?cluster .
+    ?statement2           aida:clusterMember            ?member .
+
+    ?statement3           a                             rdf:Statement .
+    ?statement3           rdf:object                    ?type .
+    ?statement3           rdf:predicate                 rdf:type .
+    ?statement3           rdf:subject                   ?member .
+    ?statement3           aida:justifiedBy              ?justification .
+
+    ?justification        a                             aida:ImageJustification .
+    ?justification        aida:source                   ?doceid .
+    ?justification        aida:sourceDocument           ?docid .
+    ?justification        aida:boundingBox              ?bb  .
+    ?bb                   aida:boundingBoxUpperLeftX    ?ulx .
+    ?bb                   aida:boundingBoxUpperLeftY    ?uly .
+    ?bb                   aida:boundingBoxLowerRightX   ?lrx .
+    ?bb                   aida:boundingBoxLowerRightY   ?lry .
+    
+    bind(strafter(str(?member),str(ldc:)) as ?mention_id)
+}

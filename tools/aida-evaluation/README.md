@@ -12,13 +12,13 @@
 
 # Introduction
 
-This document describes how to run the AIDA Task1/Task2 evaluation pipeline for M36 practice data using the AIDA-Evaluation docker as a standalone utility.
+This document describes how to run the AIDA Task3 evaluation pipeline for M54 develop data using the AIDA-Evaluation docker as a standalone utility.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to build the docker image?
 
-The docker has been tested with `graphdb-free-9.3.3-dist` but this section also describes how to configure it to work with a different version.
+The docker has been tested with `graphdb-free-9.10.1-dist` but this section also describes how to configure it to work with a different version.
 
 Independent of which version of GraphDB you are using, you would need to first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` (as shown below) to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
 
@@ -30,7 +30,7 @@ Independent of which version of GraphDB you are using, you would need to first u
 
 In order to build the docker image with the tested version of GraphDB you would need to:
 
-1. Download `graphdb-free-9.3.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`, and
+1. Download `graphdb-free-9.10.1-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`, and
 
 2. Run the following command:
 
@@ -56,22 +56,15 @@ make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
 
 # How to apply the docker on a test run?
 
-The docker comes loaded with two example runs: one for `task1` and the other for `task2`. The example runs are stored at `./M36-practice/runs/example-task1-run` and `./M36-practice/runs/example-task2-run`, respectively, and the output is stored at `./M36-practice/scores/example-task1-run` and `./M36-practice/scores/example-task2-run`, respectively.
+The docker comes loaded with one example task3 run. The example runs are stored at `./M54-develop/runs/example-task3-run` and the output is stored at `./M54-develop/scores/example-task3-run`.
 
 Note that the docker expects the output directory to be empty.
 
-In order to run the docker on the `task1` example run, you may execute the following:
+In order to run the docker on the `task3` example run, you may execute the following:
 
 ~~~
 cd docker
-make task1-example
-~~~
-
-In order to run the docker on the `task2` example run, you may execute the following:
-
-~~~
-cd docker
-make task2-example
+make task3-example
 ~~~
 
 If you see the message `ERROR: Output directory /score is not empty`, you would need to remove the pre-existing output.
@@ -88,68 +81,25 @@ The only difference that you should see is in the timestamps inside the log file
 
 # How to apply the docker to your run?
 
-## How to apply the docker to a task1 run?
+## How to apply the docker to a task3 run?
 
-In order to run the docker on a `task1` run, you will need to specify the following when calling `make task1`:
-
-  1. The Run ID,
-  2. The input directory, and
-  3. The output directory.
-
-You may run the following command after changing the values for the variables RUNID, HOST_INPUT_DIR, and HOST_OUTPUT_DIR.
+In order to run the docker on a `task3` KB you may run the following command:
 
 ~~~
-make task1 \
+make task3 \
   RUNID=your_run_id \
+  HOST_DATA_DIR=/absolute/path/to/data \
   HOST_INPUT_DIR=/absolute/path/to/your/run \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-Note that the scorer uses a default value of 0.1 for all IOU thresholds. If you would like to change these values, you may update thresholds on the following line of the Makefile:
+For `task3` the docker expects either the a KB or an S3 location of the KB as input. The name of the file (in the input directory `HOST_INPUT_DIR`) tells the docker whether the input is a KB or an S3 location of the KB (see below for details).
 
-~~~
-ENG_TEXT_IOU_THRESHOLD=0.1
-SPA_TEXT_IOU_THRESHOLD=0.1
-RUS_TEXT_IOU_THRESHOLD=0.1
-IMAGE_IOU_THRESHOLD=0.1
-VIDEO_IOU_THRESHOLD=0.1
-~~~
-
-Alternatively, you may also supply the new values when you run the docker using:
-
-~~~
-make task1 \
-  RUNID=your_run_id \
-  ENG_TEXT_IOU_THRESHOLD=your_threshold \
-  SPA_TEXT_IOU_THRESHOLD=your_threshold \
-  RUS_TEXT_IOU_THRESHOLD=your_threshold \
-  IMAGE_IOU_THRESHOLD=your_threshold \
-  VIDEO_IOU_THRESHOLD=your_threshold \
-  HOST_INPUT_DIR=/absolute/path/to/your/run \
-  HOST_OUTPUT_DIR=/absolute/path/to/output
-~~~
-
-## How to apply the docker to a task2 run?
-
-In order to run the docker on a `task2` KB you may run the following command:
-
-~~~
-make task2 \
-  RUNID=your_run_id \
-  HOST_INPUT_DIR=/absolute/path/to/your/run \
-  HOST_OUTPUT_DIR=/absolute/path/to/output
-~~~
-
-For `task2` the docker expects either the a KB or an S3 location of the KB as input. The name of the file (in the input directory `HOST_INPUT_DIR`) tells the docker whether the input is a KB or an S3 location of the KB (see below for details).
-
-### Providing Task2 KB
-When the input is a KB the name of the file should be `task2_kb.ttl`.
-
-### Providing S3 location of Task2 KB
+### Providing S3 location of Task3 KB
 When the input is an S3 location of the KB, the file should be named `s3_location.txt`. The docker expects exactly one line in this file, and that line should be of the form:
 
 ~~~
-s3://aida-phase2-ta-performers/.../*-nist.tgz
+s3://aida-phase[23]-ta-performers/.../*-nist.tgz
 ~~~
 
 The compressed file at the above location should expand into a directory containing a sub-directory called `NIST` which should contain a single file (with extension ttl) containing task2 KB.
@@ -167,61 +117,28 @@ make task2 \
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
-## How to apply the docker to a task3 run?
-
-Applying the docker to a task3 run is similar to that of task2, except that you would need to call `make task3 ...` instead of `make task2 ...`. Secondly, the AUX-data should have a directory containing `ltf` files from the source corpus.
-
 # How to apply the docker to your run in the evaluation setting?
 
 This section is written for the leaderboard usage or NIST-internal usage.
 
-In order to run the docker on the `evaluation` data (rather than the default `practice` data), you would need to supply the value `evaluation` to the variable named `RUNTYPE` when calling `make task1` or `make task2` by modifying the Makefile to reflect the following:
+In order to run the docker on the `practice` or `evaluation` data (rather than the default `develop` data), you would need to supply the value `practice` or `evaluation` to the variable named `RUNTYPE` when calling `make task3` by modifying the Makefile to reflect the following:
 
 ~~~
 RUNTYPE=evaluation
 ~~~
 
-Alternatively, you may run the following command for `task1`:
+Alternatively, you may run the following command for `task3`:
 
 ~~~
-make task1 \
-  RUNID=your_run_id \
+make task3 \
+  ...
   RUNTYPE=evaluation
-  ENG_TEXT_IOU_THRESHOLD=your_threshold \
-  SPA_TEXT_IOU_THRESHOLD=your_threshold \
-  RUS_TEXT_IOU_THRESHOLD=your_threshold \
-  IMAGE_IOU_THRESHOLD=your_threshold \
-  VIDEO_IOU_THRESHOLD=your_threshold \
-  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
-  HOST_INPUT_DIR=/absolute/path/to/your/run \
-  HOST_OUTPUT_DIR=/absolute/path/to/output
+  HOST_DATA_DIR=... \
+  HOST_INPUT_DIR=... \
+  HOST_OUTPUT_DIR=...
 ~~~
 
-In order to run the docker in the evaluation setting for `task2` you may run the following command when providing the KB as input:
-
-~~~
-make task2 \
-  RUNID=your_run_id \
-  RUNTYPE=evaluation \
-  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
-  HOST_INPUT_DIR=/absolute/path/to/your/run \
-  HOST_OUTPUT_DIR=/absolute/path/to/output
-~~~
-
-You may run the following command when providing the S3 location of the `task2` KB as input:
-
-~~~
-make task2 \
-  RUNID=your_run_id \
-  RUNTYPE=evaluation \
-  AWS_ACCESS_KEY_ID=your_aws_access_key_id \
-  AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
-  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
-  HOST_INPUT_DIR=/absolute/path/to/your/run \
-  HOST_OUTPUT_DIR=/absolute/path/to/output
-~~~
-
-Note that you must specify the required `evaluation` auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `practice` auxiliary data, driven from the practice corpus and annotations, and using this default value will make the docker run in the `practice` setting.
+Note that you must specify the required `practice` (or `evaluation`) auxiliary data, driven from the practice (or evaluation) corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `develop` auxiliary data crafted to show an example. Using this default value will make the docker run with the `develop` data.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -236,75 +153,27 @@ You may also want to take a look at the input directories of the `task1` and `ta
 
 # What does the output directory contain?
 
-## Task1
-
-The `task1` output directory contains the following:
-
-| Name                      |  Description                                          |
-| --------------------------|-------------------------------------------------------|
-| alignment                 | The directory containing information about alignment between system and gold clusters. |
-| logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
-| queries                   | The directory containing SPARQL queries applied to KBs. |
-| results.json              | The results JSON file to be used by the leaderboard. |
-| scores                    | The directory containing various task1 scores. |
-| similarities              | The directory containing information about similarities between system clusters, and between gold clusters. |
-| SPARQL-CLEAN-output       | The directory containing cleaned SPARQL output. |
-| SPARQL-FILTERED-output    | The directory containing filtered responses i.e. responses that are within annotated regions. |
-| SPARQL-KB-input           | The directory containing KBs validated by AIF validator. SPARQL queries are applied to these KBs.|
-| SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
-| SPARQL-VALID-output       | The directory containing valid SPARQL output. |
-
-## Task2
-
-The `task2` output directory contains the following:
-
-| Name                      |  Description                                          |
-| --------------------------|-------------------------------------------------------|
-| logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
-| queries                   | The directory containing SPARQL queries applied to KBs. |
-| SPARQL-KB-input           | The directory containing KBs to which SPARQL queries were applied.|
-| SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
-| SPARQL-VALID-output       | The directory containing valid SPARQL output. |
-
 ## Task3
 
 The `task3` output directory contains the following:
 
+SPARQL-CLEAN-output  SPARQL-KB-source     SPARQL-VALID-output  logs
+SPARQL-KB-input      SPARQL-MERGED-output SPARQL-output        queries
+
 | Name                      |  Description                                          |
 | --------------------------|-------------------------------------------------------|
 | logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
 | queries                   | The directory containing SPARQL queries applied to KBs. |
+| SPARQL-KB-source          | The directory containing AWS location of the KB (if available). |
 | SPARQL-KB-input           | The directory containing KBs to which SPARQL queries were applied.|
 | SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
 | SPARQL-CLEAN-output       | The directory containing cleaned SPARQL output. |
 | SPARQL-MERGED-output      | The directory containing merged SPARQL output. |
 | SPARQL-VALID-output       | The directory containing valid SPARQL output. |
-| SPARQL-AUGMENTED-output   | The directory containing augmented SPARQL output. |
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What does the logs directory contain?
-
-## Task1
-
-The `task1` logs directory contains the following log files:
-
-| Name                            |  Description            |
-| --------------------------------|-------------------------|
-| align-clusters.log              | The log file generated when aligning gold and system clusters. |
-| filter-responses.log            | The log file generated when filtering responses. |
-| run.log                         | The main log file recording major events by the docker. |
-| score_submission.log            | The log file generated by the scorer. |
-| validate-responses.log          | The log file generated by the validator. |
-
-## Task2
-
-The `task2` logs directory contains the following log files:
-
-| Name                            |  Description            |
-| --------------------------------|-------------------------|
-| run.log                         | The main log file recording major events by the docker. |
-| validate-responses.log          | The log file generated by the validator. |
 
 ## Task3
 
@@ -314,7 +183,6 @@ The `task3` logs directory contains the following log files:
 | --------------------------------|-------------------------|
 | run.log                         | The main log file recording major events by the docker. |
 | validate-responses.log          | The log file generated by the validator. |
-| augment-handle-output.log       | The log file generated by the script that replaces handle-spans with text, if provided. |
 | merge-output.log                | The log file generated by the script that merges output from the two variants of graph queries into one. |
 
 
@@ -322,7 +190,10 @@ The `task3` logs directory contains the following log files:
 
 # Revision History
 
-## 11/10/2020
+## 01/12/2022:
+* Evaluation pipeline modified to work on Phase3 Task3 input. This README has been revised accordingly.
+
+## 11/10/2020:
 * Evaluation pipeline modified to work on Task3 input. This README has been revised accordingly.
 
 ## 10/20/2020:

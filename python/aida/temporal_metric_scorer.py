@@ -26,14 +26,8 @@ class TemporalMetricScorer(Scorer):
                       {'name': 'system_cluster_id','header': 'SystemClusterID', 'format': 's',    'justify': 'L'},
                       {'name': 'similarity',       'header': 'Similarity',      'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
-    def __init__(self, logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator=None):
-        super().__init__(logger, annotated_regions, gold_responses, system_responses, cluster_alignment, cluster_self_similarities, separator)
-
-    def order(self, k):
-        language, metatype = k.split(':')
-        metatype = '_ALL' if metatype == 'ALL' else metatype
-        language = '_ALL' if language == 'ALL' else language
-        return '{language}:{metatype}'.format(metatype=metatype, language=language)
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger, **kwargs)
 
     def compute_temporal_similarity(self, gold_date_range, system_date_range):
         k = self.get('temporal_tuple', gold_date_range)
@@ -101,8 +95,6 @@ class TemporalMetricScorer(Scorer):
 
     def score_responses(self):
         scores = []
-        mean_similarities = {}
-        counts = {}
         for document_id in self.get('core_documents'):
             # add scores corresponding to all gold clusters
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
@@ -128,38 +120,21 @@ class TemporalMetricScorer(Scorer):
                     if len(gold_cluster.get('dates').keys()) > 1:
                         self.record_event('UNEXPECTED_NUM_DATES', gold_cluster_id, document_id)
                     similarity = self.get('temporal_similarity', list(gold_cluster.get('dates').values())[0], list(system_cluster.get('dates').values()))
-                for metatype_key in ['ALL', metatype]:
-                    for language_key in ['ALL', language]:
-                        key = '{language}:{metatype}'.format(metatype=metatype_key, language=language_key)
-                        mean_similarities[key] = mean_similarities.get(key, 0) + similarity
-                        counts[key] = counts.get(key, 0) + 1
-                score = TemporalMetricScore(self.logger,
-                                           self.get('runid'),
-                                           document_id,
-                                           language,
-                                           metatype,
-                                           gold_cluster_id,
-                                           system_cluster_id,
-                                           similarity)
+                score = TemporalMetricScore(logger=self.logger,
+                                            run_id=self.get('run_id'),
+                                            document_id=document_id,
+                                            language=language,
+                                            metatype=metatype,
+                                            gold_cluster_id=gold_cluster_id,
+                                            system_cluster_id=system_cluster_id,
+                                            similarity=similarity)
                 scores.append(score)
 
-        scores_printer = ScorePrinter(self.logger, self.printing_specs, self.separator)
+        scores_printer = ScorePrinter(self.logger, self.printing_specs)
         for score in multisort(scores, (('document_id', False),
                                         ('metatype', False),
                                         ('gold_cluster_id', False),
                                         ('system_cluster_id', False))):
             scores_printer.add(score)
-        for key in sorted(mean_similarities, key=self.order):
-            mean_similarity = mean_similarities[key] / counts[key] if counts[key] else 0
-            language, metatype = key.split(':')
-            mean_score = TemporalMetricScore(self.logger,
-                                            self.get('runid'),
-                                            'Summary',
-                                            language,
-                                            metatype,
-                                            '',
-                                            '',
-                                            mean_similarity,
-                                            summary = True)
-            scores_printer.add(mean_score)
+        self.aggregate_scores(scores_printer, TemporalMetricScore)
         self.scores = scores_printer
