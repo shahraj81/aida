@@ -125,6 +125,12 @@ def get_deepcopy_of_mention_object(m):
         mc.set(copy_attribure, m.get(copy_attribure))
     return mc
 
+def get_kb_claim_id_from_filename(filename):
+    """
+    Gets the source claim ID of the KB from filename provided as argument.
+    """
+    return get_kb_document_id_from_filename(filename)
+
 def get_kb_document_id_from_filename(filename):
     """
     Gets the source document ID of the KB from filename provided as argument.

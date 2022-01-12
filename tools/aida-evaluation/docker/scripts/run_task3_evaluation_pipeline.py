@@ -65,6 +65,7 @@ def main(args):
     #############################################################################################
 
     runtypes = {
+        'develop': 'develop',
         'practice': 'LDC2020E11',
         'evaluation': 'LDC2020R17'}
     if args.runtype not in runtypes:
@@ -80,8 +81,6 @@ def main(args):
 
     python_scripts          = '/scripts/aida/python'
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
-    ontology_type_mappings  = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
-    slotname_mappings       = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
     encoding_modality       = '/data/AUX-data/encoding_modality.txt'
     coredocs                = '/data/AUX-data/{}.coredocs.txt'.format(ldc_package_id)
     parent_children         = '/data/AUX-data/{}.parent_children.tsv'.format(ldc_package_id)
@@ -194,7 +193,7 @@ def main(args):
     # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /data/queries/AIDA_P2_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
+    call_system('cp /data/queries/AIDA_P3_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
 
     count = 0
     kb_filenames = os.listdir(sparql_kb_input)
@@ -289,8 +288,6 @@ def main(args):
             --log {log_file} \
             --task task3 \
             {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -303,8 +300,6 @@ def main(args):
             {sparql_valid_output}'.format(python_scripts=python_scripts,
                                            log_file=log_file,
                                            log_specifications=log_specifications,
-                                           ontology_type_mappings=ontology_type_mappings,
-                                           slotname_mappings=slotname_mappings,
                                            encoding_modality=encoding_modality,
                                            coredocs=coredocs,
                                            parent_children=parent_children,
@@ -335,28 +330,6 @@ def main(args):
         message = 'SPARQL output had {} error(s).'.format(num_errors)
     record_and_display_message(logger, '{}'.format(message))
 
-    #############################################################################################
-    # Replacing handle-span with text, if provided
-    #############################################################################################
-
-    record_and_display_message(logger, 'Replacing handle-span with text, if provided.')
-
-    log_file = '{logs_directory}/augment-handle-output.log'.format(logs_directory=logs_directory)
-    cmd = 'cd {python_scripts} && \
-            python3.9 augment_output.py \
-            handle \
-            --log {log_file} \
-            --task task3 \
-            {log_specifications} \
-            {ltf_directory} \
-            {sparql_valid_output} \
-            {sparql_augmented_output}'.format(python_scripts=python_scripts,
-                                              log_file=log_file,
-                                              log_specifications=log_specifications,
-                                              ltf_directory=ltf_directory,
-                                              sparql_valid_output = sparql_valid_output,
-                                              sparql_augmented_output = sparql_augmented_output)
-    call_system(cmd)
     record_and_display_message(logger, 'Done.')
 
 if __name__ == '__main__':

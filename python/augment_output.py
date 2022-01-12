@@ -5,8 +5,8 @@ from aida.file_handler import FileHandler
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
-__version__ = "0.0.0.1"
-__date__    = "9 November 2020"
+__version__ = "2022.0.0.1"
+__date__    = "10 January 2022"
 
 from aida.logger import Logger
 from aida.object import Object
@@ -217,14 +217,15 @@ class Merge(Object):
             output_directory = directory.replace(self.get('input_dir'), self.get('output_dir'))
             if not os.path.exists(output_directory):
                 os.mkdir(output_directory)
-            input_file1 = '{i}/AIDA_P2_TA3_GR_0001A.rq.tsv'.format(i=directory)
-            input_file2 = '{i}/AIDA_P2_TA3_GR_0001B.rq.tsv'.format(i=directory)
-            output_file = '{o}/AIDA_P2_TA3_GR_0001.rq.tsv'.format(o=output_directory)
+            input_file1 = '{i}/AIDA_P3_TA3_GR_0001A.rq.tsv'.format(i=directory)
+            input_file2 = '{i}/AIDA_P3_TA3_GR_0001B.rq.tsv'.format(i=directory)
+            output_file = '{o}/AIDA_P3_TA3_GR_0001.rq.tsv'.format(o=output_directory)
             self.merge_files([input_file1, input_file2], output_file)
 
-            input_file = '{i}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(i=directory)
-            output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
-            self.merge_files([input_file], output_file)
+            for code in ['CC', 'CT', 'OC', 'TM']:
+                input_file = '{i}/AIDA_P3_TA3_{c}_0001.rq.tsv'.format(i=directory, c=code)
+                output_file = '{o}/AIDA_P3_TA3_{c}_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')), c=code)
+                self.merge_files([input_file], output_file)
 
     def __call__(self):
         method_name = 'merge_{task}_sparql_output'.format(task=self.get('task'))

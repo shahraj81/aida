@@ -78,7 +78,9 @@ ERROR     UNKNOWN_PREDICATE               Unknown predicate '{}'
 ERROR     UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
 ERROR     UNKNOWN_RUNTYPE                 Unknown runtype {} (expected one from: {})
 ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
+ERROR     UNKNOWN_VALUE                   Unknown {} '{}' (expected one from '{}')
 CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} cluster '{}' is aligned to gold {} cluster '{}'
+ERROR     UNEXPECTED_CLAIM_ID             Unexpected claim ID '{}' (expected '{}')
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')

@@ -112,7 +112,7 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b AIDAED-v2020.3.0 https://github.com/shahraj81/aida.git
+RUN git clone -b FEATURE-b50004 https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
