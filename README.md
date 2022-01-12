@@ -2,6 +2,12 @@
 
 Tools and utilities for supporting AIDA evaluations.
 
+## Tools and utilities for Phase-III evaluation
+
+| Name | Description | Location | Latest release branch |
+|---|---|---|---|
+| AIDA-Evaluation Docker | Tool for applying the evaluation pipeline to task3 submissions | tools/aida-evaluation | AIDAED-v2022.0.1 |
+
 ## Tools and utilities for Phase-II evaluation
 
 | Name | Description | Location | Latest release branch |
