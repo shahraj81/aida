@@ -1,0 +1,5 @@
+01/12/2022 05:00:41 PM - run_task3_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task3_evaluation_pipeline.py, arguments:--run task3-run1 --runtype develop}
+01/12/2022 05:00:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Docker is using develop data.
+01/12/2022 05:00:42 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Inspecting the input directory.
+01/12/2022 05:00:42 PM - run_task3_evaluation_pipeline.py - ERROR - NOTHING_TO_SCORE - Nothing to score.
+01/12/2022 05:00:42 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Nothing to score.
