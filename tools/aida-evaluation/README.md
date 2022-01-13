@@ -102,12 +102,12 @@ When the input is an S3 location of the KB, the file should be named `s3_locatio
 s3://aida-phase[23]-ta-performers/.../*-nist.tgz
 ~~~
 
-The compressed file at the above location should expand into a directory containing a sub-directory called `NIST` which should contain a single file (with extension ttl) containing task2 KB.
+The compressed file at the above location should expand into a directory containing a sub-directory called `NIST` which should contain a single file (with extension ttl) containing task3 KB.
 
 Note that when supplying an S3 location you must also provide your own AWS credentials using for example the following command:
 
 ~~~
-make task2 \
+make task3 \
   RUNID=your_run_id \
   AWS_ACCESS_KEY_ID=your_aws_access_key_id \
   AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
@@ -143,11 +143,11 @@ Note that you must specify the required `practice` (or `evaluation`) auxiliary d
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What should the input directory contain?
-For `task1`, the input directory should contain all the `task1` KBs along with corresponding AIF report files.
+For `task3`, the input directory should contain all the `task3` claim KBs along with corresponding report files from the AIF validator, if any.
 
-See the section: [How to apply the docker to a task2 run?](#how-to-apply-the-docker-to-a-task2-run) for details on the input directory structure for `task2` submission.
+See the section: [How to apply the docker to a task3 run?](#how-to-apply-the-docker-to-a-task3-run) for details on the input directory structure for `task3` submission.
 
-You may also want to take a look at the input directories of the `task1` and `task2` example runs located at `./M36-practice/runs/` to get an idea of how to structure your input directories.
+You may also want to take a look at the input directories of the `task3` example runs located at `./M54-develop/runs/` to get an idea of how to structure your input directories.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
