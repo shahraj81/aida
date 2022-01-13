@@ -50,8 +50,11 @@ class Validator(Object):
         kb_claim_id = entry.get('kb_claim_id')
         if claim_id != kb_claim_id:
             self.record_event('UNEXPECTED_CLAIM_ID', claim_id, kb_claim_id, entry.get('where'))
+            return False
         if claim_id not in responses.get('claims'):
             self.record_event('UNKNOWN_CLAIM_ID', claim_id, entry.get('where'))
+            return False
+        return True
 
     def validate_claim_component_type(self, responses, schema, entry, attribute):
         allowed_values = ['claimMedium', 'claimer', 'claimerAffiliation', 'claimLocation', 'xVariable']
