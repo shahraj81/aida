@@ -319,7 +319,7 @@ def main(args):
 
     log_file = '{logs_directory}/generate-arf.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
-            python3.9 validate_responses.py \
+            python3.9 generate_arf.py \
             --log {log_file} \
             --task task3 \
             {log_specifications} \
