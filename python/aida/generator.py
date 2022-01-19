@@ -60,6 +60,9 @@ class Generator(Object):
         document_id = None
         if entry.get('kb_document_id'):
             document_id = entry.get('kb_document_id')
+        elif entry.get('claim_id'):
+            claim = responses.get('claims').get(entry.get('claim_id'))
+            document_id = claim.get('outer_claim').get('document_id')
         elif entry.get('object_informative_justification_span_text'):
             span_object = spanstring_to_object(entry.get('logger'), entry.get('object_informative_justification_span_text'))
             document_id = span_object.get('document_id')
