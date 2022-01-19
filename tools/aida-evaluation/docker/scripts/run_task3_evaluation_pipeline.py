@@ -321,7 +321,6 @@ def main(args):
     cmd = 'cd {python_scripts} && \
             python3.9 generate_arf.py \
             --log {log_file} \
-            --task task3 \
             {log_specifications} \
             {encoding_modality} \
             {coredocs} \
