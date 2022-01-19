@@ -125,7 +125,8 @@ class Generator(Object):
         entry.set('kb_claim_id', kb_claim_id)
 
     def generate_kb_document_id(self, responses, entry):
-        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK3_GR_RESPONSE':
+        if entry.get('schema').get('name') in ['AIDA_PHASE2_TASK3_GR_RESPONSE',
+                                               'AIDA_PHASE3_TASK3_TM_RESPONSE']:
             return
         if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK2_ZH_RESPONSE':
             return
