@@ -32,7 +32,6 @@ WHERE {
     ?cluster              aida:prototype                ?prototype .
     ?prototype            a                             ?metatype .
 
-    ?statement3           a                             rdf:Statement .
     ?statement3           rdf:object                    ?type .
     ?statement3           rdf:predicate                 rdf:type .
     ?statement3           rdf:subject                   ?member .
