@@ -12,7 +12,7 @@
 
 # Introduction
 
-This document describes how to run the AIDA Task3 evaluation pipeline for M54 develop data using the AIDA-Evaluation docker as a standalone utility.
+This document describes how to run the AIDA Task3 evaluation pipeline as part of the AIDA-Evaluation docker as a standalone utility.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -56,7 +56,21 @@ make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
 
 # How to apply the docker on a test run?
 
-The docker comes loaded with one example task3 run. The example runs are stored at `./M54-develop/runs/example-task3-run` and the output is stored at `./M54-develop/scores/example-task3-run`.
+The docker comes loaded with two example task3 runs, one for M54-develop data and one for M54-practice.
+
+## M54-develop data
+
+The example runs are stored at `./M54-develop/runs/example-task3-run` and the output is stored at `./M54-develop/scores/example-task3-run`.
+
+The output is generated using the M54-develop AUX-data that contains only three test documents.
+
+## M54-practice data
+
+The example runs are stored at `./M54-practice/runs/example-task3-run` and the output is stored at `./M54-practice/scores/example-task3-run`.
+
+The output is generated using the M54-practice AUX-data that contains all the documents in LDC package LDC2021E11. 
+
+## How to apply the docker on a test run?
 
 Note that the docker expects the output directory to be empty.
 
@@ -121,7 +135,7 @@ make task3 \
 
 This section is written for the leaderboard usage or NIST-internal usage.
 
-In order to run the docker on the `practice` or `evaluation` data (rather than the default `develop` data), you would need to supply the value `practice` or `evaluation` to the variable named `RUNTYPE` when calling `make task3` by modifying the Makefile to reflect the following:
+In order to run the docker on the `practice` or `evaluation` data (rather than the default `practice` data), you would need to supply the value `practice` or `evaluation` to the variable named `RUNTYPE` when calling `make task3` by modifying the Makefile to reflect the following:
 
 ~~~
 RUNTYPE=evaluation
@@ -138,7 +152,7 @@ make task3 \
   HOST_OUTPUT_DIR=...
 ~~~
 
-Note that you must specify the required `practice` (or `evaluation`) auxiliary data, driven from the practice (or evaluation) corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `develop` auxiliary data crafted to show an example. Using this default value will make the docker run with the `develop` data.
+Note that you must specify the required `practice` (or `evaluation`) auxiliary data, driven from the practice (or evaluation) corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `practice` auxiliary data crafted to show an example. Using this default value will make the docker run with the `practice` data.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -147,7 +161,7 @@ For `task3`, the input directory should contain all the `task3` claim KBs along 
 
 See the section: [How to apply the docker to a task3 run?](#how-to-apply-the-docker-to-a-task3-run) for details on the input directory structure for `task3` submission.
 
-You may also want to take a look at the input directories of the `task3` example runs located at `./M54-develop/runs/` to get an idea of how to structure your input directories.
+You may also want to take a look at the input directories of the `task3` example runs located at `./M54-practice/runs/` to get an idea of how to structure your input directories.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -189,6 +203,9 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 01/21/2022:
+* Evaluation pipeline modified to use M54-practice data by default instead of the M54-develop data.
 
 ## 01/12/2022:
 * Evaluation pipeline modified to work on Phase3 Task3 input. This README has been revised accordingly.

@@ -1,0 +1,19 @@
+claim_id	component_type	id	fieldname	value	correctness
+CLL0C04AJNP.002041	claimTopic	1	value	Curing/Preventing/Destroying the Virus	--
+CLL0C04AJNP.002041	claimSubtopic	1	value	Preventing the virus	--
+CLL0C04AJNP.002041	claimDescription	1	value	Masks prevent transmitting the virus	--
+CLL0C04AJNP.002041	claimTemplate	1	value	X prevents COVID-19	NIL
+CLL0C04AJNP.002041	claimDocument	1	value	L0C04AJNP	--
+CLL0C04AJNP.002041	claimEpistemic	1	value	EpistemicTrueCertain	NIL
+CLL0C04AJNP.002041	claimSentiment	1	value	SentimentNeutralUnknown	NIL
+CLL0C04AJNP.002041	date	1	range	(01-01-0001,31-12-9999)-(01-01-0001,31-12-9999)	NIL
+CLL0C04AJNP.002041	claimer	1	informativenessAssessment	value	NIL
+CLL0C04AJNP.002041	claimer	1	name	author	NIL
+CLL0C04AJNP.002041	claimer	1	qnode_id	EMPTY_TBD	NIL
+CLL0C04AJNP.002041	claimer	1	qnode_type	Q482980	NIL
+CLL0C04AJNP.002041	claimer	1	overallAssessment	value	NIL
+CLL0C04AJNP.002041	xVariable	1	informativenessAssessment	value	NIL
+CLL0C04AJNP.002041	xVariable	1	name	masks	NIL
+CLL0C04AJNP.002041	xVariable	1	qnode_id	EMPTY_TBD	NIL
+CLL0C04AJNP.002041	xVariable	1	qnode_type	Q2252352	NIL
+CLL0C04AJNP.002041	xVariable	1	overallAssessment	value	NIL

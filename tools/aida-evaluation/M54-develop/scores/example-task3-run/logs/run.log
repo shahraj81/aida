@@ -1,28 +1,29 @@
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task3_evaluation_pipeline.py, arguments:--run example-task3-run --runtype develop}
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Docker is using develop data.
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Inspecting the input directory.
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /evaluate/CLL0C04AJNP.002041.ttl
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /evaluate/CLL0C04CWFV.000390.ttl
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /evaluate/CLL0C0496PB.000082.ttl
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying SPARQL queries.
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying SPARQL queries to be applied.
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to CLL0C04AJNP.002041.ttl ... 1 of 3.
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/intermediate.
-01/12/2022 05:16:25 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.002041.ttl into GraphDB.
-01/12/2022 05:16:30 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Starting GraphDB
-01/12/2022 05:16:35 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries
-01/12/2022 05:16:46 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-01/12/2022 05:16:46 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-01/12/2022 05:16:46 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-01/12/2022 05:16:46 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-01/12/2022 05:16:46 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to CLL0C04CWFV.000390.ttl ... 2 of 3.
-01/12/2022 05:16:46 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04CWFV.000390.ttl into GraphDB.
-01/12/2022 05:17:05 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to CLL0C0496PB.000082.ttl ... 3 of 3.
-01/12/2022 05:17:05 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C0496PB.000082.ttl into GraphDB.
-01/12/2022 05:17:23 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - SPARQL output generated.
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task3_evaluation_pipeline.py, arguments:--run example-task3-run --runtype develop}
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Docker is using develop data.
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Inspecting the input directory.
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /evaluate/CLL0C04AJNP.002041.ttl
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /evaluate/CLL0C04CWFV.000390.ttl
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /evaluate/CLL0C0496PB.000082.ttl
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying SPARQL queries.
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying SPARQL queries to be applied.
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to CLL0C04AJNP.002041.ttl ... 1 of 3.
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/intermediate.
+01/19/2022 01:40:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.002041.ttl into GraphDB.
+01/19/2022 01:40:45 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Starting GraphDB
+01/19/2022 01:40:50 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries
+01/19/2022 01:40:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+01/19/2022 01:40:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+01/19/2022 01:40:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+01/19/2022 01:40:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+01/19/2022 01:40:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to CLL0C04CWFV.000390.ttl ... 2 of 3.
+01/19/2022 01:40:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04CWFV.000390.ttl into GraphDB.
+01/19/2022 01:41:16 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to CLL0C0496PB.000082.ttl ... 3 of 3.
+01/19/2022 01:41:16 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C0496PB.000082.ttl into GraphDB.
+01/19/2022 01:41:34 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - SPARQL output generated.
 
-01/12/2022 05:17:23 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Cleaning SPARQL output.
-01/12/2022 05:17:23 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Merging SPARQL output.
-01/12/2022 05:17:24 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Validating SPARQL output.
-01/12/2022 05:17:24 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - SPARQL output had no errors.
-01/12/2022 05:17:24 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Done.
+01/19/2022 01:41:34 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Cleaning SPARQL output.
+01/19/2022 01:41:34 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Merging SPARQL output.
+01/19/2022 01:41:35 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Validating SPARQL output.
+01/19/2022 01:41:35 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Generating ARF output.
+01/19/2022 01:41:35 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - SPARQL output had no errors.
+01/19/2022 01:41:35 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Done.

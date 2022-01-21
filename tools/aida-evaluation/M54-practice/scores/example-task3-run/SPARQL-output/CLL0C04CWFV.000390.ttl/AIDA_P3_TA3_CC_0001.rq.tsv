@@ -1,0 +1,7 @@
+?claim_id	?component_type	?name	?qnode_id	?qnode_type	?provenance	?ke
+CLL0C04CWFV.000390	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimLocation>	Russia	Q159	Q6256	России	
+CLL0C04CWFV.000390	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimer>	Nadezhda Izmozherova	EMPTY_TBD	Q2114605	Надежда Изможерова	
+CLL0C04CWFV.000390	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimerAffiliation>	Ural State Medical University	Q4476708	Q38723		
+CLL0C04CWFV.000390	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimerAffiliation>	Association of Clinical Pharmacologists of Russia	EMPTY_TBD	Q43229		
+CLL0C04CWFV.000390	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimerAffiliation>	Russian National Society of Pharmacologists	EMPTY_TBD	Q8425		
+CLL0C04CWFV.000390	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#xVariable>	favipiravir	Q16934561	Q12140		

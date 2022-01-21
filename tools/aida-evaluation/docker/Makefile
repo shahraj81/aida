@@ -1,6 +1,6 @@
 ROOT=/absolute/path/to/aida/tools/aida-evaluation
 
-RUNTYPE=develop
+RUNTYPE=practice
 
 RUNS=$(ROOT)/M54-$(RUNTYPE)/runs
 SCORES=$(ROOT)/M54-$(RUNTYPE)/scores

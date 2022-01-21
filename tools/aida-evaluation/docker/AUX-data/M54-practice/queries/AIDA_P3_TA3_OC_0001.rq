@@ -1,0 +1,23 @@
+PREFIX aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#>
+
+select distinct
+	?root_uid
+	?claim_id
+	?topic
+	?subtopic
+	?claim_template
+	?description
+	?epistemic_status
+	?sentiment_status
+
+where {
+    ?claim a aida:Claim .
+    ?claim aida:sourceDocument ?root_uid .
+    ?claim aida:claimId ?claim_id .
+    ?claim aida:topic ?topic .
+    ?claim aida:subtopic ?subtopic .
+    ?claim aida:claimTemplate ?claim_template .
+    OPTIONAL { ?claim aida:naturalLanguageDescription ?description . }
+    ?claim aida:epistemic ?epistemic_status .
+    ?claim aida:sentiment ?sentiment_status .
+}

@@ -66,7 +66,7 @@ def main(args):
 
     runtypes = {
         'develop': 'develop',
-        'practice': 'LDC2020E11',
+        'practice': 'LDC2021E11',
         'evaluation': 'LDC2020R17'}
     if args.runtype not in runtypes:
         logger.record_event('UNKNOWN_RUNTYPE', args.runtype, ','.join(runtypes))
@@ -88,14 +88,13 @@ def main(args):
     image_boundaries        = '/data/AUX-data/{}.image_boundaries.txt'.format(ldc_package_id)
     keyframe_boundaries     = '/data/AUX-data/{}.keyframe_boundaries.txt'.format(ldc_package_id)
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
-    ltf_directory           = '/data/ltf'
     sparql_kb_source        = '{output}/SPARQL-KB-source'.format(output=args.output)
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
     sparql_merged_output    = '{output}/SPARQL-MERGED-output'.format(output=args.output)
     sparql_valid_output     = '{output}/SPARQL-VALID-output'.format(output=args.output)
-    sparql_augmented_output = '{output}/SPARQL-AUGMENTED-output'.format(output=args.output)
+    arf_output              = '{output}/ARF-output'.format(output=args.output)
 
     #############################################################################################
     # pull latest copy of code from git
@@ -310,6 +309,41 @@ def main(args):
                                            run_id=args.run,
                                            sparql_merged_output=sparql_merged_output,
                                            sparql_valid_output=sparql_valid_output)
+    call_system(cmd)
+
+    #############################################################################################
+    # Generate ARF output
+    #############################################################################################
+
+    record_and_display_message(logger, 'Generating ARF output.')
+
+    log_file = '{logs_directory}/generate-arf.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 generate_arf.py \
+            --log {log_file} \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {run_id} \
+            {sparql_valid_output} \
+            {arf_output}'.format(python_scripts=python_scripts,
+                                           log_file=log_file,
+                                           log_specifications=log_specifications,
+                                           encoding_modality=encoding_modality,
+                                           coredocs=coredocs,
+                                           parent_children=parent_children,
+                                           sentence_boundaries=sentence_boundaries,
+                                           image_boundaries=image_boundaries,
+                                           keyframe_boundaries=keyframe_boundaries,
+                                           video_boundaries=video_boundaries,
+                                           run_id=args.run,
+                                           sparql_valid_output=sparql_valid_output,
+                                           arf_output=arf_output)
     call_system(cmd)
 
     num_errors = 0
