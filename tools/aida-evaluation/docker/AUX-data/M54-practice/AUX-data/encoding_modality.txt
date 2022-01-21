@@ -1,0 +1,13 @@
+encoding	modality
+gif	image
+jpg	image
+ltf	text
+mp3	audio
+mp4	video
+pdf	pdf
+png	image
+psm	text
+svg	image
+bmp	image
+vid	video
+img	image
