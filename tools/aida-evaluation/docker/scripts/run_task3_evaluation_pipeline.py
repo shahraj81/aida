@@ -66,7 +66,7 @@ def main(args):
 
     runtypes = {
         'develop': 'develop',
-        'practice': 'LDC2020E11',
+        'practice': 'LDC2021E11',
         'evaluation': 'LDC2020R17'}
     if args.runtype not in runtypes:
         logger.record_event('UNKNOWN_RUNTYPE', args.runtype, ','.join(runtypes))
