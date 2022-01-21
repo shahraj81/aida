@@ -20,23 +20,22 @@ from aida.video_boundaries import VideoBoundaries
 
 import argparse
 import os
-import shutil
 import sys
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
 class OutputLine(Object):
-    def __init__(self, claim_id, component_type, component_number, field_name, field_value):
+    def __init__(self, claim_id, component_type, component_number, field_name, field_value, default_assessment_value):
         self.claim_id = claim_id
         self.component_type = component_type
         self.component_number = component_number
         self.field_name = field_name
         self.field_value = field_value
+        self.default_assessment_value = default_assessment_value
 
     def __str__(self):
-        values = [str(self.get(f)) for f in ['claim_id', 'component_type', 'component_number', 'field_name', 'field_value']]
-        values.extend(['NIL'])
+        values = [str(self.get(f)) for f in ['claim_id', 'component_type', 'component_number', 'field_name', 'field_value', 'default_assessment_value']]
         return '\t'.join(values)
 
 class OuterClaim(Object):
@@ -54,12 +53,19 @@ class OuterClaim(Object):
             'claim_epistemic_status': 'claimEpistemic',
             'claim_sentiment_status': 'claimSentiment',
             }
+        non_assessed_fields = [
+            'claim_topic',
+            'claim_subtopic',
+            'claim_description',
+            'document_id'
+            ]
         entry = self.get('entry')
         lines = []
         for field_name in fields:
             field_name_output = fields.get(field_name)
             field_value = entry.get(field_name)
-            line = OutputLine(self.get('entry').get('claim_id'), field_name_output, 1, 'value', field_value)
+            default_assessment_value = '--' if field_name in non_assessed_fields else 'NIL'
+            line = OutputLine(self.get('entry').get('claim_id'), field_name_output, 1, 'value', field_value, default_assessment_value)
             lines.append(line.__str__())
         return '\n'.join(lines)
 
@@ -79,9 +85,9 @@ class ClaimComponents(Object):
             else:
                 component_numbers[component_type] += 1
             line = ClaimComponent(logger, entry, component_numbers[component_type]).__str__()
-            # lines.append(SummaryAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
             lines.append(InformativenessAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
             lines.append(line)
+            lines.append(OverallAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
         return '\n'.join(lines)
 
 class ClaimComponent(Object):
@@ -103,7 +109,7 @@ class ClaimComponent(Object):
         for field_name in fields:
             field_name_output = fields.get(field_name)
             field_value = self.get('entry').get(field_name)
-            line = OutputLine(claim_id, claim_component_type, claim_component_number, field_name_output, field_value)
+            line = OutputLine(claim_id, claim_component_type, claim_component_number, field_name_output, field_value, 'NIL')
             lines.append(line.__str__())
         return '\n'.join(lines)
 
@@ -128,8 +134,216 @@ class ClaimTime(Object):
                                              date_range.get('start_before'),
                                              date_range.get('end_after'),
                                              date_range.get('end_before'))
-        line = OutputLine(self.get('entry').get('claim_id'), 'date', 1, 'range', range_str)
+        line = OutputLine(self.get('entry').get('claim_id'), 'date', 1, 'range', range_str, 'NIL')
         return line.__str__()
+
+class ClaimKEs(Object):
+    def __init__(self, logger, claim, nextEdgeNum):
+        super().__init__(logger)
+        self.claim = claim
+        self.nextEdgeNum = nextEdgeNum
+        self.lines = None
+        self.generate()
+
+    def get_header(self):
+        return '\t'.join(self.get('fields').keys())
+
+    def get_EdgeNum(self, entry):
+        edgeNum = self.get('nextEdgeNum')
+        self.set('nextEdgeNum', edgeNum + 1)
+        return edgeNum
+
+    def get_line(self, entry):
+        fields = self.get('fields')
+        elements = []
+        for field_name, entry_key in fields.items():
+            if entry_key is not None:
+                value = entry.get(entry_key)
+            else:
+                value = str(self.get(field_name, entry))
+            elements.append(value)
+        return '\t'.join(elements)
+
+class ClaimNonTemporalKEs(ClaimKEs):
+    def __init__(self, logger, claim, nextEdgeNum):
+        super().__init__(logger, claim, nextEdgeNum)
+
+    def get_EdgeID(self, entry):
+        return '{subject}::{predicate}::{object}'.format(
+            subject=entry.get('subject_cluster_id'),
+            predicate=entry.get('predicate'),
+            object=entry.get('object_cluster_id'))
+
+    def get_EvtRelUniqueID(self, entry):
+        return '{subject}::{type}'.format(
+            subject=entry.get('subject_cluster_id'),
+            type=entry.get('subject_type'))
+
+    def get_fields(self):
+        return {
+            'EdgeNum': None,
+            'EdgeID': None,
+            'EdgeLabel': 'predicate',
+            'IsEdgeNegated': 'is_assertion_negated',
+            'EvtRelMetatype': 'subject_cluster_member_metatype',
+            'EvtRelUniqueID': None,
+            'EvtRelClusterID': 'subject_cluster_id',
+            'IsEvtRelNegated': 'is_subject_cluster_member_negated',
+            'ObjMetatype': 'object_cluster_member_metatype',
+            'ObjectType': 'object_type',
+            'ObjClusterID': 'object_cluster_id',
+            'IsObjNegated': 'is_object_cluster_member_negated',
+            'ObjectHandle': 'object_cluster_handle',
+            'DocID': 'document_id',
+            'SubjectJustification': 'subject_informative_justification_span_text',
+            'PredicateJustification': 'predicate_justification_spans_text',
+            'ArgumentJustification': 'object_informative_justification_span_text'
+            }
+
+    def generate(self):
+        lines = []
+        lines.append(self.get('header'))
+        for entry in self.get('claim').get('claim_edge_assertions'):
+            lines.append(self.get('line', entry))
+        self.set('lines', lines)
+
+    def __str__(self):
+        return '\n'.join(self.get('lines'))
+
+
+class ClaimTemporalKEs(ClaimKEs):
+    def __init__(self, logger, claim, nextEdgeNum):
+        self.line_keys = set()
+        super().__init__(logger, claim, nextEdgeNum)
+
+    def get_corresponding_time_assertion(self, entry):
+        subject_cluster_id = entry.get('subject_cluster_id')
+        claim = entry.get('claim')
+        for entry in claim.get('claim_edge_subject_times'):
+            if entry.get('subject_cluster_id') == subject_cluster_id:
+                return entry
+
+    def get_predicate(self, entry):
+        return 'Time'
+
+    def get_EdgeNum(self, entry):
+        edgeNum = self.get('nextEdgeNum')
+        self.set('nextEdgeNum', edgeNum + 1)
+        return edgeNum
+
+    def get_EdgeID(self, entry):
+        return '{subject}::{predicate}::{object}'.format(
+            subject=entry.get('subject_cluster_id'),
+            predicate=self.get('predicate', entry),
+            object=self.get('ObjClusterID', entry))
+
+    def get_EdgeLabel(self, entry):
+        return self.get('predicate', entry)
+
+    def get_IsEdgeNegated(self, entry):
+        return 'NotNegated'
+
+    def get_EvtRelMetatype(self, entry):
+        return entry.get('subject_cluster_member_metatype')
+
+    def get_EvtRelUniqueID(self, entry):
+        return '{subject}::{type}'.format(
+            subject=entry.get('subject_cluster_id'),
+            type=entry.get('subject_type'))
+
+    def get_EvtRelClusterID(self, entry):
+        return entry.get('subject_cluster_id')
+
+    def get_IsEvtRelNegated(self, entry):
+        return 'NotNegated'
+
+    def get_ObjMetatype(self, entry):
+        return 'Time'
+
+    def get_ObjectType(self, entry):
+        return 'TMP'
+
+    def get_ObjClusterID(self, entry):
+        return 'TIME'
+
+    def get_IsObjNegated(self, entry):
+        return 'NotNegated'
+
+    def get_ObjectHandle(self, entry):
+        time_assertion_entry = self.get('corresponding_time_assertion', entry)
+        date_range = {}
+        date_types = ['start_after', 'start_before', 'end_after', 'end_before']
+        for date_type in date_types:
+            field_name_day = '{}_day'.format(date_type)
+            field_name_month = '{}_month'.format(date_type)
+            field_name_year = '{}_year'.format(date_type)
+            date_str = '{}-{}-{}'.format(time_assertion_entry.get(field_name_day),
+                                         time_assertion_entry.get(field_name_month),
+                                         time_assertion_entry.get(field_name_year))
+            date_str = date_str.replace('"','')
+            date_range[date_type] = date_str
+        range_str = '{};{};{};{}'.format(date_range.get('start_after'),
+                                             date_range.get('start_before'),
+                                             date_range.get('end_after'),
+                                             date_range.get('end_before'))
+        return range_str
+
+    def get_SubjectJustification(self, entry):
+        return 'NULL'
+
+    def get_PredicateJustification(self, entry):
+        return 'NULL'
+
+    def get_ArgumentJustification(self, entry):
+        return 'NULL'
+
+    def get_fields(self):
+        return {
+            'EdgeNum': None,
+            'EdgeID': None,
+            'EdgeLabel': None,
+            'IsEdgeNegated': None,
+            'EvtRelMetatype': None,
+            'EvtRelUniqueID': None,
+            'EvtRelClusterID': None,
+            'IsEvtRelNegated': None,
+            'ObjMetatype': None,
+            'ObjectType': None,
+            'ObjClusterID': None,
+            'IsObjNegated': None,
+            'ObjectHandle': None,
+            'DocID': 'document_id',
+            'SubjectJustification': None,
+            'PredicateJustification': None,
+            'ArgumentJustification': None
+            }
+
+    def get_line(self, entry):
+        fields = self.get('fields')
+        elements = []
+        for field_name in fields:
+            value = str(self.get(field_name, entry))
+            elements.append(value)
+        line = '\t'.join(elements)
+        elements.pop(0)
+        line_key = '\t'.join(elements)
+        if line_key in self.get('line_keys'):
+            self.set('nextEdgeNum', self.get('nextEdgeNum') - 1)
+            return None
+        self.get('line_keys').add(line_key)
+        return line
+
+    def generate(self):
+        lines = []
+        lines.append(self.get('header'))
+        for entry in self.get('claim').get('claim_edge_assertions'):
+            line = self.get('line', entry)
+            if line is not None:
+                lines.append(line)
+        self.set('lines', lines)
+
+    def __str__(self):
+        return '\n'.join(self.get('lines'))
 
 class EventOrRelationRoleFiller(Object):
     def __init__(self, logger, object_metatype, object_id, object_type, object_handle):
@@ -293,10 +507,10 @@ class InformativenessAssessment(Object):
         self.number = number
 
     def __str__(self):
-        line = OutputLine(self.get('claim_id'), self.get('component_type'), self.get('number'), 'informativenessAssessment', 'value')
+        line = OutputLine(self.get('claim_id'), self.get('component_type'), self.get('number'), 'informativenessAssessment', 'value', 'NIL')
         return line.__str__()
 
-class SummaryAssessment(Object):
+class OverallAssessment(Object):
     def __init__(self, logger, claim_id, component_type, number):
         super().__init__(logger)
         self.claim_id = claim_id
@@ -304,7 +518,7 @@ class SummaryAssessment(Object):
         self.number = number
 
     def __str__(self):
-        line = OutputLine(self.get('claim_id'), self.get('component_type'), self.get('number'), 'summaryAssessment', 'value')
+        line = OutputLine(self.get('claim_id'), self.get('component_type'), self.get('number'), 'overallAssessment', 'value', 'NIL')
         return line.__str__()
 
 class AssessorReadableFormat(Object):
@@ -332,10 +546,7 @@ class AssessorReadableFormat(Object):
         for claim_id in self.get('responses').get('claims'):
             frames = EventOrRelationFrames(logger, claim_id)
             claim = self.get('responses').get('claims').get(claim_id)
-            graph_responses_file = None
             for edge_assertion in claim.get('claim_edge_assertions'):
-                if graph_responses_file is None:
-                    graph_responses_file = edge_assertion.get('filename')
                 frames.update(edge_assertion)
             for subject_time in claim.get('claim_edge_subject_times'):
                 frames.update(subject_time)
@@ -343,10 +554,16 @@ class AssessorReadableFormat(Object):
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_fh.write(frames.__str__())
             output_fh.close()
-
-            if graph_responses_file is not None:
-                output_filename = os.path.join(output_dir, '{}-raw-kes.tab'.format(claim_id))
-                shutil.copy(graph_responses_file, output_filename)
+        for claim_id in self.get('responses').get('claims'):
+            claim = self.get('responses').get('claims').get(claim_id)
+            claim_nontemoral_kes = ClaimNonTemporalKEs(logger, claim, 1)
+            nextEdgeNum = claim_nontemoral_kes.get('nextEdgeNum')
+            claim_temoral_kes = ClaimTemporalKEs(logger, claim, nextEdgeNum)
+            output_filename = os.path.join(output_dir, '{}-raw-kes.tab'.format(claim_id))
+            output_fh = open(output_filename, 'w', encoding='utf-8')
+            output_fh.write(claim_nontemoral_kes.__str__())
+            output_fh.write(claim_temoral_kes.__str__())
+            output_fh.close()
 
 def check_path(args):
     check_for_paths_existance([args.log_specifications,
