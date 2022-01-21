@@ -79,13 +79,11 @@ WHERE {
     ?oinf_j_confidence    aida:confidenceValue          ?oinf_j_cv .
 
     # Get the type of object
-    ?statement4           a                             rdf:Statement .
     ?statement4           rdf:object                    ?object_type .
     ?statement4           rdf:predicate                 rdf:type .
     ?statement4           rdf:subject                   ?objectmo .
 
     # Get the type of subject
-    ?statement5           a                             rdf:Statement .
     ?statement5           rdf:object                    ?subject_type .
     ?statement5           rdf:predicate                 rdf:type .
     ?statement5           rdf:subject                   ?subjectmo .
