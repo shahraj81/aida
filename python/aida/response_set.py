@@ -130,7 +130,7 @@ attributes = {
         'name': 'cluster_id',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task1', 'task2'],
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'cluster_membership_confidence': {
         'name': 'cluster_membership_confidence',
@@ -267,14 +267,14 @@ attributes = {
         'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'linking_confidence': {
         'name': 'linking_confidence',
         'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'mention_type_justification_confidence': {
         'name': 'mention_type_justification_confidence',
@@ -303,14 +303,14 @@ attributes = {
         'name': 'link_target',
         'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'mention_span_text': {
         'name': 'mention_span_text',
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task1', 'task2'],
         'validate': 'validate_value_provenance_triple',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'metatype': {
         'name': 'metatype',
@@ -414,7 +414,7 @@ attributes = {
         'name': 'query_link_target',
         'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'start': {
         'dependencies': ['start_after', 'start_before'],
@@ -605,7 +605,7 @@ schemas = {
         },
     'AIDA_PHASE3_TASK2_ZH_RESPONSE': {
         'name': 'AIDA_PHASE3_TASK2_ZH_RESPONSE',
-        'year': 2020,
+        'year': 2021,
         'task': 'task2',
         'header': ['?docid', '?query_link_target', '?link_target', '?cluster', '?mention_span', '?j_cv', '?link_cv'],
         'columns': [
