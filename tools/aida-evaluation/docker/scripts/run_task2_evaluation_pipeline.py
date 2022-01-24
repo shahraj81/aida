@@ -200,7 +200,7 @@ def main(args):
     # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /data/queries/AIDA_P2_TA2_*.rq {queries}'.format(task=args.task, queries=queries))
+    call_system('cp /data/queries/AIDA_P3_TA2_*.rq {queries}'.format(task=args.task, queries=queries))
 
     record_and_display_message(logger, 'Applying queries to task2_kb.ttl ... ')
     # create the intermediate directory
