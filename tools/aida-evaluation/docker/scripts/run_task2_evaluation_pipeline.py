@@ -7,13 +7,13 @@ This script performs the following steps:
     2. Clean SPARQL output,
     3. Validate SPARQL output,
 
-This version of the docker works for M36.
+This version of the docker works for M54.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
-__version__ = "2020.1.0"
-__date__    = "6 Oct 2020"
+__version__ = "2022.0.1"
+__date__    = "24 Jan 2022"
 
 from logger import Logger
 import argparse
@@ -65,8 +65,9 @@ def main(args):
     #############################################################################################
 
     runtypes = {
-        'practice': 'LDC2020E11',
-        'evaluation': 'LDC2020R17'}
+        'develop': 'develop',
+        'practice': 'LDC2021E11',
+        'evaluation': 'LDC2022R02'}
     if args.runtype not in runtypes:
         logger.record_event('UNKNOWN_RUNTYPE', args.runtype, ','.join(runtypes))
         exit(ERROR_EXIT_CODE)
