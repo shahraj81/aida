@@ -210,7 +210,6 @@ class ClaimNonTemporalKEs(ClaimKEs):
     def __str__(self):
         return '\n'.join(self.get('lines'))
 
-
 class ClaimTemporalKEs(ClaimKEs):
     def __init__(self, logger, claim, nextEdgeNum):
         self.line_keys = set()
@@ -335,7 +334,7 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def generate(self):
         lines = []
-        lines.append(self.get('header'))
+        # lines.append(self.get('header'))
         for entry in self.get('claim').get('claim_edge_assertions'):
             line = self.get('line', entry)
             if line is not None:
