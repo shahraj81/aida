@@ -47,7 +47,7 @@ def get_entrypoints(entry):
     if entry.get('kbids') != 'N/A':
         entrypoints['kbid'] = {}
         kbids = entry.get('kbids')
-        augmented_kbids = '|'.join(['REFKB:{}'.format(kbid.strip()) for kbid in kbids.split('|')])
+        augmented_kbids = '|'.join(['{}'.format(kbid.strip()) for kbid in kbids.split('|')])
         entrypoints['kbid'][augmented_kbids] = 1
     name_variants = entry.get('name_variants').strip()
     if name_variants != '':
