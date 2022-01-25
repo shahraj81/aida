@@ -13,8 +13,6 @@ from aida.encodings import Encodings
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.logger import Logger
-from aida.ontology_type_mappings import OntologyTypeMappings
-from aida.slot_mappings import SlotMappings
 from aida.task2_pool import Task2Pool
 from aida.text_boundaries import TextBoundaries
 from aida.video_boundaries import VideoBoundaries
@@ -29,8 +27,6 @@ ERROR_EXIT_CODE = 255
 def check_paths(args):
     check_for_paths_existance([
                  args.log_specifications,
-                 args.ontology_type_mappings,
-                 args.slot_mappings,
                  args.encodings,
                  args.core_documents,
                  args.parent_children,
@@ -58,8 +54,6 @@ def check_for_paths_non_existance(paths):
 def main(args):
     logger = Logger(args.log, args.log_specifications, sys.argv)
 
-    ontology_type_mappings = OntologyTypeMappings(logger, args.ontology_type_mappings)
-    slot_mappings = SlotMappings(logger, args.slot_mappings)
     document_mappings = DocumentMappings(logger,
                                          args.parent_children,
                                          Encodings(logger, args.encodings),
@@ -75,7 +69,7 @@ def main(args):
         'video': video_boundaries
         }
 
-    pool = Task2Pool(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, args.runs_to_pool, args.queries, args.kit_size, args.batch_id, args.input, args.previous_pools)
+    pool = Task2Pool(logger, document_mappings, document_boundaries, args.runs_to_pool, args.queries, args.kit_size, args.batch_id, args.input, args.previous_pools)
     pool.write_output('{}-{}'.format(args.output, args.batch_id))
 
     exit(ALLOK_EXIT_CODE)
@@ -86,11 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--kit_size', default=200, type=int, help='Specify the maximum number of entries in a kit (default: %(default)s)')
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-p', '--previous_pools', help='Specify comma-separated list of the directories containing previous pool(s), if any')
-    parser.add_argument('-t', '--task', default='task2', choices=['task1', 'task2'], help='Specify task1 or task2 (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
-    parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
-    parser.add_argument('slot_mappings', type=str, help='File containing slot mappings')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
     parser.add_argument('core_documents', type=str, help='File containing list of core documents')
     parser.add_argument('parent_children', type=str, help='DocumentID to DocumentElementID mappings file')
