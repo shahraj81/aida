@@ -1,0 +1,18 @@
+01/24/2022 02:29:53 PM - run_task2_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task2_evaluation_pipeline.py, arguments:--run example-task2-run --runtype practice}
+01/24/2022 02:29:53 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Docker is using practice data.
+01/24/2022 02:29:54 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Inspecting the input directory.
+01/24/2022 02:29:54 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying SPARQL queries.
+01/24/2022 02:29:54 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying SPARQL queries to be applied.
+01/24/2022 02:29:54 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to task2_kb.ttl ... 
+01/24/2022 02:29:54 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/intermediate.
+01/24/2022 02:29:54 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading task2_kb.ttl into GraphDB.
+01/24/2022 02:29:59 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Starting GraphDB
+01/24/2022 02:30:04 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries
+01/24/2022 02:30:14 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+01/24/2022 02:30:14 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+01/24/2022 02:30:14 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+01/24/2022 02:30:14 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+01/24/2022 02:30:14 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Cleaning SPARQL output.
+01/24/2022 02:30:14 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - Validating SPARQL output.
+01/24/2022 02:30:16 PM - run_task2_evaluation_pipeline.py - INFO - DEFAULT_INFO - SPARQL output had no errors.
+
