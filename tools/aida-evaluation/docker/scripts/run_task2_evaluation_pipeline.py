@@ -7,13 +7,13 @@ This script performs the following steps:
     2. Clean SPARQL output,
     3. Validate SPARQL output,
 
-This version of the docker works for M36.
+This version of the docker works for M54.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
-__version__ = "2020.1.0"
-__date__    = "6 Oct 2020"
+__version__ = "2022.0.1"
+__date__    = "24 Jan 2022"
 
 from logger import Logger
 import argparse
@@ -65,8 +65,9 @@ def main(args):
     #############################################################################################
 
     runtypes = {
-        'practice': 'LDC2020E11',
-        'evaluation': 'LDC2020R17'}
+        'develop': 'develop',
+        'practice': 'LDC2021E11',
+        'evaluation': 'LDC2022R02'}
     if args.runtype not in runtypes:
         logger.record_event('UNKNOWN_RUNTYPE', args.runtype, ','.join(runtypes))
         exit(ERROR_EXIT_CODE)
@@ -80,8 +81,6 @@ def main(args):
 
     python_scripts          = '/scripts/aida/python'
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
-    ontology_type_mappings  = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
-    slotname_mappings       = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
     encoding_modality       = '/data/AUX-data/encoding_modality.txt'
     coredocs                = '/data/AUX-data/{}.coredocs.txt'.format(ldc_package_id)
     parent_children         = '/data/AUX-data/{}.parent_children.tsv'.format(ldc_package_id)
@@ -92,6 +91,7 @@ def main(args):
     sparql_kb_source        = '{output}/SPARQL-KB-source'.format(output=args.output)
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
+    sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
     sparql_valid_output     = '{output}/SPARQL-VALID-output'.format(output=args.output)
 
     #############################################################################################
@@ -200,7 +200,7 @@ def main(args):
     # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
-    call_system('cp /data/queries/AIDA_P2_TA2_*.rq {queries}'.format(task=args.task, queries=queries))
+    call_system('cp /data/queries/AIDA_P3_TA2_*.rq {queries}'.format(task=args.task, queries=queries))
 
     record_and_display_message(logger, 'Applying queries to task2_kb.ttl ... ')
     # create the intermediate directory
@@ -235,6 +235,22 @@ def main(args):
     call_system('pkill -9 -f graphdb')
 
     #############################################################################################
+    # Clean SPARQL output
+    #############################################################################################
+
+    record_and_display_message(logger, 'Cleaning SPARQL output.')
+
+    cmd = 'cd {python_scripts} && \
+            python3.9 clean_sparql_output.py \
+            {log_specifications} \
+            {sparql_output} \
+            {sparql_clean_output}'.format(python_scripts=python_scripts,
+                                          log_specifications=log_specifications,
+                                          sparql_output = sparql_output,
+                                          sparql_clean_output = sparql_clean_output)
+    call_system(cmd)
+
+    #############################################################################################
     # Validate SPARQL output
     #############################################################################################
 
@@ -246,8 +262,6 @@ def main(args):
             --log {log_file} \
             --task task2 \
             {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -256,12 +270,10 @@ def main(args):
             {keyframe_boundaries} \
             {video_boundaries} \
             {run_id} \
-            {sparql_output} \
+            {sparql_clean_output} \
             {sparql_valid_output}'.format(python_scripts=python_scripts,
                                           log_file=log_file,
                                           log_specifications=log_specifications,
-                                          ontology_type_mappings=ontology_type_mappings,
-                                          slotname_mappings=slotname_mappings,
                                           encoding_modality=encoding_modality,
                                           coredocs=coredocs,
                                           parent_children=parent_children,
@@ -270,7 +282,7 @@ def main(args):
                                           keyframe_boundaries=keyframe_boundaries,
                                           video_boundaries=video_boundaries,
                                           run_id=args.run,
-                                          sparql_output=sparql_output,
+                                          sparql_clean_output=sparql_clean_output,
                                           sparql_valid_output=sparql_valid_output)
     call_system(cmd)
 
