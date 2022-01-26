@@ -561,6 +561,7 @@ class AssessorReadableFormat(Object):
             output_filename = os.path.join(output_dir, '{}-raw-kes.tab'.format(claim_id))
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_fh.write(claim_nontemoral_kes.__str__())
+            output_fh.write('\n')
             output_fh.write(claim_temoral_kes.__str__())
             output_fh.close()
 
