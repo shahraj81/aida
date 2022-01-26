@@ -68,8 +68,15 @@ def main(args):
         'keyframe': keyframe_boundaries,
         'video': video_boundaries
         }
-
-    pool = Task2Pool(logger, document_mappings, document_boundaries, args.runs_to_pool, args.queries, args.kit_size, args.batch_id, args.input, args.previous_pools)
+    pool = Task2Pool(logger,
+                     document_mappings=document_mappings,
+                     document_boundaries=document_boundaries,
+                     runs_to_pool_file=args.runs_to_pool,
+                     queries_to_pool_file=args.queries,
+                     max_kit_size=args.kit_size,
+                     batch_id=args.batch_id,
+                     input_dir=args.input,
+                     previous_pools=args.previous_pools)
     pool.write_output('{}-{}'.format(args.output, args.batch_id))
 
     exit(ALLOK_EXIT_CODE)
