@@ -18,7 +18,7 @@ This document describes how to run the AIDA Task3 evaluation pipeline as part of
 
 # How to build the docker image?
 
-The docker has been tested with `graphdb-free-9.10.1-dist` but this section also describes how to configure it to work with a different version.
+The docker has been tested with `graphdb-free-9.10.2-dist` but this section also describes how to configure it to work with a different version.
 
 Independent of which version of GraphDB you are using, you would need to first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` (as shown below) to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
 
@@ -30,7 +30,7 @@ Independent of which version of GraphDB you are using, you would need to first u
 
 In order to build the docker image with the tested version of GraphDB you would need to:
 
-1. Download `graphdb-free-9.10.1-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`, and
+1. Download `graphdb-free-9.10.2-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`, and
 
 2. Run the following command:
 
@@ -203,6 +203,9 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 01/26/2022:
+* Graphdb version with which the code has been tested updated to the latest version available.
 
 ## 01/21/2022:
 * Evaluation pipeline modified to use M54-practice data by default instead of the M54-develop data.
