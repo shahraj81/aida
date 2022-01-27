@@ -59,14 +59,19 @@ class OuterClaim(Object):
             'claim_description',
             'document_id'
             ]
+        subfield_names = {
+            'claim_epistemic_status': ['polarity', 'strength']
+            }
         entry = self.get('entry')
         lines = []
         for field_name in fields:
             field_name_output = fields.get(field_name)
             field_value = entry.get(field_name)
             default_assessment_value = '--' if field_name in non_assessed_fields else 'NIL'
-            line = OutputLine(self.get('entry').get('claim_id'), field_name_output, 1, 'value', field_value, default_assessment_value)
-            lines.append(line.__str__())
+            subfield_name = ['value'] if field_name not in subfield_names else subfield_names.get(field_name)
+            for sn in subfield_name:
+                line = OutputLine(self.get('entry').get('claim_id'), field_name_output, 1, sn, field_value, default_assessment_value)
+                lines.append(line.__str__())
         return '\n'.join(lines)
 
 class ClaimComponents(Object):
@@ -85,8 +90,8 @@ class ClaimComponents(Object):
             else:
                 component_numbers[component_type] += 1
             line = ClaimComponent(logger, entry, component_numbers[component_type]).__str__()
-            lines.append(InformativenessAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
             lines.append(line)
+            lines.append(InformativenessAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
             lines.append(OverallAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
         return '\n'.join(lines)
 
@@ -148,7 +153,7 @@ class ClaimKEs(Object):
     def get_header(self):
         return '\t'.join(self.get('fields').keys())
 
-    def get_EdgeNum(self, entry):
+    def get_JustificationNum(self, entry):
         edgeNum = self.get('nextEdgeNum')
         self.set('nextEdgeNum', edgeNum + 1)
         return edgeNum
@@ -181,7 +186,7 @@ class ClaimNonTemporalKEs(ClaimKEs):
 
     def get_fields(self):
         return {
-            'EdgeNum': None,
+            'JustificationNum': None,
             'EdgeID': None,
             'EdgeLabel': 'predicate',
             'IsEdgeNegated': 'is_assertion_negated',
@@ -224,11 +229,6 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def get_predicate(self, entry):
         return 'Time'
-
-    def get_EdgeNum(self, entry):
-        edgeNum = self.get('nextEdgeNum')
-        self.set('nextEdgeNum', edgeNum + 1)
-        return edgeNum
 
     def get_EdgeID(self, entry):
         return '{subject}::{predicate}::{object}'.format(
@@ -298,7 +298,7 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def get_fields(self):
         return {
-            'EdgeNum': None,
+            'JustificationNum': None,
             'EdgeID': None,
             'EdgeLabel': None,
             'IsEdgeNegated': None,
