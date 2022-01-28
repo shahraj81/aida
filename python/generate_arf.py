@@ -355,8 +355,11 @@ class ClaimTemporalKEs(ClaimKEs):
     def get_line(self, entry):
         fields = self.get('fields')
         elements = []
-        for field_name in fields:
-            value = str(self.get(field_name, entry))
+        for field_name, entry_key in fields.items():
+            if entry_key is not None:
+                value = entry.get(entry_key)
+            else:
+                value = str(self.get(field_name, entry))
             elements.append(value)
         line = '\t'.join(elements)
         elements.pop(0)
