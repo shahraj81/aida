@@ -651,7 +651,7 @@ def validate_responses(args):
     arf = AssessorReadableFormat(logger, responses, args.max_qnode_types)
     arf.write_output(args.output)
     num_warnings, num_errors = logger.get_stats()
-    closing_message = 'validation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
+    closing_message = 'ARF generation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
     logger.record_event('DEFAULT_INFO', closing_message)
     print(closing_message)
     if num_errors > 0:
