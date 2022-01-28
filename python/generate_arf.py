@@ -183,8 +183,30 @@ class ClaimKEs(Object):
         self.lines = None
         self.generate()
 
+    def get_fields(self):
+        return [
+            'ClaimID',
+            'JustificationNum',
+            'EdgeID',
+            'EdgeLabel',
+            'IsEdgeNegated',
+            'EvtRelMetatype',
+            'EvtRelType',
+            'EvtRelClusterID',
+            'IsEvtRelNegated',
+            'ObjMetatype',
+            'ObjectType',
+            'ObjClusterID',
+            'IsObjNegated',
+            'ObjectHandle',
+            'DocID',
+            'SubjectJustification',
+            'PredicateJustification',
+            'ArgumentJustification'
+            ]
+
     def get_header(self):
-        return '\t'.join(self.get('fields').keys())
+        return '\t'.join(self.get('fields'))
 
     def get_JustificationNum(self, entry):
         edgeNum = self.get('nextEdgeNum')
@@ -192,15 +214,15 @@ class ClaimKEs(Object):
         return edgeNum
 
     def get_line(self, entry):
-        fields = self.get('fields')
-        elements = []
-        for field_name, entry_key in fields.items():
+        field_specs = self.get('fieldspecs')
+        line = {}
+        for field_name, entry_key in field_specs.items():
             if entry_key is not None:
                 value = entry.get(entry_key)
             else:
                 value = str(self.get(field_name, entry))
-            elements.append(value)
-        return '\t'.join(elements)
+            line[field_name] = value
+        return '\t'.join([line.get(f) for f in self.get('fields')])
 
 class ClaimNonTemporalKEs(ClaimKEs):
     def __init__(self, logger, claim, nextEdgeNum):
@@ -212,7 +234,7 @@ class ClaimNonTemporalKEs(ClaimKEs):
             predicate=entry.get('predicate'),
             object=entry.get('object_cluster_id'))
 
-    def get_fields(self):
+    def get_fieldspecs(self):
         return {
             'ClaimID': 'claim_id',
             'JustificationNum': None,
@@ -314,7 +336,7 @@ class ClaimTemporalKEs(ClaimKEs):
     def get_ArgumentJustification(self, entry):
         return 'NULL'
 
-    def get_fields(self):
+    def get_fieldspecs(self):
         return {
             'ClaimID': 'claim_id',
             'JustificationNum': None,
@@ -337,22 +359,23 @@ class ClaimTemporalKEs(ClaimKEs):
             }
 
     def get_line(self, entry):
-        fields = self.get('fields')
-        elements = []
-        for field_name, entry_key in fields.items():
+        field_specs = self.get('fieldspecs')
+        line = {}
+        for field_name, entry_key in field_specs.items():
             if entry_key is not None:
                 value = entry.get(entry_key)
             else:
                 value = str(self.get(field_name, entry))
-            elements.append(value)
-        line = '\t'.join(elements)
-        elements.pop(0)
-        line_key = '\t'.join(elements)
-        if line_key in self.get('line_keys'):
+            line[field_name] = value
+
+        line_str = '\t'.join([line.get(f) for f in self.get('fields')])
+        line_key_str = '\t'.join([line.get(f) for f in self.get('fields') if f != 'JustificationNum'])
+
+        if line_key_str in self.get('line_keys'):
             self.set('nextEdgeNum', self.get('nextEdgeNum') - 1)
             return None
-        self.get('line_keys').add(line_key)
-        return line
+        self.get('line_keys').add(line_key_str)
+        return line_str
 
     def generate(self):
         lines = []
