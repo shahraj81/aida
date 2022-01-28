@@ -212,11 +212,6 @@ class ClaimNonTemporalKEs(ClaimKEs):
             predicate=entry.get('predicate'),
             object=entry.get('object_cluster_id'))
 
-    def get_EvtRelUniqueID(self, entry):
-        return '{subject}::{type}'.format(
-            subject=entry.get('subject_cluster_id'),
-            type=entry.get('subject_type'))
-
     def get_fields(self):
         return {
             'ClaimID': 'claim_id',
@@ -225,7 +220,7 @@ class ClaimNonTemporalKEs(ClaimKEs):
             'EdgeLabel': 'predicate',
             'IsEdgeNegated': 'is_assertion_negated',
             'EvtRelMetatype': 'subject_cluster_member_metatype',
-            'EvtRelUniqueID': None,
+            'EvtRelType': 'subject_type',
             'EvtRelClusterID': 'subject_cluster_id',
             'IsEvtRelNegated': 'is_subject_cluster_member_negated',
             'ObjMetatype': 'object_cluster_member_metatype',
@@ -275,17 +270,6 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def get_IsEdgeNegated(self, entry):
         return 'NotNegated'
-
-    def get_EvtRelMetatype(self, entry):
-        return entry.get('subject_cluster_member_metatype')
-
-    def get_EvtRelUniqueID(self, entry):
-        return '{subject}::{type}'.format(
-            subject=entry.get('subject_cluster_id'),
-            type=entry.get('subject_type'))
-
-    def get_EvtRelClusterID(self, entry):
-        return entry.get('subject_cluster_id')
 
     def get_IsEvtRelNegated(self, entry):
         return 'NotNegated'
@@ -337,9 +321,9 @@ class ClaimTemporalKEs(ClaimKEs):
             'EdgeID': None,
             'EdgeLabel': None,
             'IsEdgeNegated': None,
-            'EvtRelMetatype': None,
-            'EvtRelUniqueID': None,
-            'EvtRelClusterID': None,
+            'EvtRelMetatype': 'subject_cluster_member_metatype',
+            'EvtRelType': 'subject_type',
+            'EvtRelClusterID': 'subject_cluster_id',
             'IsEvtRelNegated': None,
             'ObjMetatype': None,
             'ObjectType': None,
