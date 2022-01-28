@@ -219,6 +219,7 @@ class ClaimNonTemporalKEs(ClaimKEs):
 
     def get_fields(self):
         return {
+            'ClaimID': 'claim_id',
             'JustificationNum': None,
             'EdgeID': None,
             'EdgeLabel': 'predicate',
@@ -331,6 +332,7 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def get_fields(self):
         return {
+            'ClaimID': 'claim_id',
             'JustificationNum': None,
             'EdgeID': None,
             'EdgeLabel': None,
