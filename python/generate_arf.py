@@ -75,9 +75,10 @@ class OuterClaim(Object):
         return '\n'.join(lines)
 
 class ClaimComponents(Object):
-    def __init__(self, logger, max_qnode_types, claim_components):
+    def __init__(self, logger, max_qnode_types, lenient, claim_components):
         super().__init__(logger)
         self.max_qnode_types = max_qnode_types
+        self.lenient = lenient
         self.entries = claim_components
 
     def __str__(self):
@@ -96,15 +97,16 @@ class ClaimComponents(Object):
                 component_numbers[component_type] = 1
             else:
                 component_numbers[component_type] += 1
-            lines.append(ClaimComponent(logger, self.get('max_qnode_types'), entry, component_numbers[component_type]).__str__())
+            lines.append(ClaimComponent(logger, self.get('max_qnode_types'), self.get('lenient'), entry, component_numbers[component_type]).__str__())
             lines.append(InformativenessAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
             lines.append(OverallAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
         return '\n'.join(lines)
 
 class ClaimComponent(Object):
-    def __init__(self, logger, max_qnode_types, claim_component, claim_component_number):
+    def __init__(self, logger, max_qnode_types, lenient, claim_component, claim_component_number):
         super().__init__(logger)
         self.max_qnode_types = max_qnode_types
+        self.lenient = lenient
         self.entry = claim_component
         self.claim_component_number = claim_component_number
 
@@ -145,6 +147,8 @@ class ClaimComponent(Object):
                     tuples.add((field_name_output, fv))
             else:
                 tuples.add((field_name_output, field_value))
+            if field_name == 'claim_component_qnode_id' and self.get('lenient') == True:
+                tuples.add((fields.get('claim_component_qnode_type'), field_value))
         lines = []
         for (field_name_output, field_value) in sorted(tuples):
             line = OutputLine(claim_id, claim_component_type, claim_component_number, field_name_output, field_value, 'NIL')
@@ -566,10 +570,11 @@ class OverallAssessment(Object):
         return line.__str__()
 
 class AssessorReadableFormat(Object):
-    def __init__(self, logger, responses, max_qnode_types):
+    def __init__(self, logger, responses, max_qnode_types, lenient):
         super().__init__(logger)
         self.responses = responses
         self.max_qnode_types = max_qnode_types
+        self.lenient = lenient
 
     def write_output(self, output_dir):
         os.mkdir(output_dir)
@@ -578,7 +583,7 @@ class AssessorReadableFormat(Object):
         for claim_id in self.get('responses').get('claims'):
             claim = self.get('responses').get('claims').get(claim_id)
             outer_claim = OuterClaim(logger, claim.get('outer_claim')).__str__()
-            claim_components = ClaimComponents(logger, self.get('max_qnode_types'), claim.get('claim_components')).__str__()
+            claim_components = ClaimComponents(logger, self.get('max_qnode_types'), self.get('lenient'), claim.get('claim_components')).__str__()
             claim_time = ClaimTime(logger, claim.get('claim_time')).__str__()
             output_filename = os.path.join(output_dir, '{}-outer-claim.tab'.format(claim_id))
             output_fh = open(output_filename, 'w', encoding='utf-8')
@@ -655,7 +660,7 @@ def validate_responses(args):
         }
 
     responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task3')
-    arf = AssessorReadableFormat(logger, responses, args.max_qnode_types)
+    arf = AssessorReadableFormat(logger, responses, args.max_qnode_types, args.lenient)
     arf.write_output(args.output)
     num_warnings, num_errors = logger.get_stats()
     closing_message = 'ARF generation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
@@ -668,6 +673,7 @@ def validate_responses(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate claims in assessor readable format.")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+    parser.add_argument('-n', '--lenient', action='store_true', default=False, help='Consider identity-qnode as type-qnode? (default: %(default)s)')
     parser.add_argument('-t', '--max_qnode_types', default=5, help='Specify the maximum number of qnode types allowed in output (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
