@@ -113,6 +113,7 @@ INFO      UNEXPECTED_MENTION_TYPES_COUNT  {} mention types mismatched.
 ERROR     UNEXPECTED_PROTOTYPE_ID         Unexpected prototype ID (found: {}, expect: {})
 ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (found: {}, expected: {})
 ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
+WARNING   UNEXPECTED_NUM_CLAIM_COMPONENT_QNODE_TYPES Unexpected number of claim component QNode types for {} (provided: {}, expected <= {}); removing extra types
 ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' for claim {} not found in {}
 WARNING   MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' for claim {} not found in {}
 ERROR     MISSING_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' not found in {}

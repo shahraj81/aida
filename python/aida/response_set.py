@@ -49,6 +49,14 @@ attributes = {
         'tasks': ['task3'],
         'years': [2021],
         },
+    'claim_component_key': {
+        'name': 'claim_component_key',
+        'dependencies': ['claim_id'],
+        'generate': 'generate_claim_component_key',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2021],
+        },
     'claim_component_name': {
         'name': 'claim_component_name',
         'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
@@ -69,6 +77,14 @@ attributes = {
         },
     'claim_component_qnode_type': {
         'name': 'claim_component_qnode_type',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2021],
+        },
+    'claim_component_qnode_types': {
+        'name': 'claim_component_qnode_types',
+        'dependencies': ['claim', 'claim_component_key'],
+        'generate': 'generate_claim_component_qnode_types',
         'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
         'tasks': ['task3'],
         'years': [2021],

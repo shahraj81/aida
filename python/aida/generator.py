@@ -26,6 +26,24 @@ class Generator(Object):
             self.record_event('UNDEFINED_METHOD', method_name)
         method(responses, entry)
 
+    def generate_claim_component_key(self, responses, entry):
+        claim_id = entry.get('claim_id')
+        claim_component_type = entry.get('claim_component_type')
+        claim_component_name = entry.get('claim_component_name')
+        claim_component_qnode_id = entry.get('claim_component_qnode_id')
+        entry.set('claim_component_key', ':'.join([claim_id, claim_component_type, claim_component_name, claim_component_qnode_id]))
+
+    def generate_claim_component_qnode_types(self, responses, entry):
+        claim = entry.get('claim')
+        if claim.get('claim_component_qnode_types') is None:
+            claim.set('claim_component_qnode_types', {})
+        claim_component_qnode_types = claim.get('claim_component_qnode_types')
+        claim_component_key = entry.get('claim_component_key')
+        if claim_component_key not in claim_component_qnode_types:
+            claim_component_qnode_types[claim_component_key] = set()
+        claim_component_qnode_types[claim_component_key].add(entry.get('claim_component_qnode_type'))
+        entry.set('claim_component_qnode_types', claim_component_qnode_types[claim_component_key])
+
     def generate_cluster(self, responses, entry):
         cluster_id = entry.get('cluster_id')
         cluster = responses.get('cluster', cluster_id, entry)
