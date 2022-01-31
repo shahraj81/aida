@@ -352,8 +352,9 @@ def main(args):
     #############################################################################################
 
     runtypes = {
-        'practice': 'LDC2020E11',
-        'evaluation': 'LDC2020R17'}
+        'develop': 'develop',
+        'practice': 'LDC2021E11',
+        'evaluation': 'LDC2022R02'}
     if args.runtype not in runtypes:
         logger.record_event('UNKNOWN_RUNTYPE', args.runtype, ','.join(runtypes))
         generate_results_file_and_exit(logger, logs_directory)
@@ -380,8 +381,6 @@ def main(args):
 
     python_scripts          = '/scripts/aida/python'
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
-    ontology_type_mappings  = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
-    slotname_mappings       = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
     encoding_modality       = '/data/AUX-data/encoding_modality.txt'
     coredocs_xx             = '/data/AUX-data/{}.coredocs-xx.txt'.format(ldc_package_id)
     parent_children         = '/data/AUX-data/{}.parent_children.tsv'.format(ldc_package_id)
@@ -420,7 +419,7 @@ def main(args):
     num_files = 0
     num_directories = 0
 
-    open_performer_files = ['AIDA_P2_TA1_AM_A0001.rq.tsv', 'AIDA_P2_TA1_CM_A0001.rq.tsv', 'AIDA_P2_TA1_TM_A0001.rq.tsv']
+    open_performer_files = ['AIDA_P3_TA1_AM_A0001.rq.tsv', 'AIDA_P3_TA1_CM_A0001.rq.tsv', 'AIDA_P3_TA1_TM_A0001.rq.tsv']
 
     for item in items:
         if not item.endswith('.ttl'): continue
@@ -513,7 +512,7 @@ def main(args):
         # copy queries to be applied
         record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
         call_system('mkdir {queries}'.format(queries=queries))
-        call_system('cp /data/queries/AIDA_P2_TA1_*.rq {queries}'.format(task=args.task, queries=queries))
+        call_system('cp /data/queries/AIDA_P3_TA1_*.rq {queries}'.format(task=args.task, queries=queries))
 
         num_total = len([d for d in documents_in_submission if documents_in_submission[d] == 1])
         count = 0;
@@ -588,8 +587,6 @@ def main(args):
             python3.9 validate_responses.py \
             --log {log_file} \
             {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -602,8 +599,6 @@ def main(args):
             {sparql_valid_output}'.format(python_scripts=python_scripts,
                                           log_file=log_file,
                                           log_specifications=log_specifications,
-                                          ontology_type_mappings=ontology_type_mappings,
-                                          slotname_mappings=slotname_mappings,
                                           encoding_modality=encoding_modality,
                                           coredocs=coredocs_xx,
                                           parent_children=parent_children,
@@ -627,8 +622,6 @@ def main(args):
             python3.9 filter_responses.py \
             --log {log_file} \
             {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -642,8 +635,6 @@ def main(args):
             {sparql_filtered_output}'.format(python_scripts=python_scripts,
                                              log_file=log_file,
                                              log_specifications=log_specifications,
-                                             ontology_type_mappings=ontology_type_mappings,
-                                             slotname_mappings=slotname_mappings,
                                              encoding_modality=encoding_modality,
                                              coredocs=coredocs_xx,
                                              parent_children=parent_children,
@@ -668,7 +659,6 @@ def main(args):
             python3.9 align_clusters.py \
             --log {log_file} \
             {log_specifications} \
-            {ontology_type_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -688,7 +678,6 @@ def main(args):
             {alignment}'.format(python_scripts=python_scripts,
                                 log_file=log_file,
                                 log_specifications=log_specifications,
-                                ontology_type_mappings=ontology_type_mappings,
                                 encoding_modality=encoding_modality,
                                 coredocs=coredocs_xx,
                                 parent_children=parent_children,
@@ -719,8 +708,6 @@ def main(args):
             python3.9 score_submission.py task1 \
             --log {log_file} \
             {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -737,8 +724,6 @@ def main(args):
             {scores}'.format(python_scripts=python_scripts,
                                 log_file=log_file,
                                 log_specifications=log_specifications,
-                                ontology_type_mappings = ontology_type_mappings,
-                                slotname_mappings=slotname_mappings,
                                 encoding_modality=encoding_modality,
                                 coredocs=coredocs_xx,
                                 parent_children=parent_children,
