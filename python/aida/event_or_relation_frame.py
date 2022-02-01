@@ -53,12 +53,11 @@ class EventOrRelationFrame(Object):
         return True
 
     def update(self, entry):
-        event_or_relation_type, rolename = entry.get('?predicate').split('_')
+        predicate = entry.get('predicate')
         if self.get('metatype') is None:
             self.set('metatype', entry.get('?metatype'))
         if self.get('metatype') != entry.get('?metatype'):
             self.record_event('METATYPE_MISMATCH', self.get('ID'), self.get('metatype'), entry.get('?metatype'), entry.get('where'))
-        self.get('types')[event_or_relation_type] = 1
         filler = Object(self.get('logger'))
         filler_cluster_id = entry.get('?object')
         filler.set('predicate', entry.get('predicate'))
@@ -67,8 +66,8 @@ class EventOrRelationFrame(Object):
         filler.set('argument_assertion_confidence', entry.get('?argument_assertion_confidence'))
         filler.set('predicate_justification_confidence', entry.get('?predicate_justification_confidence'))
         filler.set('where', entry.get('where'))
-        if rolename not in self.get('role_fillers'):
-            self.get('role_fillers')[rolename] = {}
-        if filler_cluster_id not in self.get('role_fillers')[rolename]:
-            self.get('role_fillers')[rolename][filler_cluster_id] = []
-        self.get('role_fillers')[rolename][filler_cluster_id].append(filler)
+        if predicate not in self.get('role_fillers'):
+            self.get('role_fillers')[predicate] = {}
+        if filler_cluster_id not in self.get('role_fillers')[predicate]:
+            self.get('role_fillers')[predicate][filler_cluster_id] = []
+        self.get('role_fillers')[predicate][filler_cluster_id].append(filler)

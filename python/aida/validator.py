@@ -69,11 +69,7 @@ class Validator(Object):
         return self.validate_set_membership('sentiment_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
 
     def validate_cluster_type(self, responses, schema, entry, attribute):
-        logger = self.get('logger')
-        cluster_type = entry.get(attribute.get('name'))
-        if not responses.get('ontology_type_mappings').has(entry.get('metatype'), cluster_type):
-            logger.record_event('UNKNOWN_TYPE', cluster_type, entry.get('where'))
-            return False
+        # Do not validate cluster type in Phase 3
         return True
 
     def validate_coordinates(self, provenance, start_x, start_y, end_x, end_y, where):
@@ -148,13 +144,11 @@ class Validator(Object):
         if metatype not in allowed_metatypes:
             self.record_event('INVALID_METATYPE', metatype, ','.join(allowed_metatypes), entry.get('where'))
             return False
-        if attribute.get('name') == 'subject_cluster_member_metatype' and metatype == 'Entity':
+        if attribute.get('name') in ['subject_cluster_member_metatype', 'subject_metatype'] and metatype == 'Entity':
             self.record_event('UNEXPECTED_VALUE', 'metatype', metatype, entry.get('where'))
             return False
         cluster = entry.get('cluster')
         if cluster and cluster.get('metatype') != metatype:
-            return False
-        if entry.get('schema').get('name') == 'AIDA_PHASE2_TASK1_AM_RESPONSE' and metatype == 'Entity':
             self.record_event('UNEXPECTED_VALUE', 'metatype', metatype, entry.get('where'))
             return False
         return True
@@ -168,30 +162,7 @@ class Validator(Object):
         return True
 
     def validate_predicate(self, responses, schema, entry, attribute):
-        logger = self.get('logger')
-        predicate = entry.get(attribute.get('name'))
-        if not responses.get('slot_mappings').get('type_to_codes', predicate):
-            self.record_event('UNKNOWN_PREDICATE', predicate, entry.get('where'))
-            return False
-        if len(predicate.split('_')) != 2:
-            self.record_event('INVALID_PREDICATE_NO_UNDERSCORE', predicate, entry.get('where'))
-            return False
-        subject_type, rolename = predicate.split('_')
-        valid_subject_type = False
-        if schema.get('task') == 'task3':
-            for metatype in ['Event', 'Relation']:
-                if responses.get('ontology_type_mappings').has(metatype, subject_type):
-                    valid_subject_type = True
-        elif responses.get('ontology_type_mappings').has(entry.get('metatype'), subject_type):
-            valid_subject_type = True
-        if not valid_subject_type:
-            logger.record_event('UNKNOWN_TYPE', subject_type, entry.get('where'))
-            return False
-        if schema.get('task')!= 'task3' and subject_type not in entry.get('subject_cluster').get('types'):
-            logger.record_event('UNEXPECTED_SUBJECT_TYPE', subject_type, entry.get('subject_cluster').get('ID'), entry.get('where'))
-            return False
-        if entry.get('metatype') == 'Relation'and entry.get('subject_cluster').get('frame').get('number_of_fillers') > 2:
-                self.record_event('IMPROPER_RELATION', entry.get('subject_cluster').get('ID'), entry.get('where'))
+        # Do not validate predicate in Phase 3
         return True
 
     def validate_provenance_format(self, provenance, where):
@@ -374,6 +345,7 @@ class Validator(Object):
         # An entry in the coreference metric output file is invalid if:
         #  (a) a video mention of an entity was asserted using VideoJustification, or
         #  (b) a video mention of an relation/event was asserted using KeyFrameVideoJustification
+        # Updating the following for Phase 3 is unnecessary since there are no videos in the collection
         if entry.get('schema').get('name') in ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'] and modality == 'video':
             if keyframe_id and entry.get('metatype') != 'Entity':
                 self.record_event('UNEXPECTED_JUSTIFICATION', provenance, entry.get('metatype'), entry.get('cluster_id'), 'KeyFrameVideoJustification', entry.get('where'))
