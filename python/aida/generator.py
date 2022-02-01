@@ -166,7 +166,7 @@ class Generator(Object):
         entry.set('start_before', self.get('date', responses, entry, 'start_before'))
 
     def generate_subject_cluster(self, responses, entry):
-        if entry.get('schema').get('name') not in ['AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE']:
+        if entry.get('schema').get('name') not in ['AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE']:
             return
         cluster_id = entry.get('subject_cluster_id')
         cluster = responses.get('cluster', cluster_id, entry)
