@@ -818,9 +818,9 @@ class ResponseSet(Container):
     def load_responses_task1(self):
         def order(filename):
             filename_order_map = {
-                'AIDA_P2_TA1_CM_A0001.rq.tsv': 1,
-                'AIDA_P2_TA1_AM_A0001.rq.tsv': 2,
-                'AIDA_P2_TA1_TM_A0001.rq.tsv': 3
+                'AIDA_P3_TA1_CM_A0001.rq.tsv': 1,
+                'AIDA_P3_TA1_AM_A0001.rq.tsv': 2,
+                'AIDA_P3_TA1_TM_A0001.rq.tsv': 3
                 }
             if filename not in filename_order_map:
                 print("Filename: '{}' not found in lookup".format(filename))
