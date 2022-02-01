@@ -352,8 +352,9 @@ def main(args):
     #############################################################################################
 
     runtypes = {
-        'practice': 'LDC2020E11',
-        'evaluation': 'LDC2020R17'}
+        'develop': 'develop',
+        'practice': 'LDC2021E11',
+        'evaluation': 'LDC2022R02'}
     if args.runtype not in runtypes:
         logger.record_event('UNKNOWN_RUNTYPE', args.runtype, ','.join(runtypes))
         generate_results_file_and_exit(logger, logs_directory)
@@ -380,8 +381,6 @@ def main(args):
 
     python_scripts          = '/scripts/aida/python'
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
-    ontology_type_mappings  = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_typemappings.tab'
-    slotname_mappings       = '/data/AUX-data/AIDA_Annotation_Ontology_Phase2_V1.1_slotnamemappings.tab'
     encoding_modality       = '/data/AUX-data/encoding_modality.txt'
     coredocs_xx             = '/data/AUX-data/{}.coredocs-xx.txt'.format(ldc_package_id)
     parent_children         = '/data/AUX-data/{}.parent_children.tsv'.format(ldc_package_id)
@@ -420,7 +419,7 @@ def main(args):
     num_files = 0
     num_directories = 0
 
-    open_performer_files = ['AIDA_P2_TA1_AM_A0001.rq.tsv', 'AIDA_P2_TA1_CM_A0001.rq.tsv', 'AIDA_P2_TA1_TM_A0001.rq.tsv']
+    open_performer_files = ['AIDA_P3_TA1_AM_A0001.rq.tsv', 'AIDA_P3_TA1_CM_A0001.rq.tsv', 'AIDA_P3_TA1_TM_A0001.rq.tsv']
 
     for item in items:
         if not item.endswith('.ttl'): continue
@@ -513,7 +512,7 @@ def main(args):
         # copy queries to be applied
         record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
         call_system('mkdir {queries}'.format(queries=queries))
-        call_system('cp /data/queries/AIDA_P2_TA1_*.rq {queries}'.format(task=args.task, queries=queries))
+        call_system('cp /data/queries/AIDA_P3_TA1_*.rq {queries}'.format(task=args.task, queries=queries))
 
         num_total = len([d for d in documents_in_submission if documents_in_submission[d] == 1])
         count = 0;
@@ -588,8 +587,6 @@ def main(args):
             python3.9 validate_responses.py \
             --log {log_file} \
             {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
             {encoding_modality} \
             {coredocs} \
             {parent_children} \
@@ -602,8 +599,6 @@ def main(args):
             {sparql_valid_output}'.format(python_scripts=python_scripts,
                                           log_file=log_file,
                                           log_specifications=log_specifications,
-                                          ontology_type_mappings=ontology_type_mappings,
-                                          slotname_mappings=slotname_mappings,
                                           encoding_modality=encoding_modality,
                                           coredocs=coredocs_xx,
                                           parent_children=parent_children,
@@ -616,195 +611,7 @@ def main(args):
                                           sparql_valid_output=sparql_valid_output)
     call_system(cmd)
 
-    #############################################################################################
-    # Filter SPARQL output
-    #############################################################################################
-
-    record_and_display_message(logger, 'Filtering SPARQL output.')
-
-    log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
-    cmd = 'cd {python_scripts} && \
-            python3.9 filter_responses.py \
-            --log {log_file} \
-            {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
-            {encoding_modality} \
-            {coredocs} \
-            {parent_children} \
-            {sentence_boundaries} \
-            {image_boundaries} \
-            {keyframe_boundaries} \
-            {video_boundaries} \
-            {annotated_regions} \
-            {run_id} \
-            {sparql_valid_output} \
-            {sparql_filtered_output}'.format(python_scripts=python_scripts,
-                                             log_file=log_file,
-                                             log_specifications=log_specifications,
-                                             ontology_type_mappings=ontology_type_mappings,
-                                             slotname_mappings=slotname_mappings,
-                                             encoding_modality=encoding_modality,
-                                             coredocs=coredocs_xx,
-                                             parent_children=parent_children,
-                                             sentence_boundaries=sentence_boundaries,
-                                             image_boundaries=image_boundaries,
-                                             keyframe_boundaries=keyframe_boundaries,
-                                             video_boundaries=video_boundaries,
-                                             annotated_regions=annotated_regions,
-                                             run_id=args.run,
-                                             sparql_valid_output=sparql_valid_output,
-                                             sparql_filtered_output=sparql_filtered_output)
-    call_system(cmd)
-
-    #############################################################################################
-    # Aligning clusters
-    #############################################################################################
-
-    record_and_display_message(logger, 'Aligning clusters.')
-
-    log_file = '{logs_directory}/align-clusters.log'.format(logs_directory=logs_directory)
-    cmd = 'cd {python_scripts} && \
-            python3.9 align_clusters.py \
-            --log {log_file} \
-            {log_specifications} \
-            {ontology_type_mappings} \
-            {encoding_modality} \
-            {coredocs} \
-            {parent_children} \
-            {sentence_boundaries} \
-            {image_boundaries} \
-            {keyframe_boundaries} \
-            {video_boundaries} \
-            {annotated_regions} \
-            {eng_iou_threshold} \
-            {spa_iou_threshold} \
-            {rus_iou_threshold} \
-            {image_iou_threshold} \
-            {video_iou_threshold} \
-            {gold_filtered_responses} \
-            {sparql_filtered_output} \
-            {similarities} \
-            {alignment}'.format(python_scripts=python_scripts,
-                                log_file=log_file,
-                                log_specifications=log_specifications,
-                                ontology_type_mappings=ontology_type_mappings,
-                                encoding_modality=encoding_modality,
-                                coredocs=coredocs_xx,
-                                parent_children=parent_children,
-                                sentence_boundaries=sentence_boundaries,
-                                image_boundaries=image_boundaries,
-                                keyframe_boundaries=keyframe_boundaries,
-                                video_boundaries=video_boundaries,
-                                annotated_regions=annotated_regions,
-                                eng_iou_threshold=args.eng_iou_threshold,
-                                spa_iou_threshold=args.spa_iou_threshold,
-                                rus_iou_threshold=args.rus_iou_threshold,
-                                image_iou_threshold=args.image_iou_threshold,
-                                video_iou_threshold=args.video_iou_threshold,
-                                gold_filtered_responses=gold_filtered_responses,
-                                sparql_filtered_output=sparql_filtered_output,
-                                similarities=similarities,
-                                alignment=alignment)
-    call_system(cmd)
-
-    #############################################################################################
-    # generate scores
-    #############################################################################################
-
-    record_and_display_message(logger, 'Generating scores.')
-
-    log_file = '{logs_directory}/score_submission.log'.format(logs_directory=logs_directory)
-    cmd = 'cd {python_scripts} && \
-            python3.9 score_submission.py task1 \
-            --log {log_file} \
-            {log_specifications} \
-            {ontology_type_mappings} \
-            {slotname_mappings} \
-            {encoding_modality} \
-            {coredocs} \
-            {parent_children} \
-            {sentence_boundaries} \
-            {image_boundaries} \
-            {keyframe_boundaries} \
-            {video_boundaries} \
-            {annotated_regions} \
-            {gold_filtered_responses} \
-            {sparql_filtered_output} \
-            {alignment} \
-            {similarities} \
-            {run_id} \
-            {scores}'.format(python_scripts=python_scripts,
-                                log_file=log_file,
-                                log_specifications=log_specifications,
-                                ontology_type_mappings = ontology_type_mappings,
-                                slotname_mappings=slotname_mappings,
-                                encoding_modality=encoding_modality,
-                                coredocs=coredocs_xx,
-                                parent_children=parent_children,
-                                sentence_boundaries=sentence_boundaries,
-                                image_boundaries=image_boundaries,
-                                keyframe_boundaries=keyframe_boundaries,
-                                video_boundaries=video_boundaries,
-                                annotated_regions=annotated_regions,
-                                gold_filtered_responses=gold_filtered_responses,
-                                sparql_filtered_output=sparql_filtered_output,
-                                similarities=similarities,
-                                alignment=alignment,
-                                run_id=args.run,
-                                scores=scores)
-    call_system(cmd)
-
-    #############################################################################################
-    # generate confidence intervals
-    #############################################################################################
-
-    record_and_display_message(logger, 'Generating confidence intervals.')
-    log_file = '{logs_directory}/confidence_intervals.log'.format(logs_directory=logs_directory)
-    metric_classes_specs = get_metric_classes_specs()
-    added = {}
-    cmds = []
-    for line in metric_classes_specs.split('\n'):
-        line = line.strip()
-        if line == '': continue
-        if line.startswith('#'): continue
-        filename, metricname, column_value_pairs, score_columnname = line.split()
-        scorer_name = filename.split('-')[0]
-        if scorer_name in added: continue
-        cmd = 'cd {python_scripts} && \
-            python3.9 generate_confidence_intervals.py \
-            --macro \
-            --log {log_file} \
-            {log_specifications} \
-            {primary_key} \
-            {score_columnname} \
-            {aggregate} \
-            {document_id} \
-            {run_id} \
-            {input} \
-            {pretty_output} \
-            {tab_output}'.format(python_scripts=python_scripts,
-                                log_file=log_file,
-                                log_specifications=log_specifications,
-                                primary_key='RunID,Language,Metatype',
-                                score_columnname=score_columnname,
-                                aggregate='DocID:ALL-Micro,DocID:ALL-Macro',
-                                document_id='DocID',
-                                run_id='RunID',
-                                input='{}/{}-scores.tab'.format(scores, scorer_name),
-                                pretty_output='{}/{}-ci.txt'.format(scores, scorer_name),
-                                tab_output='{}/{}-ci.tab'.format(scores, scorer_name))
-        cmds.append(cmd)
-        added[scorer_name] = 1
-    with Pool(8) as p:
-        p.map(call_system, cmds)
-
-    #############################################################################################
-    # generate results.json file
-    #############################################################################################
-
-    record_and_display_message(logger, 'Generating results.json file.')
-    generate_results_file_and_exit(logger, logs_directory)
+    record_and_display_message(logger, 'Done.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
