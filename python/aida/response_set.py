@@ -264,6 +264,13 @@ attributes = {
         'validate': 'validate_negation_status',
         'years': [2021],
         },
+    'is_mention_negated': {
+        'name': 'is_mention_negated',
+        'schemas': ['AIDA_PHASE3_TASK1_CM_RESPONSE'],
+        'tasks': ['task1'],
+        'validate': 'validate_negation_status',
+        'years': [2021],
+        },
     'is_object_cluster_member_negated': {
         'name': 'is_object_cluster_member_negated',
         'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
@@ -271,10 +278,24 @@ attributes = {
         'validate': 'validate_negation_status',
         'years': [2021],
         },
+    'is_object_prototype_negated': {
+        'name': 'is_object_prototype_negated',
+        'schemas': ['AIDA_PHASE3_TASK1_AM_RESPONSE'],
+        'tasks': ['task1'],
+        'validate': 'validate_negation_status',
+        'years': [2021],
+        },
     'is_subject_cluster_member_negated': {
         'name': 'is_subject_cluster_member_negated',
         'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
         'tasks': ['task3'],
+        'validate': 'validate_negation_status',
+        'years': [2021],
+        },
+    'is_subject_prototype_negated': {
+        'name': 'is_subject_prototype_negated',
+        'schemas': ['AIDA_PHASE3_TASK1_AM_RESPONSE'],
+        'tasks': ['task1'],
         'validate': 'validate_negation_status',
         'years': [2021],
         },
@@ -598,8 +619,43 @@ schemas = {
             'mention_type_justification_confidence'
             ]
         },
-    'AIDA_PHASE2_TASK1_TM_RESPONSE': {
-        'name': 'AIDA_PHASE2_TASK1_TM_RESPONSE',
+    'AIDA_PHASE3_TASK1_AM_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK1_AM_RESPONSE',
+        'year': 2020,
+        'task': 'task1',
+        'header': ['?is_assertion_negated', '?subject_metatype', '?subject', '?is_subject_negated', '?predicate', '?object_metatype', '?object', '?is_object_negated', '?predicate_justification', '?argument_assertion_confidence', '?predicate_justification_confidence'],
+        'columns': [
+            'is_assertion_negated',
+            'subject_metatype',
+            'subject_cluster_id',
+            'is_subject_prototype_negated',
+            'predicate',
+            'object_metatype',
+            'object_cluster_id',
+            'is_object_prototype_negated',
+            'predicate_justification_span_text',
+            'argument_assertion_confidence',
+            'predicate_justification_confidence',
+            ]
+        },
+    'AIDA_PHASE3_TASK1_CM_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK1_CM_RESPONSE',
+        'year': 2020,
+        'task': 'task1',
+        'header': ['?cluster', '?metatype', '?type', '?mention_span', '?is_negated', '?type_statement_confidence', '?cluster_membership_confidence', '?mention_type_justification_confidence'],
+        'columns': [
+            'cluster_id',
+            'metatype',
+            'cluster_type',
+            'mention_span_text',
+            'is_mention_negated',
+            'type_statement_confidence',
+            'cluster_membership_confidence',
+            'mention_type_justification_confidence'
+            ]
+        },
+    'AIDA_PHASE3_TASK1_TM_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK1_TM_RESPONSE',
         'year': 2020,
         'task': 'task1',
         'header': ['?cluster', '?sa_month', '?sa_day', '?sa_year', '?sb_month', '?sb_day', '?sb_year', '?ea_month', '?ea_day', '?ea_year', '?eb_month', '?eb_day', '?eb_year'],
