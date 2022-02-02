@@ -140,7 +140,7 @@ attributes = {
         'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'generate': 'generate_cluster',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'cluster_id': {
         'name': 'cluster_id',
@@ -334,7 +334,7 @@ attributes = {
         'tasks': ['task1'],
         'generate': 'generate_kb_document_id',
         'validate': 'validate_kb_document_id',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'link_target': {
         'name': 'link_target',
@@ -363,7 +363,7 @@ attributes = {
         'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_entries_in_cluster',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'object_cluster_handle': {
         'name': 'object_cluster_handle',
@@ -1051,6 +1051,14 @@ class ResponseSet(Container):
         return self.get('document_boundaries').get('video')
 
     def validate_attributes_and_schemas(self):
+        for column_name in attributes:
+            column_spec = attributes[column_name]
+            for schema_name in column_spec.get('schemas'):
+                if 'AIDA_PHASE3' in schema_name:
+                    if 2021 not in column_spec.get('years'):
+                        self.record_event('DEFAULT_CRITICAL_ERROR',
+                                            'year \'2021\' should be included in specs for \'{}\''.format(column_name),
+                                            self.get_code_location())
         for column_name in attributes:
             column_spec = attributes[column_name]
             for schema_name in column_spec.get('schemas'):
