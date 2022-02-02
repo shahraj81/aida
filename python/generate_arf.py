@@ -673,7 +673,7 @@ def validate_responses(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate claims in assessor readable format.")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
-    parser.add_argument('-n', '--lenient', action='store_true', default=False, help='Consider identity-qnode as type-qnode? (default: %(default)s)')
+    parser.add_argument('-n', '--lenient', action='store_true', default=True, help='Consider identity-qnode as type-qnode? (default: %(default)s)')
     parser.add_argument('-t', '--max_qnode_types', default=5, help='Specify the maximum number of qnode types allowed in output (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
