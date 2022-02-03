@@ -177,7 +177,18 @@ make task2 \
 
 ## How to apply the docker to a task3 run?
 
-Applying the docker to a task3 run is similar to that of task2, except that you would need to call `make task3 ...` instead of `make task2 ...`.
+The docker currently accepts all the task3 claim KBs along with corresponding report firles from the AIF validator (if any) placed in the input directory.
+
+In order to apply the docker to a set of task3 claim KBs, run the following command:
+
+~~~
+make task3 \
+  RUNID=your_run_id \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+At this point, the docker does not accept task3 input from an S3 location.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -277,6 +288,7 @@ The `task3` logs directory contains the following log files:
 # Revision History
 
 ## 02/03/2022:
+* disallowing s3 location as input for task3
 * regenerated the Task3 ARF files to make these changes:
   * in outer-claim: add an asessment line for qnode_type, for each qnode_id that the system returned
   * change date format to be YYYY-MM-DD, to be consistent with LDC annotation (probably need to do this earlier in the pipeline)
