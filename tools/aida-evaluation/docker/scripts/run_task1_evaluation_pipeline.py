@@ -406,7 +406,6 @@ def main(args):
 
     call_system('cd {python_scripts} && git pull'.format(python_scripts=python_scripts))
 
-
     #############################################################################################
     # inspect the input directory
     #############################################################################################
