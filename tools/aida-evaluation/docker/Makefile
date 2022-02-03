@@ -12,7 +12,7 @@ GRAPHDB_VERSION=9.10.2
 GRAPHDB_EDITION=free
 
 all:
-	@echo "Usage: make [build|task3-example|task3]"
+	@echo "Usage: make [build|task1-example|task2-example|task3-example|task1|task2|task3]"
 
 build:
 	docker build \
@@ -20,19 +20,51 @@ build:
 	       --build-arg edition=$(GRAPHDB_EDITION) \
 	       -t aida-evaluation .
 
+task1-example:
+	make task1 \
+	  RUNID=example-task1-run \
+	  HOST_INPUT_DIR=$(ROOT)/M36-practice/runs/example-task1-run \
+	  HOST_OUTPUT_DIR=$(ROOT)/M36-practice/scores/example-task1-run
+
+task2-example:
+	make task2 \
+	  RUNID=example-task2-run \
+	  HOST_INPUT_DIR=$(ROOT)/M36-practice/runs/example-task2-run \
+	  HOST_OUTPUT_DIR=$(ROOT)/M36-practice/scores/example-task2-run
+
 task3-example:
 	make task3 \
 	  RUNID=example-task3-run \
-	  HOST_INPUT_DIR=$(ROOT)/M54-$(RUNTYPE)/runs/example-task3-run \
-	  HOST_OUTPUT_DIR=$(ROOT)/M54-$(RUNTYPE)/scores/example-task3-run
+	  HOST_INPUT_DIR=$(ROOT)/M54-practice/runs/example-task3-run \
+	  HOST_OUTPUT_DIR=$(ROOT)/M54-practice/scores/example-task3-run
+
+task1:
+	docker run \
+	  --env RUNID=$(RUNID) \
+	  --env RUNTYPE=$(RUNTYPE) \
+	  --env TASK=task1 \
+	  -v $(HOST_INPUT_DIR):/evaluate:ro \
+	  -v $(HOST_OUTPUT_DIR):/output \
+	  -v $(HOST_DATA_DIR):/data \
+	-it aida-evaluation
+
+task2:
+	docker run \
+	  --env RUNID=$(RUNID) \
+	  --env RUNTYPE=$(RUNTYPE) \
+	  --env TASK=task2 \
+	  --env AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
+	  --env AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+	  -v $(HOST_INPUT_DIR):/evaluate:ro \
+	  -v $(HOST_OUTPUT_DIR):/output \
+	  -v $(HOST_DATA_DIR):/data \
+	-it aida-evaluation
 
 task3:
 	docker run \
 	  --env RUNID=$(RUNID) \
 	  --env RUNTYPE=$(RUNTYPE) \
 	  --env TASK=task3 \
-	  --env AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
-	  --env AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 	  -v $(HOST_INPUT_DIR):/evaluate:ro \
 	  -v $(HOST_OUTPUT_DIR):/output \
 	  -v $(HOST_DATA_DIR):/data \
