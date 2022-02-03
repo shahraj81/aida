@@ -166,6 +166,8 @@ You may also want to take a look at the input directories of the included exampl
 
 # What does the output directory contain?
 
+## Task1
+
 The `task1` output directory contains the following:
 
 | Name                      |  Description                                          |
@@ -210,6 +212,8 @@ The `task3` output directory contains the following:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What does the logs directory contain?
+
+## Task1
 
 The `task1` logs directory contains the following log files:
 
