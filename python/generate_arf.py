@@ -167,9 +167,9 @@ class ClaimTime(Object):
             field_name_day = '{}_day'.format(date_type)
             field_name_month = '{}_month'.format(date_type)
             field_name_year = '{}_year'.format(date_type)
-            date_str = '{}-{}-{}'.format(self.get('entry').get(field_name_day),
+            date_str = '{}-{}-{}'.format(self.get('entry').get(field_name_year),
                                          self.get('entry').get(field_name_month),
-                                         self.get('entry').get(field_name_year))
+                                         self.get('entry').get(field_name_day))
             date_str = date_str.replace('"','')
             date_range[date_type] = date_str
         range_str = '({},{})-({},{})'.format(date_range.get('start_after'),
@@ -320,9 +320,9 @@ class ClaimTemporalKEs(ClaimKEs):
             field_name_day = '{}_day'.format(date_type)
             field_name_month = '{}_month'.format(date_type)
             field_name_year = '{}_year'.format(date_type)
-            date_str = '{}-{}-{}'.format(time_assertion_entry.get(field_name_day),
+            date_str = '{}-{}-{}'.format(time_assertion_entry.get(field_name_year),
                                          time_assertion_entry.get(field_name_month),
-                                         time_assertion_entry.get(field_name_year))
+                                         time_assertion_entry.get(field_name_day))
             date_str = date_str.replace('"','')
             date_range[date_type] = date_str
         range_str = '{};{};{};{}'.format(date_range.get('start_after'),
@@ -513,9 +513,9 @@ class EventOrRelationFrames(Object):
             field_name_day = '{}_day'.format(date_type)
             field_name_month = '{}_month'.format(date_type)
             field_name_year = '{}_year'.format(date_type)
-            date_str = '{}-{}-{}'.format(entry.get(field_name_day),
+            date_str = '{}-{}-{}'.format(entry.get(field_name_year),
                                          entry.get(field_name_month),
-                                         entry.get(field_name_year))
+                                         entry.get(field_name_day))
             date_str = date_str.replace('"','')
             date_range[date_type] = date_str
         subject_cluster_id = entry.get('subject_cluster_id')
