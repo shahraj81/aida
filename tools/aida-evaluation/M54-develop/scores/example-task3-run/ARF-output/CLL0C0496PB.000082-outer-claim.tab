@@ -7,7 +7,7 @@ CLL0C0496PB.000082	claimDocument	1	value	L0C0496PB	--
 CLL0C0496PB.000082	claimEpistemic	1	polarity	EpistemicTrueCertain	NIL
 CLL0C0496PB.000082	claimEpistemic	1	strength	EpistemicTrueCertain	NIL
 CLL0C0496PB.000082	claimSentiment	1	value	SentimentNeutralUnknown	NIL
-CLL0C0496PB.000082	date	1	range	(16-03-2020,16-03-2020)-(16-03-2020,16-03-2020)	NIL
+CLL0C0496PB.000082	date	1	range	(2020-03-16,2020-03-16)-(2020-03-16,2020-03-16)	NIL
 CLL0C0496PB.000082	claimMedium	1	name	Twitter	NIL
 CLL0C0496PB.000082	claimMedium	1	qnode_id	Q918	NIL
 CLL0C0496PB.000082	claimMedium	1	qnode_type	Q3220391	NIL

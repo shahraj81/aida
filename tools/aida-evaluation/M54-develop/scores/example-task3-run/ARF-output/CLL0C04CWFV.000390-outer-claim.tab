@@ -7,7 +7,7 @@ CLL0C04CWFV.000390	claimDocument	1	value	L0C04CWFV	--
 CLL0C04CWFV.000390	claimEpistemic	1	polarity	EpistemicFalseUncertain	NIL
 CLL0C04CWFV.000390	claimEpistemic	1	strength	EpistemicFalseUncertain	NIL
 CLL0C04CWFV.000390	claimSentiment	1	value	SentimentNeutralUnknown	NIL
-CLL0C04CWFV.000390	date	1	range	(01-09-2020,31-12-9999)-(01-09-2020,31-12-9999)	NIL
+CLL0C04CWFV.000390	date	1	range	(2020-09-01,9999-12-31)-(2020-09-01,9999-12-31)	NIL
 CLL0C04CWFV.000390	claimLocation	1	name	Russia	NIL
 CLL0C04CWFV.000390	claimLocation	1	qnode_id	Q159	NIL
 CLL0C04CWFV.000390	claimLocation	1	qnode_type	Q159	NIL
