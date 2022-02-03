@@ -2,6 +2,7 @@
 
 * [Introduction](#introduction)
 * [How to build the docker image?](#how-to-build-the-docker-image)
+* [Steps in the dockerized pipeline](#steps-in-the-dockerized-pipeline)
 * [How to apply the docker to a test run?](#how-to-apply-the-docker-to-a-test-run)
 * [How to apply the docker to your run?](#how-to-apply-the-docker-to-your-run)
 * [How to apply the docker to your run in the evaluation setting?](#how-to-apply-the-docker-to-your-run-in-the-evaluation-setting)
@@ -51,6 +52,34 @@ In order to build the docker image with a different version of GraphDB:
 cd docker
 make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
 ~~~
+
+[top](#how-to-run-the-aida-evaluation-pipeline)
+
+# Steps in the dockerized pipeline
+
+Depending on the task, the dockerized pipeline runs a subset of the following steps in the order given below:
+
+## SPARQL-output (Task1/2/3)
+
+In this step SPARQL queries are applied to the KBs.
+
+## SPARQL-CLEAN-output (Task1/2/3)
+
+SPARQL output contains AIF prefixes attached to values, an example of which is shown below:
+
+~~~
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#Relation>
+~~~
+
+These prefixes are removed during this cleaning step which reduces the above example to just `Relation`.
+
+## SPARQL-MERGED-output (Task3)
+
+In this step, cleaned SPARQL output from multiple variants of the a SPARQL query (e.g. `AIDA_P3_TA3_GR_0001A.rq` and `AIDA_P3_TA3_GR_0001B.rq`) are merged into a single output file `AIDA_P3_TA3_GR_0001.rq.tsv` in order to process next steps.
+
+## SPARQL-VALID-output (Task1/2/3)
+
+In this step responses from output of the previous step is validated.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -246,6 +275,12 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 02/03/2022:
+* regenerated the Task3 ARF files to make these changes:
+  * in outer-claim: add an asessment line for qnode_type, for each qnode_id that the system returned
+  * change date format to be YYYY-MM-DD, to be consistent with LDC annotation (probably need to do this earlier in the pipeline)
+* Section [Steps in the dockerized pipeline](#steps-in-the-dockerized-pipeline) added to this README
 
 ## 02/02/2022:
 * Task1 evaluation pipeline processing up to the validation step added.
