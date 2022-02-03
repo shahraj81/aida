@@ -21,10 +21,10 @@ import os
 attributes = {
     'argument_assertion_confidence': {
         'name': 'argument_assertion_confidence',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'claim': {
         'name': 'claim',
@@ -49,6 +49,14 @@ attributes = {
         'tasks': ['task3'],
         'years': [2021],
         },
+    'claim_component_key': {
+        'name': 'claim_component_key',
+        'dependencies': ['claim_id'],
+        'generate': 'generate_claim_component_key',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2021],
+        },
     'claim_component_name': {
         'name': 'claim_component_name',
         'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
@@ -69,6 +77,14 @@ attributes = {
         },
     'claim_component_qnode_type': {
         'name': 'claim_component_qnode_type',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2021],
+        },
+    'claim_component_qnode_types': {
+        'name': 'claim_component_qnode_types',
+        'dependencies': ['claim', 'claim_component_key'],
+        'generate': 'generate_claim_component_qnode_types',
         'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE'],
         'tasks': ['task3'],
         'years': [2021],
@@ -121,36 +137,36 @@ attributes = {
     'cluster': {
         'dependencies': ['cluster_id', 'document_id'],
         'name': 'cluster',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'generate': 'generate_cluster',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'cluster_id': {
         'name': 'cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task1', 'task2'],
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'cluster_membership_confidence': {
         'name': 'cluster_membership_confidence',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'cluster_type': {
         'name': 'cluster_type',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_cluster_type',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'date': {
         'dependencies': ['start', 'end', 'subject_cluster'],
         'name': 'date',
         'tasks': ['task1', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'generate': 'generate_date_start_and_end',
         'validate': 'validate_date_start_and_end',
         'years': [2020, 2021],
@@ -159,7 +175,7 @@ attributes = {
         'dependencies': ['kb_document_id'],
         'name': 'document_id',
         'tasks': ['task1', 'task2', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK2_ZH_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE'],
         'validate': 'validate_document_id',
         'generate': 'generate_document_id',
         'years': [2020, 2021],
@@ -175,7 +191,7 @@ attributes = {
         'dependencies': ['end_after', 'end_before'],
         'name': 'end',
         'tasks': ['task1', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'generate': 'generate_end',
         'validate': 'validate_date_range',
         'years': [2020, 2021],
@@ -184,26 +200,26 @@ attributes = {
         'dependencies': ['end_before_month', 'end_before_day', 'end_before_year'],
         'name': 'end_before',
         'tasks': ['task1', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'generate': 'generate_end_before',
         'validate': 'validate_date',
         'years': [2020, 2021],
         },
     'end_before_day': {
         'name': 'end_before_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'end_before_month': {
         'name': 'end_before_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'end_before_year': {
         'name': 'end_before_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
@@ -211,26 +227,26 @@ attributes = {
         'dependencies': ['end_after_month', 'end_after_day', 'end_after_year'],
         'name': 'end_after',
         'tasks': ['task1', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'generate': 'generate_end_after',
         'validate': 'validate_date',
         'years': [2020, 2021],
         },
     'end_after_day': {
         'name': 'end_after_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'end_after_month': {
         'name': 'end_after_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'end_after_year': {
         'name': 'end_after_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
@@ -243,8 +259,15 @@ attributes = {
         },
     'is_assertion_negated': {
         'name': 'is_assertion_negated',
-        'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
-        'tasks': ['task3'],
+        'schemas': ['AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
+        'tasks': ['task1', 'task3'],
+        'validate': 'validate_negation_status',
+        'years': [2021],
+        },
+    'is_mention_negated': {
+        'name': 'is_mention_negated',
+        'schemas': ['AIDA_PHASE3_TASK1_CM_RESPONSE'],
+        'tasks': ['task1'],
         'validate': 'validate_negation_status',
         'years': [2021],
         },
@@ -255,6 +278,13 @@ attributes = {
         'validate': 'validate_negation_status',
         'years': [2021],
         },
+    'is_object_prototype_negated': {
+        'name': 'is_object_prototype_negated',
+        'schemas': ['AIDA_PHASE3_TASK1_AM_RESPONSE'],
+        'tasks': ['task1'],
+        'validate': 'validate_negation_status',
+        'years': [2021],
+        },
     'is_subject_cluster_member_negated': {
         'name': 'is_subject_cluster_member_negated',
         'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
@@ -262,26 +292,33 @@ attributes = {
         'validate': 'validate_negation_status',
         'years': [2021],
         },
+    'is_subject_prototype_negated': {
+        'name': 'is_subject_prototype_negated',
+        'schemas': ['AIDA_PHASE3_TASK1_AM_RESPONSE'],
+        'tasks': ['task1'],
+        'validate': 'validate_negation_status',
+        'years': [2021],
+        },
     'justification_confidence': {
         'name': 'justification_confidence',
-        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'linking_confidence': {
         'name': 'linking_confidence',
-        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'mention_type_justification_confidence': {
         'name': 'mention_type_justification_confidence',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'kb_claim_id': {
         'name': 'kb_claim_id',
@@ -293,29 +330,29 @@ attributes = {
         },
     'kb_document_id': {
         'name': 'kb_document_id',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'generate': 'generate_kb_document_id',
         'validate': 'validate_kb_document_id',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'link_target': {
         'name': 'link_target',
-        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'mention_span_text': {
         'name': 'mention_span_text',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task1', 'task2'],
         'validate': 'validate_value_provenance_triple',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'metatype': {
         'name': 'metatype',
-        'years': [2020],
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'years': [2020, 2021],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_metatype',
         },
@@ -323,10 +360,10 @@ attributes = {
         'dependencies': ['object_cluster_id'],
         'generate': 'generate_object_cluster',
         'name': 'object_cluster',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_entries_in_cluster',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'object_cluster_handle': {
         'name': 'object_cluster_handle',
@@ -336,7 +373,7 @@ attributes = {
         },
     'object_cluster_id': {
         'name': 'object_cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
@@ -374,6 +411,13 @@ attributes = {
         'validate': 'validate_value_provenance_triple',
         'years': [2020, 2021],
         },
+    'object_metatype': {
+        'name': 'object_metatype',
+        'years': [2021],
+        'schemas': ['AIDA_PHASE3_TASK1_AM_RESPONSE'],
+        'tasks': ['task1'],
+        'validate': 'validate_metatype',
+        },
     'object_type': {
         'name': 'object_type',
         'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
@@ -384,17 +428,17 @@ attributes = {
     'predicate': {
         'dependencies': ['subject_cluster'],
         'name': 'predicate',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'validate': 'validate_predicate',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'predicate_justification_span_text': {
         'name': 'predicate_justification_span_text',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_value_provenance_triple',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'predicate_justification_spans_text': {
         'name': 'predicate_justification_spans_text',
@@ -405,22 +449,22 @@ attributes = {
         },
     'predicate_justification_confidence': {
         'name': 'predicate_justification_confidence',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'validate': 'validate_confidence',
         'years': [2020, 2021],
         },
     'query_link_target': {
         'name': 'query_link_target',
-        'schemas': ['AIDA_PHASE2_TASK2_ZH_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'start': {
         'dependencies': ['start_after', 'start_before'],
         'name': 'start',
         'tasks': ['task1', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'generate': 'generate_start',
         'validate': 'validate_date_range',
         'years': [2020, 2021],
@@ -429,26 +473,26 @@ attributes = {
         'dependencies': ['start_before_month', 'start_before_day', 'start_before_year'],
         'name': 'start_before',
         'tasks': ['task1', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'generate': 'generate_start_before',
         'validate': 'validate_date',
         'years': [2020, 2021],
         },
     'start_before_day': {
         'name': 'start_before_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'start_before_month': {
         'name': 'start_before_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'start_before_year': {
         'name': 'start_before_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
@@ -456,26 +500,26 @@ attributes = {
         'dependencies': ['start_after_month', 'start_after_day', 'start_after_year'],
         'name': 'start_after',
         'tasks': ['task1', 'task3'],
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'generate': 'generate_start_after',
         'validate': 'validate_date',
         'years': [2020, 2021],
         },
     'start_after_day': {
         'name': 'start_after_day',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'start_after_month': {
         'name': 'start_after_month',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
     'start_after_year': {
         'name': 'start_after_year',
-        'schemas': ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
@@ -483,14 +527,14 @@ attributes = {
         'dependencies': ['subject_cluster_id', 'document_id'],
         'generate': 'generate_subject_cluster',
         'name': 'subject_cluster',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_entries_in_cluster',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     'subject_cluster_id': {
         'name': 'subject_cluster_id',
-        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task1', 'task3'],
         'years': [2020, 2021],
         },
@@ -535,6 +579,13 @@ attributes = {
         'validate': 'validate_value_provenance_triple',
         'years': [2020, 2021],
         },
+    'subject_metatype': {
+        'name': 'subject_metatype',
+        'years': [2021],
+        'schemas': ['AIDA_PHASE3_TASK1_AM_RESPONSE'],
+        'tasks': ['task1'],
+        'validate': 'validate_metatype',
+        },
     'subject_type': {
         'name': 'subject_type',
         'schemas': ['AIDA_PHASE2_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE'],
@@ -544,10 +595,10 @@ attributes = {
         },
     'type_statement_confidence': {
         'name': 'type_statement_confidence',
-        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE'],
+        'schemas': ['AIDA_PHASE2_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_CM_RESPONSE'],
         'tasks': ['task1'],
         'validate': 'validate_confidence',
-        'years': [2020],
+        'years': [2020, 2021],
         },
     }
 
@@ -582,9 +633,44 @@ schemas = {
             'mention_type_justification_confidence'
             ]
         },
-    'AIDA_PHASE2_TASK1_TM_RESPONSE': {
-        'name': 'AIDA_PHASE2_TASK1_TM_RESPONSE',
-        'year': 2020,
+    'AIDA_PHASE3_TASK1_AM_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK1_AM_RESPONSE',
+        'year': 2021,
+        'task': 'task1',
+        'header': ['?is_assertion_negated', '?subject_metatype', '?subject', '?is_subject_negated', '?predicate', '?object_metatype', '?object', '?is_object_negated', '?predicate_justification', '?argument_assertion_confidence', '?predicate_justification_confidence'],
+        'columns': [
+            'is_assertion_negated',
+            'subject_metatype',
+            'subject_cluster_id',
+            'is_subject_prototype_negated',
+            'predicate',
+            'object_metatype',
+            'object_cluster_id',
+            'is_object_prototype_negated',
+            'predicate_justification_span_text',
+            'argument_assertion_confidence',
+            'predicate_justification_confidence',
+            ]
+        },
+    'AIDA_PHASE3_TASK1_CM_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK1_CM_RESPONSE',
+        'year': 2021,
+        'task': 'task1',
+        'header': ['?cluster', '?metatype', '?type', '?mention_span', '?is_negated', '?type_statement_confidence', '?cluster_membership_confidence', '?mention_type_justification_confidence'],
+        'columns': [
+            'cluster_id',
+            'metatype',
+            'cluster_type',
+            'mention_span_text',
+            'is_mention_negated',
+            'type_statement_confidence',
+            'cluster_membership_confidence',
+            'mention_type_justification_confidence'
+            ]
+        },
+    'AIDA_PHASE3_TASK1_TM_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK1_TM_RESPONSE',
+        'year': 2021,
         'task': 'task1',
         'header': ['?cluster', '?sa_month', '?sa_day', '?sa_year', '?sb_month', '?sb_day', '?sb_year', '?ea_month', '?ea_day', '?ea_year', '?eb_month', '?eb_day', '?eb_year'],
         'columns': [
@@ -603,9 +689,9 @@ schemas = {
             'end_before_year'
             ]
         },
-    'AIDA_PHASE2_TASK2_ZH_RESPONSE': {
-        'name': 'AIDA_PHASE2_TASK2_ZH_RESPONSE',
-        'year': 2020,
+    'AIDA_PHASE3_TASK2_ZH_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK2_ZH_RESPONSE',
+        'year': 2021,
         'task': 'task2',
         'header': ['?docid', '?query_link_target', '?link_target', '?cluster', '?mention_span', '?j_cv', '?link_cv'],
         'columns': [
@@ -790,6 +876,7 @@ class ResponseSet(Container):
         self.runid = runid
         self.path = path
         self.task = task
+        self.validate_attributes_and_schemas()
         self.load_responses()
 
     def load_responses(self):
@@ -802,9 +889,9 @@ class ResponseSet(Container):
     def load_responses_task1(self):
         def order(filename):
             filename_order_map = {
-                'AIDA_P2_TA1_CM_A0001.rq.tsv': 1,
-                'AIDA_P2_TA1_AM_A0001.rq.tsv': 2,
-                'AIDA_P2_TA1_TM_A0001.rq.tsv': 3
+                'AIDA_P3_TA1_CM_A0001.rq.tsv': 1,
+                'AIDA_P3_TA1_AM_A0001.rq.tsv': 2,
+                'AIDA_P3_TA1_TM_A0001.rq.tsv': 3
                 }
             if filename not in filename_order_map:
                 print("Filename: '{}' not found in lookup".format(filename))
@@ -962,6 +1049,34 @@ class ResponseSet(Container):
 
     def get_video_boundaries(self):
         return self.get('document_boundaries').get('video')
+
+    def validate_attributes_and_schemas(self):
+        for column_name in attributes:
+            column_spec = attributes[column_name]
+            for schema_name in column_spec.get('schemas'):
+                if 'AIDA_PHASE3' in schema_name:
+                    if 2021 not in column_spec.get('years'):
+                        self.record_event('DEFAULT_CRITICAL_ERROR',
+                                            'year \'2021\' should be included in specs for \'{}\''.format(column_name),
+                                            self.get_code_location())
+        for column_name in attributes:
+            column_spec = attributes[column_name]
+            for schema_name in column_spec.get('schemas'):
+                if schema_name not in schemas:
+                    self.record_event('DEFAULT_CRITICAL_ERROR',
+                                        'schema not found \'{}\''.format(schema_name),
+                                        self.get_code_location())
+        for schema in schemas.values():
+            for column_name in schema.get('columns'):
+                if column_name not in attributes:
+                    self.record_event('DEFAULT_CRITICAL_ERROR',
+                                        'specs not found for attribute \'{}\''.format(column_name),
+                                        self.get_code_location())
+                column_spec = attributes[column_name]
+                if not self.attribute_required(column_spec, schema):
+                    self.record_event('DEFAULT_CRITICAL_ERROR',
+                                        'schema \'{}\' does not require attribute \'{}\''.format(schema.get('name'), column_name),
+                                        self.get_code_location())
 
     def write_pooled_responses(self, output_dir):
         os.mkdir(output_dir)

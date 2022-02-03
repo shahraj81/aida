@@ -4,7 +4,7 @@ AIDA main script for generating queries
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "0.0.0.1"
-__date__    = "14 July 2020"
+__date__    = "25 January 2022"
 
 from aida.logger import Logger
 from aida.file_handler import FileHandler
@@ -47,7 +47,7 @@ def get_entrypoints(entry):
     if entry.get('kbids') != 'N/A':
         entrypoints['kbid'] = {}
         kbids = entry.get('kbids')
-        augmented_kbids = '|'.join(['REFKB:{}'.format(kbid.strip()) for kbid in kbids.split('|')])
+        augmented_kbids = '|'.join(['{}'.format(kbid.strip()) for kbid in kbids.split('|')])
         entrypoints['kbid'][augmented_kbids] = 1
     name_variants = entry.get('name_variants').strip()
     if name_variants != '':
@@ -69,7 +69,7 @@ PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
 SELECT DISTINCT
        ?docid                         # sourceDocument
-       ?query_link_target             # link target as part of the query e.g. "REFKB:3634385"
+       ?query_link_target             # link target as part of the query e.g. "Q84263196"
        ?link_target                   # link target in the KB matching ?query_link_target
        ?cluster                       # the ?cluster linked to ?link_target
        ?mention_span                  # informativeJustification span taken from the prototype of the ?cluster
@@ -81,8 +81,11 @@ WHERE {
 
     ?cluster              a                             aida:SameAsCluster .
     ?cluster              aida:prototype                ?prototype .
+
+    ?prototype            a                             aida:Entity .
     ?prototype            aida:informativeJustification ?justification .
     ?prototype            aida:link                     ?ref_kb_link .
+
     ?ref_kb_link          a                             aida:LinkAssertion .
     ?ref_kb_link          aida:linkTarget               ?link_target .
     ?ref_kb_link          aida:confidence               ?link_confidence .
@@ -162,7 +165,7 @@ PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
 SELECT DISTINCT
        ?docid                         # sourceDocument
-       ?query_link_target             # link target as part of the query e.g. "Venezuela"
+       ?query_link_target             # link target as part of the query e.g. "COVID-19"
        ?link_target                   # link target in the KB (taken from the value of hasName property of the member of the ?cluster) matching ?query_link_target
        ?cluster                       # the ?cluster that is associated with the ?link_target
        ?mention_span                  # informativeJustification span taken from the prototype of the ?cluster
@@ -173,6 +176,10 @@ WHERE {
     BIND ("<ENTRYPOINT>" AS ?query_link_target)
 
     ?cluster              a                             aida:SameAsCluster .
+    ?cluster              aida:prototype                ?prototype .
+
+    ?prototype            a                             aida:Entity .
+    ?prototype            aida:informativeJustification ?justification .
 
     ?statement            a                             aida:ClusterMembership .
     ?statement            aida:cluster                  ?cluster .
@@ -181,9 +188,6 @@ WHERE {
     ?cm_confidence        aida:confidenceValue          ?_link_cv .
 
     ?member               aida:hasName                  ?link_target .
-
-    ?cluster              aida:prototype                ?prototype .
-    ?prototype            aida:informativeJustification ?justification .
 
     FILTER( str(?link_target) = str(?query_link_target))
 
@@ -295,7 +299,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--clusters', default='1', help='Specify the number of clusters to be used for pooling (default: %(default)s)')
     parser.add_argument('-d', '--documents', default='10', help='Specify the number of documents per cluster to be used for pooling (default: %(default)s)')
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
-    parser.add_argument('-p', '--prefix', default='AIDA_P2_TA2_E', help='Specify the prefix of SPARQL query files (default: %(default)s)')
+    parser.add_argument('-p', '--prefix', default='AIDA_P3_TA2_E', help='Specify the prefix of SPARQL query files (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('input', type=str, help='Input file containing information needed for generation of queries')

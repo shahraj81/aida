@@ -1,0 +1,68 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:cluster-NILE30181 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILE30181-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILE30181-prototype a aida:Entity ;
+    aida:attributes aida:Generic ;
+    aida:handle "COVID-19" ;
+    aida:informativeJustification _:n372af40b13b44de9a5c68eecdaf89cbbb1112,
+      _:n372af40b13b44de9a5c68eecdaf89cbbb1774;
+    aida:link [ a aida:LinkAssertion ;
+            aida:confidence ldc:confidence ;
+            aida:linkTarget "Q84263196" ] ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILE30181 ;
+    aida:clusterMember ldc:EML0C04936H.000997 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:EML0C04936H.000997 a aida:Entity ;
+    aida:hasName "COVID-19" ;
+    aida:handle "COVID-19" ;
+    aida:informativeJustification _:n372af40b13b44de9a5c68eecdaf89cbbb942 ;
+    aida:justifiedBy _:n372af40b13b44de9a5c68eecdaf89cbbb942 .
+
+[] a rdf:Statement ;
+    rdf:object "EMPTY_TBD" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C04936H.000997 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n372af40b13b44de9a5c68eecdaf89cbbb942 ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n372af40b13b44de9a5c68eecdaf89cbbb1112 a aida:TextJustification ;
+    aida:confidence ldc:confidence ;
+    aida:endOffsetInclusive "1264"^^xsd:int ;
+    aida:source "L0C04959A" ;
+    aida:sourceDocument "L0C04936H" ;
+    aida:startOffset "1257"^^xsd:int ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n372af40b13b44de9a5c68eecdaf89cbbb1774 a aida:TextJustification ;
+    aida:confidence ldc:confidence ;
+    aida:endOffsetInclusive "2895"^^xsd:int ;
+    aida:source "L0C049DRM" ;
+    aida:sourceDocument "L0C0499MZ" ;
+    aida:startOffset "2888"^^xsd:int ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n372af40b13b44de9a5c68eecdaf89cbbb942 a aida:TextJustification ;
+    aida:confidence ldc:confidence ;
+    aida:endOffsetInclusive "3098"^^xsd:int ;
+    aida:source "L0C04959A" ;
+    aida:sourceDocument "L0C04936H" ;
+    aida:startOffset "3091"^^xsd:int ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:confidence a aida:Confidence ;
+    aida:confidenceValue "1.0"^^xsd:double ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:LDCModelGenerator a aida:System .

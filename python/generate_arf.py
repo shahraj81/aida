@@ -59,42 +59,75 @@ class OuterClaim(Object):
             'claim_description',
             'document_id'
             ]
+        subfield_names = {
+            'claim_epistemic_status': ['polarity', 'strength']
+            }
         entry = self.get('entry')
         lines = []
         for field_name in fields:
             field_name_output = fields.get(field_name)
             field_value = entry.get(field_name)
             default_assessment_value = '--' if field_name in non_assessed_fields else 'NIL'
-            line = OutputLine(self.get('entry').get('claim_id'), field_name_output, 1, 'value', field_value, default_assessment_value)
-            lines.append(line.__str__())
+            subfield_name = ['value'] if field_name not in subfield_names else subfield_names.get(field_name)
+            for sn in subfield_name:
+                line = OutputLine(self.get('entry').get('claim_id'), field_name_output, 1, sn, field_value, default_assessment_value)
+                lines.append(line.__str__())
         return '\n'.join(lines)
 
 class ClaimComponents(Object):
-    def __init__(self, logger, claim_components):
+    def __init__(self, logger, max_qnode_types, lenient, claim_components):
         super().__init__(logger)
+        self.max_qnode_types = max_qnode_types
+        self.lenient = lenient
         self.entries = claim_components
 
     def __str__(self):
         logger = self.get('logger')
         component_numbers = {}
         lines = []
+        processed = set()
         for entry in self.get('entries'):
+            claim_component_key = entry.get('claim_component_key')
+            if claim_component_key not in processed:
+                processed.add(claim_component_key)
+            else:
+                continue
             component_type = entry.get('claim_component_type')
             if component_type not in component_numbers:
                 component_numbers[component_type] = 1
             else:
                 component_numbers[component_type] += 1
-            line = ClaimComponent(logger, entry, component_numbers[component_type]).__str__()
+            lines.append(ClaimComponent(logger, self.get('max_qnode_types'), self.get('lenient'), entry, component_numbers[component_type]).__str__())
             lines.append(InformativenessAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
-            lines.append(line)
             lines.append(OverallAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
         return '\n'.join(lines)
 
 class ClaimComponent(Object):
-    def __init__(self, logger, claim_component, claim_component_number):
+    def __init__(self, logger, max_qnode_types, lenient, claim_component, claim_component_number):
         super().__init__(logger)
+        self.max_qnode_types = max_qnode_types
+        self.lenient = lenient
         self.entry = claim_component
         self.claim_component_number = claim_component_number
+
+    def get_claim_component_name(self):
+        return self.get('entry').get('claim_component_name')
+
+    def get_claim_component_qnode_id(self):
+        return self.get('entry').get('claim_component_qnode_id')
+
+    def get_claim_component_qnode_type(self):
+        claim_component_qnode_types_provided = self.get('entry').get('claim_component_qnode_types')
+        i = self.get('max_qnode_types')
+        if len(claim_component_qnode_types_provided) <= i:
+            return ','.join(claim_component_qnode_types_provided)
+        self.record_event('UNEXPECTED_NUM_CLAIM_COMPONENT_QNODE_TYPES', self.get('entry').get('claim_component_key'), len(claim_component_qnode_types_provided), i, self.get('entry').get('where'))
+        claim_component_qnode_types_selected = set()
+        for claim_component_qnode_type in sorted(self.get('entry').get('claim_component_qnode_types')):
+            if i:
+                claim_component_qnode_types_selected.add(claim_component_qnode_type)
+                i -= 1
+        return ','.join(sorted(claim_component_qnode_types_selected))
 
     def __str__(self):
         claim_id = self.get('entry').get('claim_id')
@@ -105,10 +138,19 @@ class ClaimComponent(Object):
             'claim_component_qnode_id': 'qnode_id',
             'claim_component_qnode_type': 'qnode_type',
             }
-        lines = []
+        tuples = set()
         for field_name in fields:
             field_name_output = fields.get(field_name)
-            field_value = self.get('entry').get(field_name)
+            field_value = self.get(field_name)
+            if field_name == 'claim_component_qnode_type':
+                for fv in sorted(field_value.split(',')):
+                    tuples.add((field_name_output, fv))
+            else:
+                tuples.add((field_name_output, field_value))
+            if field_name == 'claim_component_qnode_id' and self.get('lenient') == True:
+                tuples.add((fields.get('claim_component_qnode_type'), field_value))
+        lines = []
+        for (field_name_output, field_value) in sorted(tuples):
             line = OutputLine(claim_id, claim_component_type, claim_component_number, field_name_output, field_value, 'NIL')
             lines.append(line.__str__())
         return '\n'.join(lines)
@@ -125,9 +167,9 @@ class ClaimTime(Object):
             field_name_day = '{}_day'.format(date_type)
             field_name_month = '{}_month'.format(date_type)
             field_name_year = '{}_year'.format(date_type)
-            date_str = '{}-{}-{}'.format(self.get('entry').get(field_name_day),
+            date_str = '{}-{}-{}'.format(self.get('entry').get(field_name_year),
                                          self.get('entry').get(field_name_month),
-                                         self.get('entry').get(field_name_year))
+                                         self.get('entry').get(field_name_day))
             date_str = date_str.replace('"','')
             date_range[date_type] = date_str
         range_str = '({},{})-({},{})'.format(date_range.get('start_after'),
@@ -145,24 +187,46 @@ class ClaimKEs(Object):
         self.lines = None
         self.generate()
 
-    def get_header(self):
-        return '\t'.join(self.get('fields').keys())
+    def get_fields(self):
+        return [
+            'ClaimID',
+            'JustificationNum',
+            'EdgeID',
+            'EdgeLabel',
+            'IsEdgeNegated',
+            'EvtRelMetatype',
+            'EvtRelType',
+            'EvtRelClusterID',
+            'IsEvtRelNegated',
+            'ObjMetatype',
+            'ObjectType',
+            'ObjClusterID',
+            'IsObjNegated',
+            'ObjectHandle',
+            'DocID',
+            'SubjectJustification',
+            'PredicateJustification',
+            'ArgumentJustification'
+            ]
 
-    def get_EdgeNum(self, entry):
+    def get_header(self):
+        return '\t'.join(self.get('fields'))
+
+    def get_JustificationNum(self, entry):
         edgeNum = self.get('nextEdgeNum')
         self.set('nextEdgeNum', edgeNum + 1)
         return edgeNum
 
     def get_line(self, entry):
-        fields = self.get('fields')
-        elements = []
-        for field_name, entry_key in fields.items():
+        field_specs = self.get('fieldspecs')
+        line = {}
+        for field_name, entry_key in field_specs.items():
             if entry_key is not None:
                 value = entry.get(entry_key)
             else:
                 value = str(self.get(field_name, entry))
-            elements.append(value)
-        return '\t'.join(elements)
+            line[field_name] = value
+        return '\t'.join([line.get(f) for f in self.get('fields')])
 
 class ClaimNonTemporalKEs(ClaimKEs):
     def __init__(self, logger, claim, nextEdgeNum):
@@ -174,19 +238,15 @@ class ClaimNonTemporalKEs(ClaimKEs):
             predicate=entry.get('predicate'),
             object=entry.get('object_cluster_id'))
 
-    def get_EvtRelUniqueID(self, entry):
-        return '{subject}::{type}'.format(
-            subject=entry.get('subject_cluster_id'),
-            type=entry.get('subject_type'))
-
-    def get_fields(self):
+    def get_fieldspecs(self):
         return {
-            'EdgeNum': None,
+            'ClaimID': 'claim_id',
+            'JustificationNum': None,
             'EdgeID': None,
             'EdgeLabel': 'predicate',
             'IsEdgeNegated': 'is_assertion_negated',
             'EvtRelMetatype': 'subject_cluster_member_metatype',
-            'EvtRelUniqueID': None,
+            'EvtRelType': 'subject_type',
             'EvtRelClusterID': 'subject_cluster_id',
             'IsEvtRelNegated': 'is_subject_cluster_member_negated',
             'ObjMetatype': 'object_cluster_member_metatype',
@@ -210,7 +270,6 @@ class ClaimNonTemporalKEs(ClaimKEs):
     def __str__(self):
         return '\n'.join(self.get('lines'))
 
-
 class ClaimTemporalKEs(ClaimKEs):
     def __init__(self, logger, claim, nextEdgeNum):
         self.line_keys = set()
@@ -226,11 +285,6 @@ class ClaimTemporalKEs(ClaimKEs):
     def get_predicate(self, entry):
         return 'Time'
 
-    def get_EdgeNum(self, entry):
-        edgeNum = self.get('nextEdgeNum')
-        self.set('nextEdgeNum', edgeNum + 1)
-        return edgeNum
-
     def get_EdgeID(self, entry):
         return '{subject}::{predicate}::{object}'.format(
             subject=entry.get('subject_cluster_id'),
@@ -242,17 +296,6 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def get_IsEdgeNegated(self, entry):
         return 'NotNegated'
-
-    def get_EvtRelMetatype(self, entry):
-        return entry.get('subject_cluster_member_metatype')
-
-    def get_EvtRelUniqueID(self, entry):
-        return '{subject}::{type}'.format(
-            subject=entry.get('subject_cluster_id'),
-            type=entry.get('subject_type'))
-
-    def get_EvtRelClusterID(self, entry):
-        return entry.get('subject_cluster_id')
 
     def get_IsEvtRelNegated(self, entry):
         return 'NotNegated'
@@ -277,9 +320,9 @@ class ClaimTemporalKEs(ClaimKEs):
             field_name_day = '{}_day'.format(date_type)
             field_name_month = '{}_month'.format(date_type)
             field_name_year = '{}_year'.format(date_type)
-            date_str = '{}-{}-{}'.format(time_assertion_entry.get(field_name_day),
+            date_str = '{}-{}-{}'.format(time_assertion_entry.get(field_name_year),
                                          time_assertion_entry.get(field_name_month),
-                                         time_assertion_entry.get(field_name_year))
+                                         time_assertion_entry.get(field_name_day))
             date_str = date_str.replace('"','')
             date_range[date_type] = date_str
         range_str = '{};{};{};{}'.format(date_range.get('start_after'),
@@ -297,15 +340,16 @@ class ClaimTemporalKEs(ClaimKEs):
     def get_ArgumentJustification(self, entry):
         return 'NULL'
 
-    def get_fields(self):
+    def get_fieldspecs(self):
         return {
-            'EdgeNum': None,
+            'ClaimID': 'claim_id',
+            'JustificationNum': None,
             'EdgeID': None,
             'EdgeLabel': None,
             'IsEdgeNegated': None,
-            'EvtRelMetatype': None,
-            'EvtRelUniqueID': None,
-            'EvtRelClusterID': None,
+            'EvtRelMetatype': 'subject_cluster_member_metatype',
+            'EvtRelType': 'subject_type',
+            'EvtRelClusterID': 'subject_cluster_id',
             'IsEvtRelNegated': None,
             'ObjMetatype': None,
             'ObjectType': None,
@@ -319,23 +363,27 @@ class ClaimTemporalKEs(ClaimKEs):
             }
 
     def get_line(self, entry):
-        fields = self.get('fields')
-        elements = []
-        for field_name in fields:
-            value = str(self.get(field_name, entry))
-            elements.append(value)
-        line = '\t'.join(elements)
-        elements.pop(0)
-        line_key = '\t'.join(elements)
-        if line_key in self.get('line_keys'):
+        field_specs = self.get('fieldspecs')
+        line = {}
+        for field_name, entry_key in field_specs.items():
+            if entry_key is not None:
+                value = entry.get(entry_key)
+            else:
+                value = str(self.get(field_name, entry))
+            line[field_name] = value
+
+        line_str = '\t'.join([line.get(f) for f in self.get('fields')])
+        line_key_str = '\t'.join([line.get(f) for f in self.get('fields') if f != 'JustificationNum'])
+
+        if line_key_str in self.get('line_keys'):
             self.set('nextEdgeNum', self.get('nextEdgeNum') - 1)
             return None
-        self.get('line_keys').add(line_key)
-        return line
+        self.get('line_keys').add(line_key_str)
+        return line_str
 
     def generate(self):
         lines = []
-        lines.append(self.get('header'))
+        # lines.append(self.get('header'))
         for entry in self.get('claim').get('claim_edge_assertions'):
             line = self.get('line', entry)
             if line is not None:
@@ -465,9 +513,9 @@ class EventOrRelationFrames(Object):
             field_name_day = '{}_day'.format(date_type)
             field_name_month = '{}_month'.format(date_type)
             field_name_year = '{}_year'.format(date_type)
-            date_str = '{}-{}-{}'.format(entry.get(field_name_day),
+            date_str = '{}-{}-{}'.format(entry.get(field_name_year),
                                          entry.get(field_name_month),
-                                         entry.get(field_name_year))
+                                         entry.get(field_name_day))
             date_str = date_str.replace('"','')
             date_range[date_type] = date_str
         subject_cluster_id = entry.get('subject_cluster_id')
@@ -522,9 +570,11 @@ class OverallAssessment(Object):
         return line.__str__()
 
 class AssessorReadableFormat(Object):
-    def __init__(self, logger, responses):
+    def __init__(self, logger, responses, max_qnode_types, lenient):
         super().__init__(logger)
         self.responses = responses
+        self.max_qnode_types = max_qnode_types
+        self.lenient = lenient
 
     def write_output(self, output_dir):
         os.mkdir(output_dir)
@@ -533,7 +583,7 @@ class AssessorReadableFormat(Object):
         for claim_id in self.get('responses').get('claims'):
             claim = self.get('responses').get('claims').get(claim_id)
             outer_claim = OuterClaim(logger, claim.get('outer_claim')).__str__()
-            claim_components = ClaimComponents(logger, claim.get('claim_components')).__str__()
+            claim_components = ClaimComponents(logger, self.get('max_qnode_types'), self.get('lenient'), claim.get('claim_components')).__str__()
             claim_time = ClaimTime(logger, claim.get('claim_time')).__str__()
             output_filename = os.path.join(output_dir, '{}-outer-claim.tab'.format(claim_id))
             output_fh = open(output_filename, 'w', encoding='utf-8')
@@ -562,6 +612,7 @@ class AssessorReadableFormat(Object):
             output_filename = os.path.join(output_dir, '{}-raw-kes.tab'.format(claim_id))
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_fh.write(claim_nontemoral_kes.__str__())
+            output_fh.write('\n')
             output_fh.write(claim_temoral_kes.__str__())
             output_fh.close()
 
@@ -609,10 +660,10 @@ def validate_responses(args):
         }
 
     responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task3')
-    arf = AssessorReadableFormat(logger, responses)
+    arf = AssessorReadableFormat(logger, responses, args.max_qnode_types, args.lenient)
     arf.write_output(args.output)
     num_warnings, num_errors = logger.get_stats()
-    closing_message = 'validation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
+    closing_message = 'ARF generation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
     logger.record_event('DEFAULT_INFO', closing_message)
     print(closing_message)
     if num_errors > 0:
@@ -622,6 +673,8 @@ def validate_responses(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate claims in assessor readable format.")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+    parser.add_argument('-n', '--lenient', action='store_true', default=True, help='Consider identity-qnode as type-qnode? (default: %(default)s)')
+    parser.add_argument('-t', '--max_qnode_types', default=5, help='Specify the maximum number of qnode types allowed in output (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')

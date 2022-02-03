@@ -2,7 +2,8 @@
 
 * [Introduction](#introduction)
 * [How to build the docker image?](#how-to-build-the-docker-image)
-* [How to apply the docker on a test run?](#how-to-apply-the-docker-on-a-test-run)
+* [Steps in the dockerized pipeline](#steps-in-the-dockerized-pipeline)
+* [How to apply the docker to a test run?](#how-to-apply-the-docker-to-a-test-run)
 * [How to apply the docker to your run?](#how-to-apply-the-docker-to-your-run)
 * [How to apply the docker to your run in the evaluation setting?](#how-to-apply-the-docker-to-your-run-in-the-evaluation-setting)
 * [What should the input directory contain?](#what-should-the-input-directory-contain)
@@ -12,15 +13,15 @@
 
 # Introduction
 
-This document describes how to run the AIDA Task3 evaluation pipeline as part of the AIDA-Evaluation docker as a standalone utility.
+This document describes how to run the AIDA Task1/2/3 evaluation pipeline as part of the AIDA-Evaluation docker as a standalone utility.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to build the docker image?
 
-The docker has been tested with `graphdb-free-9.10.1-dist` but this section also describes how to configure it to work with a different version.
+The docker has been tested with `graphdb-free-9.10.2-dist` but this section also describes how to configure it to work with a different version.
 
-Independent of which version of GraphDB you are using, you would need to first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` (as shown below) to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed:
+Independent of which version of GraphDB is being used, first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed. The line to be updated is shown below for completeness:
 
   ~~~
   ROOT=/absolute/path/to/aida/tools/aida-evaluation
@@ -28,11 +29,11 @@ Independent of which version of GraphDB you are using, you would need to first u
 
 ## Using the tested version of GraphDB
 
-In order to build the docker image with the tested version of GraphDB you would need to:
+In order to build the docker image with the tested version of GraphDB:
 
-1. Download `graphdb-free-9.10.1-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`, and place it inside `./docker/`, and
-
-2. Run the following command:
+1. Download the installer `graphdb-free-9.10.2-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`
+2. Place the installer inside `./docker/` and
+3. Run the following command:
 
   ~~~
   cd docker
@@ -41,11 +42,11 @@ In order to build the docker image with the tested version of GraphDB you would 
 
 ## Using another version of GraphDB
 
-In order to build the docker image with a different version of GraphDB you would need to:
+In order to build the docker image with a different version of GraphDB:
 
-1. Download the installer of the GraphDB version that you would like to use (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`), and place it inside `./docker/`, and
-
-2. Run the following command:
+1. Download the installer of the preferred GraphDB version (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`)
+2. place the installer inside `./docker/` and
+3. Run the following command:
 
 ~~~
 cd docker
@@ -54,25 +55,53 @@ make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
-# How to apply the docker on a test run?
+# Steps in the dockerized pipeline
 
-The docker comes loaded with two example task3 runs, one for M54-develop data and one for M54-practice.
+Depending on the task, the dockerized pipeline runs a subset of the following steps in the order given below:
 
-## M54-develop data
+## SPARQL-output (Task1/2/3)
 
-The example runs are stored at `./M54-develop/runs/example-task3-run` and the output is stored at `./M54-develop/scores/example-task3-run`.
+In this step SPARQL queries are applied to the KBs.
 
-The output is generated using the M54-develop AUX-data that contains only three test documents.
+## SPARQL-CLEAN-output (Task1/2/3)
 
-## M54-practice data
+SPARQL output contains AIF prefixes attached to values, an example of which is shown below:
 
-The example runs are stored at `./M54-practice/runs/example-task3-run` and the output is stored at `./M54-practice/scores/example-task3-run`.
+~~~
+<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#Relation>
+~~~
 
-The output is generated using the M54-practice AUX-data that contains all the documents in LDC package LDC2021E11. 
+These prefixes are removed during this cleaning step which reduces the above example to just `Relation`.
 
-## How to apply the docker on a test run?
+## SPARQL-MERGED-output (Task3)
 
-Note that the docker expects the output directory to be empty.
+In this step, cleaned SPARQL output from multiple variants of the a SPARQL query (e.g. `AIDA_P3_TA3_GR_0001A.rq` and `AIDA_P3_TA3_GR_0001B.rq`) are merged into a single output file `AIDA_P3_TA3_GR_0001.rq.tsv` in order to process next steps.
+
+## SPARQL-VALID-output (Task1/2/3)
+
+In this step responses from output of the previous step is validated.
+
+[top](#how-to-run-the-aida-evaluation-pipeline)
+
+# How to apply the docker to a test run?
+
+The docker contains three example practice runs one for each task. The runs are stored at `./M54-practice/runs/` and the corresponding output is stored at `./M54-practice/scores`.
+
+In order to run the docker on the `task1` example run, you may execute the following:
+
+~~~
+cd docker
+make task1-example
+~~~
+
+Note that at this point the task1 docker only runs up to the validation step for Phase 3. The scorer and the other related scripts will be added as soon as possible. 
+
+In order to run the docker on the `task2` example run, you may execute the following:
+
+~~~
+cd docker
+make task2-example
+~~~
 
 In order to run the docker on the `task3` example run, you may execute the following:
 
@@ -81,7 +110,7 @@ cd docker
 make task3-example
 ~~~
 
-If you see the message `ERROR: Output directory /score is not empty`, you would need to remove the pre-existing output.
+Note that the docker expects the output directory to be empty. If you see the message `ERROR: Output directory /score is not empty`, you would need to remove the pre-existing output.
 
 You may compare your output with the expected output by running the following command:
 
@@ -95,33 +124,48 @@ The only difference that you should see is in the timestamps inside the log file
 
 # How to apply the docker to your run?
 
-## How to apply the docker to a task3 run?
+## How to apply the docker to a task1 run?
 
-In order to run the docker on a `task3` KB you may run the following command:
+In order to run the docker on a `task1` run, use the following command:
 
 ~~~
-make task3 \
+make task1 \
   RUNID=your_run_id \
-  HOST_DATA_DIR=/absolute/path/to/data \
   HOST_INPUT_DIR=/absolute/path/to/your/run \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-For `task3` the docker expects either the a KB or an S3 location of the KB as input. The name of the file (in the input directory `HOST_INPUT_DIR`) tells the docker whether the input is a KB or an S3 location of the KB (see below for details).
+[top](#how-to-run-the-aida-evaluation-pipeline)
 
-### Providing S3 location of Task3 KB
+## How to apply the docker to a task2 run?
+
+In order to run the docker on a `task2` KB you may run the following command:
+
+~~~
+make task2 \
+  RUNID=your_run_id \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+For `task2` the docker expects either the a KB or an S3 location of the KB as input. The name of the file (in the input directory `HOST_INPUT_DIR`) tells the docker whether the input is a KB or an S3 location of the KB (see below for details).
+
+### Providing Task2 KB
+When the input is a KB the name of the file should be `task2_kb.ttl`.
+
+### Providing S3 location of Task2 KB
 When the input is an S3 location of the KB, the file should be named `s3_location.txt`. The docker expects exactly one line in this file, and that line should be of the form:
 
 ~~~
-s3://aida-phase[23]-ta-performers/.../*-nist.tgz
+s3://aida-phase2-ta-performers/.../*-nist.tgz
 ~~~
 
-The compressed file at the above location should expand into a directory containing a sub-directory called `NIST` which should contain a single file (with extension ttl) containing task3 KB.
+The compressed file at the above location should expand into a directory containing a sub-directory called `NIST` which should contain a single file (with extension ttl) containing task2 KB.
 
 Note that when supplying an S3 location you must also provide your own AWS credentials using for example the following command:
 
 ~~~
-make task3 \
+make task2 \
   RUNID=your_run_id \
   AWS_ACCESS_KEY_ID=your_aws_access_key_id \
   AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
@@ -131,48 +175,68 @@ make task3 \
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
-# How to apply the docker to your run in the evaluation setting?
+## How to apply the docker to a task3 run?
 
-This section is written for the leaderboard usage or NIST-internal usage.
+The docker currently accepts all the task3 claim KBs along with corresponding report firles from the AIF validator (if any) placed in the input directory.
 
-In order to run the docker on the `practice` or `evaluation` data (rather than the default `practice` data), you would need to supply the value `practice` or `evaluation` to the variable named `RUNTYPE` when calling `make task3` by modifying the Makefile to reflect the following:
-
-~~~
-RUNTYPE=evaluation
-~~~
-
-Alternatively, you may run the following command for `task3`:
+In order to apply the docker to a set of task3 claim KBs, run the following command:
 
 ~~~
 make task3 \
-  ...
-  RUNTYPE=evaluation
-  HOST_DATA_DIR=... \
-  HOST_INPUT_DIR=... \
-  HOST_OUTPUT_DIR=...
+  RUNID=your_run_id \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-Note that you must specify the required `practice` (or `evaluation`) auxiliary data, driven from the practice (or evaluation) corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `practice` auxiliary data crafted to show an example. Using this default value will make the docker run with the `practice` data.
+At this point, the docker does not accept task3 input from an S3 location.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What should the input directory contain?
+
+For `task1`, the input directory should contain all the `task1` KBs along with corresponding AIF report files.
+
+For `task2`, see the section: [How to apply the docker to a task2 run?](#how-to-apply-the-docker-to-a-task2-run) for details on the input directory structure.
+
 For `task3`, the input directory should contain all the `task3` claim KBs along with corresponding report files from the AIF validator, if any.
 
-See the section: [How to apply the docker to a task3 run?](#how-to-apply-the-docker-to-a-task3-run) for details on the input directory structure for `task3` submission.
-
-You may also want to take a look at the input directories of the `task3` example runs located at `./M54-practice/runs/` to get an idea of how to structure your input directories.
+You may also want to take a look at the input directories of the included example runs located at `./M54-practice/runs/` to get an idea of how to structure your input directories.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # What does the output directory contain?
 
+## Task1
+
+The `task1` output directory contains the following:
+
+| Name                      |  Description                                          |
+| --------------------------|-------------------------------------------------------|
+| logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
+| queries                   | The directory containing SPARQL queries applied to KBs. |
+| SPARQL-CLEAN-output       | The directory containing cleaned SPARQL output. |
+| SPARQL-KB-input           | The directory containing KBs validated by AIF validator. SPARQL queries are applied to these KBs.|
+| SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
+| SPARQL-VALID-output       | The directory containing valid SPARQL output. |
+
+## Task2
+
+The `task2` output directory contains the following:
+
+| Name                      |  Description                                          |
+| --------------------------|-------------------------------------------------------|
+| logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
+| queries                   | The directory containing SPARQL queries applied to KBs. |
+| SPARQL-CLEAN-output       | The directory containing cleaned SPARQL output. |
+| SPARQL-KB-source          | The directory containing AWS location of the KB (if available). |
+| SPARQL-KB-input           | The directory containing KBs to which SPARQL queries were applied.|
+| SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
+| SPARQL-VALID-output       | The directory containing valid SPARQL output. |
+
+
 ## Task3
 
 The `task3` output directory contains the following:
-
-SPARQL-CLEAN-output  SPARQL-KB-source     SPARQL-VALID-output  logs
-SPARQL-KB-input      SPARQL-MERGED-output SPARQL-output        queries
 
 | Name                      |  Description                                          |
 | --------------------------|-------------------------------------------------------|
@@ -189,6 +253,25 @@ SPARQL-KB-input      SPARQL-MERGED-output SPARQL-output        queries
 
 # What does the logs directory contain?
 
+## Task1
+
+The `task1` logs directory contains the following log files:
+
+| Name                            |  Description            |
+| --------------------------------|-------------------------|
+| run.log                         | The main log file recording major events by the docker. |
+| validate-responses.log          | The log file generated by the validator. |
+
+## Task2
+
+The `task2` logs directory contains the following log files:
+
+| Name                            |  Description            |
+| --------------------------------|-------------------------|
+| run.log                         | The main log file recording major events by the docker. |
+| validate-responses.log          | The log file generated by the validator. |
+
+
 ## Task3
 
 The `task3` logs directory contains the following log files:
@@ -198,11 +281,26 @@ The `task3` logs directory contains the following log files:
 | run.log                         | The main log file recording major events by the docker. |
 | validate-responses.log          | The log file generated by the validator. |
 | merge-output.log                | The log file generated by the script that merges output from the two variants of graph queries into one. |
-
+| generate-arf.log                | The log file generated by the ARF generartor. |
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 02/03/2022:
+* disallowing s3 location as input for task3
+* regenerated the Task3 ARF files to make these changes:
+  * in outer-claim: add an asessment line for qnode_type, for each qnode_id that the system returned
+  * change date format to be YYYY-MM-DD, to be consistent with LDC annotation (probably need to do this earlier in the pipeline)
+* Section [Steps in the dockerized pipeline](#steps-in-the-dockerized-pipeline) added to this README
+
+## 02/02/2022:
+* Task1 evaluation pipeline processing up to the validation step added.
+* Task2 evaluation pipeline added.
+* README revised accordingly.
+
+## 01/26/2022:
+* Graphdb version with which the code has been tested updated to the latest version available.
 
 ## 01/21/2022:
 * Evaluation pipeline modified to use M54-practice data by default instead of the M54-develop data.

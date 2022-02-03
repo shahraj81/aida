@@ -79,7 +79,7 @@ RUN pip3.9 install numpy
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=9.10.1
+ARG version=9.10.2
 ARG edition=free
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
@@ -112,7 +112,7 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b AIDAED-v2022.0.2 https://github.com/shahraj81/aida.git
+RUN git clone -b AIDAED-v2022.0.3 https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 

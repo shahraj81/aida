@@ -217,8 +217,6 @@ class Task2Pool(Object):
 
     def load_responses(self):
         logger = self.get('logger')
-        ontology_type_mappings = self.get('ontology_type_mappings')
-        slot_mappings = self.get('slot_mappings')
         document_mappings = self.get('document_mappings')
         document_boundaries = self.get('document_boundaries')
         runs_to_pool_file = self.get('runs_to_pool_file')
@@ -229,7 +227,7 @@ class Task2Pool(Object):
             message = 'loading run \'{}\' into pool'.format(run_id)
             print('--{}'.format(message))
             logger.record_event('DEFAULT_INFO', message)
-            responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, run_dir, run_id, 'task2')
+            responses = ResponseSet(logger, document_mappings, document_boundaries, run_dir, run_id, 'task2')
             self.add(responses)
 
     def load_queries_to_pool_file(self):

@@ -4,36 +4,43 @@ CLL0C04CWFV.000390	claimSubtopic	1	value	Safe treatements for COVID-19	--
 CLL0C04CWFV.000390	claimDescription	1	value	Nadezhda Izmozherova stated that favipiravir is not safe to treat COVID-19 patients	--
 CLL0C04CWFV.000390	claimTemplate	1	value	Treatment-X is a safe treatment for COVID-19	NIL
 CLL0C04CWFV.000390	claimDocument	1	value	L0C04CWFV	--
-CLL0C04CWFV.000390	claimEpistemic	1	value	EpistemicFalseUncertain	NIL
+CLL0C04CWFV.000390	claimEpistemic	1	polarity	EpistemicFalseUncertain	NIL
+CLL0C04CWFV.000390	claimEpistemic	1	strength	EpistemicFalseUncertain	NIL
 CLL0C04CWFV.000390	claimSentiment	1	value	SentimentNeutralUnknown	NIL
-CLL0C04CWFV.000390	date	1	range	(01-09-2020,31-12-9999)-(01-09-2020,31-12-9999)	NIL
-CLL0C04CWFV.000390	claimLocation	1	informativenessAssessment	value	NIL
+CLL0C04CWFV.000390	date	1	range	(2020-09-01,9999-12-31)-(2020-09-01,9999-12-31)	NIL
 CLL0C04CWFV.000390	claimLocation	1	name	Russia	NIL
 CLL0C04CWFV.000390	claimLocation	1	qnode_id	Q159	NIL
+CLL0C04CWFV.000390	claimLocation	1	qnode_type	Q159	NIL
 CLL0C04CWFV.000390	claimLocation	1	qnode_type	Q6256	NIL
+CLL0C04CWFV.000390	claimLocation	1	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimLocation	1	overallAssessment	value	NIL
-CLL0C04CWFV.000390	claimer	1	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimer	1	name	Nadezhda Izmozherova	NIL
 CLL0C04CWFV.000390	claimer	1	qnode_id	EMPTY_TBD	NIL
+CLL0C04CWFV.000390	claimer	1	qnode_type	EMPTY_TBD	NIL
 CLL0C04CWFV.000390	claimer	1	qnode_type	Q2114605	NIL
+CLL0C04CWFV.000390	claimer	1	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimer	1	overallAssessment	value	NIL
-CLL0C04CWFV.000390	claimerAffiliation	1	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimerAffiliation	1	name	Ural State Medical University	NIL
 CLL0C04CWFV.000390	claimerAffiliation	1	qnode_id	Q4476708	NIL
 CLL0C04CWFV.000390	claimerAffiliation	1	qnode_type	Q38723	NIL
+CLL0C04CWFV.000390	claimerAffiliation	1	qnode_type	Q4476708	NIL
+CLL0C04CWFV.000390	claimerAffiliation	1	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimerAffiliation	1	overallAssessment	value	NIL
-CLL0C04CWFV.000390	claimerAffiliation	2	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimerAffiliation	2	name	Association of Clinical Pharmacologists of Russia	NIL
 CLL0C04CWFV.000390	claimerAffiliation	2	qnode_id	EMPTY_TBD	NIL
+CLL0C04CWFV.000390	claimerAffiliation	2	qnode_type	EMPTY_TBD	NIL
 CLL0C04CWFV.000390	claimerAffiliation	2	qnode_type	Q43229	NIL
+CLL0C04CWFV.000390	claimerAffiliation	2	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimerAffiliation	2	overallAssessment	value	NIL
-CLL0C04CWFV.000390	claimerAffiliation	3	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimerAffiliation	3	name	Russian National Society of Pharmacologists	NIL
 CLL0C04CWFV.000390	claimerAffiliation	3	qnode_id	EMPTY_TBD	NIL
+CLL0C04CWFV.000390	claimerAffiliation	3	qnode_type	EMPTY_TBD	NIL
 CLL0C04CWFV.000390	claimerAffiliation	3	qnode_type	Q8425	NIL
+CLL0C04CWFV.000390	claimerAffiliation	3	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	claimerAffiliation	3	overallAssessment	value	NIL
-CLL0C04CWFV.000390	xVariable	1	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	xVariable	1	name	favipiravir	NIL
 CLL0C04CWFV.000390	xVariable	1	qnode_id	Q16934561	NIL
 CLL0C04CWFV.000390	xVariable	1	qnode_type	Q12140	NIL
+CLL0C04CWFV.000390	xVariable	1	qnode_type	Q16934561	NIL
+CLL0C04CWFV.000390	xVariable	1	informativenessAssessment	value	NIL
 CLL0C04CWFV.000390	xVariable	1	overallAssessment	value	NIL

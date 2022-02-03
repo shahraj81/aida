@@ -1,0 +1,100 @@
+PREFIX ldcOnt: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LDCOntologyM36#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX aida:  <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#>
+PREFIX cfn:   <https://verdi.nextcentury.com/custom-function/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+# AIDA Phase-III Task-1 Coreference Metric
+# Alpha Query
+
+# Get all mentions from members of aida:SameAsCluster including those used in
+# type assertions, and all the types from prototypes.
+
+SELECT
+  ?cluster                 # ?cluster containing ?member1 of type ?type that matches ?query_type
+  ?metatype                # prototype is an entity, relation or event?
+  ?type                    # matching ?type
+  ?mention_span            # mention span
+  ?is_negated              # is the mention negated? ('Negated', 'NotNegated')
+  (str(?_t_cv) as ?type_statement_confidence)   # confidenceValue of asserting ?member being of ?type
+  (str(?_cm_cv) as ?cluster_membership_confidence) # confidenceValue of asserting ?member being a member of the ?cluster
+  (str(?_j_cv) as ?mention_type_justification_confidence)   # confidenceValue of justifying the mention to be of ?type
+
+WHERE {
+
+    ?statement2           a                             aida:ClusterMembership .
+    ?statement2           aida:cluster                  ?cluster .
+    ?statement2           aida:clusterMember            ?member .
+    ?statement2           aida:confidence               ?cm_confidence .
+    ?cm_confidence        aida:confidenceValue          ?_cm_cv .
+
+    ?cluster              a                             aida:SameAsCluster .
+    ?cluster              aida:prototype                ?prototype .
+    ?prototype            a                             ?metatype .
+
+    ?statement3           rdf:object                    ?type .
+    ?statement3           rdf:predicate                 rdf:type .
+    ?statement3           rdf:subject                   ?member .
+    ?statement3           aida:justifiedBy              ?justification .
+    ?statement3           aida:confidence               ?t_confidence .
+    ?t_confidence         aida:confidenceValue          ?_t_cv .
+
+    BIND( IF( EXISTS {?member aida:attributes aida:Negated .}, 'Negated', 'NotNegated') AS ?is_negated) .    
+    
+    ?justification        aida:source                   ?doceid .
+    ?justification        aida:sourceDocument           ?docid .
+    ?justification        aida:confidence               ?j_confidence .
+    ?j_confidence         aida:confidenceValue          ?_j_cv .
+
+    OPTIONAL {
+           ?justification a                             aida:TextJustification .
+           ?justification aida:startOffset              ?so .
+           ?justification aida:endOffsetInclusive       ?eo
+    }
+    OPTIONAL {
+           ?justification a                             aida:ImageJustification .
+           ?justification aida:boundingBox              ?bb1  .
+           ?bb1           aida:boundingBoxUpperLeftX    ?ulx1 .
+           ?bb1           aida:boundingBoxUpperLeftY    ?uly1 .
+           ?bb1           aida:boundingBoxLowerRightX   ?lrx1 .
+           ?bb1           aida:boundingBoxLowerRightY   ?lry1
+    }
+    OPTIONAL {
+           ?justification a                             aida:KeyFrameVideoJustification .
+           ?justification aida:keyFrame                 ?kfid .
+           ?justification aida:boundingBox              ?bb2  .
+           ?bb2           aida:boundingBoxUpperLeftX    ?ulx2 .
+           ?bb2           aida:boundingBoxUpperLeftY    ?uly2 .
+           ?bb2           aida:boundingBoxLowerRightX   ?lrx2 .
+           ?bb2           aida:boundingBoxLowerRightY   ?lry2
+    }
+    OPTIONAL {
+           ?justification a                             aida:ShotVideoJustification .
+           ?justification aida:shot                     ?sid
+    }
+    OPTIONAL {
+           ?justification a                             aida:AudioJustification .
+           ?justification aida:startTimestamp           ?st1 .
+           ?justification aida:endTimestamp             ?et1
+    }
+    OPTIONAL {
+           ?justification a                             aida:VideoJustification .
+           ?justification aida:startTimestamp           ?st2 .
+           ?justification aida:endTimestamp             ?et2
+    }
+
+    BIND( IF( BOUND(?sid), ?sid, "__NULL__") AS ?_sid) .
+    BIND( IF( BOUND(?kfid), ?kfid, "__NULL__") AS ?_kfid) .
+    BIND( IF( BOUND(?so), ?so, "__NULL__") AS ?_so) .
+    BIND( IF( BOUND(?eo), ?eo, "__NULL__") AS ?_eo) .
+    BIND( COALESCE(?st1, ?st2, "__NULL__") AS ?_st) .
+    BIND( COALESCE(?et1, ?et2, "__NULL__") AS ?_et) .
+    BIND( COALESCE(?ulx1, ?ulx2, "__NULL__") AS ?_ulx) .
+    BIND( COALESCE(?uly1, ?uly2, "__NULL__") AS ?_uly) .
+    BIND( COALESCE(?lrx1, ?lrx2, "__NULL__") AS ?_lrx) .
+    BIND( COALESCE(?lry1, ?lry2, "__NULL__") AS ?_lry) .
+
+    BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_sid), str(?_kfid), str(?_so), str(?_eo), str(?_ulx), str(?_uly), str(?_lrx), str(?_lry), str(?_st), str(?_et) ) AS ?mention_span ) .
+}
+
+ORDER BY ?cluster ?metatype ?type ?mention_span ?type_statement_confidence ?cluster_membership_confidence ?mention_type_justification_confidence
