@@ -206,6 +206,32 @@ def get_metric_classes_specs():
     """
     return metric_classes_specs
 
+def generate_dummy_results(logger, logs_directory):
+    record_and_display_message(logger, 'Generating dummy results file.')
+    metric_classes_specs = get_metric_classes_specs()
+    num_problems, problem_stats = get_problems(logs_directory)
+    scores = {}
+    for line in metric_classes_specs.split('\n'):
+        line = line.strip()
+        if line == '': continue
+        if line.startswith('#'): continue
+        scores[line.split()[1]] = 0.0
+
+    scores['RunID'] = args.run
+    scores['Total'] = scores['FrameMetric_F1']
+    scores['Errors'] = num_problems
+    scores['ErrorStats'] = problem_stats
+    scores['FatalError'] = 'No'
+
+    output = {'scores' : [
+                            scores
+                         ]
+            }
+
+    outputdir = "/score/"
+    with open(outputdir + 'results.json', 'w') as fp:
+        json.dump(output, fp, indent=4, sort_keys=True)
+
 def generate_results_file_and_exit(logger, logs_directory):
     metric_classes_specs = get_metric_classes_specs()
     metric_column_value_pairs = {}
@@ -609,6 +635,8 @@ def main(args):
                                           sparql_clean_output=sparql_clean_output,
                                           sparql_valid_output=sparql_valid_output)
     call_system(cmd)
+
+    generate_dummy_results(logger, logs_directory)
 
     record_and_display_message(logger, 'Done.')
 
