@@ -94,7 +94,10 @@ cd docker
 make task1-example
 ~~~
 
-Note that at this point the task1 docker only runs up to the validation step for Phase 3. The scorer and the other related scripts will be added as soon as possible. 
+Note that at this point:
+* the task1 docker (for Phase 3) only runs up to the validation step,
+* a dummy results file is being generated as a placeholder,
+* the scorer and the other related scripts for task1 will be added as soon as possible.
 
 In order to run the docker on the `task2` example run, you may execute the following:
 
@@ -286,6 +289,9 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 02/04/2022:
+* a dummy task1 results file is being generated as a placeholder
 
 ## 02/03/2022:
 * disallowing s3 location as input for task3
