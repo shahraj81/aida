@@ -206,7 +206,8 @@ def get_metric_classes_specs():
     """
     return metric_classes_specs
 
-def generate_dummy_results(logs_directory):
+def generate_dummy_results(logger, logs_directory):
+    record_and_display_message(logger, 'Generating dummy results file.')
     metric_classes_specs = get_metric_classes_specs()
     num_problems, problem_stats = get_problems(logs_directory)
     scores = {}
@@ -635,7 +636,7 @@ def main(args):
                                           sparql_valid_output=sparql_valid_output)
     call_system(cmd)
 
-    generate_dummy_results(logs_directory)
+    generate_dummy_results(logger, logs_directory)
 
     record_and_display_message(logger, 'Done.')
 
