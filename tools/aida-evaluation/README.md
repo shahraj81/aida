@@ -195,6 +195,60 @@ At this point, the docker does not accept task3 input from an S3 location.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
+# How to apply the docker to your run in the evaluation setting?
+
+This section is written for the leaderboard usage or NIST-internal usage.
+
+In order to run the docker on the `evaluation` data (rather than the default `practice` data), you would need to supply the value `evaluation` to the variable named `RUNTYPE` when calling `make task1` or `make task2` by modifying the Makefile to reflect the following:
+
+~~~
+RUNTYPE=evaluation
+~~~
+
+Alternatively, you may run the following command for `task1`:
+
+~~~
+make task1 \
+  RUNID=your_run_id \
+  RUNTYPE=evaluation
+  ENG_TEXT_IOU_THRESHOLD=your_threshold \
+  SPA_TEXT_IOU_THRESHOLD=your_threshold \
+  RUS_TEXT_IOU_THRESHOLD=your_threshold \
+  IMAGE_IOU_THRESHOLD=your_threshold \
+  VIDEO_IOU_THRESHOLD=your_threshold \
+  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+In order to run the docker in the evaluation setting for `task2` you may run the following command when providing the KB as input:
+
+~~~
+make task2 \
+  RUNID=your_run_id \
+  RUNTYPE=evaluation \
+  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+You may run the following command when providing the S3 location of the `task2` KB as input:
+
+~~~
+make task2 \
+  RUNID=your_run_id \
+  RUNTYPE=evaluation \
+  AWS_ACCESS_KEY_ID=your_aws_access_key_id \
+  AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
+  HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+Note that you must specify the required `evaluation` auxiliary data, driven from the evaluation corpus and annotations, by changing the default value of the variable `HOST_DATA_DIR`. The default value of this variable points to the `practice` auxiliary data, driven from the practice corpus and annotations, and using this default value will make the docker run in the `practice` setting.
+
+[top](#how-to-run-the-aida-evaluation-pipeline)
+
 # What should the input directory contain?
 
 For `task1`, the input directory should contain all the `task1` KBs along with corresponding AIF report files.
@@ -289,6 +343,12 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 02/08/2022:
+* Section [How to apply the docker to your run in the evaluation setting?](#how-to-apply-the-docker-to-your-run-in-the-evaluation-setting) added to this README
+* Following bugs in the Makefile fixed:
+  * references to M36 changed to M54
+  * IOU thresholds added as expected by the task1 run script
 
 ## 02/04/2022:
 * a dummy task1 results file is being generated as a placeholder
