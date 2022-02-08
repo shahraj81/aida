@@ -43,8 +43,13 @@ task1:
 	  --env RUNID=$(RUNID) \
 	  --env RUNTYPE=$(RUNTYPE) \
 	  --env TASK=task1 \
+          --env ENG_TEXT_IOU_THRESHOLD=$(ENG_TEXT_IOU_THRESHOLD) \
+          --env SPA_TEXT_IOU_THRESHOLD=$(SPA_TEXT_IOU_THRESHOLD) \
+          --env RUS_TEXT_IOU_THRESHOLD=$(RUS_TEXT_IOU_THRESHOLD) \
+          --env IMAGE_IOU_THRESHOLD=$(IMAGE_IOU_THRESHOLD) \
+          --env VIDEO_IOU_THRESHOLD=$(VIDEO_IOU_THRESHOLD) \
 	  -v $(HOST_INPUT_DIR):/evaluate:ro \
-	  -v $(HOST_OUTPUT_DIR):/output \
+	  -v $(HOST_OUTPUT_DIR):/score \
 	  -v $(HOST_DATA_DIR):/data \
 	-it aida-evaluation
 
