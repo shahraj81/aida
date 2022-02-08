@@ -29,14 +29,14 @@ build:
 task1-example:
 	make task1 \
 	  RUNID=example-task1-run \
-	  HOST_INPUT_DIR=$(ROOT)/M36-practice/runs/example-task1-run \
-	  HOST_OUTPUT_DIR=$(ROOT)/M36-practice/scores/example-task1-run
+	  HOST_INPUT_DIR=$(ROOT)/M54-practice/runs/example-task1-run \
+	  HOST_OUTPUT_DIR=$(ROOT)/M54-practice/scores/example-task1-run
 
 task2-example:
 	make task2 \
 	  RUNID=example-task2-run \
-	  HOST_INPUT_DIR=$(ROOT)/M36-practice/runs/example-task2-run \
-	  HOST_OUTPUT_DIR=$(ROOT)/M36-practice/scores/example-task2-run
+	  HOST_INPUT_DIR=$(ROOT)/M54-practice/runs/example-task2-run \
+	  HOST_OUTPUT_DIR=$(ROOT)/M54-practice/scores/example-task2-run
 
 task3-example:
 	make task3 \
