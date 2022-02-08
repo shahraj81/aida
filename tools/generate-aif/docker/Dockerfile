@@ -85,7 +85,7 @@ RUN pip3.9 install rdflib
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=9.3.3
+ARG version=9.10.2
 ARG edition=free
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
