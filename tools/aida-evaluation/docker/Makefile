@@ -11,6 +11,12 @@ HOST_DATA_DIR=$(ROOT)/docker/AUX-data/M54-$(RUNTYPE)/
 GRAPHDB_VERSION=9.10.2
 GRAPHDB_EDITION=free
 
+ENG_TEXT_IOU_THRESHOLD=0.1
+SPA_TEXT_IOU_THRESHOLD=0.1
+RUS_TEXT_IOU_THRESHOLD=0.1
+IMAGE_IOU_THRESHOLD=0.1
+VIDEO_IOU_THRESHOLD=0.1
+
 all:
 	@echo "Usage: make [build|task1-example|task2-example|task3-example|task1|task2|task3]"
 
