@@ -417,7 +417,7 @@ class EventOrRelationFrame(Object):
         self.fillers = {}
 
     def get_date(self, date_range, key):
-        missing = ['01-01-0001', '31-12-9999']
+        missing = ['01-01-0001', '31-12-9999', '0001-01-01', '9999-12-31']
         retVal = 'n/a'
         if key in date_range:
             value = date_range.get(key)
