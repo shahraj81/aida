@@ -5,6 +5,8 @@ import os
 
 def main(args):
     path = args.input
+    if path.endswith('/'):
+        path = path[:-1]
     if os.path.isdir(path):
         basename = os.path.basename(path)
         dirname = os.path.dirname(path)
