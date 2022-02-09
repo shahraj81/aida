@@ -372,6 +372,9 @@ class ClaimTemporalKEs(ClaimKEs):
                 value = str(self.get(field_name, entry))
             line[field_name] = value
 
+        if line.get('ObjectHandle') == '0001-01-01;9999-12-31;0001-01-01;9999-12-31':
+            return
+
         line_str = '\t'.join([line.get(f) for f in self.get('fields')])
         line_key_str = '\t'.join([line.get(f) for f in self.get('fields') if f != 'JustificationNum'])
 
