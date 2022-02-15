@@ -7,7 +7,7 @@ This script performs the following steps:
     2. Clean SPARQL output,
     3. Validate SPARQL output,
 
-This version of the docker works for M36.
+This version of the docker works for M54 (i.e. Phase 3).
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
