@@ -10,18 +10,18 @@ def main(args):
     if os.path.isdir(path):
         basename = os.path.basename(path)
         dirname = os.path.dirname(path)
-        os.system('cd {dirname} && tar -zcf {basename}.tgz.txt {basename}'.format(dirname=dirname,
+        os.system('cd {dirname} && tar -zcf {basename}.tgz {basename}'.format(dirname=dirname,
                                                                                   basename=basename))
-        result = subprocess.run(['md5', '-q', '{}.tgz.txt'.format(path)], stdout=subprocess.PIPE)
+        result = subprocess.run(['md5', '-q', '{}.tgz'.format(path)], stdout=subprocess.PIPE)
         md5hash = result.stdout.decode('utf-8').strip()
-        ctime = os.path.getctime('{path}.tgz.txt'.format(path=path))
+        ctime = os.path.getctime('{path}.tgz'.format(path=path))
         ctimestamp = datetime.datetime.fromtimestamp(ctime).__str__()
         ctimestamp = ctimestamp.replace('-', '').replace(' ', '').replace(':', '')
         ctimestamp = ctimestamp[0:12]
-        os.system('mv {path}.tgz.txt {path}_{ctimestamp}_{md5hash}.tgz.txt'.format(path=path,
+        os.system('mv {path}.tgz {path}_{ctimestamp}_{md5hash}.tgz'.format(path=path,
                                                                                    ctimestamp=ctimestamp,
                                                                                    md5hash=md5hash))
-        print('--package written to {path}_{ctimestamp}_{md5hash}.tgz.txt'.format(path=path,
+        print('--package written to {path}_{ctimestamp}_{md5hash}.tgz'.format(path=path,
                                                                                       ctimestamp=ctimestamp,
                                                                                       md5hash=md5hash))
 
