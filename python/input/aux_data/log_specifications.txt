@@ -86,6 +86,7 @@ ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', pr
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_ENTRYPOINT_DESCRIPTOR Different values of entrypoint descriptors {}, {}, {} found for query {} in files {} and {}
 ERROR     UNEXPECTED_FILENAME             Unexpected filename (expected one from '{}', provided '{}')
+ERROR     UNEXPECTED_ITEM                 Unexpected {} '{}' found in {}
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_NUM_DATES            Unexpected number of dates for gold cluster {} in document {}
