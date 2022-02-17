@@ -145,4 +145,4 @@ WORKDIR /scripts/
 #  Setup entrypoint
 #-------------------------------------------------------------
 
-ENTRYPOINT ["bash"]
+ENTRYPOINT ["make"]
