@@ -231,8 +231,6 @@ def main(args):
                                                                                               condition_name=condition_name,
                                                                                               topic_or_claim_frame_id=topic_or_claim_frame_id,
                                                                                               v=v)
-                record_and_display_message(logger, 'Creating output directory: {}'.format(output_locations[k]))
-                os.makedirs(output_locations[k])
 
             #############################################################################################
             # apply sparql queries
@@ -252,6 +250,9 @@ def main(args):
             sparql_valid_output = output_locations.get('sparql_valid_output')
             arf_output = output_locations.get('arf_output')
             intermediate = '{}/intermediate'.format(sparql_output)
+
+            record_and_display_message(logger, 'Creating output directory: {}'.format(output_locations['sparql_output']))
+            os.makedirs(output_locations['sparql_output'])
 
             count = 0
             kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(os.path.join(topic_or_claim_frame_directory, f)) and f.endswith('.ttl')]
@@ -300,6 +301,9 @@ def main(args):
             #############################################################################################
             # Clean SPARQL output
             #############################################################################################
+
+            record_and_display_message(logger, 'Creating output directory: {}'.format(output_locations['logs']))
+            os.makedirs(output_locations['logs'])
 
             record_and_display_message(logger, 'Cleaning SPARQL output.')
             log_file = '{logs_directory}/clean-sparql-output.log'.format(logs_directory=output_locations.get('logs'))
