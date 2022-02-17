@@ -225,8 +225,6 @@ def main(args):
         condition_directory = os.path.join(sparql_kb_input, condition_name)
         for topic_or_claim_frame_id in os.listdir(condition_directory):
             topic_or_claim_frame_directory = os.path.join(condition_directory, topic_or_claim_frame_id)
-            record_and_display_message(logger, 'Creating output directory: {}'.format(topic_or_claim_frame_directory))
-            os.makedirs(topic_or_claim_frame_directory)
             output_locations = {}
             for k,v in output_locations_init.items():
                 output_locations[k] = '{topic_or_claim_frame_directory}/{v}'.format(topic_or_claim_frame_directory=topic_or_claim_frame_directory,
