@@ -27,8 +27,8 @@ class TA3QuerySet(Object):
     def parse_topics(self, condition, topics_file):
         logger = self.get('logger')
         header_columns = {
-            'Condition5': ['topic_id', 'topic', 'subtopic', 'claim_template', 'claim_template_qnodes'],
-            'Condition6': ['topic_id', 'topic', 'subtopic', 'claim_template', 'claim_template_qnodes'],
+            'Condition5': ['topic_id', 'topic', 'subtopic', 'claim_template'],
+            'Condition6': ['topic_id', 'topic', 'subtopic', 'claim_template'],
             'Condition7': ['topic_id', 'topic']
             }
         header = FileHeader(logger, '\t'.join(header_columns.get(condition)))
