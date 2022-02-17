@@ -221,6 +221,7 @@ def main(args):
     call_system('mkdir {queries}'.format(queries=queries))
     call_system('cp /data/queries/AIDA_P3_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
 
+    created = set()
     for condition_name in os.listdir(sparql_kb_input):
         condition_directory = os.path.join(sparql_kb_input, condition_name)
         for topic_or_claim_frame_id in os.listdir(condition_directory):
@@ -232,8 +233,10 @@ def main(args):
                                                                                      v=v)
                 output_locations[k] = '{output_conditions_directory}/{topic_or_claim_frame_id}'.format(output_conditions_directory=output_conditions_directory,
                                                                                                        topic_or_claim_frame_id=topic_or_claim_frame_id)
-                record_and_display_message(logger, 'Creating directory: {}'.format(output_conditions_directory))
-                os.makedirs(output_conditions_directory)
+                if output_conditions_directory not in created:
+                    record_and_display_message(logger, 'Creating directory: {}'.format(output_conditions_directory))
+                    os.makedirs(output_conditions_directory)
+                    created.add(output_conditions_directory)
 
             #############################################################################################
             # apply sparql queries
