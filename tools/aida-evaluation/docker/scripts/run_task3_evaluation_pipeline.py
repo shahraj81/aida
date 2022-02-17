@@ -252,7 +252,7 @@ def main(args):
             intermediate = '{}/intermediate'.format(sparql_output)
 
             count = 0
-            kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(f) and f.endswith('.ttl')]
+            kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(os.path.join(topic_or_claim_frame_directory, f)) and f.endswith('.ttl')]
             for kb_filename in kb_filenames:
                 kb_filename_including_path = os.path.join(topic_or_claim_frame_directory, kb_filename)
                 count += 1
