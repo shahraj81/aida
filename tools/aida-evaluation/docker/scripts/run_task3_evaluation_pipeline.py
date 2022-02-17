@@ -227,7 +227,7 @@ def main(args):
             topic_or_claim_frame_directory = os.path.join(condition_directory, topic_or_claim_frame_id)
             output_locations = {}
             for k,v in output_locations_init.items():
-                output_locations[k] = '{v}/{condition_name}/{topic_or_claim_frame_id}'.format(output=args.output,
+                output_locations[k] = '{output}/{v}/{condition_name}/{topic_or_claim_frame_id}'.format(output=args.output,
                                                                                               condition_name=condition_name,
                                                                                               topic_or_claim_frame_id=topic_or_claim_frame_id,
                                                                                               v=v)
