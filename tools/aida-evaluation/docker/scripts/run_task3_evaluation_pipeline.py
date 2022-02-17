@@ -192,7 +192,7 @@ def main(args):
             {sparql_kb_input}'.format(python_scripts=python_scripts,
                                       log_file=log_file,
                                       log_specifications=log_specifications,
-                                      queries='/data/queries/ta3_query_claim_frames',
+                                      queries='/data/user-queries',
                                       sparql_kb_input=sparql_kb_input)
     call_system(cmd)
 
