@@ -45,9 +45,9 @@ def get_problems(logs_directory):
     return num_errors, stats
 
 def record_and_display_message(logger, message):
-    print("-------------------------------------------------------")
+    print("-------------------------------------------------------------------------------")
     print(message)
-    print("-------------------------------------------------------")
+    print("-------------------------------------------------------------------------------")
     logger.record_event('DEFAULT_INFO', message)
 
 def main(args):
@@ -269,7 +269,7 @@ def main(args):
             for kb_filename in kb_filenames:
                 kb_filename_including_path = os.path.join(topic_or_claim_frame_directory, kb_filename)
                 k_cnt += 1
-                record_and_display_message(logger, 'Applying queries to {condition} ({c_cnt}/{c_tot}) {topic} ({t_cnt}/{t_tot}) {kb_filename} ({k_cnt} of {k_tot}.'.format(condition=condition_name,
+                record_and_display_message(logger, 'Applying queries to {condition} ({c_cnt}/{c_tot}) {topic} ({t_cnt}/{t_tot}) {kb_filename} ({k_cnt}/{k_tot}).'.format(condition=condition_name,
                                                                                                                                                                            c_cnt=c_cnt,
                                                                                                                                                                            c_tot=len(condition_directories),
                                                                                                                                                                            topic=topic_or_claim_frame_id,
