@@ -221,10 +221,16 @@ def main(args):
     call_system('mkdir {queries}'.format(queries=queries))
     call_system('cp /data/queries/AIDA_P3_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
 
+    c_cnt = 0
     created = set()
-    for condition_name in os.listdir(sparql_kb_input):
+    condition_directories = os.listdir(sparql_kb_input)
+    for condition_name in condition_directories:
+        c_cnt += 1
         condition_directory = os.path.join(sparql_kb_input, condition_name)
-        for topic_or_claim_frame_id in os.listdir(condition_directory):
+        topic_or_claim_frame_directories = os.listdir(condition_directory)
+        t_cnt = 0
+        for topic_or_claim_frame_id in topic_or_claim_frame_directories:
+            t_cnt += 1
             topic_or_claim_frame_directory = os.path.join(condition_directory, topic_or_claim_frame_id)
             output_locations = {}
             for k,v in output_locations_init.items():
@@ -241,8 +247,6 @@ def main(args):
             #############################################################################################
             # apply sparql queries
             ############################################################################################
-            record_and_display_message(logger, 'Applying SPARQL queries to condition:\'{}\' topic_or_claim_frame_id: \'{}\''.format(condition_name,
-                                                                                                                                    topic_or_claim_frame_id))
             graphdb_bin = '/opt/graphdb/dist/bin'
             graphdb = '{}/graphdb'.format(graphdb_bin)
             loadrdf = '{}/loadrdf'.format(graphdb_bin)
@@ -260,14 +264,20 @@ def main(args):
             record_and_display_message(logger, 'Creating output directory: {}'.format(output_locations['sparql_output']))
             os.makedirs(output_locations['sparql_output'])
 
-            count = 0
+            k_cnt = 0
             kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(os.path.join(topic_or_claim_frame_directory, f)) and f.endswith('.ttl')]
             for kb_filename in kb_filenames:
                 kb_filename_including_path = os.path.join(topic_or_claim_frame_directory, kb_filename)
-                count += 1
-                record_and_display_message(logger, 'Applying queries to {kb_filename} ... {count} of {num_total}.'.format(count=count,
-                                                                                                                          num_total=len(kb_filenames),
-                                                                                                                          kb_filename=kb_filename))
+                k_cnt += 1
+                record_and_display_message(logger, 'Applying queries to {condition} ({c_cnt}/{c_tot}) {topic} ({t_cnt}/{t_tot}) {kb_filename} ({k_cnt} of {k_tot}.'.format(condition=condition_name,
+                                                                                                                                                                           c_cnt=c_cnt,
+                                                                                                                                                                           c_tot=len(condition_directories),
+                                                                                                                                                                           topic=topic_or_claim_frame_id,
+                                                                                                                                                                           t_cnt=t_cnt,
+                                                                                                                                                                           t_tot=len(topic_or_claim_frame_directories),
+                                                                                                                                                                           kb_filename=kb_filename,
+                                                                                                                                                                           k_cnt=k_cnt,
+                                                                                                                                                                           k_tot=len(kb_filenames)))
                 # create the intermediate directory
                 logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
                 call_system('mkdir -p {}'.format(intermediate))
