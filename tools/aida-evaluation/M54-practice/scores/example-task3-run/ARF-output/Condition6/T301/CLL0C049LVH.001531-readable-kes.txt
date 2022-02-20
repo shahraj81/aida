@@ -1,0 +1,9 @@
+Event:cluster-NILCVML0C049LVH.000262
+Q166231
+	UID: Event:cluster-NILCVML0C049LVH.000262:Q166231
+	Time T1 (start on or after): 2019-12-01
+	Time T2 (start on or before): n/a
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A2_ppt_theme_infectant	Entity	EMPTY_TBD	coronavirus	cluster-NILCEML0C049LVH.000042
+	arg2	A1_gol_destination_thing_becoming_infected	Entity	Q215627	Elderly people	cluster-NILCEML0C049LVH.000274

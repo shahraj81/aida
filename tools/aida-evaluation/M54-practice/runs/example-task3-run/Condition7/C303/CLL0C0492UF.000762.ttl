@@ -1,0 +1,810 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C0492UF.000762 a aida:Claim ;
+    aida:associatedKEs ldc:cluster-NILCRML0C0492UF.001811,
+        ldc:cluster-NILCRML0C0492UF.003212,
+        ldc:cluster-NILCRML0C0492UF.003252,
+        ldc:cluster-NILCVML0C0492UF.001517,
+        ldc:cluster-NILCVML0C0492UF.002714,
+        ldc:cluster-NILCVML0C0492UF.002739 ;
+    aida:claimDateTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 ;
+    aida:claimId "CLL0C0492UF.000762" ;
+    aida:claimMedium [ a aida:ClaimComponent ;
+            aida:componentIdentity "EMPTY_TBD" ;
+            aida:componentName "podcast" ;
+            aida:componentProvenance "a podcast" ;
+            aida:componentType "Q24634210" ] ;
+    aida:claimSemantics ldc:cluster-NILCVML0C0492UF.002714 ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q87740225" ;
+            aida:componentName "Romanoff" ;
+            aida:componentProvenance "Larry Romanoff" ;
+            aida:componentType "Q15978655" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q16" ;
+            aida:componentName "Canada" ;
+            aida:componentType "Q6256" ],
+        [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q61055915" ;
+            aida:componentName "Center of Research on Globalization" ;
+            aida:componentType "Q155271" ] ;
+    aida:epistemic aida:EpistemicTrueCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Romanoff claims Covid-19 was \"Chinese-specific\" and did not infect peoples of other origins and racial backgrounds" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C0492UF" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Who can contract COVID-19" .
+    
+ldc:cluster-NILCEML0C0492UF.001226 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.001226-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.001236 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.001236-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.001545 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.001545-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.001694 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.001694-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.001736 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.001736-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.002734 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.002734-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.003202 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.003202-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.003207 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCEML0C0492UF.003207-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCRML0C0492UF.001811 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCRML0C0492UF.001811-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCRML0C0492UF.003212 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCRML0C0492UF.003212-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCRML0C0492UF.003252 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCRML0C0492UF.003252-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCVML0C0492UF.001517 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCVML0C0492UF.001517-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCVML0C0492UF.002739 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCVML0C0492UF.002739-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:EML0C0492UF.001226 a aida:Entity ;
+    aida:handle "Coronavirus" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:EML0C0492UF.001236 a aida:Entity ;
+    aida:handle "China" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:EML0C0492UF.001545 a aida:Entity ;
+    aida:handle "Covid-19" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:EML0C0492UF.002734 a aida:Entity ;
+    aida:handle "a podcast" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:EML0C0492UF.003202 a aida:Entity ;
+    aida:handle "Shanghai" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:VML0C0492UF.001517 a aida:Event ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b40 .
+
+ldc:cluster-NILCEML0C0492UF.001226-prototype a aida:Entity ;
+    aida:handle "Coronavirus" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.001236-prototype a aida:Entity ;
+    aida:handle "China" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.001545-prototype a aida:Entity ;
+    aida:handle "Covid-19" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.002734-prototype a aida:Entity ;
+    aida:handle "a podcast" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.003202-prototype a aida:Entity ;
+    aida:handle "Shanghai" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCVML0C0492UF.001517-prototype a aida:Event ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b40 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCVML0C0492UF.002714 a aida:SameAsCluster ;
+    aida:prototype ldc:cluster-NILCVML0C0492UF.002714-prototype ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:EML0C0492UF.001694 a aida:Entity ;
+    aida:handle "Larry Romanoff" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:EML0C0492UF.001736 a aida:Entity ;
+    aida:handle "the Chinese public" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:EML0C0492UF.003207 a aida:Entity ;
+    aida:handle "Fudan University" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 .
+
+ldc:RML0C0492UF.001811 a aida:Relation ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 .
+
+ldc:RML0C0492UF.003212 a aida:Relation ;
+    aida:attributes aida:Hedged ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 .
+
+ldc:RML0C0492UF.003252 a aida:Relation ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 .
+
+ldc:cluster-NILCEML0C0492UF.001694-prototype a aida:Entity ;
+    aida:handle "Larry Romanoff" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.001736-prototype a aida:Entity ;
+    aida:handle "the Chinese public" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCEML0C0492UF.003207-prototype a aida:Entity ;
+    aida:handle "Fudan University" ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCRML0C0492UF.001811-prototype a aida:Relation ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCRML0C0492UF.003212-prototype a aida:Relation ;
+    aida:attributes aida:Hedged ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCRML0C0492UF.003252-prototype a aida:Relation ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:VML0C0492UF.002714 a aida:Event ;
+    aida:attributes aida:Generic ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 .
+
+ldc:VML0C0492UF.002739 a aida:Event ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b39 .
+
+ldc:cluster-NILCVML0C0492UF.002714-prototype a aida:Event ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b41 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:cluster-NILCVML0C0492UF.002739-prototype a aida:Event ;
+    aida:informativeJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:ldcTime _:n55488a2f2d8b4c7ca3c8800444213f36b39 ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:confidence a aida:Confidence ;
+    aida:confidenceValue "1.0"^^xsd:double ;
+    aida:system ldc:LDCModelGenerator .
+
+ldc:LDCModelGenerator a aida:System .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.003202 ;
+    aida:clusterMember ldc:EML0C0492UF.003202 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.001236 ;
+    aida:clusterMember ldc:EML0C0492UF.001236 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCRML0C0492UF.001811 ;
+    aida:clusterMember ldc:RML0C0492UF.001811 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCVML0C0492UF.001517 ;
+    aida:clusterMember ldc:VML0C0492UF.001517 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCRML0C0492UF.003212 ;
+    aida:clusterMember ldc:RML0C0492UF.003212 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.001694 ;
+    aida:clusterMember ldc:EML0C0492UF.001694 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.001736 ;
+    aida:clusterMember ldc:EML0C0492UF.001736 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.001226 ;
+    aida:clusterMember ldc:EML0C0492UF.001226 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.002734 ;
+    aida:clusterMember ldc:EML0C0492UF.002734 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCRML0C0492UF.003252 ;
+    aida:clusterMember ldc:RML0C0492UF.003252 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.002734 ;
+    rdf:predicate "A2_com_co_agent_other_communicators" ;
+    rdf:subject ldc:VML0C0492UF.002739 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.001545 ;
+    rdf:predicate "A1_ppt_theme_disease" ;
+    rdf:subject ldc:VML0C0492UF.001517 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.001226 ;
+    rdf:predicate "A2_ppt_theme_infectant" ;
+    rdf:subject ldc:VML0C0492UF.002714 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.001694 ;
+    rdf:predicate "A0_pag_agent_first_communicator" ;
+    rdf:subject ldc:VML0C0492UF.002739 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:VML0C0492UF.002714 ;
+    rdf:predicate "A1_ppt_topic_utterance" ;
+    rdf:subject ldc:VML0C0492UF.002739 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.001736 ;
+    rdf:predicate "A1_gol_destination_thing_becoming_infected" ;
+    rdf:subject ldc:VML0C0492UF.002714 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.001736-prototype ;
+    rdf:predicate "A1_gol_destination_thing_becoming_infected" ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.002714-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCVML0C0492UF.002714-prototype ;
+    rdf:predicate "A1_ppt_topic_utterance" ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.002739-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.001694-prototype ;
+    rdf:predicate "A0_pag_agent_first_communicator" ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.002739-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.001545-prototype ;
+    rdf:predicate "A1_ppt_theme_disease" ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.001517-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.001226-prototype ;
+    rdf:predicate "A2_ppt_theme_infectant" ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.002714-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.002734-prototype ;
+    rdf:predicate "A2_com_co_agent_other_communicators" ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.002739-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.001236 ;
+    rdf:predicate "A1" ;
+    rdf:subject ldc:RML0C0492UF.001811 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.003207 ;
+    rdf:predicate "A1" ;
+    rdf:subject ldc:RML0C0492UF.003212 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.001694 ;
+    rdf:predicate "A0" ;
+    rdf:subject ldc:RML0C0492UF.003212 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.001736 ;
+    rdf:predicate "A0" ;
+    rdf:subject ldc:RML0C0492UF.001811 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.003207 ;
+    rdf:predicate "A0" ;
+    rdf:subject ldc:RML0C0492UF.003252 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:EML0C0492UF.003202 ;
+    rdf:predicate "A1" ;
+    rdf:subject ldc:RML0C0492UF.003252 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.003202-prototype ;
+    rdf:predicate "A1" ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.003252-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.001736-prototype ;
+    rdf:predicate "A0" ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.001811-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.003207-prototype ;
+    rdf:predicate "A1" ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.003212-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.001236-prototype ;
+    rdf:predicate "A1" ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.001811-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.001694-prototype ;
+    rdf:predicate "A0" ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.003212-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ArgumentStatement ;
+    rdf:object ldc:cluster-NILCEML0C0492UF.003207-prototype ;
+    rdf:predicate "A0" ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.003252-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b20 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "P159" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.003252-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q43229" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.003207 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q6256" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.001236-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q11024" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:VML0C0492UF.002739 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q515" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.003202 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "P108" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:RML0C0492UF.003212 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCVML0C0492UF.002739 ;
+    aida:clusterMember ldc:VML0C0492UF.002739 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q215627" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.001736-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q15621286" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.002734-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q11024" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.002739-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "P159" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:RML0C0492UF.003252 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q166231" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:VML0C0492UF.002714 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "EMPTY_TBD" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.001226 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "P551" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.001811-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q15621286" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.002734 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q12136" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.001545-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q515" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.003202-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.001545 ;
+    aida:clusterMember ldc:EML0C0492UF.001545 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q107711" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.001694 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q43229" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.003207-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q215627" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.001736 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q12136" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.001545 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q166231" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.002714-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "P551" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:RML0C0492UF.001811 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "P108" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCRML0C0492UF.003212-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q6256" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:EML0C0492UF.001236 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "EMPTY_TBD" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.001226-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q3241045" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCVML0C0492UF.001517-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCVML0C0492UF.002714 ;
+    aida:clusterMember ldc:VML0C0492UF.002714 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q3241045" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:VML0C0492UF.001517 ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a rdf:Statement ;
+    rdf:object "Q107711" ;
+    rdf:predicate rdf:type ;
+    rdf:subject ldc:cluster-NILCEML0C0492UF.001694-prototype ;
+    aida:confidence ldc:confidence ;
+    aida:justifiedBy _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+[] a aida:ClusterMembership ;
+    aida:cluster ldc:cluster-NILCEML0C0492UF.003207 ;
+    aida:clusterMember ldc:EML0C0492UF.003207 ;
+    aida:confidence ldc:confidence ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b37 a aida:LDCTimeComponent ;
+    aida:day "---12"^^xsd:gDay ;
+    aida:month "--03"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "2020"^^xsd:gYear .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b34 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "2020"^^xsd:gYear .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b36 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "2020"^^xsd:gYear .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b39 a aida:LDCTime ;
+    aida:end _:n55488a2f2d8b4c7ca3c8800444213f36b34,
+        _:n55488a2f2d8b4c7ca3c8800444213f36b36 ;
+    aida:start _:n55488a2f2d8b4c7ca3c8800444213f36b34,
+        _:n55488a2f2d8b4c7ca3c8800444213f36b36 ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b40 a aida:LDCTime ;
+    aida:end _:n55488a2f2d8b4c7ca3c8800444213f36b35,
+        _:n55488a2f2d8b4c7ca3c8800444213f36b38 ;
+    aida:start _:n55488a2f2d8b4c7ca3c8800444213f36b37,
+        _:n55488a2f2d8b4c7ca3c8800444213f36b38 ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b35 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b38 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b41 a aida:LDCTime ;
+    aida:end _:n55488a2f2d8b4c7ca3c8800444213f36b35,
+        _:n55488a2f2d8b4c7ca3c8800444213f36b38 ;
+    aida:start _:n55488a2f2d8b4c7ca3c8800444213f36b35,
+        _:n55488a2f2d8b4c7ca3c8800444213f36b38 ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b20 a aida:CompoundJustification ;
+    aida:confidence ldc:confidence ;
+    aida:containedJustification _:n55488a2f2d8b4c7ca3c8800444213f36b21 ;
+    aida:system ldc:LDCModelGenerator .
+
+_:n55488a2f2d8b4c7ca3c8800444213f36b21 a aida:TextJustification ;
+    aida:confidence ldc:confidence ;
+    aida:endOffsetInclusive "0"^^xsd:int ;
+    aida:source "L0C04958V" ;
+    aida:sourceDocument "L0C0492UF" ;
+    aida:startOffset "0"^^xsd:int ;
+    aida:system ldc:LDCModelGenerator .
+

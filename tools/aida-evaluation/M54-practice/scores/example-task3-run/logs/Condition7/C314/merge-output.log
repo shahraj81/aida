@@ -1,0 +1,1 @@
+02/20/2022 01:52:35 PM - augment_output.py - INFO - Execution begins {current_dir:/scripts/aida/python, script_name:augment_output.py, arguments:merge --log /output/logs/Condition7/C314/merge-output.log --task task3 /scripts/aida/python/input/aux_data/log_specifications.txt /output/SPARQL-CLEAN-output/Condition7/C314 /output/SPARQL-MERGED-output/Condition7/C314}

@@ -1,0 +1,22 @@
+claim_id	component_type	id	fieldname	value	correctness
+CLL0C04AJNP.001495	claimTopic	1	value	Contracting the virus	--
+CLL0C04AJNP.001495	claimSubtopic	1	value	Who contracts the virus	--
+CLL0C04AJNP.001495	claimDescription	1	value	people in tight spaces have high risk of contracting virus	--
+CLL0C04AJNP.001495	claimTemplate	1	value	X can catch COVID-19	NIL
+CLL0C04AJNP.001495	claimDocument	1	value	L0C04AJNP	--
+CLL0C04AJNP.001495	claimEpistemic	1	polarity	EpistemicTrueUncertain	NIL
+CLL0C04AJNP.001495	claimEpistemic	1	strength	EpistemicTrueUncertain	NIL
+CLL0C04AJNP.001495	claimSentiment	1	value	SentimentNeutralUnknown	NIL
+CLL0C04AJNP.001495	date	1	range	(0001-01-01,9999-12-31)-(0001-01-01,9999-12-31)	NIL
+CLL0C04AJNP.001495	claimer	1	name	author	NIL
+CLL0C04AJNP.001495	claimer	1	qnode_id	EMPTY_TBD	NIL
+CLL0C04AJNP.001495	claimer	1	qnode_type	EMPTY_TBD	NIL
+CLL0C04AJNP.001495	claimer	1	qnode_type	Q482980	NIL
+CLL0C04AJNP.001495	claimer	1	informativenessAssessment	value	NIL
+CLL0C04AJNP.001495	claimer	1	overallAssessment	value	NIL
+CLL0C04AJNP.001495	xVariable	1	name	people in tight spaces	NIL
+CLL0C04AJNP.001495	xVariable	1	qnode_id	EMPTY_TBD	NIL
+CLL0C04AJNP.001495	xVariable	1	qnode_type	EMPTY_TBD	NIL
+CLL0C04AJNP.001495	xVariable	1	qnode_type	Q2472587	NIL
+CLL0C04AJNP.001495	xVariable	1	informativenessAssessment	value	NIL
+CLL0C04AJNP.001495	xVariable	1	overallAssessment	value	NIL

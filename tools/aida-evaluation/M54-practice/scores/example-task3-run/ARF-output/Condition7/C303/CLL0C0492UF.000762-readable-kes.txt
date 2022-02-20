@@ -1,0 +1,58 @@
+Relation:cluster-NILCRML0C0492UF.001811
+P551
+	UID: Relation:cluster-NILCRML0C0492UF.001811:P551
+	Time T1 (start on or after): n/a
+	Time T2 (start on or before): n/a
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A0	Entity	Q215627	the Chinese public	cluster-NILCEML0C0492UF.001736
+	arg2	A1	Entity	Q6256	China	cluster-NILCEML0C0492UF.001236
+
+Relation:cluster-NILCRML0C0492UF.003212
+P108
+	UID: Relation:cluster-NILCRML0C0492UF.003212:P108
+	Time T1 (start on or after): n/a
+	Time T2 (start on or before): n/a
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A1	Entity	Q43229	Fudan University	cluster-NILCEML0C0492UF.003207
+	arg2	A0	Entity	Q107711	Larry Romanoff	cluster-NILCEML0C0492UF.001694
+
+Relation:cluster-NILCRML0C0492UF.003252
+P159
+	UID: Relation:cluster-NILCRML0C0492UF.003252:P159
+	Time T1 (start on or after): n/a
+	Time T2 (start on or before): n/a
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A1	Entity	Q515	Shanghai	cluster-NILCEML0C0492UF.003202
+	arg2	A0	Entity	Q43229	Fudan University	cluster-NILCEML0C0492UF.003207
+
+Event:cluster-NILCVML0C0492UF.001517
+Q3241045
+	UID: Event:cluster-NILCVML0C0492UF.001517:Q3241045
+	Time T1 (start on or after): n/a
+	Time T2 (start on or before): 2020-03-12
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A1_ppt_theme_disease	Entity	Q12136	Covid-19	cluster-NILCEML0C0492UF.001545
+
+Event:cluster-NILCVML0C0492UF.002714
+Q166231
+	UID: Event:cluster-NILCVML0C0492UF.002714:Q166231
+	Time T1 (start on or after): n/a
+	Time T2 (start on or before): n/a
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A1_gol_destination_thing_becoming_infected	Entity	Q215627	the Chinese public	cluster-NILCEML0C0492UF.001736
+	arg2	A2_ppt_theme_infectant	Entity	EMPTY_TBD	Coronavirus	cluster-NILCEML0C0492UF.001226
+
+Event:cluster-NILCVML0C0492UF.002739
+Q11024
+	UID: Event:cluster-NILCVML0C0492UF.002739:Q11024
+	Time T1 (start on or after): 2020-01-01
+	Time T2 (start on or before): 2020-12-31
+	Time T3 (end on or after): 2020-01-01
+	Time T4 (end on or before): 2020-12-31
+	arg1	A0_pag_agent_first_communicator	Entity	Q107711	Larry Romanoff	cluster-NILCEML0C0492UF.001694
+	arg2	A2_com_co_agent_other_communicators	Entity	Q15621286	a podcast	cluster-NILCEML0C0492UF.002734
