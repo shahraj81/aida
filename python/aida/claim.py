@@ -48,6 +48,15 @@ class Claim(Object):
         else:
             self.record_event('MULTIPLE_CLAIM_TIME', entry.get('claim_id'), entry.get('where'))
 
+    def get_claim_condition(self):
+        return self.get('claim_uid').split(':')[0]
+
+    def get_claim_id(self):
+        return self.get('claim_uid').split(':')[2]
+
+    def get_claim_query_topic_or_claim_frame_id(self):
+        return self.get('claim_uid').split(':')[1]
+
     def update(self, entry):
         if entry.get('schema').get('name') == 'AIDA_PHASE3_TASK3_OC_RESPONSE':
             self.set('outer_claim', entry)
