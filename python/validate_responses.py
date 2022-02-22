@@ -12,6 +12,7 @@ from aida.response_set import ResponseSet
 from aida.encodings import Encodings
 from aida.core_documents import CoreDocuments
 from aida.document_mappings import DocumentMappings
+from aida.ta3_queryset import TA3QuerySet
 from aida.text_boundaries import TextBoundaries
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
@@ -67,7 +68,8 @@ def validate_responses(args):
         'video': video_boundaries
         }
 
-    responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, args.task)
+    queries = TA3QuerySet(logger, args.queries) if args.queries else None
+    responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, args.task, queries=queries)
     responses.write_valid_responses(args.output)
     num_warnings, num_errors = logger.get_stats()
     closing_message = 'validation finished (warnings:{}, errors:{})'.format(num_warnings, num_errors)
@@ -82,6 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('-t', '--task', default='task1', choices=['task1', 'task2', 'task3'], help='Specify task1 or task2 or task3 (default: %(default)s)')
+    parser.add_argument('-q', '--queries', help='Specify the directory containing task3 user queries')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
     parser.add_argument('core_documents', type=str, help='File containing list of core documents to be included in the pool')

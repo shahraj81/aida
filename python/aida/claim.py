@@ -11,9 +11,9 @@ __date__    = "11 January 2022"
 from aida.object import Object
 
 class Claim(Object):
-    def __init__(self, logger, claim_id):
+    def __init__(self, logger, claim_uid):
         super().__init__(logger)
-        self.claim_id = claim_id
+        self.claim_uid = claim_uid
         self.outer_claim = None
         self.claim_components = []
         self.claim_edge_assertions = []

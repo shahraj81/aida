@@ -51,8 +51,12 @@ class Validator(Object):
         if claim_id != kb_claim_id:
             self.record_event('UNEXPECTED_CLAIM_ID', claim_id, kb_claim_id, entry.get('where'))
             return False
-        if claim_id not in responses.get('claims'):
-            self.record_event('UNKNOWN_CLAIM_ID', claim_id, entry.get('where'))
+        return True
+
+    def validate_claim_uid(self, responses, schema, entry, attribute):
+        claim_uid = entry.get(attribute.get('name'))
+        if claim_uid not in responses.get('claims'):
+            self.record_event('UNKNOWN_CLAIM_ID', claim_uid, entry.get('where'))
             return False
         return True
 
@@ -60,9 +64,30 @@ class Validator(Object):
         allowed_values = ['claimMedium', 'claimer', 'claimerAffiliation', 'claimLocation', 'xVariable']
         return self.validate_set_membership('component_type', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
 
+    def validate_claim_condition(self, responses, schema, entry, attribute):
+        claim_condition = entry.get(attribute.get('name'))
+        queries = responses.get('queries')
+        if queries:
+            if claim_condition not in queries.get('conditions'):
+                self.record_event('UNKNOWN_CLAIM_CONDITION', claim_condition, entry.get('where'))
+                return False
+        return True
+
     def validate_claim_epistemic_status(self, responses, schema, entry, attribute):
         allowed_values = ['EpistemicTrueCertain', 'EpistemicTrueUncertain', 'EpistemicFalseCertain', 'EpistemicFalseUncertain', 'EpistemicUnknown']
         return self.validate_set_membership('epistemic_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+
+    def validate_claim_query_topic_or_claim_frame_id(self, responses, schema, entry, attribute):
+        claim_query_topic_or_claim_frame_id = entry.get(attribute.get('name'))
+        queries = responses.get('queries')
+        if queries:
+            claim_condition = entry.get('claim_condition')
+            query_condition = queries.get('conditions').get(claim_condition)
+            key = 'query_claim_frames' if query_condition.get('query_claim_frames') else 'topics'
+            if claim_query_topic_or_claim_frame_id not in query_condition.get(key):
+                self.record_event('UNKNOWN_CLAIM_QUERY_TOPIC_OR_CLAIM_FRAME_ID', key, claim_query_topic_or_claim_frame_id, entry.get('where'))
+                return False
+        return True
 
     def validate_claim_sentiment_status(self, responses, schema, entry, attribute):
         allowed_values = ['SentimentPositive', 'SentimentNegative', 'SentimentMixed', 'SentimentNeutralUnknown']

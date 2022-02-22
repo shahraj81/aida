@@ -12,6 +12,8 @@ from aida.ldc_time import LDCTime
 from aida.object import Object
 from aida.utility import get_kb_claim_id_from_filename, get_kb_document_id_from_filename, spanstring_to_object, trim
 
+import os
+
 class Generator(Object):
     """
     Generator for generated-values in AIDA response.
@@ -63,8 +65,8 @@ class Generator(Object):
             entry.get('subject_cluster').get('dates').add(entry.get('date'))
 
     def generate_claim(self, responses, entry):
-        claim_id = entry.get('claim_id')
-        claim = responses.get('claim', claim_id)
+        claim_uid = entry.get('claim_uid')
+        claim = responses.get('claim', claim_uid)
         claim.update(entry)
         entry.set('claim', claim)
 
@@ -74,12 +76,27 @@ class Generator(Object):
             claim_id = entry.get('kb_claim_id')
         entry.set('claim_id', claim_id)
 
+    def generate_claim_uid(self, responses, entry):
+        fields = ['claim_condition', 'claim_query_topic_or_claim_frame_id', 'claim_id']
+        claim_uid = ':'.join([entry.get(f) for f in fields])
+        entry.set('claim_uid', claim_uid)
+
+    def generate_claim_condition(self, responses, entry):
+        filename = entry.get('filename')
+        claim_condition = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(filename))))
+        entry.set('claim_condition', claim_condition)
+
+    def generate_claim_query_topic_or_claim_frame_id(self, responses, entry):
+        filename = entry.get('filename')
+        claim_query_topic_or_claim_frame_id = os.path.basename(os.path.dirname(os.path.dirname(filename)))
+        entry.set('claim_query_topic_or_claim_frame_id', claim_query_topic_or_claim_frame_id)
+
     def generate_document_id(self, responses, entry):
         document_id = None
         if entry.get('kb_document_id'):
             document_id = entry.get('kb_document_id')
-        elif entry.get('claim_id'):
-            claim = responses.get('claims').get(entry.get('claim_id'))
+        elif entry.get('claim_uid'):
+            claim = responses.get('claims').get(entry.get('claim_uid'))
             document_id = claim.get('outer_claim').get('document_id')
         elif entry.get('object_informative_justification_span_text'):
             span_object = spanstring_to_object(entry.get('logger'), entry.get('object_informative_justification_span_text'))

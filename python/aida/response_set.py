@@ -28,7 +28,7 @@ attributes = {
         },
     'claim': {
         'name': 'claim',
-        'dependencies': ['claim_id'],
+        'dependencies': ['claim_uid'],
         'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
         'tasks': ['task3'],
         'generate': 'generate_claim',
@@ -41,6 +41,15 @@ attributes = {
         'tasks': ['task3'],
         'generate': 'generate_claim_id',
         'validate': 'validate_claim_id',
+        'years': [2021],
+        },
+    'claim_uid': {
+        'name': 'claim_uid',
+        'dependencies': ['claim_id', 'claim_condition', 'claim_query_topic_or_claim_frame_id'],
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'tasks': ['task3'],
+        'generate': 'generate_claim_uid',
+        'validate': 'validate_claim_uid',
         'years': [2021],
         },
     'claim_component_ke': {
@@ -96,6 +105,14 @@ attributes = {
         'validate': 'validate_claim_component_type',
         'years': [2021],
         },
+    'claim_condition': {
+        'name': 'claim_condition',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'tasks': ['task3'],
+        'generate': 'generate_claim_condition',
+        'validate': 'validate_claim_condition',
+        'years': [2021],
+        },
     'claim_description': {
         'name': 'claim_description',
         'schemas': ['AIDA_PHASE3_TASK3_OC_RESPONSE'],
@@ -107,6 +124,14 @@ attributes = {
         'schemas': ['AIDA_PHASE3_TASK3_OC_RESPONSE'],
         'tasks': ['task3'],
         'validate': 'validate_claim_epistemic_status',
+        'years': [2021],
+        },
+    'claim_query_topic_or_claim_frame_id': {
+        'name': 'claim_query_topic_or_claim_frame_id',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'tasks': ['task3'],
+        'generate': 'generate_claim_query_topic_or_claim_frame_id',
+        'validate': 'validate_claim_query_topic_or_claim_frame_id',
         'years': [2021],
         },
     'claim_sentiment_status': {
@@ -863,7 +888,7 @@ class ResponseSet(Container):
     Set of responses for AIDA.
     """
 
-    def __init__(self, logger, document_mappings, document_boundaries, path, runid, task='task1'):
+    def __init__(self, logger, document_mappings, document_boundaries, path, runid, task='task1', queries=None):
         super().__init__(logger)
         self.claims = Container(logger)
         self.document_mappings = document_mappings
@@ -873,6 +898,7 @@ class ResponseSet(Container):
         self.normalizer = Normalizer(logger)
         self.document_clusters = Container(logger)
         self.document_frames = Container(logger)
+        self.queries = queries
         self.runid = runid
         self.path = path
         self.task = task
@@ -934,15 +960,20 @@ class ResponseSet(Container):
                 exit()
             return filename_order_map[filename]
         logger = self.get('logger')
-        for subdir in ['{}/{}'.format(self.get('path'), d) for d in os.listdir(self.get('path'))]:
-            for filename in sorted(os.listdir(subdir), key=order):
-                filename_including_path = '{}/{}'.format(subdir, filename)
-                fh = FileHandler(logger, filename_including_path, encoding='utf-8')
-                schema = identify_file_schema(fh, self.get('task'))
-                if schema is None:
-                    logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
-                else:
-                    self.load_file(fh, schema)
+        for condition in os.listdir(self.get('path')):
+            condition_dir = os.path.join(self.get('path'), condition)
+            for query_topic_or_claim_frame_id in os.listdir(condition_dir):
+                query_topic_or_claim_frame_dir = os.path.join(condition_dir, query_topic_or_claim_frame_id)
+                for kb in os.listdir(query_topic_or_claim_frame_dir):
+                    kb_dir = os.path.join(query_topic_or_claim_frame_dir, kb)
+                    for filename in sorted(os.listdir(kb_dir), key=order):
+                        filename_including_path = '{}/{}'.format(kb_dir, filename)
+                        fh = FileHandler(logger, filename_including_path, encoding='utf-8')
+                        schema = identify_file_schema(fh, self.get('task'))
+                        if schema is None:
+                            logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
+                        else:
+                            self.load_file(fh, schema)
 
     def load_file(self, fh, schema):
         logger = self.get('logger')
@@ -1005,13 +1036,13 @@ class ResponseSet(Container):
         if generator_name:
             self.get('generator').generate(self, generator_name, entry)
 
-    def get_claim(self, claim_id):
+    def get_claim(self, claim_uid):
         logger = self.get('logger')
         claims = self.get('claims')
-        if claim_id not in claims:
-            claim = Claim(logger, claim_id)
-            claims.add(key=claim_id, value=claim)
-        claim = claims.get(claim_id)
+        if claim_uid not in claims:
+            claim = Claim(logger, claim_uid)
+            claims.add(key=claim_uid, value=claim)
+        claim = claims.get(claim_uid)
         return claim
 
     def get_cluster(self, cluster_id, entry):
@@ -1133,7 +1164,7 @@ class ResponseSet(Container):
             output_filename = input_filename.replace(self.get('path'), output_dir)
             dirname = os.path.dirname(output_filename)
             if not os.path.exists(dirname):
-                os.mkdir(dirname)
+                os.makedirs(dirname, exist_ok=True)
             file_container = self.get(input_filename)
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_fh.write('{}\n'.format(file_container.get('header').get('line')))
