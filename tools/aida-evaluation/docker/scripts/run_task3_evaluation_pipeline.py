@@ -106,6 +106,11 @@ def main(args):
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
     sparql_kb_source        = '{output}/SPARQL-KB-source'.format(output=args.output)
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
+    sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
+    sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
+    sparql_merged_output    = '{output}/SPARQL-MERGED-output'.format(output=args.output)
+    sparql_valid_output     = '{output}/SPARQL-VALID-output'.format(output=args.output)
+    arf_output              = '{output}/ARF-output'.format(output=args.output)
 
     #############################################################################################
     # pull latest copy of code from git
@@ -254,15 +259,11 @@ def main(args):
             jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
             config = '{}/config/Local-config.ttl'.format(verdi)
             properties = '{}/config/Local-config.properties'.format(verdi)
-            sparql_output = output_locations.get('sparql_output')
-            sparql_clean_output = output_locations.get('sparql_clean_output')
-            sparql_merged_output = output_locations.get('sparql_merged_output')
-            sparql_valid_output = output_locations.get('sparql_valid_output')
-            arf_output = output_locations.get('arf_output')
-            intermediate = '{}/intermediate'.format(sparql_output)
+            sparql_output_subdir = output_locations.get('sparql_output')
+            intermediate = '{}/intermediate'.format(sparql_output_subdir)
 
-            record_and_display_message(logger, 'Creating output directory: {}'.format(output_locations['sparql_output']))
-            os.makedirs(output_locations['sparql_output'])
+            record_and_display_message(logger, 'Creating output directory: {}'.format(sparql_output_subdir))
+            os.makedirs(sparql_output_subdir)
 
             k_cnt = 0
             kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(os.path.join(topic_or_claim_frame_directory, f)) and f.endswith('.ttl')]
@@ -298,12 +299,12 @@ def main(args):
                                                                                           intermediate=intermediate))
                 # generate the SPARQL output directory corresponding to the KB
                 logger.record_event('DEFAULT_INFO', 'Creating SPARQL output directory corresponding to the KB')
-                call_system('mkdir {output}/{kb_filename}'.format(output=sparql_output, kb_filename=kb_filename))
+                call_system('mkdir {output}/{kb_filename}'.format(output=sparql_output_subdir, kb_filename=kb_filename))
                 # move output out of intermediate into the output corresponding to the KB
                 logger.record_event('DEFAULT_INFO', 'Moving output out of the intermediate directory')
                 call_system('mv {intermediate}/*/* {output}/{kb_filename}'.format(intermediate=intermediate,
                                                                                   kb_filename=kb_filename,
-                                                                                  output=sparql_output))
+                                                                                  output=sparql_output_subdir))
                 # remove intermediate directory
                 logger.record_event('DEFAULT_INFO', 'Removing the intermediate directory.')
                 call_system('rm -rf {}'.format(intermediate))
@@ -314,118 +315,115 @@ def main(args):
             message = 'SPARQL output generated.'
             record_and_display_message(logger, '{}\n'.format(message))
 
-            #############################################################################################
-            # Clean SPARQL output
-            #############################################################################################
+    #############################################################################################
+    # Clean SPARQL output
+    #############################################################################################
 
-            record_and_display_message(logger, 'Creating output directory: {}'.format(output_locations['logs']))
-            os.makedirs(output_locations['logs'])
+    record_and_display_message(logger, 'Cleaning SPARQL output.')
+    log_file = '{logs_directory}/clean-sparql-output.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 clean_sparql_output.py \
+            --log {log_file} \
+            {log_specifications} \
+            {sparql_output} \
+            {sparql_clean_output}'.format(python_scripts=python_scripts,
+                                          log_file=log_file,
+                                          log_specifications=log_specifications,
+                                          sparql_output=sparql_output,
+                                          sparql_clean_output=sparql_clean_output)
+    call_system(cmd)
 
-            record_and_display_message(logger, 'Cleaning SPARQL output.')
-            log_file = '{logs_directory}/clean-sparql-output.log'.format(logs_directory=output_locations.get('logs'))
-            cmd = 'cd {python_scripts} && \
-                    python3.9 clean_sparql_output.py \
-                    --log {log_file} \
-                    {log_specifications} \
-                    {sparql_output} \
-                    {sparql_clean_output}'.format(python_scripts=python_scripts,
-                                                  log_file=log_file,
-                                                  log_specifications=log_specifications,
-                                                  sparql_output=sparql_output,
-                                                  sparql_clean_output=sparql_clean_output)
-            call_system(cmd)
+    #############################################################################################
+    # Merge SPARQL output
+    #############################################################################################
 
-            #############################################################################################
-            # Merge SPARQL output
-            #############################################################################################
+    record_and_display_message(logger, 'Merging SPARQL output.')
 
-            record_and_display_message(logger, 'Merging SPARQL output.')
+    log_file = '{logs_directory}/merge-output.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 augment_output.py \
+            merge \
+            --log {log_file} \
+            --task task3 \
+            {log_specifications} \
+            {sparql_clean_output} \
+            {sparql_merged_output}'.format(python_scripts=python_scripts,
+                                           log_file=log_file,
+                                           log_specifications=log_specifications,
+                                           sparql_clean_output = sparql_clean_output,
+                                           sparql_merged_output = sparql_merged_output)
+    call_system(cmd)
 
-            log_file = '{logs_directory}/merge-output.log'.format(logs_directory=output_locations.get('logs'))
-            cmd = 'cd {python_scripts} && \
-                    python3.9 augment_output.py \
-                    merge \
-                    --log {log_file} \
-                    --task task3 \
-                    {log_specifications} \
-                    {sparql_clean_output} \
-                    {sparql_merged_output}'.format(python_scripts=python_scripts,
-                                                   log_file=log_file,
-                                                   log_specifications=log_specifications,
-                                                   sparql_clean_output = sparql_clean_output,
-                                                   sparql_merged_output = sparql_merged_output)
-            call_system(cmd)
+    #############################################################################################
+    # Validate SPARQL output
+    #############################################################################################
 
-            #############################################################################################
-            # Validate SPARQL output
-            #############################################################################################
+    record_and_display_message(logger, 'Validating SPARQL output.')
 
-            record_and_display_message(logger, 'Validating SPARQL output.')
+    log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 validate_responses.py \
+            --log {log_file} \
+            --task task3 \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {run_id} \
+            {sparql_merged_output} \
+            {sparql_valid_output}'.format(python_scripts=python_scripts,
+                                           log_file=log_file,
+                                           log_specifications=log_specifications,
+                                           encoding_modality=encoding_modality,
+                                           coredocs=coredocs,
+                                           parent_children=parent_children,
+                                           sentence_boundaries=sentence_boundaries,
+                                           image_boundaries=image_boundaries,
+                                           keyframe_boundaries=keyframe_boundaries,
+                                           video_boundaries=video_boundaries,
+                                           run_id=args.run,
+                                           sparql_merged_output=sparql_merged_output,
+                                           sparql_valid_output=sparql_valid_output)
+    call_system(cmd)
 
-            log_file = '{logs_directory}/validate-responses.log'.format(logs_directory=output_locations.get('logs'))
-            cmd = 'cd {python_scripts} && \
-                    python3.9 validate_responses.py \
-                    --log {log_file} \
-                    --task task3 \
-                    {log_specifications} \
-                    {encoding_modality} \
-                    {coredocs} \
-                    {parent_children} \
-                    {sentence_boundaries} \
-                    {image_boundaries} \
-                    {keyframe_boundaries} \
-                    {video_boundaries} \
-                    {run_id} \
-                    {sparql_merged_output} \
-                    {sparql_valid_output}'.format(python_scripts=python_scripts,
-                                                   log_file=log_file,
-                                                   log_specifications=log_specifications,
-                                                   encoding_modality=encoding_modality,
-                                                   coredocs=coredocs,
-                                                   parent_children=parent_children,
-                                                   sentence_boundaries=sentence_boundaries,
-                                                   image_boundaries=image_boundaries,
-                                                   keyframe_boundaries=keyframe_boundaries,
-                                                   video_boundaries=video_boundaries,
-                                                   run_id=args.run,
-                                                   sparql_merged_output=sparql_merged_output,
-                                                   sparql_valid_output=sparql_valid_output)
-            call_system(cmd)
+    #############################################################################################
+    # Generate ARF output
+    #############################################################################################
 
-            #############################################################################################
-            # Generate ARF output
-            #############################################################################################
+    record_and_display_message(logger, 'Generating ARF output.')
 
-            record_and_display_message(logger, 'Generating ARF output.')
-
-            log_file = '{logs_directory}/generate-arf.log'.format(logs_directory=output_locations.get('logs'))
-            cmd = 'cd {python_scripts} && \
-                    python3.9 generate_arf.py \
-                    --log {log_file} \
-                    {log_specifications} \
-                    {encoding_modality} \
-                    {coredocs} \
-                    {parent_children} \
-                    {sentence_boundaries} \
-                    {image_boundaries} \
-                    {keyframe_boundaries} \
-                    {video_boundaries} \
-                    {run_id} \
-                    {sparql_valid_output} \
-                    {arf_output}'.format(python_scripts=python_scripts,
-                                                   log_file=log_file,
-                                                   log_specifications=log_specifications,
-                                                   encoding_modality=encoding_modality,
-                                                   coredocs=coredocs,
-                                                   parent_children=parent_children,
-                                                   sentence_boundaries=sentence_boundaries,
-                                                   image_boundaries=image_boundaries,
-                                                   keyframe_boundaries=keyframe_boundaries,
-                                                   video_boundaries=video_boundaries,
-                                                   run_id=args.run,
-                                                   sparql_valid_output=sparql_valid_output,
-                                                   arf_output=arf_output)
-            call_system(cmd)
+    log_file = '{logs_directory}/generate-arf.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 generate_arf.py \
+            --log {log_file} \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {run_id} \
+            {sparql_valid_output} \
+            {arf_output}'.format(python_scripts=python_scripts,
+                                           log_file=log_file,
+                                           log_specifications=log_specifications,
+                                           encoding_modality=encoding_modality,
+                                           coredocs=coredocs,
+                                           parent_children=parent_children,
+                                           sentence_boundaries=sentence_boundaries,
+                                           image_boundaries=image_boundaries,
+                                           keyframe_boundaries=keyframe_boundaries,
+                                           video_boundaries=video_boundaries,
+                                           run_id=args.run,
+                                           sparql_valid_output=sparql_valid_output,
+                                           arf_output=arf_output)
+    call_system(cmd)
 
     record_and_display_message(logger, 'Done.')
 
