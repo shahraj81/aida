@@ -204,7 +204,6 @@ def main(args):
     num_errors, _ = get_problems(logs_directory)
     if num_errors:
         logger.record_event('IMPROPER_INPUT_DIRECTORY_STRUCTURE', sparql_kb_input)
-        record_and_display_message(logger, 'Improper structure of input directory: {}'.format(sparql_kb_input))
         exit(ERROR_EXIT_CODE)
 
     #############################################################################################
