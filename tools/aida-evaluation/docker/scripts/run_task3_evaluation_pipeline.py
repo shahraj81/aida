@@ -228,7 +228,6 @@ def main(args):
         for topic_or_claim_frame_id in topic_or_claim_frame_directories:
             t_cnt += 1
             topic_or_claim_frame_directory = os.path.join(condition_directory, topic_or_claim_frame_id)
-            output_locations = {}
             output_conditions_directory = '{output}/SPARQL-output/{condition_name}'.format(output=args.output,
                                                                                            condition_name=condition_name)
             if output_conditions_directory not in created:
@@ -248,7 +247,6 @@ def main(args):
             jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
             config = '{}/config/Local-config.ttl'.format(verdi)
             properties = '{}/config/Local-config.properties'.format(verdi)
-            sparql_output_subdir = output_locations.get('sparql_output')
             intermediate = '{}/intermediate'.format(sparql_output_subdir)
 
             record_and_display_message(logger, 'Creating output directory: {}'.format(sparql_output_subdir))
