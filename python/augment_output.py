@@ -215,8 +215,7 @@ class Merge(Object):
 
         for directory in directories:
             output_directory = directory.replace(self.get('input_dir'), self.get('output_dir'))
-            if not os.path.exists(output_directory):
-                os.mkdir(output_directory)
+            os.makedirs(output_directory, exist_ok=True)
             input_file1 = '{i}/AIDA_P3_TA3_GR_0001A.rq.tsv'.format(i=directory)
             input_file2 = '{i}/AIDA_P3_TA3_GR_0001B.rq.tsv'.format(i=directory)
             output_file = '{o}/AIDA_P3_TA3_GR_0001.rq.tsv'.format(o=output_directory)
