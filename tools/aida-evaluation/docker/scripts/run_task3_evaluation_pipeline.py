@@ -211,15 +211,6 @@ def main(args):
     # process each condition and topic_or_claim_frame independently
     #############################################################################################
 
-    output_locations_init = {
-        'sparql_output': 'SPARQL-output',
-        'sparql_clean_output': 'SPARQL-CLEAN-output',
-        'sparql_merged_output': 'SPARQL-MERGED-output',
-        'sparql_valid_output': 'SPARQL-VALID-output',
-        'arf_output': 'ARF-output',
-        'logs': 'logs'
-        }
-
     # copy TA3 SPARQL queries
     queries = '{}/queries'.format(args.output)
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
@@ -238,17 +229,15 @@ def main(args):
             t_cnt += 1
             topic_or_claim_frame_directory = os.path.join(condition_directory, topic_or_claim_frame_id)
             output_locations = {}
-            for k,v in output_locations_init.items():
-                output_conditions_directory = '{output}/{v}/{condition_name}'.format(output=args.output,
-                                                                                     condition_name=condition_name,
-                                                                                     v=v)
-                output_locations[k] = '{output_conditions_directory}/{topic_or_claim_frame_id}'.format(output_conditions_directory=output_conditions_directory,
-                                                                                                       topic_or_claim_frame_id=topic_or_claim_frame_id)
-                if output_conditions_directory not in created:
-                    record_and_display_message(logger, 'Creating directory: {}'.format(output_conditions_directory))
-                    os.makedirs(output_conditions_directory)
-                    created.add(output_conditions_directory)
+            output_conditions_directory = '{output}/SPARQL-output/{condition_name}'.format(output=args.output,
+                                                                                           condition_name=condition_name)
+            if output_conditions_directory not in created:
+                record_and_display_message(logger, 'Creating directory: {}'.format(output_conditions_directory))
+                os.makedirs(output_conditions_directory)
+                created.add(output_conditions_directory)
 
+            sparql_output_subdir = '{output_conditions_directory}/{topic_or_claim_frame_id}'.format(output_conditions_directory=output_conditions_directory,
+                                                                                                    topic_or_claim_frame_id=topic_or_claim_frame_id)
             #############################################################################################
             # apply sparql queries
             ############################################################################################
