@@ -19,6 +19,7 @@ INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
 ERROR     ID_WITH_EXTENSION_ERROR         File extension included as part of {} '{}'
 ERROR     IMPROPER_COMPOUND_JUSTIFICATION Compound justification '{}' has more than two justifications
+ERROR     IMPROPER_INPUT_DIRECTORY_STRUCTURE Improper structure for directory: {}
 ERROR     IMPROPER_RELATION               Relation '{}' has more than two fillers
 ERROR     INCOMPATIBLE_TYPES              '{}' has incompatible types '{}'
 WARNING   INVALID_CONFIDENCE              Invalid confidence value '{}' (using 1.0)
