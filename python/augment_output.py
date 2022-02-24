@@ -213,8 +213,10 @@ class Merge(Object):
         for root, dirs, files in os.walk(self.get('input_dir')):
             directories.extend([os.path.join(root, dir) for dir in dirs if dir.endswith('.ttl')])
 
+        parents = set()
         for directory in directories:
             output_directory = directory.replace(self.get('input_dir'), self.get('output_dir'))
+            parents.add((os.path.dirname(directory), os.path.dirname(output_directory)))
             os.makedirs(output_directory, exist_ok=True)
             input_file1 = '{i}/AIDA_P3_TA3_GR_0001A.rq.tsv'.format(i=directory)
             input_file2 = '{i}/AIDA_P3_TA3_GR_0001B.rq.tsv'.format(i=directory)
@@ -225,6 +227,15 @@ class Merge(Object):
                 input_file = '{i}/AIDA_P3_TA3_{c}_0001.rq.tsv'.format(i=directory, c=code)
                 output_file = '{o}/AIDA_P3_TA3_{c}_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')), c=code)
                 self.merge_files([input_file], output_file)
+
+        print('--copying ranking files')
+        for (input_directory, output_directory) in parents:
+            ranking_file = '{input_directory}/{basename}.ranking.tsv'.format(input_directory=input_directory,
+                                                                             basename=os.path.basename(input_directory))
+            command = 'cp {ranking_file} {output_directory}'.format(ranking_file=ranking_file,
+                                                                    output_directory=output_directory)
+            print('--running command: {command}'.format(command=command))
+            os.system(command)
 
     def __call__(self):
         method_name = 'merge_{task}_sparql_output'.format(task=self.get('task'))
