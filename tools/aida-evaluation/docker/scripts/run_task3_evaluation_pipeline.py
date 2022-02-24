@@ -236,6 +236,15 @@ def main(args):
 
             sparql_output_subdir = '{output_conditions_directory}/{topic_or_claim_frame_id}'.format(output_conditions_directory=output_conditions_directory,
                                                                                                     topic_or_claim_frame_id=topic_or_claim_frame_id)
+            record_and_display_message(logger, 'Creating output directory: {}'.format(sparql_output_subdir))
+            os.makedirs(sparql_output_subdir)
+            # copy ranking file
+            input_ranking_file = '{output}/SPARQL-KB-input/{condition_name}/{topic_or_claim_frame_id}/{topic_or_claim_frame_id}.ranking.tsv'
+            input_ranking_file = input_ranking_file.format(output=args.output,
+                                                           condition_name=condition_name,
+                                                           topic_or_claim_frame_id=topic_or_claim_frame_id)
+            call_system('cp {input_ranking_file} {sparql_output_subdir}'.format(input_ranking_file=input_ranking_file,
+                                                                                sparql_output_subdir=sparql_output_subdir))
             #############################################################################################
             # apply sparql queries
             ############################################################################################
@@ -247,9 +256,6 @@ def main(args):
             config = '{}/config/Local-config.ttl'.format(verdi)
             properties = '{}/config/Local-config.properties'.format(verdi)
             intermediate = '{}/intermediate'.format(sparql_output_subdir)
-
-            record_and_display_message(logger, 'Creating output directory: {}'.format(sparql_output_subdir))
-            os.makedirs(sparql_output_subdir)
 
             k_cnt = 0
             kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(os.path.join(topic_or_claim_frame_directory, f)) and f.endswith('.ttl')]
