@@ -1283,7 +1283,8 @@ class ResponseSet(Container):
                 os.makedirs(dirname, exist_ok=True)
             file_container = self.get(input_filename)
             output_fh = open(output_filename, 'w', encoding='utf-8')
-            output_fh.write('{}\n'.format(file_container.get('header').get('line')))
+            if not input_filename.endswith('.ranking.tsv'):
+                output_fh.write('{}\n'.format(file_container.get('header').get('line')))
             for linenum in sorted(file_container, key=int):
                 entry = self.get(input_filename).get(str(linenum))
                 if not entry.get('valid'): continue
