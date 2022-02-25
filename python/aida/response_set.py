@@ -139,6 +139,7 @@ attributes = {
         'name': 'claim_relation',
         'schemas': ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE'],
         'tasks': ['task3'],
+        'validate': 'validate_claim_relation',
         'years': [2021],
         },
     'claim_sentiment_status': {
@@ -1018,12 +1019,12 @@ class ResponseSet(Container):
                 return FileHeader(logger, '\t'.join(header_columns))
         def order(filename):
             filename_order_map = {
-                'ranking.tsv'               : 1,
-                'AIDA_P3_TA3_OC_0001.rq.tsv': 2,
-                'AIDA_P3_TA3_CC_0001.rq.tsv': 3,
-                'AIDA_P3_TA3_CT_0001.rq.tsv': 4,
-                'AIDA_P3_TA3_GR_0001.rq.tsv': 5,
-                'AIDA_P3_TA3_TM_0001.rq.tsv': 6,
+                'AIDA_P3_TA3_OC_0001.rq.tsv': 1,
+                'AIDA_P3_TA3_CC_0001.rq.tsv': 2,
+                'AIDA_P3_TA3_CT_0001.rq.tsv': 3,
+                'AIDA_P3_TA3_GR_0001.rq.tsv': 4,
+                'AIDA_P3_TA3_TM_0001.rq.tsv': 5,
+                'ranking.tsv'               : 6,
                 }
             basename = 'ranking.tsv' if filename.endswith('.ranking.tsv') else os.path.basename(filename)
             if basename not in filename_order_map:
@@ -1035,14 +1036,17 @@ class ResponseSet(Container):
             condition_dir = os.path.join(self.get('path'), condition)
             for query_topic_or_claim_frame_id in os.listdir(condition_dir):
                 query_topic_or_claim_frame_dir = os.path.join(condition_dir, query_topic_or_claim_frame_id)
+                filenames = set()
                 for root, _, files in os.walk(query_topic_or_claim_frame_dir):
                     for filename in sorted([os.path.join(root, file) for file in files], key=order):
-                        fh = FileHandler(logger, filename, header=get_header(logger, condition, filename), encoding='utf-8')
-                        schema = identify_file_schema(fh, self.get('task'))
-                        if schema is None:
-                            logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename, self.get('code_location'))
-                        else:
-                            self.load_file(fh, schema)
+                        filenames.add(filename)
+                for filename in sorted(filenames, key=order):
+                    fh = FileHandler(logger, filename, header=get_header(logger, condition, filename), encoding='utf-8')
+                    schema = identify_file_schema(fh, self.get('task'))
+                    if schema is None:
+                        logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename, self.get('code_location'))
+                    else:
+                        self.load_file(fh, schema)
 
     def load_file(self, fh, schema):
         logger = self.get('logger')
@@ -1198,24 +1202,28 @@ class ResponseSet(Container):
         # validate that rank is unique
         ranks = {}
         for claim in self.get('claims').values():
+            claim_uid = claim.get('claim_uid')
             claim_condition = claim.get('claim_condition')
             claim_query_topic_or_claim_frame_id = claim.get('claim_query_topic_or_claim_frame_id')
             rank_key = '{}:{}'.format(claim_condition, claim_query_topic_or_claim_frame_id)
-            rank = claim.get('claim_rank').get('rank')
-            if rank_key not in ranks:
-                ranks[rank_key] = {}
-            if rank in ranks.get(rank_key):
-                self.record_event('DUPLICATE_VALUE', 'rank: {}'.format(rank), claim.get('claim_rank').get('where'))
+            claim_rank = claim.get('claim_rank')
+            if claim_rank:
+                rank = claim_rank.get('rank')
+                if rank_key not in ranks:
+                    ranks[rank_key] = {}
+                if rank in ranks.get(rank_key):
+                    self.record_event('DUPLICATE_VALUE', 'rank: {}'.format(rank), claim.get('claim_rank').get('where'))
+                else:
+                    ranks.setdefault(rank_key, {})[rank] = claim_uid
             else:
-                ranks.setdefault(rank_key, {})[rank] = claim.get('claim_uid')
+                self.record_event('MISSING_CLAIM_RANK', claim_uid)
             if claim_condition == 'Condition7': continue
             found = False
             for claim_component in claim.get('claim_components'):
                 if claim_component.get('claim_component_type') == 'xVariable':
                     found = True
             if not found:
-                where = {'filename': claim_component.get('filename'), 'lineno': 1}
-                self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'xVariable', claim_condition, where)
+                self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'xVariable', claim_condition, claim_uid)
 
     def write_pooled_responses(self, output_dir):
         os.mkdir(output_dir)

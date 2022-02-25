@@ -66,8 +66,10 @@ class Generator(Object):
 
     def generate_claim(self, responses, entry):
         claim_uid = entry.get('claim_uid')
-        claim = responses.get('claim', claim_uid)
-        claim.update(entry)
+        claim = None
+        if not (entry.get('schema').get('name') in ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE'] and claim_uid not in responses.get('claims')):
+            claim = responses.get('claim', claim_uid)
+            claim.update(entry)
         entry.set('claim', claim)
 
     def generate_claim_id(self, responses, entry):

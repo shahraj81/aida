@@ -70,6 +70,8 @@ class Claim(Object):
         elif entry.get('schema').get('name') == 'AIDA_PHASE3_TASK3_TM_RESPONSE':
             self.add('claim_edge_subject_time', entry)
         elif entry.get('schema').get('name') in ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE']:
+            if self.get('claim_rank'):
+                self.record_event('MULTIPLE_CLAIM_RANKS', self.get('claim_uid'), entry.get('where'))
             self.set('claim_rank', entry)
         else:
             self.record_event('UNEXPECTED_ENTRY', entry.get('where'))
