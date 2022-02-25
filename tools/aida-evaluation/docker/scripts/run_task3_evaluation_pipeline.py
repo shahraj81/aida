@@ -305,7 +305,7 @@ def main(args):
                 call_system('pkill -9 -f graphdb')
 
             message = 'SPARQL output generated.'
-            record_and_display_message(logger, '{}\n'.format(message))
+            record_and_display_message(logger, '{}'.format(message))
 
     #############################################################################################
     # Clean SPARQL output

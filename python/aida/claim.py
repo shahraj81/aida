@@ -18,6 +18,7 @@ class Claim(Object):
         self.claim_components = []
         self.claim_edge_assertions = []
         self.claim_edge_subject_times = []
+        self.claim_rank = None
         self.claim_time = None
 
     def add(self, *args, **kwargs):
@@ -68,5 +69,7 @@ class Claim(Object):
             self.add('claim_edge_assertion', entry)
         elif entry.get('schema').get('name') == 'AIDA_PHASE3_TASK3_TM_RESPONSE':
             self.add('claim_edge_subject_time', entry)
+        elif entry.get('schema').get('name') in ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE']:
+            self.set('claim_rank', entry)
         else:
             self.record_event('UNEXPECTED_ENTRY', entry.get('where'))

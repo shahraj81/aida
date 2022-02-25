@@ -10,7 +10,7 @@ WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
 INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
-CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected no more than once
+CRITICAL  DUPLICATE_VALUE                 {} appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
 WARNING   ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED '{}' met pooling criteria but was not assessed
@@ -45,6 +45,7 @@ ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
 ERROR     MISSING_OPEN_PERFORMER_FILE     {}/{} is expected from open performers but not found
+ERROR     MISSING_REQUIRED_CLAIM_FIELD    Claim {} (required for {} KBs) missing
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
 CRITICAL  MULTIPLE_CLUSTER_LINKING_CONFIDENCES Multiple distinct values of linking confidences ({}, {}) found for cluster {}; expected single distinct value
 ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
