@@ -164,7 +164,7 @@ def main(args):
                 uncompress_command = 'tar -zxf'
             call_system('cd /tmp/s3_run && {uncompress_command} {s3_filename}'.format(s3_filename=s3_filename,
                                                                                       uncompress_command=uncompress_command))
-            call_system('mv /tmp/s3_run/*/NIST /tmp/s3_run/NIST')
+            call_system('mv /tmp/s3_run/output/*/NIST /tmp/s3_run/NIST')
 
     input_path = '/tmp/s3_run/NIST' if s3_location_provided else args.input
     for dirpath, dirnames, filenames in os.walk(input_path):
