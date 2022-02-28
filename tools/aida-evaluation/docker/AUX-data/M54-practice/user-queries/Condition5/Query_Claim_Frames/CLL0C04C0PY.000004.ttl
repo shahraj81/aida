@@ -1,0 +1,45 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04C0PY.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:ndf77826031c846cea924cad07845d64cb3,
+                _:ndf77826031c846cea924cad07845d64cb5 ;
+            aida:start _:ndf77826031c846cea924cad07845d64cb3,
+                _:ndf77826031c846cea924cad07845d64cb5 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04C0PY.000004" ;
+    aida:claimTemplate "Wearing masks has X negative effect" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q7817" ;
+            aida:componentName "The WHO" ;
+            aida:componentProvenance "World Health Organization" ;
+            aida:componentType "Q15925165" ] ;
+    aida:epistemic aida:EpistemicTrueUncertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "WHO claims masks might cause people not to practice social distancing" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04C0PY" ;
+    aida:subtopic "Harmful effects of wearing masks" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Non-Pharmaceutical Interventions (NPIs): Masks" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90001" ;
+            aida:componentName "Lack of social distancing" ;
+            aida:componentType "Q9332" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:ndf77826031c846cea924cad07845d64cb3 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+
+_:ndf77826031c846cea924cad07845d64cb5 a aida:LDCTimeComponent ;
+    aida:day "---05"^^xsd:gDay ;
+    aida:month "--06"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "2020"^^xsd:gYear .
+

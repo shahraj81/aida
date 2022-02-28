@@ -344,6 +344,15 @@ The `task3` logs directory contains the following log files:
 
 # Revision History
 
+## 02/09/2022:
+* Dates mapped to N/A updated in generated ARF
+  * '01-01-0001', '31-12-9999', '0001-01-01', '9999-12-31' are mapped to N/A
+* Do not generate termporal edges in generated ARF if all the dates were left unspecified (i.e. one from {'01-01-0001', '31-12-9999', '0001-01-01', '9999-12-31'})
+* Task3 runs directory structure updated to match one specified in the evaluation plan
+* Task3 run can now be read from an S3 location. The directory structure for a task3 run read from an S3 location is different from the one directly mounted on the docker. Details added to this README.
+* Task3 user queries added for practice data.
+
+
 ## 02/08/2022:
 * Section [How to apply the docker to your run in the evaluation setting?](#how-to-apply-the-docker-to-your-run-in-the-evaluation-setting) added to this README
 * Following bugs in the Makefile fixed:

@@ -1,0 +1,48 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04C54T.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:n410c18d6628b4a81916fe7ac4c361fe6b3,
+                _:n410c18d6628b4a81916fe7ac4c361fe6b4 ;
+            aida:start _:n410c18d6628b4a81916fe7ac4c361fe6b3,
+                _:n410c18d6628b4a81916fe7ac4c361fe6b4 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04C54T.000004" ;
+    aida:claimTemplate "The first case of COVID-19 occurred in location-X" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90037" ;
+            aida:componentName "Chinese state media" ;
+            aida:componentProvenance "Chinese state media" ;
+            aida:componentType "Q2324556" ] ;
+    aida:claimerAffiliation _:n410c18d6628b4a81916fe7ac4c361fe6b2 ;
+    aida:epistemic aida:EpistemicFalseUncertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Chinese state media claims the first cases of COVID-19 might not have occurred in China" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04C54T" ;
+    aida:subtopic "Where the first case of COVID-19 occurred" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Origin of the Virus" ;
+    aida:xVariable _:n410c18d6628b4a81916fe7ac4c361fe6b2 .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:n410c18d6628b4a81916fe7ac4c361fe6b2 a aida:ClaimComponent ;
+    aida:componentIdentity "Q148" ;
+    aida:componentName "China" ;
+    aida:componentType "Q6256" .
+
+_:n410c18d6628b4a81916fe7ac4c361fe6b3 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:n410c18d6628b4a81916fe7ac4c361fe6b4 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

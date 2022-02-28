@@ -1,0 +1,50 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C049G9H.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:ne5b7df402ccc4d2895ddb64dc04e64e5b4,
+                _:ne5b7df402ccc4d2895ddb64dc04e64e5b5 ;
+            aida:start _:ne5b7df402ccc4d2895ddb64dc04e64e5b4,
+                _:ne5b7df402ccc4d2895ddb64dc04e64e5b5 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C049G9H.000004" ;
+    aida:claimMedium [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q355" ;
+            aida:componentName "Facebook" ;
+            aida:componentProvenance "Facebook" ;
+            aida:componentType "Q3220391" ] ;
+    aida:claimTemplate "X transmits / transfers COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90025" ;
+            aida:componentName "Facebook posters" ;
+            aida:componentProvenance "Posts on Facebook" ;
+            aida:componentType "Q215627" ] ;
+    aida:epistemic aida:EpistemicTrueCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Facebook posters claim packages from China transmit COVID-19" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C049G9H" ;
+    aida:subtopic "What transmits COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Transmitting the virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90024" ;
+            aida:componentName "Packages from China" ;
+            aida:componentType "Q13107365" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:ne5b7df402ccc4d2895ddb64dc04e64e5b4 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:ne5b7df402ccc4d2895ddb64dc04e64e5b5 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

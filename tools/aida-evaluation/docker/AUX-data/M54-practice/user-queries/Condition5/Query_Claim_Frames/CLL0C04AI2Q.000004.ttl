@@ -1,0 +1,49 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04AI2Q.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:n44950d91a51f4a1cabba4c169e63735cb4,
+                _:n44950d91a51f4a1cabba4c169e63735cb5 ;
+            aida:start _:n44950d91a51f4a1cabba4c169e63735cb4,
+                _:n44950d91a51f4a1cabba4c169e63735cb5 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04AI2Q.000004" ;
+    aida:claimTemplate "X can catch COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90012" ;
+            aida:componentName "Tess Gannaway" ;
+            aida:componentProvenance "Tess Gannaway" ;
+            aida:componentType "Q1650915" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q49120" ;
+            aida:componentName "Tufts" ;
+            aida:componentType "Q3918" ] ;
+    aida:epistemic aida:EpistemicTrueCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Tess Gannaway claims women can catch COVID-19" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04AI2Q" ;
+    aida:subtopic "Who can contract COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Contracting the virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90011" ;
+            aida:componentName "Women" ;
+            aida:componentType "Q467" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:n44950d91a51f4a1cabba4c169e63735cb4 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:n44950d91a51f4a1cabba4c169e63735cb5 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

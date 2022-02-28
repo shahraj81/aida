@@ -1,0 +1,8 @@
+T301	Contracting the virus	Who can contract COVID-19	X can catch COVID-19
+T302	Non-Pharmaceutical Interventions (NPIs): Masks	Harmful effects of wearing masks	Wearing masks has X negative effect
+T302	Non-Pharmaceutical Interventions (NPIs): Masks	Places where there are regulations for wearing masks to prevent the spread of COVID-19	Wearing masks is required in location/GPE/facility-x
+T302	Non-Pharmaceutical Interventions (NPIs): Masks	Places where wearing masks is recommended to prevent the spread of COVID-19	Wearing masks is recommended in location/GPE/facility-x
+T302	Non-Pharmaceutical Interventions (NPIs): Masks	Places where wearing masks is necessary to prevent the spread of COVID-19	Wearing masks is necessary in location/GPE/facility-x
+T303	Origin of the Virus	Where the first case of COVID-19 occurred	The first case of COVID-19 occurred in location-X
+T303	Origin of the Virus	Animals associated with the origin of COVID-19	Animal-X is associated/involved with the origin of COVID-19
+T304	Transmitting the virus	What transmits COVID-19	X transmits / transfers COVID-19

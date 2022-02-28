@@ -1,0 +1,50 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04C08B.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:ne96106adc75f4fdabc7a297250fed864b4,
+                _:ne96106adc75f4fdabc7a297250fed864b5 ;
+            aida:start _:ne96106adc75f4fdabc7a297250fed864b4,
+                _:ne96106adc75f4fdabc7a297250fed864b5 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04C08B.000004" ;
+    aida:claimLocation [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q145" ;
+            aida:componentName "United Kingdom" ;
+            aida:componentProvenance "UK" ;
+            aida:componentType "Q6256" ] ;
+    aida:claimTemplate "Wearing masks has X negative effect" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q30325238" ;
+            aida:componentName "Full Fact" ;
+            aida:componentProvenance "Full Fact" ;
+            aida:componentType "Q95155801" ] ;
+    aida:epistemic aida:EpistemicFalseCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Author claims masks do not cause hypercapnia" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04C08B" ;
+    aida:subtopic "Harmful effects of wearing masks" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Non-Pharmaceutical Interventions (NPIs): Masks" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90038" ;
+            aida:componentName "Hypercapnia" ;
+            aida:componentType "Q615759" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:ne96106adc75f4fdabc7a297250fed864b4 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:ne96106adc75f4fdabc7a297250fed864b5 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

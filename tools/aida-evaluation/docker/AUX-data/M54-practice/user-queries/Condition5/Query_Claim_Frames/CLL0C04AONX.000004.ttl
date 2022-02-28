@@ -1,0 +1,49 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04AONX.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:ne3b647be45a246d99da419646ee42356b4,
+                _:ne3b647be45a246d99da419646ee42356b5 ;
+            aida:start _:ne3b647be45a246d99da419646ee42356b4,
+                _:ne3b647be45a246d99da419646ee42356b5 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04AONX.000004" ;
+    aida:claimTemplate "Animal-X is associated/involved with the origin of COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q24941815" ;
+            aida:componentName "Fernando Simón" ;
+            aida:componentProvenance "Fernando Simón" ;
+            aida:componentType "Q599151" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q24941810" ;
+            aida:componentName "Coordination Center for Health Alerts and Emergencies" ;
+            aida:componentType "Q327333" ] ;
+    aida:epistemic aida:EpistemicTrueUncertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Fernando Simón claims minks might be involved with the origin of COVID-19" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04AONX" ;
+    aida:subtopic "Animals associated with the origin of COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Origin of the Virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90016" ;
+            aida:componentName "Mink" ;
+            aida:componentType "Q17700" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:ne3b647be45a246d99da419646ee42356b4 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:ne3b647be45a246d99da419646ee42356b5 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

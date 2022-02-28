@@ -1,0 +1,62 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04C06G.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:n6ff5dcc9737a4e20a7c359356fbee90bb7,
+                _:n6ff5dcc9737a4e20a7c359356fbee90bb8 ;
+            aida:start _:n6ff5dcc9737a4e20a7c359356fbee90bb7,
+                _:n6ff5dcc9737a4e20a7c359356fbee90bb8 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04C06G.000004" ;
+    aida:claimMedium [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q5558534" ;
+            aida:componentName "Medical Hypotheses" ;
+            aida:componentProvenance "Medical Hypotheses" ;
+            aida:componentType "Q5633421" ] ;
+    aida:claimTemplate "Wearing masks has X negative effect" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q89776941" ;
+            aida:componentName "Baruch Vainshelboim" ;
+            aida:componentProvenance "Baruch Vainshelboim" ;
+            aida:componentType "Q1650915" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90041" ;
+            aida:componentName "cardiology division at the Veterans Affairs Palo Alto Health Care System" ;
+            aida:componentType "Q2366457" ],
+        [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q7906572" ;
+            aida:componentName "VA Palo Alto Health Care System" ;
+            aida:componentType "Q95984744" ],
+        [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q41506" ;
+            aida:componentName "Stanford University" ;
+            aida:componentType "Q15936437" ] ;
+    aida:epistemic aida:EpistemicTrueCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Baruch Vainshelboim claims masks cause adverse psychological effects" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04C06G" ;
+    aida:subtopic "Harmful effects of wearing masks" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Non-Pharmaceutical Interventions (NPIs): Masks" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90040" ;
+            aida:componentName "Adverse psychological effects" ;
+            aida:componentType "Q12047512" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:n6ff5dcc9737a4e20a7c359356fbee90bb7 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:n6ff5dcc9737a4e20a7c359356fbee90bb8 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

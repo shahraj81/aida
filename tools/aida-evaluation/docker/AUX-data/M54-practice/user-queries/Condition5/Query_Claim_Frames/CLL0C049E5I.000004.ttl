@@ -1,0 +1,49 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C049E5I.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:ne1499058606f4e9895fa259648ec995fb4,
+                _:ne1499058606f4e9895fa259648ec995fb5 ;
+            aida:start _:ne1499058606f4e9895fa259648ec995fb4,
+                _:ne1499058606f4e9895fa259648ec995fb5 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C049E5I.000004" ;
+    aida:claimTemplate "X transmits / transfers COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90032" ;
+            aida:componentName "Leticia Ruiz" ;
+            aida:componentProvenance "Leticia Ruiz" ;
+            aida:componentType "Q39631" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90033" ;
+            aida:componentName "Preventive Medicine department" ;
+            aida:componentType "Q1312371" ] ;
+    aida:epistemic aida:EpistemicTrueUncertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Leticia Ruiz claims loose hair could transmit particles" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C049E5I" ;
+    aida:subtopic "What transmits COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Transmitting the virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90031" ;
+            aida:componentName "Hair" ;
+            aida:componentType "Q28472" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:ne1499058606f4e9895fa259648ec995fb4 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:ne1499058606f4e9895fa259648ec995fb5 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+
