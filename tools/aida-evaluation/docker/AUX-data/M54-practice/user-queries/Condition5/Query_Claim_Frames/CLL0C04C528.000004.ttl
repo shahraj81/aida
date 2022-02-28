@@ -1,0 +1,54 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04C528.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:n5c2b96e82d8a4aedb0b2422ec35cb54ab5,
+                _:n5c2b96e82d8a4aedb0b2422ec35cb54ab7 ;
+            aida:start _:n5c2b96e82d8a4aedb0b2422ec35cb54ab5,
+                _:n5c2b96e82d8a4aedb0b2422ec35cb54ab7 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04C528.000004" ;
+    aida:claimMedium [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90036" ;
+            aida:componentName "Science Integrity Digest blog" ;
+            aida:componentProvenance "Science Integrity Digest blog" ;
+            aida:componentType "Q30849" ] ;
+    aida:claimTemplate "The first case of COVID-19 occurred in location-X" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q42775804" ;
+            aida:componentName "Elisabeth Bik" ;
+            aida:componentProvenance "Elisabeth Bik" ;
+            aida:componentType "Q3779582" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q55" ;
+            aida:componentName "The Netherlands" ;
+            aida:componentType "Q6256" ] ;
+    aida:epistemic aida:EpistemicUnknown ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Elisabeth Bik claims it's not known if the first cases of COVID-19 occurred in Barcelona" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04C528" ;
+    aida:subtopic "Where the first case of COVID-19 occurred" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Origin of the Virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q1492" ;
+            aida:componentName "Barcelona" ;
+            aida:componentType "Q33146843" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:n5c2b96e82d8a4aedb0b2422ec35cb54ab5 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:n5c2b96e82d8a4aedb0b2422ec35cb54ab7 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--02"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "2020"^^xsd:gYear .
+

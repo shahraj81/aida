@@ -1,0 +1,45 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04C1F9.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:nfeb685cb74b244269070a22e2772aa43b3,
+                _:nfeb685cb74b244269070a22e2772aa43b4 ;
+            aida:start _:nfeb685cb74b244269070a22e2772aa43b3,
+                _:nfeb685cb74b244269070a22e2772aa43b4 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04C1F9.000004" ;
+    aida:claimTemplate "Animal-X is associated/involved with the origin of COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90021" ;
+            aida:componentName "Scientists" ;
+            aida:componentProvenance "Scientists" ;
+            aida:componentType "Q901" ] ;
+    aida:epistemic aida:EpistemicFalseUncertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Scientists claim stray dogs might not be involved with the origin of COVID-19" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04C1F9" ;
+    aida:subtopic "Animals associated with the origin of COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Origin of the Virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90020" ;
+            aida:componentName "Stray dogs" ;
+            aida:componentType "Q1124833" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:nfeb685cb74b244269070a22e2772aa43b3 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:nfeb685cb74b244269070a22e2772aa43b4 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

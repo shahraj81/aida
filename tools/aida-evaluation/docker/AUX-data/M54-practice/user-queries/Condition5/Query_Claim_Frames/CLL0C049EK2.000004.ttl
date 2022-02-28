@@ -1,0 +1,44 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C049EK2.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:n1018427128e74f4b841d3c5fda6f0af6b3,
+                _:n1018427128e74f4b841d3c5fda6f0af6b4 ;
+            aida:start _:n1018427128e74f4b841d3c5fda6f0af6b3,
+                _:n1018427128e74f4b841d3c5fda6f0af6b4 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C049EK2.000004" ;
+    aida:claimTemplate "Wearing masks is recommended in location/GPE/facility-x" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90003" ;
+            aida:componentName "author" ;
+            aida:componentType "Q1930187" ] ;
+    aida:epistemic aida:EpistemicTrueCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Author claims wearing masks is recommended in public places in the United States" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C049EK2" ;
+    aida:subtopic "Places where wearing masks is recommended to prevent the spread of COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Non-Pharmaceutical Interventions (NPIs): Masks" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90002" ;
+            aida:componentName "Public places in the United States" ;
+            aida:componentType "Q294440" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:n1018427128e74f4b841d3c5fda6f0af6b3 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:n1018427128e74f4b841d3c5fda6f0af6b4 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

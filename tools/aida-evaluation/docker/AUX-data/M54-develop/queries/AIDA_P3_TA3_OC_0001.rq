@@ -15,8 +15,8 @@ where {
     ?claim aida:sourceDocument ?root_uid .
     ?claim aida:claimId ?claim_id .
     ?claim aida:topic ?topic .
-    ?claim aida:subtopic ?subtopic .
-    ?claim aida:claimTemplate ?claim_template .
+    OPTIONAL { ?claim aida:subtopic ?subtopic . }
+    OPTIONAL { ?claim aida:claimTemplate ?claim_template . }
     OPTIONAL { ?claim aida:naturalLanguageDescription ?description . }
     ?claim aida:epistemic ?epistemic_status .
     ?claim aida:sentiment ?sentiment_status .

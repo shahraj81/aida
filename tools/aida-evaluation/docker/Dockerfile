@@ -112,12 +112,14 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b AIDAED-v2022.0.3 https://github.com/shahraj81/aida.git
+RUN git clone -b AIDAED-v2022.0.4 https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
 RUN cp /scripts/aida/python/input/aux_data/log_specifications.txt /scripts/
 RUN cp /scripts/aida/python/aida/logger.py /scripts/
+RUN cp /scripts/aida/python/aida/object.py /scripts/
+RUN cp /scripts/aida/python/aida/ta3_queryset.py /scripts/
 RUN cp /scripts/aida/tools/aida-evaluation/docker/scripts/run_task?_evaluation_pipeline.py /scripts/
 RUN cp /scripts/aida/tools/aida-evaluation/docker/scripts/Makefile /scripts/
 

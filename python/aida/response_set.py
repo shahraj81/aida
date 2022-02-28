@@ -11,13 +11,14 @@ from aida.claim import Claim
 from aida.cluster import Cluster
 from aida.container import Container
 from aida.file_handler import FileHandler
+from aida.file_header import FileHeader
 from aida.generator import Generator
 from aida.validator import Validator
 from aida.normalizer import Normalizer
 from aida.event_or_relation_frame import EventOrRelationFrame
 
 import os
-  
+
 attributes = {
     'argument_assertion_confidence': {
         'name': 'argument_assertion_confidence',
@@ -28,8 +29,8 @@ attributes = {
         },
     'claim': {
         'name': 'claim',
-        'dependencies': ['claim_id'],
-        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'dependencies': ['claim_uid'],
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE'],
         'tasks': ['task3'],
         'generate': 'generate_claim',
         'years': [2021],
@@ -37,10 +38,19 @@ attributes = {
     'claim_id': {
         'name': 'claim_id',
         'dependencies': ['kb_claim_id'],
-        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE'],
         'tasks': ['task3'],
         'generate': 'generate_claim_id',
         'validate': 'validate_claim_id',
+        'years': [2021],
+        },
+    'claim_uid': {
+        'name': 'claim_uid',
+        'dependencies': ['claim_id', 'claim_condition', 'claim_query_topic_or_claim_frame_id'],
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE'],
+        'tasks': ['task3'],
+        'generate': 'generate_claim_uid',
+        'validate': 'validate_claim_uid',
         'years': [2021],
         },
     'claim_component_ke': {
@@ -96,6 +106,14 @@ attributes = {
         'validate': 'validate_claim_component_type',
         'years': [2021],
         },
+    'claim_condition': {
+        'name': 'claim_condition',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'tasks': ['task3'],
+        'generate': 'generate_claim_condition',
+        'validate': 'validate_claim_condition',
+        'years': [2021],
+        },
     'claim_description': {
         'name': 'claim_description',
         'schemas': ['AIDA_PHASE3_TASK3_OC_RESPONSE'],
@@ -109,6 +127,21 @@ attributes = {
         'validate': 'validate_claim_epistemic_status',
         'years': [2021],
         },
+    'claim_query_topic_or_claim_frame_id': {
+        'name': 'claim_query_topic_or_claim_frame_id',
+        'schemas': ['AIDA_PHASE3_TASK3_CC_RESPONSE', 'AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_OC_RESPONSE', 'AIDA_PHASE3_TASK3_GR_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE'],
+        'tasks': ['task3'],
+        'generate': 'generate_claim_query_topic_or_claim_frame_id',
+        'validate': 'validate_claim_query_topic_or_claim_frame_id',
+        'years': [2021],
+        },
+    'claim_relation': {
+        'name': 'claim_relation',
+        'schemas': ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_claim_relation',
+        'years': [2021],
+        },
     'claim_sentiment_status': {
         'name': 'claim_sentiment_status',
         'schemas': ['AIDA_PHASE3_TASK3_OC_RESPONSE'],
@@ -120,12 +153,14 @@ attributes = {
         'name': 'claim_subtopic',
         'schemas': ['AIDA_PHASE3_TASK3_OC_RESPONSE'],
         'tasks': ['task3'],
+        'validate': 'validate_claim_subtopic',
         'years': [2021],
         },
     'claim_template': {
         'name': 'claim_template',
         'schemas': ['AIDA_PHASE3_TASK3_OC_RESPONSE'],
         'tasks': ['task3'],
+        'validate': 'validate_claim_template',
         'years': [2021],
         },
     'claim_topic': {
@@ -454,11 +489,38 @@ attributes = {
         'validate': 'validate_confidence',
         'years': [2020, 2021],
         },
+    'query_claim_id': {
+        'name': 'query_claim_id',
+        'schemas': ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_query_claim_id',
+        'years': [2021],
+        },
+    'query_claim_uid': {
+        'name': 'query_claim_uid',
+        'schemas': ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE'],
+        'tasks': ['task3'],
+        'generate': 'generate_query_claim_uid',
+        'years': [2021],
+        },
     'query_link_target': {
         'name': 'query_link_target',
         'schemas': ['AIDA_PHASE3_TASK2_ZH_RESPONSE'],
         'tasks': ['task2'],
         'years': [2020, 2021],
+        },
+    'query_topic': {
+        'name': 'query_topic',
+        'schemas': ['AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE'],
+        'tasks': ['task3'],
+        'validate': 'validate_query_topic',
+        'years': [2021],
+        },
+    'rank': {
+        'name': 'rank',
+        'schemas': ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2021],
         },
     'start': {
         'dependencies': ['start_after', 'start_before'],
@@ -750,6 +812,29 @@ schemas = {
             'claim_component_ke',
             ]
         },
+    'AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE',
+        'year': 2021,
+        'task': 'task3',
+        'header': ['?query_claim_id', '?claim_id', '?rank', '?claim_relation'],
+        'columns': [
+            'query_claim_id',
+            'claim_id',
+            'rank',
+            'claim_relation',
+            ]
+        },
+    'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE': {
+        'name': 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE',
+        'year': 2021,
+        'task': 'task3',
+        'header': ['?query_topic', '?claim_id', '?rank'],
+        'columns': [
+            'query_topic',
+            'claim_id',
+            'rank',
+            ]
+        },
     'AIDA_PHASE3_TASK3_CT_RESPONSE': {
         'name': 'AIDA_PHASE3_TASK3_CT_RESPONSE',
         'year': 2021,
@@ -863,7 +948,7 @@ class ResponseSet(Container):
     Set of responses for AIDA.
     """
 
-    def __init__(self, logger, document_mappings, document_boundaries, path, runid, task='task1'):
+    def __init__(self, logger, document_mappings, document_boundaries, path, runid, task='task1', queries=None):
         super().__init__(logger)
         self.claims = Container(logger)
         self.document_mappings = document_mappings
@@ -873,11 +958,13 @@ class ResponseSet(Container):
         self.normalizer = Normalizer(logger)
         self.document_clusters = Container(logger)
         self.document_frames = Container(logger)
+        self.queries = queries
         self.runid = runid
         self.path = path
         self.task = task
         self.validate_attributes_and_schemas()
         self.load_responses()
+        self.validate_responses()
 
     def load_responses(self):
         method_name = 'load_responses_{task}'.format(task=self.get('task'))
@@ -921,28 +1008,45 @@ class ResponseSet(Container):
                 self.load_file(fh, schema)
 
     def load_responses_task3(self):
+        def get_header(logger, condition, filename):
+            if filename.endswith('ranking.tsv'):
+                schema_names = {
+                    'Condition5': 'AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE',
+                    'Condition6': 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE',
+                    'Condition7': 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE',
+                    }
+                header_columns = schemas.get(schema_names.get(condition)).get('header')
+                return FileHeader(logger, '\t'.join(header_columns))
         def order(filename):
             filename_order_map = {
                 'AIDA_P3_TA3_OC_0001.rq.tsv': 1,
                 'AIDA_P3_TA3_CC_0001.rq.tsv': 2,
                 'AIDA_P3_TA3_CT_0001.rq.tsv': 3,
                 'AIDA_P3_TA3_GR_0001.rq.tsv': 4,
-                'AIDA_P3_TA3_TM_0001.rq.tsv': 5
+                'AIDA_P3_TA3_TM_0001.rq.tsv': 5,
+                'ranking.tsv'               : 6,
                 }
-            if filename not in filename_order_map:
-                print("Filename: '{}' not found in lookup".format(filename))
+            basename = 'ranking.tsv' if filename.endswith('.ranking.tsv') else os.path.basename(filename)
+            if basename not in filename_order_map:
+                print("Filename: '{}' not found in lookup".format(basename))
                 exit()
-            return filename_order_map[filename]
+            return filename_order_map[basename]
         logger = self.get('logger')
-        for subdir in ['{}/{}'.format(self.get('path'), d) for d in os.listdir(self.get('path'))]:
-            for filename in sorted(os.listdir(subdir), key=order):
-                filename_including_path = '{}/{}'.format(subdir, filename)
-                fh = FileHandler(logger, filename_including_path, encoding='utf-8')
-                schema = identify_file_schema(fh, self.get('task'))
-                if schema is None:
-                    logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename_including_path, self.get('code_location'))
-                else:
-                    self.load_file(fh, schema)
+        for condition in os.listdir(self.get('path')):
+            condition_dir = os.path.join(self.get('path'), condition)
+            for query_topic_or_claim_frame_id in os.listdir(condition_dir):
+                query_topic_or_claim_frame_dir = os.path.join(condition_dir, query_topic_or_claim_frame_id)
+                filenames = set()
+                for root, _, files in os.walk(query_topic_or_claim_frame_dir):
+                    for filename in sorted([os.path.join(root, file) for file in files], key=order):
+                        filenames.add(filename)
+                for filename in sorted(filenames, key=order):
+                    fh = FileHandler(logger, filename, header=get_header(logger, condition, filename), encoding='utf-8')
+                    schema = identify_file_schema(fh, self.get('task'))
+                    if schema is None:
+                        logger.record_event('UNKNOWN_RESPONSE_FILE_TYPE', filename, self.get('code_location'))
+                    else:
+                        self.load_file(fh, schema)
 
     def load_file(self, fh, schema):
         logger = self.get('logger')
@@ -1005,13 +1109,13 @@ class ResponseSet(Container):
         if generator_name:
             self.get('generator').generate(self, generator_name, entry)
 
-    def get_claim(self, claim_id):
+    def get_claim(self, claim_uid):
         logger = self.get('logger')
         claims = self.get('claims')
-        if claim_id not in claims:
-            claim = Claim(logger, claim_id)
-            claims.add(key=claim_id, value=claim)
-        claim = claims.get(claim_id)
+        if claim_uid not in claims:
+            claim = Claim(logger, claim_uid)
+            claims.add(key=claim_uid, value=claim)
+        claim = claims.get(claim_uid)
         return claim
 
     def get_cluster(self, cluster_id, entry):
@@ -1078,6 +1182,49 @@ class ResponseSet(Container):
                                         'schema \'{}\' does not require attribute \'{}\''.format(schema.get('name'), column_name),
                                         self.get_code_location())
 
+    def validate_responses(self):
+        method_name = 'validate_responses_{task}'.format(task=self.get('task'))
+        method = self.get('method', method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name)
+        method()
+
+    def validate_responses_task1(self):
+        # nothing to do here
+        return
+
+    def validate_responses_task2(self):
+        # nothing to do here
+        return
+
+    def validate_responses_task3(self):
+        # validate if condition6 and condition7 claims have x-variable
+        # validate that rank is unique
+        ranks = {}
+        for claim in self.get('claims').values():
+            claim_uid = claim.get('claim_uid')
+            claim_condition = claim.get('claim_condition')
+            claim_query_topic_or_claim_frame_id = claim.get('claim_query_topic_or_claim_frame_id')
+            rank_key = '{}:{}'.format(claim_condition, claim_query_topic_or_claim_frame_id)
+            claim_rank = claim.get('claim_rank')
+            if claim_rank:
+                rank = claim_rank.get('rank')
+                if rank_key not in ranks:
+                    ranks[rank_key] = {}
+                if rank in ranks.get(rank_key):
+                    self.record_event('DUPLICATE_VALUE', 'rank: {}'.format(rank), claim.get('claim_rank').get('where'))
+                else:
+                    ranks.setdefault(rank_key, {})[rank] = claim_uid
+            else:
+                self.record_event('MISSING_CLAIM_RANK', claim_uid)
+            if claim_condition == 'Condition7': continue
+            found = False
+            for claim_component in claim.get('claim_components'):
+                if claim_component.get('claim_component_type') == 'xVariable':
+                    found = True
+            if not found:
+                self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'xVariable', claim_condition, claim_uid)
+
     def write_pooled_responses(self, output_dir):
         os.mkdir(output_dir)
         for input_filename in self:
@@ -1133,10 +1280,11 @@ class ResponseSet(Container):
             output_filename = input_filename.replace(self.get('path'), output_dir)
             dirname = os.path.dirname(output_filename)
             if not os.path.exists(dirname):
-                os.mkdir(dirname)
+                os.makedirs(dirname, exist_ok=True)
             file_container = self.get(input_filename)
             output_fh = open(output_filename, 'w', encoding='utf-8')
-            output_fh.write('{}\n'.format(file_container.get('header').get('line')))
+            if not input_filename.endswith('.ranking.tsv'):
+                output_fh.write('{}\n'.format(file_container.get('header').get('line')))
             for linenum in sorted(file_container, key=int):
                 entry = self.get(input_filename).get(str(linenum))
                 if not entry.get('valid'): continue

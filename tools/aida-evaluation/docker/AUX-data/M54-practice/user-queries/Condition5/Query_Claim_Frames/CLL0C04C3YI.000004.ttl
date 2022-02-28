@@ -1,0 +1,45 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04C3YI.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:nfb813718b906417bbecb2764ff12a92fb3,
+                _:nfb813718b906417bbecb2764ff12a92fb4 ;
+            aida:start _:nfb813718b906417bbecb2764ff12a92fb3,
+                _:nfb813718b906417bbecb2764ff12a92fb4 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04C3YI.000004" ;
+    aida:claimTemplate "The first case of COVID-19 occurred in location-X" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q5133764" ;
+            aida:componentName "Clinical Infectious Diseases" ;
+            aida:componentProvenance "Clinical Infectious Diseases" ;
+            aida:componentType "Q5633421" ] ;
+    aida:epistemic aida:EpistemicTrueCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Clinical Infectious Diseases claims the first cases of COVID-19 occurred in the United States" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04C3YI" ;
+    aida:subtopic "Where the first case of COVID-19 occurred" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Origin of the Virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q30" ;
+            aida:componentName "United States" ;
+            aida:componentType "Q6256" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:nfb813718b906417bbecb2764ff12a92fb3 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "2020"^^xsd:gYear .
+
+_:nfb813718b906417bbecb2764ff12a92fb4 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "2020"^^xsd:gYear .
+

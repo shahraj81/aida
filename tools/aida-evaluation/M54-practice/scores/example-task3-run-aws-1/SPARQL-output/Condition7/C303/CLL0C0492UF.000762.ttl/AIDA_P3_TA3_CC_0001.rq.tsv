@@ -1,0 +1,5 @@
+?claim_id	?component_type	?name	?qnode_id	?qnode_type	?provenance	?ke
+CLL0C0492UF.000762	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimMedium>	podcast	EMPTY_TBD	Q24634210	a podcast	
+CLL0C0492UF.000762	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimer>	Romanoff	Q87740225	Q15978655	Larry Romanoff	
+CLL0C0492UF.000762	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimerAffiliation>	Canada	Q16	Q6256		
+CLL0C0492UF.000762	<https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#claimerAffiliation>	Center of Research on Globalization	Q61055915	Q155271		

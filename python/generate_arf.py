@@ -372,6 +372,9 @@ class ClaimTemporalKEs(ClaimKEs):
                 value = str(self.get(field_name, entry))
             line[field_name] = value
 
+        if line.get('ObjectHandle') == '0001-01-01;9999-12-31;0001-01-01;9999-12-31':
+            return
+
         line_str = '\t'.join([line.get(f) for f in self.get('fields')])
         line_key_str = '\t'.join([line.get(f) for f in self.get('fields') if f != 'JustificationNum'])
 
@@ -417,7 +420,7 @@ class EventOrRelationFrame(Object):
         self.fillers = {}
 
     def get_date(self, date_range, key):
-        missing = ['01-01-0001', '31-12-9999']
+        missing = ['01-01-0001', '31-12-9999', '0001-01-01', '9999-12-31']
         retVal = 'n/a'
         if key in date_range:
             value = date_range.get(key)
@@ -577,15 +580,22 @@ class AssessorReadableFormat(Object):
         self.lenient = lenient
 
     def write_output(self, output_dir):
+        def get_claim_output_dir(output_dir, claim):
+            claim_condition = claim.get('claim_condition')
+            claim_query_topic_or_claim_frame_id = claim.get('claim_query_topic_or_claim_frame_id')
+            claim_output_dir = os.path.join(output_dir, claim_condition, claim_query_topic_or_claim_frame_id)
+            return claim_output_dir
         os.mkdir(output_dir)
         logger = self.get('logger')
         header = ['claim_id', 'component_type', 'id', 'fieldname', 'value', 'correctness']
-        for claim_id in self.get('responses').get('claims'):
-            claim = self.get('responses').get('claims').get(claim_id)
+        for claim_uid in self.get('responses').get('claims'):
+            claim = self.get('responses').get('claims').get(claim_uid)
             outer_claim = OuterClaim(logger, claim.get('outer_claim')).__str__()
             claim_components = ClaimComponents(logger, self.get('max_qnode_types'), self.get('lenient'), claim.get('claim_components')).__str__()
             claim_time = ClaimTime(logger, claim.get('claim_time')).__str__()
-            output_filename = os.path.join(output_dir, '{}-outer-claim.tab'.format(claim_id))
+            claim_output_dir = get_claim_output_dir(output_dir, claim)
+            os.makedirs(claim_output_dir, exist_ok=True)
+            output_filename = os.path.join(claim_output_dir, '{}-outer-claim.tab'.format(claim.get('claim_id')))
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_str = '\t'.join(header)
             output_str = '{}\n{}'.format(output_str, outer_claim)
@@ -593,23 +603,27 @@ class AssessorReadableFormat(Object):
             output_str = '{}\n{}'.format(output_str, claim_components)
             output_fh.write(output_str)
             output_fh.close()
-        for claim_id in self.get('responses').get('claims'):
-            frames = EventOrRelationFrames(logger, claim_id)
-            claim = self.get('responses').get('claims').get(claim_id)
+        for claim_uid in self.get('responses').get('claims'):
+            frames = EventOrRelationFrames(logger, claim_uid)
+            claim = self.get('responses').get('claims').get(claim_uid)
             for edge_assertion in claim.get('claim_edge_assertions'):
                 frames.update(edge_assertion)
             for subject_time in claim.get('claim_edge_subject_times'):
                 frames.update(subject_time)
-            output_filename = os.path.join(output_dir, '{}-readable-kes.txt'.format(claim_id))
+            claim_output_dir = get_claim_output_dir(output_dir, claim)
+            os.makedirs(claim_output_dir, exist_ok=True)
+            output_filename = os.path.join(claim_output_dir, '{}-readable-kes.txt'.format(claim.get('claim_id')))
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_fh.write(frames.__str__())
             output_fh.close()
-        for claim_id in self.get('responses').get('claims'):
-            claim = self.get('responses').get('claims').get(claim_id)
+        for claim_uid in self.get('responses').get('claims'):
+            claim = self.get('responses').get('claims').get(claim_uid)
             claim_nontemoral_kes = ClaimNonTemporalKEs(logger, claim, 1)
             nextEdgeNum = claim_nontemoral_kes.get('nextEdgeNum')
             claim_temoral_kes = ClaimTemporalKEs(logger, claim, nextEdgeNum)
-            output_filename = os.path.join(output_dir, '{}-raw-kes.tab'.format(claim_id))
+            claim_output_dir = get_claim_output_dir(output_dir, claim)
+            os.makedirs(claim_output_dir, exist_ok=True)
+            output_filename = os.path.join(claim_output_dir, '{}-raw-kes.tab'.format(claim.get('claim_id')))
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_fh.write(claim_nontemoral_kes.__str__())
             output_fh.write('\n')

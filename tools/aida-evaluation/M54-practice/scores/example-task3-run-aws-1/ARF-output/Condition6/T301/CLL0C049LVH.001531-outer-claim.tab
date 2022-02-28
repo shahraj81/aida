@@ -1,0 +1,22 @@
+claim_id	component_type	id	fieldname	value	correctness
+CLL0C049LVH.001531	claimTopic	1	value	Contracting the virus	--
+CLL0C049LVH.001531	claimSubtopic	1	value	Who contracts the virus	--
+CLL0C049LVH.001531	claimDescription	1	value	It's a myth that coronavirus only affects older people	--
+CLL0C049LVH.001531	claimTemplate	1	value	X can catch COVID-19	NIL
+CLL0C049LVH.001531	claimDocument	1	value	L0C049LVH	--
+CLL0C049LVH.001531	claimEpistemic	1	polarity	EpistemicFalseCertain	NIL
+CLL0C049LVH.001531	claimEpistemic	1	strength	EpistemicFalseCertain	NIL
+CLL0C049LVH.001531	claimSentiment	1	value	SentimentNeutralUnknown	NIL
+CLL0C049LVH.001531	date	1	range	(2019-12-01,2019-12-31)-(2019-12-01,2019-12-31)	NIL
+CLL0C049LVH.001531	claimer	1	name	author	NIL
+CLL0C049LVH.001531	claimer	1	qnode_id	EMPTY_TBD	NIL
+CLL0C049LVH.001531	claimer	1	qnode_type	EMPTY_TBD	NIL
+CLL0C049LVH.001531	claimer	1	qnode_type	Q1930187	NIL
+CLL0C049LVH.001531	claimer	1	informativenessAssessment	value	NIL
+CLL0C049LVH.001531	claimer	1	overallAssessment	value	NIL
+CLL0C049LVH.001531	xVariable	1	name	Only older people	NIL
+CLL0C049LVH.001531	xVariable	1	qnode_id	EMPTY_TBD	NIL
+CLL0C049LVH.001531	xVariable	1	qnode_type	EMPTY_TBD	NIL
+CLL0C049LVH.001531	xVariable	1	qnode_type	Q2191986	NIL
+CLL0C049LVH.001531	xVariable	1	informativenessAssessment	value	NIL
+CLL0C049LVH.001531	xVariable	1	overallAssessment	value	NIL

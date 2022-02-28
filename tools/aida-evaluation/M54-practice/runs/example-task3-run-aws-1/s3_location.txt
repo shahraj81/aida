@@ -1,0 +1,1 @@
+s3://aida-phase2-ta-performers/NIST/example-task3-run-1_202202281357_1a7d6027af9afe67e4524bdfdc1c2c58.tgz

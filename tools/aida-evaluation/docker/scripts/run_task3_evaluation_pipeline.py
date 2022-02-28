@@ -7,13 +7,13 @@ This script performs the following steps:
     2. Clean SPARQL output,
     3. Validate SPARQL output,
 
-This version of the docker works for M36.
+This version of the docker works for M54 (i.e. Phase 3).
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "2020.1.0"
-__date__    = "5 Nov 2020"
+__date__    = "16 February 2022"
 
 from logger import Logger
 import argparse
@@ -28,10 +28,24 @@ def call_system(cmd):
     print("running system command: '{}'".format(cmd))
     os.system(cmd)
 
+def get_problems(logs_directory):
+    num_errors = 0
+    stats = {}
+    for filename in os.listdir(logs_directory):
+        filepath = '{}/{}'.format(logs_directory, filename)
+        fh = open(filepath)
+        for line in fh.readlines():
+            if 'ERROR' in line:
+                num_errors += 1
+                error_type = line.split('-')[3].strip()
+                stats[error_type] = stats.get(error_type, 0) + 1
+        fh.close()
+    return num_errors, stats
+
 def record_and_display_message(logger, message):
-    print("-------------------------------------------------------")
+    print("-------------------------------------------------------------------------------")
     print(message)
-    print("-------------------------------------------------------")
+    print("-------------------------------------------------------------------------------")
     logger.record_event('DEFAULT_INFO', message)
 
 def main(args):
@@ -107,103 +121,218 @@ def main(args):
     #############################################################################################
 
     record_and_display_message(logger, 'Inspecting the input directory.')
+
     for destination in [sparql_kb_source, sparql_kb_input]:
         call_system('mkdir {destination}'.format(destination=destination))
     items = [f for f in os.listdir(args.input)]
 
+    num_items = len(items)
+    s3_location_provided = False
+    if num_items == 1:
+        filename = items[0]
+        if filename == 's3_location.txt':
+            s3_location_provided = True
     num_files = 0
-    # pull all ttl files in (even if they are not valid)
-    for item in items:
-        if not item.endswith('.ttl'): continue
-        if item.startswith('.'): continue
-        if os.path.isfile(os.path.join(args.input, item)):
-            num_files += 1
-            logger.record_event('DEFAULT_INFO', 'Copying {input}/{filename}'.format(input=args.input, filename=item))
-            call_system('cp -r {input}/{filename} {destination}'.format(input=args.input, filename=item, destination=sparql_kb_input))
+    input_filenames_including_path = {}
+    if s3_location_provided:
+        if args.aws_access_key_id is None or args.aws_secret_access_key is None:
+            logger.record_event('MISSING_AWS_CREDENTIALS')
+            exit(ERROR_EXIT_CODE)
+        call_system('mkdir /root/.aws')
+        with open('/root/.aws/credentials', 'w') as credentials:
+            credentials.write('[default]\n')
+            credentials.write('aws_access_key_id = {}\n'.format(args.aws_access_key_id))
+            credentials.write('aws_secret_access_key = {}\n'.format(args.aws_secret_access_key))
+        call_system('cp {path}/{filename} {destination}/source.txt'.format(path=args.input, filename=filename, destination=sparql_kb_source))
+        with open('{path}/{filename}'.format(path=args.input, filename=filename)) as fh:
+            lines = fh.readlines()
+            if len(lines) != 1:
+                logger.record_event('UNEXPECTED_NUM_LINES_IN_INPUT', 1, len(lines))
+                exit(ERROR_EXIT_CODE)
+            s3_location = lines[0].strip()
+            if not s3_location.startswith('s3://aida-') and not s3_location.endswith('.tgz'):
+                logger.record_event('UNEXPECTED_S3_LOCATION', 's3://aida-*/*.tgz', s3_location)
+                exit(ERROR_EXIT_CODE)
+            s3_filename = s3_location.split('/')[-1]
+            call_system('mkdir /tmp/s3_run/')
+            record_and_display_message(logger, 'Downloading {s3_location}.'.format(s3_location=s3_location))
+            call_system('aws s3 cp {s3_location} /tmp/s3_run/'.format(s3_location=s3_location))
+            uncompress_command = None
+            if s3_filename.endswith('.zip'):
+                uncompress_command = 'unzip'
+            if s3_filename.endswith('.tgz'):
+                uncompress_command = 'tar -zxf'
+            call_system('cd /tmp/s3_run && {uncompress_command} {s3_filename}'.format(s3_filename=s3_filename,
+                                                                                      uncompress_command=uncompress_command))
+            call_system('mv /tmp/s3_run/output/*/NIST /tmp/s3_run/NIST')
 
-    if num_files == 0:
-        logger.record_event('NOTHING_TO_SCORE')
-        record_and_display_message(logger, 'Nothing to score.')
+    input_path = '/tmp/s3_run/NIST' if s3_location_provided else args.input
+    for dirpath, dirnames, filenames in os.walk(input_path):
+        for filename in filenames:
+            filename_including_path = os.path.join(dirpath, filename)
+            if filename.endswith('-report.txt'):
+                filename_including_path = '{}.ttl'.format(filename_including_path.replace('-report.txt', ''))
+                input_filenames_including_path[filename_including_path] = 0
+            elif filename.endswith('.ttl'):
+                if filename_including_path not in input_filenames_including_path:
+                    input_filenames_including_path[filename_including_path] = 1
+            elif filename.endswith('.ranking.tsv'):
+                input_filenames_including_path[filename_including_path] = 1
+    for filename_including_path in input_filenames_including_path:
+        if input_filenames_including_path[filename_including_path] == 0:
+            record_and_display_message(logger, 'Ignoring invalid KB: {}'.format(filename_including_path.replace(input_path, '')))
+        elif input_filenames_including_path[filename_including_path] == 1:
+            record_and_display_message(logger, 'Copying {}'.format(filename_including_path.replace(input_path, '')))
+            destination = filename_including_path.replace(input_path, sparql_kb_input)
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            call_system('cp {filename_including_path} {destination}'.format(filename_including_path=filename_including_path,
+                                                                             destination=destination))
+            num_files += 1
+    if s3_location_provided:
+        call_system('rm -rf /tmp/s3_run/')
+
+    #############################################################################################
+    # verify the input directory structure
+    #############################################################################################
+
+    record_and_display_message(logger, 'Verifying input directory structure.')
+
+    log_file = '{logs_directory}/verify-output-directory-structure.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 verify_output_directory_structure.py \
+            task3 \
+            --log {log_file} \
+            {log_specifications} \
+            {queries} \
+            {sparql_kb_input}'.format(python_scripts=python_scripts,
+                                      log_file=log_file,
+                                      log_specifications=log_specifications,
+                                      queries='/data/user-queries',
+                                      sparql_kb_input=sparql_kb_input)
+    call_system(cmd)
+
+    num_errors, _ = get_problems(logs_directory)
+    if num_errors:
+        logger.record_event('IMPROPER_INPUT_DIRECTORY_STRUCTURE', sparql_kb_input)
         exit(ERROR_EXIT_CODE)
 
     #############################################################################################
-    # apply sparql queries
+    # process each condition and topic_or_claim_frame independently
     #############################################################################################
 
-    record_and_display_message(logger, 'Applying SPARQL queries.')
-    graphdb_bin = '/opt/graphdb/dist/bin'
-    graphdb = '{}/graphdb'.format(graphdb_bin)
-    loadrdf = '{}/loadrdf'.format(graphdb_bin)
-    verdi = '/opt/sparql-evaluation'
-    jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
-    config = '{}/config/Local-config.ttl'.format(verdi)
-    properties = '{}/config/Local-config.properties'.format(verdi)
-    intermediate = '{}/intermediate'.format(sparql_output)
+    # copy TA3 SPARQL queries
     queries = '{}/queries'.format(args.output)
-
-    # copy queries to be applied
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
     call_system('cp /data/queries/AIDA_P3_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
 
-    count = 0
-    kb_filenames = os.listdir(sparql_kb_input)
-    for kb_filename in kb_filenames:
-        kb_filename_including_path = os.path.join(sparql_kb_input, kb_filename)
-        count += 1
-        record_and_display_message(logger, 'Applying queries to {kb_filename} ... {count} of {num_total}.'.format(count=count,
-                                                                                                                  num_total=len(kb_filenames),
-                                                                                                                  kb_filename=kb_filename))
-        # create the intermediate directory
-        logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
-        call_system('mkdir -p {}'.format(intermediate))
-        # load KB into GraphDB
-        logger.record_event('DEFAULT_INFO', 'Loading {kb_filename} into GraphDB.'.format(kb_filename=kb_filename))
-        input_kb = '{kb_filename_including_path}'.format(kb_filename_including_path=kb_filename_including_path)
-        call_system('{loadrdf} -c {config} -f -m parallel {input}'.format(loadrdf=loadrdf, config=config, input=input_kb))
-        # start GraphDB
-        logger.record_event('DEFAULT_INFO', 'Starting GraphDB')
-        call_system('{graphdb} -d'.format(graphdb=graphdb))
-        # wait for GraphDB
-        call_system('sleep 5')
-        # apply queries
-        logger.record_event('DEFAULT_INFO', 'Applying queries')
-        call_system('java -Xmx4096M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
-                                                                                  properties=properties,
-                                                                                  queries=queries,
-                                                                                  intermediate=intermediate))
-        # generate the SPARQL output directory corresponding to the KB
-        logger.record_event('DEFAULT_INFO', 'Creating SPARQL output directory corresponding to the KB')
-        call_system('mkdir {output}/{kb_filename}'.format(output=sparql_output, kb_filename=kb_filename))
-        # move output out of intermediate into the output corresponding to the KB
-        logger.record_event('DEFAULT_INFO', 'Moving output out of the intermediate directory')
-        call_system('mv {intermediate}/*/* {output}/{kb_filename}'.format(intermediate=intermediate,
-                                                                          kb_filename=kb_filename,
-                                                                          output=sparql_output))
-        # remove intermediate directory
-        logger.record_event('DEFAULT_INFO', 'Removing the intermediate directory.')
-        call_system('rm -rf {}'.format(intermediate))
-        # stop GraphDB
-        logger.record_event('DEFAULT_INFO', 'Stopping GraphDB.')
-        call_system('pkill -9 -f graphdb')
+    c_cnt = 0
+    created = set()
+    condition_directories = os.listdir(sparql_kb_input)
+    for condition_name in condition_directories:
+        c_cnt += 1
+        condition_directory = os.path.join(sparql_kb_input, condition_name)
+        topic_or_claim_frame_directories = os.listdir(condition_directory)
+        t_cnt = 0
+        for topic_or_claim_frame_id in topic_or_claim_frame_directories:
+            t_cnt += 1
+            topic_or_claim_frame_directory = os.path.join(condition_directory, topic_or_claim_frame_id)
+            output_conditions_directory = '{output}/SPARQL-output/{condition_name}'.format(output=args.output,
+                                                                                           condition_name=condition_name)
+            if output_conditions_directory not in created:
+                record_and_display_message(logger, 'Creating directory: {}'.format(output_conditions_directory))
+                os.makedirs(output_conditions_directory)
+                created.add(output_conditions_directory)
 
-    message = 'SPARQL output generated.'
-    record_and_display_message(logger, '{}\n'.format(message))
+            sparql_output_subdir = '{output_conditions_directory}/{topic_or_claim_frame_id}'.format(output_conditions_directory=output_conditions_directory,
+                                                                                                    topic_or_claim_frame_id=topic_or_claim_frame_id)
+            record_and_display_message(logger, 'Creating output directory: {}'.format(sparql_output_subdir))
+            os.makedirs(sparql_output_subdir)
+            # copy ranking file
+            input_ranking_file = '{output}/SPARQL-KB-input/{condition_name}/{topic_or_claim_frame_id}/{topic_or_claim_frame_id}.ranking.tsv'
+            input_ranking_file = input_ranking_file.format(output=args.output,
+                                                           condition_name=condition_name,
+                                                           topic_or_claim_frame_id=topic_or_claim_frame_id)
+            call_system('cp {input_ranking_file} {sparql_output_subdir}'.format(input_ranking_file=input_ranking_file,
+                                                                                sparql_output_subdir=sparql_output_subdir))
+            #############################################################################################
+            # apply sparql queries
+            ############################################################################################
+            graphdb_bin = '/opt/graphdb/dist/bin'
+            graphdb = '{}/graphdb'.format(graphdb_bin)
+            loadrdf = '{}/loadrdf'.format(graphdb_bin)
+            verdi = '/opt/sparql-evaluation'
+            jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
+            config = '{}/config/Local-config.ttl'.format(verdi)
+            properties = '{}/config/Local-config.properties'.format(verdi)
+            intermediate = '{}/intermediate'.format(sparql_output_subdir)
+
+            k_cnt = 0
+            kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(os.path.join(topic_or_claim_frame_directory, f)) and f.endswith('.ttl')]
+            for kb_filename in kb_filenames:
+                kb_filename_including_path = os.path.join(topic_or_claim_frame_directory, kb_filename)
+                k_cnt += 1
+                record_and_display_message(logger, 'Applying queries to {condition} ({c_cnt}/{c_tot}) {topic} ({t_cnt}/{t_tot}) {kb_filename} ({k_cnt}/{k_tot}).'.format(condition=condition_name,
+                                                                                                                                                                           c_cnt=c_cnt,
+                                                                                                                                                                           c_tot=len(condition_directories),
+                                                                                                                                                                           topic=topic_or_claim_frame_id,
+                                                                                                                                                                           t_cnt=t_cnt,
+                                                                                                                                                                           t_tot=len(topic_or_claim_frame_directories),
+                                                                                                                                                                           kb_filename=kb_filename,
+                                                                                                                                                                           k_cnt=k_cnt,
+                                                                                                                                                                           k_tot=len(kb_filenames)))
+                # create the intermediate directory
+                logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
+                call_system('mkdir -p {}'.format(intermediate))
+                # load KB into GraphDB
+                logger.record_event('DEFAULT_INFO', 'Loading {kb_filename} into GraphDB.'.format(kb_filename=kb_filename))
+                input_kb = '{kb_filename_including_path}'.format(kb_filename_including_path=kb_filename_including_path)
+                call_system('{loadrdf} -c {config} -f -m parallel {input}'.format(loadrdf=loadrdf, config=config, input=input_kb))
+                # start GraphDB
+                logger.record_event('DEFAULT_INFO', 'Starting GraphDB')
+                call_system('{graphdb} -d'.format(graphdb=graphdb))
+                # wait for GraphDB
+                call_system('sleep 5')
+                # apply queries
+                logger.record_event('DEFAULT_INFO', 'Applying queries')
+                call_system('java -Xmx4096M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
+                                                                                          properties=properties,
+                                                                                          queries=queries,
+                                                                                          intermediate=intermediate))
+                # generate the SPARQL output directory corresponding to the KB
+                logger.record_event('DEFAULT_INFO', 'Creating SPARQL output directory corresponding to the KB')
+                call_system('mkdir {output}/{kb_filename}'.format(output=sparql_output_subdir, kb_filename=kb_filename))
+                # move output out of intermediate into the output corresponding to the KB
+                logger.record_event('DEFAULT_INFO', 'Moving output out of the intermediate directory')
+                call_system('mv {intermediate}/*/* {output}/{kb_filename}'.format(intermediate=intermediate,
+                                                                                  kb_filename=kb_filename,
+                                                                                  output=sparql_output_subdir))
+                # remove intermediate directory
+                logger.record_event('DEFAULT_INFO', 'Removing the intermediate directory.')
+                call_system('rm -rf {}'.format(intermediate))
+                # stop GraphDB
+                logger.record_event('DEFAULT_INFO', 'Stopping GraphDB.')
+                call_system('pkill -9 -f graphdb')
+
+            message = 'SPARQL output generated.'
+            record_and_display_message(logger, '{}'.format(message))
 
     #############################################################################################
     # Clean SPARQL output
     #############################################################################################
 
     record_and_display_message(logger, 'Cleaning SPARQL output.')
-
+    log_file = '{logs_directory}/clean-sparql-output.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
             python3.9 clean_sparql_output.py \
+            --log {log_file} \
             {log_specifications} \
             {sparql_output} \
             {sparql_clean_output}'.format(python_scripts=python_scripts,
+                                          log_file=log_file,
                                           log_specifications=log_specifications,
-                                          sparql_output = sparql_output,
-                                          sparql_clean_output = sparql_clean_output)
+                                          sparql_output=sparql_output,
+                                          sparql_clean_output=sparql_clean_output)
     call_system(cmd)
 
     #############################################################################################
@@ -297,24 +426,6 @@ def main(args):
                                            sparql_valid_output=sparql_valid_output,
                                            arf_output=arf_output)
     call_system(cmd)
-
-    num_errors = 0
-    with open(log_file) as f:
-        for line in f.readlines():
-            if 'ERROR' in line:
-                num_errors += 1
-
-    num_validated_files_written = 0
-    for dirpath, dirnames, filenames in os.walk('{sparql_valid_output}'.format(sparql_valid_output=sparql_valid_output)):
-        for filename in [f for f in filenames if f.endswith('.rq.tsv')]:
-            num_validated_files_written += 1
-
-    message = 'SPARQL output had no errors.'
-    if num_validated_files_written == 0:
-        message = '*** Unable to find validated output files ***'
-    elif num_errors:
-        message = 'SPARQL output had {} error(s).'.format(num_errors)
-    record_and_display_message(logger, '{}'.format(message))
 
     record_and_display_message(logger, 'Done.')
 

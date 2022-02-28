@@ -1,0 +1,22 @@
+claim_id	component_type	id	fieldname	value	correctness
+CLL0C04AJNP.001781	claimTopic	1	value	Non-Pharmaceutical Interventions (NPIs): Masks	--
+CLL0C04AJNP.001781	claimSubtopic	1	value	Mask Regulations	--
+CLL0C04AJNP.001781	claimDescription	1	value	Walmart requires mask in store	--
+CLL0C04AJNP.001781	claimTemplate	1	value	Wearing masks is required in location/GPE/facility-x	NIL
+CLL0C04AJNP.001781	claimDocument	1	value	L0C04AJNP	--
+CLL0C04AJNP.001781	claimEpistemic	1	polarity	EpistemicTrueCertain	NIL
+CLL0C04AJNP.001781	claimEpistemic	1	strength	EpistemicTrueCertain	NIL
+CLL0C04AJNP.001781	claimSentiment	1	value	SentimentNeutralUnknown	NIL
+CLL0C04AJNP.001781	date	1	range	(0001-01-01,9999-12-31)-(0001-01-01,9999-12-31)	NIL
+CLL0C04AJNP.001781	claimer	1	name	author	NIL
+CLL0C04AJNP.001781	claimer	1	qnode_id	EMPTY_TBD	NIL
+CLL0C04AJNP.001781	claimer	1	qnode_type	EMPTY_TBD	NIL
+CLL0C04AJNP.001781	claimer	1	qnode_type	Q482980	NIL
+CLL0C04AJNP.001781	claimer	1	informativenessAssessment	value	NIL
+CLL0C04AJNP.001781	claimer	1	overallAssessment	value	NIL
+CLL0C04AJNP.001781	xVariable	1	name	Walmart store	NIL
+CLL0C04AJNP.001781	xVariable	1	qnode_id	EMPTY_TBD	NIL
+CLL0C04AJNP.001781	xVariable	1	qnode_type	EMPTY_TBD	NIL
+CLL0C04AJNP.001781	xVariable	1	qnode_type	Q57334497	NIL
+CLL0C04AJNP.001781	xVariable	1	informativenessAssessment	value	NIL
+CLL0C04AJNP.001781	xVariable	1	overallAssessment	value	NIL

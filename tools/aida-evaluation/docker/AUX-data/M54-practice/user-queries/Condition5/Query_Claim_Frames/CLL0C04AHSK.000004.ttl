@@ -1,0 +1,54 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C04AHSK.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:nb63eb427c4f14a8186f0c895bd2e82cdb5,
+                _:nb63eb427c4f14a8186f0c895bd2e82cdb6 ;
+            aida:start _:nb63eb427c4f14a8186f0c895bd2e82cdb5,
+                _:nb63eb427c4f14a8186f0c895bd2e82cdb6 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C04AHSK.000004" ;
+    aida:claimMedium [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q355" ;
+            aida:componentName "Facebook" ;
+            aida:componentProvenance "Facebook" ;
+            aida:componentType "Q3220391" ] ;
+    aida:claimTemplate "X can catch COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90008" ;
+            aida:componentName "Dr. Jen Caudle" ;
+            aida:componentProvenance "Dr. Jen Caudle" ;
+            aida:componentType "Q39631" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q1799872" ;
+            aida:componentName "Rowan University" ;
+            aida:componentType "Q875538" ] ;
+    aida:epistemic aida:EpistemicTrueCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Dr. Jen Caudle claims black people can catch COVID-19" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C04AHSK" ;
+    aida:subtopic "Who can contract COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Contracting the virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90007" ;
+            aida:componentName "Black people" ;
+            aida:componentType "Q817393" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:nb63eb427c4f14a8186f0c895bd2e82cdb5 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:nb63eb427c4f14a8186f0c895bd2e82cdb6 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+

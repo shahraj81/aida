@@ -44,6 +44,18 @@ task3-example:
 	  HOST_INPUT_DIR=$(ROOT)/M54-practice/runs/example-task3-run \
 	  HOST_OUTPUT_DIR=$(ROOT)/M54-practice/scores/example-task3-run
 
+task3-example-aws-1:
+	make task3 \
+	  RUNID=example-task3-run-aws-1 \
+	  HOST_INPUT_DIR=$(ROOT)/M54-practice/runs/example-task3-run-aws-1 \
+	  HOST_OUTPUT_DIR=$(ROOT)/M54-practice/scores/example-task3-run-aws-1
+
+task3-example-aws-2:
+	make task3 \
+	  RUNID=example-task3-run-aws-2 \
+	  HOST_INPUT_DIR=$(ROOT)/M54-practice/runs/example-task3-run-aws-2 \
+	  HOST_OUTPUT_DIR=$(ROOT)/M54-practice/scores/example-task3-run-aws-2
+
 task1:
 	docker run \
 	  --env RUNID=$(RUNID) \
@@ -76,6 +88,8 @@ task3:
 	  --env RUNID=$(RUNID) \
 	  --env RUNTYPE=$(RUNTYPE) \
 	  --env TASK=task3 \
+	  --env AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
+	  --env AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 	  -v $(HOST_INPUT_DIR):/evaluate:ro \
 	  -v $(HOST_OUTPUT_DIR):/output \
 	  -v $(HOST_DATA_DIR):/data \

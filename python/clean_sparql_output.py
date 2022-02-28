@@ -58,8 +58,7 @@ def clean_sparql_output(args):
         output_subdir = input_filename.replace(args.input, '').replace(output_basename, '').rstrip('/').lstrip('/')
         output_directory = '{}/{}'.format(output_root, output_subdir)
         output_filename = '{}/{}'.format(output_directory, output_basename)
-        if not os.path.exists(output_directory):
-            os.mkdir(output_directory)
+        os.makedirs(output_directory, exist_ok=True)
         clean_a_sparql_output_file(logger, input_filename, output_filename)
     exit(ALLOK_EXIT_CODE)
 

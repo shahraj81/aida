@@ -1,0 +1,44 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C049OUI.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:nc335769b1b314f6fb411475718062ed1b3,
+                _:nc335769b1b314f6fb411475718062ed1b4 ;
+            aida:start _:nc335769b1b314f6fb411475718062ed1b3,
+                _:nc335769b1b314f6fb411475718062ed1b4 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C049OUI.000004" ;
+    aida:claimTemplate "X transmits / transfers COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90028" ;
+            aida:componentName "author" ;
+            aida:componentType "Q1930187" ] ;
+    aida:epistemic aida:EpistemicFalseCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Author claims Chinese food cannot transmit COVID-19" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C049OUI" ;
+    aida:subtopic "What transmits COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Transmitting the virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90027" ;
+            aida:componentName "Chinese food" ;
+            aida:componentType "Q2095" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:nc335769b1b314f6fb411475718062ed1b3 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:nc335769b1b314f6fb411475718062ed1b4 a aida:LDCTimeComponent ;
+    aida:day "---21"^^xsd:gDay ;
+    aida:month "--02"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "2020"^^xsd:gYear .
+

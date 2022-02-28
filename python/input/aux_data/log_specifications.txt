@@ -10,7 +10,7 @@ WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
 INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
-CRITICAL  DUPLICATE_VALUE                 '{}' appears more than once, expected no more than once
+CRITICAL  DUPLICATE_VALUE                 {} appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
 WARNING   ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED '{}' met pooling criteria but was not assessed
@@ -19,6 +19,7 @@ INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
 ERROR     ID_WITH_EXTENSION_ERROR         File extension included as part of {} '{}'
 ERROR     IMPROPER_COMPOUND_JUSTIFICATION Compound justification '{}' has more than two justifications
+ERROR     IMPROPER_INPUT_DIRECTORY_STRUCTURE Improper structure of directory: {}
 ERROR     IMPROPER_RELATION               Relation '{}' has more than two fillers
 ERROR     INCOMPATIBLE_TYPES              '{}' has incompatible types '{}'
 WARNING   INVALID_CONFIDENCE              Invalid confidence value '{}' (using 1.0)
@@ -35,6 +36,7 @@ CRITICAL  KEY_IS_NONE                     key 'None' used
 INFO      MACRO_SCORES                    DOCID:{} MACRO_SCORE:{} INPUT:{}
 INFO      MENTION_NOT_ANNOTATED           Response skipped because mention '{}' is outside the annotated regions
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
+ERROR     MISSING_CLAIM_RANK              Ranking information not found for claim {}
 ERROR     MISSING_AWS_CREDENTIALS         AWS credentials missing
 INFO      MISSING_DATE_FIELD              Missing {} {}; using '{}' as the {} date
 ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
@@ -44,7 +46,9 @@ ERROR     MISSING_ITEM_WITH_KEY           {} '{}' not found
 ERROR     MISSING_ITEM                   '{}' not found
 WARNING   MISSING_KEY_WARNING             Key '{}' does not exist
 ERROR     MISSING_OPEN_PERFORMER_FILE     {}/{} is expected from open performers but not found
+ERROR     MISSING_REQUIRED_CLAIM_FIELD    Claim {} (required for {} KBs) missing in claim {}
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
+ERROR     MULTIPLE_CLAIM_RANKS            Multiple ranks found for claim {}
 CRITICAL  MULTIPLE_CLUSTER_LINKING_CONFIDENCES Multiple distinct values of linking confidences ({}, {}) found for cluster {}; expected single distinct value
 ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
 CRITICAL  MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT Multiple informative justifications ({}, {}) found for document {}
@@ -78,7 +82,10 @@ ERROR     UNKNOWN_PREDICATE               Unknown predicate '{}'
 ERROR     UNKNOWN_RESPONSE_FILE_TYPE      Type cannot be determined for file: {}
 ERROR     UNKNOWN_RUNTYPE                 Unknown runtype {} (expected one from: {})
 ERROR     UNKNOWN_TYPE                    Type '{}' not found in the ontology
-ERROR     UNKNOWN_VALUE                   Unknown {} '{}' (expected one from '{}')
+ERROR     UNKNOWN_VALUE                   Unknown {} '{}' (expected one from {{{}}})
+ERROR     UNKNOWN_CLAIM_ID                Unknown claim ID '{}'
+ERROR     UNKNOWN_CLAIM_CONDITION         Unknown claim condition '{}'
+ERROR     UNKNOWN_CLAIM_QUERY_TOPIC_OR_CLAIM_FRAME_ID Unknown {} '{}'
 CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} cluster '{}' is aligned to gold {} cluster '{}'
 ERROR     UNEXPECTED_CLAIM_ID             Unexpected claim ID '{}' (expected '{}')
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
@@ -86,6 +93,7 @@ ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', pr
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_ENTRYPOINT_DESCRIPTOR Different values of entrypoint descriptors {}, {}, {} found for query {} in files {} and {}
 ERROR     UNEXPECTED_FILENAME             Unexpected filename (expected one from '{}', provided '{}')
+ERROR     UNEXPECTED_ITEM                 Unexpected {} '{}' found in {}
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_NUM_DATES            Unexpected number of dates for gold cluster {} in document {}

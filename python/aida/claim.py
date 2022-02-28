@@ -11,13 +11,14 @@ __date__    = "11 January 2022"
 from aida.object import Object
 
 class Claim(Object):
-    def __init__(self, logger, claim_id):
+    def __init__(self, logger, claim_uid):
         super().__init__(logger)
-        self.claim_id = claim_id
+        self.claim_uid = claim_uid
         self.outer_claim = None
         self.claim_components = []
         self.claim_edge_assertions = []
         self.claim_edge_subject_times = []
+        self.claim_rank = None
         self.claim_time = None
 
     def add(self, *args, **kwargs):
@@ -48,6 +49,15 @@ class Claim(Object):
         else:
             self.record_event('MULTIPLE_CLAIM_TIME', entry.get('claim_id'), entry.get('where'))
 
+    def get_claim_condition(self):
+        return self.get('claim_uid').split(':')[0]
+
+    def get_claim_id(self):
+        return self.get('claim_uid').split(':')[2]
+
+    def get_claim_query_topic_or_claim_frame_id(self):
+        return self.get('claim_uid').split(':')[1]
+
     def update(self, entry):
         if entry.get('schema').get('name') == 'AIDA_PHASE3_TASK3_OC_RESPONSE':
             self.set('outer_claim', entry)
@@ -59,5 +69,9 @@ class Claim(Object):
             self.add('claim_edge_assertion', entry)
         elif entry.get('schema').get('name') == 'AIDA_PHASE3_TASK3_TM_RESPONSE':
             self.add('claim_edge_subject_time', entry)
+        elif entry.get('schema').get('name') in ['AIDA_PHASE3_TASK3_CONDITION5_RANKING_RESPONSE', 'AIDA_PHASE3_TASK3_CONDITION67_RANKING_RESPONSE']:
+            if self.get('claim_rank'):
+                self.record_event('MULTIPLE_CLAIM_RANKS', self.get('claim_uid'), entry.get('where'))
+            self.set('claim_rank', entry)
         else:
             self.record_event('UNEXPECTED_ENTRY', entry.get('where'))

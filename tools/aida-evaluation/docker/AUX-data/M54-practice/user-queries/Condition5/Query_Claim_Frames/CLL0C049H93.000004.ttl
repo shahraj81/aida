@@ -1,0 +1,53 @@
+@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .
+@prefix ldc: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/LdcAnnotations#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ldc:claim-CLL0C049H93.000004 a aida:Claim ;
+    aida:claimDateTime [ a aida:LDCTime ;
+            aida:end _:n7fe2b82028954a40bdfaa254de62a0ccb5,
+                _:n7fe2b82028954a40bdfaa254de62a0ccb6 ;
+            aida:start _:n7fe2b82028954a40bdfaa254de62a0ccb5,
+                _:n7fe2b82028954a40bdfaa254de62a0ccb6 ;
+            aida:system ldc:LDCModelGenerator ] ;
+    aida:claimId "CLL0C049H93.000004" ;
+    aida:claimTemplate "X can catch COVID-19" ;
+    aida:claimer [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q43776740" ;
+            aida:componentName "Oh Myoung Don" ;
+            aida:componentProvenance "Oh Myoung Don" ;
+            aida:componentType "Q1650915" ] ;
+    aida:claimerAffiliation [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q99298799" ;
+            aida:componentName "Seoul National University College of Medicine" ;
+            aida:componentType "Q494230" ],
+        [ a aida:ClaimComponent ;
+            aida:componentIdentity "Q39913" ;
+            aida:componentName "Seoul National University" ;
+            aida:componentType "Q15936437" ] ;
+    aida:epistemic aida:EpistemicFalseCertain ;
+    aida:importance "1.0"^^xsd:double ;
+    aida:naturalLanguageDescription "Oh Myoung Don claims people who have recovered from COVID-19 cannot catch COVID-19" ;
+    aida:sentiment aida:SentimentNeutralUnknown ;
+    aida:sourceDocument "L0C049H93" ;
+    aida:subtopic "Who can contract COVID-19" ;
+    aida:system ldc:LDCModelGenerator ;
+    aida:topic "Contracting the virus" ;
+    aida:xVariable [ a aida:ClaimComponent ;
+            aida:componentIdentity "NILQ90004" ;
+            aida:componentName "People who have recovered from COVID-19" ;
+            aida:componentType "Q215627" ] .
+
+ldc:LDCModelGenerator a aida:System .
+
+_:n7fe2b82028954a40bdfaa254de62a0ccb5 a aida:LDCTimeComponent ;
+    aida:day "---31"^^xsd:gDay ;
+    aida:month "--12"^^xsd:gMonth ;
+    aida:timeType "BEFORE" ;
+    aida:year "9999"^^xsd:gYear .
+
+_:n7fe2b82028954a40bdfaa254de62a0ccb6 a aida:LDCTimeComponent ;
+    aida:day "---01"^^xsd:gDay ;
+    aida:month "--01"^^xsd:gMonth ;
+    aida:timeType "AFTER" ;
+    aida:year "0001"^^xsd:gYear .
+
