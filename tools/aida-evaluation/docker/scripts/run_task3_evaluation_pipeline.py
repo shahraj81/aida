@@ -10,8 +10,6 @@ This script performs the following steps:
 This version of the docker works for M54 (i.e. Phase 3).
 """
 
-# this script needs revision due to changed directory structure
-
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "2020.1.0"
@@ -135,6 +133,7 @@ def main(args):
         if filename == 's3_location.txt':
             s3_location_provided = True
     num_files = 0
+    input_filenames_including_path = {}
     if s3_location_provided:
         if args.aws_access_key_id is None or args.aws_secret_access_key is None:
             logger.record_event('MISSING_AWS_CREDENTIALS')
@@ -165,21 +164,32 @@ def main(args):
                 uncompress_command = 'tar -zxf'
             call_system('cd /tmp/s3_run && {uncompress_command} {s3_filename}'.format(s3_filename=s3_filename,
                                                                                       uncompress_command=uncompress_command))
+            call_system('mv /tmp/s3_run/*/NIST /tmp/s3_run/NIST')
 
-            for dirpath, dirnames, filenames in os.walk('/tmp/s3_run/'):
-                for kb_filename in [f for f in filenames if f.endswith('.ttl')]:
-                    if len(dirpath.split('/')) == 6 and os.path.basename(dirpath) == 'NIST':
-                        kb_filename_including_path = os.path.join(dirpath, kb_filename)
-                        # consider all kbs valid
-                        record_and_display_message(logger, 'Copying {}'.format(kb_filename_including_path.replace('/tmp/s3_run/', '')))
-                        call_system('cp {kb_filename_including_path} {destination}/'.format(kb_filename_including_path=kb_filename_including_path,
-                                                                                            destination=sparql_kb_input))
-                        num_files += 1
-            call_system('rm -rf /tmp/s3_run')
-    else:
-        # pull all ttl files in (even if they are not valid)
-        logger.record_event('DEFAULT_INFO', 'Copying everything from {input}'.format(input=args.input))
-        call_system('cp -r {input}/* {destination}'.format(input=args.input, destination=sparql_kb_input))
+    input_path = '/tmp/s3_run/NIST' if s3_location_provided else args.input
+    for dirpath, dirnames, filenames in os.walk(input_path):
+        for filename in filenames:
+            filename_including_path = os.path.join(dirpath, filename)
+            if filename.endswith('-report.txt'):
+                filename_including_path = '{}.ttl'.format(filename_including_path.replace('-report.txt', ''))
+                input_filenames_including_path[filename_including_path] = 0
+            elif filename.endswith('.ttl'):
+                if filename_including_path not in input_filenames_including_path:
+                    input_filenames_including_path[filename_including_path] = 1
+            elif filename.endswith('.ranking.tsv'):
+                input_filenames_including_path[filename_including_path] = 1
+    for filename_including_path in input_filenames_including_path:
+        if input_filenames_including_path[filename_including_path] == 0:
+            record_and_display_message(logger, 'Ignoring invalid KB: {}'.format(filename_including_path.replace(input_path, '')))
+        elif input_filenames_including_path[filename_including_path] == 1:
+            record_and_display_message(logger, 'Copying {}'.format(filename_including_path.replace(input_path, '')))
+            destination = filename_including_path.replace(input_path, sparql_kb_input)
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            call_system('cp {filename_including_path} {destination}'.format(filename_including_path=filename_including_path,
+                                                                             destination=destination))
+            num_files += 1
+    if s3_location_provided:
+        call_system('rm -rf /tmp/s3_run/')
 
     #############################################################################################
     # verify the input directory structure
