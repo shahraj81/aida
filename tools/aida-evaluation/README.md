@@ -340,7 +340,7 @@ For `task1`, the input directory should contain all the `task1` KBs along with c
 
 For `task2`, see the section: [How to apply the docker to a task2 run?](#how-to-apply-the-docker-to-a-task2-run) for details on the input directory structure.
 
-For `task3`, the input directory should contain all the `task3` claim KBs along with corresponding report files from the AIF validator, if any.
+For `task3`, the input directory should contain all the `task3` claim KBs along with corresponding report files from the AIF validator, if any. The directory should be structured as mentioned in the Section: [How to apply the docker to your run?](#how-to-apply-the-docker-to-your-run).
 
 You may also want to take a look at the input directories of the included example runs located at `./M54-practice/runs/` to get an idea of how to structure your input directories.
 
