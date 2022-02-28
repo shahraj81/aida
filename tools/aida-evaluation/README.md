@@ -81,11 +81,15 @@ In this step, cleaned SPARQL output from multiple variants of the a SPARQL query
 
 In this step responses from output of the previous step is validated.
 
+## ARF-output (Task3)
+
+In this step task3 validated output is converted to output in assessor readable format (ARF).
+
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to apply the docker to a test run?
 
-The docker contains three example practice runs one for each task. The runs are stored at `./M54-practice/runs/` and the corresponding output is stored at `./M54-practice/scores`.
+The docker contains example practice runs for each task. The runs are stored at `./M54-practice/runs/` and the corresponding output is stored at `./M54-practice/scores`.
 
 In order to run the docker on the `task1` example run, you may execute the following:
 
@@ -106,11 +110,22 @@ cd docker
 make task2-example
 ~~~
 
-In order to run the docker on the `task3` example run, you may execute the following:
+Three example runs (and corresponding output) for `task3` have been made available. In order to run the docker on these example runs, you may execute the following:
 
+1. `M54-practice/runs/example-task3-run`,
 ~~~
 cd docker
 make task3-example
+~~~
+2. `M54-practice/runs/example-task3-run-aws-1`,
+~~~
+cd docker
+make task3-example-aws-1
+~~~
+3. `M54-practice/runs/example-task3-run-aws-2`,
+~~~
+cd docker
+make task3-example-aws-2
 ~~~
 
 Note that the docker expects the output directory to be empty. If you see the message `ERROR: Output directory /score is not empty`, you would need to remove the pre-existing output.
@@ -180,9 +195,11 @@ make task2 \
 
 ## How to apply the docker to a task3 run?
 
-The docker currently accepts all the task3 claim KBs along with corresponding report firles from the AIF validator (if any) placed in the input directory.
+The AIDA evaluation docker can accept a task3 run either via the direct mount or from an S3 location. The format of the input expected by the docker differs depending on how the input is provided, as described below.
 
-In order to apply the docker to a set of task3 claim KBs, run the following command:
+### Direct mount
+
+In order to apply the docker to a task3 run that is mounted directly to the docker, run the following command:
 
 ~~~
 make task3 \
@@ -191,7 +208,75 @@ make task3 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
-At this point, the docker does not accept task3 input from an S3 location.
+Note that, in this case, the directory structure should be of the form:
+
+~~~
+  - your_run_id
+  - your_run_id/Condition5
+  - your_run_id/Condition5/query_claim_id_1/some_claim_id_11.ttl
+  - your_run_id/Condition5/query_claim_id_1/some_claim_id_12.ttl
+  - your_run_id/Condition5/query_claim_id_1/some_claim_id_12-report.txt
+  - your_run_id/Condition5/query_claim_id_1/...
+  - your_run_id/Condition5/query_claim_id_1/query_claim_id_1.ranking.tsv
+  - your_run_id/Condition5/query_claim_id_...
+  - your_run_id/Condition6/query_topic_1/some_claim_id_21.ttl
+  - your_run_id/Condition6/query_topic_1/some_claim_id_22.ttl
+  - your_run_id/Condition6/query_topic_1/...
+  - your_run_id/Condition6/query_topic_1/query_topic_1.ranking.tsv
+  - your_run_id/Condition6/query_topic_...
+  - your_run_id/Condition7/query_topic_2/some_claim_id_31.ttl
+  - your_run_id/Condition7/query_topic_2/some_claim_id_32.ttl
+  - your_run_id/Condition7/query_topic_2/...
+  - your_run_id/Condition7/query_topic_2/query_topic_3.ranking.tsv
+  - your_run_id/Condition7/query_topic_...
+~~~
+
+Note that in the above example `your_run_id/Condition5/query_claim_id_1/some_claim_id_12.ttl` does not have valid AIF due to the presence of the report file `your_run_id/Condition5/query_claim_id_1/some_claim_id_12-report.txt` which is why that claim KB would not be processed.
+
+Also note that a condition directory should not be present if the run does not have a claim KB corresponding to it.
+
+### S3 location
+
+When the input is an S3 location of the run, place a file named `s3_location.txt` inside the input directory. The input directory should not contain any other file or directory in it. The docker expects exactly one line in the `s3_location.txt` file, and that line should be of the form:
+
+~~~
+s3://aida-phase2-ta-performers/.../*-nist.tgz
+~~~
+
+The compressed file at the above location should expand into a directory of the form:
+
+~~~
+  - output/your_run_id/NIST
+  - output/your_run_id/NIST/Condition5
+  - output/your_run_id/NIST/Condition5/query_claim_id_1/some_claim_id_11.ttl
+  - output/your_run_id/NIST/Condition5/query_claim_id_1/some_claim_id_12.ttl
+  - output/your_run_id/NIST/Condition5/query_claim_id_1/...
+  - output/your_run_id/NIST/Condition5/query_claim_id_1/query_claim_id_1.ranking.tsv
+  - output/your_run_id/NIST/Condition5/query_claim_id_...
+  - output/your_run_id/NIST/Condition6/query_topic_1/some_claim_id_21.ttl
+  - output/your_run_id/NIST/Condition6/query_topic_1/some_claim_id_22.ttl
+  - output/your_run_id/NIST/Condition6/query_topic_1/...
+  - output/your_run_id/NIST/Condition6/query_topic_1/query_topic_1.ranking.tsv
+  - output/your_run_id/NIST/Condition6/query_topic_...
+  - output/your_run_id/NIST/Condition7/query_topic_2/some_claim_id_31.ttl
+  - output/your_run_id/NIST/Condition7/query_topic_2/some_claim_id_32.ttl
+  - output/your_run_id/NIST/Condition7/query_topic_2/...
+  - output/your_run_id/NIST/Condition7/query_topic_2/query_topic_3.ranking.tsv
+  - output/your_run_id/NIST/Condition7/query_topic_...
+~~~
+
+In order to apply the docker to a task3 run that is to be read from an S3 location, run the following command:
+
+~~~
+make task3 \
+  RUNID=your_run_id \
+  AWS_ACCESS_KEY_ID=your_aws_access_key_id \
+  AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
+  HOST_INPUT_DIR=/absolute/path/to/your/run \
+  HOST_OUTPUT_DIR=/absolute/path/to/output
+~~~
+
+Also note that a condition directory should not be present if the run does not have a claim KB corresponding to it.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
@@ -351,7 +436,9 @@ The `task3` logs directory contains the following log files:
 * Task3 runs directory structure updated to match one specified in the evaluation plan
 * Task3 run can now be read from an S3 location. The directory structure for a task3 run read from an S3 location is different from the one directly mounted on the docker. Details added to this README.
 * Task3 user queries added for practice data.
-
+* Task3 SPARQL queries now do not require subtopic or claimTemplate. Since the fields required in a task3 KB vary with Condition, the required fields are validated by the response validator.
+* Task3 validator expanded to perform additional checks.
+* Task3 evaluation docker will not process KBs that do not have valid AIF.
 
 ## 02/08/2022:
 * Section [How to apply the docker to your run in the evaluation setting?](#how-to-apply-the-docker-to-your-run-in-the-evaluation-setting) added to this README
