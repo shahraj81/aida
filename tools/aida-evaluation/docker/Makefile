@@ -88,6 +88,8 @@ task3:
 	  --env RUNID=$(RUNID) \
 	  --env RUNTYPE=$(RUNTYPE) \
 	  --env TASK=task3 \
+	  --env AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
+	  --env AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 	  -v $(HOST_INPUT_DIR):/evaluate:ro \
 	  -v $(HOST_OUTPUT_DIR):/output \
 	  -v $(HOST_DATA_DIR):/data \
