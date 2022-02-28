@@ -1,0 +1,21 @@
+Event:cluster-NILCVML0C04AJNP.002350
+Q166231
+	UID: Event:cluster-NILCVML0C04AJNP.002350:Q166231
+	Time T1 (start on or after): n/a
+	Time T2 (start on or before): n/a
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A2_ppt_theme_infectant	Entity	EMPTY_TBD	Coronavirus	cluster-NILCEML0C04AJNP.002107
+	arg2	A0_pag_agent_causer_of_infection	Entity	Q1058795	droplets	cluster-NILCEML0C04AJNP.002067
+	arg3	A1_gol_destination_thing_becoming_infected	Entity	Q215627	people	cluster-NILCEML0C04AJNP.002097
+	arg4	AM_loc__location	Entity	Q27096235	tight spaces	cluster-NILCEML0C04AJNP.002102
+
+Event:cluster-NILCVML0C04AJNP.002534
+Q21170798
+	UID: Event:cluster-NILCVML0C04AJNP.002534:Q21170798
+	Time T1 (start on or after): n/a
+	Time T2 (start on or before): n/a
+	Time T3 (end on or after): n/a
+	Time T4 (end on or before): n/a
+	arg1	A0_pag_agent_one_party	Entity	Q215627	people	cluster-NILCEML0C04AJNP.002097
+	arg2	AM_loc__location	Entity	Q27096235	tight spaces	cluster-NILCEML0C04AJNP.002102

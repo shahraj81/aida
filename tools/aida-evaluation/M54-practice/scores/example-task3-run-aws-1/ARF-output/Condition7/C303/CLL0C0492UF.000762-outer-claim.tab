@@ -1,0 +1,34 @@
+claim_id	component_type	id	fieldname	value	correctness
+CLL0C0492UF.000762	claimTopic	1	value	Who can contract COVID-19	--
+CLL0C0492UF.000762	claimSubtopic	1	value		--
+CLL0C0492UF.000762	claimDescription	1	value	"Romanoff claims Covid-19 was \"Chinese-specific\" and did not infect peoples of other origins and racial backgrounds"	--
+CLL0C0492UF.000762	claimTemplate	1	value		NIL
+CLL0C0492UF.000762	claimDocument	1	value	L0C0492UF	--
+CLL0C0492UF.000762	claimEpistemic	1	polarity	EpistemicTrueCertain	NIL
+CLL0C0492UF.000762	claimEpistemic	1	strength	EpistemicTrueCertain	NIL
+CLL0C0492UF.000762	claimSentiment	1	value	SentimentNeutralUnknown	NIL
+CLL0C0492UF.000762	date	1	range	(0001-01-01,9999-12-31)-(0001-01-01,9999-12-31)	NIL
+CLL0C0492UF.000762	claimMedium	1	name	podcast	NIL
+CLL0C0492UF.000762	claimMedium	1	qnode_id	EMPTY_TBD	NIL
+CLL0C0492UF.000762	claimMedium	1	qnode_type	EMPTY_TBD	NIL
+CLL0C0492UF.000762	claimMedium	1	qnode_type	Q24634210	NIL
+CLL0C0492UF.000762	claimMedium	1	informativenessAssessment	value	NIL
+CLL0C0492UF.000762	claimMedium	1	overallAssessment	value	NIL
+CLL0C0492UF.000762	claimer	1	name	Romanoff	NIL
+CLL0C0492UF.000762	claimer	1	qnode_id	Q87740225	NIL
+CLL0C0492UF.000762	claimer	1	qnode_type	Q15978655	NIL
+CLL0C0492UF.000762	claimer	1	qnode_type	Q87740225	NIL
+CLL0C0492UF.000762	claimer	1	informativenessAssessment	value	NIL
+CLL0C0492UF.000762	claimer	1	overallAssessment	value	NIL
+CLL0C0492UF.000762	claimerAffiliation	1	name	Canada	NIL
+CLL0C0492UF.000762	claimerAffiliation	1	qnode_id	Q16	NIL
+CLL0C0492UF.000762	claimerAffiliation	1	qnode_type	Q16	NIL
+CLL0C0492UF.000762	claimerAffiliation	1	qnode_type	Q6256	NIL
+CLL0C0492UF.000762	claimerAffiliation	1	informativenessAssessment	value	NIL
+CLL0C0492UF.000762	claimerAffiliation	1	overallAssessment	value	NIL
+CLL0C0492UF.000762	claimerAffiliation	2	name	Center of Research on Globalization	NIL
+CLL0C0492UF.000762	claimerAffiliation	2	qnode_id	Q61055915	NIL
+CLL0C0492UF.000762	claimerAffiliation	2	qnode_type	Q155271	NIL
+CLL0C0492UF.000762	claimerAffiliation	2	qnode_type	Q61055915	NIL
+CLL0C0492UF.000762	claimerAffiliation	2	informativenessAssessment	value	NIL
+CLL0C0492UF.000762	claimerAffiliation	2	overallAssessment	value	NIL
