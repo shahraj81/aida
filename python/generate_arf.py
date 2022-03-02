@@ -160,7 +160,7 @@ class ClaimTime(Object):
         super().__init__(logger)
         self.entry = claim_time
 
-    def __str__(self):
+    def get_range_str(self):
         date_range = {}
         date_types = ['start_after', 'start_before', 'end_after', 'end_before']
         for date_type in date_types:
@@ -176,6 +176,16 @@ class ClaimTime(Object):
                                              date_range.get('start_before'),
                                              date_range.get('end_after'),
                                              date_range.get('end_before'))
+        if range_str == '(0001-01-01,9999-12-31)-(0001-01-01,9999-12-31)':
+            return
+        return range_str
+
+    def __str__(self):
+        if self.get('entry') is None:
+            return
+        range_str = self.get('range_str')
+        if range_str is None:
+            return
         line = OutputLine(self.get('entry').get('claim_id'), 'date', 1, 'range', range_str, 'NIL')
         return line.__str__()
 
@@ -599,7 +609,8 @@ class AssessorReadableFormat(Object):
             output_fh = open(output_filename, 'w', encoding='utf-8')
             output_str = '\t'.join(header)
             output_str = '{}\n{}'.format(output_str, outer_claim)
-            output_str = '{}\n{}'.format(output_str, claim_time)
+            if claim_time is not None:
+                output_str = '{}\n{}'.format(output_str, claim_time)
             output_str = '{}\n{}'.format(output_str, claim_components)
             output_fh.write(output_str)
             output_fh.close()
