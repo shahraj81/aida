@@ -7,7 +7,6 @@ CLL0C04AJNP.001833	claimDocument	1	value	L0C04AJNP	--
 CLL0C04AJNP.001833	claimEpistemic	1	polarity	EpistemicTrueCertain	NIL
 CLL0C04AJNP.001833	claimEpistemic	1	strength	EpistemicTrueCertain	NIL
 CLL0C04AJNP.001833	claimSentiment	1	value	SentimentNeutralUnknown	NIL
-CLL0C04AJNP.001833	date	1	range	(0001-01-01,9999-12-31)-(0001-01-01,9999-12-31)	NIL
 CLL0C04AJNP.001833	claimer	1	name	author	NIL
 CLL0C04AJNP.001833	claimer	1	qnode_id	EMPTY_TBD	NIL
 CLL0C04AJNP.001833	claimer	1	qnode_type	EMPTY_TBD	NIL

@@ -1629,7 +1629,7 @@ class Predicate(AIFObject):
         return self.get('pIRI', prefix='', separator='', code='', md5=False)
 
     def is_valid(self):
-        if self.get('rolename') == 'EMPTY_TBD':
+        if self.get('rolename') in ['EMPTY_TBD', 'EMPTY_REF']:
             return False
         return True
 
