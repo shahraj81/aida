@@ -288,7 +288,10 @@ class Validator(Object):
                         problem_field = 'day'
                         valid = False
         if not valid:
-            self.record_event('INVALID_DATE_RANGE', entry.get('subject_cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
+            if schema.get('name') in ['AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE']:
+                self.record_event('INVALID_DATE_RANGE', 'Claim', entry.get('claim_uid'), start_or_end_after, start_or_end_before, entry.get('where'))
+            else:
+                self.record_event('INVALID_DATE_RANGE', 'Cluster', entry.get('subject_cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
         return valid
 
     def validate_date_start_and_end(self, responses, schema, entry, attribute):

@@ -24,7 +24,7 @@ ERROR     IMPROPER_RELATION               Relation '{}' has more than two filler
 ERROR     INCOMPATIBLE_TYPES              '{}' has incompatible types '{}'
 WARNING   INVALID_CONFIDENCE              Invalid confidence value '{}' (using 1.0)
 ERROR     INVALID_DATE                    Cluster {} has invalid {} {}
-ERROR     INVALID_DATE_RANGE              Cluster {} has invalid date range: {} > {}
+ERROR     INVALID_DATE_RANGE              {} {} has invalid date range: {} > {}
 ERROR     INVALID_IMPORTANCE_VALUE        Invalid importance value '{}'
 ERROR     INVALID_METATYPE                Invalid metatype (expected one from '{}', provided '{}')
 CRITICAL  INVALID_POSTPOLICY_CATEGORIZATION Invalid value for post-policy response categorization '{}'
