@@ -167,6 +167,7 @@ attributes = {
         'name': 'claim_topic',
         'schemas': ['AIDA_PHASE3_TASK3_OC_RESPONSE'],
         'tasks': ['task3'],
+        'validate': 'validate_claim_topic',
         'years': [2021],
         },
     'cluster': {

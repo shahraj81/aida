@@ -88,6 +88,7 @@ ERROR     UNKNOWN_CLAIM_CONDITION         Unknown claim condition '{}'
 ERROR     UNKNOWN_CLAIM_QUERY_TOPIC_OR_CLAIM_FRAME_ID Unknown {} '{}'
 CRITICAL  UNEXPECTED_ALIGNED_CLUSTER_METATYPE Unexpected metatype: system {} cluster '{}' is aligned to gold {} cluster '{}'
 ERROR     UNEXPECTED_CLAIM_ID             Unexpected claim ID '{}' (expected '{}')
+ERROR     UNEXPECTED_CLAIM_VALUE          Unexpected {} '{}' for claim {}
 CRITICAL  UNEXPECTED_COLUMN_HEADER        Unexpected header of column # {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', provided '{})
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
