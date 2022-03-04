@@ -103,8 +103,8 @@ def string_to_span(logger, span_string, where=None):
 def trim_cv(cv):
     return float(trim(cv))
 
-def trim(value):
-    return value.replace('"','')
+def trim(s):
+    return s.strip().replace('"','')
 
 def parse_document_element_id(s):
     document_element_id = s
