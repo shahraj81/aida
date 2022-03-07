@@ -9,7 +9,7 @@ __date__    = "11 January 2022"
 
 from aida.object import Object
 from aida.span import Span
-from aida.utility import types_are_compatible, is_number, trim_cv
+from aida.utility import types_are_compatible, is_number, trim, trim_cv
 
 import datetime
 import os
@@ -92,28 +92,68 @@ class Validator(Object):
 
     def validate_claim_relation(self, responses, schema, entry, attribute):
         allowed_values = ['supporting', 'refuting', 'related']
-        return self.validate_set_membership('claim_relation', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        valid = self.validate_set_membership('claim_relation', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        if not valid:
+            entry.get('claim').set('valid', False)
+        return valid
 
     def validate_claim_sentiment_status(self, responses, schema, entry, attribute):
         allowed_values = ['SentimentPositive', 'SentimentNegative', 'SentimentMixed', 'SentimentNeutralUnknown']
         return self.validate_set_membership('sentiment_status', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
 
     def validate_claim_subtopic(self, responses, schema, entry, attribute):
-        claim_subtopic = entry.get(attribute.get('name'))
+        claim_subtopic = trim(entry.get(attribute.get('name')))
         claim_uid = entry.get('claim_uid')
         claim_condition = entry.get('claim_condition')
-        if claim_condition in ['Condition5', 'Condition6'] and claim_subtopic == '':
+        claim_topic = trim(entry.get('claim_topic'))
+        where = entry.get('where')
+        if claim_condition in ['Condition5', 'Condition6']:
+            if claim_subtopic == '':
                 self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'subtopic', claim_condition, claim_uid, entry.get('where'))
+                return False
+            # validate if claim_subtopic matches one in the user-queries
+            if responses.get('queries') is not None:
+                for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
+                    for entry in topic_list:
+                        if claim_subtopic == entry.get('subtopic') and claim_topic == entry.get('topic'):
+                            return True
+                self.record_event('UNEXPECTED_CLAIM_VALUE', 'subtopic', claim_subtopic, claim_uid, where)
                 return False
         return True
 
     def validate_claim_template(self, responses, schema, entry, attribute):
-        claim_template = entry.get(attribute.get('name'))
+        claim_template = trim(entry.get(attribute.get('name')))
         claim_uid = entry.get('claim_uid')
         claim_condition = entry.get('claim_condition')
-        if claim_condition in ['Condition5', 'Condition6'] and claim_template == '':
+        claim_topic = trim(entry.get('claim_topic'))
+        claim_subtopic = trim(entry.get('claim_subtopic'))
+        where = entry.get('where')
+        if claim_condition in ['Condition5', 'Condition6']:
+            if claim_template == '':
                 self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'claim_template', claim_condition, claim_uid, entry.get('where'))
                 return False
+            # validate if claim_template matches one in the user-queries
+            if responses.get('queries') is not None:
+                for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
+                    for entry in topic_list:
+                        if claim_subtopic == entry.get('subtopic') and claim_topic == entry.get('topic') and claim_template == entry.get('claim_template'):
+                            return True
+                self.record_event('UNEXPECTED_CLAIM_VALUE', 'claimTemplate', claim_template, claim_uid, where)
+                return False
+        return True
+
+    def validate_claim_topic(self, responses, schema, entry, attribute):
+        claim_topic = trim(entry.get(attribute.get('name')))
+        claim_uid = entry.get('claim_uid')
+        claim_condition = entry.get('claim_condition')
+        where = entry.get('where')
+        if responses.get('queries') is not None:
+            for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
+                for entry in topic_list:
+                    if claim_topic == entry.get('topic'):
+                        return True
+            self.record_event('UNEXPECTED_CLAIM_VALUE', 'topic', claim_topic, claim_uid, where)
+            return False
         return True
 
     def validate_cluster_type(self, responses, schema, entry, attribute):
@@ -288,7 +328,10 @@ class Validator(Object):
                         problem_field = 'day'
                         valid = False
         if not valid:
-            self.record_event('INVALID_DATE_RANGE', entry.get('subject_cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
+            if schema.get('name') in ['AIDA_PHASE3_TASK3_CT_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE']:
+                self.record_event('INVALID_DATE_RANGE', 'Claim', entry.get('claim_uid'), start_or_end_after, start_or_end_before, entry.get('where'))
+            else:
+                self.record_event('INVALID_DATE_RANGE', 'Cluster', entry.get('subject_cluster_id'), start_or_end_after, start_or_end_before, entry.get('where'))
         return valid
 
     def validate_date_start_and_end(self, responses, schema, entry, attribute):

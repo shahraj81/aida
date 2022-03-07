@@ -1,6 +1,6 @@
 claim_id	component_type	id	fieldname	value	correctness
 CLL0C04AJNP.001807	claimTopic	1	value	Non-Pharmaceutical Interventions (NPIs): Masks	--
-CLL0C04AJNP.001807	claimSubtopic	1	value	Mask Regulations	--
+CLL0C04AJNP.001807	claimSubtopic	1	value	Places where there are regulations for wearing masks to prevent the spread of COVID-19	--
 CLL0C04AJNP.001807	claimDescription	1	value	Aldi requires mask in store	--
 CLL0C04AJNP.001807	claimTemplate	1	value	Wearing masks is required in location/GPE/facility-x	NIL
 CLL0C04AJNP.001807	claimDocument	1	value	L0C04AJNP	--

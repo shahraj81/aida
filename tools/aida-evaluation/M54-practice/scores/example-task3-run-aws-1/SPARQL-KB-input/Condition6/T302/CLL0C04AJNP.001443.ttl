@@ -25,7 +25,7 @@ ldc:claim-CLL0C04AJNP.001443 a aida:Claim ;
     aida:naturalLanguageDescription "Masks required indoors" ;
     aida:sentiment aida:SentimentNeutralUnknown ;
     aida:sourceDocument "L0C04AJNP" ;
-    aida:subtopic "Mask Regulations" ;
+    aida:subtopic "Places where there are regulations for wearing masks to prevent the spread of COVID-19" ;
     aida:system ldc:LDCModelGenerator ;
     aida:topic "Non-Pharmaceutical Interventions (NPIs): Masks" ;
     aida:xVariable [ a aida:ClaimComponent ;
