@@ -109,12 +109,13 @@ class Validator(Object):
                 self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'subtopic', claim_condition, claim_uid, entry.get('where'))
                 return False
             # validate if claim_subtopic matches one in the user-queries
-            for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
-                for entry in topic_list:
-                    if claim_subtopic == entry.get('subtopic') and claim_topic == entry.get('topic'):
-                        return True
-            self.record_event('UNEXPECTED_CLAIM_VALUE', 'subtopic', claim_subtopic, claim_uid, where)
-            return False
+            if responses.get('queries') is not None:
+                for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
+                    for entry in topic_list:
+                        if claim_subtopic == entry.get('subtopic') and claim_topic == entry.get('topic'):
+                            return True
+                self.record_event('UNEXPECTED_CLAIM_VALUE', 'subtopic', claim_subtopic, claim_uid, where)
+                return False
         return True
 
     def validate_claim_template(self, responses, schema, entry, attribute):
@@ -129,12 +130,13 @@ class Validator(Object):
                 self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'claim_template', claim_condition, claim_uid, entry.get('where'))
                 return False
             # validate if claim_template matches one in the user-queries
-            for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
-                for entry in topic_list:
-                    if claim_subtopic == entry.get('subtopic') and claim_topic == entry.get('topic') and claim_template == entry.get('claim_template'):
-                        return True
-            self.record_event('UNEXPECTED_CLAIM_VALUE', 'claimTemplate', claim_template, claim_uid, where)
-            return False
+            if responses.get('queries') is not None:
+                for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
+                    for entry in topic_list:
+                        if claim_subtopic == entry.get('subtopic') and claim_topic == entry.get('topic') and claim_template == entry.get('claim_template'):
+                            return True
+                self.record_event('UNEXPECTED_CLAIM_VALUE', 'claimTemplate', claim_template, claim_uid, where)
+                return False
         return True
 
     def validate_claim_topic(self, responses, schema, entry, attribute):
@@ -142,11 +144,12 @@ class Validator(Object):
         claim_uid = entry.get('claim_uid')
         claim_condition = entry.get('claim_condition')
         where = entry.get('where')
-        for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
-            for entry in topic_list:
-                if claim_topic == entry.get('topic'):
-                    return True
-        self.record_event('UNEXPECTED_CLAIM_VALUE', 'topic', claim_topic, claim_uid, where)
+        if responses.get('queries') is not None:
+            for topic_list in responses.get('queries').get('conditions').get(claim_condition).get('topics').values():
+                for entry in topic_list:
+                    if claim_topic == entry.get('topic'):
+                        return True
+            self.record_event('UNEXPECTED_CLAIM_VALUE', 'topic', claim_topic, claim_uid, where)
         return False
 
     def validate_cluster_type(self, responses, schema, entry, attribute):
