@@ -1201,11 +1201,17 @@ class ResponseSet(Container):
     def validate_responses_task3(self):
         # validate if condition6 and condition7 claims have x-variable
         # validate that rank is unique
+        # mark claim as invalid if:
+        #   the outer claim is invalid, or
+        #   the rank is invalid
+        #   xVariable is missing (if required)
         ranks = {}
         for claim in self.get('claims').values():
             claim_uid = claim.get('claim_uid')
             claim_condition = claim.get('claim_condition')
             claim_query_topic_or_claim_frame_id = claim.get('claim_query_topic_or_claim_frame_id')
+            if claim.get('outer_claim').get('valid') == False:
+                claim.set('valid', False)
             rank_key = '{}:{}'.format(claim_condition, claim_query_topic_or_claim_frame_id)
             claim_rank = claim.get('claim_rank')
             if claim_rank:
@@ -1213,10 +1219,12 @@ class ResponseSet(Container):
                 if rank_key not in ranks:
                     ranks[rank_key] = {}
                 if rank in ranks.get(rank_key):
+                    claim.set('valid', False)
                     self.record_event('DUPLICATE_VALUE', 'rank: {}'.format(rank), claim.get('claim_rank').get('where'))
                 else:
                     ranks.setdefault(rank_key, {})[rank] = claim_uid
             else:
+                claim.set('valid', False)
                 self.record_event('MISSING_CLAIM_RANK', claim_uid)
             if claim_condition == 'Condition7': continue
             found = False
@@ -1224,6 +1232,7 @@ class ResponseSet(Container):
                 if claim_component.get('claim_component_type') == 'xVariable':
                     found = True
             if not found:
+                claim.set('valid', False)
                 self.record_event('MISSING_REQUIRED_CLAIM_FIELD', 'xVariable', claim_condition, claim_uid)
 
     def write_pooled_responses(self, output_dir):
@@ -1289,5 +1298,6 @@ class ResponseSet(Container):
             for linenum in sorted(file_container, key=int):
                 entry = self.get(input_filename).get(str(linenum))
                 if not entry.get('valid'): continue
+                if not entry.get('claim').get('valid'): continue
                 output_fh.write(entry.__str__())
             output_fh.close()

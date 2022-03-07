@@ -92,7 +92,10 @@ class Validator(Object):
 
     def validate_claim_relation(self, responses, schema, entry, attribute):
         allowed_values = ['supporting', 'refuting', 'related']
-        return self.validate_set_membership('claim_relation', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        valid = self.validate_set_membership('claim_relation', allowed_values, entry.get(attribute.get('name')), entry.get('where'))
+        if not valid:
+            entry.get('claim').set('valid', False)
+        return valid
 
     def validate_claim_sentiment_status(self, responses, schema, entry, attribute):
         allowed_values = ['SentimentPositive', 'SentimentNegative', 'SentimentMixed', 'SentimentNeutralUnknown']
@@ -150,7 +153,8 @@ class Validator(Object):
                     if claim_topic == entry.get('topic'):
                         return True
             self.record_event('UNEXPECTED_CLAIM_VALUE', 'topic', claim_topic, claim_uid, where)
-        return False
+            return False
+        return True
 
     def validate_cluster_type(self, responses, schema, entry, attribute):
         # Do not validate cluster type in Phase 3
