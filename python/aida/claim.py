@@ -20,6 +20,7 @@ class Claim(Object):
         self.claim_edge_subject_times = []
         self.claim_rank = None
         self.claim_time = None
+        self.valid = True
 
     def add(self, *args, **kwargs):
         key = args[0]

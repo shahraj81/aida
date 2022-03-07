@@ -13,6 +13,7 @@ from aida.response_set import ResponseSet
 from aida.encodings import Encodings
 from aida.core_documents import CoreDocuments
 from aida.document_mappings import DocumentMappings
+from aida.ta3_queryset import TA3QuerySet
 from aida.text_boundaries import TextBoundaries
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
@@ -684,7 +685,8 @@ def validate_responses(args):
         'video': video_boundaries
         }
 
-    responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task3')
+    queries = TA3QuerySet(logger, args.queries) if args.queries else None
+    responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task3', queries=queries)
     arf = AssessorReadableFormat(logger, responses, args.max_qnode_types, args.lenient)
     arf.write_output(args.output)
     num_warnings, num_errors = logger.get_stats()
@@ -699,6 +701,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate claims in assessor readable format.")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-n', '--lenient', action='store_true', default=True, help='Consider identity-qnode as type-qnode? (default: %(default)s)')
+    parser.add_argument('-q', '--queries', help='Specify the directory containing task3 user queries')
     parser.add_argument('-t', '--max_qnode_types', default=5, help='Specify the maximum number of qnode types allowed in output (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')

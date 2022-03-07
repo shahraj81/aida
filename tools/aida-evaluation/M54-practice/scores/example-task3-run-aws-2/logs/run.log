@@ -1,45 +1,45 @@
-03/02/2022 02:10:39 PM - run_task3_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task3_evaluation_pipeline.py, arguments:--run example-task3-run-aws-2 --runtype practice --aws_access_key_id __XXXXXXXXX__ --aws_secret_access_key __XXXXXXXXX__}
-03/02/2022 02:10:39 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Docker is using practice data.
-03/02/2022 02:10:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Inspecting the input directory.
-03/02/2022 02:10:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Downloading s3://aida-phase2-ta-performers/NIST/example-task3-run-2_202202281356_8b44c6185c3601a0c989ce45e6b50000.tgz.
-03/02/2022 02:10:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition5/CLL0C04C08B.000004/CLL0C04AJNP.001781.ttl
-03/02/2022 02:10:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Ignoring invalid KB: /Condition5/CLL0C04C08B.000004/CLL0C04AJNP.001443.ttl
-03/02/2022 02:10:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition5/CLL0C04C08B.000004/CLL0C04C08B.000004.ranking.tsv
-03/02/2022 02:10:40 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition6/T302/T302.ranking.tsv
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition6/T302/CLL0C04AJNP.001833.ttl
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition6/T302/CLL0C04AJNP.001443.ttl
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition7/C314/C314.ranking.tsv
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition7/C314/CLL0C04AJNP.001781.ttl
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition7/C314/CLL0C04AJNP.001807.ttl
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Verifying input directory structure.
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying SPARQL queries to be applied.
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating directory: /output/SPARQL-output/Condition5
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating output directory: /output/SPARQL-output/Condition5/CLL0C04C08B.000004
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition5 (1/3) CLL0C04C08B.000004 (1/1) CLL0C04AJNP.001781.ttl (1/1).
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/Condition5/CLL0C04C08B.000004/intermediate.
-03/02/2022 02:10:41 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001781.ttl into GraphDB.
-03/02/2022 02:10:45 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Starting GraphDB
-03/02/2022 02:10:50 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Stopping GraphDB.
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - SPARQL output generated.
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating directory: /output/SPARQL-output/Condition6
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating output directory: /output/SPARQL-output/Condition6/T302
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition6 (2/3) T302 (1/1) CLL0C04AJNP.001833.ttl (1/2).
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/Condition6/T302/intermediate.
-03/02/2022 02:10:59 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001833.ttl into GraphDB.
-03/02/2022 02:11:18 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition6 (2/3) T302 (1/1) CLL0C04AJNP.001443.ttl (2/2).
-03/02/2022 02:11:18 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001443.ttl into GraphDB.
-03/02/2022 02:11:36 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating directory: /output/SPARQL-output/Condition7
-03/02/2022 02:11:36 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating output directory: /output/SPARQL-output/Condition7/C314
-03/02/2022 02:11:36 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition7 (3/3) C314 (1/1) CLL0C04AJNP.001807.ttl (1/2).
-03/02/2022 02:11:36 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/Condition7/C314/intermediate.
-03/02/2022 02:11:36 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001807.ttl into GraphDB.
-03/02/2022 02:11:55 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition7 (3/3) C314 (1/1) CLL0C04AJNP.001781.ttl (2/2).
-03/02/2022 02:12:16 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Cleaning SPARQL output.
-03/02/2022 02:12:16 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Merging SPARQL output.
-03/02/2022 02:12:16 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Validating SPARQL output.
-03/02/2022 02:12:19 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Generating ARF output.
-03/02/2022 02:12:22 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Done.
+03/07/2022 01:12:54 PM - run_task3_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task3_evaluation_pipeline.py, arguments:--run example-task3-run-aws-2 --runtype practice --aws_access_key_id __XXXXXXXXX__ --aws_secret_access_key __XXXXXXXXX__}
+03/07/2022 01:12:54 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Docker is using practice data.
+03/07/2022 01:12:55 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Inspecting the input directory.
+03/07/2022 01:12:55 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Downloading s3://aida-phase2-ta-performers/NIST/example-task3-run-2_202202281356_8b44c6185c3601a0c989ce45e6b50000.tgz.
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition5/CLL0C04C08B.000004/CLL0C04AJNP.001781.ttl
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Ignoring invalid KB: /Condition5/CLL0C04C08B.000004/CLL0C04AJNP.001443.ttl
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition5/CLL0C04C08B.000004/CLL0C04C08B.000004.ranking.tsv
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition6/T302/T302.ranking.tsv
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition6/T302/CLL0C04AJNP.001833.ttl
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition6/T302/CLL0C04AJNP.001443.ttl
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition7/C314/C314.ranking.tsv
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition7/C314/CLL0C04AJNP.001781.ttl
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying /Condition7/C314/CLL0C04AJNP.001807.ttl
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Verifying input directory structure.
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Copying SPARQL queries to be applied.
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating directory: /output/SPARQL-output/Condition5
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating output directory: /output/SPARQL-output/Condition5/CLL0C04C08B.000004
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition5 (1/3) CLL0C04C08B.000004 (1/1) CLL0C04AJNP.001781.ttl (1/1).
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/Condition5/CLL0C04C08B.000004/intermediate.
+03/07/2022 01:12:56 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001781.ttl into GraphDB.
+03/07/2022 01:13:00 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Starting GraphDB
+03/07/2022 01:13:05 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Moving output out of the intermediate directory
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Removing the intermediate directory.
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Stopping GraphDB.
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - SPARQL output generated.
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating directory: /output/SPARQL-output/Condition6
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating output directory: /output/SPARQL-output/Condition6/T302
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition6 (2/3) T302 (1/1) CLL0C04AJNP.001833.ttl (1/2).
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/Condition6/T302/intermediate.
+03/07/2022 01:13:14 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001833.ttl into GraphDB.
+03/07/2022 01:13:31 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition6 (2/3) T302 (1/1) CLL0C04AJNP.001443.ttl (2/2).
+03/07/2022 01:13:31 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001443.ttl into GraphDB.
+03/07/2022 01:13:50 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating directory: /output/SPARQL-output/Condition7
+03/07/2022 01:13:50 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating output directory: /output/SPARQL-output/Condition7/C314
+03/07/2022 01:13:50 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition7 (3/3) C314 (1/1) CLL0C04AJNP.001807.ttl (1/2).
+03/07/2022 01:13:50 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Creating /output/SPARQL-output/Condition7/C314/intermediate.
+03/07/2022 01:13:50 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Loading CLL0C04AJNP.001807.ttl into GraphDB.
+03/07/2022 01:14:09 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Applying queries to Condition7 (3/3) C314 (1/1) CLL0C04AJNP.001781.ttl (2/2).
+03/07/2022 01:14:29 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Cleaning SPARQL output.
+03/07/2022 01:14:29 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Merging SPARQL output.
+03/07/2022 01:14:29 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Validating SPARQL output.
+03/07/2022 01:14:32 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Generating ARF output.
+03/07/2022 01:14:35 PM - run_task3_evaluation_pipeline.py - INFO - DEFAULT_INFO - Done.

@@ -25,7 +25,7 @@ ldc:claim-CLL0C049LVH.001531 a aida:Claim ;
     aida:naturalLanguageDescription "It's a myth that coronavirus only affects older people" ;
     aida:sentiment aida:SentimentNeutralUnknown ;
     aida:sourceDocument "L0C049LVH" ;
-    aida:subtopic "Who contracts the virus" ;
+    aida:subtopic "Who can contract COVID-19" ;
     aida:system ldc:LDCModelGenerator ;
     aida:topic "Contracting the virus" ;
     aida:xVariable [ a aida:ClaimComponent ;

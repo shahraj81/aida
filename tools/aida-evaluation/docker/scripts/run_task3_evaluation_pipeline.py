@@ -366,6 +366,7 @@ def main(args):
     cmd = 'cd {python_scripts} && \
             python3.9 validate_responses.py \
             --log {log_file} \
+            --queries {queries} \
             --task task3 \
             {log_specifications} \
             {encoding_modality} \
@@ -379,6 +380,7 @@ def main(args):
             {sparql_merged_output} \
             {sparql_valid_output}'.format(python_scripts=python_scripts,
                                            log_file=log_file,
+                                           queries='/data/user-queries',
                                            log_specifications=log_specifications,
                                            encoding_modality=encoding_modality,
                                            coredocs=coredocs,
@@ -402,6 +404,7 @@ def main(args):
     cmd = 'cd {python_scripts} && \
             python3.9 generate_arf.py \
             --log {log_file} \
+            --queries {queries} \
             {log_specifications} \
             {encoding_modality} \
             {coredocs} \
@@ -414,6 +417,7 @@ def main(args):
             {sparql_valid_output} \
             {arf_output}'.format(python_scripts=python_scripts,
                                            log_file=log_file,
+                                           queries='/data/user-queries',
                                            log_specifications=log_specifications,
                                            encoding_modality=encoding_modality,
                                            coredocs=coredocs,

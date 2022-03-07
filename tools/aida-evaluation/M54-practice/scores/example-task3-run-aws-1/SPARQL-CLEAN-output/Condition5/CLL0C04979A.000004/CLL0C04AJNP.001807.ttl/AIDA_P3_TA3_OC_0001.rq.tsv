@@ -1,2 +1,2 @@
 ?root_uid	?claim_id	?topic	?subtopic	?claim_template	?description	?epistemic_status	?sentiment_status
-L0C04AJNP	CLL0C04AJNP.001807	Non-Pharmaceutical Interventions (NPIs): Masks	Mask Regulations	Wearing masks is required in location/GPE/facility-x	Aldi requires mask in store	EpistemicTrueCertain	SentimentNeutralUnknown
+L0C04AJNP	CLL0C04AJNP.001807	Non-Pharmaceutical Interventions (NPIs): Masks	Places where there are regulations for wearing masks to prevent the spread of COVID-19	Wearing masks is required in location/GPE/facility-x	Aldi requires mask in store	EpistemicTrueCertain	SentimentNeutralUnknown

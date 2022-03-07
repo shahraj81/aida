@@ -51,7 +51,7 @@ def get_entrypoints(entry):
         entrypoints['kbid'][augmented_kbids] = 1
     name_variants = entry.get('name_variants').strip()
     if name_variants != '':
-        for name_variant in name_variants.split(','):
+        for name_variant in name_variants.split('),'):
             cleaned_name_variant = clean(name_variant)
             if cleaned_name_variant != '':
                 entrypoints['name'][cleaned_name_variant] = 1
