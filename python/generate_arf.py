@@ -325,6 +325,8 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def get_ObjectHandle(self, entry):
         time_assertion_entry = self.get('corresponding_time_assertion', entry)
+        if time_assertion_entry is None:
+            return
         date_range = {}
         date_types = ['start_after', 'start_before', 'end_after', 'end_before']
         for date_type in date_types:
@@ -383,7 +385,7 @@ class ClaimTemporalKEs(ClaimKEs):
                 value = str(self.get(field_name, entry))
             line[field_name] = value
 
-        if line.get('ObjectHandle') == '0001-01-01;9999-12-31;0001-01-01;9999-12-31':
+        if line.get('ObjectHandle') in ['0001-01-01;9999-12-31;0001-01-01;9999-12-31', 'None']:
             return
 
         line_str = '\t'.join([line.get(f) for f in self.get('fields')])
@@ -490,7 +492,8 @@ class EventOrRelationFrame(Object):
         line2 = event_or_relation_type
         line3 = '\tUID: {uid}'.format(uid=uid)
         lines = [line1, line2, line3]
-        lines.append(self.get('date_range_str'))
+        if self.get('date_range') is not None:
+            lines.append(self.get('date_range_str'))
         fillers = self.get('fillers')
         argnum = 0
         for predicate, filler_list in fillers.items():
