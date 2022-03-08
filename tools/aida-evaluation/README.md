@@ -430,6 +430,7 @@ The `task3` logs directory contains the following log files:
 # Revision History
 
 ## 03/07/2022:
+* A bug was fixed that was causing the ARF generator to crash
 * Task3 validator expanded to:
   * clarify error message(s)
   * match topic, subtopic and claimTemplate against those in user-queries
