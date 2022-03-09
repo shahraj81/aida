@@ -79,7 +79,7 @@ RUN pip3.9 install numpy
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=9.10.2
+ARG version=9.10.3
 ARG edition=free
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
