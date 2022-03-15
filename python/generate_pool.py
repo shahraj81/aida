@@ -15,6 +15,7 @@ from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.logger import Logger
 from aida.object import Object
 from aida.task2_pool import Task2Pool
+from aida.task3_pool import Task3Pool
 from aida.text_boundaries import TextBoundaries
 from aida.video_boundaries import VideoBoundaries
 
@@ -144,8 +145,59 @@ class Task2(Object):
         parser.set_defaults(myclass=myclass)
         return parser
 
+class Task3(Object):
+    """
+    Class representing Task3 pooler.
+    """
+    def __init__(self, log, batch_id, previous_pools, log_specifications, queries_to_pool, runs_to_pool, input_dir, output_dir):
+        check_for_paths_existance([
+                 log_specifications,
+                 runs_to_pool,
+                 queries_to_pool,
+                 input_dir
+                 ])
+        check_for_paths_non_existance(['{}-{}'.format(output_dir, self.get('batch_id'))])
+        self.log_filename = log
+        self.batch_id = batch_id
+        self.previous_pools = previous_pools
+        self.log_specifications = log_specifications
+        self.runs_to_pool = runs_to_pool
+        self.queries_to_pool = queries_to_pool
+        self.input = input_dir
+        self.output = output_dir
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specifications'),
+                        sys.argv)
+
+    def __call__(self):
+        logger = self.get('logger')
+        pool = Task3Pool(logger,
+                         runs_to_pool_file=self.get('runs_to_pool'),
+                         queries_to_pool_file=self.get('queries_to_pool'),
+                         batch_id=self.get('batch_id'),
+                         input_dir=self.get('input'),
+                         previous_pools=self.get('previous_pools'),
+                         output_dir=self.get('output'))
+        pool.write_output('{}-{}'.format(self.get('output'), self.get('batch_id')))
+        exit(ALLOK_EXIT_CODE)
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-b', '--batch_id', default='BATCH1', help='Specify the batch ID (default: %(default)s)')
+        parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-p', '--previous_pools', help='Specify comma-separated list of the directories containing previous pool(s), if any')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('log_specifications', type=str, help='File containing error specifications')
+        parser.add_argument('runs_to_pool', type=str, help='File containing IDs of runs to be included in the pool')
+        parser.add_argument('queries_to_pool', type=str, help='File containing list of (tab-separated) condition-query pairs to be included in the pool')
+        parser.add_argument('input_dir', type=str, help='Directory containing all the runs (this directory contains the output of AIDA evaluation docker when applied to the runs)')
+        parser.add_argument('output_dir', type=str, help='Specify the directory (prefix) to which the output should be written')
+        parser.set_defaults(myclass=myclass)
+        return parser
+
 myclasses = [
     Task2,
+    Task3
     ]
 
 def main(args=sys.argv[1:]):
