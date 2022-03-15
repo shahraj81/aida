@@ -265,19 +265,20 @@ class ClaimMappings(Object):
             self.set(key, kwargs[key])
         self.mappings = []
 
-    def add(self, condition, query_id, path, claim_id, claim_uid):
+    def add(self, condition, query_id, run_id, claim_id, runs_directory, claim_uid):
         mappings = self.get('mappings')
         mapping = ClaimMapping(self.get('logger'),
                                condition=condition,
                                query_id=query_id,
-                               path=path,
-                               claim_id=claim_id,
-                               claim_uid=claim_uid)
+                               run_id=run_id,
+                               runs_directory=runs_directory,
+                               system_claim_id=claim_id,
+                               pool_claim_uid=claim_uid)
         mapping.set('header', self.get('header'))
         mappings.append(mapping)
 
     def get_header(self):
-        return ['claim_uid', 'condition', 'query_id', 'path', 'claim_id']
+        return ['pool_claim_uid', 'condition', 'query_id', 'run_id', 'runs_directory', 'system_claim_id']
 
     def write_output(self, output_dir):
         def order(mapping):
@@ -299,14 +300,14 @@ class Claims(Object):
         self.claims = {}
         self.mappings = ClaimMappings(logger)
 
-    def add(self, condition, query_id, path, claim_id):
+    def add(self, condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir):
         claims = self.get('claims')
-        claim = Claim(self.get('logger'), condition=condition, query_id=query_id, path=path, claim_id=claim_id)
+        claim = Claim(self.get('logger'), condition=condition, query_id=query_id, path=condition_and_query_dir, claim_id=claim_id)
         claim_uid = claim.get('uid')
         if claim_uid in claims:
-            claims.get(claim_uid).add_duplicate(path, claim_id)
+            claims.get(claim_uid).add_duplicate(condition_and_query_dir, claim_id)
         claims[claim_uid] = claim
-        self.get('mappings').add(condition, query_id, path, claim_id, claim_uid)
+        self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid)
 
     def write_output(self, output_dir):
         for claim in self.get('claims').values():
@@ -359,8 +360,7 @@ class Task3Pool(Object):
                         for rank in sorted(ranks):
                             if rank <= depth:
                                 claim_id = ranks.get(rank)
-                                path = os.path.join(condition_dir, query_id)
-                                self.get('claims').add(condition, query_id, path, claim_id)
+                                self.get('claims').add(condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir)
 
     def write_output(self, output_dir):
         self.get('claims').write_output(output_dir)
