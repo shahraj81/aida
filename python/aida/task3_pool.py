@@ -192,13 +192,21 @@ class ClaimEdges(Object):
         self.file_handler = FileHandler(logger, self.get('filename'))
 
     def to_string(self, claim_id=None):
+        def order(entry):
+            header = list(entry.get('header').get('columns'))
+            header.remove('ClaimID')
+            header.remove('JustificationNum')
+            return '\t'.join(entry.get(f) for f in header)
         header = self.get('file_handler').get('header')
         retVal = header.get('line')
-        for entry in self.get('file_handler'):
+        i = 1
+        for entry in sorted(self.get('file_handler'), key=order):
             if claim_id:
                 entry.set('ClaimID', claim_id)
+            entry.set('JustificationNum', str(i))
             line = '\t'.join([entry.get(f) for f in header.get('columns')])
             retVal = '{retVal}\n{line}'.format(retVal=retVal, line=line)
+            i += 1
         return retVal
 
     def write_output(self, output_dir, condition, query_id, claim_id):
