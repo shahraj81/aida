@@ -270,7 +270,7 @@ class ClaimMappings(Object):
             self.set(key, kwargs[key])
         self.mappings = []
 
-    def add(self, condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations):
+    def add(self, condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations, in_previous_pools):
         def order(claim_relation):
             lookup = {
                 'ontopic': 1,
@@ -289,14 +289,16 @@ class ClaimMappings(Object):
                                runs_directory=runs_directory,
                                run_claim_id=claim_id,
                                pool_claim_uid=claim_uid,
-                               claim_relations=','.join(sorted(claim_relations, key=order)))
+                               claim_relations=','.join(sorted(claim_relations, key=order)),
+                               in_previous_pools=str(in_previous_pools))
         mapping.set('header', self.get('header'))
         mappings.append(mapping)
 
     def get_header(self):
-        return ['pool_claim_uid', 'condition', 'query_id', 'claim_relations', 'run_claim_id', 'run_id', 'runs_directory']
+        return ['pool_claim_uid', 'condition', 'query_id', 'claim_relations', 'run_claim_id', 'run_id', 'runs_directory', 'in_previous_pools']
 
     def write_output(self, output_dir):
+        os.makedirs(output_dir, exist_ok=True)
         def order(mapping):
             return mapping.__str__()
         lines = ['\t'.join(self.get('header'))]
@@ -322,12 +324,34 @@ class Claims(Object):
         claim_uid = claim.get('uid')
         if claim_uid not in claims:
             claims[claim_uid] = claim
-        self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations)
+        in_previous_pools = True if self.get('previous_pools').contains(claim_uid) else False
+        self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations, in_previous_pools)
 
     def write_output(self, output_dir):
-        for claim in self.get('claims').values():
-            claim.write_output(output_dir)
+        for claim_uid, claim in self.get('claims').items():
+            if not self.get('previous_pools').contains(claim_uid):
+                claim.write_output(output_dir)
         self.get('mappings').write_output(output_dir)
+
+class PreviousPools(Object):
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger)
+        for key in kwargs:
+            self.set(key, kwargs[key])
+        self.claims = set()
+        self.load()
+
+    def contains(self, claim_uid):
+        if claim_uid in self.get('claims'):
+            return True
+        return False
+
+    def load(self):
+        for path in self.get('previous_pools').split(','):
+            for filename in os.listdir(os.path.join(path, 'pool')):
+                if filename.endswith('-outer-claim.tab'):
+                    claim_uid = filename.split('-')[0]
+                    self.get('claims').add(claim_uid)
 
 class Task3Pool(Object):
     """
@@ -337,7 +361,7 @@ class Task3Pool(Object):
         super().__init__(logger)
         for key in kwargs:
             self.set(key, kwargs[key])
-        self.claims = Claims(logger)
+        self.claims = Claims(logger, previous_pools=PreviousPools(logger, previous_pools=self.get('previous_pools')))
         self.load_responses()
 
     def load_responses(self):
