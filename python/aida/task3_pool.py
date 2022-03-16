@@ -330,13 +330,26 @@ class Task3Pool(Object):
         self.load_responses()
 
     def load_responses(self):
+        def get_expanded_claim_relations(provided=None):
+            claimrelations = set(['ontopic'])
+            if provided is not None:
+                claimrelations.add(provided)
+                lookup = {
+                    'refuting':         ['nonsupporting'],
+                    'supporting':       ['nonrefuting'],
+                    'nonrefuting':      ['supporting'],
+                    'nonsupporting':    ['refuting'],
+                    'related':          ['nonsupporting', 'nonrefuting']
+                    }
+                claimrelations.update(lookup.get(provided))
+            return claimrelations
         logger = self.get('logger')
         queries_to_pool = {}
         for entry in FileHandler(logger, self.get('queries_to_pool_file')):
             condition = entry.get('condition')
             query_id = entry.get('query_id')
-            depth = int(entry.get('depth'))
-            queries_to_pool['{}:{}'.format(condition, query_id)] = int(depth)
+            depth = entry.get('depth')
+            queries_to_pool['{}:{}'.format(condition, query_id)] = depth
         runs_directory = self.get('input_dir')
         for entry in FileHandler(logger, self.get('runs_to_pool_file')):
             run_id = entry.get('run_id')
@@ -347,7 +360,10 @@ class Task3Pool(Object):
                     condition_and_query = '{}:{}'.format(condition, query_id)
                     if condition_and_query in queries_to_pool:
                         condition_and_query_dir = os.path.join(condition_dir, query_id)
-                        depth = queries_to_pool.get(condition_and_query)
+                        depth_left = {}
+                        for claim_relation_and_depth in queries_to_pool.get(condition_and_query).split(','):
+                            c, d = claim_relation_and_depth.split(':')
+                            depth_left[c] = int(d)
                         ranking_file = '{path}/{query_id}.ranking.tsv'.format(path=condition_and_query_dir.replace('ARF-output', 'SPARQL-VALID-output'),
                                                                               query_id=query_id)
                         ranks = {}
@@ -357,14 +373,27 @@ class Task3Pool(Object):
                                 lineno += 1
                                 elements = line.strip().split('\t')
                                 claim_id, rank = elements[1], int(elements[2])
+                                provided = elements[3] if condition == 'Condition5' else None
+                                claim_relations = get_expanded_claim_relations(provided=provided)
                                 if rank in ranks:
                                     # critical error
                                     self.record_event('DUPLICATE_RANK', {'filename':ranking_file, 'lineno':lineno})
-                                ranks[rank] = claim_id
+                                ranks[rank] = {
+                                    'claim_id': claim_id,
+                                    'claim_relations': claim_relations
+                                    }
                         for rank in sorted(ranks):
-                            if rank <= depth:
-                                claim_id = ranks.get(rank)
+                            claim_id = ranks.get(rank).get('claim_id')
+                            claim_relations = ranks.get(rank).get('claim_relations')
+                            include_in_pool = False
+                            for claim_relation in claim_relations:
+                                if depth_left.get(claim_relation) > 0:
+                                    include_in_pool = True
+                            if include_in_pool:
                                 self.get('claims').add(condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir)
+                                for claim_relation in claim_relations:
+                                    if depth_left.get(claim_relation) > 0:
+                                        depth_left[claim_relation] -= 1
 
     def write_output(self, output_dir):
         self.get('claims').write_output(output_dir)
