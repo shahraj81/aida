@@ -170,8 +170,8 @@ class OuterClaim(Object):
             lines.append(line)
         return '\n'.join(lines)
 
-    def write_output(self, output_dir, condition, query_id, claim_id):
-        path = os.path.join(output_dir, condition, query_id)
+    def write_output(self, output_dir, claim_id):
+        path = os.path.join(output_dir, 'pool')
         os.makedirs(path, exist_ok=True)
         output_filename = os.path.join(path, '{}-outer-claim.tab'.format(claim_id) )
         with open(output_filename, 'w') as program_output:
@@ -209,8 +209,8 @@ class ClaimEdges(Object):
             i += 1
         return retVal
 
-    def write_output(self, output_dir, condition, query_id, claim_id):
-        path = os.path.join(output_dir, condition, query_id)
+    def write_output(self, output_dir, claim_id):
+        path = os.path.join(output_dir, 'pool')
         os.makedirs(path, exist_ok=True)
         output_filename = os.path.join(path, '{}-raw-kes.tab'.format(claim_id) )
         with open(output_filename, 'w') as program_output:
@@ -242,9 +242,9 @@ class Claim(Object):
         self.set('outer_claim', OuterClaim(logger, filename=os.path.join(path, '{}-outer-claim.tab'.format(claim_id))))
         self.set('claim_edges', ClaimEdges(logger, filename=os.path.join(path, '{}-raw-kes.tab'.format(claim_id))))
 
-    def write_output(self, output_dir, condition, query_id):
-        self.get('outer_claim').write_output(output_dir, condition, query_id, self.get('uid'))
-        self.get('claim_edges').write_output(output_dir, condition, query_id, self.get('uid'))
+    def write_output(self, output_dir):
+        self.get('outer_claim').write_output(output_dir, self.get('uid'))
+        self.get('claim_edges').write_output(output_dir, self.get('uid'))
 
     def __eq__(self, other):
         return self.get('uid') == other.get('uid')
@@ -270,20 +270,31 @@ class ClaimMappings(Object):
             self.set(key, kwargs[key])
         self.mappings = []
 
-    def add(self, condition, query_id, run_id, claim_id, runs_directory, claim_uid):
+    def add(self, condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations):
+        def order(claim_relation):
+            lookup = {
+                'ontopic': 1,
+                'supporting': 2,
+                'refuting': 3,
+                'related': 4,
+                'nonrefuting': 5,
+                'nonsupporting': 6
+                }
+            return lookup.get(claim_relation)
         mappings = self.get('mappings')
         mapping = ClaimMapping(self.get('logger'),
                                condition=condition,
                                query_id=query_id,
                                run_id=run_id,
                                runs_directory=runs_directory,
-                               system_claim_id=claim_id,
-                               pool_claim_uid=claim_uid)
+                               run_claim_id=claim_id,
+                               pool_claim_uid=claim_uid,
+                               claim_relations=','.join(sorted(claim_relations, key=order)))
         mapping.set('header', self.get('header'))
         mappings.append(mapping)
 
     def get_header(self):
-        return ['pool_claim_uid', 'condition', 'query_id', 'run_id', 'runs_directory', 'system_claim_id']
+        return ['pool_claim_uid', 'condition', 'query_id', 'claim_relations', 'run_claim_id', 'run_id', 'runs_directory']
 
     def write_output(self, output_dir):
         def order(mapping):
@@ -305,17 +316,17 @@ class Claims(Object):
         self.claims = {}
         self.mappings = ClaimMappings(logger)
 
-    def add(self, condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir):
+    def add(self, condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir, claim_relations):
         claims = self.get('claims')
         claim = Claim(self.get('logger'), condition=condition, query_id=query_id, path=condition_and_query_dir, claim_id=claim_id)
         claim_uid = claim.get('uid')
         if claim_uid not in claims:
             claims[claim_uid] = claim
-        self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid)
+        self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations)
 
     def write_output(self, output_dir):
         for claim in self.get('claims').values():
-            claim.write_output(output_dir, claim.get('condition'), claim.get('query_id'))
+            claim.write_output(output_dir)
         self.get('mappings').write_output(output_dir)
 
 class Task3Pool(Object):
@@ -390,7 +401,7 @@ class Task3Pool(Object):
                                 if depth_left.get(claim_relation) > 0:
                                     include_in_pool = True
                             if include_in_pool:
-                                self.get('claims').add(condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir)
+                                self.get('claims').add(condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir, claim_relations)
                                 for claim_relation in claim_relations:
                                     if depth_left.get(claim_relation) > 0:
                                         depth_left[claim_relation] -= 1
