@@ -29,10 +29,11 @@ class FieldValue(Object):
             values[value] = entry
 
     def __str__(self):
+        def to_string(entry):
+            return '\t'.join([entry.get(f) for f in ['fieldname', 'value', 'correctness']])
         lines = []
-        for entry in self.get('values').values():
-            line = '\t'.join([entry.get(f) for f in ['fieldname', 'value', 'correctness']])
-            lines.append(line)
+        for entry in sorted(self.get('values').values(), key=to_string):
+            lines.append(to_string(entry))
         return lines
 
 class FieldValues(Object):
@@ -195,7 +196,7 @@ class ClaimEdges(Object):
         retVal = header.get('line')
         for entry in self.get('file_handler'):
             if claim_id:
-                entry.set('claim_id', claim_id)
+                entry.set('ClaimID', claim_id)
             line = '\t'.join([entry.get(f) for f in header.get('columns')])
             retVal = '{retVal}\n{line}'.format(retVal=retVal, line=line)
         return retVal
@@ -205,7 +206,7 @@ class ClaimEdges(Object):
         os.makedirs(path, exist_ok=True)
         output_filename = os.path.join(path, '{}-raw-kes.tab'.format(claim_id) )
         with open(output_filename, 'w') as program_output:
-            for line in self.to_string(claim_id):
+            for line in self.to_string(claim_id=claim_id):
                 program_output.write(line)
 
     def __str__(self):
@@ -219,13 +220,9 @@ class Claim(Object):
         super().__init__(logger)
         for key in kwargs:
             self.set(key, kwargs[key])
-        self.duplicates = set()
         self.outer_claim = None
         self.claim_edges = None
         self.load()
-
-    def add_duplicate(self, path, claim_id):
-        self.get('duplicates').add((path, claim_id))
 
     def get_uid(self):
         return get_md5_from_string(self.__str__())
@@ -304,9 +301,8 @@ class Claims(Object):
         claims = self.get('claims')
         claim = Claim(self.get('logger'), condition=condition, query_id=query_id, path=condition_and_query_dir, claim_id=claim_id)
         claim_uid = claim.get('uid')
-        if claim_uid in claims:
-            claims.get(claim_uid).add_duplicate(condition_and_query_dir, claim_id)
-        claims[claim_uid] = claim
+        if claim_uid not in claims:
+            claims[claim_uid] = claim
         self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid)
 
     def write_output(self, output_dir):
