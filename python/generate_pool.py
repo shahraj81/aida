@@ -156,7 +156,7 @@ class Task3(Object):
                  queries_to_pool,
                  input_dir
                  ])
-        check_for_paths_non_existance(['{}-{}'.format(output_dir, self.get('batch_id'))])
+        check_for_paths_non_existance(['{}-{}'.format(output_dir, batch_id)])
         self.log_filename = log
         self.batch_id = batch_id
         self.previous_pools = previous_pools
