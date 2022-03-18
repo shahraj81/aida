@@ -28,6 +28,12 @@ class FieldValue(Object):
         else:
             values[value] = entry
 
+    def get_fieldvalues(self):
+        names = []
+        for entry in self.get('values').values():
+            names.append(entry.get('value'))
+        return names
+
     def __str__(self):
         def to_string(entry):
             return '\t'.join([entry.get(f) for f in ['fieldname', 'value', 'correctness']])
@@ -49,6 +55,9 @@ class FieldValues(Object):
         fieldvalue = fieldvalues.setdefault(fieldname, FieldValue(self.get('logger'), fieldname=fieldname))
         fieldvalue.add(entry)
 
+    def get_values(self, fieldname):
+        return self.get('fieldvalues').get(fieldname).get('fieldvalues')
+
     def __str__(self):
         lines = []
         for fieldvalue in self.get('fieldvalues').values():
@@ -68,6 +77,9 @@ class ClaimComponentSetMember(Object):
     def get_md5(self):
         return get_md5_from_string('\n'.join(sorted(self.__str__())))
 
+    def get_values(self, fieldname):
+        return self.get('fieldvalues').get('values', fieldname)
+
     def __str__(self):
         return self.get('fieldvalues').__str__()
 
@@ -86,6 +98,12 @@ class ClaimComponentSet(Object):
         index = int(entry.get('id')) - 1
         member = members.setdefault(index, ClaimComponentSetMember(self.get('logger'), component_type=self.get('component_type')))
         member.add(entry)
+
+    def get_fieldvalues(self, fieldname):
+        names = []
+        for member in self.get('members').values():
+            names.extend(member.get('values', fieldname))
+        return names
 
     def __str__(self):
         members = {}
@@ -119,6 +137,9 @@ class ClaimComponents(Object):
         component_set = components.setdefault(component_type, ClaimComponentSet(self.get('logger'), component_type=component_type))
         component_set.add(entry)
 
+    def get_fieldvalues(self, component_name, fieldname):
+        return [] if not component_name in self.get('components') else self.get('components').get(component_name).get('fieldvalues', fieldname)
+
     def load(self):
         for entry in self.get('file_handler'):
             self.add_component_entry(entry)
@@ -134,9 +155,10 @@ class ClaimComponents(Object):
                 'claimEpistemic': 6,
                 'claimSentiment': 7,
                 'claimer': 8,
-                'claimerAffliation': 9,
-                'xVariable': 10,
-                'date': 11,
+                'claimerAffiliation': 9,
+                'claimMedium': 10,
+                'xVariable': 11,
+                'date': 12,
                 }
             if component_type not in order_map:
                 print("Component type: '{}' not found in lookup".format(component_type))
@@ -158,6 +180,9 @@ class OuterClaim(Object):
             self.set(key, kwargs[key])
         self.file_handler = FileHandler(logger, self.get('filename'))
         self.components = ClaimComponents(logger, file_handler=self.get('file_handler'))
+
+    def get_fieldvalues(self, component_name, fieldname):
+        return self.get('components').get('fieldvalues', component_name, fieldname)
 
     def to_string(self, claim_id=None):
         header = self.get('file_handler').get('header')
@@ -235,6 +260,28 @@ class Claim(Object):
     def get_uid(self):
         return get_md5_from_string(self.__str__())
 
+    def get_human_readable(self):
+        outer_claim = self.get('outer_claim')
+        claimer = outer_claim.get('fieldvalues', 'claimer', 'name')
+        claimLocation = outer_claim.get('fieldvalues', 'claimLocation', 'name')
+        claimMedium = outer_claim.get('fieldvalues', 'claimMedium', 'name')
+        claimTemplate = ','.join(outer_claim.get('fieldvalues', 'claimTemplate', 'value'))
+        if claimTemplate == '':
+            return
+        claimTemplate = claimTemplate.replace('x', '<{xVariable}>')
+        claimTemplate = claimTemplate.replace('X', '<{xVariable}>')
+        xVariable = ','.join(outer_claim.get('fieldvalues', 'xVariable', 'name'))
+        date = outer_claim.get('fieldvalues', 'date', 'range')
+        template = 'At <{place}> place using <{medium}> medium during <{date}>, <{claimer}> claims that {claimTemplate}'
+        human_readable = template.format(
+            place = ','.join(claimLocation),
+            medium = ','.join(claimMedium),
+            date = ','.join(date),
+            claimer = ','.join(claimer),
+            claimTemplate = claimTemplate.format(xVariable=xVariable)
+            )
+        return human_readable
+
     def load(self):
         logger = self.get('logger')
         path = self.get('path')
@@ -297,6 +344,13 @@ class ClaimMappings(Object):
     def get_header(self):
         return ['pool_claim_uid', 'condition', 'query_id', 'claim_relations', 'run_claim_id', 'run_id', 'runs_directory', 'in_previous_pools']
 
+    def get_claim_mappings(self, claim_uid):
+        mappings = []
+        for mapping in self.get('mappings'):
+            if mapping.get('pool_claim_uid') == claim_uid:
+                mappings.append(mapping)
+        return mappings
+
     def write_output(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)
         def order(mapping):
@@ -328,10 +382,39 @@ class Claims(Object):
         self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations, in_previous_pools)
 
     def write_output(self, output_dir):
+        header = '{condition}\t{query}\t{run_id}\t{run_claim_id}\t{claim_relations}'
         for claim_uid, claim in self.get('claims').items():
             if not self.get('previous_pools').contains(claim_uid):
                 claim.write_output(output_dir)
         self.get('mappings').write_output(output_dir)
+        with open(os.path.join(output_dir, 'human-readable-format.tab'), 'w') as program_output:
+            lines = []
+            for claim_uid in sorted(self.get('claims')):
+                claim_lines = ['--------------']
+                claim_lines.append('claim: {}'.format(claim_uid))
+                claim_lines.append('\n')
+                claim_lines.append(header.replace('{','').replace('}',''))
+                claim_mappings = self.get('mappings').get('claim_mappings', claim_uid)
+                for claim_mapping in claim_mappings:
+                    condition = claim_mapping.get('condition')
+                    query_id = claim_mapping.get('query_id')
+                    run_id = claim_mapping.get('run_id')
+                    run_claim_id = claim_mapping.get('run_claim_id')
+                    claim_relations = claim_mapping.get('claim_relations')
+                    line = str(header)
+                    line = line.format(condition=condition,
+                                       query=query_id,
+                                       run_id=run_id,
+                                       run_claim_id=run_claim_id,
+                                       claim_relations=claim_relations)
+                    claim_lines.append(line)
+                human_readable = self.get('claims').get(claim_uid).get('human_readable')
+                if human_readable:
+                    claim_lines.append('\n')
+                    claim_lines.append(human_readable)
+                    claim_lines.append('\n')
+                    lines.extend(claim_lines)
+            program_output.write('\n'.join(lines))
 
 class PreviousPools(Object):
     def __init__(self, logger, **kwargs):
@@ -347,11 +430,12 @@ class PreviousPools(Object):
         return False
 
     def load(self):
-        for path in self.get('previous_pools').split(','):
-            for filename in os.listdir(os.path.join(path, 'pool')):
-                if filename.endswith('-outer-claim.tab'):
-                    claim_uid = filename.split('-')[0]
-                    self.get('claims').add(claim_uid)
+        if self.get('previous_pools'):
+            for path in self.get('previous_pools').split(','):
+                for filename in os.listdir(os.path.join(path, 'pool')):
+                    if filename.endswith('-outer-claim.tab'):
+                        claim_uid = filename.split('-')[0]
+                        self.get('claims').add(claim_uid)
 
 class Task3Pool(Object):
     """
