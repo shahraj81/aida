@@ -101,6 +101,8 @@ class ClaimComponents(Object):
             lines.append(ClaimComponent(logger, self.get('max_qnode_types'), self.get('lenient'), entry, component_numbers[component_type]).__str__())
             lines.append(InformativenessAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
             lines.append(OverallAssessment(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
+            lines.append(ECID(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
+            lines.append(ECSimilarity(logger, entry.get('claim_id'), component_type, component_numbers[component_type]).__str__())
         return '\n'.join(lines)
 
 class ClaimComponent(Object):
@@ -187,8 +189,12 @@ class ClaimTime(Object):
         range_str = self.get('range_str')
         if range_str is None:
             return
-        line = OutputLine(self.get('entry').get('claim_id'), 'date', 1, 'range', range_str, 'NIL')
-        return line.__str__()
+        logger = self.get('logger')
+        lines = []
+        lines.append(OutputLine(self.get('entry').get('claim_id'), 'date', 1, 'range', range_str, 'NIL').__str__())
+        lines.append(ECID(logger, self.get('entry').get('claim_id'), 'date', 1).__str__())
+        lines.append(ECSimilarity(logger, self.get('entry').get('claim_id'), 'date', 1).__str__())
+        return '\n'.join(lines)
 
 class ClaimKEs(Object):
     def __init__(self, logger, claim, nextEdgeNum):
@@ -584,6 +590,28 @@ class OverallAssessment(Object):
 
     def __str__(self):
         line = OutputLine(self.get('claim_id'), self.get('component_type'), self.get('number'), 'overallAssessment', 'value', 'NIL')
+        return line.__str__()
+
+class ECID(Object):
+    def __init__(self, logger, claim_id, component_type, number):
+        super().__init__(logger)
+        self.claim_id = claim_id
+        self.component_type = component_type
+        self.number = number
+
+    def __str__(self):
+        line = OutputLine(self.get('claim_id'), self.get('component_type'), self.get('number'), 'ec_id', 'value', 'NIL')
+        return line.__str__()
+
+class ECSimilarity(Object):
+    def __init__(self, logger, claim_id, component_type, number):
+        super().__init__(logger)
+        self.claim_id = claim_id
+        self.component_type = component_type
+        self.number = number
+
+    def __str__(self):
+        line = OutputLine(self.get('claim_id'), self.get('component_type'), self.get('number'), 'ec_similarity', 'value', 'NIL')
         return line.__str__()
 
 class AssessorReadableFormat(Object):
