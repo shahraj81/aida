@@ -18,6 +18,7 @@ __date__    = "16 February 2022"
 from logger import Logger
 from object import Object
 import argparse
+import hashlib
 import os
 import re
 import sys
@@ -29,6 +30,12 @@ def call_system(cmd):
     cmd = ' '.join(cmd.split())
     print("running system command: '{}'".format(cmd))
     os.system(cmd)
+
+def get_md5_from_string(text):
+    """
+    Gets the MD5 sum of a string passed as argument provided as argument.
+    """
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 def get_problems(logs_directory):
     num_errors = 0
@@ -43,6 +50,9 @@ def get_problems(logs_directory):
                 stats[error_type] = stats.get(error_type, 0) + 1
         fh.close()
     return num_errors, stats
+
+def get_repository_id(condition, query_id, kb):
+    return get_md5_from_string('\t'.join([condition, query_id, kb]))
 
 def record_and_display_message(logger, message):
     print("-------------------------------------------------------------------------------")
@@ -192,6 +202,7 @@ def main(args):
 
     python_scripts          = '/scripts/aida/python'
     log_specifications      = '{}/input/aux_data/log_specifications.txt'.format(python_scripts)
+    repositories            = '{}/claim_repositories.log'.format(logs_directory)
     encoding_modality       = '/data/AUX-data/encoding_modality.txt'
     coredocs                = '/data/AUX-data/{}.coredocs.txt'.format(ldc_package_id)
     parent_children         = '/data/AUX-data/{}.parent_children.tsv'.format(ldc_package_id)
@@ -320,105 +331,110 @@ def main(args):
         exit(ERROR_EXIT_CODE)
 
     #############################################################################################
-    # process each condition and topic_or_claim_frame independently
+    # prepare queries directory
     #############################################################################################
 
-    # copy TA3 SPARQL queries
     queries = '{}/queries'.format(args.output)
     record_and_display_message(logger, 'Copying SPARQL queries to be applied.')
     call_system('mkdir {queries}'.format(queries=queries))
     call_system('cp /data/queries/AIDA_P3_TA3_*.rq {queries}'.format(task=args.task, queries=queries))
 
-    c_cnt = 0
-    created = set()
-    condition_directories = os.listdir(sparql_kb_input)
-    for condition_name in condition_directories:
-        c_cnt += 1
-        condition_directory = os.path.join(sparql_kb_input, condition_name)
-        topic_or_claim_frame_directories = os.listdir(condition_directory)
-        t_cnt = 0
-        for topic_or_claim_frame_id in topic_or_claim_frame_directories:
-            t_cnt += 1
-            topic_or_claim_frame_directory = os.path.join(condition_directory, topic_or_claim_frame_id)
-            output_conditions_directory = '{output}/SPARQL-output/{condition_name}'.format(output=args.output,
-                                                                                           condition_name=condition_name)
-            if output_conditions_directory not in created:
-                record_and_display_message(logger, 'Creating directory: {}'.format(output_conditions_directory))
-                os.makedirs(output_conditions_directory)
-                created.add(output_conditions_directory)
+    #############################################################################################
+    # process each condition and topic_or_claim_frame independently
+    #############################################################################################
 
-            sparql_output_subdir = '{output_conditions_directory}/{topic_or_claim_frame_id}'.format(output_conditions_directory=output_conditions_directory,
-                                                                                                    topic_or_claim_frame_id=topic_or_claim_frame_id)
-            record_and_display_message(logger, 'Creating output directory: {}'.format(sparql_output_subdir))
-            os.makedirs(sparql_output_subdir)
-            # copy ranking file
-            input_ranking_file = '{output}/SPARQL-KB-input/{condition_name}/{topic_or_claim_frame_id}/{topic_or_claim_frame_id}.ranking.tsv'
-            input_ranking_file = input_ranking_file.format(output=args.output,
-                                                           condition_name=condition_name,
-                                                           topic_or_claim_frame_id=topic_or_claim_frame_id)
+    # populate filenames to avoid repeated os calls
+    filenames = {}
+    num_kbs = 0
+    condition_directories = os.listdir(sparql_kb_input)
+    for condition in condition_directories:
+        condition_directory = os.path.join(sparql_kb_input, condition)
+        for query_id in os.listdir(condition_directory):
+            query_directory = os.path.join(condition_directory, query_id)
+            kb_filenames = [f for f in os.listdir(query_directory) if os.path.isfile(os.path.join(query_directory, f)) and f.endswith('.ttl')]
+            filenames.setdefault(condition, {})[query_id] = kb_filenames
+            num_kbs += len(kb_filenames)
+
+    # prepare all the claim repositories
+    record_and_display_message(logger, 'Preparing claim repositories')
+    graphdb_bin = '/opt/graphdb/dist/bin'
+    graphdb = '{}/graphdb'.format(graphdb_bin)
+    loadrdf = '{}/loadrdf'.format(graphdb_bin)
+    verdi = '/opt/sparql-evaluation'
+    jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
+    config_source = '{}/config/Local-config.ttl'.format(verdi)
+    properties_source = '{}/config/Local-config.properties'.format(verdi)
+
+    configs = '{}/configs'.format(verdi)
+    os.mkdir(configs)
+
+    load_kb_commands = []
+    load_kb_command = '{loadrdf} -c {config} -f -m parallel {input}'
+    lines = ['\t'.join(['condition', 'query', 'kb', 'repository'])]
+    for condition in filenames:
+        for query_id in filenames.get(condition):
+            for kb in filenames.get(condition).get(query_id):
+                repository_id = 'Local_{md5}'.format(md5=get_repository_id(condition, query_id, kb))
+                lines.append('\t'.join([condition, query_id, kb, repository_id]))
+                os.mkdir(os.path.join(configs, repository_id))
+                kb_config_file = os.path.join(configs, repository_id, 'Local-config.ttl')
+                kb_config_properties_file = os.path.join(configs, repository_id, 'Local-config.properties')
+                for (source, destination) in [(config_source, kb_config_file), (properties_source, kb_config_properties_file)]:
+                    call_system('cp {source} {destination}'.format(source=source, destination=destination))
+                    call_system('sed -i.0 \'s/Local/{repository_id}/\' {destination}'.format(repository_id=repository_id, destination=destination))
+                load_kb_commands.append(load_kb_command.format(loadrdf=loadrdf,
+                                                               config=kb_config_file,
+                                                               input=os.path.join(sparql_kb_input, condition, query_id, kb)))
+
+    # write the repositories mapping file
+    record_and_display_message(logger, 'Writing file: {}'.format(repositories))
+    with open(repositories, 'w') as program_output:
+        program_output.write('\n'.join(lines))
+
+    # load all the claims into their respective repositories
+    record_and_display_message(logger, 'Loading all the claims into their respective repositories')
+    for cmd in load_kb_commands:
+        call_system(cmd)
+
+    # prepare commandsets for applying queries
+    apply_queries_commandsets = []
+    for condition in filenames:
+        output_conditions_directory = os.path.join(args.output, 'SPARQL-output', condition)
+        for query_id in filenames.get(condition):
+            sparql_output_subdir = os.path.join(output_conditions_directory, query_id)
+            intermediate = os.path.join(sparql_output_subdir, 'intermediate')
+            os.makedirs(intermediate)
+            input_ranking_file = os.path.join(args.output, 'SPARQL-KB-input', condition, query_id, '{}.ranking.tsv'.format(query_id))
             call_system('cp {input_ranking_file} {sparql_output_subdir}'.format(input_ranking_file=input_ranking_file,
                                                                                 sparql_output_subdir=sparql_output_subdir))
-            #############################################################################################
-            # apply sparql queries
-            ############################################################################################
-            graphdb_bin = '/opt/graphdb/dist/bin'
-            graphdb = '{}/graphdb'.format(graphdb_bin)
-            loadrdf = '{}/loadrdf'.format(graphdb_bin)
-            verdi = '/opt/sparql-evaluation'
-            jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
-            config = '{}/config/Local-config.ttl'.format(verdi)
-            properties = '{}/config/Local-config.properties'.format(verdi)
-            intermediate = '{}/intermediate'.format(sparql_output_subdir)
+            intermediate = os.path.join(sparql_output_subdir, 'intermediate')
+            for kb in filenames.get(condition).get(query_id):
+                repository_id = 'Local_{md5}'.format(md5=get_repository_id(condition, query_id, kb))
+                kb_config_properties_file = os.path.join(configs, repository_id, 'Local-config.properties')
+                commandset = []
+                commandset.append('java -Xmx4096M -jar {j} -c {p} -q {q} -o {i}/'.format(j=jar,
+                                                                                         p=kb_config_properties_file,
+                                                                                         q=queries,
+                                                                                         i=intermediate))
+                commandset.append('mkdir {output}/{kb}'.format(output=sparql_output_subdir, kb=kb))
+                commandset.append('mv {intermediate}/*/* {output}/{kb}'.format(intermediate=intermediate,
+                                                                               kb=kb,
+                                                                               output=sparql_output_subdir))
+                commandset.append('rm -rf {}'.format(intermediate))
+                apply_queries_commandsets.append(commandset)
 
-            k_cnt = 0
-            kb_filenames = [f for f in os.listdir(topic_or_claim_frame_directory) if os.path.isfile(os.path.join(topic_or_claim_frame_directory, f)) and f.endswith('.ttl')]
-            for kb_filename in kb_filenames:
-                kb_filename_including_path = os.path.join(topic_or_claim_frame_directory, kb_filename)
-                k_cnt += 1
-                record_and_display_message(logger, 'Applying queries to {condition} ({c_cnt}/{c_tot}) {topic} ({t_cnt}/{t_tot}) {kb_filename} ({k_cnt}/{k_tot}).'.format(condition=condition_name,
-                                                                                                                                                                           c_cnt=c_cnt,
-                                                                                                                                                                           c_tot=len(condition_directories),
-                                                                                                                                                                           topic=topic_or_claim_frame_id,
-                                                                                                                                                                           t_cnt=t_cnt,
-                                                                                                                                                                           t_tot=len(topic_or_claim_frame_directories),
-                                                                                                                                                                           kb_filename=kb_filename,
-                                                                                                                                                                           k_cnt=k_cnt,
-                                                                                                                                                                           k_tot=len(kb_filenames)))
-                # create the intermediate directory
-                logger.record_event('DEFAULT_INFO', 'Creating {}.'.format(intermediate))
-                call_system('mkdir -p {}'.format(intermediate))
-                # load KB into GraphDB
-                logger.record_event('DEFAULT_INFO', 'Loading {kb_filename} into GraphDB.'.format(kb_filename=kb_filename))
-                input_kb = '{kb_filename_including_path}'.format(kb_filename_including_path=kb_filename_including_path)
-                call_system('{loadrdf} -c {config} -f -m parallel {input}'.format(loadrdf=loadrdf, config=config, input=input_kb))
-                # start GraphDB
-                logger.record_event('DEFAULT_INFO', 'Starting GraphDB')
-                call_system('{graphdb} -d'.format(graphdb=graphdb))
-                # wait for GraphDB
-                call_system('sleep 5')
-                # apply queries
-                logger.record_event('DEFAULT_INFO', 'Applying queries')
-                call_system('java -Xmx4096M -jar {jar} -c {properties} -q {queries} -o {intermediate}/'.format(jar=jar,
-                                                                                          properties=properties,
-                                                                                          queries=queries,
-                                                                                          intermediate=intermediate))
-                # generate the SPARQL output directory corresponding to the KB
-                logger.record_event('DEFAULT_INFO', 'Creating SPARQL output directory corresponding to the KB')
-                call_system('mkdir {output}/{kb_filename}'.format(output=sparql_output_subdir, kb_filename=kb_filename))
-                # move output out of intermediate into the output corresponding to the KB
-                logger.record_event('DEFAULT_INFO', 'Moving output out of the intermediate directory')
-                call_system('mv {intermediate}/*/* {output}/{kb_filename}'.format(intermediate=intermediate,
-                                                                                  kb_filename=kb_filename,
-                                                                                  output=sparql_output_subdir))
-                # remove intermediate directory
-                logger.record_event('DEFAULT_INFO', 'Removing the intermediate directory.')
-                call_system('rm -rf {}'.format(intermediate))
-                # stop GraphDB
-                logger.record_event('DEFAULT_INFO', 'Stopping GraphDB.')
-                call_system('pkill -9 -f graphdb')
+    # start GraphDB
+    logger.record_event('DEFAULT_INFO', 'Starting GraphDB')
+    call_system('{graphdb} -d'.format(graphdb=graphdb))
+    # wait for GraphDB
+    call_system('sleep 5')
+    # apply queries
+    for commandset in apply_queries_commandsets:
+        for cmd in commandset:
+            call_system(cmd)
 
-            message = 'SPARQL output generated.'
-            record_and_display_message(logger, '{}'.format(message))
+    message = 'SPARQL output generated.'
+    record_and_display_message(logger, '{}'.format(message))
 
     #############################################################################################
     # Clean SPARQL output
