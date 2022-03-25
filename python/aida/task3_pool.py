@@ -157,8 +157,9 @@ class ClaimComponents(Object):
                 'claimer': 8,
                 'claimerAffiliation': 9,
                 'claimMedium': 10,
-                'xVariable': 11,
-                'date': 12,
+                'claimLocation': 11,
+                'xVariable': 12,
+                'date': 13,
                 }
             if component_type not in order_map:
                 print("Component type: '{}' not found in lookup".format(component_type))
@@ -261,8 +262,18 @@ class Claim(Object):
         return get_md5_from_string(self.__str__())
 
     def get_human_readable(self):
+        def get_polarity(epistemic):
+            polarity = {
+                'EpistemicTrueCertain': 'TRUE',
+                'EpistemicTrueUncertain': 'TRUE',
+                'EpistemicFalseCertain': 'FALSE',
+                'EpistemicFalseUncertain': 'FALSE',
+                'EpistemicUnknown': 'UNKNOWN'
+                }
+            return polarity.get(epistemic)
         outer_claim = self.get('outer_claim')
         claimer = outer_claim.get('fieldvalues', 'claimer', 'name')
+        claimEpistemic = outer_claim.get('fieldvalues', 'claimEpistemic', 'polarity')
         claimLocation = outer_claim.get('fieldvalues', 'claimLocation', 'name')
         claimMedium = outer_claim.get('fieldvalues', 'claimMedium', 'name')
         claimTemplate = ','.join(outer_claim.get('fieldvalues', 'claimTemplate', 'value'))
@@ -272,12 +283,13 @@ class Claim(Object):
         claimTemplate = claimTemplate.replace('X', '<{xVariable}>')
         xVariable = ','.join(outer_claim.get('fieldvalues', 'xVariable', 'name'))
         date = outer_claim.get('fieldvalues', 'date', 'range')
-        template = 'At <{place}> place using <{medium}> medium during <{date}>, <{claimer}> claims that {claimTemplate}'
+        template = 'At <{place}> place using <{medium}> medium during <{date}> date, <{claimer}> claims it is <{epistemic}> that {claimTemplate}'
         human_readable = template.format(
             place = ','.join(claimLocation),
             medium = ','.join(claimMedium),
             date = ','.join(date),
             claimer = ','.join(claimer),
+            epistemic = get_polarity(','.join(claimEpistemic)),
             claimTemplate = claimTemplate.format(xVariable=xVariable)
             )
         return human_readable
