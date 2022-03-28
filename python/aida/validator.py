@@ -194,6 +194,12 @@ class Validator(Object):
             if document_id != kb_document_id:
                 self.record_event('UNEXPECTED_DOCUMENT', kb_document_id, document_id, entry.get('where'))
                 return False
+        if schema.get('name') == 'AIDA_PHASE3_TASK3_GR_RESPONSE':
+            claim_document_id = entry.get('claim').get('outer_claim').get('document_id')
+            entry_document_id = entry.get('document_id')
+            if entry_document_id != claim_document_id:
+                self.record_event('UNEXPECTED_DOCUMENT', claim_document_id, entry_document_id, entry.get('where'))
+                return False
         return True
 
     def validate_kb_claim_id(self, responses, schema, entry, attribute):
