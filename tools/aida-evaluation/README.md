@@ -19,7 +19,7 @@ This document describes how to run the AIDA Task1/2/3 evaluation pipeline as par
 
 # How to build the docker image?
 
-The docker has been tested with `graphdb-free-9.10.2-dist` but this section also describes how to configure it to work with a different version.
+The docker has been tested with `graphdb-free-9.10.3-dist` but this section also describes how to configure it to work with a different version.
 
 Independent of which version of GraphDB is being used, first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed. The line to be updated is shown below for completeness:
 
@@ -31,7 +31,7 @@ Independent of which version of GraphDB is being used, first update the value of
 
 In order to build the docker image with the tested version of GraphDB:
 
-1. Download the installer `graphdb-free-9.10.2-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`
+1. Download the installer `graphdb-free-9.10.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`
 2. Place the installer inside `./docker/` and
 3. Run the following command:
 
@@ -276,6 +276,19 @@ make task3 \
   HOST_OUTPUT_DIR=/absolute/path/to/output
 ~~~
 
+### Using DEPTH to process top-ranked claims
+
+You may optionally use DEPTH to specify the number of top-ranked claims that you would like to be selected for processing through the NIST evaluation pipeline. This option will in particular be helpful for debugging. For example, if you want to process the top-5 claims for each condition, for each user-query, and for each claim-relation (see Section 6.4 of Evaluation Plan v1.1), using the following command:
+
+~~~
+make task3 \
+  ...
+  DEPTH=Condition5:5,Condition6:5,Condition7:5
+  ...
+~~~
+
+Note that the value of DEPTH should be of the form: `^Condition5:\d+,Condition6:\d+,Condition7:\d$`.
+
 Also note that a condition directory should not be present if the run does not have a claim KB corresponding to it.
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
@@ -428,6 +441,21 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 3/28/2022:
+* Removing task3 edges from SPARQL-VALID-output if the source document does not match that of the claim
+
+## 03/25/2022:
+* `ec_id` and `ec_similarity` assessment lines added to the outer-claim files in the ARF-output
+
+## 03/10/2022:
+* Adding an optional switch --depth to the task3 run script. This switch can take values in the form '^Condition5:\d+,Condition6:\d+,Condition7:\d$'. If provided, for each condition, for each user-query, and for each claim-relation (see Section 6.4 of Evaluation Plan v1.1), top-ranked claims will be selected (as specified using the switch --depth) for processing through the NIST evaluation pipeline.
+
+## 03/09/2022:
+* Updating the default GraphDB version to 9.10.3 that came with critical bug fixes
+
+## 03/08/2022:
+* When generating ARF, allow missing date for an event or relation
 
 ## 03/07/2022:
 * A bug was fixed that was causing the ARF generator to crash

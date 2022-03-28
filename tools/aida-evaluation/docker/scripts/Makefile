@@ -6,6 +6,10 @@ ifneq ($(AWS_SECRET_ACCESS_KEY),)
 	AWS_SECRET_ACCESS_KEY_ARG=--aws_secret_access_key $(AWS_SECRET_ACCESS_KEY)
 endif
 
+ifneq ($(DEPTH),)
+	DEPTH_ARG=--depth $(DEPTH)
+endif
+
 all:
 
 ifeq ($(TASK), task1)
@@ -22,7 +26,7 @@ else ifeq ($(TASK), task2)
 	  --run $(RUNID) --runtype $(RUNTYPE) $(AWS_ACCESS_KEY_ID_ARG) $(AWS_SECRET_ACCESS_KEY_ARG)
 else ifeq ($(TASK), task3)
 	python3.9 run_task3_evaluation_pipeline.py \
-	  --run $(RUNID) --runtype $(RUNTYPE) $(AWS_ACCESS_KEY_ID_ARG) $(AWS_SECRET_ACCESS_KEY_ARG)
+	  --run $(RUNID) --runtype $(RUNTYPE) $(DEPTH_ARG) $(AWS_ACCESS_KEY_ID_ARG) $(AWS_SECRET_ACCESS_KEY_ARG)
 else
 	@echo "unexpected value of environment variable TASK"
 endif

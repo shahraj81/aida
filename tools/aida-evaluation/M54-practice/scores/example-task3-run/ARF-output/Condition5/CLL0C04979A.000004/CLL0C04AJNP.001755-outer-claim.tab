@@ -13,9 +13,13 @@ CLL0C04AJNP.001755	claimer	1	qnode_type	EMPTY_TBD	NIL
 CLL0C04AJNP.001755	claimer	1	qnode_type	Q482980	NIL
 CLL0C04AJNP.001755	claimer	1	informativenessAssessment	value	NIL
 CLL0C04AJNP.001755	claimer	1	overallAssessment	value	NIL
+CLL0C04AJNP.001755	claimer	1	ec_id	value	NIL
+CLL0C04AJNP.001755	claimer	1	ec_similarity	value	NIL
 CLL0C04AJNP.001755	xVariable	1	name	Target store	NIL
 CLL0C04AJNP.001755	xVariable	1	qnode_id	EMPTY_TBD	NIL
 CLL0C04AJNP.001755	xVariable	1	qnode_type	EMPTY_TBD	NIL
 CLL0C04AJNP.001755	xVariable	1	qnode_type	Q57334497	NIL
 CLL0C04AJNP.001755	xVariable	1	informativenessAssessment	value	NIL
 CLL0C04AJNP.001755	xVariable	1	overallAssessment	value	NIL
+CLL0C04AJNP.001755	xVariable	1	ec_id	value	NIL
+CLL0C04AJNP.001755	xVariable	1	ec_similarity	value	NIL

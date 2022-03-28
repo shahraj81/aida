@@ -104,6 +104,7 @@ def main(args):
     # inspect the input directory
     #############################################################################################
 
+    s3_tarball_extensions = ['.zip', '.tgz']
     record_and_display_message(logger, 'Inspecting the input directory.')
     call_system('mkdir {destination}'.format(destination=sparql_kb_source))
     items = [f for f in os.listdir(args.input)]
@@ -133,8 +134,15 @@ def main(args):
                     logger.record_event('UNEXPECTED_NUM_LINES_IN_INPUT', 1, len(lines))
                     exit(ERROR_EXIT_CODE)
                 s3_location = lines[0].strip()
-                if not s3_location.startswith('s3://aida-') and not s3_location.endswith('.tgz'):
-                    logger.record_event('UNEXPECTED_S3_LOCATION', 's3://aida-*/*.tgz', s3_location)
+                if not s3_location.startswith('s3://aida-'):
+                    logger.record_event('UNEXPECTED_S3_LOCATION', 's3://aida-*/*.[tgz|zip]', s3_location)
+                    exit(ERROR_EXIT_CODE)
+                extension_check = False
+                for extension in s3_tarball_extensions:
+                    if s3_location.endswith(extension):
+                        extension_check = True
+                if not extension_check:
+                    logger.record_event('UNEXPECTED_S3_LOCATION', 's3://aida-*/*.[tgz|zip]', s3_location)
                     exit(ERROR_EXIT_CODE)
                 s3_filename = s3_location.split('/')[-1]
                 call_system('mkdir /tmp/s3_run/')

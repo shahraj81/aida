@@ -16,8 +16,10 @@ __version__ = "2020.1.0"
 __date__    = "16 February 2022"
 
 from logger import Logger
+from object import Object
 import argparse
 import os
+import re
 import sys
 
 ALLOK_EXIT_CODE = 0
@@ -48,6 +50,96 @@ def record_and_display_message(logger, message):
     print("-------------------------------------------------------------------------------")
     logger.record_event('DEFAULT_INFO', message)
 
+def trim(s):
+    return s.replace('.ttl', '') if s is not None and s.endswith('.ttl') else s
+
+class ClaimRankings(Object):
+    def __init__(self, logger, input_path, arg_depth):
+        super().__init__(logger)
+        self.depth = {}
+        if arg_depth:
+            for condition_and_depth in arg_depth.split(','):
+                c, d = condition_and_depth.split(':')
+                self.depth[c] = int(d)
+        self.input_path = input_path
+        self.ranks = {}
+
+    def generate_pool(self):
+        def generate(query_claims, depth):
+            for query_id in query_claims:
+                bins = {}
+                for claim_id, claim_relation_and_rank in query_claims.get(query_id).items():
+                    claim_relation = claim_relation_and_rank.get('claim_relation')
+                    rank = claim_relation_and_rank.get('rank')
+                    if claim_relation not in bins:
+                        bins[claim_relation] = {}
+                    bins.get(claim_relation)[rank] = claim_id
+                for claim_relation in bins:
+                    claim_relation_bin = bins.get(claim_relation)
+                    i = 0
+                    for rank in sorted(claim_relation_bin.keys()):
+                        i += 1
+                        claim_id = claim_relation_bin.get(rank)
+                        pooled = True if depth is None or i <= depth else False
+                        query_claims.get(query_id).get(claim_id)['pooled'] = pooled
+        ranks = self.get('ranks')
+        for condition in ranks:
+            query_claims = ranks.get(condition)
+            generate(query_claims, self.get('depth').get(condition) if self.get('depth') else None)
+
+    def get_claim(self, claim_condition, query_id, claim_id):
+        return self.get('ranks').get(claim_condition).get(query_id).get(claim_id)
+
+    def include_in_pool(self, filename):
+        p = self.parse(filename)
+        claim = self.get('claim', p.get('claim_condition'), p.get('query_id'), p.get('claim_id'))
+        return claim.get('pooled')
+
+    def load_file(self, filename):
+        claim_condition = self.parse(filename).get('claim_condition')
+        with open(filename) as fh:
+            for line in fh.readlines():
+                elements = line.strip().split('\t')
+                query_id, claim_id, rank = [elements[i] for i in range(3)]
+                claim_relation = 'related' if len(elements) == 3 else elements[3]
+                self.get('ranks').setdefault(claim_condition, {}) \
+                     .setdefault(query_id, {})[claim_id] = {
+                         'claim_relation': claim_relation,
+                         'filename': filename,
+                         'line': line,
+                         'rank': int(rank)
+                         }
+        return
+
+    def parse(self, filename):
+        filename = filename.replace(self.get('input_path'), '')
+        if filename.startswith('/'):
+            filename = filename.replace('/', '', 1)
+        claim_condition, query_id, claim_id = filename.split('/')
+        claim_id = None if claim_id.endswith('.ranking.tsv') else claim_id
+        return {
+            'claim_condition': claim_condition,
+            'query_id': query_id,
+            'claim_id': trim(claim_id)
+            }
+
+    def write_to_files(self, output_dir):
+        lines = {}
+        ranks = self.get('ranks')
+        for condition in ranks:
+            queries = ranks.get(condition)
+            for query_id in queries:
+                for claim in queries.get(query_id).values():
+                    if claim.get('pooled'):
+                        input_ranking_filename = claim.get('filename')
+                        output_ranking_filename = input_ranking_filename.replace(self.get('input_path'), output_dir)
+                        line = claim.get('line')
+                        lines.setdefault(output_ranking_filename, []).append(line)
+        for output_ranking_filename in lines:
+            with open(output_ranking_filename, 'w') as program_output:
+                for line in lines.get(output_ranking_filename):
+                    program_output.write(line)
+
 def main(args):
 
     #############################################################################################
@@ -77,6 +169,11 @@ def main(args):
     #############################################################################################
     # validate values of arguments
     #############################################################################################
+
+    p = re.compile('^Condition5:\d+,Condition6:\d+,Condition7:\d+$')
+    if not(args.depth is None or (args.depth and p.match(args.depth))):
+        record_and_display_message(logger, 'Invalid depth: {}.'.format(args.depth))
+        exit(ERROR_EXIT_CODE)
 
     runtypes = {
         'develop': 'develop',
@@ -167,6 +264,7 @@ def main(args):
             call_system('mv /tmp/s3_run/output/*/NIST /tmp/s3_run/NIST')
 
     input_path = '/tmp/s3_run/NIST' if s3_location_provided else args.input
+    claim_rankings = ClaimRankings(logger, input_path, args.depth)
     for dirpath, dirnames, filenames in os.walk(input_path):
         for filename in filenames:
             filename_including_path = os.path.join(dirpath, filename)
@@ -177,17 +275,22 @@ def main(args):
                 if filename_including_path not in input_filenames_including_path:
                     input_filenames_including_path[filename_including_path] = 1
             elif filename.endswith('.ranking.tsv'):
-                input_filenames_including_path[filename_including_path] = 1
+                claim_rankings.load_file(filename_including_path)
+    claim_rankings.generate_pool()
     for filename_including_path in input_filenames_including_path:
         if input_filenames_including_path[filename_including_path] == 0:
             record_and_display_message(logger, 'Ignoring invalid KB: {}'.format(filename_including_path.replace(input_path, '')))
         elif input_filenames_including_path[filename_including_path] == 1:
-            record_and_display_message(logger, 'Copying {}'.format(filename_including_path.replace(input_path, '')))
-            destination = filename_including_path.replace(input_path, sparql_kb_input)
-            os.makedirs(os.path.dirname(destination), exist_ok=True)
-            call_system('cp {filename_including_path} {destination}'.format(filename_including_path=filename_including_path,
-                                                                             destination=destination))
-            num_files += 1
+            if claim_rankings.include_in_pool(filename_including_path):
+                record_and_display_message(logger, 'Copying {}'.format(filename_including_path.replace(input_path, '')))
+                destination = filename_including_path.replace(input_path, sparql_kb_input)
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                call_system('cp {filename_including_path} {destination}'.format(filename_including_path=filename_including_path,
+                                                                                 destination=destination))
+                num_files += 1
+            else:
+                record_and_display_message(logger, 'Skipping {}'.format(filename_including_path.replace(input_path, '')))
+    claim_rankings.write_to_files(sparql_kb_input)
     if s3_location_provided:
         call_system('rm -rf /tmp/s3_run/')
 
@@ -435,6 +538,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply AIDA M36 task2 evaluation pipeline to the KB.")
+    parser.add_argument('-d', '--depth', help='Specify the pool depth')
     parser.add_argument('-i', '--input', default='/evaluate', help='Specify the input directory (default: %(default)s)')
     parser.add_argument('-I', '--aws_access_key_id', help='aws_access_key_id; required if the KB is to be obtained from an S3 location')
     parser.add_argument('-K', '--aws_secret_access_key', help='aws_secret_access_key; required if the KB is to be obtained from an S3 location')

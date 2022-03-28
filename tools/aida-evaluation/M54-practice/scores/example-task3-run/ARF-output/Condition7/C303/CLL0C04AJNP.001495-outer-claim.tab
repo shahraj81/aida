@@ -13,3 +13,5 @@ CLL0C04AJNP.001495	claimer	1	qnode_type	EMPTY_TBD	NIL
 CLL0C04AJNP.001495	claimer	1	qnode_type	Q482980	NIL
 CLL0C04AJNP.001495	claimer	1	informativenessAssessment	value	NIL
 CLL0C04AJNP.001495	claimer	1	overallAssessment	value	NIL
+CLL0C04AJNP.001495	claimer	1	ec_id	value	NIL
+CLL0C04AJNP.001495	claimer	1	ec_similarity	value	NIL

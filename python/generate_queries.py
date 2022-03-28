@@ -44,7 +44,7 @@ def clean(name_variant):
 
 def get_entrypoints(entry):
     entrypoints = {'name': {entry.get('entity_name').strip(): 1}}
-    if entry.get('kbids') != 'N/A':
+    if entry.get('kbids') != 'N/A' and entry.get('kbids') != 'Not in DWD':
         entrypoints['kbid'] = {}
         kbids = entry.get('kbids')
         augmented_kbids = '|'.join(['{}'.format(kbid.strip()) for kbid in kbids.split('|')])
