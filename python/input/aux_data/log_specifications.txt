@@ -50,6 +50,7 @@ ERROR     MISSING_REQUIRED_CLAIM_FIELD    Claim {} (required for {} KBs) missing
 CRITICAL  MULTIPLE_ASSESSMENTS            Multiple assessments containing key='{}'
 ERROR     MULTIPLE_CLAIM_RANKS            Multiple ranks found for claim {}
 CRITICAL  MULTIPLE_CLUSTER_LINKING_CONFIDENCES Multiple distinct values of linking confidences ({}, {}) found for cluster {}; expected single distinct value
+WARNING   MULTIPLE_DATES                  Multiple dates on claim {} - {} - {} - {}
 ERROR     MULTIPLE_DOCUMENTS              Multiple documents in response: '{}', '{}'
 CRITICAL  MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT Multiple informative justifications ({}, {}) found for document {}
 CRITICAL  MULTIPLE_LANGUAGES_IN_A_DOCUMENT Multiple languages {} found in document {}
