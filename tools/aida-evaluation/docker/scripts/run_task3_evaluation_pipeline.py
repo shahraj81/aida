@@ -523,6 +523,7 @@ def main(args):
                                                   sparql_augmented_output = sparql_augmented_output)
     else:
         record_and_display_message(logger, '{ltf_directory} does not exist, skipping replacing missing handle-span with text.'.format(ltf_directory=ltf_directory))
+        cmd = 'cp -r {source} {destination}'.format(source=sparql_valid_output, destination=sparql_augmented_output)
 
     call_system(cmd)
 
