@@ -102,21 +102,13 @@ class Handle(Object):
 
     def augment_task3_sparql_output(self):
         os.mkdir(self.get('output_dir'))
-        directories = []
-        for root, dirs, files in os.walk(self.get('input_dir')):
-            directories.extend([os.path.join(root, d) for d in dirs if d.endswith('.ttl')])
-
-        for directory in directories:
-            output_directory = directory.replace(self.get('input_dir'), self.get('output_dir'))
-            if not os.path.exists(output_directory):
-                os.mkdir(output_directory)
-            input_file = '{i}/AIDA_P2_TA3_GR_0001.rq.tsv'.format(i=directory)
-            output_file = '{o}/AIDA_P2_TA3_GR_0001.rq.tsv'.format(o=output_directory)
-            self.augment_file(input_file, output_file)
-
-            input_file = '{i}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(i=directory)
-            output_file = '{o}/AIDA_P2_TA3_TM_0001.rq.tsv'.format(o=directory.replace(self.get('input_dir'), self.get('output_dir')))
-            self.augment_file(input_file, output_file)
+        for directory, dirs, files in os.walk(self.get('input_dir')):
+            for filename in files:
+                output_directory = directory.replace(self.get('input_dir'), self.get('output_dir'))
+                os.makedirs(output_directory, exist_ok=True)
+                input_file = '{i}/{f}'.format(i=directory, f=filename)
+                output_file = '{o}/{f}'.format(o=output_directory, f=filename)
+                self.augment_file(input_file, output_file)
 
     def get_handle_text(self, document_span):
         pattern = re.compile('^(\w+?):(\w+?):\((\S+),(\S+)\)-\((\S+),(\S+)\)$')

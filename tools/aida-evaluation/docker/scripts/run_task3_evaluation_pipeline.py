@@ -199,12 +199,14 @@ def main(args):
     image_boundaries        = '/data/AUX-data/{}.image_boundaries.txt'.format(ldc_package_id)
     keyframe_boundaries     = '/data/AUX-data/{}.keyframe_boundaries.txt'.format(ldc_package_id)
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
+    ltf_directory           = '/data/ltf'
     sparql_kb_source        = '{output}/SPARQL-KB-source'.format(output=args.output)
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
     sparql_merged_output    = '{output}/SPARQL-MERGED-output'.format(output=args.output)
     sparql_valid_output     = '{output}/SPARQL-VALID-output'.format(output=args.output)
+    sparql_augmented_output = '{output}/SPARQL-AUGMENTED-output'.format(output=args.output)
     arf_output              = '{output}/ARF-output'.format(output=args.output)
 
     #############################################################################################
@@ -498,6 +500,34 @@ def main(args):
     call_system(cmd)
 
     #############################################################################################
+    # Replacing missing handle-span with text, if provided
+    #############################################################################################
+
+    record_and_display_message(logger, 'Replacing missing handle-span with text, if provided.')
+
+    if os.path.exists(ltf_directory):
+        log_file = '{logs_directory}/augment-handle-output.log'.format(logs_directory=logs_directory)
+        cmd = 'cd {python_scripts} && \
+                python3.9 augment_output.py \
+                handle \
+                --log {log_file} \
+                --task task3 \
+                {log_specifications} \
+                {ltf_directory} \
+                {sparql_valid_output} \
+                {sparql_augmented_output}'.format(python_scripts=python_scripts,
+                                                  log_file=log_file,
+                                                  log_specifications=log_specifications,
+                                                  ltf_directory=ltf_directory,
+                                                  sparql_valid_output = sparql_valid_output,
+                                                  sparql_augmented_output = sparql_augmented_output)
+    else:
+        record_and_display_message(logger, '{ltf_directory} does not exist, skipping replacing missing handle-span with text.'.format(ltf_directory=ltf_directory))
+        cmd = 'cp -r {source} {destination}'.format(source=sparql_valid_output, destination=sparql_augmented_output)
+
+    call_system(cmd)
+
+    #############################################################################################
     # Generate ARF output
     #############################################################################################
 
@@ -517,7 +547,7 @@ def main(args):
             {keyframe_boundaries} \
             {video_boundaries} \
             {run_id} \
-            {sparql_valid_output} \
+            {sparql_augmented_output} \
             {arf_output}'.format(python_scripts=python_scripts,
                                            log_file=log_file,
                                            queries='/data/user-queries',
@@ -530,7 +560,7 @@ def main(args):
                                            keyframe_boundaries=keyframe_boundaries,
                                            video_boundaries=video_boundaries,
                                            run_id=args.run,
-                                           sparql_valid_output=sparql_valid_output,
+                                           sparql_augmented_output=sparql_augmented_output,
                                            arf_output=arf_output)
     call_system(cmd)
 
