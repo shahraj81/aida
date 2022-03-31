@@ -479,7 +479,7 @@ class EventOrRelationFrame(Object):
 
     def add_date_range(self, date_range):
         if self.get('date_range') is not None:
-            self.record_event('MULTIPLE_DATES')
+            self.record_event('MULTIPLE_DATES', self.get('claim_id'), self.get('uid'), self.get('event_or_relation_metatype'), self.get('event_or_relation_id'))
         self.set('date_range', date_range)
 
     def add_filler(self, predicate, filler):

@@ -291,6 +291,10 @@ Note that the value of DEPTH should be of the form: `^Condition5:\d+,Condition6:
 
 Also note that a condition directory should not be present if the run does not have a claim KB corresponding to it.
 
+### LTF data
+
+Since the source corpus is protected by copyrights, providing LTF data to the docker is optional. If one desires to have missing object handles (objectc_handle), in `AIDA_P3_TA3_GR_*.rq.tsv` files, automatically replaced by text taken from the source corpus using object informative justification span (oinf_j_span) given that oinf_j_span is drawn from a text document, all the ltf files (`*.ltf.xml`), contained in the source corpus, should be placed in a directory named `ltf` inside the auxiliary data directory. Note that the auxiliary data directory is the one that is pointed to by variable named HOST_DATA_DIR in the `./docker/Makefile`.
+
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # How to apply the docker to your run in the evaluation setting?
@@ -441,6 +445,12 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 3/31/2022:
+* Replacing objectc_handle with text from source corpus if:
+  * objectc_handle is missing, and
+  * oinf_j_span is drawn from a text document, and
+  * ltf_directory is made avaialble to the docker.
 
 ## 3/28/2022:
 * Removing task3 edges from SPARQL-VALID-output if the source document does not match that of the claim
