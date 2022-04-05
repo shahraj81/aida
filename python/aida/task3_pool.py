@@ -246,6 +246,29 @@ class ClaimEdges(Object):
     def __str__(self):
         return self.to_string('xxxxxxxxxxx')
 
+class ReadableKEs(Object):
+    """
+    Class representing the readable KEs
+    """
+    def __init__(self, logger, **kwargs):
+        super().__init__(logger)
+        for key in kwargs:
+            self.set(key, kwargs[key])
+        self.file_handler = FileHandler(logger, self.get('filename'))
+
+    def to_string(self):
+        lines = []
+        for entry in self.get('file_handler'):
+            lines.append(entry.get('line'))
+        return ''.join(lines)
+
+    def write_output(self, output_dir, claim_id):
+        path = os.path.join(output_dir, 'pool')
+        os.makedirs(path, exist_ok=True)
+        output_filename = os.path.join(path, '{}-readable-kes.txt'.format(claim_id) )
+        with open(output_filename, 'w') as program_output:
+            program_output.write(self.to_string())
+
 class Claim(Object):
     """
     Class representing a claim
@@ -256,6 +279,7 @@ class Claim(Object):
             self.set(key, kwargs[key])
         self.outer_claim = None
         self.claim_edges = None
+        self.readable_kes = None
         self.load()
 
     def get_uid(self):
@@ -300,10 +324,12 @@ class Claim(Object):
         claim_id = self.get('claim_id')
         self.set('outer_claim', OuterClaim(logger, filename=os.path.join(path, '{}-outer-claim.tab'.format(claim_id))))
         self.set('claim_edges', ClaimEdges(logger, filename=os.path.join(path, '{}-raw-kes.tab'.format(claim_id))))
+        self.set('readable_kes', ReadableKEs(logger, filename=os.path.join(path, '{}-readable-kes.txt'.format(claim_id))))
 
     def write_output(self, output_dir):
         self.get('outer_claim').write_output(output_dir, self.get('uid'))
         self.get('claim_edges').write_output(output_dir, self.get('uid'))
+        self.get('readable_kes').write_output(output_dir, self.get('uid'))
 
     def __eq__(self, other):
         return self.get('uid') == other.get('uid')
@@ -421,9 +447,12 @@ class Claims(Object):
                                        claim_relations=claim_relations)
                     claim_lines.append(line)
                 human_readable = self.get('claims').get(claim_uid).get('human_readable')
+                readable_kes = self.get('claims').get(claim_uid).get('readable_kes').to_string()
                 if human_readable:
                     claim_lines.append('\n')
                     claim_lines.append(human_readable)
+                    claim_lines.append('\n')
+                    claim_lines.append(readable_kes)
                     claim_lines.append('\n')
                     lines.extend(claim_lines)
             program_output.write('\n'.join(lines))
