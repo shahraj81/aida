@@ -257,10 +257,8 @@ class ReadableKEs(Object):
         self.file_handler = FileHandler(logger, self.get('filename'))
 
     def to_string(self):
-        lines = []
-        for entry in self.get('file_handler'):
-            lines.append(entry.get('line'))
-        return ''.join(lines)
+        with open(self.get('filename')) as fh:
+            return fh.read()
 
     def write_output(self, output_dir, claim_id):
         path = os.path.join(output_dir, 'pool')
