@@ -119,7 +119,7 @@ class Task2(Object):
                          max_kit_size=self.get('kit_size'),
                          batch_id=self.get('batch_id'),
                          input_dir=self.get('input'),
-                         previous_pools=self.get('previous_pools'))
+                         previous_pool_dirs=self.get('previous_pools'))
         pool.write_output('{}-{}'.format(self.get('output'), self.get('batch_id')))
         exit(ALLOK_EXIT_CODE)
 
