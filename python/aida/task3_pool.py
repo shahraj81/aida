@@ -353,7 +353,7 @@ class ClaimMappings(Object):
             self.set(key, kwargs[key])
         self.mappings = []
 
-    def add(self, condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations, in_previous_pools):
+    def add(self, condition, query_id, run_id, rank, claim_id, runs_directory, claim_uid, claim_relations, in_previous_pools):
         def order(claim_relation):
             lookup = {
                 'ontopic': 1,
@@ -370,6 +370,7 @@ class ClaimMappings(Object):
                                query_id=query_id,
                                run_id=run_id,
                                runs_directory=runs_directory,
+                               rank=str(rank),
                                run_claim_id=claim_id,
                                pool_claim_uid=claim_uid,
                                claim_relations=','.join(sorted(claim_relations, key=order)),
@@ -378,7 +379,7 @@ class ClaimMappings(Object):
         mappings.append(mapping)
 
     def get_header(self):
-        return ['pool_claim_uid', 'condition', 'query_id', 'claim_relations', 'run_claim_id', 'run_id', 'runs_directory', 'in_previous_pools']
+        return ['pool_claim_uid', 'condition', 'query_id', 'claim_relations', 'rank', 'run_claim_id', 'run_id', 'runs_directory', 'in_previous_pools']
 
     def get_claim_mappings(self, claim_uid):
         mappings = []
@@ -408,17 +409,17 @@ class Claims(Object):
         self.claims = {}
         self.mappings = ClaimMappings(logger)
 
-    def add(self, condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir, claim_relations):
+    def add(self, condition, query_id, run_id, rank, claim_id, runs_directory, condition_and_query_dir, claim_relations):
         claims = self.get('claims')
         claim = Claim(self.get('logger'), condition=condition, query_id=query_id, path=condition_and_query_dir, claim_id=claim_id)
         claim_uid = claim.get('uid')
         if claim_uid not in claims:
             claims[claim_uid] = claim
         in_previous_pools = True if self.get('previous_pools').contains(claim_uid) else False
-        self.get('mappings').add(condition, query_id, run_id, claim_id, runs_directory, claim_uid, claim_relations, in_previous_pools)
+        self.get('mappings').add(condition, query_id, run_id, rank, claim_id, runs_directory, claim_uid, claim_relations, in_previous_pools)
 
     def write_output(self, output_dir):
-        header = '{condition}\t{query}\t{run_id}\t{run_claim_id}\t{claim_relations}'
+        header = '{condition}\t{query}\t{run_id}\t{rank}\t{run_claim_id}\t{claim_relations}'
         for claim_uid, claim in self.get('claims').items():
             if not self.get('previous_pools').contains(claim_uid):
                 claim.write_output(output_dir)
@@ -434,6 +435,7 @@ class Claims(Object):
                 for claim_mapping in claim_mappings:
                     condition = claim_mapping.get('condition')
                     query_id = claim_mapping.get('query_id')
+                    rank = claim_mapping.get('rank')
                     run_id = claim_mapping.get('run_id')
                     run_claim_id = claim_mapping.get('run_claim_id')
                     claim_relations = claim_mapping.get('claim_relations')
@@ -441,6 +443,7 @@ class Claims(Object):
                     line = line.format(condition=condition,
                                        query=query_id,
                                        run_id=run_id,
+                                       rank=rank,
                                        run_claim_id=run_claim_id,
                                        claim_relations=claim_relations)
                     claim_lines.append(line)
@@ -548,7 +551,7 @@ class Task3Pool(Object):
                                 if depth_left.get(claim_relation) > 0:
                                     include_in_pool = True
                             if include_in_pool:
-                                self.get('claims').add(condition, query_id, run_id, claim_id, runs_directory, condition_and_query_dir, claim_relations)
+                                self.get('claims').add(condition, query_id, run_id, rank, claim_id, runs_directory, condition_and_query_dir, claim_relations)
                                 for claim_relation in claim_relations:
                                     if depth_left.get(claim_relation) > 0:
                                         depth_left[claim_relation] -= 1
