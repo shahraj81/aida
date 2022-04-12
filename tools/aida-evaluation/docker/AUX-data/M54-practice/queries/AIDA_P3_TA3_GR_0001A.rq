@@ -9,12 +9,14 @@ SELECT DISTINCT
        ?edge_type       # edge type
        ?is_assertion_negated # is the argument assertion negated? ('Negated', 'NotNegated')
        ?object_cluster  # object cluster ID
+       ?is_object_associated_to_claim # is the object cluster associated to the claim
        ?objectmo        # prototype of object cluster
        ?objectmo_metatype # metatype of object prototype
        ?is_objectmo_negated # is the object prototype negated? ('Negated', 'NotNegated')
        ?oinf_j_span     # informativeJustification of ?objectmo
        ?object_type     # type of the object
        ?subject_cluster # subject cluster ID
+       ?is_subject_associated_to_claim # is the subject cluster associated to the claim
        ?subjectmo       # prototype of subject cluster
        ?subjectmo_metatype # metatype of subject prototype
        ?is_subjectmo_negated # is the subject prototype negated? ('Negated', 'NotNegated')
@@ -49,6 +51,8 @@ WHERE {
     BIND( IF( EXISTS {?subjectmo aida:attributes aida:Negated .}, 'Negated', 'NotNegated') AS ?is_subjectmo_negated) .
 #    ?subjectmo            aida:importance               ?subjectc_iv .
 
+    BIND( IF( EXISTS {?claim aida:associatedKEs ?subject_cluster .}, 'AssociatedKE', 'NotAssociatedKE') AS ?is_subject_associated_to_claim) .
+
     # Get the subject informativeJustification
     # ?subjectmo            aida:informativeJustification ?sinf_justification .
     # ?sinf_justification   aida:sourceDocument           ?docid .
@@ -70,6 +74,8 @@ WHERE {
     BIND( IF( EXISTS {?objectmo aida:attributes aida:Negated .}, 'Negated', 'NotNegated') AS ?is_objectmo_negated) .
     # Get the object handle
     ?objectmo           aida:handle                   ?objectc_handle .
+
+    BIND( IF( EXISTS {?claim aida:associatedKEs ?object_cluster .}, 'AssociatedKE', 'NotAssociatedKE') AS ?is_object_associated_to_claim) .
 
     # Get the object informativeJustification
     ?objectmo             aida:informativeJustification ?oinf_justification .
