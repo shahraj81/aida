@@ -224,13 +224,16 @@ class ClaimEdges(Object):
             header.remove('JustificationNum')
             return '\t'.join(entry.get(f) for f in header)
         header = self.get('file_handler').get('header')
+        header_columns = list(header.get('columns'))
+        if claim_id:
+            header_columns = [c for c in header_columns if c not in ['IsEvtRelInClaimSemantics', 'IsObjInClaimSemantics']]
         retVal = header.get('line')
         i = 1
         for entry in sorted(self.get('file_handler'), key=order):
             if claim_id:
                 entry.set('ClaimID', claim_id)
             entry.set('JustificationNum', str(i))
-            line = '\t'.join([entry.get(f) for f in header.get('columns')])
+            line = '\t'.join([entry.get(f) for f in header_columns])
             retVal = '{retVal}\n{line}'.format(retVal=retVal, line=line)
             i += 1
         return retVal
