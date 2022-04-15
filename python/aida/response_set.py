@@ -313,6 +313,12 @@ attributes = {
         'tasks': ['task3'],
         'years': [2020, 2021],
         },
+    'is_object_in_claim_semantics': {
+        'name': 'is_object_in_claim_semantics',
+        'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2020, 2021],
+        },
     'is_object_cluster_member_negated': {
         'name': 'is_object_cluster_member_negated',
         'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
@@ -329,6 +335,12 @@ attributes = {
         },
     'is_subject_associated_to_claim': {
         'name': 'is_subject_associated_to_claim',
+        'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
+        'tasks': ['task3'],
+        'years': [2020, 2021],
+        },
+    'is_subject_in_claim_semantics': {
+        'name': 'is_subject_in_claim_semantics',
         'schemas': ['AIDA_PHASE3_TASK3_GR_RESPONSE'],
         'tasks': ['task3'],
         'years': [2020, 2021],
@@ -874,9 +886,9 @@ schemas = {
         'year': 2021,
         'task': 'task3',
         'header': ['?docid', '?edge_type', '?is_assertion_negated',
-                   '?object_cluster', '?is_object_associated_to_claim',
+                   '?object_cluster', '?is_object_associated_to_claim', '?is_object_in_claim_semantics',
                    '?objectmo', '?objectmo_metatype', '?is_objectmo_negated', '?oinf_j_span', '?object_type',
-                   '?subject_cluster', '?is_subject_associated_to_claim',
+                   '?subject_cluster', '?is_subject_associated_to_claim', '?is_subject_in_claim_semantics',
                    '?subjectmo', '?subjectmo_metatype', '?is_subjectmo_negated', '?sinf_j_span', '?subject_type',
                    '?ej_span', '?objectc_handle', '?edge_cj_cv', '?oinf_j_cv', '?obcm_cv', '?sinf_j_cv', '?sbcm_cv'],
         'columns': [
@@ -885,6 +897,7 @@ schemas = {
             'is_assertion_negated',
             'object_cluster_id',
             'is_object_associated_to_claim',
+            'is_object_in_claim_semantics',
             'object_cluster_member_id',
             'object_cluster_member_metatype',
             'is_object_cluster_member_negated',
@@ -892,6 +905,7 @@ schemas = {
             'object_type',
             'subject_cluster_id',
             'is_subject_associated_to_claim',
+            'is_subject_in_claim_semantics',
             'subject_cluster_member_id',
             'subject_cluster_member_metatype',
             'is_subject_cluster_member_negated',
