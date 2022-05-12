@@ -81,7 +81,7 @@ class NDCGScorerV1(Scorer):
                 return claim_relation
         return claim_relation
 
-    def get_claim_relation_correctness(self, claim_relation, claim):
+    def get_claim_relation_correctness(self, ranked_list_claim_relation, claim):
         """
         In order to have correct claim relation, the claim frame must always be on topic.
 
@@ -95,19 +95,21 @@ class NDCGScorerV1(Scorer):
         the claim frame gets only half credit if the system tag is “related” but the gold tag is
         “supporting” in List 5 or “refuting” in List 6).
         """
-        if claim.get('assessed_claim_relation') not in ['ontopic', 'related', 'supporting', 'refuting', 'nonsupporting', 'nonrefuting']:
+        if claim.get('assessed_claim_relation') is None:
             return 0
-        if claim.get('assessed_claim_relation') == claim_relation:
+        if claim.get('assessed_claim_relation') not in ['related', 'supporting', 'refuting']:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value', claim.get('assessed_claim_relation'))
+            return 0
+        if claim.get('assessed_claim_relation') == ranked_list_claim_relation:
             return 1
         compatible_claim_relations = {
-            'nonrefuting': 'supporting',
-            'nonsupporting': 'refuting'
+            'nonrefuting': ['supporting', 'related'],
+            'nonsupporting': ['refuting', 'related'],
+            'ontopic': ['supporting', 'related', 'refuting']
             }
-        if claim_relation in compatible_claim_relations:
-            if claim.get('assessed_claim_relation') == compatible_claim_relations.get(claim_relation):
+        if ranked_list_claim_relation in compatible_claim_relations:
+            if claim.get('assessed_claim_relation') in compatible_claim_relations.get(ranked_list_claim_relation):
                 return 0.5
-        if claim.get('condition') == 'Condition6' and claim_relation == 'ontopic':
-            return 1
         self.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine claim relation correctness', self.get('code_location'))
 
     def get_claim_relations(self, score, scores):
@@ -177,7 +179,7 @@ class NDCGScorerV1(Scorer):
         score = 0
         if not self.get('required_fields_correctness', the_claim):
             return score
-        claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim)
+        claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim) if the_claim.get('condition') == 'Condition5' else 1
         if claim_relation_correctness_scale == 0:
             return score
         specs = self.get('specs')
@@ -193,11 +195,32 @@ class NDCGScorerV1(Scorer):
     def get_query_ids(self, score, scores):
         return ['ALL-Macro']
 
-    def get_ranked_claims(self, query, claim_relation):
+    def get_ranked_claims(self, query, ranked_list_claim_relation):
+        def is_compatible(the_claim_relation, ranked_list_claim_relation):
+            if the_claim_relation == ranked_list_claim_relation:
+                return True
+            compatible = {
+                'nonrefuting': ['related', 'supporting'],
+                'nonsupporting': ['related', 'refuting'],
+                'ontopic': ['related', 'refuting', 'supporting']
+                }
+            if ranked_list_claim_relation in compatible and the_claim_relation in compatible.get(ranked_list_claim_relation):
+                return True
+            return False
+        run_id = self.get('run_id')
+        condition = query.get('condition')
+        query_id = query.get('query_id')
         claims = []
         for claim in self.get('claims').get(query.get('condition')).get(query.get('query_id')).values():
-            if not claim.get('assessment'): continue
-            if claim.get('claim_relation') != claim_relation: continue
+            rank = claim.get('rank')
+            run_claim_id = claim.get('claim_id')
+            run_claim_relation = claim.get('claim_relation')
+            if not claim.get('assessment'):
+                self.record_event('SKIPPING_CLAIM_NOT_ASSESSED', run_id, condition, query_id, ranked_list_claim_relation, rank, run_claim_id)
+                continue
+            if not is_compatible(run_claim_relation, ranked_list_claim_relation):
+                self.record_event('SKIPPING_CLAIM_INCOMPATIBLE', run_id, condition, query_id, ranked_list_claim_relation, rank, run_claim_id, run_claim_relation)
+                continue
             assessed_claim = self.get('assessed_claim', claim)
             assessed_claim_relation = self.get('assessed_claim_relation', query, assessed_claim)
             assessed_claim.set('assessed_claim_relation', assessed_claim_relation)
@@ -430,7 +453,7 @@ class NDCGScorerV1(Scorer):
         self.load_query_claim_frames()
         scores = []
         claim_relations = {
-            'Condition5': ['ontopic', 'related', 'refuting', 'supporting', 'nonrelated', 'nonrefuting'],
+            'Condition5': ['ontopic', 'related', 'refuting', 'supporting', 'nonsupporting', 'nonrefuting'],
             'Condition6': ['ontopic'],
             'Condition7': ['ontopic']
             }
