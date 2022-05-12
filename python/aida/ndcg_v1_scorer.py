@@ -318,16 +318,17 @@ class NDCGScorerV1(Scorer):
                 },
             }
 
-    def get_DCG(self, query, claim_relation, ranked_claims):
+    def get_DCG(self, query, claim_relation, ranked_claims, ideal=False):
         run_id = self.get('run_id')
         query_id = query.get('query_id')
         condition = query.get('condition')
+        ranking_type = 'submitted' if not ideal else 'ideal'
         DCG = 0
         for rank in range(len(ranked_claims)):
             gain = self.get('gain', query, claim_relation, ranked_claims, rank)
             run_claim_id = ranked_claims[rank].get('run_claim_id')
             pool_claim_id = ranked_claims[rank].get('claim_id')
-            self.record_event('GAIN_VALUE', 'submitted', run_id, condition, query_id, claim_relation, rank, run_claim_id, pool_claim_id, gain)
+            self.record_event('GAIN_VALUE', ranking_type, run_id, condition, query_id, claim_relation, rank, run_claim_id, pool_claim_id, gain)
             DCG += (gain/math.log2(rank+2))
         return DCG
 
@@ -347,7 +348,7 @@ class NDCGScorerV1(Scorer):
                     best_next_claim = the_claim
             ideal_claims_ranking.append(best_next_claim)
             claims_set.remove(best_next_claim)
-        IDCG = self.get('DCG', query, claim_relation, ideal_claims_ranking)
+        IDCG = self.get('DCG', query, claim_relation, ideal_claims_ranking, ideal=True)
         return IDCG
 
     def aggregate_scores(self, scores, score_class):
