@@ -60,11 +60,16 @@ class NDCGScorerV1(Scorer):
         outer_claim_filename = claim.get('assessment').get('outer_claim').get('filename')
         path = os.path.dirname(outer_claim_filename)
         claim_id = os.path.basename(outer_claim_filename).replace('-outer-claim.tab', '')
-        return OuterClaim(self.get('logger'),
-                          condition=claim.get('condition'),
-                          query_id=claim.get('query_id'),
-                          path=path,
-                          claim_id=claim_id)
+        outer_claim = OuterClaim(self.get('logger'),
+                                 condition=claim.get('condition'),
+                                 query_id=claim.get('query_id'),
+                                 path=path,
+                                 claim_id=claim_id,
+                                 run_claim_path=claim.get('path'),
+                                 run_claim_id=claim.get('claim_id'),
+                                 run_claim_relation=claim.get('claim_relation'),
+                                 run_claim_rank=claim.get('rank'))
+        return outer_claim
 
     def get_assessed_claim_relation(self, query, claim):
         claim_relation = None
