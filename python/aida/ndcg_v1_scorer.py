@@ -218,6 +218,12 @@ class NDCGScorerV1(Scorer):
         DCG = self.get('DCG', query, claim_relation, ranked_claims)
         IDCG = self.get('IDCG', query, claim_relation, ranked_claims)
         nDCG = DCG/IDCG if IDCG > 0 else 0
+        run_id = self.get('run_id')
+        condition = query.get('condition')
+        query_id = query.get('query_id')
+        self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'DCG', DCG)
+        self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'IDCG', IDCG)
+        self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'nDCG', nDCG)
         return nDCG
 
     def get_specs(self):
