@@ -381,12 +381,28 @@ class ClaimMappings(Object):
     def get_header(self):
         return ['pool_claim_uid', 'condition', 'query_id', 'claim_relations', 'rank', 'run_claim_id', 'run_id', 'runs_directory', 'in_previous_pools']
 
-    def get_claim_mappings(self, claim_uid):
+    def get_claim_mappings(self, **kwargs):
         mappings = []
         for mapping in self.get('mappings'):
-            if mapping.get('pool_claim_uid') == claim_uid:
+            matched = True
+            for k,v in kwargs.items():
+                if not mapping.get(k) == v:
+                    matched = False
+            if matched:
                 mappings.append(mapping)
         return mappings
+
+    def load(self, filename):
+        for entry in FileHandler(self.get('logger'), filename):
+            self.add(entry.get('condition'),
+                     entry.get('query_id'),
+                     entry.get('run_id'),
+                     entry.get('rank'),
+                     entry.get('run_claim_id'),
+                     entry.get('runs_directory'),
+                     entry.get('pool_claim_uid'),
+                     [entry.get('claim_relations')],
+                     entry.get('in_previous_pools'))
 
     def write_output(self, output_dir):
         os.makedirs(output_dir, exist_ok=True)
@@ -431,7 +447,7 @@ class Claims(Object):
                 claim_lines.append('claim: {}'.format(claim_uid))
                 claim_lines.append('\n')
                 claim_lines.append(header.replace('{','').replace('}',''))
-                claim_mappings = self.get('mappings').get('claim_mappings', claim_uid)
+                claim_mappings = self.get('mappings').get('claim_mappings', pool_claim_uid=claim_uid)
                 for claim_mapping in claim_mappings:
                     condition = claim_mapping.get('condition')
                     query_id = claim_mapping.get('query_id')

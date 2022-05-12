@@ -17,11 +17,12 @@ from aida.document_mappings import DocumentMappings
 from aida.encodings import Encodings
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
-from aida.scores_manager import ScoresManager
-from aida.slot_mappings import SlotMappings
 from aida.logger import Logger
 from aida.object import Object
 from aida.ontology_type_mappings import OntologyTypeMappings
+from aida.scores_manager import ScoresManager
+from aida.slot_mappings import SlotMappings
+from aida.ta3_queryset import TA3QuerySet
 from aida.response_set import ResponseSet
 from aida.text_boundaries import TextBoundaries
 from aida.video_boundaries import VideoBoundaries
@@ -261,9 +262,97 @@ class Task2(Object):
         parser.set_defaults(myclass=myclass)
         return parser
 
+class Task3(Object):
+    """
+    Class representing Task3 scorer.
+    """
+    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries, queries_to_score, query_claim_frames, claim_mappings, assessments, claim_relations, responses, scores):
+        check_for_paths_existance([
+                 log_specifications,
+                 encodings,
+                 core_documents,
+                 parent_children,
+                 sentence_boundaries,
+                 image_boundaries,
+                 keyframe_boundaries,
+                 video_boundaries,
+                 queries,
+                 queries_to_score,
+                 query_claim_frames,
+                 claim_mappings,
+                 assessments,
+                 claim_relations,
+                 responses
+                 ])
+        check_for_paths_non_existance([scores])
+        self.log_filename = log
+        self.runid = runid
+        self.log_specifications = log_specifications
+        self.encodings = encodings
+        self.core_documents = core_documents
+        self.parent_children = parent_children
+        self.sentence_boundaries = sentence_boundaries
+        self.image_boundaries = image_boundaries
+        self.keyframe_boundaries = keyframe_boundaries
+        self.video_boundaries = video_boundaries
+        self.queries = queries
+        self.queries_to_score = queries_to_score
+        self.query_claim_frames = query_claim_frames
+        self.claim_mappings = claim_mappings
+        self.assessments = assessments
+        self.claim_relations = claim_relations
+        self.responses = responses
+        self.scores = scores
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specifications'),
+                        sys.argv)
+
+    def __call__(self):
+        logger = self.get('logger')
+        queries_to_score = {}
+        for entry in FileHandler(logger, self.get('queries_to_score')):
+            queries_to_score[entry.get('query_id')] = entry
+
+        assessments = Assessments(logger, 'task3', queries_to_score, self.get('assessments'), claim_mappings=self.get('claim_mappings'), claim_relations=self.get('claim_relations'))
+        arguments = {
+            'run_id': self.get('runid'),
+            'assessments': assessments,
+            'responses_dir': self.get('responses'),
+            'queries_to_score': queries_to_score,
+            'query_claim_frames_dir': self.get('query_claim_frames'),
+            }
+        scores = ScoresManager(logger, 'task3', arguments)
+        scores.print_scores(self.get('scores'))
+        exit(ALLOK_EXIT_CODE)
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('log_specifications', type=str, help='File containing error specifications')
+        parser.add_argument('encodings', type=str, help='File containing list of encoding-to-modality mappings')
+        parser.add_argument('core_documents', type=str, help='File containing list of core documents')
+        parser.add_argument('parent_children', type=str, help='File containing parent-to-child document ID mappings')
+        parser.add_argument('sentence_boundaries', type=str, help='File containing sentence boundaries')
+        parser.add_argument('image_boundaries', type=str, help='File containing image bounding boxes')
+        parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
+        parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
+        parser.add_argument('queries', type=str, help='Specify the directory containing task3 user queries')
+        parser.add_argument('queries_to_score', type=str, help='File containing list of queryids to be scored')
+        parser.add_argument('query_claim_frames', type=str, help='Directory containing output of NIST evaluation docker when applied to query claim frames represented as a Condition5 run')
+        parser.add_argument('claim_mappings', type=str, help='File containing claim mappings (claim-mappings.tab)')
+        parser.add_argument('assessments', type=str, help='Directory containing assessments')
+        parser.add_argument('claim_relations', type=str, help='File containing relations of query claims to assessed pooled claims')
+        parser.add_argument('responses', type=str, help='Directory containing output of AIDA evaluation docker')
+        parser.add_argument('runid', type=str, help='ID of the system being scored')
+        parser.add_argument('scores', type=str, help='Directory to which the scores should be written')
+        parser.set_defaults(myclass=myclass)
+        return parser
+
 myclasses = [
     Task1,
-    Task2
+    Task2,
+    Task3
     ]
 
 def main(args=sys.argv[1:]):

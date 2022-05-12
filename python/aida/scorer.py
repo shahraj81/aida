@@ -89,5 +89,5 @@ class Scorer(Object):
         scores = self.get('scores')
         scores.set('separator', separator)
         fh = open(filename, 'w')
-        fh.write(scores.__str__())
+        fh.write(scores.to_string())
         fh.close()

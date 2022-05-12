@@ -7,6 +7,7 @@ __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "19 November 2020"
 
+from aida.task3_pool import Claim, ClaimMappings
 from aida.container import Container
 from aida.file_handler import FileHandler
 from aida.file_header import FileHeader
@@ -35,12 +36,41 @@ class Assessments(Container):
     AIDA assessments class.
     """
     
-    def __init__(self, logger, task, queries_to_score, assessments_dir):
+    def __init__(self, logger, task, queries_to_score, assessments_dir, claim_mappings=None, claim_relations=None):
         super().__init__(logger)
         self.task = task
         self.queries_to_score = queries_to_score
         self.assessments_dir = assessments_dir
+        self.claim_mappings_filename = claim_mappings
+        self.claim_relations_filename = claim_relations
         self.load()
+
+    def get_assessment(self, task, **kwargs):
+        method_name = "get_{}_assessment".format(str(self.get('task')).lower())
+        method = self.get_method(method_name)
+        if method is None:
+            self.record_event('UNDEFINED_METHOD', method_name)
+        return method(**kwargs)
+
+    def get_task3_assessment(self, **kwargs):
+        claim = kwargs.get('claim')
+        condition = claim.get('condition')
+        query_id = claim.get('query_id')
+        run_id = kwargs.get('run_id')
+        run_claim_id = claim.get('claim_id')
+        claim_mappings = self.get('claim_mappings').get('claim_mappings',
+                                                        condition=condition,
+                                                        query_id=query_id,
+                                                        run_id=run_id,
+                                                        run_claim_id=run_claim_id)
+        if len(claim_mappings) == 1:
+            pool_claim_id = claim_mappings[0].get('pool_claim_uid')
+            assessment = self.get('claims').get(pool_claim_id)
+            return assessment
+        elif len(claim_mappings) > 1:
+            message = 'CRITICAL ERROR: unexpected number of matched claim mappings'
+            print(message)
+            self.record_event('DEFAULT_CRITICAL_ERROR', message)
 
     def exists(self, key):
         num_splits = len(key.split(':'))
@@ -105,6 +135,31 @@ class Assessments(Container):
                 line = 'ENTITYID={} QUERYID={} DOCID={} MENTION={} ASSESSMENT={} FQEC_READ={} FQEC={}'.format(
                     entity_id, queryid, docid, mention_span, assessment, fqec_read, fqec)
                 self.logger.record_event('GROUND_TRUTH', line, where)
+
+    def load_task3_assessments(self):
+        logger = self.get('logger')
+        claims = {}
+        claim_mappings = ClaimMappings(logger)
+        claim_mappings.load(self.get('claim_mappings_filename'))
+        self.set('claim_mappings', claim_mappings)
+        self.set('claims', claims)
+        for claim_mapping in claim_mappings.get('mappings'):
+            condition = claim_mapping.get('condition')
+            query_id = claim_mapping.get('query_id')
+            pool_claim_id = claim_mapping.get('pool_claim_uid')
+            if pool_claim_id not in claims:
+                claim = Claim(self.get('logger'),
+                              condition=condition,
+                              query_id=query_id,
+                              path=self.get('assessments_dir'),
+                              claim_id=pool_claim_id)
+                claim.set('mappings', [])
+                claims[pool_claim_id] = claim
+            claim = claims.get(pool_claim_id)
+            claim.get('mappings').append(claim_mapping)
+        claim_relations_filename = self.get('claim_relations_filename')
+        if claim_relations_filename:
+            self.set('cross_claim_relations', FileHandler(logger, claim_relations_filename))
 
     def load_classquery_assessments(self): 
         next_fqec_num = 1001

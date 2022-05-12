@@ -14,6 +14,7 @@ from aida.argument_metric_v1_scorer import ArgumentMetricScorerV1
 from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
 from aida.frame_metric_scorer import FrameMetricScorer
+from aida.ndcg_v1_scorer import NDCGScorerV1
 from aida.temporal_metric_scorer import TemporalMetricScorer
 from aida.type_metric_v1_scorer import TypeMetricScorerV1
 from aida.type_metric_v2_scorer import TypeMetricScorerV2
@@ -39,6 +40,9 @@ class ScoresManager(Object):
             },
         'task2': {
             'AcrossDocumentsCoreferenceMetric': AcrossDocumentsCoreferenceMetricScorer
+            },
+        'task3': {
+            'NDCGScorerV1': NDCGScorerV1,
             }
         }
 
@@ -62,7 +66,7 @@ class ScoresManager(Object):
                                                      cluster_alignment=self.get('cluster_alignment'),
                                                      cluster_self_similarities=self.get('cluster_self_similarities'))
                 self.get('scores').add(key=metric, value=scorer)
-        if self.get('task') == 'task2':
+        elif self.get('task') == 'task2':
             for metric in self.get('metrics'):
                 scorer = self.get('metrics')[metric](logger=self.get('logger'),
                                                      run_id=self.get('run_id'),
@@ -72,6 +76,15 @@ class ScoresManager(Object):
                                                      responses=self.get('responses'),
                                                      assessments=self.get('assessments'),
                                                      queries_to_score=self.get('queries_to_score'))
+                self.get('scores').add(key=metric, value=scorer)
+        elif self.get('task') == 'task3':
+            for metric in self.get('metrics'):
+                scorer = self.get('metrics')[metric](logger=self.get('logger'),
+                                                     run_id=self.get('run_id'),
+                                                     responses_dir=self.get('responses_dir'),
+                                                     assessments=self.get('assessments'),
+                                                     queries_to_score=self.get('queries_to_score'),
+                                                     query_claim_frames_dir=self.get('query_claim_frames_dir'))
                 self.get('scores').add(key=metric, value=scorer)
 
     def print_scores(self, output_directory):
