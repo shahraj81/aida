@@ -327,7 +327,7 @@ class NDCGScorerV1(Scorer):
             gain = self.get('gain', query, claim_relation, ranked_claims, rank)
             run_claim_id = ranked_claims[rank].get('run_claim_id')
             pool_claim_id = ranked_claims[rank].get('claim_id')
-            self.record_event('GAIN_VALUE', run_id, condition, query_id, claim_relation, rank, run_claim_id, pool_claim_id, gain)
+            self.record_event('GAIN_VALUE', 'submitted', run_id, condition, query_id, claim_relation, rank, run_claim_id, pool_claim_id, gain)
             DCG += (gain/math.log2(rank+2))
         return DCG
 

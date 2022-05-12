@@ -15,7 +15,7 @@ CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column 
 ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
 WARNING   ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED '{}' met pooling criteria but was not assessed
 ERROR     EXPECTING_VALID_ENTRY           Code expected entry to be valid but it was not. This happens when either the code is not run on the output of the response validator or when the response validator did not remove an invalid entry.
-INFO      GAIN_VALUE                      RUN_ID:{} CONDITION:{} QUERY_ID:{} CLAIM_RELATION:{} RANK:{} RUN_CLAIM_ID:{} POOL_CLAIM_ID:{} GAIN:{}
+INFO      GAIN_VALUE                      RANKING_TYPE:{} RUN_ID:{} CONDITION:{} QUERY_ID:{} CLAIM_RELATION:{} RANK:{} RUN_CLAIM_ID:{} POOL_CLAIM_ID:{} GAIN:{}
 INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
 ERROR     ID_WITH_EXTENSION_ERROR         File extension included as part of {} '{}'
