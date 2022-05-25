@@ -217,8 +217,7 @@ class NDCGScorerV1(Scorer):
                     dependent_fieldspec = self.get('specs').get(dependent_fieldname)
                     dependent_field_novelty_weight = self.get('field_pairwise_novelty_weight', dependent_fieldspec, the_claim, previous_claim, correctness_requirement, list(stack).append(fieldspec.get('fieldname')))
                     if dependent_field_novelty_weight:
-                        # TODO: determine the weight
-                        weight = dependent_fieldspec.get('dependents_weight')
+                        weight = len(the_claim_field_values)
                         break
         return weight
 
@@ -316,7 +315,6 @@ class NDCGScorerV1(Scorer):
             'claimTemplate': {
                 'component': False,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'claimTemplate',
                 'importance_rank': 1,
                 'max_num_of_values': 1,
@@ -328,7 +326,6 @@ class NDCGScorerV1(Scorer):
             'claimEpistemic': {
                 'component': False,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'claimEpistemic',
                 'importance_rank': 2,
                 'max_num_of_values': 1,
@@ -340,7 +337,6 @@ class NDCGScorerV1(Scorer):
             'xVariable': {
                 'component': True,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'xVariable',
                 'importance_rank': 3,
                 'max_num_of_values': 1,
@@ -352,7 +348,6 @@ class NDCGScorerV1(Scorer):
             'claimer': {
                 'component': True,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'claimer',
                 'importance_rank': 4,
                 'max_num_of_values': 1,
@@ -364,7 +359,6 @@ class NDCGScorerV1(Scorer):
             'claimerAffiliation': {
                 'component': True,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'claimerAffiliation',
                 'importance_rank': 5,
                 'max_num_of_values': 3,
@@ -376,7 +370,6 @@ class NDCGScorerV1(Scorer):
             'claimLocation': {
                 'component': True,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'claimLocation',
                 'importance_rank': 6,
                 'max_num_of_values': 1,
@@ -388,7 +381,6 @@ class NDCGScorerV1(Scorer):
             'claimMedium': {
                 'component': True,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'claimMedium',
                 'importance_rank': 7,
                 'max_num_of_values': 1,
@@ -400,7 +392,6 @@ class NDCGScorerV1(Scorer):
             'date': {
                 'component': True,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'date',
                 'importance_rank': 8,
                 'max_num_of_values': 1,
@@ -412,7 +403,6 @@ class NDCGScorerV1(Scorer):
             'claimSentiment': {
                 'component': False,
                 'dependents': [],
-                'dependents_weight': 1,
                 'fieldname': 'claimSentiment',
                 'importance_rank': 9,
                 'max_num_of_values': 1,
