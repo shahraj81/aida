@@ -314,7 +314,7 @@ class NDCGScorerV1(Scorer):
         return {
             'claimTemplate': {
                 'component': False,
-                'dependents': [],
+                'dependents': ['claimEpistemic', 'xVariable'],
                 'fieldname': 'claimTemplate',
                 'importance_rank': 1,
                 'max_num_of_values': 1,
@@ -325,7 +325,7 @@ class NDCGScorerV1(Scorer):
                 },
             'claimEpistemic': {
                 'component': False,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'xVariable'],
                 'fieldname': 'claimEpistemic',
                 'importance_rank': 2,
                 'max_num_of_values': 1,
@@ -336,7 +336,7 @@ class NDCGScorerV1(Scorer):
                 },
             'xVariable': {
                 'component': True,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'claimEpistemic'],
                 'fieldname': 'xVariable',
                 'importance_rank': 3,
                 'max_num_of_values': 1,
@@ -347,7 +347,7 @@ class NDCGScorerV1(Scorer):
                 },
             'claimer': {
                 'component': True,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'claimEpistemic', 'xVariable'],
                 'fieldname': 'claimer',
                 'importance_rank': 4,
                 'max_num_of_values': 1,
@@ -358,7 +358,7 @@ class NDCGScorerV1(Scorer):
                 },
             'claimerAffiliation': {
                 'component': True,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'claimEpistemic', 'xVariable', 'claimer'],
                 'fieldname': 'claimerAffiliation',
                 'importance_rank': 5,
                 'max_num_of_values': 3,
@@ -369,7 +369,7 @@ class NDCGScorerV1(Scorer):
                 },
             'claimLocation': {
                 'component': True,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'claimEpistemic', 'xVariable', 'claimer'],
                 'fieldname': 'claimLocation',
                 'importance_rank': 6,
                 'max_num_of_values': 1,
@@ -380,7 +380,7 @@ class NDCGScorerV1(Scorer):
                 },
             'claimMedium': {
                 'component': True,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'claimEpistemic', 'xVariable', 'claimer'],
                 'fieldname': 'claimMedium',
                 'importance_rank': 7,
                 'max_num_of_values': 1,
@@ -391,7 +391,7 @@ class NDCGScorerV1(Scorer):
                 },
             'date': {
                 'component': True,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'claimEpistemic', 'xVariable', 'claimer'],
                 'fieldname': 'date',
                 'importance_rank': 8,
                 'max_num_of_values': 1,
@@ -402,7 +402,7 @@ class NDCGScorerV1(Scorer):
                 },
             'claimSentiment': {
                 'component': False,
-                'dependents': [],
+                'dependents': ['claimTemplate', 'claimEpistemic', 'xVariable', 'claimer'],
                 'fieldname': 'claimSentiment',
                 'importance_rank': 9,
                 'max_num_of_values': 1,
