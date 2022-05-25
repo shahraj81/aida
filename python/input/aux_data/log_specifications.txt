@@ -2,6 +2,7 @@ type      code                            message
 INFO      ALIGNMENT_INFO                  QUERY_ID:{} CLUSTER_ID:{} FQEC:{}
 INFO      AP_RANKED_LIST                  QUERY_ID:{} NUM_GROUND_TRUTH:{} CLUSTER_ID:{} FQEC:{} RANK:{} MENTION:{} POST_POLICY_ASSESSMENT:{} WEIGHT:{} SUM_PRECISION:{}
 INFO      TYPE_METRIC_AP_RANKED_LIST      METRIC:{} DOCUMENT_ID:{} GOLD_CLUSTER:{} SYSTEM_CLUSTER:{} NUM_GROUND_TRUTH:{} RANK:{} TYPE:{} LABEL:{} WEIGHT:{} NUM_CORRECT:{} SUM_PRECISION:{}
+INFO      CLAIM_STRING                    {}
 INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 INFO      CLUSTER_NOT_ANNOTATED           Response line skipped because all mentions of cluster '{}' were outside annotated regions
 ERROR     CONFLICTING_ASSESSMENTS         Conflicting assessment for '{}' in kits corresponding to queries {},{}

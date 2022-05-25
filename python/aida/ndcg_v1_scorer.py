@@ -17,6 +17,7 @@ from aida.scorer import Scorer
 from aida.task3_pool import Claim
 from aida.utility import multisort
 
+from datetime import datetime
 import math
 import os
 
@@ -46,12 +47,13 @@ class NDCGScorerV1(Scorer):
     AIDA class for Task3 scorer.
     """
 
-    printing_specs = [{'name': 'condition',      'header': 'Condition',     'format': 's',    'justify': 'L'},
-                      {'name': 'query_id',       'header': 'QueryID',       'format': 's',    'justify': 'L'},
-                      {'name': 'claim_relation', 'header': 'ClaimRelation', 'format': 's',    'justify': 'L'},
-                      {'name': 'run_id',         'header': 'RunID',         'format': 's',    'justify': 'L'},
-                      {'name': 'num_of_claims',  'header': 'NumClaims',     'format': 's',    'justify': 'R'},
-                      {'name': 'ndcg',           'header': 'NDCG',          'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
+    printing_specs = [{'name': 'condition',              'header': 'Condition',          'format': 's',    'justify': 'L'},
+                      {'name': 'query_id',               'header': 'QueryID',            'format': 's',    'justify': 'L'},
+                      {'name': 'claim_relation',         'header': 'ClaimRelation',      'format': 's',    'justify': 'L'},
+                      {'name': 'run_id',                 'header': 'RunID',              'format': 's',    'justify': 'L'},
+                      {'name': 'num_of_claims',          'header': 'NumSubmittedClaims', 'format': 's',    'justify': 'R'},
+                      {'name': 'num_of_assessed_claims', 'header': 'NumAssessedClaims',  'format': 's',    'justify': 'R'},
+                      {'name': 'ndcg',                   'header': 'NDCG',               'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
@@ -95,13 +97,17 @@ class NDCGScorerV1(Scorer):
         the claim frame gets only half credit if the system tag is “related” but the gold tag is
         “supporting” in List 5 or “refuting” in List 6).
         """
+        # LDC will not provide cross claim relation for incorrect claims, return 0
         if claim.get('assessed_claim_relation') is None:
             return 0
+        # if assessed cross claim relations from LDC is not one of the following, raise an error
         if claim.get('assessed_claim_relation') not in ['related', 'supporting', 'refuting']:
             self.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value', claim.get('assessed_claim_relation'))
             return 0
+        # if claim relations match, return 1
         if claim.get('assessed_claim_relation') == ranked_list_claim_relation:
             return 1
+        # if claim relations did not match but are compatible return 0.5
         compatible_claim_relations = {
             'nonrefuting': ['supporting', 'related'],
             'nonsupporting': ['refuting', 'related'],
@@ -110,6 +116,7 @@ class NDCGScorerV1(Scorer):
         if ranked_list_claim_relation in compatible_claim_relations:
             if claim.get('assessed_claim_relation') in compatible_claim_relations.get(ranked_list_claim_relation):
                 return 0.5
+        # otherwise, raise an error
         self.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine claim relation correctness', self.get('code_location'))
 
     def get_claim_relations(self, score, scores):
@@ -120,43 +127,42 @@ class NDCGScorerV1(Scorer):
     def get_claim_to_string(self, claim):
         specs = self.get('specs')
         claim_id = claim.get('claim_id')
-        string = []
-        string.append('-----------')
-        string.append(claim_id)
+        string = ['claim_id:{}'.format(claim_id)]
         for fieldspec in specs.values():
             field_name = fieldspec.get('fieldname')
             claim_field_values = self.get('field_values', fieldspec, claim)
             if len(claim_field_values) == 0:
                 claim_field_values = set(['None'])
-            string.append('{}: {}'.format(field_name, ','.join(claim_field_values)))
-        return '\n'.join(string)
+            string.append('{}:{}'.format(field_name, ','.join(claim_field_values)))
+        return '::'.join(string)
 
     def get_conditions(self, score, scores):
         field_name = 'condition'
         values = [score.get(field_name)]
         return values
 
-    def get_field_correctness(self, fieldspec, claim):
+    def get_field_correctness(self, fieldspec, claim, component_id='1'):
         correctness_code = {
             'Correct': True,
             'Inexact': True,
             'Wrong': False,
+            'N/A': False
             }
-        correctness = claim.get('data').get(fieldspec.get('fieldname')).get('1').get(fieldspec.get('overall_assessment_fieldname'))[0].get('correctness')
+        correctness = claim.get('data').get(fieldspec.get('fieldname')).get(component_id).get(fieldspec.get('overall_assessment_fieldname'))[0].get('correctness')
         if correctness == 'NIL':
             self.record_event('DEFAULT_WARNING', 'missing assessment for claim {}; using correct as default assessment'.format(claim.get('claim_id')))
             return True
         return correctness_code.get(correctness)
 
-    def get_field_values(self, fieldspec, claim):
+    def get_field_values(self, fieldspec, claim, correctness_requirement=False):
+        # TODO: return only correct values if correctness_requirement=True otherwise return all values
         values = []
         data = claim.get('data').get(fieldspec.get('fieldname'))
         if data:
-            fieldname_key = 'ec_fieldname' if fieldspec.get('component') else 'overall_assessment_fieldname'
-            fieldname = fieldspec.get(fieldname_key)
-            sub_fieldname = 'correctness' if fieldspec.get('component') else 'value'
-            for entry in data.values():
-                values.append(entry.get(fieldname)[0].get(sub_fieldname))
+            fieldname, sub_fieldname = fieldspec.get('value_fieldnames').split(':')
+            for component_id, entry in data.items():
+                if (not correctness_requirement) or self.get('field_correctness', fieldspec, claim, component_id):
+                    values.append(entry.get(fieldname)[0].get(sub_fieldname))
         retVals = set()
         max_num_of_values = fieldspec.get('max_num_of_values')
         for value in sorted(values):
@@ -171,26 +177,78 @@ class NDCGScorerV1(Scorer):
         gain = 1 if query_claim_frame is None else self.get('pairwise_novelty_score', claim_relation, the_claim, query_claim_frame)
         for i in range(rank):
             pairwise_novelty_score = self.get('pairwise_novelty_score', claim_relation, the_claim, ranked_claims[i])
+            if pairwise_novelty_score == 0:
+                return 0
             if gain > pairwise_novelty_score:
                 gain = pairwise_novelty_score
         return gain
 
-    def get_pairwise_novelty_score(self, claim_relation, the_claim, another_claim):
-        score = 0
-        if not self.get('required_fields_correctness', the_claim):
-            return score
+    def get_pairwise_novelty_score(self, claim_relation, the_claim, previous_claim):
+        pairwise_novelty_scores = self.get('pairwise_novelty_scores')
+        lookup_key = '-'.join([the_claim.get('claim_id'), previous_claim.get('claim_id')])
         claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim) if the_claim.get('condition') == 'Condition5' else 1
         if claim_relation_correctness_scale == 0:
-            return score
-        specs = self.get('specs')
-        for fieldspec in specs.values():
-            the_claim_field_values = self.get('field_values', fieldspec, the_claim)
-            another_claim_field_values = self.get('field_values', fieldspec, another_claim)
-            field_weight = 0
-            if the_claim_field_values != another_claim_field_values:
-                field_weight = fieldspec.get('weight')
-            score += field_weight
-        return score * claim_relation_correctness_scale
+            return 0
+        if lookup_key not in pairwise_novelty_scores:
+            score = 0
+            if not self.get('required_fields_correctness', the_claim):
+                return score
+            specs = self.get('specs')
+            for fieldspec in specs.values():
+                field_pairwise_novelty_weight = self.get('field_pairwise_novelty_weight', fieldspec, the_claim, previous_claim, correctness_requirement=True)
+                score += (fieldspec.get('weight') * field_pairwise_novelty_weight)
+            pairwise_novelty_scores[lookup_key] = score
+        score = pairwise_novelty_scores.get(lookup_key)
+        return claim_relation_correctness_scale * score
+
+    def get_field_pairwise_novelty_weight(self, fieldspec, the_claim, previous_claim, correctness_requirement=True):
+        the_claim_field_values = self.get('field_values', fieldspec, the_claim, correctness_requirement=True)
+        previous_claim_field_values = self.get('field_values', fieldspec, previous_claim, correctness_requirement=True)
+        weight = 0
+        if len(the_claim_field_values):
+            weight = len(the_claim_field_values - previous_claim_field_values)
+            if fieldspec.get('fieldname') == 'date':
+                weight = self.get('field_pairwise_novelty_weight_date', the_claim_field_values, previous_claim_field_values)
+            if weight == 0:
+                dependent_fieldnames = fieldspec.get('dependents')
+                for dependent_fieldname in dependent_fieldnames:
+                    dependent_fieldspec = self.get('specs').get(dependent_fieldname)
+                    dependent_field_novelty_weight = self.get('field_pairwise_novelty_weight', dependent_fieldspec, the_claim, previous_claim, correctness_requirement)
+                    if dependent_field_novelty_weight:
+                        # TODO: determine the weight
+                        weight = dependent_fieldspec.get('dependents_weight')
+                        break
+        return weight
+
+    def get_field_pairwise_novelty_weight_date(self, the_claim_field_values, previous_claim_field_values):
+        def different(date_string_1, date_string_2):
+            different = False
+            if date_string_1 == '--' or date_string_2 == '--':
+                different = True
+            else:
+                date1 = datetime.fromisoformat(date_string_1)
+                date2 = datetime.fromisoformat(date_string_2)
+                delta = date1 - date2 if date1 > date2 else date2 - date1
+                if delta.days > 30:
+                    different = True
+            return different
+        def parse(date_range):
+            start, end = [e.replace('(','').replace(')','') for e in date_range.split(')-(')]
+            start_after, start_before = start.split(',')
+            end_after, end_before = end.split(',')
+            return [start_after, start_before, end_after, end_before]
+        weight = len(the_claim_field_values)
+        if len(previous_claim_field_values):
+            if len(the_claim_field_values) != 1 and len(previous_claim_field_values) != 1:
+                self.record_event('DEFAULT_CRITIAL_ERROR', 'unexpected number of date field values')
+            the_claim_times = parse(list(the_claim_field_values)[0])
+            previous_claim_times = parse(list(previous_claim_field_values)[0])
+            weight = 0
+            for i in range(4):
+                if different(the_claim_times[i], previous_claim_times[i]):
+                    # TODO: determine the weight
+                    weight = 1
+        return weight
 
     def get_query_ids(self, score, scores):
         return ['ALL-Macro']
@@ -215,9 +273,11 @@ class NDCGScorerV1(Scorer):
             rank = claim.get('rank')
             run_claim_id = claim.get('claim_id')
             run_claim_relation = claim.get('claim_relation')
+            # record if skipping the claim because it was not assessed
             if not claim.get('assessment'):
                 self.record_event('SKIPPING_CLAIM_NOT_ASSESSED', run_id, condition, query_id, ranked_list_claim_relation, rank, run_claim_id)
                 continue
+            # record if skipping the claim because the claim relation is not compatible to the ranked list claim relation
             if not is_compatible(run_claim_relation, ranked_list_claim_relation):
                 self.record_event('SKIPPING_CLAIM_INCOMPATIBLE', run_id, condition, query_id, ranked_list_claim_relation, rank, run_claim_id, run_claim_relation)
                 continue
@@ -230,16 +290,15 @@ class NDCGScorerV1(Scorer):
 
     def get_required_fields_correctness(self, claim):
         specs = self.get('specs')
-        correctness = True
         for fieldspec in specs.values():
             if fieldspec.get('required'):
                 if not self.get('field_correctness', fieldspec, claim):
-                    correctness = False
-        return correctness
+                    return False
+        return True
 
     def get_score(self, query, claim_relation, ranked_claims):
         DCG = self.get('DCG', query, claim_relation, ranked_claims)
-        IDCG = self.get('IDCG', query, claim_relation, ranked_claims)
+        IDCG, num_assessed_claims = self.get('IDCG', query, claim_relation)
         nDCG = DCG/IDCG if IDCG > 0 else 0
         run_id = self.get('run_id')
         condition = query.get('condition')
@@ -247,97 +306,117 @@ class NDCGScorerV1(Scorer):
         self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'DCG', DCG)
         self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'IDCG', IDCG)
         self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'nDCG', nDCG)
-        return nDCG
+        return nDCG, num_assessed_claims
 
     def get_specs(self):
         return {
             'claimTemplate': {
-                'fieldname': 'claimTemplate',
                 'component': False,
-                'required': True,
-                'max_num_of_values': 1,
-                'weight': 1,
-                'overall_assessment_fieldname': 'value',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'claimTemplate',
                 'importance_rank': 1,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'value',
+                'required': True,
+                'value_fieldnames': 'value:value',
+                'weight': 1,
                 },
             'claimEpistemic': {
-                'fieldname': 'claimEpistemic',
                 'component': False,
-                'required': True,
-                'max_num_of_values': 1,
-                'weight': 1,
-                'overall_assessment_fieldname': 'polarity',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'claimEpistemic',
                 'importance_rank': 2,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'polarity',
+                'required': True,
+                'value_fieldnames': 'polarity:value',
+                'weight': 1,
                 },
             'xVariable': {
-                'fieldname': 'xVariable',
                 'component': True,
-                'required': True,
-                'max_num_of_values': 1,
-                'ec_fieldname': 'ec_id',
-                'weight': 1,
-                'overall_assessment_fieldname': 'overallAssessment',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'xVariable',
                 'importance_rank': 3,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'overallAssessment',
+                'required': True,
+                'value_fieldnames': 'ec_id:correctness',
+                'weight': 1,
                 },
             'claimer': {
-                'fieldname': 'claimer',
                 'component': True,
-                'required': True,
-                'max_num_of_values': 1,
-                'ec_fieldname': 'ec_id',
-                'weight': 1,
-                'overall_assessment_fieldname': 'overallAssessment',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'claimer',
                 'importance_rank': 4,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'overallAssessment',
+                'required': True,
+                'value_fieldnames': 'ec_id:correctness',
+                'weight': 1,
                 },
             'claimerAffiliation': {
-                'fieldname': 'claimerAffiliation',
                 'component': True,
-                'required': False,
-                'max_num_of_values': 3,
-                'ec_fieldname': 'ec_id',
-                'weight': 1,
-                'overall_assessment_fieldname': 'overallAssessment',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'claimerAffiliation',
                 'importance_rank': 5,
+                'max_num_of_values': 3,
+                'overall_assessment_fieldname': 'overallAssessment',
+                'required': False,
+                'value_fieldnames': 'ec_id:correctness',
+                'weight': 1,
                 },
             'claimLocation': {
-                'fieldname': 'claimLocation',
                 'component': True,
-                'required': False,
-                'max_num_of_values': 1,
-                'ec_fieldname': 'ec_id',
-                'weight': 1,
-                'overall_assessment_fieldname': 'overallAssessment',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'claimLocation',
                 'importance_rank': 6,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'overallAssessment',
+                'required': False,
+                'value_fieldnames': 'ec_id:correctness',
+                'weight': 1,
                 },
             'claimMedium': {
-                'fieldname': 'claimMedium',
                 'component': True,
-                'required': False,
-                'max_num_of_values': 1,
-                'ec_fieldname': 'ec_id',
-                'weight': 1,
-                'overall_assessment_fieldname': 'overallAssessment',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'claimMedium',
                 'importance_rank': 7,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'overallAssessment',
+                'required': False,
+                'value_fieldnames': 'ec_id:correctness',
+                'weight': 1,
                 },
             'date': {
-                'fieldname': 'date',
                 'component': True,
-                'required': False,
-                'max_num_of_values': 1,
-                'ec_fieldname': 'ec_id',
-                'weight': 1,
-                'overall_assessment_fieldname': 'overallAssessment',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'date',
                 'importance_rank': 8,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'range',
+                'required': False,
+                'value_fieldnames': 'range:value',
+                'weight': 1,
                 },
             'claimSentiment': {
-                'fieldname': 'claimSentiment',
                 'component': False,
-                'required': False,
-                'max_num_of_values': 1,
-                'ec_fieldname': 'ec_id',
-                'weight': 1,
-                'overall_assessment_fieldname': 'value',
+                'dependents': [],
+                'dependents_weight': 1,
+                'fieldname': 'claimSentiment',
                 'importance_rank': 9,
+                'max_num_of_values': 1,
+                'overall_assessment_fieldname': 'value',
+                'required': False,
+                'value_fieldnames': 'value:value',
+                'weight': 1,
                 },
             }
 
@@ -355,8 +434,46 @@ class NDCGScorerV1(Scorer):
             DCG += (gain/math.log2(rank+2))
         return DCG
 
-    def get_IDCG(self, query, claim_relation, ranked_claims):
-        claims_set = set(ranked_claims)
+    def get_IDCG(self, query, claim_relation):
+        def get_outer_claim(claim, rank):
+            outer_claim_filename = claim.get('outer_claim').get('filename')
+            path = os.path.dirname(outer_claim_filename)
+            claim_id = os.path.basename(outer_claim_filename).replace('-outer-claim.tab', '')
+            outer_claim = OuterClaim(self.get('logger'),
+                                     condition=claim.get('condition'),
+                                     query_id=claim.get('query_id'),
+                                     path=path,
+                                     claim_id=claim_id,
+                                     run_claim_path=claim.get('path'),
+                                     run_claim_id=claim.get('claim_id'),
+                                     run_claim_relation=claim_relation,
+                                     run_claim_rank=rank)
+            return outer_claim
+        compatible_claim_relations = {
+            'nonrefuting': ['supporting', 'related'],
+            'nonsupporting': ['refuting', 'related'],
+            'ontopic': ['supporting', 'related', 'refuting'],
+            'refuting': ['refuting'],
+            'related': ['related'],
+            'supporting': ['supporting'],
+            }
+        related_claim_ids = set()
+        for entry in self.get('assessments').get('cross_claim_relations'):
+            if entry.get('relation') in compatible_claim_relations.get(claim_relation):
+                claim_id_1 = entry.get('claim_id_1')
+                claim_id_2 = entry.get('claim_id_2')
+                if claim_id_1 == query.get('query_id'):
+                    related_claim_ids.add(claim_id_2)
+                elif claim_id_2 == query.get('query_id'):
+                    related_claim_ids.add(claim_id_1)
+        claims_set = set()
+        rank = 1
+        for claim in self.get('assessments').get('claims').values():
+            if claim.get('claim_id') in related_claim_ids:
+                outer_claim = get_outer_claim(claim, rank)
+                outer_claim.set('assessed_claim_relation', self.get('assessed_claim_relation', query, outer_claim))
+                claims_set.add(outer_claim)
+                rank += 1
         ideal_claims_ranking = []
         while(len(claims_set)):
             best_next_claim = None
@@ -372,7 +489,7 @@ class NDCGScorerV1(Scorer):
             ideal_claims_ranking.append(best_next_claim)
             claims_set.remove(best_next_claim)
         IDCG = self.get('DCG', query, claim_relation, ideal_claims_ranking, ideal=True)
-        return IDCG
+        return IDCG, len(ideal_claims_ranking)
 
     def aggregate_scores(self, scores, score_class):
         aggregates = {}
@@ -408,6 +525,7 @@ class NDCGScorerV1(Scorer):
                                    claim_id=query_id)
                 claim.set('rank', -1000000)
                 query.set('query_claim_frame', claim)
+                self.record_event('CLAIM_STRING', self.get('claim_to_string', claim))
 
     def load_responses(self):
         logger = self.get('logger')
@@ -451,6 +569,7 @@ class NDCGScorerV1(Scorer):
     def score_responses(self):
         self.load_responses()
         self.load_query_claim_frames()
+        self.pairwise_novelty_scores = {}
         scores = []
         claim_relations = {
             'Condition5': ['ontopic', 'related', 'refuting', 'supporting', 'nonsupporting', 'nonrefuting'],
@@ -458,20 +577,27 @@ class NDCGScorerV1(Scorer):
             'Condition7': ['ontopic']
             }
         queries_to_score = self.get('queries_to_score')
+        printed = set()
         for query_id, query in queries_to_score.items():
             condition = query.get('condition')
             for claim_relation in claim_relations.get(condition):
                 ranked_claims = self.get('ranked_claims', query, claim_relation)
-                ndcg = self.get('score', query, claim_relation, ranked_claims)
+                ndcg, num_assessed_claims = self.get('score', query, claim_relation, ranked_claims)
                 score = NDCGScore(logger=self.logger,
                                   run_id=self.get('run_id'),
                                   condition=condition,
                                   query_id=query_id,
                                   claim_relation=claim_relation,
                                   num_of_claims=str(len(ranked_claims)),
+                                  num_of_assessed_claims=str(num_assessed_claims),
                                   ndcg=ndcg
                                   )
                 scores.append(score)
+                for claim in ranked_claims:
+                    claim_id = claim.get('claim_id')
+                    if claim_id not in printed:
+                        self.record_event('CLAIM_STRING', self.get('claim_to_string', claim))
+                        printed.add(claim_id)
         scores_printer = ScorePrinter(self.logger, self.printing_specs, aggregate_types=['ALL-Macro'])
         for score in multisort(scores, (('condition', False),
                                         ('query_id', False),
