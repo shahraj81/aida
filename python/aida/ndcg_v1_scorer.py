@@ -223,7 +223,9 @@ class NDCGScorerV1(Scorer):
     def get_field_pairwise_novelty_weight_date(self, the_claim_field_values, previous_claim_field_values):
         def different(date_string_1, date_string_2):
             different = False
-            if (date_string_1 == '--' or date_string_2 == '--') and not(date_string_1 == '--' and date_string_2 == '--'):
+            if date_string_1 == '--' and date_string_2 == '--':
+                different = False
+            elif date_string_1 == '--' or date_string_2 == '--':
                 different = True
             else:
                 date1 = datetime.fromisoformat(date_string_1)
