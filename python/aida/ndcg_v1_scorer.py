@@ -74,13 +74,18 @@ class NDCGScorerV1(Scorer):
         return outer_claim
 
     def get_assessed_claim_relation(self, query, claim):
+        apply_patch = {
+                'refuted_by': 'refuting',
+                'related': 'related',
+                'supported_by': 'supporting'
+                }
         claim_relation = None
         for entry in self.get('assessments').get('cross_claim_relations'):
-            pool_claim_id = entry.get('claim_id_1')
-            query_claim_id = entry.get('claim_id_2')
+            system_claim_id = entry.get('system_claim_id')
+            query_claim_id = entry.get('query_claim_id')
             claim_relation = entry.get('relation')
-            if query.get('query_id') == query_claim_id and claim.get('claim_id') == pool_claim_id:
-                return claim_relation
+            if query.get('query_id') == query_claim_id and claim.get('claim_id') == system_claim_id:
+                return apply_patch.get(claim_relation)
         return claim_relation
 
     def get_claim_relation_correctness(self, ranked_list_claim_relation, claim):
