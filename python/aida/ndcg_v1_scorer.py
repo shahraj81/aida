@@ -121,8 +121,7 @@ class NDCGScorerV1(Scorer):
         if ranked_list_claim_relation in compatible_claim_relations:
             if claim.get('assessed_claim_relation') in compatible_claim_relations.get(ranked_list_claim_relation):
                 return 0.5
-        # otherwise, raise an error
-        self.record_event('DEFAULT_CRITICAL_ERROR', 'Unable to determine claim relation correctness', self.get('code_location'))
+        return 0
 
     def get_claim_relations(self, score, scores):
         field_name = 'claim_relation'
