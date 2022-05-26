@@ -321,7 +321,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'value',
                 'required': True,
                 'value_fieldnames': 'value:value',
-                'weight': 1,
+                'weight': 64,
                 },
             'claimEpistemic': {
                 'component': False,
@@ -332,7 +332,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'polarity',
                 'required': True,
                 'value_fieldnames': 'polarity:value',
-                'weight': 1,
+                'weight': 64,
                 },
             'xVariable': {
                 'component': True,
@@ -343,7 +343,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': True,
                 'value_fieldnames': 'ec_id:correctness',
-                'weight': 1,
+                'weight': 64,
                 },
             'claimer': {
                 'component': True,
@@ -354,7 +354,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': True,
                 'value_fieldnames': 'ec_id:correctness',
-                'weight': 1,
+                'weight': 16,
                 },
             'claimerAffiliation': {
                 'component': True,
@@ -365,7 +365,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': False,
                 'value_fieldnames': 'ec_id:correctness',
-                'weight': 1,
+                'weight': 4,
                 },
             'claimLocation': {
                 'component': True,
@@ -409,7 +409,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'value',
                 'required': False,
                 'value_fieldnames': 'value:value',
-                'weight': 1,
+                'weight': 0.5,
                 },
             }
 
