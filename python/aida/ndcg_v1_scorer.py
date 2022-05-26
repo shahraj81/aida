@@ -83,9 +83,9 @@ class NDCGScorerV1(Scorer):
         for entry in self.get('assessments').get('cross_claim_relations'):
             system_claim_id = entry.get('system_claim_id')
             query_claim_id = entry.get('query_claim_id')
-            claim_relation = entry.get('relation')
+            claim_relation = apply_patch.get(entry.get('relation'))
             if query.get('query_id') == query_claim_id and claim.get('claim_id') == system_claim_id:
-                return apply_patch.get(claim_relation)
+                return claim_relation
         return claim_relation
 
     def get_claim_relation_correctness(self, ranked_list_claim_relation, claim):
