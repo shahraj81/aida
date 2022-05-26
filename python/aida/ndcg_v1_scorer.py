@@ -201,7 +201,7 @@ class NDCGScorerV1(Scorer):
         score = pairwise_novelty_scores.get(lookup_key)
         return claim_relation_correctness_scale * score
 
-    def get_field_pairwise_novelty_weight(self, fieldspec, the_claim, previous_claim, correctness_requirement=True, stack=[]):
+    def get_field_pairwise_novelty_weight(self, fieldspec, the_claim, previous_claim, correctness_requirement=True, dependents_stack=[]):
         the_claim_field_values = self.get('field_values', fieldspec, the_claim, correctness_requirement=True)
         previous_claim_field_values = self.get('field_values', fieldspec, previous_claim, correctness_requirement=True)
         weight = 0
@@ -210,12 +210,14 @@ class NDCGScorerV1(Scorer):
             if fieldspec.get('fieldname') == 'date':
                 weight = self.get('field_pairwise_novelty_weight_date', the_claim_field_values, previous_claim_field_values)
             if weight == 0:
-                if fieldspec.get('fieldname') in stack:
+                if fieldspec.get('fieldname') in dependents_stack:
                     return 0
                 dependent_fieldnames = fieldspec.get('dependents')
                 for dependent_fieldname in dependent_fieldnames:
                     dependent_fieldspec = self.get('specs').get(dependent_fieldname)
-                    dependent_field_novelty_weight = self.get('field_pairwise_novelty_weight', dependent_fieldspec, the_claim, previous_claim, correctness_requirement, list(stack).append(fieldspec.get('fieldname')))
+                    updated_dependents_stack = list(dependents_stack[:])
+                    updated_dependents_stack.append(fieldspec.get('fieldname'))
+                    dependent_field_novelty_weight = self.get('field_pairwise_novelty_weight', dependent_fieldspec, the_claim, previous_claim, correctness_requirement, updated_dependents_stack)
                     if dependent_field_novelty_weight:
                         weight = len(the_claim_field_values)
                         break
