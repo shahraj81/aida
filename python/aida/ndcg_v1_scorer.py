@@ -21,9 +21,18 @@ from datetime import datetime
 import math
 import os
 
+def normalize_claim_relation(relation):
+    apply_patch = {
+        'refuted_by': 'refuting',
+        'related': 'related',
+        'supported_by': 'supporting'
+        }
+    return apply_patch.get(relation)
+
 class OuterClaim(Object):
     def __init__(self, logger, **kwargs):
         super().__init__(logger)
+        self.is_query_claim_frame = False
         for key in kwargs:
             self.set(key, kwargs[key])
         self.data = {}
@@ -74,16 +83,11 @@ class NDCGScorerV1(Scorer):
         return outer_claim
 
     def get_assessed_claim_relation(self, query, claim):
-        apply_patch = {
-                'refuted_by': 'refuting',
-                'related': 'related',
-                'supported_by': 'supporting'
-                }
         claim_relation = None
         for entry in self.get('assessments').get('cross_claim_relations'):
             system_claim_id = entry.get('system_claim_id')
             query_claim_id = entry.get('query_claim_id')
-            claim_relation = apply_patch.get(entry.get('relation'))
+            claim_relation = normalize_claim_relation(entry.get('relation'))
             if query.get('query_id') == query_claim_id and claim.get('claim_id') == system_claim_id:
                 return claim_relation
         return claim_relation
@@ -146,27 +150,32 @@ class NDCGScorerV1(Scorer):
         return values
 
     def get_field_correctness(self, fieldspec, claim, component_id='1'):
+        if claim.get('is_query_claim_frame'):
+            return True
         correctness_code = {
             'Correct': True,
+            'Incorrect': False,
             'Inexact': True,
             'Wrong': False,
-            'N/A': False
+            'N/A': False,
+            'NIL': False
             }
         correctness = claim.get('data').get(fieldspec.get('fieldname')).get(component_id).get(fieldspec.get('overall_assessment_fieldname'))[0].get('correctness')
-        if correctness == 'NIL':
-            self.record_event('DEFAULT_WARNING', 'missing assessment for claim {}; using correct as default assessment'.format(claim.get('claim_id')))
-            return True
+        if correctness not in correctness_code:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value \'{}\' for correctness'.format(correctness))
         return correctness_code.get(correctness)
 
     def get_field_values(self, fieldspec, claim, correctness_requirement=False):
-        # TODO: return only correct values if correctness_requirement=True otherwise return all values
         values = []
         data = claim.get('data').get(fieldspec.get('fieldname'))
         if data:
             fieldname, sub_fieldname = fieldspec.get('value_fieldnames').split(':')
             for component_id, entry in data.items():
-                if (not correctness_requirement) or self.get('field_correctness', fieldspec, claim, component_id):
-                    values.append(entry.get(fieldname)[0].get(sub_fieldname))
+                field_correctness = self.get('field_correctness', fieldspec, claim, component_id)
+                fieldvalue = entry.get(fieldname)[0].get(sub_fieldname)
+                self.record_event('CLAIM_FIELD_CORRECTNESS', claim.get('claim_id'), fieldspec.get('fieldname'), fieldvalue, field_correctness)
+                if (not correctness_requirement) or field_correctness:
+                    values.append(fieldvalue)
         retVals = set()
         max_num_of_values = fieldspec.get('max_num_of_values')
         for value in sorted(values):
@@ -195,7 +204,9 @@ class NDCGScorerV1(Scorer):
             return 0
         if lookup_key not in pairwise_novelty_scores:
             score = 0
-            if not self.get('required_fields_correctness', the_claim):
+            required_fields_correctness = self.get('required_fields_correctness', the_claim)
+            self.record_event('CLAIM_CORRECTNESS', the_claim.get('claim_id'), required_fields_correctness)
+            if not required_fields_correctness:
                 return score
             specs = self.get('specs')
             for fieldspec in specs.values():
@@ -261,16 +272,76 @@ class NDCGScorerV1(Scorer):
     def get_query_ids(self, score, scores):
         return ['ALL-Macro']
 
-    def get_ranked_claims(self, query, ranked_list_claim_relation):
-        def is_compatible(the_claim_relation, ranked_list_claim_relation):
-            if the_claim_relation == ranked_list_claim_relation:
+    def get_ranked_claims(self, query, claim_relation, ranked_list_type):
+        if ranked_list_type == 'submitted':
+            return self.get('ranked_claims_submitted', query, claim_relation)
+        elif ranked_list_type == 'ideal':
+            return self.get('ranked_claims_ideal', query, claim_relation)
+
+    def get_ranked_claims_ideal(self, query, claim_relation):
+        def get_outer_claim(claim, rank):
+            outer_claim_filename = claim.get('outer_claim').get('filename')
+            path = os.path.dirname(outer_claim_filename)
+            claim_id = os.path.basename(outer_claim_filename).replace('-outer-claim.tab', '')
+            outer_claim = OuterClaim(self.get('logger'),
+                                     condition=claim.get('condition'),
+                                     query_id=claim.get('query_id'),
+                                     path=path,
+                                     claim_id=claim_id,
+                                     run_claim_path=claim.get('path'),
+                                     run_claim_id=claim.get('claim_id'),
+                                     run_claim_relation=claim_relation,
+                                     run_claim_rank=rank)
+            return outer_claim
+        compatible_claim_relations = {
+            'nonrefuting': ['supporting', 'related'],
+            'nonsupporting': ['refuting', 'related'],
+            'ontopic': ['supporting', 'related', 'refuting'],
+            'refuting': ['refuting'],
+            'related': ['related'],
+            'supporting': ['supporting'],
+            }
+        related_claim_ids = set()
+        for entry in self.get('assessments').get('cross_claim_relations'):
+            cross_claim_relation = normalize_claim_relation(entry.get('relation'))
+            if cross_claim_relation in compatible_claim_relations.get(claim_relation):
+                query_claim_id = entry.get('query_claim_id')
+                if query_claim_id == query.get('query_id'):
+                    related_claim_ids.add(entry.get('system_claim_id'))
+        claims_set = set()
+        rank = 1
+        for claim in self.get('assessments').get('claims').values():
+            if claim.get('claim_id') in related_claim_ids or (query.get('condition') == claim.get('condition') == 'Condition6'):
+                outer_claim = get_outer_claim(claim, rank)
+                outer_claim.set('assessed_claim_relation', self.get('assessed_claim_relation', query, outer_claim))
+                claims_set.add(outer_claim)
+                rank += 1
+        ideal_claims_ranking = []
+        while(len(claims_set)):
+            best_next_claim = None
+            max_gain_of_next_claim = None
+            for the_claim in claims_set:
+                test_ranked_list = list(ideal_claims_ranking[:])
+                test_ranked_list.append(the_claim)
+                rank = len(test_ranked_list) - 1
+                gain_of_the_claim = self.get('gain', query, claim_relation, test_ranked_list, rank)
+                if max_gain_of_next_claim is None or gain_of_the_claim > max_gain_of_next_claim:
+                    max_gain_of_next_claim = gain_of_the_claim
+                    best_next_claim = the_claim
+            ideal_claims_ranking.append(best_next_claim)
+            claims_set.remove(best_next_claim)
+        return ideal_claims_ranking
+
+    def get_ranked_claims_submitted(self, query, claim_relation):
+        def is_compatible(the_claim_relation, claim_relation):
+            if the_claim_relation == claim_relation:
                 return True
             compatible = {
                 'nonrefuting': ['related', 'supporting'],
                 'nonsupporting': ['related', 'refuting'],
                 'ontopic': ['related', 'refuting', 'supporting']
                 }
-            if ranked_list_claim_relation in compatible and the_claim_relation in compatible.get(ranked_list_claim_relation):
+            if claim_relation in compatible and the_claim_relation in compatible.get(claim_relation):
                 return True
             return False
         run_id = self.get('run_id')
@@ -283,11 +354,11 @@ class NDCGScorerV1(Scorer):
             run_claim_relation = claim.get('claim_relation')
             # record if skipping the claim because it was not assessed
             if not claim.get('assessment'):
-                self.record_event('SKIPPING_CLAIM_NOT_ASSESSED', run_id, condition, query_id, ranked_list_claim_relation, rank, run_claim_id)
+                self.record_event('SKIPPING_CLAIM_NOT_ASSESSED', run_id, condition, query_id, claim_relation, rank, run_claim_id)
                 continue
             # record if skipping the claim because the claim relation is not compatible to the ranked list claim relation
-            if not is_compatible(run_claim_relation, ranked_list_claim_relation):
-                self.record_event('SKIPPING_CLAIM_INCOMPATIBLE', run_id, condition, query_id, ranked_list_claim_relation, rank, run_claim_id, run_claim_relation)
+            if not is_compatible(run_claim_relation, claim_relation):
+                self.record_event('SKIPPING_CLAIM_INCOMPATIBLE', run_id, condition, query_id, claim_relation, rank, run_claim_id, run_claim_relation)
                 continue
             assessed_claim = self.get('assessed_claim', claim)
             assessed_claim_relation = self.get('assessed_claim_relation', query, assessed_claim)
@@ -304,9 +375,9 @@ class NDCGScorerV1(Scorer):
                     return False
         return True
 
-    def get_score(self, query, claim_relation, ranked_claims):
-        DCG = self.get('DCG', query, claim_relation, ranked_claims)
-        IDCG, num_assessed_claims = self.get('IDCG', query, claim_relation)
+    def get_score(self, query, claim_relation, ranked_claims_submitted, ranked_claims_ideal):
+        DCG = self.get('DCG', query, claim_relation, ranked_claims_submitted, ideal=False)
+        IDCG = self.get('DCG', query, claim_relation, ranked_claims_ideal, ideal=True)
         nDCG = DCG/IDCG if IDCG > 0 else 0
         run_id = self.get('run_id')
         condition = query.get('condition')
@@ -314,7 +385,7 @@ class NDCGScorerV1(Scorer):
         self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'DCG', DCG)
         self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'IDCG', IDCG)
         self.record_event('SCORE_VALUE', run_id, condition, query_id, claim_relation, 'nDCG', nDCG)
-        return nDCG, num_assessed_claims
+        return nDCG
 
     def get_specs(self):
         return {
@@ -433,63 +504,6 @@ class NDCGScorerV1(Scorer):
             DCG += (gain/math.log2(rank+2))
         return DCG
 
-    def get_IDCG(self, query, claim_relation):
-        def get_outer_claim(claim, rank):
-            outer_claim_filename = claim.get('outer_claim').get('filename')
-            path = os.path.dirname(outer_claim_filename)
-            claim_id = os.path.basename(outer_claim_filename).replace('-outer-claim.tab', '')
-            outer_claim = OuterClaim(self.get('logger'),
-                                     condition=claim.get('condition'),
-                                     query_id=claim.get('query_id'),
-                                     path=path,
-                                     claim_id=claim_id,
-                                     run_claim_path=claim.get('path'),
-                                     run_claim_id=claim.get('claim_id'),
-                                     run_claim_relation=claim_relation,
-                                     run_claim_rank=rank)
-            return outer_claim
-        compatible_claim_relations = {
-            'nonrefuting': ['supporting', 'related'],
-            'nonsupporting': ['refuting', 'related'],
-            'ontopic': ['supporting', 'related', 'refuting'],
-            'refuting': ['refuting'],
-            'related': ['related'],
-            'supporting': ['supporting'],
-            }
-        related_claim_ids = set()
-        for entry in self.get('assessments').get('cross_claim_relations'):
-            if entry.get('relation') in compatible_claim_relations.get(claim_relation):
-                claim_id_1 = entry.get('claim_id_1')
-                claim_id_2 = entry.get('claim_id_2')
-                if claim_id_1 == query.get('query_id'):
-                    related_claim_ids.add(claim_id_2)
-                elif claim_id_2 == query.get('query_id'):
-                    related_claim_ids.add(claim_id_1)
-        claims_set = set()
-        rank = 1
-        for claim in self.get('assessments').get('claims').values():
-            if claim.get('claim_id') in related_claim_ids:
-                outer_claim = get_outer_claim(claim, rank)
-                outer_claim.set('assessed_claim_relation', self.get('assessed_claim_relation', query, outer_claim))
-                claims_set.add(outer_claim)
-                rank += 1
-        ideal_claims_ranking = []
-        while(len(claims_set)):
-            best_next_claim = None
-            max_gain_of_next_claim = None
-            for the_claim in claims_set:
-                test_ranked_list = list(ideal_claims_ranking[:])
-                test_ranked_list.append(the_claim)
-                rank = len(test_ranked_list) - 1
-                gain_of_the_claim = self.get('gain', query, claim_relation, test_ranked_list, rank)
-                if max_gain_of_next_claim is None or gain_of_the_claim > max_gain_of_next_claim:
-                    max_gain_of_next_claim = gain_of_the_claim
-                    best_next_claim = the_claim
-            ideal_claims_ranking.append(best_next_claim)
-            claims_set.remove(best_next_claim)
-        IDCG = self.get('DCG', query, claim_relation, ideal_claims_ranking, ideal=True)
-        return IDCG, len(ideal_claims_ranking)
-
     def aggregate_scores(self, scores, score_class):
         aggregates = {}
         for score in scores.values():
@@ -521,7 +535,8 @@ class NDCGScorerV1(Scorer):
                 claim = OuterClaim(self.get('logger'),
                                    condition='Condition5',
                                    path='{}/ARF-output/Condition5/{}'.format(self.get('query_claim_frames_dir'), query_id),
-                                   claim_id=query_id)
+                                   claim_id=query_id,
+                                   is_query_claim_frame=True)
                 claim.set('rank', -1000000)
                 query.set('query_claim_frame', claim)
                 self.record_event('CLAIM_STRING', self.get('claim_to_string', claim))
@@ -580,18 +595,21 @@ class NDCGScorerV1(Scorer):
         for query_id, query in queries_to_score.items():
             condition = query.get('condition')
             for claim_relation in claim_relations.get(condition):
-                ranked_claims = self.get('ranked_claims', query, claim_relation)
-                ndcg, num_assessed_claims = self.get('score', query, claim_relation, ranked_claims)
+                ranked_claims_submitted = self.get('ranked_claims', query, claim_relation, ranked_list_type='submitted')
+                ranked_claims_ideal = self.get('ranked_claims', query, claim_relation, ranked_list_type='ideal')
+                ndcg = self.get('score', query, claim_relation, ranked_claims_submitted, ranked_claims_ideal)
                 score = NDCGScore(logger=self.logger,
                                   run_id=self.get('run_id'),
                                   condition=condition,
                                   query_id=query_id,
                                   claim_relation=claim_relation,
-                                  num_of_claims=str(len(ranked_claims)),
-                                  num_of_assessed_claims=str(num_assessed_claims),
+                                  num_of_claims=str(len(ranked_claims_submitted)),
+                                  num_of_assessed_claims=str(len(ranked_claims_ideal)),
                                   ndcg=ndcg
                                   )
                 scores.append(score)
+                ranked_claims = ranked_claims_submitted.copy()
+                ranked_claims.extend(ranked_claims_ideal)
                 for claim in ranked_claims:
                     claim_id = claim.get('claim_id')
                     if claim_id not in printed:
