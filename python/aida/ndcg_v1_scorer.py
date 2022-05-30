@@ -348,23 +348,24 @@ class NDCGScorerV1(Scorer):
         condition = query.get('condition')
         query_id = query.get('query_id')
         claims = []
-        for claim in self.get('claims').get(query.get('condition')).get(query.get('query_id')).values():
-            rank = claim.get('rank')
-            run_claim_id = claim.get('claim_id')
-            run_claim_relation = claim.get('claim_relation')
-            # record if skipping the claim because it was not assessed
-            if not claim.get('assessment'):
-                self.record_event('SKIPPING_CLAIM_NOT_ASSESSED', run_id, condition, query_id, claim_relation, rank, run_claim_id)
-                continue
-            # record if skipping the claim because the claim relation is not compatible to the ranked list claim relation
-            if not is_compatible(run_claim_relation, claim_relation):
-                self.record_event('SKIPPING_CLAIM_INCOMPATIBLE', run_id, condition, query_id, claim_relation, rank, run_claim_id, run_claim_relation)
-                continue
-            assessed_claim = self.get('assessed_claim', claim)
-            assessed_claim_relation = self.get('assessed_claim_relation', query, assessed_claim)
-            assessed_claim.set('assessed_claim_relation', assessed_claim_relation)
-            assessed_claim.set('rank', claim.get('rank'))
-            claims.append(assessed_claim)
+        if self.get('claims').get(query.get('condition')).get(query.get('query_id')) is not None:
+            for claim in self.get('claims').get(query.get('condition')).get(query.get('query_id')).values():
+                rank = claim.get('rank')
+                run_claim_id = claim.get('claim_id')
+                run_claim_relation = claim.get('claim_relation')
+                # record if skipping the claim because it was not assessed
+                if not claim.get('assessment'):
+                    self.record_event('SKIPPING_CLAIM_NOT_ASSESSED', run_id, condition, query_id, claim_relation, rank, run_claim_id)
+                    continue
+                # record if skipping the claim because the claim relation is not compatible to the ranked list claim relation
+                if not is_compatible(run_claim_relation, claim_relation):
+                    self.record_event('SKIPPING_CLAIM_INCOMPATIBLE', run_id, condition, query_id, claim_relation, rank, run_claim_id, run_claim_relation)
+                    continue
+                assessed_claim = self.get('assessed_claim', claim)
+                assessed_claim_relation = self.get('assessed_claim_relation', query, assessed_claim)
+                assessed_claim.set('assessed_claim_relation', assessed_claim_relation)
+                assessed_claim.set('rank', claim.get('rank'))
+                claims.append(assessed_claim)
         return sorted(claims, key = lambda claim: claim.get('rank'))
 
     def get_required_fields_correctness(self, claim):
