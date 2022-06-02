@@ -41,7 +41,7 @@ class Score(Object):
             return retVal
         if field_name == 'document_id':
             return aggregate_type
-        if field_name in ['precision', 'recall', 'gold_cluster_id', 'system_cluster_id', 'num_of_claims', 'num_of_assessed_claims']:
+        if field_name in ['precision', 'recall', 'gold_cluster_id', 'system_cluster_id', 'num_of_claims', 'ground_truth']:
             return ''
         if aggregate_type == 'ALL-Micro':
             return micro(self.get('elements'), field_name)

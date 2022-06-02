@@ -61,7 +61,7 @@ class NDCGScorerV1(Scorer):
                       {'name': 'claim_relation',         'header': 'ClaimRelation',      'format': 's',    'justify': 'L'},
                       {'name': 'run_id',                 'header': 'RunID',              'format': 's',    'justify': 'L'},
                       {'name': 'num_of_claims',          'header': 'NumSubmittedClaims', 'format': 's',    'justify': 'R'},
-                      {'name': 'num_of_assessed_claims', 'header': 'NumAssessedClaims',  'format': 's',    'justify': 'R'},
+                      {'name': 'ground_truth',           'header': 'GT',                 'format': 's',    'justify': 'R'},
                       {'name': 'ndcg',                   'header': 'NDCG',               'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
     def __init__(self, logger, **kwargs):
@@ -605,7 +605,7 @@ class NDCGScorerV1(Scorer):
                                   query_id=query_id,
                                   claim_relation=claim_relation,
                                   num_of_claims=str(len(ranked_claims_submitted)),
-                                  num_of_assessed_claims=str(len(ranked_claims_ideal)),
+                                  ground_truth=str(len(ranked_claims_ideal)),
                                   ndcg=ndcg
                                   )
                 scores.append(score)
