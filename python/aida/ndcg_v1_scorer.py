@@ -399,7 +399,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'value',
                 'required': True,
                 'value_fieldnames': 'value:value',
-                'weight': 64,
+                'weight': 32,
                 },
             'claimEpistemic': {
                 'component': False,
@@ -410,7 +410,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'polarity',
                 'required': True,
                 'value_fieldnames': 'polarity:value',
-                'weight': 64,
+                'weight': 32,
                 },
             'xVariable': {
                 'component': True,
@@ -421,7 +421,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': True,
                 'value_fieldnames': 'ec_id:correctness',
-                'weight': 64,
+                'weight': 32,
                 },
             'claimer': {
                 'component': True,

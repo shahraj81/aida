@@ -102,16 +102,16 @@ dependents = {
     }
 
 weights = {
-    'claimEpistemic': '64',
+    'claimEpistemic': '32',
     'claimLocation': '1',
     'claimMedium': '1',
     'claimSentiment': '0.5',
-    'claimTemplate': '64',
+    'claimTemplate': '32',
     'claim_id': '0',
     'claimer': '16',
     'claimerAffiliation': '4',
     'date': '1',
-    'xVariable': '64',
+    'xVariable': '32',
     }
 
 def calculate_gain(fields, value_not_provided_for_fields, incorrect_values):
