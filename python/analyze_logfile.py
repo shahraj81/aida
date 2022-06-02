@@ -18,7 +18,7 @@ ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
 def check_for_paths_existance(args):
-    for path in [args.log_specifications, args.score, args.scorelog]:
+    for path in [args.log_specifications, args.score, args.score_log]:
         if not os.path.exists(path):
             print('Error: Path {} does not exist'.format(path))
             exit(ERROR_EXIT_CODE)
@@ -228,7 +228,6 @@ def analyze_logfile(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Analyze TA3 scorer log output file")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
-    parser.add_argument('-r', '--ranking', default='submitted', choices=['submitted','ideal'], help='Ranking type (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('score', type=str, help='Input score tab file')
