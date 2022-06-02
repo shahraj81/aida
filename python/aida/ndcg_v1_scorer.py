@@ -200,6 +200,7 @@ class NDCGScorerV1(Scorer):
         pairwise_novelty_scores = self.get('pairwise_novelty_scores')
         lookup_key = '-'.join([the_claim.get('claim_id'), previous_claim.get('claim_id')])
         claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim) if the_claim.get('condition') == 'Condition5' else 1
+        self.record_event('CLAIM_RELATION_CORRECTNESS', the_claim.get('claim_id'), claim_relation, claim_relation_correctness_scale)
         if claim_relation_correctness_scale == 0:
             return 0
         if lookup_key not in pairwise_novelty_scores:
