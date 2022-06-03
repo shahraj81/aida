@@ -5,7 +5,7 @@ INFO      TYPE_METRIC_AP_RANKED_LIST      METRIC:{} DOCUMENT_ID:{} GOLD_CLUSTER:
 INFO      CLAIM_CORRECTNESS               CLAIM_ID:{} CORRECTNESS:{}
 INFO      CLAIM_FIELD_CORRECTNESS         CLAIM_ID:{}::FIELD_NAME:{}::FIELD_VALUE:{}::CORRECTNESS:{}
 INFO      CLAIM_STRING                    {}
-INFO      CLAIM_RELATION_CORRECTNESS      CLAIM_ID:{} CLAIM_RELATION:{} CORRECTNESS_SCALE:{}
+INFO      CLAIM_RELATION_CORRECTNESS      QUERY_ID:{} CLAIM_ID:{} CLAIM_RELATION:{} CORRECTNESS_SCALE:{}
 INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 INFO      CLUSTER_NOT_ANNOTATED           Response line skipped because all mentions of cluster '{}' were outside annotated regions
 ERROR     CONFLICTING_ASSESSMENTS         Conflicting assessment for '{}' in kits corresponding to queries {},{}

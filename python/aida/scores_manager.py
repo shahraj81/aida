@@ -83,8 +83,7 @@ class ScoresManager(Object):
                                                      run_id=self.get('run_id'),
                                                      responses_dir=self.get('responses_dir'),
                                                      assessments=self.get('assessments'),
-                                                     queries_to_score=self.get('queries_to_score'),
-                                                     query_claim_frames_dir=self.get('query_claim_frames_dir'))
+                                                     queries_to_score=self.get('queries_to_score'))
                 self.get('scores').add(key=metric, value=scorer)
 
     def print_scores(self, output_directory):

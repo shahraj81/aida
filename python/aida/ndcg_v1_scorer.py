@@ -135,7 +135,8 @@ class NDCGScorerV1(Scorer):
     def get_claim_to_string(self, claim):
         specs = self.get('specs')
         claim_id = claim.get('claim_id')
-        string = ['claim_id:{}'.format(claim_id)]
+        query_claim_frame_id = claim.get('query_id') if claim.get('is_query_claim_frame') else 'None'
+        string = ['claim_id:{}'.format(claim_id), 'query_claim_frame_id:{}'.format(query_claim_frame_id)]
         for fieldspec in specs.values():
             field_name = fieldspec.get('fieldname')
             claim_field_values = self.get('field_values', fieldspec, claim)
@@ -158,7 +159,6 @@ class NDCGScorerV1(Scorer):
             'Inexact': True,
             'Wrong': False,
             'N/A': False,
-            'NIL': False
             }
         correctness = claim.get('data').get(fieldspec.get('fieldname')).get(component_id).get(fieldspec.get('overall_assessment_fieldname'))[0].get('correctness')
         if correctness not in correctness_code:
@@ -187,20 +187,20 @@ class NDCGScorerV1(Scorer):
     def get_gain(self, query, claim_relation, ranked_claims, rank):
         query_claim_frame = query.get('query_claim_frame')
         the_claim = ranked_claims[rank]
-        gain = 1 if query_claim_frame is None else self.get('pairwise_novelty_score', claim_relation, the_claim, query_claim_frame)
+        gain = 1 if query_claim_frame is None else self.get('pairwise_novelty_score', query.get('query_id'), claim_relation, the_claim, query_claim_frame)
         for i in range(rank):
-            pairwise_novelty_score = self.get('pairwise_novelty_score', claim_relation, the_claim, ranked_claims[i])
+            pairwise_novelty_score = self.get('pairwise_novelty_score', query.get('query_id'), claim_relation, the_claim, ranked_claims[i])
             if pairwise_novelty_score == 0:
                 return 0
             if gain > pairwise_novelty_score:
                 gain = pairwise_novelty_score
         return gain
 
-    def get_pairwise_novelty_score(self, claim_relation, the_claim, previous_claim):
+    def get_pairwise_novelty_score(self, query_id, claim_relation, the_claim, previous_claim):
         pairwise_novelty_scores = self.get('pairwise_novelty_scores')
         lookup_key = '-'.join([the_claim.get('claim_id'), previous_claim.get('claim_id')])
         claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim) if the_claim.get('condition') == 'Condition5' else 1
-        self.record_event('CLAIM_RELATION_CORRECTNESS', the_claim.get('claim_id'), claim_relation, claim_relation_correctness_scale)
+        self.record_event('CLAIM_RELATION_CORRECTNESS', query_id, the_claim.get('claim_id'), claim_relation, claim_relation_correctness_scale)
         if claim_relation_correctness_scale == 0:
             return 0
         if lookup_key not in pairwise_novelty_scores:
@@ -534,12 +534,17 @@ class NDCGScorerV1(Scorer):
     def load_query_claim_frames(self):
         for query_id, query in self.get('queries_to_score').items():
             if query.get('condition') == 'Condition5':
+                claim_mappings = self.get('assessments').get('claim_mappings').get('claim_mappings', query_id=query_id, run_claim_id=query_id)
+                pool_claim_id = claim_mappings[0].get('pool_claim_uid')
+                path = self.get('assessments').get('claims').get(pool_claim_id).get('path')
                 claim = OuterClaim(self.get('logger'),
                                    condition='Condition5',
-                                   path='{}/ARF-output/Condition5/{}'.format(self.get('query_claim_frames_dir'), query_id),
-                                   claim_id=query_id,
-                                   is_query_claim_frame=True)
-                claim.set('rank', -1000000)
+                                   claim_id=pool_claim_id,
+                                   is_query_claim_frame=True,
+                                   path=path,
+                                   query_id=query_id,
+                                   query=query,
+                                   rank=-1000000)
                 query.set('query_claim_frame', claim)
                 self.record_event('CLAIM_STRING', self.get('claim_to_string', claim))
 

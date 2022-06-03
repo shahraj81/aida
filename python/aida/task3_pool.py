@@ -393,6 +393,7 @@ class ClaimMappings(Object):
         return mappings
 
     def load(self, filename):
+        self.filename = filename
         for entry in FileHandler(self.get('logger'), filename):
             self.add(entry.get('condition'),
                      entry.get('query_id'),

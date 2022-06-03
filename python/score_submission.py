@@ -1,7 +1,6 @@
 """
 Main AIDA scoring script.
 """
-from aida.file_handler import FileHandler
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
@@ -15,6 +14,7 @@ from aida.cluster_self_similarities import ClusterSelfSimilarities
 from aida.core_documents import CoreDocuments
 from aida.document_mappings import DocumentMappings
 from aida.encodings import Encodings
+from aida.file_handler import FileHandler
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.logger import Logger
@@ -22,7 +22,6 @@ from aida.object import Object
 from aida.ontology_type_mappings import OntologyTypeMappings
 from aida.scores_manager import ScoresManager
 from aida.slot_mappings import SlotMappings
-from aida.ta3_queryset import TA3QuerySet
 from aida.response_set import ResponseSet
 from aida.text_boundaries import TextBoundaries
 from aida.video_boundaries import VideoBoundaries
@@ -266,7 +265,7 @@ class Task3(Object):
     """
     Class representing Task3 scorer.
     """
-    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries, queries_to_score, query_claim_frames, claim_mappings, assessments, claim_relations, responses, scores):
+    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries, queries_to_score, query_claim_frames, assessments, responses, scores):
         check_for_paths_existance([
                  log_specifications,
                  encodings,
@@ -279,9 +278,7 @@ class Task3(Object):
                  queries,
                  queries_to_score,
                  query_claim_frames,
-                 claim_mappings,
                  assessments,
-                 claim_relations,
                  responses
                  ])
         check_for_paths_non_existance([scores])
@@ -298,9 +295,7 @@ class Task3(Object):
         self.queries = queries
         self.queries_to_score = queries_to_score
         self.query_claim_frames = query_claim_frames
-        self.claim_mappings = claim_mappings
         self.assessments = assessments
-        self.claim_relations = claim_relations
         self.responses = responses
         self.scores = scores
         self.logger = Logger(self.get('log_filename'),
@@ -313,13 +308,30 @@ class Task3(Object):
         for entry in FileHandler(logger, self.get('queries_to_score')):
             queries_to_score[entry.get('query_id')] = entry
 
-        assessments = Assessments(logger, 'task3', queries_to_score, self.get('assessments'), claim_mappings=self.get('claim_mappings'), claim_relations=self.get('claim_relations'))
+        assessments_package=self.get('assessments')
+        responses_dir = self.get('responses')
+        assessments_dir = os.path.join(responses_dir, 'assessments')
+        claims_dir = os.path.join(assessments_dir, 'claims')
+        check_for_paths_non_existance([assessments_dir])
+        os.makedirs(claims_dir)
+        sub_dirs = ['ldc_claims', 'system_claims']
+        for sub_dir in sub_dirs:
+            source_dir = os.path.join(assessments_package, 'data', 'TA3', sub_dir)
+            command = 'cp {source}/* {destination}/'.format(source=source_dir, destination=claims_dir)
+            os.system(command)
+        files = ['claim-mappings.tab', 'cross_claim_relations.tab']
+        for filename in files:
+            command = 'cp {source}/{filename} {destination}/'.format(filename=filename, source=os.path.join(assessments_package, 'data', 'TA3'), destination=assessments_dir)
+            os.system(command)
+        claim_mappings = os.path.join(assessments_package, 'data', 'TA3', 'claim-mappings.tab')
+        claim_relations = os.path.join(assessments_package, 'data', 'TA3', 'cross_claim_relations.tab')
+
+        assessments = Assessments(logger, 'task3', queries_to_score, claims_dir, claim_mappings=claim_mappings, claim_relations=claim_relations)
         arguments = {
             'run_id': self.get('runid'),
             'assessments': assessments,
             'responses_dir': self.get('responses'),
             'queries_to_score': queries_to_score,
-            'query_claim_frames_dir': self.get('query_claim_frames'),
             }
         scores = ScoresManager(logger, 'task3', arguments)
         scores.print_scores(self.get('scores'))
@@ -340,9 +352,7 @@ class Task3(Object):
         parser.add_argument('queries', type=str, help='Specify the directory containing task3 user queries')
         parser.add_argument('queries_to_score', type=str, help='File containing list of queryids to be scored')
         parser.add_argument('query_claim_frames', type=str, help='Directory containing output of NIST evaluation docker when applied to query claim frames represented as a Condition5 run')
-        parser.add_argument('claim_mappings', type=str, help='File containing claim mappings (claim-mappings.tab)')
-        parser.add_argument('assessments', type=str, help='Directory containing assessments')
-        parser.add_argument('claim_relations', type=str, help='File containing relations of query claims to assessed pooled claims')
+        parser.add_argument('assessments', type=str, help='Directory containing the assessments package as recieved from LDC')
         parser.add_argument('responses', type=str, help='Directory containing output of AIDA evaluation docker')
         parser.add_argument('runid', type=str, help='ID of the system being scored')
         parser.add_argument('scores', type=str, help='Directory to which the scores should be written')

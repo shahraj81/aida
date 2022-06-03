@@ -138,12 +138,11 @@ def analyze_part_of_logfile(logger, input_filename, condition, claim_relation, r
             if entry.get(key) != value:
                 return False
         return True
+    query_claim_frame_entry = None
     claim_field_correctness = {}
     claim_relation_correctness = {}
     claims = {}
     ranking = []
-    if condition == 'Condition5':
-        ranking.append({'RANK': '-1', 'GAIN':'N/A', 'POOL_CLAIM_ID':query_id, 'IS_QUERY_CLAIM_FRAME': True})
     with open(input_filename) as fh:
         for line in fh.readlines():
             entry = parse(line)
@@ -160,11 +159,19 @@ def analyze_part_of_logfile(logger, input_filename, condition, claim_relation, r
                     claim_field_correctness.setdefault(entry.get('CLAIM_ID'), {})[field_name_and_value] = entry.get('CORRECTNESS')
                 elif matches(entry,
                              ENTRY_TYPE='CLAIM_RELATION_CORRECTNESS'):
-                    field_name_and_value = '{}:{}'.format(entry.get('CLAIM_ID'), entry.get('CLAIM_RELATION'))
-                    claim_relation_correctness[field_name_and_value] = entry.get('CORRECTNESS_SCALE')
+                    query_id_and_field_name_and_value = '{}:{}:{}'.format(entry.get('QUERY_ID'), entry.get('CLAIM_ID'), entry.get('CLAIM_RELATION'))
+                    claim_relation_correctness[query_id_and_field_name_and_value] = entry.get('CORRECTNESS_SCALE')
                 elif matches(entry,
                              ENTRY_TYPE='CLAIM_STRING'):
+                    if entry.get('query_claim_frame_id') == query_id:
+                        if query_claim_frame_entry is None:
+                            query_claim_frame_entry = entry
+                        else:
+                            logger.record_event('DEFAULT_CRITICAL_ERROR', 'query_claim_frame_entry is not None')
                     claims[entry.get('claim_id')] = entry
+
+    if condition == 'Condition5':
+        ranking.append({'RANK': '-1', 'GAIN':'N/A', 'POOL_CLAIM_ID':query_claim_frame_entry.get('claim_id'), 'QUERY_CLAIM_FRAME_ID':query_claim_frame_entry.get('query_claim_frame_id'), 'IS_QUERY_CLAIM_FRAME': True})
 
     values = {}
     ranks = list()
@@ -207,9 +214,8 @@ def analyze_part_of_logfile(logger, input_filename, condition, claim_relation, r
             program_output.write('{} {} {}\n'.format(key_value, spaces, new_at_ranks_str))
             program_output.write('    {}{}\n'.format(dependents.get(key), correct_or_incorrect))
         ranks.append(rank)
-
-        field_name_and_value = '{}:{}'.format(claim_id, claim_relation)
-        the_claim_relation_correctness_scale = 0 if entry.get('IS_QUERY_CLAIM_FRAME') else claim_relation_correctness.get(field_name_and_value)
+        query_id_and_field_name_and_value = '{}:{}:{}'.format(query_id, claim_id, claim_relation)
+        the_claim_relation_correctness_scale = 0 if entry.get('IS_QUERY_CLAIM_FRAME') else claim_relation_correctness.get(query_id_and_field_name_and_value)
         program_output.write('\nthe_claim_relation_correctness_scale:{}\n'.format(the_claim_relation_correctness_scale))
         program_output.write('\nnew at rank:\n')
         for rank in fields_new_at_rank:
