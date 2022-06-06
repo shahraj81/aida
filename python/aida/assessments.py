@@ -149,12 +149,14 @@ class Assessments(Container):
             pool_claim_id = claim_mapping.get('pool_claim_uid')
             if pool_claim_id not in claims:
                 claim = Claim(self.get('logger'),
-                              condition=condition,
+                              conditions=set([condition]),
                               query_id=query_id,
                               path=self.get('assessments_dir'),
                               claim_id=pool_claim_id)
                 claim.set('mappings', [])
                 claims[pool_claim_id] = claim
+            else:
+                claims.get(pool_claim_id).get('conditions').add(condition)
             claim = claims.get(pool_claim_id)
             claim.get('mappings').append(claim_mapping)
         claim_relations_filename = self.get('claim_relations_filename')
