@@ -336,7 +336,7 @@ class NDCGScorerV1(Scorer):
         while(len(claims_set)):
             best_next_claim = None
             max_gain_of_next_claim = None
-            for the_claim in claims_set:
+            for the_claim in sorted(claims_set, key=lambda c: c.get('claim_id')):
                 test_ranked_list = list(ideal_claims_ranking[:])
                 test_ranked_list.append(the_claim)
                 rank = len(test_ranked_list) - 1
