@@ -58,23 +58,24 @@ def is_new_old(values, key, value):
 def parse(line):
     for entry_type in parsers:
         if entry_type in line:
-            _, _, _, entry_type, entry_str = line.strip().split(' - ')
+            _, _, _, classname, entry_type, entry_str = line.strip().split(' - ')
             entry = None
             if entry_type in parsers:
-                entry = parsers.get(entry_type)(line, entry_type, entry_str)
+                entry = parsers.get(entry_type)(line, classname, entry_type, entry_str)
             return entry
 
-def parse_CLAIM_FIELD_CORRECTNESS(line, entry_type, entry_str):
-    return parse_DEFAULT(line, entry_type, entry_str, split_by_1='::', split_by_2=':')
+def parse_CLAIM_FIELD_CORRECTNESS(line, classname, entry_type, entry_str):
+    return parse_DEFAULT(line, classname, entry_type, entry_str, split_by_1='::', split_by_2=':')
 
-def parse_CLAIM_STRING(line, entry_type, entry_str):
-    return parse_DEFAULT(line, entry_type, entry_str, split_by_1='::', split_by_2=':')
+def parse_CLAIM_STRING(line, classname, entry_type, entry_str):
+    return parse_DEFAULT(line, classname, entry_type, entry_str, split_by_1='::', split_by_2=':')
 
-def parse_DEFAULT(line, entry_type, entry_str, split_by_1=None, split_by_2=':'):
-    key_value_pairs = entry_str.split(split_by_1)
+def parse_DEFAULT(line, classname, entry_type, entry_str, split_by_1=None, split_by_2=':'):
     entry = {'ENTRY_TYPE': entry_type,
+             'ENTRY_CLASS': classname,
              'ENTRY_STR': entry_str,
              'LINE': line.strip()}
+    key_value_pairs = entry_str.split(split_by_1)
     for key_value_pair in key_value_pairs:
         key, value = key_value_pair.split(split_by_2)
         entry[key] = value
@@ -132,7 +133,7 @@ def calculate_gain(fields, value_not_provided_for_fields, incorrect_values):
         gain += float(weights.get(fieldname))
     return fields_counted_as_new, gain
 
-def analyze_part_of_logfile(logger, input_filename, condition, claim_relation, ranking_type, query_id, program_output):
+def analyze_part_of_logfile(logger, input_filename, classname, condition, claim_relation, ranking_type, query_id, program_output):
     def matches(entry, **kwargs):
         for key, value in kwargs.items():
             if entry.get(key) != value:
@@ -148,20 +149,24 @@ def analyze_part_of_logfile(logger, input_filename, condition, claim_relation, r
             entry = parse(line)
             if entry:
                 if matches(entry,
+                           ENTRY_CLASS=classname,
                            CLAIM_RELATION=claim_relation,
                            ENTRY_TYPE='GAIN_VALUE',
                            QUERY_ID=query_id,
                            RANKING_TYPE=ranking_type):
                     ranking.append(entry)
                 elif matches(entry,
+                             ENTRY_CLASS=classname,
                              ENTRY_TYPE='CLAIM_FIELD_CORRECTNESS'):
                     field_name_and_value = '{}:{}'.format(entry.get('FIELD_NAME'), entry.get('FIELD_VALUE'))
                     claim_field_correctness.setdefault(entry.get('CLAIM_ID'), {})[field_name_and_value] = entry.get('CORRECTNESS')
                 elif matches(entry,
+                             ENTRY_CLASS=classname,
                              ENTRY_TYPE='CLAIM_RELATION_CORRECTNESS'):
                     query_id_and_field_name_and_value = '{}:{}:{}'.format(entry.get('QUERY_ID'), entry.get('CLAIM_ID'), entry.get('CLAIM_RELATION'))
                     claim_relation_correctness[query_id_and_field_name_and_value] = entry.get('CORRECTNESS_SCALE')
                 elif matches(entry,
+                             ENTRY_CLASS=classname,
                              ENTRY_TYPE='CLAIM_STRING'):
                     if entry.get('query_claim_frame_id') == query_id:
                         if query_claim_frame_entry is None:
@@ -237,9 +242,10 @@ def analyze_logfile(args):
         claim_relation = entry.get('ClaimRelation')
         if query_id != 'ALL-Macro':
             for ranking_type in ['submitted', 'ideal']:
-                output_filename = os.path.join(output_directory, 'ranking_{}_{}_{}.txt'.format(query_id, claim_relation, ranking_type))
-                with open(output_filename, 'w') as program_output:
-                    analyze_part_of_logfile(logger, input_score_logfilename, condition, claim_relation, ranking_type, query_id, program_output)
+                for classname in ['NDCGScorerV2']:
+                    output_filename = os.path.join(output_directory, 'ranking_{}_{}_{}_{}.txt'.format(classname, query_id, claim_relation, ranking_type))
+                    with open(output_filename, 'w') as program_output:
+                        analyze_part_of_logfile(logger, input_score_logfilename, classname, condition, claim_relation, ranking_type, query_id, program_output)
     exit(ALLOK_EXIT_CODE)
 
 if __name__ == '__main__':
