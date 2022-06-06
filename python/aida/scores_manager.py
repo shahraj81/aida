@@ -15,6 +15,7 @@ from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
 from aida.frame_metric_scorer import FrameMetricScorer
 from aida.ndcg_v1_scorer import NDCGScorerV1
+from aida.ndcg_v2_scorer import NDCGScorerV2
 from aida.temporal_metric_scorer import TemporalMetricScorer
 from aida.type_metric_v1_scorer import TypeMetricScorerV1
 from aida.type_metric_v2_scorer import TypeMetricScorerV2
@@ -43,6 +44,7 @@ class ScoresManager(Object):
             },
         'task3': {
             'NDCGScorerV1': NDCGScorerV1,
+            'NDCGScorerV2': NDCGScorerV2,
             }
         }
 

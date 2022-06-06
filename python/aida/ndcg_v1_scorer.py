@@ -1,5 +1,7 @@
 """
-AIDA class for Task3 scorer.
+AIDA class for Task3 NDCG scorer V1.
+
+V1 refers to the variant where all the submitted claims are considered for scoring regarless of the pooling depth.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -53,7 +55,9 @@ class OuterClaim(Object):
 
 class NDCGScorerV1(Scorer):
     """
-    AIDA class for Task3 scorer.
+    AIDA class for Task3 NDCG scorer V1.
+
+    V1 refers to the variant where all the submitted claims are considered for scoring regarless of the pooling depth.
     """
 
     printing_specs = [{'name': 'condition',              'header': 'Condition',          'format': 's',    'justify': 'L'},
@@ -270,6 +274,17 @@ class NDCGScorerV1(Scorer):
                     weight = 1
         return weight
 
+    def get_pooling_depth(self, query, claim_relation):
+        query_claim_relation_pooling_depth = None
+        for query_claim_relation_and_depth in query.get('depth').split(','):
+            query_claim_relation, query_pooling_depth = query_claim_relation_and_depth.split(':')
+            if query_claim_relation == claim_relation:
+                query_claim_relation_pooling_depth = query_pooling_depth
+                break
+        if query_claim_relation_pooling_depth is None:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'pooling depth is None')
+        return int(query_claim_relation_pooling_depth)
+
     def get_query_ids(self, score, scores):
         return ['ALL-Macro']
 
@@ -279,7 +294,7 @@ class NDCGScorerV1(Scorer):
         elif ranked_list_type == 'ideal':
             return self.get('ranked_claims_ideal', query, claim_relation)
 
-    def get_ranked_claims_ideal(self, query, claim_relation):
+    def get_ranked_claims_ideal(self, query, claim_relation, LIMITED_TO_POOLING_DEPTH=False):
         def get_outer_claim(claim, rank):
             outer_claim_filename = claim.get('outer_claim').get('filename')
             path = os.path.dirname(outer_claim_filename)
@@ -331,9 +346,9 @@ class NDCGScorerV1(Scorer):
                     best_next_claim = the_claim
             ideal_claims_ranking.append(best_next_claim)
             claims_set.remove(best_next_claim)
-        return ideal_claims_ranking
+        return ideal_claims_ranking[0:self.get('pooling_depth', query, claim_relation)] if LIMITED_TO_POOLING_DEPTH else ideal_claims_ranking
 
-    def get_ranked_claims_submitted(self, query, claim_relation):
+    def get_ranked_claims_submitted(self, query, claim_relation, LIMITED_TO_POOLING_DEPTH=False):
         def is_compatible(the_claim_relation, claim_relation):
             if the_claim_relation == claim_relation:
                 return True
@@ -367,7 +382,8 @@ class NDCGScorerV1(Scorer):
                 assessed_claim.set('assessed_claim_relation', assessed_claim_relation)
                 assessed_claim.set('rank', claim.get('rank'))
                 claims.append(assessed_claim)
-        return sorted(claims, key = lambda claim: claim.get('rank'))
+        sorted_claims = sorted(claims, key = lambda claim: claim.get('rank'))
+        return sorted_claims[0:self.get('pooling_depth', query, claim_relation)] if LIMITED_TO_POOLING_DEPTH else sorted_claims
 
     def get_required_fields_correctness(self, claim):
         specs = self.get('specs')
