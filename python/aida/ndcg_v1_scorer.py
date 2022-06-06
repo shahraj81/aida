@@ -397,6 +397,8 @@ class NDCGScorerV1(Scorer):
         DCG = self.get('DCG', query, claim_relation, ranked_claims_submitted, ideal=False)
         IDCG = self.get('DCG', query, claim_relation, ranked_claims_ideal, ideal=True)
         nDCG = DCG/IDCG if IDCG > 0 else 0
+        if nDCG > 1:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'nDCG > 1')
         run_id = self.get('run_id')
         condition = query.get('condition')
         query_id = query.get('query_id')
