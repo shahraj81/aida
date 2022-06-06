@@ -109,7 +109,7 @@ class Logger:
             line_dict = dict(zip(header, line.strip().split(None, 2)))
             self.event_specs[line_dict['code']] = line_dict
 
-    def record_event(self, event_code, *args):
+    def record_event(self, event_code, *args, classname=None):
         """
         Record an event.
         
@@ -142,7 +142,8 @@ class Logger:
             event_object = self.event_specs[event_code]
             event_type = event_object['type']
             event_message = event_object['message'].format(*argslst)
-            event_message = '{code} - {message}'.format(code=event_code, message=event_message)
+            classname = 'NO_CLASS_NAME' if classname is None else classname
+            event_message = '{classname} - {code} - {message}'.format(classname=classname, code=event_code, message=event_message)
             if event_message in self.recorded:
                 return
             self.recorded[event_message] = 1

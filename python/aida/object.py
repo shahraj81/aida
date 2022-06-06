@@ -83,7 +83,7 @@ class Object(object):
             args:
                 the arguments that are passed to the logger's record_event method.
         """
-        self.get('logger').record_event(event_code, *args)
+        self.get('logger').record_event(event_code, *args, classname=self.__class__.__name__)
 
     def set(self, key, value):
         """
