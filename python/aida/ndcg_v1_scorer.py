@@ -171,15 +171,16 @@ class NDCGScorerV1(Scorer):
 
     def get_field_values(self, fieldspec, claim, correctness_requirement=False):
         values = []
-        data = claim.get('data').get(fieldspec.get('fieldname'))
-        if data:
-            fieldname, sub_fieldname = fieldspec.get('value_fieldnames').split(':')
-            for component_id, entry in data.items():
-                field_correctness = self.get('field_correctness', fieldspec, claim, component_id)
-                fieldvalue = entry.get(fieldname)[0].get(sub_fieldname)
-                self.record_event('CLAIM_FIELD_CORRECTNESS', claim.get('claim_id'), fieldspec.get('fieldname'), fieldvalue, field_correctness)
-                if (not correctness_requirement) or field_correctness:
-                    values.append(fieldvalue)
+        if claim is not None:
+            data = claim.get('data').get(fieldspec.get('fieldname'))
+            if data:
+                fieldname, sub_fieldname = fieldspec.get('value_fieldnames').split(':')
+                for component_id, entry in data.items():
+                    field_correctness = self.get('field_correctness', fieldspec, claim, component_id)
+                    fieldvalue = entry.get(fieldname)[0].get(sub_fieldname)
+                    self.record_event('CLAIM_FIELD_CORRECTNESS', claim.get('claim_id'), fieldspec.get('fieldname'), fieldvalue, field_correctness)
+                    if (not correctness_requirement) or field_correctness:
+                        values.append(fieldvalue)
         retVals = set()
         max_num_of_values = fieldspec.get('max_num_of_values')
         for value in sorted(values):
@@ -191,7 +192,7 @@ class NDCGScorerV1(Scorer):
     def get_gain(self, query, claim_relation, ranked_claims, rank):
         query_claim_frame = query.get('query_claim_frame')
         the_claim = ranked_claims[rank]
-        gain = 1 if query_claim_frame is None else self.get('pairwise_novelty_score', query.get('query_id'), claim_relation, the_claim, query_claim_frame)
+        gain = self.get('pairwise_novelty_score', query.get('query_id'), claim_relation, the_claim, query_claim_frame)
         for i in range(rank):
             pairwise_novelty_score = self.get('pairwise_novelty_score', query.get('query_id'), claim_relation, the_claim, ranked_claims[i])
             if pairwise_novelty_score == 0:
@@ -202,7 +203,7 @@ class NDCGScorerV1(Scorer):
 
     def get_pairwise_novelty_score(self, query_id, claim_relation, the_claim, previous_claim):
         pairwise_novelty_scores = self.get('pairwise_novelty_scores')
-        lookup_key = '-'.join([the_claim.get('claim_id'), previous_claim.get('claim_id')])
+        lookup_key = '-'.join([the_claim.get('claim_id'), previous_claim.get('claim_id') if previous_claim else 'None'])
         claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim) if the_claim.get('condition') == 'Condition5' else 1
         self.record_event('CLAIM_RELATION_CORRECTNESS', query_id, the_claim.get('claim_id'), claim_relation, claim_relation_correctness_scale)
         if claim_relation_correctness_scale == 0:
@@ -327,7 +328,7 @@ class NDCGScorerV1(Scorer):
         claims_set = set()
         rank = 1
         for claim in self.get('assessments').get('claims').values():
-            if claim.get('claim_id') in related_claim_ids or (query.get('condition') == claim.get('condition') == 'Condition6'):
+            if claim.get('claim_id') in related_claim_ids or (query.get('condition') == 'Condition6' and query.get('condition') in claim.get('conditions')):
                 outer_claim = get_outer_claim(claim, rank)
                 outer_claim.set('assessed_claim_relation', self.get('assessed_claim_relation', query, outer_claim))
                 claims_set.add(outer_claim)
@@ -521,7 +522,8 @@ class NDCGScorerV1(Scorer):
             run_claim_id = ranked_claims[rank].get('run_claim_id')
             pool_claim_id = ranked_claims[rank].get('claim_id')
             self.record_event('GAIN_VALUE', ranking_type, run_id, condition, query_id, claim_relation, rank, run_claim_id, pool_claim_id, gain)
-            DCG += (gain/math.log2(rank+2))
+            discounted_gain = gain/math.log2(rank+2)
+            DCG += discounted_gain
         return DCG
 
     def aggregate_scores(self, scores, score_class):
