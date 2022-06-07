@@ -64,7 +64,7 @@ class NDCGScorerV1(Scorer):
                       {'name': 'query_id',               'header': 'QueryID',            'format': 's',    'justify': 'L'},
                       {'name': 'claim_relation',         'header': 'ClaimRelation',      'format': 's',    'justify': 'L'},
                       {'name': 'run_id',                 'header': 'RunID',              'format': 's',    'justify': 'L'},
-                      {'name': 'num_of_claims',          'header': 'NumSubmittedClaims', 'format': 's',    'justify': 'R'},
+                      {'name': 'num_of_claims',          'header': 'NumAssessedClaims',  'format': 's',    'justify': 'R'},
                       {'name': 'ground_truth',           'header': 'GT',                 'format': 's',    'justify': 'R'},
                       {'name': 'ndcg',                   'header': 'NDCG',               'format': '6.4f', 'justify': 'R', 'mean_format': '6.4f'}]
 
