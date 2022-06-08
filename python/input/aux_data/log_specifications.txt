@@ -17,6 +17,7 @@ CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
 CRITICAL  DUPLICATE_VALUE                 {} appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
+INFO      F1_SCORE_AT_CUTOFF              QUERY_ID:{} CLAIM_RELATION:{} CUTOFF:{} F1:{}
 WARNING   ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED '{}' met pooling criteria but was not assessed
 ERROR     EXPECTING_VALID_ENTRY           Code expected entry to be valid but it was not. This happens when either the code is not run on the output of the response validator or when the response validator did not remove an invalid entry.
 INFO      GAIN_VALUE                      RANKING_TYPE:{} RUN_ID:{} CONDITION:{} QUERY_ID:{} CLAIM_RELATION:{} RANK:{} RUN_CLAIM_ID:{} POOL_CLAIM_ID:{} GAIN:{}
@@ -71,6 +72,7 @@ CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.
 CRITICAL  OVERWRITING_POSTPOLICY_CATEGORIZATION Attempting to overwrite post-policy categorization '{}' by '{}'
 INFO      PAIR_WISE_AP                    QUERY_ID: {} CLUSTER_ID: {} FQEC: {} AP: {}
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
+INFO      RANKED_CLAIMS                   RANKING_TYPE:{} QUERY_ID:{} CLAIM_RELATION:{} RANK:{} CLAIM_ID:{}
 INFO      RESPONSE_CATEGORIZATION_INFO    QUERY_ID:{} CLUSTER_ID:{} MENTION:{} LINK_CONFIDENCE:{} CLUSTER_RANK:{} JUSTIFICATION_CONFIDENCE:{} WEIGHT:{} RESPONSE_RANK:{} PRE_POLICY:{} POST_POLICY:{}
 INFO      SCORE_VALUE                     RUN_ID:{} CONDITION:{} QUERY_ID:{} CLAIM_RELATION:{} {}:{}
 INFO      SKIPPING_CLAIM_NOT_ASSESSED     RUN_ID:{} CONDITION:{} QUERY_ID:{} RANKED_LIST_CLAIM_RELATION:{} RANK:{} RUN_CLAIM_ID:{}
@@ -132,6 +134,7 @@ ERROR     UNEXPECTED_PROTOTYPE_ID         Unexpected prototype ID (found: {}, ex
 ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (found: {}, expected: {})
 ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
 WARNING   UNEXPECTED_NUM_CLAIM_COMPONENT_QNODE_TYPES Unexpected number of claim component QNode types for {} (provided: {}, expected <= {}); removing extra types
+INFO      UNIQUE_VALUES                   RANKING_TYPE:{}::QUERY_ID:{}::CLAIM_RELATION:{}::CUTOFF:{}::VALUES:{}
 ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' for claim {} not found in {}
 WARNING   MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' for claim {} not found in {}
 ERROR     MISSING_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' not found in {}

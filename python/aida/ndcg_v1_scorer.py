@@ -290,10 +290,16 @@ class NDCGScorerV1(Scorer):
         return ['ALL-Macro']
 
     def get_ranked_claims(self, query, claim_relation, ranked_list_type):
+        ranked_claims = None
         if ranked_list_type == 'submitted':
-            return self.get('ranked_claims_submitted', query, claim_relation)
+            ranked_claims = self.get('ranked_claims_submitted', query, claim_relation)
         elif ranked_list_type == 'ideal':
-            return self.get('ranked_claims_ideal', query, claim_relation)
+            ranked_claims = self.get('ranked_claims_ideal', query, claim_relation)
+        rank = 1
+        for claim in ranked_claims:
+            self.record_event('RANKED_CLAIMS', ranked_list_type, query.get('query_id'), claim_relation, rank, claim.get('claim_id'))
+            rank += 1
+        return ranked_claims
 
     def get_ranked_claims_ideal(self, query, claim_relation, LIMITED_TO_POOLING_DEPTH=False):
         def get_outer_claim(claim, rank):
@@ -418,6 +424,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'value',
                 'required': True,
+                'required_for_f1': True,
                 'value_fieldnames': 'value:value',
                 'weight': 32,
                 },
@@ -429,6 +436,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'polarity',
                 'required': True,
+                'required_for_f1': True,
                 'value_fieldnames': 'polarity:value',
                 'weight': 32,
                 },
@@ -440,6 +448,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': True,
+                'required_for_f1': True,
                 'value_fieldnames': 'ec_id:correctness',
                 'weight': 32,
                 },
@@ -451,6 +460,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': True,
+                'required_for_f1': True,
                 'value_fieldnames': 'ec_id:correctness',
                 'weight': 16,
                 },
@@ -462,6 +472,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 3,
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': False,
+                'required_for_f1': False,
                 'value_fieldnames': 'ec_id:correctness',
                 'weight': 4,
                 },
@@ -473,6 +484,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': False,
+                'required_for_f1': False,
                 'value_fieldnames': 'ec_id:correctness',
                 'weight': 1,
                 },
@@ -484,6 +496,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': False,
+                'required_for_f1': False,
                 'value_fieldnames': 'ec_id:correctness',
                 'weight': 1,
                 },
@@ -495,6 +508,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'range',
                 'required': False,
+                'required_for_f1': False,
                 'value_fieldnames': 'range:value',
                 'weight': 1,
                 },
@@ -506,6 +520,7 @@ class NDCGScorerV1(Scorer):
                 'max_num_of_values': 1,
                 'overall_assessment_fieldname': 'value',
                 'required': False,
+                'required_for_f1': False,
                 'value_fieldnames': 'value:value',
                 'weight': 0.5,
                 },

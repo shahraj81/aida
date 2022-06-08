@@ -78,4 +78,4 @@ class ScorePrinter(Container):
         string = self.get_header_text()
         for line in self.get('lines'):
             string = '{}\n{}'.format(string, self.get_line_text(line))
-        return string
+        return '{}\n'.format(string)
