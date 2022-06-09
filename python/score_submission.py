@@ -1,7 +1,6 @@
 """
 Main AIDA scoring script.
 """
-
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
 __status__  = "production"
 __version__ = "1.0.0.1"
@@ -314,11 +313,27 @@ class Task3(Object):
         claims_dir = os.path.join(assessments_dir, 'claims')
         check_for_paths_non_existance([assessments_dir])
         os.makedirs(claims_dir)
-        sub_dirs = ['ldc_claims', 'system_claims']
-        for sub_dir in sub_dirs:
-            source_dir = os.path.join(assessments_package, 'data', 'TA3', sub_dir)
-            command = 'cp {source}/* {destination}/'.format(source=source_dir, destination=claims_dir)
-            os.system(command)
+        # copy system claims as is
+        source_dir = os.path.join(assessments_package, 'data', 'TA3', 'system_claims')
+        command = 'cp {source}/* {destination}/'.format(source=source_dir, destination=claims_dir)
+        os.system(command)
+        # copy ldc claims and mark every field correct
+        source_dir = os.path.join(assessments_package, 'data', 'TA3', 'ldc_claims')
+        for filename in os.listdir(source_dir):
+            if filename.endswith('-outer-claim.tab'):
+                with open(os.path.join(claims_dir, filename), 'w') as corrected_claims_output:
+                    filehandler = FileHandler(logger, os.path.join(source_dir, filename))
+                    corrected_claims_output.write('{}\n'.format(filehandler.get('header').get('line')))
+                    for entry in filehandler:
+                        if entry.get('correctness') == 'NIL':
+                            corrected_value = 'Informative' if entry.get('fieldname') == 'informativenessAssessment' else 'Correct'
+                            entry.set('correctness', corrected_value)
+                            line = [entry.get(fieldname) for fieldname in entry.get('header').get('columns')]
+                            entry.set('line', '{}\n'.format('\t'.join(line)))
+                        corrected_claims_output.write(entry.get('line'))
+            else:
+                command = 'cp {source}/{filename} {destination}/'.format(filename=filename, source=source_dir, destination=claims_dir)
+                os.system(command)
         files = ['claim-mappings.tab', 'cross_claim_relations.tab']
         for filename in files:
             command = 'cp {source}/{filename} {destination}/'.format(filename=filename, source=os.path.join(assessments_package, 'data', 'TA3'), destination=assessments_dir)
