@@ -264,7 +264,7 @@ class Task3(Object):
     """
     Class representing Task3 scorer.
     """
-    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries, queries_to_score, query_claim_frames, assessments, responses, scores):
+    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries, queries_to_score, query_claim_frames, claim_mappings, assessments, responses, scores):
         check_for_paths_existance([
                  log_specifications,
                  encodings,
@@ -277,6 +277,7 @@ class Task3(Object):
                  queries,
                  queries_to_score,
                  query_claim_frames,
+                 claim_mappings,
                  assessments,
                  responses
                  ])
@@ -294,6 +295,7 @@ class Task3(Object):
         self.queries = queries
         self.queries_to_score = queries_to_score
         self.query_claim_frames = query_claim_frames
+        self.claim_mappings = claim_mappings
         self.assessments = assessments
         self.responses = responses
         self.scores = scores
@@ -338,10 +340,9 @@ class Task3(Object):
         for filename in files:
             command = 'cp {source}/{filename} {destination}/'.format(filename=filename, source=os.path.join(assessments_package, 'data', 'TA3'), destination=assessments_dir)
             os.system(command)
-        claim_mappings = os.path.join(assessments_package, 'data', 'TA3', 'claim-mappings.tab')
         claim_relations = os.path.join(assessments_package, 'data', 'TA3', 'cross_claim_relations.tab')
 
-        assessments = Assessments(logger, 'task3', queries_to_score, claims_dir, claim_mappings=claim_mappings, claim_relations=claim_relations)
+        assessments = Assessments(logger, 'task3', queries_to_score, claims_dir, claim_mappings=self.get('claim_mappings'), claim_relations=claim_relations)
         arguments = {
             'run_id': self.get('runid'),
             'assessments': assessments,
@@ -367,6 +368,7 @@ class Task3(Object):
         parser.add_argument('queries', type=str, help='Specify the directory containing task3 user queries')
         parser.add_argument('queries_to_score', type=str, help='File containing list of queryids to be scored')
         parser.add_argument('query_claim_frames', type=str, help='Directory containing output of NIST evaluation docker when applied to query claim frames represented as a Condition5 run')
+        parser.add_argument('claim_mappings', type=str, help='File containing claim mappings (claim-mappings.tab)')
         parser.add_argument('assessments', type=str, help='Directory containing the assessments package as recieved from LDC')
         parser.add_argument('responses', type=str, help='Directory containing output of AIDA evaluation docker')
         parser.add_argument('runid', type=str, help='ID of the system being scored')
