@@ -333,7 +333,9 @@ class NDCGScorerV1(Scorer):
             cross_claim_relation = normalize_claim_relation(entry.get('relation'))
             if cross_claim_relation in compatible_claim_relations.get(claim_relation):
                 query_claim_id = entry.get('query_claim_id')
-                if on_same_topic(query_claim_id, query.get('query_id')):
+                if claim_relation == 'ontopic' and on_same_topic(query_claim_id, query.get('query_id')):
+                    related_claim_ids.add(entry.get('system_claim_id'))
+                elif claim_relation != 'ontopic' and query_claim_id == query.get('query_id'):
                     related_claim_ids.add(entry.get('system_claim_id'))
         claims_set = set()
         rank = 1
