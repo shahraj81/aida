@@ -339,7 +339,7 @@ class Task3(Object):
                     os.system(command)
         command = 'cp {source}/cross_claim_relations.tab {destination}/'.format(source=os.path.join(assessments_package, 'data', 'TA3'), destination=assessments_dir)
         os.system(command)
-        claim_relations = os.path.join(assessments_package, 'data', 'TA3', 'cross_claim_relations.tab')
+        claim_relations = os.path.join(assessments_dir, 'cross_claim_relations.tab')
 
         assessments = Assessments(logger, 'task3', queries_to_score, claims_dir, claim_mappings=self.get('claim_mappings'), claim_relations=claim_relations)
         arguments = {
