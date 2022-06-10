@@ -264,7 +264,7 @@ class Task3(Object):
     """
     Class representing Task3 scorer.
     """
-    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries, queries_to_score, query_claim_frames, claim_mappings, assessments, responses, scores):
+    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries, queries_to_score, query_claim_frames, claim_mappings, assessments, responses, assessments_wc, scores):
         check_for_paths_existance([
                  log_specifications,
                  encodings,
@@ -279,6 +279,7 @@ class Task3(Object):
                  query_claim_frames,
                  claim_mappings,
                  assessments,
+                 assessments_wc,
                  responses
                  ])
         check_for_paths_non_existance([scores])
@@ -298,6 +299,7 @@ class Task3(Object):
         self.claim_mappings = claim_mappings
         self.assessments = assessments
         self.responses = responses
+        self.assessments_wc = assessments_wc
         self.scores = scores
         self.logger = Logger(self.get('log_filename'),
                         self.get('log_specifications'),
@@ -310,8 +312,7 @@ class Task3(Object):
             queries_to_score[entry.get('query_id')] = entry
 
         assessments_package=self.get('assessments')
-        responses_dir = self.get('responses')
-        assessments_dir = os.path.join(responses_dir, 'assessments')
+        assessments_dir = self.get('assessments_wc')
         claims_dir = os.path.join(assessments_dir, 'claims')
         check_for_paths_non_existance([assessments_dir])
         os.makedirs(claims_dir)
@@ -371,6 +372,7 @@ class Task3(Object):
         parser.add_argument('assessments', type=str, help='Directory containing the assessments package as recieved from LDC')
         parser.add_argument('responses', type=str, help='Directory containing output of AIDA evaluation docker')
         parser.add_argument('runid', type=str, help='ID of the system being scored')
+        parser.add_argument('assessments_wc', type=str, help='Directory to which the working copy of the assessments package should be written')
         parser.add_argument('scores', type=str, help='Directory to which the scores should be written')
         parser.set_defaults(myclass=myclass)
         return parser
