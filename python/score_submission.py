@@ -279,10 +279,9 @@ class Task3(Object):
                  query_claim_frames,
                  claim_mappings,
                  assessments,
-                 assessments_wc,
                  responses
                  ])
-        check_for_paths_non_existance([scores])
+        check_for_paths_non_existance([assessments_wc, scores])
         self.log_filename = log
         self.runid = runid
         self.log_specifications = log_specifications
