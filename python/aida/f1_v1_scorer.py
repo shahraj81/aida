@@ -12,6 +12,9 @@ from aida.ndcg_v1_scorer import NDCGScorerV1
 from aida.score_printer import ScorePrinter
 from aida.utility import multisort
 
+def trim(value):
+    return '{0:6.4f}'.format(value)
+
 class F1ScorerV1(NDCGScorerV1):
     """
     AIDA class for Task3 F1 scorer (Variant 1).
@@ -34,26 +37,26 @@ class F1ScorerV1(NDCGScorerV1):
         self.record_event('UNIQUE_VALUES', 'ideal', query.get('query_id'), claim_relation, 'EOL', ','.join(sorted(unique_values_in_ideal_list)))
         best_unique_values_in_submitted_list = None
         best_rank = None
-        best_score = None
+        best_f1 = None
         for rank in range(len(ranked_claims_submitted)):
-            score, unique_values_in_submitted_list = self.get('score_at_cutoff', rank+1, query, claim_relation, ranked_claims_submitted, unique_values_in_ideal_list)
+            precision, recall, f1, unique_values_in_submitted_list = self.get('score_at_cutoff', rank+1, query, claim_relation, ranked_claims_submitted, unique_values_in_ideal_list)
             self.record_event('UNIQUE_VALUES', 'submitted', query.get('query_id'), claim_relation, rank+1, ','.join(sorted(unique_values_in_submitted_list)))
-            self.record_event('F1_SCORE_AT_CUTOFF', query.get('query_id'), claim_relation, rank+1, score)
-            if best_score is None or score > best_score:
-                best_score = score
+            self.record_event('SCORE_AT_CUTOFF', query.get('query_id'), claim_relation, rank+1, trim(precision), trim(recall), trim(f1))
+            if best_f1 is None or f1 > best_f1:
+                best_f1 = f1
                 best_unique_values_in_submitted_list = unique_values_in_submitted_list
                 best_rank = rank + 1
-        return best_score, best_rank, best_unique_values_in_submitted_list, unique_values_in_ideal_list
+        return best_f1, best_rank, best_unique_values_in_submitted_list, unique_values_in_ideal_list
 
     def get_score_at_cutoff(self, cutoff_rank, query, claim_relation, ranked_claims_submitted, unique_values_in_ideal_list):
         unique_values_in_submitted_list = self.get('unique_values', claim_relation, ranked_claims_submitted, cutoff_rank=cutoff_rank)
         precision = len(unique_values_in_submitted_list)/cutoff_rank
         recall_denominator = len(unique_values_in_ideal_list)
-        score = 0
+        f1 = 0
         if recall_denominator > 0:
             recall = len(unique_values_in_submitted_list)/recall_denominator
-            score = 2 * precision * recall / (precision + recall) if precision + recall else 0
-        return score, unique_values_in_submitted_list
+            f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
+        return precision, recall, f1, unique_values_in_submitted_list
 
     def get_unique_values(self, claim_relation, ranked_claims, cutoff_rank=None):
         def to_string(claim_values):
