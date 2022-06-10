@@ -51,8 +51,9 @@ class F1ScorerV1(NDCGScorerV1):
     def get_score_at_cutoff(self, cutoff_rank, query, claim_relation, ranked_claims_submitted, unique_values_in_ideal_list):
         unique_values_in_submitted_list = self.get('unique_values', claim_relation, ranked_claims_submitted, cutoff_rank=cutoff_rank)
         precision = len(unique_values_in_submitted_list)/cutoff_rank
-        recall_denominator = len(unique_values_in_ideal_list)
+        recall = 0
         f1 = 0
+        recall_denominator = len(unique_values_in_ideal_list)
         if recall_denominator > 0:
             recall = len(unique_values_in_submitted_list)/recall_denominator
             f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
