@@ -314,7 +314,6 @@ class Task3(Object):
         assessments_package=self.get('assessments')
         assessments_dir = self.get('assessments_wc')
         claims_dir = os.path.join(assessments_dir, 'claims')
-        check_for_paths_non_existance([assessments_dir])
         os.makedirs(claims_dir)
         # copy system claims as is
         source_dir = os.path.join(assessments_package, 'data', 'TA3', 'system_claims')
