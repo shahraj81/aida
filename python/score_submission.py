@@ -321,21 +321,22 @@ class Task3(Object):
         os.system(command)
         # copy ldc claims and mark every field correct
         source_dir = os.path.join(assessments_package, 'data', 'TA3', 'ldc_claims')
-        for filename in os.listdir(source_dir):
-            if filename.endswith('-outer-claim.tab'):
-                with open(os.path.join(claims_dir, filename), 'w') as corrected_claims_output:
-                    filehandler = FileHandler(logger, os.path.join(source_dir, filename))
-                    corrected_claims_output.write('{}\n'.format(filehandler.get('header').get('line')))
-                    for entry in filehandler:
-                        if entry.get('correctness') == 'NIL':
-                            corrected_value = 'Informative' if entry.get('fieldname') == 'informativenessAssessment' else 'Correct'
-                            entry.set('correctness', corrected_value)
-                            line = [entry.get(fieldname) for fieldname in entry.get('header').get('columns')]
-                            entry.set('line', '{}\n'.format('\t'.join(line)))
-                        corrected_claims_output.write(entry.get('line'))
-            else:
-                command = 'cp {source}/{filename} {destination}/'.format(filename=filename, source=source_dir, destination=claims_dir)
-                os.system(command)
+        if os.path.exists(source_dir) and os.path.isdir(source_dir):
+            for filename in os.listdir(source_dir):
+                if filename.endswith('-outer-claim.tab'):
+                    with open(os.path.join(claims_dir, filename), 'w') as corrected_claims_output:
+                        filehandler = FileHandler(logger, os.path.join(source_dir, filename))
+                        corrected_claims_output.write('{}\n'.format(filehandler.get('header').get('line')))
+                        for entry in filehandler:
+                            if entry.get('correctness') == 'NIL':
+                                corrected_value = 'Informative' if entry.get('fieldname') == 'informativenessAssessment' else 'Correct'
+                                entry.set('correctness', corrected_value)
+                                line = [entry.get(fieldname) for fieldname in entry.get('header').get('columns')]
+                                entry.set('line', '{}\n'.format('\t'.join(line)))
+                            corrected_claims_output.write(entry.get('line'))
+                else:
+                    command = 'cp {source}/{filename} {destination}/'.format(filename=filename, source=source_dir, destination=claims_dir)
+                    os.system(command)
         files = ['claim-mappings.tab', 'cross_claim_relations.tab']
         for filename in files:
             command = 'cp {source}/{filename} {destination}/'.format(filename=filename, source=os.path.join(assessments_package, 'data', 'TA3'), destination=assessments_dir)
