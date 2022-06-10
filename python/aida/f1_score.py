@@ -6,9 +6,9 @@ __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "6 June 2022"
 
-from aida.score import Score
+from aida.ndcg_score import NDCGScore
 
-class F1Score(Score):
+class F1Score(NDCGScore):
     """
     AIDA class for F1-based task3 evaluation metric score.
     """
