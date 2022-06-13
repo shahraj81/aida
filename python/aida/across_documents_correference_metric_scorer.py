@@ -46,6 +46,18 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
 
+    def aggregate_scores(self, scores, score_class):
+        aggregate = score_class(self.get('logger'),
+                                aggregate=True,
+                                run_id=self.get('run_id'),
+                                summary=True,
+                                entity_id='Summary',
+                                query_id='ALL-Macro',
+                                elements=Container(self.get('logger')))
+        for score in scores.values():
+            aggregate.get('elements').add(score)
+        scores.add(aggregate)
+
     def order(self, k):
         return k
 
@@ -389,19 +401,9 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                                                           **counts)
             scores.append(score)
 
-        macro_counts = {'average_precision': sum_average_precision/len(self.get('queries_to_score'))}
-        for field_name in [s.get('name') for s in self.get('printing_specs') if s.get('name').startswith('num_')]:
-            macro_counts[field_name] = macro_counts[field_name] if field_name in macro_counts else ''
-        macro_average_score = AcrossDocumentsCoreferenceMetricScore(self.get('logger'),
-                                                                    run_id=self.get('run_id'),
-                                                                    query_id='ALL-Macro',
-                                                                    entity_id='Summary',
-                                                                    summary=True,
-                                                                    **macro_counts)
-
-        scores_printer = ScorePrinter(self.logger, self.printing_specs)
+        scores_printer = ScorePrinter(self.logger, self.printing_specs, aggregate_types=['ALL-Macro'])
         for score in multisort(scores, (('entity_id', False),
                                         ('query_id', False))):
             scores_printer.add(score)
-        scores_printer.add(macro_average_score)
+        self.aggregate_scores(scores_printer, AcrossDocumentsCoreferenceMetricScore)
         self.scores = scores_printer

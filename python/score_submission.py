@@ -157,11 +157,9 @@ class Task2(Object):
     """
     Class representing Task2 scorer.
     """
-    def __init__(self, log, runid, cutoff, normalize, weighted, log_specifications, ontology_types, slots, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries_to_score, assessments, responses, scores):
+    def __init__(self, log, runid, cutoff, normalize, weighted, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, queries_to_score, assessments, responses, scores):
         check_for_paths_existance([
                  log_specifications,
-                 ontology_types,
-                 slots,
                  encodings,
                  core_documents,
                  parent_children,
@@ -181,8 +179,6 @@ class Task2(Object):
         self.normalize = normalize
         self.weighted = weighted
         self.log_specifications = log_specifications
-        self.ontology_types = ontology_types
-        self.slots = slots
         self.encodings = encodings
         self.core_documents = core_documents
         self.parent_children = parent_children
@@ -200,8 +196,6 @@ class Task2(Object):
 
     def __call__(self):
         logger = self.get('logger')
-        ontology_types = OntologyTypeMappings(logger, self.get('ontology_types'))
-        slots = SlotMappings(logger, self.get('slots'))
         document_mappings = DocumentMappings(logger,
                                              self.get('parent_children'),
                                              Encodings(logger, self.get('encodings')),
@@ -221,7 +215,7 @@ class Task2(Object):
             queries_to_score[entry.get('query_id')] = entry
 
         assessments = Assessments(logger, 'task2', queries_to_score, self.get('assessments'))
-        responses = ResponseSet(logger, ontology_types, slots, document_mappings, document_boundaries, self.get('responses'), self.get('runid'), task='task2')
+        responses = ResponseSet(logger, document_mappings, document_boundaries, self.get('responses'), self.get('runid'), task='task2')
         arguments = {
             'run_id': self.get('runid'),
             'cutoff': self.get('cutoff'),
@@ -243,8 +237,6 @@ class Task2(Object):
         parser.add_argument('-N', '--normalize', action='store_true', help='Normalize confidences?')
         parser.add_argument('-W', '--weighted', action='store_true', help='Use weighted Value for AP computation?')
         parser.add_argument('log_specifications', type=str, help='File containing error specifications')
-        parser.add_argument('ontology_types', type=str, help='File containing all types in the ontology')
-        parser.add_argument('slots', type=str, help='File containing slot mappings')
         parser.add_argument('encodings', type=str, help='File containing list of encoding-to-modality mappings')
         parser.add_argument('core_documents', type=str, help='File containing list of core documents')
         parser.add_argument('parent_children', type=str, help='File containing parent-to-child document ID mappings')

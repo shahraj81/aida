@@ -83,7 +83,7 @@ class Assessments(Container):
         return True
 
     def normalize(self, key, value):
-        normalize = {'correct': 'CORRECT', 'wrong': 'INCORRECT', 'inexact': 'INEXACT', 'yes': 'YES', 'no': 'NO'}
+        normalize = {'correct': 'CORRECT', 'wrong': 'INCORRECT', 'inexact': 'INEXACT', 'yes': 'CORRECT', 'no': 'INCORRECT'}
         keys_to_normalize = ['assessment', 'object_linkability', 'predicate_justification_correctness']
         value = normalize[value] if key in keys_to_normalize and value in normalize else value
         return value
@@ -98,7 +98,7 @@ class Assessments(Container):
     def load_task2_assessments(self):
         next_fqec_num = 1001
         generated_fqecs = {}
-        path = '{}/data/zero-hop/*.tab'.format(self.assessments_dir)
+        path = '{}/data/TA2/*.tab'.format(self.assessments_dir)
         header =  FileHeader(self.logger, "\t".join(assessments.get('task2').get('across_documents_coreference').get('columns')))
         for filename in glob.glob(path):
             for entry in FileHandler(self.logger, filename, header):
