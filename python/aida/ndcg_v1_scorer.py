@@ -170,6 +170,15 @@ class NDCGScorerV1(Scorer):
         return correctness_code.get(correctness)
 
     def get_field_values(self, fieldspec, claim, correctness_requirement=False):
+        def normalize(value):
+            mapping = {
+                'EpistemicTrueCertain': 'True',
+                'EpistemicTrueUncertain': 'True',
+                'EpistemicFalseCertain': 'False',
+                'EpistemicFalseUncertain': 'False',
+                'EpistemicUnknown': 'Unknown'
+                }
+            return mapping[value] if value in mapping else value
         values = []
         if claim is not None:
             data = claim.get('data').get(fieldspec.get('fieldname'))
@@ -177,7 +186,7 @@ class NDCGScorerV1(Scorer):
                 fieldname, sub_fieldname = fieldspec.get('value_fieldnames').split(':')
                 for component_id, entry in data.items():
                     field_correctness = self.get('field_correctness', fieldspec, claim, component_id)
-                    fieldvalue = entry.get(fieldname)[0].get(sub_fieldname)
+                    fieldvalue = normalize(entry.get(fieldname)[0].get(sub_fieldname))
                     self.record_event('CLAIM_FIELD_CORRECTNESS', claim.get('claim_id'), fieldspec.get('fieldname'), fieldvalue, field_correctness)
                     if (not correctness_requirement) or field_correctness:
                         values.append(fieldvalue)
