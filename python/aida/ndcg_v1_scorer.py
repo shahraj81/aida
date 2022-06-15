@@ -356,10 +356,11 @@ class NDCGScorerV1(Scorer):
                     claims_set.add(outer_claim)
                     rank += 1
         ideal_claims_ranking = []
-        while(len(claims_set)):
+        sorted_claims_set = list(sorted(claims_set, key=lambda c: c.get('claim_id')))
+        while(len(sorted_claims_set)):
             best_next_claim = None
             max_gain_of_next_claim = None
-            for the_claim in sorted(claims_set, key=lambda c: c.get('claim_id')):
+            for the_claim in sorted_claims_set:
                 test_ranked_list = list(ideal_claims_ranking[:])
                 test_ranked_list.append(the_claim)
                 rank = len(test_ranked_list) - 1
@@ -368,7 +369,7 @@ class NDCGScorerV1(Scorer):
                     max_gain_of_next_claim = gain_of_the_claim
                     best_next_claim = the_claim
             ideal_claims_ranking.append(best_next_claim)
-            claims_set.remove(best_next_claim)
+            sorted_claims_set.remove(best_next_claim)
         return ideal_claims_ranking[0:self.get('pooling_depth', query, claim_relation)] if LIMITED_TO_POOLING_DEPTH else ideal_claims_ranking
 
     def get_ranked_claims_submitted(self, query, claim_relation, LIMITED_TO_POOLING_DEPTH=False):
