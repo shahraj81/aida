@@ -352,7 +352,7 @@ class NDCGScorerV1(Scorer):
             if claim.get('claim_id') in related_claim_ids or (query.get('condition') == 'Condition6' and query.get('condition') in claim.get('conditions')):
                 outer_claim = get_outer_claim(claim, rank)
                 outer_claim.set('assessed_claim_relation', self.get('assessed_claim_relation', query, outer_claim))
-                if self.get('required_field_correctness', outer_claim):
+                if self.get('required_fields_correctness', outer_claim):
                     claims_set.add(outer_claim)
                     rank += 1
         ideal_claims_ranking = []
