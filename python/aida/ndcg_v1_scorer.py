@@ -118,7 +118,7 @@ class NDCGScorerV1(Scorer):
             self.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected value', claim.get('assessed_claim_relation'))
             return 0
         # if claim relations match, return 1
-        if claim.get('assessed_claim_relation') == ranked_list_claim_relation:
+        if claim.get('assessed_claim_relation') == ranked_list_claim_relation or ranked_list_claim_relation == 'ontopic':
             return 1
         # if claim relations did not match but are compatible return 0.5
         compatible_claim_relations = {
