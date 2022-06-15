@@ -32,8 +32,22 @@ class F1ScorerV1(NDCGScorerV1):
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
 
+    def get_claim_values(self, claim):
+        def to_string(claim_values):
+            values = []
+            for fieldname in sorted(claim_values):
+                field_values = claim_values.get(fieldname)
+                values.append('{}:{}'.format(fieldname, ','.join(sorted(field_values))))
+            return '::'.join(values)
+        claim_values = {}
+        for fieldspec in self.get('specs').values():
+            if fieldspec.get('required_for_f1'):
+                field_values = self.get('field_values', fieldspec, claim, correctness_requirement=True)
+                claim_values[fieldspec.get('fieldname')] = field_values
+        return to_string(claim_values)
+
     def get_score(self, query, claim_relation, ranked_claims_submitted, ranked_claims_ideal):
-        unique_values_in_ideal_list = self.get('unique_values', claim_relation, ranked_claims_ideal, cutoff_rank=None)
+        unique_values_in_ideal_list = self.get('unique_values', claim_relation, ranked_claims_ideal, cutoff_rank=None, query_claim_frame=query.get('query_claim_frame'))
         self.record_event('UNIQUE_VALUES', 'ideal', query.get('query_id'), claim_relation, 'EOL', ','.join(sorted(unique_values_in_ideal_list)))
         best_unique_values_in_submitted_list = None
         best_rank = None
@@ -49,7 +63,7 @@ class F1ScorerV1(NDCGScorerV1):
         return best_f1, best_rank, best_unique_values_in_submitted_list, unique_values_in_ideal_list
 
     def get_score_at_cutoff(self, cutoff_rank, query, claim_relation, ranked_claims_submitted, unique_values_in_ideal_list):
-        unique_values_in_submitted_list = self.get('unique_values', claim_relation, ranked_claims_submitted, cutoff_rank=cutoff_rank)
+        unique_values_in_submitted_list = self.get('unique_values', claim_relation, ranked_claims_submitted, cutoff_rank=cutoff_rank, query_claim_frame=query.get('query_claim_frame'))
         precision = len(unique_values_in_submitted_list)/cutoff_rank
         recall = 0
         f1 = 0
@@ -59,13 +73,7 @@ class F1ScorerV1(NDCGScorerV1):
             f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
         return precision, recall, f1, unique_values_in_submitted_list
 
-    def get_unique_values(self, claim_relation, ranked_claims, cutoff_rank=None):
-        def to_string(claim_values):
-            values = []
-            for fieldname in sorted(claim_values):
-                field_values = claim_values.get(fieldname)
-                values.append('{}:{}'.format(fieldname, ','.join(sorted(field_values))))
-            return '::'.join(values)
+    def get_unique_values(self, claim_relation, ranked_claims, cutoff_rank=None, query_claim_frame=None):
         claims = set()
         i = len(ranked_claims) if cutoff_rank is None else cutoff_rank
         for claim in ranked_claims:
@@ -75,15 +83,13 @@ class F1ScorerV1(NDCGScorerV1):
             are_required_fields_correct = self.get('required_fields_correctness', claim)
             if claim_relation_correctness_scale == 0 or not are_required_fields_correct: continue
             claims.add(claim)
+        query_claim_frame_values = self.get('claim_values', query_claim_frame) if query_claim_frame is not None else ''
         claims_values = {}
         for claim in claims:
             claim_id = claim.get('claim_id')
-            claim_values = {}
-            for fieldspec in self.get('specs').values():
-                if fieldspec.get('required_for_f1'):
-                    field_values = self.get('field_values', fieldspec, claim, correctness_requirement=True)
-                    claim_values[fieldspec.get('fieldname')] = field_values
-            claims_values[claim_id] = to_string(claim_values)
+            the_claim_values = self.get('claim_values', claim)
+            if the_claim_values != query_claim_frame_values:
+                claims_values[claim_id] = the_claim_values
         unique_values = set(claims_values.values())
         return unique_values
 
