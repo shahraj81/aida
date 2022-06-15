@@ -464,7 +464,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': True,
                 'required_for_f1': True,
-                'value_fieldnames': 'ec_id:correctness',
+                'value_fieldnames': 'ec_similarity:correctness',
                 'weight': 32,
                 },
             'claimer': {
@@ -476,7 +476,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': True,
                 'required_for_f1': True,
-                'value_fieldnames': 'ec_id:correctness',
+                'value_fieldnames': 'ec_similarity:correctness',
                 'weight': 16,
                 },
             'claimerAffiliation': {
@@ -488,7 +488,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': False,
                 'required_for_f1': False,
-                'value_fieldnames': 'ec_id:correctness',
+                'value_fieldnames': 'ec_similarity:correctness',
                 'weight': 4,
                 },
             'claimLocation': {
@@ -500,7 +500,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': False,
                 'required_for_f1': False,
-                'value_fieldnames': 'ec_id:correctness',
+                'value_fieldnames': 'ec_similarity:correctness',
                 'weight': 1,
                 },
             'claimMedium': {
@@ -512,7 +512,7 @@ class NDCGScorerV1(Scorer):
                 'overall_assessment_fieldname': 'overallAssessment',
                 'required': False,
                 'required_for_f1': False,
-                'value_fieldnames': 'ec_id:correctness',
+                'value_fieldnames': 'ec_similarity:correctness',
                 'weight': 1,
                 },
             'date': {
