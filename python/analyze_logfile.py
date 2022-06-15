@@ -242,7 +242,7 @@ def analyze_logfile(args):
         claim_relation = entry.get('ClaimRelation')
         if query_id != 'ALL-Macro':
             for ranking_type in ['submitted', 'ideal']:
-                for classname in ['NDCGScorerV2']:
+                for classname in ['NDCGScorerV1', 'NDCGScorerV2']:
                     output_filename = os.path.join(output_directory, 'ranking_{}_{}_{}_{}.txt'.format(classname, query_id, claim_relation, ranking_type))
                     with open(output_filename, 'w') as program_output:
                         analyze_part_of_logfile(logger, input_score_logfilename, classname, condition, claim_relation, ranking_type, query_id, program_output)
