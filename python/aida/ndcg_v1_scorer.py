@@ -239,7 +239,7 @@ class NDCGScorerV1(Scorer):
             weight = len(the_claim_field_values - previous_claim_field_values)
             if fieldspec.get('fieldname') == 'date':
                 weight = self.get('field_pairwise_novelty_weight_date', the_claim_field_values, previous_claim_field_values)
-            if weight == 0:
+            if weight == 0 or fieldspec.get('max_num_of_values') > 1:
                 if fieldspec.get('fieldname') in dependents_stack:
                     return 0
                 dependent_fieldnames = fieldspec.get('dependents')
