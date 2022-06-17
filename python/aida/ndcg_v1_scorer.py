@@ -359,6 +359,7 @@ class NDCGScorerV1(Scorer):
             }
         related_claim_ids = set()
         for entry in self.get('assessments').get('cross_claim_relations'):
+            if entry.get('relation') == 'identical': continue
             cross_claim_relation = normalize_claim_relation(entry.get('relation'))
             if cross_claim_relation in compatible_claim_relations.get(claim_relation):
                 query_claim_id = entry.get('query_claim_id')
