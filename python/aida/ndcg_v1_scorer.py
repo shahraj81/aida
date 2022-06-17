@@ -136,10 +136,14 @@ class NDCGScorerV1(Scorer):
         values = [score.get(field_name)]
         return values
 
-    def get_claim_to_string(self, claim):
+    def get_claim_to_string(self, query, claim):
         specs = self.get('specs')
         claim_id = claim.get('claim_id')
-        query_claim_frame_id = claim.get('query_id') if claim.get('is_query_claim_frame') else 'None'
+        query_claim_frame_id = None
+        if claim.get('is_query_claim_frame') and query.get('condition') == 'Condition5':
+            if claim.get('query_id') != query.get('query_id'):
+                self.record_event('DEFAULT_CRITICAL_ERROR', 'unexpected query_id')
+            query_claim_frame_id = claim.get('query_id')
         string = ['claim_id:{}'.format(claim_id), 'query_claim_frame_id:{}'.format(query_claim_frame_id)]
         for fieldspec in specs.values():
             field_name = fieldspec.get('fieldname')
@@ -201,20 +205,20 @@ class NDCGScorerV1(Scorer):
     def get_gain(self, query, claim_relation, ranked_claims, rank):
         query_claim_frame = query.get('query_claim_frame')
         the_claim = ranked_claims[rank]
-        gain = self.get('pairwise_novelty_score', query.get('query_id'), claim_relation, the_claim, query_claim_frame)
+        gain = self.get('pairwise_novelty_score', query, claim_relation, the_claim, query_claim_frame)
         for i in range(rank):
-            pairwise_novelty_score = self.get('pairwise_novelty_score', query.get('query_id'), claim_relation, the_claim, ranked_claims[i])
+            pairwise_novelty_score = self.get('pairwise_novelty_score', query, claim_relation, the_claim, ranked_claims[i])
             if pairwise_novelty_score == 0:
                 return 0
             if gain > pairwise_novelty_score:
                 gain = pairwise_novelty_score
         return gain
 
-    def get_pairwise_novelty_score(self, query_id, claim_relation, the_claim, previous_claim):
+    def get_pairwise_novelty_score(self, query, claim_relation, the_claim, previous_claim):
         pairwise_novelty_scores = self.get('pairwise_novelty_scores')
         lookup_key = '-'.join([the_claim.get('claim_id'), previous_claim.get('claim_id') if previous_claim else 'None'])
-        claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim) if the_claim.get('condition') == 'Condition5' else 1
-        self.record_event('CLAIM_RELATION_CORRECTNESS', query_id, the_claim.get('claim_id'), claim_relation, claim_relation_correctness_scale)
+        claim_relation_correctness_scale = self.get('claim_relation_correctness', claim_relation, the_claim) if query.get('condition') == 'Condition5' else 1
+        self.record_event('CLAIM_RELATION_CORRECTNESS', query.get('query_id'), the_claim.get('claim_id'), claim_relation, claim_relation_correctness_scale)
         if claim_relation_correctness_scale == 0:
             return 0
         if lookup_key not in pairwise_novelty_scores:
@@ -311,15 +315,31 @@ class NDCGScorerV1(Scorer):
         return ranked_claims
 
     def get_ranked_claims_ideal(self, query, claim_relation, LIMITED_TO_POOLING_DEPTH=False):
-        def get_outer_claim(claim, rank):
+        def condition6_filter(queries_to_score, query, claim):
+            if query.get('condition') != 'Condition6':
+                return False
+            for claim_mapping in claim.get('mappings'):
+                claim_mapping_query_id = claim_mapping.get('query_id')
+                claim_mapping_query_topic_id = queries_to_score.get(claim_mapping_query_id).get('topic_id')
+                if query.get('topic_id') == claim_mapping_query_topic_id:
+                    return True
+            return False
+        def get_outer_claim(query_id, claim, rank):
+            def is_query_claim_frame(claim):
+                for claim_mapping in claim.get('mappings'):
+                    if claim_mapping.get('run_id') == 'query_claim_frames':
+                        return True
+                return False
             outer_claim_filename = claim.get('outer_claim').get('filename')
             path = os.path.dirname(outer_claim_filename)
             claim_id = os.path.basename(outer_claim_filename).replace('-outer-claim.tab', '')
             outer_claim = OuterClaim(self.get('logger'),
-                                     condition=claim.get('condition'),
-                                     query_id=claim.get('query_id'),
+                                     conditions=claim.get('conditions'),
+                                     query_id=query_id,
                                      path=path,
                                      claim_id=claim_id,
+                                     is_query_claim_frame=is_query_claim_frame(claim),
+                                     rank=-1000000,
                                      run_claim_path=claim.get('path'),
                                      run_claim_id=claim.get('claim_id'),
                                      run_claim_relation=claim_relation,
@@ -349,8 +369,8 @@ class NDCGScorerV1(Scorer):
         claims_set = set()
         rank = 1
         for claim in self.get('assessments').get('claims').values():
-            if claim.get('claim_id') in related_claim_ids or (query.get('condition') == 'Condition6' and query.get('condition') in claim.get('conditions')):
-                outer_claim = get_outer_claim(claim, rank)
+            if claim.get('claim_id') in related_claim_ids or condition6_filter(self.get('queries_to_score'), query, claim):
+                outer_claim = get_outer_claim(query.get('query_id'), claim, rank)
                 outer_claim.set('assessed_claim_relation', self.get('assessed_claim_relation', query, outer_claim))
                 if self.get('required_fields_correctness', outer_claim):
                     claims_set.add(outer_claim)
@@ -590,7 +610,7 @@ class NDCGScorerV1(Scorer):
                 pool_claim_id = claim_mappings[0].get('pool_claim_uid')
                 path = self.get('assessments').get('claims').get(pool_claim_id).get('path')
                 claim = OuterClaim(self.get('logger'),
-                                   condition='Condition5',
+                                   conditions=['Condition5'],
                                    claim_id=pool_claim_id,
                                    is_query_claim_frame=True,
                                    path=path,
@@ -598,7 +618,7 @@ class NDCGScorerV1(Scorer):
                                    query=query,
                                    rank=-1000000)
                 query.set('query_claim_frame', claim)
-                self.record_event('CLAIM_STRING', self.get('claim_to_string', claim))
+                self.record_event('CLAIM_STRING', self.get('claim_to_string', query, claim))
 
     def load_responses(self):
         logger = self.get('logger')
@@ -672,7 +692,7 @@ class NDCGScorerV1(Scorer):
                 for claim in ranked_claims:
                     claim_id = claim.get('claim_id')
                     if claim_id not in printed:
-                        self.record_event('CLAIM_STRING', self.get('claim_to_string', claim))
+                        self.record_event('CLAIM_STRING', self.get('claim_to_string', query, claim))
                         printed.add(claim_id)
         scores_printer = ScorePrinter(self.logger, self.printing_specs, aggregate_types=['ALL-Macro'])
         for score in multisort(scores, (('condition', False),

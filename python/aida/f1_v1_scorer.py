@@ -127,7 +127,7 @@ class F1ScorerV1(NDCGScorerV1):
                 for claim in ranked_claims:
                     claim_id = claim.get('claim_id')
                     if claim_id not in printed:
-                        self.record_event('CLAIM_STRING', self.get('claim_to_string', claim))
+                        self.record_event('CLAIM_STRING', self.get('claim_to_string', query, claim))
                         printed.add(claim_id)
         scores_printer = ScorePrinter(self.logger, self.printing_specs, aggregate_types=['ALL-Macro'])
         for score in multisort(scores, (('condition', False),
