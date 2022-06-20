@@ -144,7 +144,9 @@ class NDCGScorerV1(Scorer):
             if claim.get('query_id') != query.get('query_id'):
                 self.record_event('DEFAULT_CRITICAL_ERROR', 'unexpected query_id')
             query_claim_frame_id = claim.get('query_id')
-        string = ['claim_id:{}'.format(claim_id), 'query_claim_frame_id:{}'.format(query_claim_frame_id)]
+        string = ['claim_id:{}'.format(claim_id),
+                  'is_query_claim_frame:{}'.format(claim.get('is_query_claim_frame')),
+                  'query_claim_frame_id:{}'.format(query_claim_frame_id)]
         for fieldspec in specs.values():
             field_name = fieldspec.get('fieldname')
             claim_field_values = self.get('field_values', fieldspec, claim)
