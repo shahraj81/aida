@@ -1,5 +1,9 @@
 """
 AIDA class for Task3 F1 scorer (Variant 1).
+
+V1 refers to the variant where:
+  - all the submitted claims are considered for scoring regardless of the pooling depth.
+  - required fields include: claimTemplate, claimEpistemic, xVariable, claimer
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -18,6 +22,10 @@ def trim(value):
 class F1ScorerV1(NDCGScorerV1):
     """
     AIDA class for Task3 F1 scorer (Variant 1).
+
+    V1 refers to the variant where:
+      - all the submitted claims are considered for scoring regardless of the pooling depth.
+      - required fields include: claimTemplate, claimEpistemic, xVariable, claimer
     """
 
     printing_specs = [{'name': 'condition',                       'header': 'Condition',                 'format': 's',    'justify': 'L'},
