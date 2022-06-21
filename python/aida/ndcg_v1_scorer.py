@@ -1,7 +1,7 @@
 """
 AIDA class for Task3 NDCG scorer V1.
 
-V1 refers to the variant where all the submitted claims are considered for scoring regarless of the pooling depth.
+V1 refers to the variant where all the submitted claims are considered for scoring regardless of the pooling depth.
 """
 
 __author__  = "Shahzad Rajput <shahzad.rajput@nist.gov>"
@@ -359,9 +359,13 @@ class NDCGScorerV1(Scorer):
             'related': ['related'],
             'supporting': ['supporting'],
             }
+        identical_claims = set()
+        for entry in self.get('assessments').get('cross_claim_relations'):
+            if entry.get('relation') == 'identical' and entry.get('query_claim_id') == query.get('query_id'):
+                identical_claims.add(entry.get('system_claim_id'))
         related_claim_ids = set()
         for entry in self.get('assessments').get('cross_claim_relations'):
-            if entry.get('relation') == 'identical': continue
+            if entry.get('system_claim_id') in identical_claims: continue
             cross_claim_relation = normalize_claim_relation(entry.get('relation'))
             if cross_claim_relation in compatible_claim_relations.get(claim_relation):
                 query_claim_id = entry.get('query_claim_id')
