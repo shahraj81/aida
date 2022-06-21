@@ -13,7 +13,12 @@ from aida.across_documents_correference_metric_scorer import AcrossDocumentsCore
 from aida.argument_metric_v1_scorer import ArgumentMetricScorerV1
 from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
-from aida.f1_v1_scorer import F1ScorerV1
+from aida.f1_v1a_scorer import F1ScorerV1A
+from aida.f1_v2a_scorer import F1ScorerV2A
+from aida.f1_v1b_scorer import F1ScorerV1B
+from aida.f1_v2b_scorer import F1ScorerV2B
+from aida.f1_v1c_scorer import F1ScorerV1C
+from aida.f1_v2c_scorer import F1ScorerV2C
 from aida.frame_metric_scorer import FrameMetricScorer
 from aida.ndcg_v1_scorer import NDCGScorerV1
 from aida.ndcg_v2_scorer import NDCGScorerV2
@@ -44,7 +49,12 @@ class ScoresManager(Object):
             'AcrossDocumentsCoreferenceMetric': AcrossDocumentsCoreferenceMetricScorer
             },
         'task3': {
-            'F1ScorerV1': F1ScorerV1,
+            'F1ScorerV1A': F1ScorerV1A,
+            'F1ScorerV2A': F1ScorerV2A,
+            'F1ScorerV1B': F1ScorerV1B,
+            'F1ScorerV2B': F1ScorerV2B,
+            'F1ScorerV1C': F1ScorerV1C,
+            'F1ScorerV2C': F1ScorerV2C,
             'NDCGScorerV1': NDCGScorerV1,
             'NDCGScorerV2': NDCGScorerV2,
             }
