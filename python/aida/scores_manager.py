@@ -9,7 +9,8 @@ __date__    = "3 February 2020"
 from aida.object import Object
 from aida.container import Container
 
-from aida.across_documents_correference_metric_scorer import AcrossDocumentsCoreferenceMetricScorer
+from aida.across_documents_correference_metric_scorer_v1 import AcrossDocumentsCoreferenceMetricScorerV1
+from aida.across_documents_correference_metric_scorer_v2 import AcrossDocumentsCoreferenceMetricScorerV2
 from aida.argument_metric_v1_scorer import ArgumentMetricScorerV1
 from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
@@ -46,7 +47,8 @@ class ScoresManager(Object):
             'TypeMetricV3': TypeMetricScorerV3,
             },
         'task2': {
-            'AcrossDocumentsCoreferenceMetric': AcrossDocumentsCoreferenceMetricScorer
+            'AcrossDocumentsCoreferenceMetricV1': AcrossDocumentsCoreferenceMetricScorerV1,
+            'AcrossDocumentsCoreferenceMetricV2': AcrossDocumentsCoreferenceMetricScorerV2,
             },
         'task3': {
             'F1ScorerV1A': F1ScorerV1A,

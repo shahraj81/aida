@@ -41,7 +41,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                       {'name': 'num_right',                 'header': 'Right',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_wrong',                 'header': 'Wrong',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_ignored',               'header': 'Ignrd',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'average_precision',         'header': 'AvgPrec',    'format': '6.4f', 'justify': 'R'}]
+                      {'name': 'average_precision',         'header': 'MAP',        'format': '6.4f', 'justify': 'R'}]
 
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
@@ -205,7 +205,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         assessments = self.get('entity_assessments', query_id)
 
         pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
-        num_clusters = int(self.get('queries_to_score').get(query_id).get('clusters'))
+        num_clusters = self.get('num_clusters', query_id)
         num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
         selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters) if responses else []
         for cluster_id in selected_clusters:
@@ -294,6 +294,9 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if entry.get('assessment') in ['CORRECT', 'INEXACT']:
                         equivalence_classes.add(entry.get('fqec'))
         return equivalence_classes
+
+    def get_num_clusters(self, query_id):
+        return int(self.get('queries_to_score').get(query_id).get('clusters'))
 
     def get_num_rel_documents(self, the_query_id):
         relevant_documents = set()
