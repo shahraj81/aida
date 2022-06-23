@@ -209,7 +209,7 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
         assessments = self.get('assessments_map')
         pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
         num_clusters = self.get('num_clusters', query_id)
-        num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
+        num_documents = self.get('num_documents', query_id)
         selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters) if responses else []
         for cluster_id in selected_clusters:
             apply_normalization_and_compute_weights(responses,
@@ -228,21 +228,14 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
             if cluster_id not in APs:
                 APs[cluster_id] = {}
             for fqec in ids['equivalence_classes']:
-                # update
-                num_rel_documents = self.get('num_rel_documents', fqec)
-                num_rel_documents_counted = num_rel_documents
-                truncate = False
-                if self.get('cutoff'):
-                    truncate = num_documents
-                    if num_rel_documents_counted > num_documents:
-                        num_rel_documents_counted = num_documents
+                num_rel_documents_counted = self.get('num_rel_documents_counted', query_id, fqec)
                 APs[cluster_id][fqec] = compute_AP(logger,
                                                    query_id,
                                                    num_rel_documents_counted,
                                                    responses,
                                                    cluster_id,
                                                    fqec,
-                                                   truncate)
+                                                   num_documents if self.get('cutoff') else False)
 
         mappings = {}
         for item_type in ['clusters', 'equivalence_classes']:
@@ -271,11 +264,13 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
                     logger.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
 
         countss = []
-        for fqec in alignment.get('fqec_to_cluster'):
-            average_precision = alignment.get('fqec_to_cluster').get(fqec).get('AP')
+        for fqec in self.get('equivalence_classes', query_id):
+            average_precision = 0
+            if fqec in alignment.get('fqec_to_cluster'):
+                average_precision = alignment.get('fqec_to_cluster').get(fqec).get('AP')
             counts = {'average_precision': average_precision,
-                      'num_rel_documents': num_rel_documents,
-                      'num_rel_documents_counted': num_rel_documents_counted,
+                      'num_rel_documents': self.get('num_rel_documents', fqec),
+                      'num_rel_documents_counted': self.get('num_rel_documents_counted', query_id, fqec),
                       'fqec': fqec}
             for field_name in [s.get('name') for s in self.get('printing_specs') if s.get('name').startswith('num_')]:
                 counts[field_name] = counts[field_name] if field_name in counts else self.get(field_name, categorized_responses)
@@ -295,6 +290,9 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
     def get_num_clusters(self, query_id):
         return int(self.get('queries_to_score').get(query_id).get('clusters'))
 
+    def get_num_documents(self, query_id):
+        return int(self.get('queries_to_score').get(query_id).get('documents'))
+
     def get_num_rel_documents(self, fqec):
         relevant_documents = set()
         for query_id in self.get('queries_to_score'):
@@ -302,6 +300,13 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
                 if entry.get('fqec') == fqec and entry.get('assessment') in ['CORRECT', 'INEXACT']:
                     relevant_documents.add(entry.get('docid'))
         return len(relevant_documents)
+
+    def get_num_rel_documents_counted(self, query_id, fqec):
+        num_documents = self.get('num_documents', query_id)
+        num_rel_documents_counted = self.get('num_rel_documents', fqec)
+        if self.get('cutoff') and num_rel_documents_counted > num_documents:
+            num_rel_documents_counted = num_documents
+        return num_rel_documents_counted
 
     def get_num_submitted(self, cr):
         key = 'SUBMITTED'
