@@ -613,7 +613,7 @@ class NDCGScorerV1(Scorer):
     def load_query_claim_frames(self):
         for query_id, query in self.get('queries_to_score').items():
             if query.get('condition') == 'Condition5':
-                claim_mappings = self.get('assessments').get('claim_mappings').get('claim_mappings', query_id=query_id, run_claim_id=query_id)
+                claim_mappings = self.get('assessments').get('claim_mappings').get('claim_mappings', query_id=query_id, run_claim_id=query_id, run_id='query_claim_frames')
                 pool_claim_id = claim_mappings[0].get('pool_claim_uid')
                 path = self.get('assessments').get('claims').get(pool_claim_id).get('path')
                 claim = OuterClaim(self.get('logger'),
