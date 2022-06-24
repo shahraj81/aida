@@ -43,7 +43,8 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
                       {'name': 'num_right',                 'header': 'Right',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_wrong',                 'header': 'Wrong',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_ignored',               'header': 'Ignrd',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'average_precision',         'header': 'MAP',        'format': '6.4f', 'justify': 'R'}]
+                      {'name': 'average_precision',         'header': 'AP',         'format': '6.4f', 'justify': 'R'},
+                      {'name': 'cluster_id',                'header': 'ClusterID',  'format': 's',    'justify': 'L'}]
 
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
@@ -265,15 +266,18 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
 
         countss = []
         for fqec in self.get('equivalence_classes', query_id):
+            cluster_id = None
             average_precision = 0
             if fqec in alignment.get('fqec_to_cluster'):
                 average_precision = alignment.get('fqec_to_cluster').get(fqec).get('AP')
+                cluster_id = alignment.get('fqec_to_cluster').get(fqec).get('aligned_to')
             counts = {'average_precision': average_precision,
                       'num_rel_documents': self.get('num_rel_documents', fqec),
                       'num_rel_documents_counted': self.get('num_rel_documents_counted', query_id, fqec),
-                      'fqec': fqec}
+                      'fqec': fqec,
+                      'cluster_id': str(cluster_id)}
             for field_name in [s.get('name') for s in self.get('printing_specs') if s.get('name').startswith('num_')]:
-                counts[field_name] = counts[field_name] if field_name in counts else self.get(field_name, categorized_responses)
+                counts[field_name] = counts[field_name] if field_name in counts else self.get(field_name, cluster_id, categorized_responses)
             countss.append(counts)
         return countss
 
@@ -308,70 +312,82 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
             num_rel_documents_counted = num_documents
         return num_rel_documents_counted
 
-    def get_num_submitted(self, cr):
+    def get_num_submitted(self, cluster_id, cr):
         key = 'SUBMITTED'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_valid(self, cr):
+    def get_num_valid(self, cluster_id, cr):
         key = 'VALID'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_inexact(self, cr):
+    def get_num_inexact(self, cluster_id, cr):
         key = 'INEXACT'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_invalid(self, cr):
+    def get_num_invalid(self, cluster_id, cr):
         key = 'INVALID'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_notpooled(self, cr):
+    def get_num_notpooled(self, cluster_id, cr):
         key = 'NOTMETPOOLINGCRITERIA'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_pooled(self, cr):
+    def get_num_pooled(self, cluster_id, cr):
         key = 'METPOOLINGCRITERIA'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_assessed(self, cr):
-        num_pooled = self.get('num_pooled', cr)
-        num_notassessed = self.get('num_notassessed', cr)
+    def get_num_assessed(self, cluster_id, cr):
+        num_pooled = self.get('num_pooled', cluster_id, cr)
+        num_notassessed = self.get('num_notassessed', cluster_id, cr)
         return num_pooled - num_notassessed
 
-    def get_num_notassessed(self, cr):
+    def get_num_notassessed(self, cluster_id, cr):
         key = 'NOTASSESSED'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_correct(self, cr):
+    def get_num_correct(self, cluster_id, cr):
         key = 'CORRECT'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_incorrect(self, cr):
+    def get_num_incorrect(self, cluster_id, cr):
         key = 'INCORRECT'
         policy = 'PRE_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_right(self, cr):
+    def get_num_right(self, cluster_id, cr):
         key = 'RIGHT'
         policy = 'POST_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_wrong(self, cr):
+    def get_num_wrong(self, cluster_id, cr):
         key = 'WRONG'
         policy = 'POST_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
-    def get_num_ignored(self, cr):
+    def get_num_ignored(self, cluster_id, cr):
         key = 'IGNORED'
         policy = 'POST_POLICY'
-        return 0 if key not in cr.get(policy) else len(cr.get(policy).get(key))
+        return 0 if key not in cr.get(policy) else len(
+            [e for e in cr.get(policy).get(key) if e.get('cluster_id') == cluster_id])
 
     def get_assessments_map(self):
         assessments = Container(self.get('logger'))
