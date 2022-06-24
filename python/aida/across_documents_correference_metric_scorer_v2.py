@@ -24,10 +24,10 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
     AIDA class for across documents coreference metric scorer.
     """
 
-    printing_specs = [{'name': 'entity_id',                 'header': 'Entity',     'format': 's',    'justify': 'L'},
+    printing_specs = [{'name': 'entity_id',                 'header': 'SctdEntity', 'format': 's',    'justify': 'L'},
                       {'name': 'run_id',                    'header': 'RunID',      'format': 's',    'justify': 'L'},
                       {'name': 'query_id',                  'header': 'QueryID',    'format': 's',    'justify': 'L'},
-                      {'name': 'fqec',                      'header': 'FQEC',       'format': 's',    'justify': 'L'},
+                      {'name': 'fqec',                      'header': 'AssdEntity', 'format': 's',    'justify': 'L'},
                       {'name': 'num_rel_documents',         'header': 'Rel',        'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_rel_documents_counted', 'header': 'RelCntd',    'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_submitted',             'header': 'Sub',        'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
