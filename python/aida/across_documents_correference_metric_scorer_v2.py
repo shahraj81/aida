@@ -201,7 +201,7 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
                                     response.get('weight'),
                                     response.get('response_rank'),
                                     ','.join(sorted(response.get('categorization').get('PRE_POLICY'))),
-                                    ','.join(sorted(response.get('categorization').get('POST_POLICY'))),
+                                    response.get('categorization').get('POST_POLICY'),
                                     response.get('where')
                                     )
 
