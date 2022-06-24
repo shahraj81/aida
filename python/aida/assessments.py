@@ -134,7 +134,7 @@ class Assessments(Container):
 
                 line = 'ENTITYID={} QUERYID={} DOCID={} MENTION={} ASSESSMENT={} FQEC_READ={} FQEC={}'.format(
                     entity_id, queryid, docid, mention_span, assessment, fqec_read, fqec)
-                self.logger.record_event('GROUND_TRUTH', line, where)
+                self.record_event('GROUND_TRUTH', line, where)
 
     def load_task3_assessments(self):
         logger = self.get('logger')

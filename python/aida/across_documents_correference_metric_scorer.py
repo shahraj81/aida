@@ -108,9 +108,9 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if post_policy_assessment == 'RIGHT' and fqec == response_fqec:
                         num_right += response.get('weight')
                         sum_precision += num_right/num_responses
-                    logger.record_event('AP_RANKED_LIST', query_id, num_ground_truth, cluster_id, fqec, num_responses, response.get('mention_span_text'), post_policy_assessment, response.get('weight'), sum_precision, response.get('where'))
+                    self.record_event('AP_RANKED_LIST', query_id, num_ground_truth, cluster_id, fqec, num_responses, response.get('mention_span_text'), post_policy_assessment, response.get('weight'), sum_precision, response.get('where'))
             ap = sum_precision/num_ground_truth if num_ground_truth else 0
-            logger.record_event('PAIR_WISE_AP', query_id, cluster_id, fqec, ap)
+            self.record_event('PAIR_WISE_AP', query_id, cluster_id, fqec, ap)
             return ap
 
         def lookup_AP(APs, item_a, item_b):
@@ -176,7 +176,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 else:
                     record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTASSESSED', response)
                     record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
-                    logger.record_event('ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED', mention_span_text, response.get('where'))
+                    self.record_event('ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED', mention_span_text, response.get('where'))
                     continue
                 selected_justifications = selected_cluster_justifications[response.get('cluster_id')]
                 if mention_span_text in selected_justifications:
@@ -186,7 +186,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if post_policy_assessment == 'RIGHT':
                         ids['equivalence_classes'].add(response.get('assessment').get('fqec'))
             for response in responses.values():
-                logger.record_event('RESPONSE_CATEGORIZATION_INFO',
+                self.record_event('RESPONSE_CATEGORIZATION_INFO',
                                     query_id,
                                     response.get('cluster_id'),
                                     response.get('mention_span_text'),
@@ -265,7 +265,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                             'aligned_to': cluster_id,
                             'AP': AP
                         }
-                    logger.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
+                    self.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
 
         sum_average_precision = 0
         denominator_for_mean = len(ids['equivalence_classes'])
