@@ -289,6 +289,12 @@ class AcrossDocumentsCoreferenceMetricScorerV2(Scorer):
         for entry in self.get('assessments').get(query_id).values():
             if entry.get('assessment') in ['CORRECT', 'INEXACT']:
                 equivalence_classes.add(entry.get('fqec'))
+        entity_id = self.get('queries_to_score').get(query_id).get('entity_id')
+        for query_id in self.get('queries_to_score'):
+            if self.get('queries_to_score').get(query_id).get('entity_id') == entity_id:
+                entry = self.get('queries_to_score').get(query_id)
+                if entry.get('entrypoint_type') == 'kbid':
+                    equivalence_classes.add(entry.get('entrypoint'))
         return equivalence_classes
 
     def get_num_clusters(self, query_id):
