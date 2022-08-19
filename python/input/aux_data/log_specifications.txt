@@ -42,7 +42,9 @@ CRITICAL  KEY_IS_NONE                     key 'None' used
 INFO      MACRO_SCORES                    DOCID:{} MACRO_SCORE:{} INPUT:{}
 INFO      MENTION_NOT_ANNOTATED           Response skipped because mention '{}' is outside the annotated regions
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
+CRITICAL  METHOD_NOT_FOUND                Method '{}' not found
 ERROR     MISSING_CLAIM_RANK              Ranking information not found for claim {}
+CRITICAL  MISSING_CHILD_DOCUMENT          Child document not found for parent {}
 ERROR     MISSING_AWS_CREDENTIALS         AWS credentials missing
 INFO      MISSING_DATE_FIELD              Missing {} {}; using '{}' as the {} date
 ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
@@ -84,6 +86,7 @@ WARNING   SPAN_OFF_BOUNDARY_CORRECTED     Correcting span '{}' to '{}' because i
 ERROR     SPAN_OFF_BOUNDARY_ERROR         Cannot correct therefore removing span '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
 INFO      TYPE_METRIC_SCORE_INFO          {} {} DOCUMENT:{} GOLD_CLUSTER:{} TYPES:{} SYSTEM_CLUSTER:{} TYPES:{}
+WARNING   TYPE_NOT_IN_OVERLAY             Type '{}' not in overlay
 INFO      ANNOTATED_TYPES_INFO            ANNOTATED_TYPES_INFO: DOCUMENT: {} TYPES_ANNOTATED: {}
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
@@ -105,6 +108,7 @@ ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', pr
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_ENTRYPOINT_DESCRIPTOR Different values of entrypoint descriptors {}, {}, {} found for query {} in files {} and {}
 ERROR     UNEXPECTED_FILENAME             Unexpected filename (expected one from '{}', provided '{}')
+ERROR     UNEXPECTED_GENERIC_STATUS       Unexpected generic status for cluster {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_ITEM                 Unexpected {} '{}' found in {}
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')

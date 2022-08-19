@@ -19,6 +19,7 @@ from re import findall, compile
 import argparse
 import datetime
 import hashlib
+import json
 import os
 import re
 import sys
@@ -31,6 +32,21 @@ GENERATE_BLANK_NODE = True
 
 def escape(s):
     return s.replace('"', '\\"') if '"' in s else s
+
+def unspecified(ere_type):
+    """
+    Determine if the ere_type provided as argument is unspecified. Return True if so,
+    False otherwise.
+    Note: Current implementation considers an ERE type to be unspecified if it's one
+    of the following:
+        unspecified
+        n/a
+        none
+        not present
+    """
+    if ere_type.lower() in ['unspecified', 'n/a', 'none', 'not present']:
+        return True
+    return False
 
 class AIFObject(Object):
     def __init__(self, logger):
@@ -68,7 +84,7 @@ class AIFObject(Object):
         else:
             value = getattr(self, key, None)
             if value is None and getattr(self, 'entry', None):
-                    value = self.entry.get(key)
+                value = self.entry.get(key)
             return value
 
     def get_classname(self):
@@ -120,6 +136,55 @@ class AIFObject(Object):
 
     def __str__(self):
         return self.get('id')
+
+class LDCSlotTypeToNameMapping(AIFObject):
+    def __init__(self, logger, path):
+        super().__init__(logger)
+        self.input = path
+        self.mapping = {}
+        self.load()
+
+    def add_mapping(self, ldc_slot_type, slot_name):
+        if ldc_slot_type and slot_name:
+            self.get('mapping').setdefault(ldc_slot_type, set()).add(slot_name)
+
+    def load(self):
+        with open(self.get('input')) as fp:
+            data = json.load(fp)
+        for ere_metatype in ['events', 'relations']:
+            for dwd_node in data.get(ere_metatype).values():
+                if dwd_node.get('ldc_types'):
+                    for ldc_type in dwd_node.get('ldc_types'):
+                        if ldc_type.get('ldc_arguments'):
+                            for ldc_argument in ldc_type.get('ldc_arguments'):
+                                ldc_slot_type = ldc_argument.get('ldc_argument_output_value')
+                                slot_name = ldc_argument.get('dwd_arg_name')
+                                self.add_mapping(ldc_slot_type, slot_name)
+
+class LDCTypeToDWDNodeMapping(AIFObject):
+    def __init__(self, logger, path):
+        super().__init__(logger)
+        self.input = path
+        self.mapping = {}
+        self.load()
+
+    def add_mapping(self, ldc_type, wd_node):
+        self.get('mapping').setdefault(ldc_type.lower(), set()).add(wd_node)
+
+    def load(self):
+        with open(self.get('input')) as fp:
+            data = json.load(fp)
+        for ere_metatype in ['events', 'relations', 'entities']:
+            for dwd_node in data.get(ere_metatype).values():
+                wd_node = dwd_node.get('wd_node')
+                if dwd_node.get('ldc_types'):
+                    for ldc_type in dwd_node.get('ldc_types'):
+                        full_ldc_type = ldc_type.get('name')
+                        if full_ldc_type.endswith('.Unspecified.Unspecified'):
+                            full_ldc_type = full_ldc_type.replace('.Unspecified.Unspecified', '')
+                        elif full_ldc_type.endswith('.Unspecified'):
+                            full_ldc_type = full_ldc_type.replace('.Unspecified', '')
+                        self.add_mapping(full_ldc_type, wd_node)
 
 class AIFStatement(AIFObject):
     def __init__(self, logger, *args, **kwargs):
@@ -419,10 +484,10 @@ class ClusterPrototype(AIFObject):
         informative_justifications = {}
         for mention in self.get('cluster').get('mentions'):
             mention_document_id = mention.get('document_id')
-            mention_justification = mention.get('justifiedBy')
-            informative_justification = informative_justifications.get(mention_document_id)
             if document_id is not None and mention_document_id != document_id:
                 continue
+            mention_justification = mention.get('justifiedBy')
+            informative_justification = informative_justifications.get(mention_document_id)
             if informative_justification is None or \
                 (informative_justification.get('classname') != 'TextJustification' and \
                     mention_justification.get('classname') == 'TextJustification'):
@@ -493,9 +558,12 @@ class ClusterPrototype(AIFObject):
                         time_prototype.set('end_time_before', mention_T4.get('copy'))
         return time_prototype
 
-    def get_types(self):
+    def get_types(self, document_id=None):
         types = []
         for mention in self.get('cluster').get('mentions'):
+            mention_document_id = mention.get('document_id')
+            if document_id is not None and mention_document_id != document_id:
+                continue
             mention_type = mention.get('type')
             mention_type_justification = mention.get('justifiedBy')
             types.append({'type': mention_type,
@@ -525,7 +593,7 @@ class ClusterPrototype(AIFObject):
         AIF_triples = self.get('coreAIF', predicates)
         if time:
             AIF_triples.extend(time.get('AIF'))
-        for cluster_type_and_justification in self.get('types'):
+        for cluster_type_and_justification in self.get('types', document_id=document_id):
             cluster_type = cluster_type_and_justification.get('type')
             cluster_type_justification = cluster_type_and_justification.get('justifiedBy')
             if document_id is not None and cluster_type_justification.get('document_id') != document_id:
@@ -582,11 +650,45 @@ class EREMention(AIFObject):
             self.record_event('LINK_EXISTS', link.get('qnode_kb_id_identity'), self.get('id'), self.get('where'))
         self.get('links').append(link)
 
+    def get_cleaned_full_type_ov(self):
+        """
+        Gets the cleaned Full Type OV.
+
+        Note that OV is the type written in lower case descriptive type name as it came from LDC; OV values
+        are not the proper cased types used in the AIF.
+        """
+        entry = self.get('entry')
+        if unspecified(entry.get('type')):
+            return
+        full_type = entry.get('type')
+        if not unspecified(entry.get('subtype')):
+            full_type = '{}.{}'.format(entry.get('type'), entry.get('subtype'))
+        if not unspecified(entry.get('subtype')) and not unspecified(entry.get('subsubtype')):
+            full_type = '{}.{}.{}'.format(entry.get('type'), entry.get('subtype'), entry.get('subsubtype'))
+        return full_type
+
     def get_document_id(self):
         return self.get('root_uid')
 
-    def get_type(self):
-        return self.get('qnode_type_id')
+    def get_full_type(self):
+        """
+        Gets the full type of the mention.
+
+        At this point, this method simply returns the output of the get_cleaned_full_type method.
+        """
+        return self.get('cleaned_full_type_ov')
+
+    def get_types(self):
+        type_mappings = self.get('type_mappings')
+        types = set()
+        full_ldc_type = self.get('full_type')
+        if type_mappings is not None and full_ldc_type in type_mappings.get('mapping'):
+            for qnode_type_id in type_mappings.get('mapping').get(full_ldc_type):
+                types.add(qnode_type_id)
+        else:
+            self.record_event('TYPE_NOT_IN_OVERLAY', full_ldc_type, self.get('entry').get('where'))
+            types.add(self.get('qnode_type_id'))
+        return types
 
     def get_justifiedBy(self):
         parentDocument = self.get('root_uid')
@@ -595,6 +697,8 @@ class EREMention(AIFObject):
             childDocument = self.get('document_mappings').get('text_document', parentDocument)
         else:
             childDocument = self.get('document_mappings').get('document_elements').get(childDocument)
+        if childDocument is None:
+            self.record_event('MISSING_CHILD_DOCUMENT', parentDocument)
         modality = childDocument.get('modality')
         if modality == 'text':
             startOffset = self.get('textoffset_startchar')
@@ -609,7 +713,9 @@ class EREMention(AIFObject):
         elif modality == 'image':
             pattern = re.compile('^(\d+),(\d+),(\d+),(\d+)$')
             m = pattern.match(self.get('mediamention_coordinates'))
-            start_x, start_y, end_x, end_y = map(lambda i : m.group(i), range(1, 5))
+            start_x, start_y, end_x, end_y = 0, 0, 0, 0
+            if m:
+                start_x, start_y, end_x, end_y = map(lambda i : m.group(i), range(1, 5))
             return ImageJustification(self.get('logger'),
                                      sourceDocument=parentDocument,
                                      source=childDocument.get('ID'),
@@ -639,13 +745,14 @@ class EREMention(AIFObject):
             'aida:system': self.get('system'),
             }
         AIF_triples.extend(self.get('coreAIF', predicates))
-        AIF_triples.extend(
-            TypeStatement(logger,
-                          subject=self,
-                          type=self.get('type'),
-                          justifiedBy=self.get('justifiedBy'),
-                          confidence=Confidence(logger),
-                          system=System(logger)).get('AIF'))
+        for atype in self.get('types'):
+            AIF_triples.extend(
+                TypeStatement(logger,
+                              subject=self,
+                              type=atype,
+                              justifiedBy=self.get('justifiedBy'),
+                              confidence=Confidence(logger),
+                              system=System(logger)).get('AIF'))
         AIF_triples.extend(self.get('justifiedBy').get('AIF'))
         if self.get('time'):
             AIF_triples.extend(self.get('time').get('AIF'))
@@ -716,9 +823,10 @@ class EntityMention(EREMention):
         return ['EMPTY_NA']
 
 class EventOrRelationArgument(AIFObject):
-    def __init__(self, logger, entry):
+    def __init__(self, logger, entry, general_slot_type=None):
         super().__init__(logger)
         self.entry = entry
+        self.general_slot_type = general_slot_type if general_slot_type is not None else entry.get('general_slot_type')
         self.attributes = []
         self.set_attributes()
 
@@ -769,9 +877,10 @@ class EventOrRelationArgument(AIFObject):
         AIF_triples.extend(self.get('coreAIF', predicates))
         AIF_triples.extend(self.get('justifiedBy').get('AIF'))
         AIF_triples.extend(self.get('confidence').get('AIF'))
-        AIF_triples.extend(self.get('object').get('AIF', document_id=document_id))
-        for cluster in self.get('object').get('clusters'):
-            AIF_triples.extend(cluster.get('AIF', document_id=document_id))
+        if not isinstance(self.get('object'), EventMention):
+            AIF_triples.extend(self.get('object').get('AIF', document_id=document_id))
+            for cluster in self.get('object').get('clusters'):
+                AIF_triples.extend(cluster.get('AIF', document_id=document_id))
         return AIF_triples
 
     def get_confidence(self):
@@ -828,22 +937,22 @@ class EventOrRelationArgument(AIFObject):
                 self.get('attributes').append(Attribute(self.get('logger'), a.strip(), self.get('where')))
 
 class EventArgument(EventOrRelationArgument):
-    def __init__(self, logger, entry):
-        super().__init__(logger, entry)
+    def __init__(self, logger, entry, general_slot_type=None):
+        super().__init__(logger, entry, general_slot_type=general_slot_type)
 
     def get_subjectmention_id(self):
         return self.get('eventmention_id')
 
 class RelationArgument(EventOrRelationArgument):
-    def __init__(self, logger, entry):
-        super().__init__(logger, entry)
+    def __init__(self, logger, entry, general_slot_type=None):
+        super().__init__(logger, entry, general_slot_type=general_slot_type)
 
     def get_subjectmention_id(self):
         return self.get('relationmention_id')
 
 class EventPrototypeArgument(EventArgument):
-    def __init__(self, logger, entry):
-        super().__init__(logger, entry)
+    def __init__(self, logger, entry, general_slot_type=None):
+        super().__init__(logger, entry, general_slot_type=general_slot_type)
 
     def get_id(self):
         return self.get('prototypeid')
@@ -852,8 +961,8 @@ class EventPrototypeArgument(EventArgument):
         return self.get('prototypeAIF', document_id=document_id)
 
 class RelationPrototypeArgument(RelationArgument):
-    def __init__(self, logger, entry):
-        super().__init__(logger, entry)
+    def __init__(self, logger, entry, general_slot_type=None):
+        super().__init__(logger, entry, general_slot_type=general_slot_type)
 
     def get_id(self):
         return self.get('prototypeid')
@@ -1665,10 +1774,30 @@ class AIF(AIFObject):
         methods = self.get('methods')
         method = methods[sheet_name]['method'] if sheet_name in methods else None
         if method:
-            obj = method(self.get('logger'), entry)
             if methods[sheet_name]['entry_type'] == 'mention':
+                obj = method(self.get('logger'), entry)
                 obj.add('document_mappings', self.get('document_mappings'))
-            self.add(methods[sheet_name]['entry_type'], obj)
+                obj.set('type_mappings', self.get('type_mappings'))
+                obj.set('slot_mappings', self.get('slot_mappings'))
+                self.add(methods[sheet_name]['entry_type'], obj)
+            elif methods[sheet_name]['entry_type'] == 'argument':
+                ldc_slot_type = entry.get('slot_type')
+                general_slot_types = set()
+                slot_mappings = self.get('slot_mappings')
+                if slot_mappings is not None and ldc_slot_type in slot_mappings.get('mapping'):
+                    if slot_mappings.get('mapping').get(ldc_slot_type):
+                        for predicate in slot_mappings.get('mapping').get(ldc_slot_type):
+                            general_slot_types.add(predicate)
+                else:
+                    general_slot_types.add(entry.get('general_slot_type'))
+                for general_slot_type in general_slot_types:
+                    obj = method(self.get('logger'), entry, general_slot_type=general_slot_type)
+                    self.add(methods[sheet_name]['entry_type'], obj)
+            elif methods[sheet_name]['entry_type'] == 'link':
+                obj = method(self.get('logger'), entry)
+                self.add(methods[sheet_name]['entry_type'], obj)
+            else:
+                self.record_event('DEFAULT_CRITICAL', 'Unexpected entry type: {}'.format(methods[sheet_name]['entry_type']), self.get('code_location'))
         else:
             self.record_event('METHOD_NOT_FOUND', methods[sheet_name]['method'], self.get('code_location'))
 
@@ -1750,7 +1879,7 @@ class AIF(AIFObject):
                     if mentionframe:
                         cluster.add('frame', mentionframe)
                     if link.get('generic_status') != cluster.get('generic_status'):
-                        self.record_event('UNEXPECTED_GENERIC_STATUS', cluster_id, cluster.get('generic_status'), link.get('generic_status'), link.get('where'))
+                        self.record_event('UNEXPECTED_GENERIC_STATUS', cluster_id, link.get('generic_status'), cluster.get('generic_status'), link.get('where'))
                 else:
                     if isinstance(mention, EventMention):
                         cluster = EventCluster(self.get('logger'), cluster_id)  \
@@ -1788,7 +1917,9 @@ class AIF(AIFObject):
         return patched_output
 
 class TA1AIF(AIF):
-    def __init__(self, logger, annotations, document_mappings):
+    def __init__(self, logger, annotations, document_mappings, type_mappings, slot_mappings):
+        self.type_mappings = type_mappings
+        self.slot_mappings = slot_mappings
         super().__init__(logger, annotations, document_mappings)
 
     def generate(self):
@@ -1987,12 +2118,13 @@ class Task1(Object):
     """
     Generate Task1 AIF.
     """
-    def __init__(self, log, noBlank, errors, encodings_filename, parent_children, annotations, output):
+    def __init__(self, log, noBlank, errors, encodings_filename, parent_children, overlay, annotations, output):
         check_for_paths_existance([
                  errors,
                  encodings_filename,
                  parent_children,
                  annotations,
+                 overlay,
                  ])
         check_for_paths_non_existance([output])
         self.log_filename = log
@@ -2000,6 +2132,7 @@ class Task1(Object):
         self.log_specifications = errors
         self.encodings_filename = encodings_filename
         self.parent_children = parent_children
+        self.overlay = overlay
         self.annotations = annotations
         self.output = output
         self.logger = Logger(self.get('log_filename'),
@@ -2022,7 +2155,9 @@ class Task1(Object):
         annotations = TA1Annotations(logger, self.get('annotations'), include_items=include_files)
         encodings = Encodings(logger, self.get('encodings_filename'))
         document_mappings = DocumentMappings(logger, self.get('parent_children'), encodings)
-        aif = TA1AIF(logger, annotations, document_mappings)
+        slot_mappings = LDCSlotTypeToNameMapping(logger, self.get('overlay'))
+        type_mappings = LDCTypeToDWDNodeMapping(logger, self.get('overlay'))
+        aif = TA1AIF(logger, annotations, document_mappings, type_mappings, slot_mappings)
         aif.write_output(self.get('output'))
         print('--done.')
         exit(ALLOK_EXIT_CODE)
@@ -2035,6 +2170,7 @@ class Task1(Object):
         parser.add_argument('errors', type=str, help='File containing error specifications')
         parser.add_argument('encodings_filename', type=str, help='File containing list of encoding to modality mappings')
         parser.add_argument('parent_children', type=str, help='parent_children.tab file as received from LDC')
+        parser.add_argument('overlay', type=str, help='The JSON file contain DWD overlay')
         parser.add_argument('annotations', type=str, help='Directory containing Task1 annotations as received from LDC')
         parser.add_argument('output', type=str, help='Specify a directory to which output should be written')
         parser.set_defaults(myclass=myclass)
