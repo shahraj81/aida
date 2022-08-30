@@ -64,7 +64,7 @@ class ExcelWorkbook(Object):
         self.load_file()
 
     def load_file(self):
-        sheets = pd.read_excel(self.get('filename'), sheet_name=None)
+        sheets = pd.read_excel(self.get('filename'), engine='openpyxl', sheet_name=None)
         for sheet_name, df in sheets.items():
             self.get('worksheets')[sheet_name] = Worksheet(self.get('logger'), self.get('filename'), sheet_name, df)
 

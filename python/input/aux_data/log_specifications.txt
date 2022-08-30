@@ -1,5 +1,5 @@
 type      code                            message
-INFO      ALIGNMENT_INFO                  QUERY_ID:{} CLUSTER_ID:{} FQEC:{}
+INFO      ALIGNMENT_INFO                  DOCUMENT_ID:{} CLUSTER_OR_MENTION:{} GOLD_AND_SYSTEM_CLUSTER_ID:{} GOLD_ITEM_ID:{} SYSTEM_ITEM_ID:{} SIMILARITY:{}
 INFO      AP_RANKED_LIST                  QUERY_ID:{} NUM_GROUND_TRUTH:{} CLUSTER_ID:{} FQEC:{} RANK:{} MENTION:{} POST_POLICY_ASSESSMENT:{} WEIGHT:{} SUM_PRECISION:{}
 INFO      TYPE_METRIC_AP_RANKED_LIST      METRIC:{} DOCUMENT_ID:{} GOLD_CLUSTER:{} SYSTEM_CLUSTER:{} NUM_GROUND_TRUTH:{} RANK:{} TYPE:{} LABEL:{} WEIGHT:{} NUM_CORRECT:{} SUM_PRECISION:{}
 INFO      CLAIM_CORRECTNESS               CLAIM_ID:{} CORRECTNESS:{}
@@ -74,6 +74,7 @@ CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.
 CRITICAL  OVERWRITING_POSTPOLICY_CATEGORIZATION Attempting to overwrite post-policy categorization '{}' by '{}'
 INFO      PAIR_WISE_AP                    QUERY_ID: {} CLUSTER_ID: {} FQEC: {} AP: {}
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
+INFO      PASSESS_FILTER                  DWD type {} {} filter{}
 INFO      RANKED_CLAIMS                   RANKING_TYPE:{} QUERY_ID:{} CLAIM_RELATION:{} RANK:{} CLAIM_ID:{}
 INFO      RESPONSE_CATEGORIZATION_INFO    QUERY_ID:{} CLUSTER_ID:{} MENTION:{} LINK_CONFIDENCE:{} CLUSTER_RANK:{} JUSTIFICATION_CONFIDENCE:{} WEIGHT:{} RESPONSE_RANK:{} PRE_POLICY:{} POST_POLICY:{}
 INFO      SCORE_VALUE                     RUN_ID:{} CONDITION:{} QUERY_ID:{} CLAIM_RELATION:{} {}:{}
@@ -82,6 +83,7 @@ INFO      SKIPPING_CLAIM_INCOMPATIBLE     RUN_ID:{} CONDITION:{} QUERY_ID:{} RAN
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
 INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
+WARNING   SPACE_IN_TYPE                   Space found in "{}"
 WARNING   SPAN_OFF_BOUNDARY_CORRECTED     Correcting span '{}' to '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     SPAN_OFF_BOUNDARY_ERROR         Cannot correct therefore removing span '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'

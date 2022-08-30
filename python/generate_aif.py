@@ -184,6 +184,9 @@ class LDCTypeToDWDNodeMapping(AIFObject):
                             full_ldc_type = full_ldc_type.replace('.Unspecified.Unspecified', '')
                         elif full_ldc_type.endswith('.Unspecified'):
                             full_ldc_type = full_ldc_type.replace('.Unspecified', '')
+                        for wd_node_or_ldc_type in [wd_node, full_ldc_type]:
+                            if re.search(r'\s', wd_node_or_ldc_type):
+                                self.record_event('SPACE_IN_TYPE', wd_node_or_ldc_type, {'filename': self.get('input'), 'lineno': 'NOLINENUMBER'})
                         self.add_mapping(full_ldc_type, wd_node)
 
 class AIFStatement(AIFObject):
