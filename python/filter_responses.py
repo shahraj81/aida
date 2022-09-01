@@ -36,13 +36,12 @@ from munkres import Munkres
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
-SIMILARITY_TYPES = ['complex', 'transe', 'text', 'class', 'jc', 'topsim']
-
 class AlignClusters(Object):
-    def __init__(self, logger, document_mappings, responses):
+    def __init__(self, logger, document_mappings, similarity, responses):
         super().__init__(logger)
         self.document_mappings = document_mappings
         self.responses = responses
+        self.similarity = similarity
         self.weighted = 'no'
         self.alignments = {}
         self.align_clusters()
@@ -50,14 +49,22 @@ class AlignClusters(Object):
     def get_cluster(self, gold_or_system, document_id, cluster_id):
         return self.get('responses').get(gold_or_system).get('document_clusters').get(document_id).get(cluster_id)
 
+    def get_cluster_types(self, gold_or_system, document_id, cluster_id):
+        cluster_types = set()
+        for entry in self.get('responses').get(gold_or_system).get('document_clusters').get(document_id).get(cluster_id).get('entries').values():
+            cluster_types.add(entry.get('cluster_type'))
+        return cluster_types
+
     def get_document_cluster_similarities(self, document_id):
         similarities = {}
         for gold_cluster_id in sorted(self.get('responses').get('gold').get('document_clusters').get(document_id) or []):
             for system_cluster_id in sorted(self.get('responses').get('system').get('document_clusters').get(document_id)):
-                similarities.setdefault(gold_cluster_id, {})[system_cluster_id] = self.get('similarity', document_id, gold_cluster_id, system_cluster_id)
+                similarity = self.get('type_similarity', document_id, gold_cluster_id, system_cluster_id)
+                similarity *= self.get('mention_similarity', document_id, gold_cluster_id, system_cluster_id)
+                similarities.setdefault(gold_cluster_id, {})[system_cluster_id] = similarity
         return similarities
 
-    def get_similarity(self, document_id, gold_cluster_id, system_cluster_id):
+    def get_mention_similarity(self, document_id, gold_cluster_id, system_cluster_id):
         gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
         system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
         mentions = {
@@ -105,6 +112,20 @@ class AlignClusters(Object):
     def get_threshold(self, modality, language):
         return 0.1
 
+    def get_type_similarity(self, document_id, gold_cluster_id, system_cluster_id):
+        similarity = 0
+        gold_cluster_types = self.get('cluster_types', 'gold', document_id, gold_cluster_id)
+        system_cluster_types = self.get('cluster_types', 'system', document_id, system_cluster_id)
+        if len(gold_cluster_types & system_cluster_types):
+            similarity = 1.0
+        else:
+            for q1 in gold_cluster_types:
+                for q2 in system_cluster_types:
+                    isi_similarity_value = self.get('similarity').similarity(q1, q2)
+                    if similarity < isi_similarity_value:
+                        similarity = isi_similarity_value
+        return similarity
+
     def align_clusters(self):
         mappings = {}
         for document_id in self.get('document_mappings').get('core_documents'):
@@ -130,6 +151,12 @@ class AlignClusters(Object):
             else:
                 self.record_event('DEFAULT_CRITICAL_ERROR', 'cluster_id should be None when aligning clusters')
         return alignment
+
+    def is_aligned_to_a_gold_cluster(self, document_id, cluster_id):
+        document_alignments = self.get('alignments').get(document_id)
+        if document_alignments and cluster_id in document_alignments.get('cluster').get('system_to_gold'):
+            return True
+        return False
 
     def lookup_similarity(self, similarities, gold_item_id, system_item_id):
         if gold_item_id in similarities:
@@ -157,6 +184,124 @@ class AlignClusters(Object):
                         }
                 self.record_event('ALIGNMENT_INFO', document_id, cluster_or_mention, gold_and_system_cluster_id, gold_item_id, system_item_id, similarity)
 
+class ResponseFilter(Object):
+    def __init__(self, logger, alignment, similarity):
+        super().__init__(logger)
+        self.alignment = alignment
+        self.similarity = similarity
+        self.filtered_clusters = {}
+
+    def apply(self, responses):
+        for schema_name in ['AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE']:
+            for input_filename in responses:
+                for linenum in responses.get(input_filename):
+                    entry = responses.get(input_filename).get(str(linenum))
+                    if entry.get('schema').get('name') == schema_name:
+                        self.apply_filter_to_entry(entry, schema_name)
+
+    def apply_filter_to_entry(self, entry, schema_name):
+        logger = self.get('logger')
+        filtered_clusters = self.get('filtered_clusters')
+
+        if schema_name not in ['AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE']:
+            logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected schema name: {}'.format(schema_name), entry.get('code_location'))
+
+        passes_filter = False
+
+        if schema_name == 'AIDA_PHASE3_TASK1_AM_RESPONSE':
+            cluster_type_to_keys = {
+                        'subject': '{}:{}'.format(entry.get('kb_document_id'), entry.get('subject_cluster').get('ID')),
+                        'object': '{}:{}'.format(entry.get('kb_document_id'), entry.get('object_cluster').get('ID'))
+                        }
+            passes_filter = True
+            for cluster_type in cluster_type_to_keys:
+                key = cluster_type_to_keys[cluster_type]
+                if key in filtered_clusters:
+                    if not filtered_clusters[key]:
+                        passes_filter = False
+                        cluster_id = entry.get('{}_cluster'.format(cluster_type)).get('ID')
+                        logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
+                        break
+                else:
+                    logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', entry.get('code_location'))
+
+        elif schema_name == 'AIDA_PHASE3_TASK1_CM_RESPONSE':
+            key = '{}:{}'.format(entry.get('kb_document_id'), entry.get('cluster').get('ID'))
+            cluster_type = entry.get('cluster_type')
+            if key not in filtered_clusters:
+                filtered_clusters[key] = False
+            if self.passes_filter(entry):
+                passes_filter = True
+                filtered_clusters[key] = True
+            else:
+                logger.record_event('MENTION_NOT_ANNOTATED', entry.get('mention_span_text'), entry.get('where'))
+
+        elif schema_name == 'AIDA_PHASE3_TASK1_TM_RESPONSE':
+            cluster_id = entry.get('subject_cluster').get('ID')
+            key = '{}:{}'.format(entry.get('kb_document_id'), cluster_id)
+            if key in filtered_clusters:
+                passes_filter = filtered_clusters[key]
+                if not passes_filter:
+                    logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
+            else:
+                logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', entry.get('code_location'))
+
+        entry.set('passes_filter', passes_filter)
+
+    def passes_filter(self, entry):
+        # the entry passes filter if
+        ## - the corresponding system cluster is aligned to a gold cluster, or 
+        if self.get('alignment').is_aligned_to_a_gold_cluster(entry.get('document_id'), entry.get('cluster').get('ID')):
+            return True
+        ## - if the cluster type:
+            # - matches one of the taggable DWD types, or
+            # - is a synonym of a taggable DWD type, or
+            # - is similar enough to a taggable DWD type
+        if self.get('similarity').passes_filter(entry.get('cluster_type')):
+            return True
+        return False
+
+class Similarity(Object):
+    def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, USE_ISI_SERVICE=False):
+        super().__init__(logger)
+        self.alpha = alpha
+        self.combine = combine
+        self.taggable_dwd_ontology = taggable_dwd_ontology
+        self.SIMILARITY_TYPES = ['complex', 'transe', 'text', 'class', 'jc', 'topsim']
+        self.USE_ISI_SERVICE = USE_ISI_SERVICE
+
+    def similarity(self, q1, q2):
+        if q1 == q2:
+            return 1.0
+        if self.get('taggable_dwd_ontology').get('is_synonym', q1, q2):
+            return 1.0
+        if self.get('USE_ISI_SERVICE'):
+            return self.isi_similarity(q1, q2)
+        return 0.0
+
+    def isi_similarity(self, q1, q2):
+        url = 'https://kgtk.isi.edu/similarity_api'
+        similarity = []
+        for similarity_type in self.get('SIMILARITY_TYPES'):
+            resp = requests.get(url,
+                                params={
+                                    'q1': q1,
+                                    'q2': q2,
+                                    'similarity_type': similarity_type})
+            json_struct = json.loads(resp.text)
+            if 'error' not in json_struct:
+                similarity.append(json_struct.get('similarity'))
+        return self.get('combine')(similarity)
+
+    def passes_filter(self, cluster_type):
+        taggable_dwd_ontology = self.get('taggable_dwd_ontology')
+        if taggable_dwd_ontology.passes_filter(cluster_type):
+            return True
+        for taggable_dwd_type in taggable_dwd_ontology.get('taggable_dwd_types'):
+            if self.similarity(cluster_type, taggable_dwd_type) > self.get('alpha'):
+                return True
+        return False
+
 class TaggableDWDOntology(Object):
     def __init__(self, logger, taggable_ldc_ontology_filename, overlay_filename):
         self.logger = logger
@@ -172,46 +317,6 @@ class TaggableDWDOntology(Object):
                 if ldc_type in self.type_mappings.get('mapping'):
                     for mapped_dwd_type in self.type_mappings.get('mapping').get(ldc_type):
                         self.taggable_dwd_types.setdefault(mapped_dwd_type, set()).add(ldc_type)
-
-    def isi_similarity(self, q1, q2, combine=statistics.mean):
-        url = 'https://kgtk.isi.edu/similarity_api'
-        similarity = []
-        for similarity_type in SIMILARITY_TYPES:
-            resp = requests.get(url,
-                                params={
-                                    'q1': q1,
-                                    'q2': q2,
-                                    'similarity_type': similarity_type})
-            json_struct = json.loads(resp.text)
-            if 'error' not in json_struct:
-                similarity.append(json_struct.get('similarity'))
-        return combine(similarity)
-
-    def passes_filter(self, document_id, dwd_type, alpha, alignment):
-        passes_filter = False
-        reason = ''
-        taggable_dwd_types = self.get('taggable_dwd_types')
-        if dwd_type in taggable_dwd_types:
-            reason = ' due to being directly mapped'
-            passes_filter = True
-            self.record_event('PASSESS_FILTER', document_id, dwd_type, 'passed', reason)
-        elif alignment.get('aligned'):
-            system_cluster_id = alignment.get('system_cluster_id')
-            gold_cluster_id = alignment.get('gold_cluster_id')
-            reason = ' due to the system cluster {} being aligned to gold cluster {}'.format(system_cluster_id, gold_cluster_id)
-            passes_filter = True
-            self.record_event('PASSESS_FILTER', document_id, dwd_type, 'passed', reason)
-        else:
-            for taggable_dwd_type in taggable_dwd_types:
-                isi_similarity = self.isi_similarity(dwd_type, taggable_dwd_type)
-                if isi_similarity > alpha:
-                    reason = ' due to the dwd_type being similar to taggable_dwd_type {} with similarity score={} > {}=alpha'.format(taggable_dwd_type, alpha)
-                    passes_filter = True
-                    self.record_event('PASSESS_FILTER', document_id, dwd_type, 'passed', reason)
-                    break
-        if not passes_filter:
-            self.record_event('PASSESS_FILTER', document_id, dwd_type, 'did not pass', reason)
-        return passes_filter
 
 def check_path(args):
     check_for_paths_existance([args.log_specifications,
@@ -239,15 +344,15 @@ def check_for_paths_non_existance(paths):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
 
-def run_filter_on_all_responses(responses, alignment, taggable_dwd_ontology, alpha):
+def run_filter_on_all_responses(responses, alignment, alpha):
     filtered_clusters = {}
     # Note: the order of the following is critical.
     # Running on AIDA_PHASE3_TASK1_CM_RESPONSE creates the lookup table filtered_clusters later
     # used by AIDA_PHASE3_TASK1_AM_RESPONSE and AIDA_PHASE3_TASK1_TM_RESPONSE
     for schema_name in ['AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE']:
-        run_filter_on_all_schema_responses(responses, alignment, schema_name, filtered_clusters, taggable_dwd_ontology, alpha)
+        run_filter_on_all_schema_responses(responses, alignment, schema_name, filtered_clusters, alpha)
 
-def run_filter_on_all_schema_responses(responses, alignment, schema_name, filtered_clusters, taggable_dwd_ontology, alpha):
+def run_filter_on_all_schema_responses(responses, alignment, schema_name, filtered_clusters, alpha):
     for input_filename in responses:
         for linenum in responses.get(input_filename):
             entry = responses.get(input_filename).get(str(linenum))
@@ -256,10 +361,9 @@ def run_filter_on_all_schema_responses(responses, alignment, schema_name, filter
                                     alignment,
                                     schema_name,
                                     filtered_clusters,
-                                    taggable_dwd_ontology,
                                     alpha)
 
-def run_filter_on_entry(entry, alignment, schema_name, filtered_clusters, taggable_dwd_ontology, alpha):
+def run_filter_on_entry(entry, alignment, schema_name, filtered_clusters, alpha):
     logger = entry.get('logger')
 
     if schema_name not in ['AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE']:
@@ -335,8 +439,10 @@ def filter_responses(args):
     taggable_dwd_ontology = TaggableDWDOntology(logger, args.taggable_ldc_ontology, args.overlay)
     system_responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task1')
     gold_responses = ResponseSet(logger, document_mappings, document_boundaries, args.gold, 'gold', 'task1')
-    alignment = AlignClusters(logger, document_mappings, {'gold': gold_responses, 'system': system_responses})
-    run_filter_on_all_responses(system_responses, alignment, taggable_dwd_ontology, args.alpha)
+    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha)
+    alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses})
+    response_filter = ResponseFilter(logger, alignment, similarity)
+    response_filter.apply(system_responses)
 
     os.mkdir(args.output)
     for input_filename in system_responses:
