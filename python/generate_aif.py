@@ -166,6 +166,7 @@ class LDCTypeToDWDNodeMapping(AIFObject):
         super().__init__(logger)
         self.input = path
         self.mapping = {}
+        self.synonyms = {}
         self.load()
 
     def add_mapping(self, ldc_type, wd_node):
@@ -188,6 +189,16 @@ class LDCTypeToDWDNodeMapping(AIFObject):
                             if re.search(r'\s', wd_node_or_ldc_type):
                                 self.record_event('SPACE_IN_TYPE', wd_node_or_ldc_type, {'filename': self.get('input'), 'lineno': 'NOLINENUMBER'})
                         self.add_mapping(full_ldc_type, wd_node)
+                synonyms = set()
+                if ere_metatype in ['events', 'entities']:
+                    for similar_node in dwd_node.get('similar_nodes'):
+                        if 'SS' in similar_node.get('similarity_type'):
+                            synonyms.add(similar_node.get('wd_node'))
+                elif ere_metatype == 'relations':
+                    if dwd_node.get('related_qnodes') is not None:
+                        for similar_node in dwd_node.get('related_qnodes'):
+                            synonyms.add(similar_node.get('wd_node'))
+                self.get('synonyms').setdefault(wd_node, set()).update(synonyms)
 
 class AIFStatement(AIFObject):
     def __init__(self, logger, *args, **kwargs):

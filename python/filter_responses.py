@@ -308,6 +308,7 @@ class TaggableDWDOntology(Object):
         self.type_mappings = LDCTypeToDWDNodeMapping(logger, overlay_filename)
         self.taggable_ldc_ontology = ExcelWorkbook(logger, taggable_ldc_ontology_filename)
         self.taggable_dwd_types = {}
+        self.synonyms = {}
         for ere_type in ['events', 'entities', 'relations']:
             ere_type_data = self.taggable_ldc_ontology.get('worksheets').get(ere_type).get('entries')
             for entry in ere_type_data:
@@ -317,6 +318,24 @@ class TaggableDWDOntology(Object):
                 if ldc_type in self.type_mappings.get('mapping'):
                     for mapped_dwd_type in self.type_mappings.get('mapping').get(ldc_type):
                         self.taggable_dwd_types.setdefault(mapped_dwd_type, set()).add(ldc_type)
+
+    def passes_filter(self, cluster_type):
+        # a cluster passes filter if the cluster_type is a taggable dwd type
+        # or it is a synonym of a taggable dwd type
+        if cluster_type in self.get('taggable_dwd_types'):
+            return True
+        for taggable_dwd_type in self.get('taggable_dwd_types'):
+            if self.is_synonym(cluster_type, taggable_dwd_type):
+                return True
+        return False
+
+    def is_synonym(self, q1, q2):
+        synonyms = self.get('type_mappings').get('synonyms')
+        for (t1, t2) in ((q1, q2), (q2, q1)):
+            if t1 in synonyms:
+                if t2 in synonyms.get(t1):
+                    return True
+        return False
 
 def check_path(args):
     check_for_paths_existance([args.log_specifications,
@@ -343,81 +362,6 @@ def check_for_paths_non_existance(paths):
         if os.path.exists(path):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
-
-def run_filter_on_all_responses(responses, alignment, alpha):
-    filtered_clusters = {}
-    # Note: the order of the following is critical.
-    # Running on AIDA_PHASE3_TASK1_CM_RESPONSE creates the lookup table filtered_clusters later
-    # used by AIDA_PHASE3_TASK1_AM_RESPONSE and AIDA_PHASE3_TASK1_TM_RESPONSE
-    for schema_name in ['AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE']:
-        run_filter_on_all_schema_responses(responses, alignment, schema_name, filtered_clusters, alpha)
-
-def run_filter_on_all_schema_responses(responses, alignment, schema_name, filtered_clusters, alpha):
-    for input_filename in responses:
-        for linenum in responses.get(input_filename):
-            entry = responses.get(input_filename).get(str(linenum))
-            if entry.get('schema').get('name') == schema_name:
-                run_filter_on_entry(entry,
-                                    alignment,
-                                    schema_name,
-                                    filtered_clusters,
-                                    alpha)
-
-def run_filter_on_entry(entry, alignment, schema_name, filtered_clusters, alpha):
-    logger = entry.get('logger')
-
-    if schema_name not in ['AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE']:
-        logger.record_event('DEFAULT_CRITICAL_ERROR', 'Unexpected schema name: {}'.format(schema_name), entry.get('code_location'))
-
-    passes_filter = False
-
-    if schema_name == 'AIDA_PHASE3_TASK1_AM_RESPONSE':
-        cluster_type_to_keys = {
-                    'subject': '{}:{}'.format(entry.get('kb_document_id'), entry.get('subject_cluster').get('ID')),
-                    'object': '{}:{}'.format(entry.get('kb_document_id'), entry.get('object_cluster').get('ID'))
-                    }
-        passes_filter = True
-        for cluster_type in cluster_type_to_keys:
-            key = cluster_type_to_keys[cluster_type]
-            if key in filtered_clusters:
-                if not filtered_clusters[key]:
-                    passes_filter = False
-                    cluster_id = entry.get('{}_cluster'.format(cluster_type)).get('ID')
-                    logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
-                    break
-            else:
-                logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', entry.get('code_location'))
-
-    elif schema_name == 'AIDA_PHASE3_TASK1_CM_RESPONSE':
-        key = '{}:{}'.format(entry.get('kb_document_id'), entry.get('cluster').get('ID'))
-        cluster_type = entry.get('cluster_type')
-        if key not in filtered_clusters:
-            filtered_clusters[key] = False
-        alignment_info = {'aligned': False}
-        system_to_gold_alignment = alignment.get('alignments').get(entry.get('kb_document_id')).get('cluster').get('system_to_gold')
-        if system_to_gold_alignment.get(entry.get('cluster').get('ID')):
-            alignment_info = {
-                'aligned': True,
-                'system_cluster_id': entry.get('cluster').get('ID'),
-                'gold_cluster_id': system_to_gold_alignment.get(entry.get('cluster').get('ID')).get('aligned_to')
-                }
-        if taggable_dwd_ontology.passes_filter(entry.get('kb_document_id'), cluster_type, alpha, alignment_info):
-            passes_filter = True
-            filtered_clusters[key] = True
-        else:
-            logger.record_event('MENTION_NOT_ANNOTATED', entry.get('mention_span_text'), entry.get('where'))
-
-    elif schema_name == 'AIDA_PHASE3_TASK1_TM_RESPONSE':
-        cluster_id = entry.get('subject_cluster').get('ID')
-        key = '{}:{}'.format(entry.get('kb_document_id'), cluster_id)
-        if key in filtered_clusters:
-            passes_filter = filtered_clusters[key]
-            if not passes_filter:
-                logger.record_event('CLUSTER_NOT_ANNOTATED', cluster_id, entry.get('where'))
-        else:
-            logger.record_event('MISSING_ENTRY_IN_LOOKUP_ERROR', key, 'filtered_clusters', entry.get('code_location'))
-
-    entry.set('passes_filter', passes_filter)
 
 def filter_responses(args):
     logger = Logger(args.log, args.log_specifications, sys.argv)
