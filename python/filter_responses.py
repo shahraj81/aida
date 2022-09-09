@@ -257,7 +257,7 @@ class AlignClusters(Object):
         mention_alignment_output_dir = os.path.join(output_dir, 'mention')
         os.mkdir(mention_alignment_output_dir)
         for document_id in self.get('alignments'):
-            document_cluster_alignment = self.get('alignments').get(document_id).get('cluster').get('system_to_gold')
+            document_cluster_alignment = self.get('alignments').get(document_id).get('cluster').get('gold_to_system')
             with open(os.path.join(cluster_alignment_output_dir, '{}.tab'.format(document_id)), 'w') as cluster_alignment_program_output:
                 with open(os.path.join(mention_alignment_output_dir, '{}.tab'.format(document_id)), 'w') as mention_alignment_program_output:
                     cluster_alignment_program_output.write(tostring(cluster_alignment_columns))
