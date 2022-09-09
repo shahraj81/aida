@@ -59,77 +59,94 @@ class AlignClusters(Object):
         similarities = {}
         for gold_cluster_id in sorted(self.get('responses').get('gold').get('document_clusters').get(document_id) or []):
             for system_cluster_id in sorted(self.get('responses').get('system').get('document_clusters').get(document_id)):
-                similarity = self.get('metatype_similarity', document_id, gold_cluster_id, system_cluster_id)
+                similarity = self.get('metatype_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
                 if similarity > 0:
-                    similarity *= self.get('type_similarity', document_id, gold_cluster_id, system_cluster_id)
-                    similarity *= self.get('mention_similarity', document_id, gold_cluster_id, system_cluster_id)
+                    similarity *= self.get('type_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
+                    similarity *= self.get('mention_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
                 similarities.setdefault(gold_cluster_id, {})[system_cluster_id] = similarity
         return similarities
 
-    def get_mention_similarity(self, document_id, gold_cluster_id, system_cluster_id):
-        gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
-        system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
-        mentions = {
-            'gold':   gold_cluster.get('mentions').values(),
-            'system': system_cluster.get('mentions').values()}
 
+    def get_mention_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2):
+        # make the similarity symmetric
+        if cluster_id1 > cluster_id2:
+            temp = cluster_id1
+            cluster_id1 = cluster_id2
+            cluster_id2 = temp
+            temp = system_or_gold1
+            system_or_gold1 = system_or_gold2
+            system_or_gold2 = temp
+
+        cluster1 = self.get('cluster', system_or_gold1, document_id, cluster_id1)
+        cluster2 = self.get('cluster', system_or_gold2, document_id, cluster_id2)
+
+        # align mentions
+        mentions = {
+            'cluster1': list(cluster1.get('mentions').values()),
+            'cluster2': list(cluster2.get('mentions').values())
+            }
+
+        # build the mapping table
         mappings = {}
-        for filetype in mentions:
-            mappings[filetype] = {'id_to_index': {}, 'index_to_id': {}}
+        for clusternum in mentions:
+            mappings[clusternum] = {'id_to_index': {}, 'index_to_id': {}}
             index = 0;
-            for mention in mentions[filetype]:
-                mappings[filetype]['id_to_index'][mention.get('ID')] = index
-                mappings[filetype]['index_to_id'][index] = mention.get('ID')
+            for mention in mentions[clusternum]:
+                mappings[clusternum]['id_to_index'][mention.get('ID')] = index
+                mappings[clusternum]['index_to_id'][index] = mention.get('ID')
                 index += 1
 
+        # build the similarities table
         similarities = {}
-        for gold_mention in mentions['gold']:
-            document_element_id = gold_mention.get('document_element_id')
+        for mention1 in mentions['cluster1']:
+            document_element_id = mention1.get('document_element_id')
             modality = self.get('document_mappings').get('modality', document_element_id)
             language = self.get('document_mappings').get('language', document_element_id)
-            for system_mention in mentions['system']:
-                if gold_mention.get('ID') not in similarities:
-                    similarities[gold_mention.get('ID')] = {}
-                iou = get_intersection_over_union(gold_mention, system_mention)
+            for mention2 in mentions['cluster2']:
+                if mention1.get('ID') not in similarities:
+                    similarities[mention1.get('ID')] = {}
+                iou = get_intersection_over_union(mention1, mention2)
                 iou = 0 if iou < self.get('threshold', modality, language) else iou
-                similarities[gold_mention.get('ID')][system_mention.get('ID')] = iou
+                similarities[mention1.get('ID')][mention2.get('ID')] = iou
 
-        gold_and_system_cluster_id = '::'.join([gold_cluster_id, system_cluster_id])
-        self.record_alignment(document_id, 'mention', gold_and_system_cluster_id, similarities, mappings)
-        alignment = self.get('alignments').get(document_id).get('mention').get(gold_and_system_cluster_id)
+        # record alignment
+        cluster1_and_cluster2_ids = '::'.join([cluster_id1, cluster_id2])
+        alignment_type = '{}_to_{}'.format(system_or_gold1, system_or_gold2)
+        self.record_alignment(document_id, 'mention', alignment_type, cluster1_and_cluster2_ids, similarities, mappings)
+        alignment = self.get('alignments').get(document_id).get('mention').get(cluster1_and_cluster2_ids)
 
         similarity = 0
-        for gold_mention_id in alignment.get('gold_to_system'):
-            system_mention_id = alignment.get('gold_to_system').get(gold_mention_id).get('aligned_to')
-            if similarities[gold_mention_id][system_mention_id] > 0:
+        for mention_id1 in alignment.get(alignment_type):
+            mention_id2 = alignment.get(alignment_type).get(mention_id1).get('aligned_to')
+            if similarities[mention_id1][mention_id2] > 0:
                 # lenient similarity computation
                 if self.get('weighted') == 'no':
                     # total mentions
                     similarity += 1
                 elif self.get('weighted') == 'yes':
                     # total iou
-                    similarity += similarities[gold_mention_id][system_mention_id]
+                    similarity += similarities[mention_id1][mention_id2]
         return similarity
 
-    def get_metatype_similarity(self, document_id, gold_cluster_id, system_cluster_id):
-        gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
-        system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
-        if gold_cluster.get('metatype') == system_cluster.get('metatype'):
+    def get_metatype_similarity(self, document_id, system_or_gold1, cluster1, system_or_gold2, cluster2):
+        metatype1 = self.get('cluster', system_or_gold1, document_id, cluster1).get('metatype')
+        metatype2 = self.get('cluster', system_or_gold2, document_id, cluster2).get('metatype')
+        if metatype1 == metatype2:
             return 1.0
-        return 0
+        return 0.0
 
     def get_threshold(self, modality, language):
         return 0.1
 
-    def get_type_similarity(self, document_id, gold_cluster_id, system_cluster_id):
+    def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2):
         similarity = 0
-        gold_cluster_types = self.get('cluster_types', 'gold', document_id, gold_cluster_id)
-        system_cluster_types = self.get('cluster_types', 'system', document_id, system_cluster_id)
-        if len(gold_cluster_types & system_cluster_types):
+        cluster1_types = self.get('cluster_types', system_or_gold1, document_id, cluster_id1)
+        cluster2_types = self.get('cluster_types', system_or_gold2, document_id, cluster_id2)
+        if len(cluster1_types & cluster2_types):
             similarity = 1.0
         else:
-            for q1 in gold_cluster_types:
-                for q2 in system_cluster_types:
+            for q1 in cluster1_types:
+                for q2 in cluster2_types:
                     isi_similarity_value = self.get('similarity').similarity(q1, q2)
                     if similarity < isi_similarity_value:
                         similarity = isi_similarity_value
@@ -137,29 +154,34 @@ class AlignClusters(Object):
 
     def align_clusters(self):
         mappings = {}
+        filetype_to_clusternum_mapping = {
+            'gold': 'cluster1',
+            'system': 'cluster2'
+            }
         for document_id in self.get('document_mappings').get('core_documents'):
             for filetype in ['gold', 'system']:
-                mappings[filetype] = {'id_to_index': {}, 'index_to_id': {}}
+                clusternum = filetype_to_clusternum_mapping[filetype]
+                mappings[clusternum] = {'id_to_index': {}, 'index_to_id': {}}
                 index = 0
                 for cluster_id in sorted(self.get('responses').get(filetype).get('document_clusters').get(document_id) or []):
-                    mappings[filetype]['id_to_index'][cluster_id] = index
-                    mappings[filetype]['index_to_id'][index] = cluster_id
+                    mappings[clusternum]['id_to_index'][cluster_id] = index
+                    mappings[clusternum]['index_to_id'][index] = cluster_id
                     index += 1
-            self.record_alignment(document_id, 'cluster', None, self.get('document_cluster_similarities', document_id), mappings)
+            self.record_alignment(document_id, 'cluster', 'gold_to_system', None, self.get('document_cluster_similarities', document_id), mappings)
 
-    def init_alignment(self, document_id, cluster_or_mention, gold_and_system_cluster_id):
-        alignment = {'gold_to_system': {}, 'system_to_gold': {}}
-        if gold_and_system_cluster_id is None:
+    def init_alignment(self, document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids):
+        if cluster1_and_cluster2_ids is None:
             if cluster_or_mention == 'cluster':
-                self.get('alignments').setdefault(document_id, {})[cluster_or_mention] = alignment
+                self.get('alignments').setdefault(document_id, {}).setdefault(cluster_or_mention, {})[alignment_type] = {}
+                return self.get('alignments').get(document_id).get(cluster_or_mention)
             else:
                 self.record_event('DEFAULT_CRITICAL_ERROR', 'cluster_id should be provided when aligning mentions')
         else:
             if cluster_or_mention == 'mention':
-                self.get('alignments').setdefault(document_id, {}).setdefault(cluster_or_mention, {})[gold_and_system_cluster_id] = alignment
+                self.get('alignments').setdefault(document_id, {}).setdefault(cluster_or_mention, {}).setdefault(cluster1_and_cluster2_ids, {})[alignment_type] = {}
+                return self.get('alignments').get(document_id).get(cluster_or_mention).get(cluster1_and_cluster2_ids)
             else:
                 self.record_event('DEFAULT_CRITICAL_ERROR', 'cluster_id should be None when aligning clusters')
-        return alignment
 
     def is_aligned_to_a_gold_cluster(self, document_id, cluster_id):
         document_alignments = self.get('alignments').get(document_id)
@@ -173,25 +195,86 @@ class AlignClusters(Object):
                 return similarities.get(item_id1).get(item_id2)
         return 0
 
-    def record_alignment(self, document_id, cluster_or_mention, gold_and_system_cluster_id, similarities, mappings):
-        # gold_and_system_cluster_id is needed when this method is called for recording mention alignment
+    def record_alignment(self, document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids, similarities, mappings):
         if len(similarities):
-            alignment = self.init_alignment(document_id, cluster_or_mention, gold_and_system_cluster_id)
-            cost_matrix = get_cost_matrix(similarities, mappings)
-            for gold_item_index, system_item_index in Munkres().compute(cost_matrix):
-                gold_item_id = mappings['gold']['index_to_id'][gold_item_index]
-                system_item_id = mappings['system']['index_to_id'][system_item_index]
-                similarity = self.lookup_similarity(similarities, gold_item_id, system_item_id)
+            alignment = self.init_alignment(document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids)
+            cost_matrix = get_cost_matrix(similarities, mappings, type_a='cluster1', type_b='cluster2')
+            for item1_index, item2_index in Munkres().compute(cost_matrix):
+                item1_id = mappings['cluster1']['index_to_id'][item1_index]
+                item2_id = mappings['cluster2']['index_to_id'][item2_index]
+                similarity = self.lookup_similarity(similarities, item1_id, item2_id)
                 if similarity > 0:
-                    alignment.get('gold_to_system')[gold_item_id] = {
-                            'aligned_to': system_item_id,
+                    alignment.get(alignment_type)[item1_id] = {
+                            'aligned_to': item2_id,
                             'aligned_similarity': similarity
                         }
-                    alignment.get('system_to_gold')[system_item_id] = {
-                            'aligned_to': gold_item_id,
-                            'aligned_similarity': similarity
+                    i1, i2 = alignment_type.split('_to_')
+                    inverted_alignment_type = '{}_to_{}'.format(i2, i1)
+                    if inverted_alignment_type != alignment_type:
+                        alignment.setdefault(inverted_alignment_type, {})[item2_id] = {
+                                'aligned_to': item1_id,
+                                'aligned_similarity': similarity
+                            }
+                self.record_event('ALIGNMENT_INFO', document_id, cluster_or_mention, cluster1_and_cluster2_ids, item1_id, item2_id, similarity)
+
+    def print_similarities(self, output_dir):
+        def tostring(entry=None):
+            columns = ['metatype', 'system_or_gold1', 'cluster1', 'system_or_gold2', 'cluster2', 'similarity']
+            values = []
+            for column in columns:
+                value = column if entry is None else str(entry.get(column))
+                values.append(value)
+            return '{}\n'.format('\t'.join(values))
+        os.mkdir(output_dir)
+        for document_id in self.get('alignments'):
+            cluster_ids = {
+                'system': list(sorted(self.get('alignments').get(document_id).get('cluster').get('system_to_gold').keys())),
+                'gold': list(sorted(self.get('alignments').get(document_id).get('cluster').get('gold_to_system').keys()))
+                }
+            with open(os.path.join(output_dir, '{}.tab'.format(document_id)), 'w') as program_output:
+                program_output.write(tostring())
+                for system_or_gold1, system_or_gold2 in [('system', 'system'), ('system', 'gold'), ('gold', 'gold')]:
+                    for cluster1 in cluster_ids.get(system_or_gold1):
+                        metatype = self.get('cluster', system_or_gold1, document_id, cluster1).get('metatype')
+                        for cluster2 in cluster_ids.get(system_or_gold2):
+                            similarity = self.get('metatype_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
+                            if similarity > 0:
+                                similarity *= self.get('type_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
+                                similarity *= self.get('mention_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
+                                entry = {
+                                    'metatype': metatype,
+                                    'system_or_gold1': system_or_gold1,
+                                    'cluster1': cluster1,
+                                    'system_or_gold2': system_or_gold2,
+                                    'cluster2': cluster2,
+                                    'similarity': similarity
+                                    }
+                                program_output.write(tostring(entry))
+
+    def print_alignment(self, output_dir):
+        def tostring(entry=None):
+            columns = ['metatype', 'system_cluster', 'gold_cluster', 'similarity']
+            values = []
+            for column in columns:
+                value = column if entry is None else str(entry.get(column))
+                values.append(value)
+            return '{}\n'.format('\t'.join(values))
+        os.mkdir(output_dir)
+        for document_id in self.get('alignments'):
+            document_cluster_alignment = self.get('alignments').get(document_id).get('cluster').get('system_to_gold')
+            with open(os.path.join(output_dir, '{}.tab'.format(document_id)), 'w') as program_output:
+                program_output.write(tostring())
+                for gold_cluster_id in sorted(document_cluster_alignment):
+                    system_cluster_id = document_cluster_alignment.get(gold_cluster_id).get('aligned_to')
+                    similarity = document_cluster_alignment.get(gold_cluster_id).get('aligned_similarity')
+                    metatype = self.get('cluster', 'gold', document_id, gold_cluster_id).get('metatype')
+                    entry = {
+                        'metatype': metatype,
+                        'system_cluster': system_cluster_id,
+                        'gold_cluster': gold_cluster_id,
+                        'similarity': similarity
                         }
-                self.record_event('ALIGNMENT_INFO', document_id, cluster_or_mention, gold_and_system_cluster_id, gold_item_id, system_item_id, similarity)
+                    program_output.write(tostring(entry))
 
 class ResponseFilter(Object):
     def __init__(self, logger, alignment, similarity):
@@ -258,104 +341,6 @@ class ResponseFilter(Object):
 
         entry.set('passes_filter', passes_filter)
 
-    def get_mention_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2):
-        # make the similarity symmetric
-        if cluster_id1 > cluster_id2:
-            temp = cluster_id1
-            cluster_id1 = cluster_id2
-            cluster_id2 = temp
-            temp = system_or_gold1
-            system_or_gold1 = system_or_gold2
-            system_or_gold2 = temp
-
-        cluster1 = self.get('alignment').get('cluster', system_or_gold1, document_id, cluster_id1)
-        cluster2 = self.get('alignment').get('cluster', system_or_gold2, document_id, cluster_id2)
-
-        # align mentions
-        mentions = {
-            'cluster1': list(cluster1.get('mentions').values()),
-            'cluster2': list(cluster2.get('mentions').values())
-            }
-
-        # build the mapping table
-        mappings = {}
-        for clusternum in mentions:
-            mappings[clusternum] = {'id_to_index': {}, 'index_to_id': {}}
-            index = 0;
-            for mention in mentions[clusternum]:
-                mappings[clusternum]['id_to_index'][mention.get('ID')] = index
-                mappings[clusternum]['index_to_id'][index] = mention.get('ID')
-                index += 1
-
-        # build the similarities table
-        similarities = {}
-        for mention1 in mentions['cluster1']:
-            document_element_id = mention1.get('document_element_id')
-            modality = self.get('alignment').get('document_mappings').get('modality', document_element_id)
-            language = self.get('alignment').get('document_mappings').get('language', document_element_id)
-            for mention2 in mentions['cluster2']:
-                if mention1.get('ID') not in similarities:
-                    similarities[mention1.get('ID')] = {}
-                iou = get_intersection_over_union(mention1, mention2)
-                iou = 0 if iou < self.get('alignment').get('threshold', modality, language) else iou
-                similarities[mention1.get('ID')][mention2.get('ID')] = iou
-
-        # record alignment
-        cluster1_and_cluster2_ids = '::'.join([cluster_id1, cluster_id2])
-        alignment_type = '{}_to_{}'.format(system_or_gold1, system_or_gold2)
-        self.record_alignment(document_id, 'mention', alignment_type, cluster1_and_cluster2_ids, similarities, mappings)
-        alignment = self.get('alignments').get(document_id).get('mention').get(cluster1_and_cluster2_ids)
-
-        similarity = 0
-        for mention_id1 in alignment.get(alignment_type):
-            mention_id2 = alignment.get(alignment_type).get(mention_id1).get('aligned_to')
-            if similarities[mention_id1][mention_id2] > 0:
-                # lenient similarity computation
-                if self.get('alignment').get('weighted') == 'no':
-                    # total mentions
-                    similarity += 1
-                elif self.get('alignment').get('weighted') == 'yes':
-                    # total iou
-                    similarity += similarities[mention_id1][mention_id2]
-        return similarity
-
-    def get_metatype_similarity(self, document_id, system_or_gold1, cluster1, system_or_gold2, cluster2):
-        metatype1 = self.get('alignment').get('cluster', system_or_gold1, document_id, cluster1).get('metatype')
-        metatype2 = self.get('alignment').get('cluster', system_or_gold2, document_id, cluster2).get('metatype')
-        if metatype1 == metatype2:
-            return 1.0
-        return 0.0
-
-    def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2):
-        similarity = 0
-        cluster1_types = self.get('alignment').get('cluster_types', system_or_gold1, document_id, cluster_id1)
-        cluster2_types = self.get('alignment').get('cluster_types', system_or_gold2, document_id, cluster_id2)
-        if len(cluster1_types & cluster2_types):
-            similarity = 1.0
-        else:
-            for q1 in cluster1_types:
-                for q2 in cluster2_types:
-                    isi_similarity_value = self.get('similarity').similarity(q1, q2)
-                    if similarity < isi_similarity_value:
-                        similarity = isi_similarity_value
-        return similarity
-
-    def init_alignment(self, document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids):
-        alignment = {'gold_to_system': {}, 'system_to_gold': {}}
-        if cluster1_and_cluster2_ids is None:
-            if cluster_or_mention == 'cluster':
-                self.get('alignments').setdefault(document_id, {}).setdefault(cluster_or_mention, {})[alignment_type] = {}
-                return self.get('alignments').get(document_id).get(cluster_or_mention)
-            else:
-                self.record_event('DEFAULT_CRITICAL_ERROR', 'cluster_id should be provided when aligning mentions')
-        else:
-            if cluster_or_mention == 'mention':
-                self.get('alignments').setdefault(document_id, {}).setdefault(cluster_or_mention, {}).setdefault(cluster1_and_cluster2_ids, {})[alignment_type] = {}
-                return self.get('alignments').get(document_id).get(cluster_or_mention).get(cluster1_and_cluster2_ids)
-            else:
-                self.record_event('DEFAULT_CRITICAL_ERROR', 'cluster_id should be None when aligning clusters')
-        return alignment
-
     def passes_filter(self, entry):
         # the entry passes filter if
         ## - the corresponding system cluster is aligned to a gold cluster, or 
@@ -368,91 +353,6 @@ class ResponseFilter(Object):
         if self.get('similarity').passes_filter(entry.get('cluster_type')):
             return True
         return False
-
-    def print_similarities(self, output_dir):
-        def tostring(entry=None):
-            columns = ['metatype', 'system_or_gold1', 'cluster1', 'system_or_gold2', 'cluster2', 'similarity']
-            values = []
-            for column in columns:
-                value = column if entry is None else str(entry.get(column))
-                values.append(value)
-            return '{}\n'.format('\t'.join(values))
-        os.mkdir(output_dir)
-        alignment = self.get('alignment').get('alignments')
-        for document_id in alignment:
-            cluster_ids = {
-                'system': list(sorted(alignment.get(document_id).get('cluster').get('system_to_gold').keys())),
-                'gold': list(sorted(alignment.get(document_id).get('cluster').get('gold_to_system').keys()))
-                }
-            with open(os.path.join(output_dir, '{}.tab'.format(document_id)), 'w') as program_output:
-                program_output.write(tostring())
-                for system_or_gold1, system_or_gold2 in [('system', 'system'), ('system', 'gold'), ('gold', 'gold')]:
-                    for cluster1 in cluster_ids.get(system_or_gold1):
-                        metatype = self.get('alignment').get('cluster', system_or_gold1, document_id, cluster1).get('metatype')
-                        for cluster2 in cluster_ids.get(system_or_gold2):
-                            similarity = self.get('metatype_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
-                            if similarity > 0:
-                                similarity *= self.get('type_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
-                                similarity *= self.get('mention_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
-                                entry = {
-                                    'metatype': metatype,
-                                    'system_or_gold1': system_or_gold1,
-                                    'cluster1': cluster1,
-                                    'system_or_gold2': system_or_gold2,
-                                    'cluster2': cluster2,
-                                    'similarity': similarity
-                                    }
-                                program_output.write(tostring(entry))
-
-    def print_alignment(self, output_dir):
-        print mention alignment
-        combine the methods common to AlignClusters and ResponseFilter
-        def tostring(entry=None):
-            columns = ['metatype', 'system_cluster', 'gold_cluster', 'similarity']
-            values = []
-            for column in columns:
-                value = column if entry is None else str(entry.get(column))
-                values.append(value)
-            return '{}\n'.format('\t'.join(values))
-        os.mkdir(output_dir)
-        alignment = self.get('alignment').get('alignments')
-        for document_id in alignment:
-            document_cluster_alignment = alignment.get(document_id).get('cluster').get('system_to_gold')
-            with open(os.path.join(output_dir, '{}.tab'.format(document_id)), 'w') as program_output:
-                program_output.write(tostring())
-                for gold_cluster_id in sorted(document_cluster_alignment):
-                    system_cluster_id = document_cluster_alignment.get(gold_cluster_id).get('aligned_to')
-                    similarity = document_cluster_alignment.get(gold_cluster_id).get('aligned_similarity')
-                    metatype = self.get('alignment').get('cluster', 'gold', document_id, gold_cluster_id).get('metatype')
-                    entry = {
-                        'metatype': metatype,
-                        'system_cluster': system_cluster_id,
-                        'gold_cluster': gold_cluster_id,
-                        'similarity': similarity
-                        }
-                    program_output.write(tostring(entry))
-
-    def record_alignment(self, document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids, similarities, mappings):
-        if len(similarities):
-            alignment = self.init_alignment(document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids)
-            cost_matrix = get_cost_matrix(similarities, mappings, type_a='cluster1', type_b='cluster2')
-            for item1_index, item2_index in Munkres().compute(cost_matrix):
-                item1_id = mappings['cluster1']['index_to_id'][item1_index]
-                item2_id = mappings['cluster2']['index_to_id'][item2_index]
-                similarity = self.get('alignment').lookup_similarity(similarities, item1_id, item2_id)
-                if similarity > 0:
-                    alignment.get(alignment_type)[item1_id] = {
-                            'aligned_to': item2_id,
-                            'aligned_similarity': similarity
-                        }
-                    i1, i2 = alignment_type.split('_to_')
-                    inverted_alignment_type = '{}_to_{}'.format(i2, i1)
-                    if inverted_alignment_type != alignment_type:
-                        alignment.setdefault(inverted_alignment_type, {})[item2_id] = {
-                                'aligned_to': item1_id,
-                                'aligned_similarity': similarity
-                            }
-                self.record_event('ALIGNMENT_INFO', document_id, cluster_or_mention, cluster1_and_cluster2_ids, item1_id, item2_id, similarity)
 
 class Similarity(Object):
     def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, USE_ISI_SERVICE=False):
@@ -580,7 +480,10 @@ def filter_responses(args):
     alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses})
     response_filter = ResponseFilter(logger, alignment, similarity)
     response_filter.apply(system_responses)
-
+    # write alignment and similarities
+    alignment.print_similarities(args.similarities)
+    alignment.print_alignment(args.alignment)
+    # write filtered output
     os.mkdir(args.output)
     for input_filename in system_responses:
         output_filename = input_filename.replace(system_responses.get('path'), args.output)
@@ -598,10 +501,6 @@ def filter_responses(args):
             if entry.get('passes_filter'):
                 program_output.write(entry.__str__())
         program_output.close()
-
-    response_filter.print_similarities(args.similarities)
-    response_filter.print_alignment(args.alignment)
-
     logger.record_event('DEFAULT_INFO', 'filtering finished')
     exit(ALLOK_EXIT_CODE)
 
