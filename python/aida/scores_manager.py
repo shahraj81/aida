@@ -36,14 +36,14 @@ class ScoresManager(Object):
 
     task_metrics = {
         'task1': {
-            'ArgumentMetricV1': ArgumentMetricScorerV1,
-            'ArgumentMetricV2': ArgumentMetricScorerV2,
+            # 'ArgumentMetricV1': ArgumentMetricScorerV1,
+            # 'ArgumentMetricV2': ArgumentMetricScorerV2,
             'CoreferenceMetric': CoreferenceMetricScorer,
-            'FrameMetric': FrameMetricScorer,
-            'TemporalMetric': TemporalMetricScorer,
-            'TypeMetricV1': TypeMetricScorerV1,
-            'TypeMetricV2': TypeMetricScorerV2,
-            'TypeMetricV3': TypeMetricScorerV3,
+            # 'FrameMetric': FrameMetricScorer,
+            # 'TemporalMetric': TemporalMetricScorer,
+            # 'TypeMetricV1': TypeMetricScorerV1,
+            # 'TypeMetricV2': TypeMetricScorerV2,
+            # 'TypeMetricV3': TypeMetricScorerV3,
             },
         'task2': {
             'AcrossDocumentsCoreferenceMetricV2': AcrossDocumentsCoreferenceMetricScorerV2,

@@ -64,6 +64,9 @@ class CoreferenceMetricScorer(Scorer):
         scores = []
         for document_id in self.get('core_documents'):
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
+            if document is None:
+                self.record_event('DEFAULT_WARNING', 'No language information found for document {}'.format(document_id))
+                continue
             language = document.get('language')
             for metatype_key in metatypes:
                 max_total_similarity = self.get('max_total_similarity', document_id, metatypes[metatype_key])

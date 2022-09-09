@@ -6,7 +6,6 @@ __status__  = "production"
 __version__ = "1.0.0.1"
 __date__    = "17 August 2020"
 
-from aida.annotated_regions import AnnotatedRegions
 from aida.assessments import Assessments
 from aida.cluster_alignment import ClusterAlignment
 from aida.cluster_self_similarities import ClusterSelfSimilarities
@@ -18,9 +17,7 @@ from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.logger import Logger
 from aida.object import Object
-from aida.ontology_type_mappings import OntologyTypeMappings
 from aida.scores_manager import ScoresManager
-from aida.slot_mappings import SlotMappings
 from aida.response_set import ResponseSet
 from aida.text_boundaries import TextBoundaries
 from aida.video_boundaries import VideoBoundaries
@@ -51,11 +48,9 @@ class Task1(Object):
     """
     Class representing Task1 scorer.
     """
-    def __init__(self, log, runid, log_specifications, ontology_type_mappings, slot_mappings, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, regions, gold, system, alignment, similarities, scores):
+    def __init__(self, log, runid, log_specifications, encodings, core_documents, parent_children, sentence_boundaries, image_boundaries, keyframe_boundaries, video_boundaries, gold, system, alignment, similarities, scores):
         check_for_paths_existance([
                  log_specifications,
-                 ontology_type_mappings,
-                 slot_mappings,
                  encodings,
                  core_documents,
                  parent_children,
@@ -63,7 +58,6 @@ class Task1(Object):
                  image_boundaries,
                  keyframe_boundaries,
                  video_boundaries,
-                 regions,
                  gold,
                  system,
                  alignment,
@@ -73,8 +67,6 @@ class Task1(Object):
         self.log_filename = log
         self.runid = runid
         self.log_specifications = log_specifications
-        self.ontology_type_mappings = ontology_type_mappings
-        self.slot_mappings = slot_mappings
         self.encodings = encodings
         self.core_documents = core_documents
         self.parent_children = parent_children
@@ -82,7 +74,6 @@ class Task1(Object):
         self.image_boundaries = image_boundaries
         self.keyframe_boundaries = keyframe_boundaries
         self.video_boundaries = video_boundaries
-        self.regions = regions
         self.gold = gold
         self.system = system
         self.alignment = alignment
@@ -94,8 +85,6 @@ class Task1(Object):
 
     def __call__(self):
         logger = self.get('logger')
-        ontology_type_mappings = OntologyTypeMappings(logger, self.get('ontology_type_mappings'))
-        slot_mappings = SlotMappings(logger, self.get('slot_mappings'))
         document_mappings = DocumentMappings(logger,
                                              self.get('parent_children'),
                                              Encodings(logger, self.get('encodings')),
@@ -110,16 +99,12 @@ class Task1(Object):
             'keyframe': keyframe_boundaries,
             'video': video_boundaries
             }
-
-        annotated_regions = AnnotatedRegions(logger, ontology_type_mappings, document_mappings, document_boundaries, self.get('regions'))
-
-        gold_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, self.get('gold'), 'gold')
-        system_responses = ResponseSet(logger, ontology_type_mappings, slot_mappings, document_mappings, document_boundaries, self.get('system'), self.get('runid'))
+        gold_responses = ResponseSet(logger, document_mappings, document_boundaries, self.get('gold'), 'gold', 'task1')
+        system_responses = ResponseSet(logger, document_mappings, document_boundaries, self.get('system'), self.get('runid'), 'task1')
         cluster_alignment = ClusterAlignment(logger, self.get('alignment'))
         cluster_self_similarities = ClusterSelfSimilarities(logger, self.get('similarities'))
         arguments = {
             'run_id': self.get('runid'),
-            'annotated_regions': annotated_regions,
             'gold_responses': gold_responses,
             'system_responses': system_responses,
             'cluster_alignment': cluster_alignment,
@@ -134,8 +119,6 @@ class Task1(Object):
         parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
         parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
         parser.add_argument('log_specifications', type=str, help='File containing error specifications')
-        parser.add_argument('ontology_type_mappings', type=str, help='File containing all the types in the ontology')
-        parser.add_argument('slot_mappings', type=str, help='File containing slot mappings')
         parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
         parser.add_argument('core_documents', type=str, help='File containing list of core documents')
         parser.add_argument('parent_children', type=str, help='DocumentID to DocumentElementID mappings file')
@@ -143,7 +126,6 @@ class Task1(Object):
         parser.add_argument('image_boundaries', type=str, help='File containing image bounding boxes')
         parser.add_argument('keyframe_boundaries', type=str, help='File containing keyframe bounding boxes')
         parser.add_argument('video_boundaries', type=str, help='File containing length of videos')
-        parser.add_argument('regions', type=str, help='File containing annotated regions information')
         parser.add_argument('gold', type=str, help='Directory containing gold information.')
         parser.add_argument('system', type=str, help='Directory containing system information.')
         parser.add_argument('alignment', type=str, help='Directory containing alignment information.')
