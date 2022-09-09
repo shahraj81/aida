@@ -66,17 +66,7 @@ class AlignClusters(Object):
                 similarities.setdefault(gold_cluster_id, {})[system_cluster_id] = similarity
         return similarities
 
-
     def get_mention_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2):
-        # make the similarity symmetric
-        if cluster_id1 > cluster_id2:
-            temp = cluster_id1
-            cluster_id1 = cluster_id2
-            cluster_id2 = temp
-            temp = system_or_gold1
-            system_or_gold1 = system_or_gold2
-            system_or_gold2 = temp
-
         cluster1 = self.get('cluster', system_or_gold1, document_id, cluster_id1)
         cluster2 = self.get('cluster', system_or_gold2, document_id, cluster_id2)
 
