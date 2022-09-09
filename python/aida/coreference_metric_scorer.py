@@ -33,8 +33,7 @@ class CoreferenceMetricScorer(Scorer):
             if cluster_id == 'None': continue
             metatype = self.get('metatype', 'gold', cluster_id)
             if metatype not in metatypes: continue
-            if metatype != 'Relation':
-                max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
+            max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
         return max_total_similarity
 
     def get_metatype(self, system_or_gold, cluster_id):
@@ -51,14 +50,14 @@ class CoreferenceMetricScorer(Scorer):
             metatype = self.get('metatype', system_or_gold, cluster_id)
             if metatype not in metatypes: continue
             self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
-            if metatype != 'Relation':
-                total_self_similarity += float(self_similarity)
+            total_self_similarity += float(self_similarity)
         return total_self_similarity
 
     def score_responses(self):
         metatypes = {
-            'ALL': ['Entity', 'Event'],
+            'ALL': ['Entity', 'Relation', 'Event'],
             'Entity': ['Entity'],
+            'Relation': ['Relation'],
             'Event': ['Event']
             }
         scores = []
@@ -74,7 +73,7 @@ class CoreferenceMetricScorer(Scorer):
                 total_self_similarity_system = self.get('total_self_similarity', 'system', document_id, metatypes[metatype_key])
 
                 precision = max_total_similarity / total_self_similarity_system if total_self_similarity_system else 0
-                recall = max_total_similarity / total_self_similarity_gold
+                recall = max_total_similarity / total_self_similarity_gold if total_self_similarity_gold else 0
                 f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
                 score = CoreferenceMetricScore(logger=self.logger,
                                                run_id=self.get('run_id'),
