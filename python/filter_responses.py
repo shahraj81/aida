@@ -252,29 +252,53 @@ class AlignClusters(Object):
                                 program_output.write(tostring(entry))
 
     def print_alignment(self, output_dir):
-        def tostring(entry=None):
-            columns = ['metatype', 'system_cluster', 'gold_cluster', 'similarity']
+        def tostring(columns, entry=None):
             values = []
             for column in columns:
                 value = column if entry is None else str(entry.get(column))
                 values.append(value)
             return '{}\n'.format('\t'.join(values))
         os.mkdir(output_dir)
+        cluster_alignment_columns = ['metatype', 'system_cluster', 'gold_cluster', 'similarity']
+        mention_alignment_columns = ['metatype', 'system_cluster', 'gold_cluster', 'system_mention', 'gold_mention', 'similarity']
+        # print cluster alignment
+        cluster_alignment_output_dir = os.path.join(output_dir, 'cluster')
+        os.mkdir(cluster_alignment_output_dir)
+        mention_alignment_output_dir = os.path.join(output_dir, 'mention')
+        os.mkdir(mention_alignment_output_dir)
         for document_id in self.get('alignments'):
             document_cluster_alignment = self.get('alignments').get(document_id).get('cluster').get('system_to_gold')
-            with open(os.path.join(output_dir, '{}.tab'.format(document_id)), 'w') as program_output:
-                program_output.write(tostring())
-                for gold_cluster_id in sorted(document_cluster_alignment):
-                    system_cluster_id = document_cluster_alignment.get(gold_cluster_id).get('aligned_to')
-                    similarity = document_cluster_alignment.get(gold_cluster_id).get('aligned_similarity')
-                    metatype = self.get('cluster', 'gold', document_id, gold_cluster_id).get('metatype')
-                    entry = {
-                        'metatype': metatype,
-                        'system_cluster': system_cluster_id,
-                        'gold_cluster': gold_cluster_id,
-                        'similarity': similarity
-                        }
-                    program_output.write(tostring(entry))
+            with open(os.path.join(cluster_alignment_output_dir, '{}.tab'.format(document_id)), 'w') as cluster_alignment_program_output:
+                with open(os.path.join(mention_alignment_output_dir, '{}.tab'.format(document_id)), 'w') as mention_alignment_program_output:
+                    cluster_alignment_program_output.write(tostring(cluster_alignment_columns))
+                    mention_alignment_program_output.write(tostring(mention_alignment_columns))
+                    document_cluster_mention_alignment = self.get('alignments').get(document_id).get('mention')
+                    for gold_cluster_id in sorted(document_cluster_alignment):
+                        system_cluster_id = document_cluster_alignment.get(gold_cluster_id).get('aligned_to')
+                        similarity = document_cluster_alignment.get(gold_cluster_id).get('aligned_similarity')
+                        metatype = self.get('cluster', 'gold', document_id, gold_cluster_id).get('metatype')
+                        entry = {
+                            'metatype': metatype,
+                            'system_cluster': system_cluster_id,
+                            'gold_cluster': gold_cluster_id,
+                            'similarity': similarity
+                            }
+                        cluster_alignment_program_output.write(tostring(cluster_alignment_columns, entry))
+                        # print mention alignment for the pair of aligned gold and system clusters
+                        cluster1_and_cluster2_ids = '::'.join([gold_cluster_id, system_cluster_id])
+                        alignment_type = 'gold_to_system'
+                        for gold_mention_id in document_cluster_mention_alignment.get(cluster1_and_cluster2_ids).get(alignment_type):
+                            system_mention_id = document_cluster_mention_alignment.get(cluster1_and_cluster2_ids).get(alignment_type).get(gold_mention_id).get('aligned_to')
+                            similarity = document_cluster_mention_alignment.get(cluster1_and_cluster2_ids).get(alignment_type).get(gold_mention_id).get('aligned_similarity')
+                            entry = {
+                                'metatype': metatype,
+                                'system_cluster': system_cluster_id,
+                                'gold_cluster': gold_cluster_id,
+                                'system_mention': system_mention_id,
+                                'gold_mention': gold_mention_id,
+                                'similarity': similarity
+                                }
+                            mention_alignment_program_output.write(tostring(mention_alignment_columns, entry))
 
 class ResponseFilter(Object):
     def __init__(self, logger, alignment, similarity):
