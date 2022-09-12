@@ -31,13 +31,17 @@ class CoreferenceMetricScorer(Scorer):
         max_total_similarity = 0
         for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):
             if cluster_id == 'None': continue
-            metatype = self.get('metatype', 'gold', cluster_id)
+            metatype = self.get('metatype', document_id, 'gold', cluster_id)
             if metatype not in metatypes: continue
             max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
         return max_total_similarity
 
-    def get_metatype(self, system_or_gold, cluster_id):
-        metatype = self.get('cluster_self_similarities').get('cluster_to_metatype').get('{}:{}'.format(system_or_gold.upper(), cluster_id))
+    def get_metatype(self, document_id, system_or_gold, cluster_id):
+        responses = {
+            'gold': self.get('gold_responses'),
+            'system': self.get('system_responses')
+            }
+        metatype = responses.get(system_or_gold).get('document_clusters').get(document_id).get(cluster_id).get('metatype')
         if metatype not in ['Event', 'Relation', 'Entity']:
             self.record_event('DEFAULT_CRITICAL_ERROR', 'Unknown metatype: {} for {}:{}'.format(metatype, system_or_gold.upper(), cluster_id), self.get('code_location'))
         return metatype
@@ -47,7 +51,7 @@ class CoreferenceMetricScorer(Scorer):
         if system_or_gold == 'system' and document_id not in self.get('cluster_self_similarities').get(system_or_gold):
             return total_self_similarity
         for cluster_id in self.get('cluster_self_similarities').get(system_or_gold).get(document_id):
-            metatype = self.get('metatype', system_or_gold, cluster_id)
+            metatype = self.get('metatype', document_id, system_or_gold, cluster_id)
             if metatype not in metatypes: continue
             self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
             total_self_similarity += float(self_similarity)
