@@ -20,6 +20,7 @@ from aida.object import Object
 from aida.scores_manager import ScoresManager
 from aida.response_set import ResponseSet
 from aida.text_boundaries import TextBoundaries
+from aida.type_similarities import TypeSimilarities
 from aida.video_boundaries import VideoBoundaries
 
 import argparse
@@ -102,6 +103,7 @@ class Task1(Object):
         gold_responses = ResponseSet(logger, document_mappings, document_boundaries, self.get('gold'), 'gold', 'task1')
         system_responses = ResponseSet(logger, document_mappings, document_boundaries, self.get('system'), self.get('runid'), 'task1')
         cluster_alignment = ClusterAlignment(logger, self.get('alignment'))
+        type_similarities = TypeSimilarities(logger, self.get('similarities'))
         cluster_self_similarities = ClusterSelfSimilarities(logger, self.get('similarities'))
         arguments = {
             'run_id': self.get('runid'),
@@ -109,9 +111,11 @@ class Task1(Object):
             'system_responses': system_responses,
             'cluster_alignment': cluster_alignment,
             'cluster_self_similarities': cluster_self_similarities,
+            'type_similarities': type_similarities,
             }
         scores = ScoresManager(logger, 'task1', arguments)
         scores.print_scores(self.get('scores'))
+        logger.record_event('DEFAULT_INFO', 'done.')
         exit(ALLOK_EXIT_CODE)
 
     @classmethod

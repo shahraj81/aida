@@ -26,6 +26,7 @@ from aida.temporal_metric_scorer import TemporalMetricScorer
 from aida.type_metric_v1_scorer import TypeMetricScorerV1
 from aida.type_metric_v2_scorer import TypeMetricScorerV2
 from aida.type_metric_v3_scorer import TypeMetricScorerV3
+from aida.type_metric_v4_scorer import TypeMetricScorerV4
 
 import os
 
@@ -44,6 +45,7 @@ class ScoresManager(Object):
             # 'TypeMetricV1': TypeMetricScorerV1,
             # 'TypeMetricV2': TypeMetricScorerV2,
             # 'TypeMetricV3': TypeMetricScorerV3,
+            'TypeMetricV4': TypeMetricScorerV4,
             },
         'task2': {
             'AcrossDocumentsCoreferenceMetricV2': AcrossDocumentsCoreferenceMetricScorerV2,
@@ -78,7 +80,8 @@ class ScoresManager(Object):
                                                      gold_responses=self.get('gold_responses'),
                                                      system_responses=self.get('system_responses'),
                                                      cluster_alignment=self.get('cluster_alignment'),
-                                                     cluster_self_similarities=self.get('cluster_self_similarities'))
+                                                     cluster_self_similarities=self.get('cluster_self_similarities'),
+                                                     type_similarities=self.get('type_similarities'))
                 self.get('scores').add(key=metric, value=scorer)
         elif self.get('task') == 'task2':
             for metric in self.get('metrics'):
