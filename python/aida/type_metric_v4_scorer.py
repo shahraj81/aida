@@ -66,27 +66,6 @@ class TypeMetricScorerV4(Scorer):
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
                 type_similarity = self.get('type_similarity', document_id, {'system': system_cluster_id, 'gold':gold_cluster_id})
                 metatype = self.get('metatype', document_id, {'system': system_cluster_id, 'gold':gold_cluster_id})
-                # aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
-                # average_precision = 0
-                # if gold_cluster_id == 'None': continue
-                # gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
-                # metatype = gold_cluster.get('metatype')
-                # if metatype not in ['Entity', 'Event']: continue
-                # if system_cluster_id != 'None':
-                #     if aligned_similarity == 0:
-                #         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
-                #     system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
-                #     if system_cluster.get('metatype') != metatype:
-                #         self.record_event('UNEXPECTED_ALIGNED_CLUSTER_METATYPE', system_cluster.get('metatype'), system_cluster_id, metatype, gold_cluster_id)
-                #     gold_types = gold_cluster.get('all_expanded_types')
-                #     system_types = {}
-                #     if document_id in self.get('system_responses').get('document_clusters'):
-                #         system_types = self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id).get('all_expanded_types')
-                #     augmented_gold_types = self.get('augmented_types', document_id, gold_types)
-                #     augmented_system_types = self.get('augmented_types', document_id, system_types)
-                #     self.record_event('TYPE_METRIC_SCORE_INFO', self.__class__.__name__, 'TYPES_SUBMITTED', document_id, gold_cluster_id, ','.join(sorted(gold_types)), system_cluster_id, ','.join(sorted(system_types)))
-                #     self.record_event('TYPE_METRIC_SCORE_INFO', self.__class__.__name__, 'TYPES_SCORED', document_id, gold_cluster_id, ','.join(sorted(augmented_gold_types)), system_cluster_id, ','.join(sorted(augmented_system_types)))
-                #     average_precision = self.get('average_precision', document_id, gold_cluster_id, augmented_gold_types, system_cluster_id, augmented_system_types)
                 score = TypeMetricScoreV4(logger=self.logger,
                                            run_id=self.get('run_id'),
                                            document_id=document_id,
