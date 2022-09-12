@@ -209,7 +209,7 @@ class AlignClusters(Object):
 
     def print_similarities(self, output_dir):
         def tostring(entry=None):
-            columns = ['metatype', 'system_or_gold1', 'cluster1', 'system_or_gold2', 'cluster2', 'similarity']
+            columns = ['metatype', 'system_or_gold1', 'cluster1', 'system_or_gold2', 'cluster2', 'type_similarity', 'similarity']
             values = []
             for column in columns:
                 value = column if entry is None else str(entry.get(column))
@@ -229,15 +229,17 @@ class AlignClusters(Object):
                         for cluster2 in cluster_ids.get(system_or_gold2):
                             similarity = self.get('metatype_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
                             if similarity > 0:
-                                similarity *= self.get('type_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
+                                type_similarity = self.get('type_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
                                 similarity *= self.get('mention_similarity', document_id, system_or_gold1, cluster1, system_or_gold2, cluster2)
+                                similarity *= type_similarity
                                 entry = {
                                     'metatype': metatype,
                                     'system_or_gold1': system_or_gold1,
                                     'cluster1': cluster1,
                                     'system_or_gold2': system_or_gold2,
                                     'cluster2': cluster2,
-                                    'similarity': similarity
+                                    'type_similarity': type_similarity,
+                                    'similarity': similarity,
                                     }
                                 program_output.write(tostring(entry))
 
