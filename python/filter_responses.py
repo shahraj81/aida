@@ -265,8 +265,15 @@ class AlignClusters(Object):
                     cluster_alignment_program_output.write(tostring(cluster_alignment_columns))
                     mention_alignment_program_output.write(tostring(mention_alignment_columns))
                     document_cluster_mention_alignment = self.get('alignments').get(document_id).get('mention')
+                    # print aligned clusters
+                    aligned_clusters = {
+                        'gold': set(),
+                        'system': set()
+                        }
                     for gold_cluster_id in sorted(document_cluster_alignment):
                         system_cluster_id = document_cluster_alignment.get(gold_cluster_id).get('aligned_to')
+                        aligned_clusters.get('gold').add(gold_cluster_id)
+                        aligned_clusters.get('system').add(system_cluster_id)
                         similarity = document_cluster_alignment.get(gold_cluster_id).get('aligned_similarity')
                         metatype = self.get('cluster', 'gold', document_id, gold_cluster_id).get('metatype')
                         entry = {
@@ -291,6 +298,16 @@ class AlignClusters(Object):
                                 'similarity': similarity
                                 }
                             mention_alignment_program_output.write(tostring(mention_alignment_columns, entry))
+                    # print unaligned gold and system clusters information
+                    for system_or_gold in ['gold', 'system']:
+                        for cluster_id in self.get('responses').get(system_or_gold).get('document_clusters').get(document_id):
+                            entry = {
+                                'metatype': self.get('cluster', system_or_gold, document_id, cluster_id).get('metatype'),
+                                'system_cluster': cluster_id if system_or_gold == 'system' else 'None',
+                                'gold_cluster': cluster_id if system_or_gold == 'gold' else 'None',
+                                'similarity': 0
+                                }
+                            cluster_alignment_program_output.write(tostring(cluster_alignment_columns, entry))
 
 class ResponseFilter(Object):
     def __init__(self, logger, alignment, similarity):
