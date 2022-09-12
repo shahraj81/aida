@@ -301,6 +301,7 @@ class AlignClusters(Object):
                     # print unaligned gold and system clusters information
                     for system_or_gold in ['gold', 'system']:
                         for cluster_id in self.get('responses').get(system_or_gold).get('document_clusters').get(document_id):
+                            if cluster_id in aligned_clusters.get(system_or_gold): continue
                             entry = {
                                 'metatype': self.get('cluster', system_or_gold, document_id, cluster_id).get('metatype'),
                                 'system_cluster': cluster_id if system_or_gold == 'system' else 'None',
