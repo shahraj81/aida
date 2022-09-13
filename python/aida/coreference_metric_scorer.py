@@ -59,9 +59,8 @@ class CoreferenceMetricScorer(Scorer):
 
     def score_responses(self):
         metatypes = {
-            'ALL': ['Entity', 'Relation', 'Event'],
+            'ALL': ['Entity', 'Event'],
             'Entity': ['Entity'],
-            'Relation': ['Relation'],
             'Event': ['Event']
             }
         scores = []
