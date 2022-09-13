@@ -61,7 +61,7 @@ class Generator(Object):
                 present = True
                 date_object.set(field_name, entry.get(field_name))
         entry.set('date', date_object if present else None)
-        if entry.get('schema').get('name') in ['AIDA_PHASE2_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE']:
+        if entry.get('schema').get('name') in ['AIDA_PHASE3_TASK1_TM_RESPONSE', 'AIDA_PHASE3_TASK3_TM_RESPONSE']:
             entry.get('subject_cluster').get('dates').add(entry.get('date'))
 
     def generate_claim(self, responses, entry):

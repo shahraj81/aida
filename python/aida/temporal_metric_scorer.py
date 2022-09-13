@@ -98,6 +98,8 @@ class TemporalMetricScorer(Scorer):
         for document_id in self.get('core_documents'):
             # add scores corresponding to all gold clusters
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
+            # skip those core documents that do not have an entry in the parent-children table
+            if document is None: continue
             language = document.get('language')
             document_gold_to_system = self.get('cluster_alignment').get('gold_to_system').get(document_id)
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
@@ -108,7 +110,7 @@ class TemporalMetricScorer(Scorer):
                 gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
                 metatype = gold_cluster.get('metatype')
                 if metatype not in ['Event', 'Relation']: continue
-                if list(gold_cluster.get('dates').values())[0] is None:
+                if len(gold_cluster.get('dates')) == 0:
                     self.record_event('NO_TEMPORAL_CONSTRAINT', gold_cluster_id, document_id)
                     continue
                 if system_cluster_id != 'None':
@@ -117,7 +119,7 @@ class TemporalMetricScorer(Scorer):
                     system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
                     if system_cluster.get('metatype') != metatype:
                         self.record_event('UNEXPECTED_ALIGNED_CLUSTER_METATYPE', system_cluster.get('metatype'), system_cluster_id, metatype, gold_cluster_id)
-                    if len(gold_cluster.get('dates').keys()) > 1:
+                    if len(gold_cluster.get('dates')) > 1:
                         self.record_event('UNEXPECTED_NUM_DATES', gold_cluster_id, document_id)
                     similarity = self.get('temporal_similarity', list(gold_cluster.get('dates').values())[0], list(system_cluster.get('dates').values()))
                 score = TemporalMetricScore(logger=self.logger,

@@ -35,6 +35,12 @@ class Container(Object):
         """
         return iter(self.store)
 
+    def __len__(self):
+        """
+        Returns the length of store.
+        """
+        return len(self.store)
+
     def get(self, *args, **kwargs):
         """
         Gets the value for the key using the given args, if found. Returns None otherwise.

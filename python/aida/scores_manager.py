@@ -42,7 +42,7 @@ class ScoresManager(Object):
             # 'ArgumentMetricV2': ArgumentMetricScorerV2,
             'CoreferenceMetric': CoreferenceMetricScorer,
             # 'FrameMetric': FrameMetricScorer,
-            # 'TemporalMetric': TemporalMetricScorer,
+            'TemporalMetric': TemporalMetricScorer,
             # 'TypeMetricV1': TypeMetricScorerV1,
             # 'TypeMetricV2': TypeMetricScorerV2,
             # 'TypeMetricV3': TypeMetricScorerV3,
