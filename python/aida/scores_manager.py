@@ -20,6 +20,7 @@ from aida.f1_v2b_scorer import F1ScorerV2B
 from aida.f1_v1c_scorer import F1ScorerV1C
 from aida.f1_v2c_scorer import F1ScorerV2C
 from aida.frame_metric_scorer import FrameMetricScorer
+from aida.negation_metric_scorer import NegationMetricScorer
 from aida.ndcg_v1_scorer import NDCGScorerV1
 from aida.ndcg_v2_scorer import NDCGScorerV2
 from aida.temporal_metric_scorer import TemporalMetricScorer
@@ -45,6 +46,7 @@ class ScoresManager(Object):
             # 'TypeMetricV1': TypeMetricScorerV1,
             # 'TypeMetricV2': TypeMetricScorerV2,
             # 'TypeMetricV3': TypeMetricScorerV3,
+            'NegationMetric': NegationMetricScorer,
             'TypeMetricV4': TypeMetricScorerV4,
             },
         'task2': {
@@ -80,6 +82,7 @@ class ScoresManager(Object):
                                                      gold_responses=self.get('gold_responses'),
                                                      system_responses=self.get('system_responses'),
                                                      cluster_alignment=self.get('cluster_alignment'),
+                                                     mention_alignment=self.get('mention_alignment'),
                                                      cluster_self_similarities=self.get('cluster_self_similarities'),
                                                      type_similarities=self.get('type_similarities'))
                 self.get('scores').add(key=metric, value=scorer)

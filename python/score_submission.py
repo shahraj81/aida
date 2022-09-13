@@ -16,6 +16,7 @@ from aida.file_handler import FileHandler
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
 from aida.logger import Logger
+from aida.mention_alignment import MentionAlignment
 from aida.object import Object
 from aida.scores_manager import ScoresManager
 from aida.response_set import ResponseSet
@@ -102,7 +103,8 @@ class Task1(Object):
             }
         gold_responses = ResponseSet(logger, document_mappings, document_boundaries, self.get('gold'), 'gold', 'task1')
         system_responses = ResponseSet(logger, document_mappings, document_boundaries, self.get('system'), self.get('runid'), 'task1')
-        cluster_alignment = ClusterAlignment(logger, self.get('alignment'))
+        cluster_alignment = ClusterAlignment(logger, os.path.join(self.get('alignment'), 'cluster'))
+        mention_alignment = MentionAlignment(logger, os.path.join(self.get('alignment'), 'mention'))
         type_similarities = TypeSimilarities(logger, self.get('similarities'))
         cluster_self_similarities = ClusterSelfSimilarities(logger, self.get('similarities'))
         arguments = {
@@ -110,6 +112,7 @@ class Task1(Object):
             'gold_responses': gold_responses,
             'system_responses': system_responses,
             'cluster_alignment': cluster_alignment,
+            'mention_alignment': mention_alignment,
             'cluster_self_similarities': cluster_self_similarities,
             'type_similarities': type_similarities,
             }

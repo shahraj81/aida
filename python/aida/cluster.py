@@ -60,6 +60,7 @@ class Cluster(Object):
                          trim_cv(entry.get('?type_statement_confidence')),
                          trim_cv(entry.get('?cluster_membership_confidence')),
                          trim_cv(entry.get('?mention_type_justification_confidence')),
+                         entry.get('?is_negated'),
                          entry.get('where'))
         self.get('entries').add(entry)
 
@@ -76,7 +77,7 @@ class Cluster(Object):
         else:
             self.get('types').get(cluster_type).append(entry)
 
-    def add_mention(self, span_string, t_cv, cm_cv, j_cv, where):
+    def add_mention(self, span_string, t_cv, cm_cv, j_cv, is_negated, where):
         logger = self.get('logger')
         mention = augment_mention_object(spanstring_to_object(logger, span_string, where), self.get('document_mappings'), self.get('document_boundaries'))
         mention.set('ID', span_string)
@@ -84,6 +85,7 @@ class Cluster(Object):
         mention.set('t_cv', t_cv)
         mention.set('cm_cv', cm_cv)
         mention.set('j_cv', j_cv)
+        mention.set('is_negated', is_negated)
         self.get('mentions').add(key=mention.get('ID'), value=mention)
 
     def is_alignable_entity_or_event(self, annotated_regions):
