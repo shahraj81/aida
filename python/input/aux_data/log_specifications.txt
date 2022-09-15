@@ -64,6 +64,7 @@ CRITICAL  MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT Multiple informative justificat
 CRITICAL  MULTIPLE_LANGUAGES_IN_A_DOCUMENT Multiple languages {} found in document {}
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
 ERROR     MULTIPLE_METATYPES              Multiple metatypes '{}' and '{} for '{}'
+ERROR     MULTIPLE_VALUES                 Multiple values of {} found for edge '{}:{}' : {}, {}
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
 CRITICAL  NO_SPECS                        No specifications available for '{}'
 INFO      NO_TEMPORAL_CONSTRAINT          Gold cluster {} in document {} has no temporal constraint

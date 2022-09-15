@@ -48,7 +48,6 @@ class NegationMetricScorer(Scorer):
     def score_responses(self):
         scores = []
         for document_id in self.get('core_documents'):
-            # add scores corresponding to all gold clusters
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
             # skip those core documents that do not have an entry in the parent-children table
             if document is None: continue

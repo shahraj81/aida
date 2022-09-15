@@ -201,6 +201,7 @@ class Generator(Object):
             cluster.set('frame', frame)
         frame = cluster.get('frame')
         if entry.get('schema').get('name') in ['AIDA_PHASE2_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE']:
+            frame.set('cluster', cluster)
             frame.update(entry)
         entry.set('subject_cluster', cluster)
 

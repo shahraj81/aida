@@ -10,8 +10,12 @@ from aida.object import Object
 from aida.container import Container
 
 from aida.across_documents_correference_metric_scorer_v2 import AcrossDocumentsCoreferenceMetricScorerV2
-from aida.argument_metric_v1_scorer import ArgumentMetricScorerV1
-from aida.argument_metric_v2_scorer import ArgumentMetricScorerV2
+from aida.argument_metric_v3a1_scorer import ArgumentMetricScorerV3A1
+from aida.argument_metric_v3a2_scorer import ArgumentMetricScorerV3A2
+from aida.argument_metric_v3b1_scorer import ArgumentMetricScorerV3B1
+from aida.argument_metric_v3b2_scorer import ArgumentMetricScorerV3B2
+from aida.argument_metric_v3c1_scorer import ArgumentMetricScorerV3C1
+from aida.argument_metric_v3c2_scorer import ArgumentMetricScorerV3C2
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
 from aida.f1_v1a_scorer import F1ScorerV1A
 from aida.f1_v2a_scorer import F1ScorerV2A
@@ -38,14 +42,15 @@ class ScoresManager(Object):
 
     task_metrics = {
         'task1': {
-            # 'ArgumentMetricV1': ArgumentMetricScorerV1,
-            # 'ArgumentMetricV2': ArgumentMetricScorerV2,
+            'ArgumentMetricV3A1': ArgumentMetricScorerV3A1,
+            'ArgumentMetricV3A2': ArgumentMetricScorerV3A2,
+            'ArgumentMetricV3B1': ArgumentMetricScorerV3B1,
+            'ArgumentMetricV3B2': ArgumentMetricScorerV3B2,
+            'ArgumentMetricV3C1': ArgumentMetricScorerV3C1,
+            'ArgumentMetricV3C2': ArgumentMetricScorerV3C2,
             'CoreferenceMetric': CoreferenceMetricScorer,
             # 'FrameMetric': FrameMetricScorer,
             'TemporalMetric': TemporalMetricScorer,
-            # 'TypeMetricV1': TypeMetricScorerV1,
-            # 'TypeMetricV2': TypeMetricScorerV2,
-            # 'TypeMetricV3': TypeMetricScorerV3,
             'NegationMetric': NegationMetricScorer,
             'TypeMetricV4': TypeMetricScorerV4,
             },
