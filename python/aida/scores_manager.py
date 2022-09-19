@@ -49,7 +49,7 @@ class ScoresManager(Object):
             'ArgumentMetricV3C1': ArgumentMetricScorerV3C1,
             'ArgumentMetricV3C2': ArgumentMetricScorerV3C2,
             'CoreferenceMetric': CoreferenceMetricScorer,
-            # 'FrameMetric': FrameMetricScorer,
+            'FrameMetric': FrameMetricScorer,
             'TemporalMetric': TemporalMetricScorer,
             'NegationMetric': NegationMetricScorer,
             'TypeMetricV4': TypeMetricScorerV4,
