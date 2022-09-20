@@ -20,7 +20,7 @@ from aida.excel_workbook import ExcelWorkbook
 from aida.text_boundaries import TextBoundaries
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
-from aida.utility import get_cost_matrix, get_intersection_over_union
+from aida.utility import get_cost_matrix, get_intersection_over_union, trim_cv
 from aida.video_boundaries import VideoBoundaries
 from generate_aif import LDCTypeToDWDNodeMapping
 
@@ -52,7 +52,7 @@ class AlignClusters(Object):
     def get_cluster_types(self, gold_or_system, document_id, cluster_id):
         cluster_types = set()
         for entry in self.get('responses').get(gold_or_system).get('document_clusters').get(document_id).get(cluster_id).get('entries').values():
-            cluster_types.add(entry.get('cluster_type'))
+            cluster_types.add((trim_cv(entry.get('cluster_membership_confidence')) * trim_cv(entry.get('type_statement_confidence')), entry.get('cluster_type')))
         return cluster_types
 
     def get_document_cluster_similarities(self, document_id):
@@ -128,18 +128,18 @@ class AlignClusters(Object):
     def get_threshold(self, modality, language):
         return 0.1
 
-    def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2):
+    def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2, combine=statistics.mean):
         similarity = 0
         cluster1_types = self.get('cluster_types', system_or_gold1, document_id, cluster_id1)
         cluster2_types = self.get('cluster_types', system_or_gold2, document_id, cluster_id2)
         if len(cluster1_types & cluster2_types):
             similarity = 1.0
         else:
-            for q1 in cluster1_types:
-                for q2 in cluster2_types:
-                    isi_similarity_value = self.get('similarity').similarity(q1, q2)
-                    if similarity < isi_similarity_value:
-                        similarity = isi_similarity_value
+            similarities = []
+            for (conf1, q1) in cluster1_types:
+                for (conf2, q2) in cluster2_types:
+                    similarities.append(conf1 * conf2 * self.get('similarity').similarity(q1, q2))
+            similarity = combine(similarities)
         return similarity
 
     def align_clusters(self):
@@ -394,7 +394,8 @@ class Similarity(Object):
         self.alpha = alpha
         self.combine = combine
         self.taggable_dwd_ontology = taggable_dwd_ontology
-        self.SIMILARITY_TYPES = ['complex', 'transe', 'text', 'class', 'jc', 'topsim']
+        # self.SIMILARITY_TYPES = ['complex', 'transe', 'text', 'class', 'jc', 'topsim']
+        self.SIMILARITY_TYPES = ['class', 'jc']
         self.USE_ISI_SERVICE = USE_ISI_SERVICE
 
     def similarity(self, q1, q2):
@@ -542,7 +543,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Align system and gold clusters")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
-    parser.add_argument('-a', '--alpha', default=0.5, help='Specify the type similarity threshold (default: %(default)s)')
+    parser.add_argument('-a', '--alpha', default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
     parser.add_argument('core_documents', type=str, help='File containing list of core documents to be included in the pool')
