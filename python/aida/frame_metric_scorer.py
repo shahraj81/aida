@@ -91,30 +91,31 @@ class FrameMetricScorer(Scorer):
         frame = self.get('frame', system_or_gold, document_id, cluster_id)
         logger = self.get('logger')
         edges = Container(logger)
-        subject_metatype = frame.get('metatype')
-        role_fillers = frame.get('role_fillers')
-        for role_name in role_fillers:
-            for filler_cluster_id in role_fillers.get(role_name):
-                for predicate_justification in role_fillers.get(role_name).get(filler_cluster_id):
-                    subject_types = set(frame.get('types').keys())
-                    # in this version of the scorer, an edge is uniquely identified by (subject_cluster_id,
-                    # object_cluster_id)
-                    #
-                    # defined this way, the rolenames on the edge are a union of all the rolename
-                    # that go between the pair of clusters
-                    #
-                    # given the frame (of the subject cluster), number of unique edges correspond to the 
-                    # number of unique object cluster IDs
-                    edge_key = filler_cluster_id
-                    edge = edges.get(edge_key, default=TypeRoleFiller(logger))
-                    edge.update('edge_id', edge_key, single_valued=True)
-                    edge.update('negation_status', predicate_justification.get('is_assertion_negated'))
-                    edge.update('subject_cluster_id', frame.get('ID'), single_valued=True)
-                    edge.update('subject_types', subject_types)
-                    edge.update('metatype', subject_metatype, single_valued=True)
-                    edge.update('role_name', role_name)
-                    edge.update('filler_cluster_id', filler_cluster_id, single_valued=True)
-                    edge.update('predicate_justifications', predicate_justification)
+        if frame is not None:
+            subject_metatype = frame.get('metatype')
+            role_fillers = frame.get('role_fillers')
+            for role_name in role_fillers:
+                for filler_cluster_id in role_fillers.get(role_name):
+                    for predicate_justification in role_fillers.get(role_name).get(filler_cluster_id):
+                        subject_types = set(frame.get('types').keys())
+                        # in this version of the scorer, an edge is uniquely identified by (subject_cluster_id,
+                        # object_cluster_id)
+                        #
+                        # defined this way, the rolenames on the edge are a union of all the rolename
+                        # that go between the pair of clusters
+                        #
+                        # given the frame (of the subject cluster), number of unique edges correspond to the 
+                        # number of unique object cluster IDs
+                        edge_key = filler_cluster_id
+                        edge = edges.get(edge_key, default=TypeRoleFiller(logger))
+                        edge.update('edge_id', edge_key, single_valued=True)
+                        edge.update('negation_status', predicate_justification.get('is_assertion_negated'))
+                        edge.update('subject_cluster_id', frame.get('ID'), single_valued=True)
+                        edge.update('subject_types', subject_types)
+                        edge.update('metatype', subject_metatype, single_valued=True)
+                        edge.update('role_name', role_name)
+                        edge.update('filler_cluster_id', filler_cluster_id, single_valued=True)
+                        edge.update('predicate_justifications', predicate_justification)
         return edges
 
     def get_RoleSim(self, gold_edge, system_edge):
