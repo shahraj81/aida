@@ -49,7 +49,7 @@ class ScorePrinter(Container):
                     elements_to_print = {}
                     for field in self.printing_specs:
                         field_name = field.get('name')
-                        value = score.get('aggregate', field_name, aggregate_type) if field.get('mean_format') else ''
+                        value = score.get('aggregate', field_name, aggregate_type)
                         format_spec = field.get('mean_format') if score.get('summary') and field.get('mean_format') else field.get('format')
                         text = '{0:{1}}'.format(value, 's' if value=='' else format_spec)
                         elements_to_print[field_name] = text
