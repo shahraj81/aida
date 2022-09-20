@@ -64,10 +64,8 @@ class FrameMetricScorer(Scorer):
             system_edge.set('Edgescore', similarities.get(gold_edge_id).get(system_edge_id))
 
     def get_AverageEdgeScore(self, document_id, system_cluster_id, gold_cluster_id):
-        gold_frame = self.get('frame', 'gold', document_id, gold_cluster_id)
-        system_frame = self.get('frame', 'system', document_id, system_cluster_id)
-        gold_edges = self.get('edges', gold_frame)
-        system_edges = self.get('edges', system_frame)
+        gold_edges = self.get('edges', 'gold', document_id, gold_cluster_id)
+        system_edges = self.get('edges', 'system', document_id, system_cluster_id)
         self.align_edges(document_id, gold_edges, system_edges)
         # compute score
         sumEdgescore = 0
@@ -83,7 +81,14 @@ class FrameMetricScorer(Scorer):
                     count += 1
         return sumEdgescore/count if count else 0
 
-    def get_edges(self, frame):
+    def get_ClusterSim(self, document_id, gold_edge, system_edge, cluster_type):
+        # normalized similarity
+        sim = self.get('Sim', document_id, gold_edge, system_edge, cluster_type)
+        max_number_of_mentions = self.get('max_number_of_mentions', document_id, gold_edge, system_edge, cluster_type)
+        return sim/max_number_of_mentions
+
+    def get_edges(self, system_or_gold, document_id, cluster_id):
+        frame = self.get('frame', system_or_gold, document_id, cluster_id)
         logger = self.get('logger')
         edges = Container(logger)
         subject_metatype = frame.get('metatype')
@@ -128,7 +133,7 @@ class FrameMetricScorer(Scorer):
         trimmed_roles = {}
         for system_or_gold in edge:
             trimmed_roles[system_or_gold] = set([trim(r) for r in edge.get(system_or_gold).get('role_name')])
-        return float(len(trimmed_roles.get('system') & trimmed_roles.get('gold')))
+        return 1.0 if len(trimmed_roles.get('system') & trimmed_roles.get('gold')) else 0
 
     def get_Sim(self, document_id, gold_edge, system_edge, cluster_type):
         cluster_keys = {
@@ -147,10 +152,27 @@ class FrameMetricScorer(Scorer):
         return 0
 
     def get_Edgescore(self, document_id, gold_edge, system_edge):
-        Edgescore = self.get('Sim', document_id, gold_edge, gold_edge, cluster_type='subject')
+        Edgescore = self.get('ClusterSim', document_id, gold_edge, system_edge, cluster_type='subject')
         Edgescore *= self.get('RoleSim', gold_edge, gold_edge)
-        Edgescore *= self.get('Sim', document_id, gold_edge, gold_edge, cluster_type='object')
+        Edgescore *= self.get('ClusterSim', document_id, gold_edge, system_edge, cluster_type='object')
         return Edgescore
+
+    def get_max_number_of_mentions(self, document_id, gold_edge, system_edge, cluster_type):
+        cluster_keys = {
+            'subject': 'subject_cluster_id',
+            'object': 'filler_cluster_id'
+            }
+        edges = {'system': system_edge, 'gold': gold_edge}
+        max_number_of_mentions = 0
+        for system_or_gold in edges:
+            cluster_id = edges.get(system_or_gold).get(cluster_keys.get(cluster_type))
+            cluster = self.get('cluster', system_or_gold, document_id, cluster_id)
+            if len(cluster.get('mentions')) > max_number_of_mentions:
+                max_number_of_mentions = len(cluster.get('mentions'))
+        return max_number_of_mentions
+
+    def get_num_edges(self, system_or_gold, document_id, cluster_id):
+        return len(self.get('edges', system_or_gold, document_id, cluster_id))
 
     def score_responses(self):
         scores = []
@@ -165,6 +187,8 @@ class FrameMetricScorer(Scorer):
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
                 aligned_similarity = document_gold_to_system.get(gold_cluster_id).get('aligned_similarity')
+                num_gold_edges = 0
+                average_edge_score = 0
                 if gold_cluster_id == 'None': continue
                 gold_cluster = self.get('cluster', 'gold', document_id, gold_cluster_id)
                 metatype = gold_cluster.get('metatype')
@@ -175,9 +199,11 @@ class FrameMetricScorer(Scorer):
                     system_cluster = self.get('cluster', 'system', document_id, system_cluster_id)
                     if system_cluster.get('metatype') != metatype:
                         self.record_event('UNEXPECTED_ALIGNED_CLUSTER_METATYPE', system_cluster.get('metatype'), system_cluster_id, metatype, gold_cluster_id)
+                    num_gold_edges = self.get('num_edges', 'gold', document_id, gold_cluster_id)
                     average_edge_score = self.get('AverageEdgeScore', document_id, system_cluster_id, gold_cluster_id)
                     counted.get('system').add(system_cluster_id)
                     counted.get('gold').add(gold_cluster_id)
+                if num_gold_edges == 0: continue
                 score = FrameMetricScore(logger=self.logger,
                                          run_id=self.get('run_id'),
                                          document_id=document_id,
