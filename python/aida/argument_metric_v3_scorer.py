@@ -128,7 +128,7 @@ class ArgumentMetricScorerV3(Scorer):
         trimmed_roles = {}
         for system_or_gold in trfs:
             trimmed_roles[system_or_gold] = set([trim(r) for r in trfs.get(system_or_gold).get('role_name')])
-        return float(len(trimmed_roles.get('system') & trimmed_roles.get('gold')))
+        return 1.0 if len(trimmed_roles.get('system') & trimmed_roles.get('gold')) else 0
 
     def get_score(self, gold_trfs, system_trfs, metatypes):
         sumTRFscore = 0
