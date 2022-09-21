@@ -204,6 +204,11 @@ class ArgumentMetricScorerV3(Scorer):
             system_trfs = self.filter(self.get('document_types_role_fillers', 'system', document_id))
             self.align_trfs(document_id, gold_trfs, system_trfs)
             for metatype_key in metatypes:
+                counted_trfs = 0
+                for gold_trf in gold_trfs.values():
+                    if gold_trf.get('metatype') in metatypes.get(metatype_key):
+                        counted_trfs += 1
+                if not counted_trfs: continue
                 averageTRFscore = self.get('score', gold_trfs, system_trfs, metatypes[metatype_key])
                 score = ArgumentMetricScore(logger=self.logger,
                                             run_id=self.get('run_id'),
