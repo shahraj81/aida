@@ -28,9 +28,6 @@ from aida.negation_metric_scorer import NegationMetricScorer
 from aida.ndcg_v1_scorer import NDCGScorerV1
 from aida.ndcg_v2_scorer import NDCGScorerV2
 from aida.temporal_metric_scorer import TemporalMetricScorer
-from aida.type_metric_v1_scorer import TypeMetricScorerV1
-from aida.type_metric_v2_scorer import TypeMetricScorerV2
-from aida.type_metric_v3_scorer import TypeMetricScorerV3
 from aida.type_metric_v4_scorer import TypeMetricScorerV4
 
 import os
