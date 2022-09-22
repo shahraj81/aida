@@ -16,6 +16,7 @@ DEBUG     DEFAULT_DEBUG                   {}
 INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
 INFO      DOCUMENT_EDGE_INFO              DOCUMENT_ID:{} SYSTEM_OR_GOLD:{} EDGE_ID:{} SUBJECT_CLUSTER_ID:{} ROLE_NAMES:{} SUBJECT_TYPES:{} IS_ALIGNED:{} ALIGNED_TO:{} EDGE_SCORE:{}
+INFO      DOCUMENT_TRF_INFO               DOCUMENT_ID:{} SYSTEM_OR_GOLD:{} TRF_ID:{} METATYPE:{} ROLE_NAMES:{} IS_ALIGNED:{} ALIGNED_TO:{} TRF_SCORE:{}
 CRITICAL  DUPLICATE_VALUE                 {} appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 INFO      EDGE_SCORE_INFO                 DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} EDGE_SCORE:{}
@@ -92,8 +93,11 @@ WARNING   SPACE_IN_TYPE                   Space found in "{}"
 WARNING   SPAN_OFF_BOUNDARY_CORRECTED     Correcting span '{}' to '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     SPAN_OFF_BOUNDARY_ERROR         Cannot correct therefore removing span '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
+INFO      TRF_SCORE_INFO                  DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} TRF_SCORE:{}
 INFO      TYPE_METRIC_SCORE_INFO          {} {} DOCUMENT:{} GOLD_CLUSTER:{} TYPES:{} SYSTEM_CLUSTER:{} TYPES:{}
 WARNING   TYPE_NOT_IN_OVERLAY             Type '{}' not in overlay
+INFO      TYPE_SIM_DETAIL_INFO            DOCUMENT_ID:{} GOLD_EDGE:{} GOLD_CLUSTER:{} SYSTEM_EDGE:{} SYSTEM_CLUSTER:{} TYPE_SIM:{}
+INFO      TYPE_SIM_INFO                   DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} TYPE_SIM:{}
 INFO      ANNOTATED_TYPES_INFO            ANNOTATED_TYPES_INFO: DOCUMENT: {} TYPES_ANNOTATED: {}
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response

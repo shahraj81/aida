@@ -57,14 +57,16 @@ class ArgumentMetricScorerV3(Scorer):
         for gold_trf_index, system_trf_index in Munkres().compute(cost_matrix):
             gold_trf_id = mappings['gold']['index_to_id'][gold_trf_index]
             system_trf_id = mappings['system']['index_to_id'][system_trf_index]
-            gold_trf = gold_trfs.get(gold_trf_id)
-            system_trf = system_trfs.get(system_trf_id)
-            gold_trf.set('aligned', True)
-            gold_trf.set('aligned_to', system_trf)
-            gold_trf.set('TRFscore', similarities.get(gold_trf_id).get(system_trf_id))
-            system_trf.set('aligned', True)
-            system_trf.set('aligned_to', gold_trf)
-            system_trf.set('TRFscore', similarities.get(gold_trf_id).get(system_trf_id))
+            trf_score = similarities.get(gold_trf_id).get(system_trf_id)
+            if trf_score > 0:
+                gold_trf = gold_trfs.get(gold_trf_id)
+                system_trf = system_trfs.get(system_trf_id)
+                gold_trf.set('aligned', True)
+                gold_trf.set('aligned_to', system_trf)
+                gold_trf.set('TRFscore', similarities.get(gold_trf_id).get(system_trf_id))
+                system_trf.set('aligned', True)
+                system_trf.set('aligned_to', gold_trf)
+                system_trf.set('TRFscore', trf_score)
 
     def are_trfs_aligned(self, document_id, gold_trf, system_trf):
         if gold_trf.get('type') != system_trf.get('type'): return False
@@ -146,7 +148,7 @@ class ArgumentMetricScorerV3(Scorer):
             trimmed_roles[system_or_gold] = set([trim(r) for r in trfs.get(system_or_gold).get('role_name')])
         return 1.0 if len(trimmed_roles.get('system') & trimmed_roles.get('gold')) else 0
 
-    def get_score(self, gold_trfs, system_trfs, metatypes):
+    def get_score(self, document_id, gold_trfs, system_trfs, metatypes):
         sumTRFscore = 0
         count = 0
         trfs = {'gold': gold_trfs, 'system': system_trfs}
@@ -156,6 +158,14 @@ class ArgumentMetricScorerV3(Scorer):
                 count += 1
         for system_or_gold in trfs:
             for trf in trfs.get(system_or_gold).values():
+                # log TRF information
+                trf_id = trf.get('trf_id')
+                metatype = trf.get('metatype')
+                role_names = ','.join(sorted(trf.get('role_name')))
+                is_aligned = trf.get('aligned')
+                aligned_to = trf.get('aligned_to').get('trf_id') if is_aligned else 'None'
+                trf_score = trf.get('TRFscore')
+                self.record_event('DOCUMENT_TRF_INFO', document_id, system_or_gold, trf_id, metatype, role_names, is_aligned, aligned_to, trf_score)
                 if trf.get('aligned') is None and trf.get('metatype') in metatypes:
                     count += 1
         return sumTRFscore/count if count else 0
@@ -178,15 +188,21 @@ class ArgumentMetricScorerV3(Scorer):
         for system_cluster_id in system_trf.get('subject_cluster_id'):
             for gold_cluster_id in gold_trf.get('subject_cluster_id'):
                 TypeSim = self.get('type_similarity', document_id, system_cluster_id, gold_cluster_id)
+                self.record_event('TYPE_SIM_DETAIL_INFO', document_id, gold_trf.get('trf_id'), gold_cluster_id, system_trf.get('trf_id'), system_cluster_id, TypeSim)
                 if maxTypeSim < TypeSim:
                     maxTypeSim = TypeSim
         return maxTypeSim
 
     def get_TRFscore(self, document_id, gold_trf, system_trf):
-        TRFscore = self.get('TypeSim', document_id, gold_trf, system_trf)
-        TRFscore *= self.get('RoleSim', document_id, gold_trf, system_trf)
-        TRFscore *= self.get('ClusterSim', document_id, gold_trf, system_trf)
-        return TRFscore
+        type_sim = self.get('TypeSim', document_id, gold_trf, system_trf)
+        role_sim = self.get('RoleSim', document_id, gold_trf, system_trf)
+        cluster_sim = self.get('ClusterSim', document_id, gold_trf, system_trf)
+        trf_score = type_sim * role_sim * cluster_sim
+        self.record_event('TYPE_SIM_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), type_sim)
+        self.record_event('CLUSTER_SIM_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), 'object', cluster_sim)
+        self.record_event('ROLE_SIM_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), role_sim)
+        self.record_event('TRF_SCORE_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), trf_score)
+        return trf_score
 
     def score_responses(self):
         metatypes = {
@@ -209,7 +225,7 @@ class ArgumentMetricScorerV3(Scorer):
                     if gold_trf.get('metatype') in metatypes.get(metatype_key):
                         counted_trfs += 1
                 if not counted_trfs: continue
-                averageTRFscore = self.get('score', gold_trfs, system_trfs, metatypes[metatype_key])
+                averageTRFscore = self.get('score', document_id, gold_trfs, system_trfs, metatypes[metatype_key])
                 score = ArgumentMetricScore(logger=self.logger,
                                             run_id=self.get('run_id'),
                                             document_id=document_id,
