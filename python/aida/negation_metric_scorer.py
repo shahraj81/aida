@@ -65,11 +65,13 @@ class NegationMetricScorer(Scorer):
                 system_mention_ids = list(system_cluster.get('mentions').keys())
                 total_mention_negation_score = 0
                 for system_mention_id in system_mention_ids:
-                    system_mention_alignment = self.get('mention_alignment').get(document_id).get(system_cluster_id).get(system_mention_id)
+                    system_cluster_alignment = self.get('mention_alignment').get(document_id).get(system_cluster_id)
+                    system_mention_alignment = system_cluster_alignment.get(system_mention_id)
                     if system_mention_alignment is None: continue
                     gold_mention_id = system_mention_alignment.get('aligned_to')
-                    mention_negation_score = self.get('mention_negation_score', document_id, system_cluster, system_mention_id, gold_cluster, gold_mention_id)
-                    total_mention_negation_score += mention_negation_score
+                    if system_cluster_alignment.get('aligned_to') == gold_cluster_id and gold_mention_id in gold_mention_ids:
+                        mention_negation_score = self.get('mention_negation_score', document_id, system_cluster, system_mention_id, gold_cluster, gold_mention_id)
+                        total_mention_negation_score += mention_negation_score
                 precision = total_mention_negation_score / len(system_mention_ids) if len(system_mention_ids) else 0
                 recall = total_mention_negation_score / len(gold_mention_ids) if len(gold_mention_ids) else 0
                 f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
