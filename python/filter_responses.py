@@ -129,17 +129,13 @@ class AlignClusters(Object):
         return 0.1
 
     def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2, combine=statistics.mean):
-        similarity = 0
         cluster1_types = self.get('cluster_types', system_or_gold1, document_id, cluster_id1)
         cluster2_types = self.get('cluster_types', system_or_gold2, document_id, cluster_id2)
-        if len(cluster1_types & cluster2_types):
-            similarity = 1.0
-        else:
-            similarities = []
-            for (conf1, q1) in cluster1_types:
-                for (conf2, q2) in cluster2_types:
-                    similarities.append(conf1 * conf2 * self.get('similarity').similarity(q1, q2))
-            similarity = combine(similarities)
+        similarities = []
+        for (conf1, q1) in cluster1_types:
+            for (conf2, q2) in cluster2_types:
+                similarities.append(conf1 * conf2 * self.get('similarity').similarity(q1, q2))
+        similarity = combine(similarities)
         return similarity
 
     def align_clusters(self):
