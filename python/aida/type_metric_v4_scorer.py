@@ -63,9 +63,13 @@ class TypeMetricScorerV4(Scorer):
 
             document_gold_to_system = self.get('cluster_alignment').get('gold_to_system').get(document_id)
             for gold_cluster_id in document_gold_to_system if document_gold_to_system else []:
+                if gold_cluster_id == 'None': continue
                 system_cluster_id = document_gold_to_system.get(gold_cluster_id).get('aligned_to')
-                type_similarity = self.get('type_similarity', document_id, {'system': system_cluster_id, 'gold':gold_cluster_id})
+                type_similarity = 0.0000
+                if system_cluster_id != 'None':
+                    type_similarity = self.get('type_similarity', document_id, {'system': system_cluster_id, 'gold':gold_cluster_id})
                 metatype = self.get('metatype', document_id, {'system': system_cluster_id, 'gold':gold_cluster_id})
+                if metatype not in ['Entity', 'Event']: continue
                 score = TypeMetricScoreV4(logger=self.logger,
                                            run_id=self.get('run_id'),
                                            document_id=document_id,
@@ -91,7 +95,7 @@ class TypeMetricScorerV4(Scorer):
                                                    metatype=metatype,
                                                    gold_cluster_id=gold_cluster_id,
                                                    system_cluster_id=system_cluster_id,
-                                                   type_similarity=0)
+                                                   type_similarity=0.0000)
                         scores.append(score)
                     elif aligned_similarity == 0:
                         self.record_event('DEFAULT_CRITICAL_ERROR', 'aligned_similarity=0')
