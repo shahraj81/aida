@@ -414,7 +414,8 @@ def main(args):
     image_boundaries        = '/data/AUX-data/{}.image_boundaries.txt'.format(ldc_package_id)
     keyframe_boundaries     = '/data/AUX-data/{}.keyframe_boundaries.txt'.format(ldc_package_id)
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
-    annotated_regions       = '/data/AUX-data/{}.annotated_regions.txt'.format(ldc_package_id)
+    annotation_tagset       = '/data/AUX-data/AIDA_TA1_Annotation_Tagset_Phase_3_External_V1.0.xlsx'
+    dwd_overlay             = '/data/AUX-data/xpo_v5.1a.json'
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
@@ -634,6 +635,94 @@ def main(args):
                                           run_id=args.run,
                                           sparql_clean_output=sparql_clean_output,
                                           sparql_valid_output=sparql_valid_output)
+    call_system(cmd)
+
+    #############################################################################################
+    # Align clusters and mentions, and filter SPARQL output
+    #############################################################################################
+
+    record_and_display_message(logger, 'Aligning clusters and mentions, and filtering SPARQL output.')
+
+    log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 filter_responses.py \
+            --log {log_file} \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {annotation_tagset} \
+            {dwd_overlay} \
+            {gold_filtered_responses} \
+            {run_id} \
+            {sparql_valid_output} \
+            {similarities} \
+            {alignment} \
+            {sparql_filtered_output}'.format(python_scripts=python_scripts,
+                                          log_file=log_file,
+                                          log_specifications=log_specifications,
+                                          encoding_modality=encoding_modality,
+                                          coredocs=coredocs_xx,
+                                          parent_children=parent_children,
+                                          sentence_boundaries=sentence_boundaries,
+                                          image_boundaries=image_boundaries,
+                                          keyframe_boundaries=keyframe_boundaries,
+                                          video_boundaries=video_boundaries,
+                                          annotation_tagset=annotation_tagset,
+                                          dwd_overlay=dwd_overlay,
+                                          gold_filtered_responses=gold_filtered_responses,
+                                          run_id=args.run,
+                                          sparql_valid_output=sparql_valid_output,
+                                          similarities=similarities,
+                                          alignment=alignment,
+                                          sparql_filtered_output=sparql_filtered_output)
+    call_system(cmd)
+
+    #############################################################################################
+    # Generate scores
+    #############################################################################################
+
+    record_and_display_message(logger, 'Generating scores.')
+
+    log_file = '{logs_directory}/score-responses.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 score_submission.py \
+            task1 \
+            --log {log_file} \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {gold_filtered_responses} \
+            {sparql_filtered_output} \
+            {alignment} \
+            {similarities} \
+            {run_id} \
+            {sparql_valid_output} \
+            {scores}'.format(python_scripts=python_scripts,
+                                          log_file=log_file,
+                                          log_specifications=log_specifications,
+                                          encoding_modality=encoding_modality,
+                                          coredocs=coredocs_xx,
+                                          parent_children=parent_children,
+                                          sentence_boundaries=sentence_boundaries,
+                                          image_boundaries=image_boundaries,
+                                          keyframe_boundaries=keyframe_boundaries,
+                                          video_boundaries=video_boundaries,
+                                          gold_filtered_responses=gold_filtered_responses,
+                                          run_id=args.run,
+                                          sparql_valid_output=sparql_valid_output,
+                                          similarities=similarities,
+                                          alignment=alignment,
+                                          scores=scores)
     call_system(cmd)
 
     generate_dummy_results(logger, logs_directory)
