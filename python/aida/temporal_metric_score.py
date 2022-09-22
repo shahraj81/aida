@@ -17,7 +17,8 @@ class TemporalMetricScore(Score):
         for key in kwargs:
             self.set(key, kwargs[key])
         self.metatype_sortkey = '_ALL' if self.get('metatype') == 'ALL' else self.get('metatype')
-        self.set_defaults()
+        if not self.get('summary'):
+            self.set_defaults()
 
     def set_defaults(self):
         defaults = {
