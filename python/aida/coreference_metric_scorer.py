@@ -29,11 +29,12 @@ class CoreferenceMetricScorer(Scorer):
 
     def get_max_total_similarity(self, document_id, metatypes):
         max_total_similarity = 0
-        for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):
-            if cluster_id == 'None': continue
-            metatype = self.get('metatype', document_id, 'gold', cluster_id)
-            if metatype not in metatypes: continue
-            max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
+        if document_id in self.get('cluster_alignment').get('gold_to_system'):
+            for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):
+                if cluster_id == 'None': continue
+                metatype = self.get('metatype', document_id, 'gold', cluster_id)
+                if metatype not in metatypes: continue
+                max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
         return max_total_similarity
 
     def get_metatype(self, document_id, system_or_gold, cluster_id):
@@ -50,11 +51,12 @@ class CoreferenceMetricScorer(Scorer):
         total_self_similarity = 0
         if system_or_gold == 'system' and document_id not in self.get('cluster_self_similarities').get(system_or_gold):
             return total_self_similarity
-        for cluster_id in self.get('cluster_self_similarities').get(system_or_gold).get(document_id):
-            metatype = self.get('metatype', document_id, system_or_gold, cluster_id)
-            if metatype not in metatypes: continue
-            self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
-            total_self_similarity += float(self_similarity)
+        if document_id in self.get('cluster_self_similarities').get(system_or_gold):
+            for cluster_id in self.get('cluster_self_similarities').get(system_or_gold).get(document_id):
+                metatype = self.get('metatype', document_id, system_or_gold, cluster_id)
+                if metatype not in metatypes: continue
+                self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
+                total_self_similarity += float(self_similarity)
         return total_self_similarity
 
     def score_responses(self):

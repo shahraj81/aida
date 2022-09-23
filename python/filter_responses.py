@@ -58,7 +58,7 @@ class AlignClusters(Object):
     def get_document_cluster_similarities(self, document_id):
         similarities = {}
         for gold_cluster_id in sorted(self.get('responses').get('gold').get('document_clusters').get(document_id) or []):
-            for system_cluster_id in sorted(self.get('responses').get('system').get('document_clusters').get(document_id)):
+            for system_cluster_id in sorted(self.get('responses').get('system').get('document_clusters').get(document_id) or []):
                 similarity = self.get('metatype_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
                 if similarity > 0:
                     similarity *= self.get('type_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)

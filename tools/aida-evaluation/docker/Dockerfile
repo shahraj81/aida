@@ -73,6 +73,24 @@ RUN pip3.9 install arch
 RUN pip3.9 install numpy
 
 #-------------------------------------------------------------
+#  Install rdflib
+#-------------------------------------------------------------
+
+RUN pip3.9 install rdflib
+
+#-------------------------------------------------------------
+#  Install requests
+#-------------------------------------------------------------
+
+RUN pip3.9 install requests
+
+#-------------------------------------------------------------
+#  Install openpyxl
+#-------------------------------------------------------------
+
+RUN pip3.9 install openpyxl
+
+#-------------------------------------------------------------
 #  Install GraphDB
 #  Taken from the Dockerfile for GraphDB docker available at:
 #  https://github.com/Ontotext-AD/graphdb-docker

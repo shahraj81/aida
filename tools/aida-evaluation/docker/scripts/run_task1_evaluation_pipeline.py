@@ -425,7 +425,7 @@ def main(args):
     similarities            = '{output}/similarities'.format(output=args.output)
     scores                  = '{output}/scores'.format(output=args.output)
 
-    gold_filtered_responses = '/data/gold/SPARQL-FILTERED-output'
+    gold_valid_responses = '/data/gold/SPARQL-VALID-output'
 
     #############################################################################################
     # pull latest copy of code from git
@@ -657,7 +657,7 @@ def main(args):
             {video_boundaries} \
             {annotation_tagset} \
             {dwd_overlay} \
-            {gold_filtered_responses} \
+            {gold_valid_responses} \
             {run_id} \
             {sparql_valid_output} \
             {similarities} \
@@ -674,7 +674,7 @@ def main(args):
                                           video_boundaries=video_boundaries,
                                           annotation_tagset=annotation_tagset,
                                           dwd_overlay=dwd_overlay,
-                                          gold_filtered_responses=gold_filtered_responses,
+                                          gold_valid_responses=gold_valid_responses,
                                           run_id=args.run,
                                           sparql_valid_output=sparql_valid_output,
                                           similarities=similarities,
@@ -701,12 +701,11 @@ def main(args):
             {image_boundaries} \
             {keyframe_boundaries} \
             {video_boundaries} \
-            {gold_filtered_responses} \
+            {gold_valid_responses} \
             {sparql_filtered_output} \
             {alignment} \
             {similarities} \
             {run_id} \
-            {sparql_valid_output} \
             {scores}'.format(python_scripts=python_scripts,
                                           log_file=log_file,
                                           log_specifications=log_specifications,
@@ -717,9 +716,9 @@ def main(args):
                                           image_boundaries=image_boundaries,
                                           keyframe_boundaries=keyframe_boundaries,
                                           video_boundaries=video_boundaries,
-                                          gold_filtered_responses=gold_filtered_responses,
+                                          gold_valid_responses=gold_valid_responses,
                                           run_id=args.run,
-                                          sparql_valid_output=sparql_valid_output,
+                                          sparql_filtered_output=sparql_filtered_output,
                                           similarities=similarities,
                                           alignment=alignment,
                                           scores=scores)
