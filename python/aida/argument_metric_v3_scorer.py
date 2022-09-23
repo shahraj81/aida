@@ -112,13 +112,13 @@ class ArgumentMetricScorerV3(Scorer):
                     for filler_cluster_id in role_fillers.get(role_name):
                         for predicate_justification in role_fillers.get(role_name).get(filler_cluster_id):
                             subject_types = set(frame.get('types').keys())
-                            trf_key = '{types_str}:{filler_cluster_id}'.format(types_str=types_tostring(subject_types),
-                                                                               filler_cluster_id=filler_cluster_id)
+                            trf_key = '{subject_cluster_id}:{filler_cluster_id}'.format(subject_cluster_id=frame.get('ID'),
+                                                                                        filler_cluster_id=filler_cluster_id)
                             types_role_filler = types_role_fillers.get(trf_key, default=TypeRoleFiller(logger))
                             types_role_filler.update('trf_id', trf_key, single_valued=True)
                             types_role_filler.update('document_id', document_id, single_valued=True)
                             types_role_filler.update('negation_status', predicate_justification.get('is_assertion_negated'))
-                            types_role_filler.update('subject_cluster_id', frame.get('ID'))
+                            types_role_filler.update('subject_cluster_id', frame.get('ID'), single_valued=True)
                             types_role_filler.update('subject_types', subject_types)
                             types_role_filler.update('metatype', subject_metatype, single_valued=True)
                             types_role_filler.update('role_name', role_name)
@@ -126,7 +126,7 @@ class ArgumentMetricScorerV3(Scorer):
                             types_role_filler.update('predicate_justifications', predicate_justification)
         return types_role_fillers
 
-    def get_RoleSim(self, document_id, gold_trf, system_trf):
+    def get_RolesPrecision(self, document_id, gold_trf, system_trf):
         def trim(rolename):
             parts = rolename.split('_')
             num_parts = 2
@@ -142,7 +142,7 @@ class ArgumentMetricScorerV3(Scorer):
         trimmed_roles = {}
         for system_or_gold in trfs:
             trimmed_roles[system_or_gold] = set([trim(r) for r in trfs.get(system_or_gold).get('role_name')])
-        return 1.0 if len(trimmed_roles.get('system') & trimmed_roles.get('gold')) else 0
+        return len(trimmed_roles.get('system') & trimmed_roles.get('gold')) / len(trimmed_roles.get('system')) if len(trimmed_roles.get('system')) else 0
 
     def get_score(self, document_id, gold_trfs, system_trfs, metatypes):
         sumTRFscore = 0
@@ -180,23 +180,16 @@ class ArgumentMetricScorerV3(Scorer):
         return float(self.get('type_similarities').get('type_similarity', document_id, system_cluster_id, gold_cluster_id))
 
     def get_TypeSim(self, document_id, gold_trf, system_trf):
-        maxTypeSim = 0
-        for system_cluster_id in system_trf.get('subject_cluster_id'):
-            for gold_cluster_id in gold_trf.get('subject_cluster_id'):
-                TypeSim = self.get('type_similarity', document_id, system_cluster_id, gold_cluster_id)
-                self.record_event('TYPE_SIM_DETAIL_INFO', document_id, gold_trf.get('trf_id'), gold_cluster_id, system_trf.get('trf_id'), system_cluster_id, TypeSim)
-                if maxTypeSim < TypeSim:
-                    maxTypeSim = TypeSim
-        return maxTypeSim
+        return self.get('type_similarity', document_id, system_trf.get('subject_cluster_id'), gold_trf.get('subject_cluster_id'))
 
     def get_TRFscore(self, document_id, gold_trf, system_trf):
         type_sim = self.get('TypeSim', document_id, gold_trf, system_trf)
-        role_sim = self.get('RoleSim', document_id, gold_trf, system_trf)
+        roles_precision = self.get('RolesPrecision', document_id, gold_trf, system_trf)
         cluster_sim = self.get('ClusterSim', document_id, gold_trf, system_trf)
-        trf_score = type_sim * role_sim * cluster_sim
+        trf_score = type_sim * roles_precision * cluster_sim
         self.record_event('TYPE_SIM_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), type_sim)
         self.record_event('CLUSTER_SIM_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), 'object', cluster_sim)
-        self.record_event('ROLE_SIM_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), role_sim)
+        self.record_event('ROLES_PRECISION_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), roles_precision)
         self.record_event('TRF_SCORE_INFO', document_id, gold_trf.get('trf_id'), system_trf.get('trf_id'), trf_score)
         return trf_score
 
