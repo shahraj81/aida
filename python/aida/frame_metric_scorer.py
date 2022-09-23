@@ -105,7 +105,7 @@ class FrameMetricScorer(Scorer):
         sim = self.get('Sim', document_id, gold_edge, system_edge, cluster_type)
         precision = sim/get_number_of_mentions(document_id, cluster_type, 'system', system_edge)
         recall = sim/get_number_of_mentions(document_id, cluster_type, 'gold', gold_edge)
-        f1 = 2 * precision * recall / (precision + recall)
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
         return f1
 
     def get_edges(self, system_or_gold, document_id, cluster_id):

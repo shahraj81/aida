@@ -95,7 +95,7 @@ class ArgumentMetricScorerV3(Scorer):
         sim = self.get('Sim', document_id, gold_trf, system_trf)
         precision = sim/get_number_of_mentions(document_id, 'system', system_trf)
         recall = sim/get_number_of_mentions(document_id, 'gold', gold_trf)
-        f1 = 2 * precision * recall / (precision + recall)
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
         return f1
 
     def get_document_types_role_fillers(self, system_or_gold, document_id):
