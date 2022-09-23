@@ -156,7 +156,7 @@ class FrameMetricScorer(Scorer):
         trimmed_roles = {}
         for system_or_gold in edge:
             trimmed_roles[system_or_gold] = set([trim(r) for r in edge.get(system_or_gold).get('role_name')])
-        return 1.0 if len(trimmed_roles.get('system') & trimmed_roles.get('gold')) else 0
+        return len(trimmed_roles.get('system') & trimmed_roles.get('gold')) / len(trimmed_roles.get('system')) if len(trimmed_roles.get('system')) else 0
 
     def get_Sim(self, document_id, gold_edge, system_edge, cluster_type):
         cluster_keys = {
