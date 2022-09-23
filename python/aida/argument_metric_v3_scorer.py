@@ -88,9 +88,15 @@ class ArgumentMetricScorerV3(Scorer):
 
     def get_ClusterSim(self, document_id, gold_trf, system_trf):
         # normalized similarity
+        def get_number_of_mentions(document_id, system_or_gold, trf):
+            cluster_id = trf.get('filler_cluster_id')
+            cluster = self.get('cluster', system_or_gold, document_id, cluster_id)
+            return len(cluster.get('mentions'))
         sim = self.get('Sim', document_id, gold_trf, system_trf)
-        max_number_of_mentions = self.get('max_number_of_mentions', document_id, gold_trf, system_trf)
-        return sim/max_number_of_mentions
+        precision = sim/get_number_of_mentions(document_id, 'system', system_trf)
+        recall = sim/get_number_of_mentions(document_id, 'gold', gold_trf)
+        f1 = 2 * precision * recall / (precision + recall)
+        return f1
 
     def get_document_types_role_fillers(self, system_or_gold, document_id):
         def types_tostring(types):
@@ -119,16 +125,6 @@ class ArgumentMetricScorerV3(Scorer):
                             types_role_filler.update('filler_cluster_id', filler_cluster_id, single_valued=True)
                             types_role_filler.update('predicate_justifications', predicate_justification)
         return types_role_fillers
-
-    def get_max_number_of_mentions(self, document_id, gold_trf, system_trf):
-        trfs = {'system': system_trf, 'gold': gold_trf}
-        max_number_of_mentions = 0
-        for system_or_gold in trfs:
-            cluster_id = trfs.get(system_or_gold).get('filler_cluster_id')
-            cluster = self.get('cluster', system_or_gold, document_id, cluster_id)
-            if len(cluster.get('mentions')) > max_number_of_mentions:
-                max_number_of_mentions = len(cluster.get('mentions'))
-        return max_number_of_mentions
 
     def get_RoleSim(self, document_id, gold_trf, system_trf):
         def trim(rolename):

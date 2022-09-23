@@ -94,9 +94,19 @@ class FrameMetricScorer(Scorer):
 
     def get_ClusterSim(self, document_id, gold_edge, system_edge, cluster_type):
         # normalized similarity
+        def get_number_of_mentions(document_id, cluster_type, system_or_gold, edge):
+            cluster_keys = {
+                'subject': 'subject_cluster_id',
+                'object': 'filler_cluster_id'
+                }
+            cluster_id = edge.get(cluster_keys.get(cluster_type))
+            cluster = self.get('cluster', system_or_gold, document_id, cluster_id)
+            return len(cluster.get('mentions'))
         sim = self.get('Sim', document_id, gold_edge, system_edge, cluster_type)
-        max_number_of_mentions = self.get('max_number_of_mentions', document_id, gold_edge, system_edge, cluster_type)
-        return sim/max_number_of_mentions
+        precision = sim/get_number_of_mentions(document_id, cluster_type, 'system', system_edge)
+        recall = sim/get_number_of_mentions(document_id, cluster_type, 'gold', gold_edge)
+        f1 = 2 * precision * recall / (precision + recall)
+        return f1
 
     def get_edges(self, system_or_gold, document_id, cluster_id):
         frame = self.get('frame', system_or_gold, document_id, cluster_id)
@@ -174,20 +184,6 @@ class FrameMetricScorer(Scorer):
         self.record_event('CLUSTER_SIM_INFO', document_id, gold_edge.get('edge_id'), system_edge.get('edge_id'), 'object', object_cluster_sim)
         self.record_event('EDGE_SCORE_INFO', document_id, gold_edge.get('edge_id'), system_edge.get('edge_id'), edge_score)
         return edge_score
-
-    def get_max_number_of_mentions(self, document_id, gold_edge, system_edge, cluster_type):
-        cluster_keys = {
-            'subject': 'subject_cluster_id',
-            'object': 'filler_cluster_id'
-            }
-        edges = {'system': system_edge, 'gold': gold_edge}
-        max_number_of_mentions = 0
-        for system_or_gold in edges:
-            cluster_id = edges.get(system_or_gold).get(cluster_keys.get(cluster_type))
-            cluster = self.get('cluster', system_or_gold, document_id, cluster_id)
-            if len(cluster.get('mentions')) > max_number_of_mentions:
-                max_number_of_mentions = len(cluster.get('mentions'))
-        return max_number_of_mentions
 
     def get_num_edges(self, system_or_gold, document_id, cluster_id):
         return len(self.get('edges', system_or_gold, document_id, cluster_id))
