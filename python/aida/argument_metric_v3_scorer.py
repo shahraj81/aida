@@ -183,6 +183,8 @@ class ArgumentMetricScorerV3(Scorer):
         return self.get('type_similarity', document_id, system_trf.get('subject_cluster_id'), gold_trf.get('subject_cluster_id'))
 
     def get_TRFscore(self, document_id, gold_trf, system_trf):
+        if gold_trf.get('metatype') != system_trf.get('metatype'):
+            return 0
         type_sim = self.get('TypeSim', document_id, gold_trf, system_trf)
         roles_precision = self.get('RolesPrecision', document_id, gold_trf, system_trf)
         cluster_sim = self.get('ClusterSim', document_id, gold_trf, system_trf)
