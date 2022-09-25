@@ -77,7 +77,6 @@ class NegationMetricScorerV2(Scorer):
                     gold_cluster = self.get('gold_responses').get('document_clusters').get(document_id).get(gold_cluster_id)
                     metatype = gold_cluster.get('metatype')
                     if metatype not in metatypes.get(metatype_key): continue
-                    if metatype not in ['Relation', 'Event']: continue
                     gold_mention_ids = list(gold_cluster.get('mentions').keys())
                     system_cluster = self.get('system_responses').get('document_clusters').get(document_id).get(system_cluster_id)
                     system_mention_ids = list(system_cluster.get('mentions').keys())
