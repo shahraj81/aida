@@ -68,7 +68,7 @@ class NegationMetricScorerV2(Scorer):
                                         negated_mention_exists[metatype_key] = True
 
             for metatype_key in metatypes:
-                if negated_mention_exists.get(metatype_key): continue
+                if not negated_mention_exists.get(metatype_key): continue
                 true_positive, false_positive, false_negative = 0, 0, 0
                 document_system_to_gold = self.get('cluster_alignment').get('system_to_gold').get(document_id)
                 for system_cluster_id in document_system_to_gold if document_system_to_gold else []:
