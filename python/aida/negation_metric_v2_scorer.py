@@ -40,8 +40,8 @@ class NegationMetricScorerV2(Scorer):
 
     def score_responses(self):
         metatypes = {
-            'ALL': ['Entity', 'Event'],
-            'Entity': ['Entity'],
+            'ALL': ['Relation', 'Event'],
+            'Relation': ['Relation'],
             'Event': ['Event']
             }
         scores = []
