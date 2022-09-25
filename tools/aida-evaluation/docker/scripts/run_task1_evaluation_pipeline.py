@@ -326,7 +326,7 @@ def generate_results_file_and_exit(logger, logs_directory):
             file_handle = open(filename, "r")
             lines = file_handle.readlines()
             columns = lines[0].strip().split()
-            for line in [l for l in lines if 'Summary' in l]:
+            for line in [l for l in lines if 'ALL-Micro' in l]:
                 line.strip()
                 values = line.split()
                 for i in range(len(columns) - len(values)):
