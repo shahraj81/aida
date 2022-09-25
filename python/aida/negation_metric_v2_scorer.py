@@ -62,10 +62,10 @@ class NegationMetricScorerV2(Scorer):
                     for cluster in responses.get(system_or_gold).get('document_clusters').get(document_id).values():
                         for mention in cluster.get('mentions').values():
                             if mention.get('is_negated') == 'Negated':
-                                mention_metatype = mention.get('metatype')
+                                cluster_metatype = cluster.get('metatype')
                                 for metatype_key in metatypes:
-                                    if mention_metatype in metatypes.get(metatype_key):
-                                        negated_mention_exists[mention_metatype] = True
+                                    if cluster_metatype in metatypes.get(metatype_key):
+                                        negated_mention_exists[metatype_key] = True
 
             for metatype_key in metatypes:
                 if negated_mention_exists.get(metatype_key): continue
