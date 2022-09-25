@@ -202,22 +202,22 @@ def get_metric_classes_specs():
         # ---
         # TypeMetricV4
         #
-          TypeMetricV1-scores.txt        TypeMetricV4_S                              Language:ALL,Metatype:ALL      TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_S                              Language:ALL,Metatype:ALL      TypeSimilarity
 
-          TypeMetricV1-scores.txt        TypeMetricV4_Events_S                       Language:ALL,Metatype:Event    TypeSimilarity
-          TypeMetricV1-scores.txt        TypeMetricV4_Entities_S                     Language:ALL,Metatype:Entity   TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_Events_S                       Language:ALL,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_Entities_S                     Language:ALL,Metatype:Entity   TypeSimilarity
 
-          TypeMetricV1-scores.txt        TypeMetricV4_ENG_S                          Language:ENG,Metatype:ALL      TypeSimilarity
-          TypeMetricV1-scores.txt        TypeMetricV4_ENG_Events_S                   Language:ENG,Metatype:Event    TypeSimilarity
-          TypeMetricV1-scores.txt        TypeMetricV4_ENG_Entities_S                 Language:ENG,Metatype:Entity   TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_ENG_S                          Language:ENG,Metatype:ALL      TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_ENG_Events_S                   Language:ENG,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_ENG_Entities_S                 Language:ENG,Metatype:Entity   TypeSimilarity
 
-          TypeMetricV1-scores.txt        TypeMetricV4_RUS_S                          Language:RUS,Metatype:ALL      TypeSimilarity
-          TypeMetricV1-scores.txt        TypeMetricV4_RUS_Events_S                   Language:RUS,Metatype:Event    TypeSimilarity
-          TypeMetricV1-scores.txt        TypeMetricV4_RUS_Entities_S                 Language:RUS,Metatype:Entity   TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_RUS_S                          Language:RUS,Metatype:ALL      TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_RUS_Events_S                   Language:RUS,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_RUS_Entities_S                 Language:RUS,Metatype:Entity   TypeSimilarity
 
-          TypeMetricV1-scores.txt        TypeMetricV4_SPA_S                          Language:SPA,Metatype:ALL      TypeSimilarity
-          TypeMetricV1-scores.txt        TypeMetricV4_SPA_Events_S                   Language:SPA,Metatype:Event    TypeSimilarity
-          TypeMetricV1-scores.txt        TypeMetricV4_SPA_Entities_S                 Language:SPA,Metatype:Entity   TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_SPA_S                          Language:SPA,Metatype:ALL      TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_SPA_Events_S                   Language:SPA,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_SPA_Entities_S                 Language:SPA,Metatype:Entity   TypeSimilarity
 
         # ---
         # FrameMetric
@@ -240,24 +240,44 @@ def get_metric_classes_specs():
           FrameMetric-scores.txt         FrameMetric_SPA_Relations_S                 Language:SPA,Metatype:Relation AvgEdgeScore
 
         # ---
-        # NegationMetric
+        # NegationMetricV1
         #
-          NegationMetric-scores.txt      NegationMetric_F1                           Language:ALL,Metatype:ALL      F1
+          NegationMetricV1-scores.txt    NegationMetricV1_F1                         Language:ALL,Metatype:ALL      F1
 
-          NegationMetric-scores.txt      NegationMetric_Events_F1                    Language:ALL,Metatype:Event    F1
-          NegationMetric-scores.txt      NegationMetric_Relations_F1                 Language:ALL,Metatype:Relation F1
+          NegationMetricV1-scores.txt    NegationMetricV1_Events_F1                  Language:ALL,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_Relations_F1               Language:ALL,Metatype:Relation F1
 
-          NegationMetric-scores.txt      NegationMetric_ENG_F1                       Language:ENG,Metatype:ALL      F1
-          NegationMetric-scores.txt      NegationMetric_ENG_Events_F1                Language:ENG,Metatype:Event    F1
-          NegationMetric-scores.txt      NegationMetric_ENG_Relations_F1             Language:ENG,Metatype:Relation F1
+          NegationMetricV1-scores.txt    NegationMetricV1_ENG_F1                     Language:ENG,Metatype:ALL      F1
+          NegationMetricV1-scores.txt    NegationMetricV1_ENG_Events_F1              Language:ENG,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_ENG_Relations_F1           Language:ENG,Metatype:Relation F1
 
-          NegationMetric-scores.txt      NegationMetric_RUS_F1                       Language:RUS,Metatype:ALL      F1
-          NegationMetric-scores.txt      NegationMetric_RUS_Events_F1                Language:RUS,Metatype:Event    F1
-          NegationMetric-scores.txt      NegationMetric_RUS_Relations_F1             Language:RUS,Metatype:Relation F1
+          NegationMetricV1-scores.txt    NegationMetricV1_RUS_F1                     Language:RUS,Metatype:ALL      F1
+          NegationMetricV1-scores.txt    NegationMetricV1_RUS_Events_F1              Language:RUS,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_RUS_Relations_F1           Language:RUS,Metatype:Relation F1
 
-          NegationMetric-scores.txt      NegationMetric_SPA_F1                       Language:SPA,Metatype:ALL      F1
-          NegationMetric-scores.txt      NegationMetric_SPA_Events_F1                Language:SPA,Metatype:Event    F1
-          NegationMetric-scores.txt      NegationMetric_SPA_Relations_F1             Language:SPA,Metatype:Relation F1
+          NegationMetricV1-scores.txt    NegationMetricV1_SPA_F1                     Language:SPA,Metatype:ALL      F1
+          NegationMetricV1-scores.txt    NegationMetricV1_SPA_Events_F1              Language:SPA,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_SPA_Relations_F1           Language:SPA,Metatype:Relation F1
+
+        # ---
+        # NegationMetricV2
+        #
+          NegationMetricV2-scores.txt    NegationMetricV2_F1                         Language:ALL,Metatype:ALL      F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_Events_F1                  Language:ALL,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_Relations_F1               Language:ALL,Metatype:Relation F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_ENG_F1                     Language:ENG,Metatype:ALL      F1
+          NegationMetricV2-scores.txt    NegationMetricV2_ENG_Events_F1              Language:ENG,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_ENG_Relations_F1           Language:ENG,Metatype:Relation F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_RUS_F1                     Language:RUS,Metatype:ALL      F1
+          NegationMetricV2-scores.txt    NegationMetricV2_RUS_Events_F1              Language:RUS,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_RUS_Relations_F1           Language:RUS,Metatype:Relation F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_SPA_F1                     Language:SPA,Metatype:ALL      F1
+          NegationMetricV2-scores.txt    NegationMetricV2_SPA_Events_F1              Language:SPA,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_SPA_Relations_F1           Language:SPA,Metatype:Relation F1
 
     """
     return metric_classes_specs
