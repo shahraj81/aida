@@ -24,7 +24,8 @@ from aida.f1_v2b_scorer import F1ScorerV2B
 from aida.f1_v1c_scorer import F1ScorerV1C
 from aida.f1_v2c_scorer import F1ScorerV2C
 from aida.frame_metric_scorer import FrameMetricScorer
-from aida.negation_metric_scorer import NegationMetricScorer
+from aida.negation_metric_v1_scorer import NegationMetricScorerV1
+from aida.negation_metric_v2_scorer import NegationMetricScorerV2
 from aida.ndcg_v1_scorer import NDCGScorerV1
 from aida.ndcg_v2_scorer import NDCGScorerV2
 from aida.temporal_metric_scorer import TemporalMetricScorer
@@ -48,7 +49,8 @@ class ScoresManager(Object):
             'CoreferenceMetric': CoreferenceMetricScorer,
             'FrameMetric': FrameMetricScorer,
             'TemporalMetric': TemporalMetricScorer,
-            'NegationMetric': NegationMetricScorer,
+            'NegationMetricV1': NegationMetricScorerV1,
+            'NegationMetricV2': NegationMetricScorerV2,
             'TypeMetricV4': TypeMetricScorerV4,
             },
         'task2': {

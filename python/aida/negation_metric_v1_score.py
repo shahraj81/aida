@@ -8,7 +8,7 @@ __date__    = "13 September 2022"
 
 from aida.score import Score
 
-class NegationMetricScore(Score):
+class NegationMetricScoreV1(Score):
     """
     AIDA class for negation metric score.
     """

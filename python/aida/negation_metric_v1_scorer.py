@@ -8,15 +8,10 @@ __date__    = "18 August 2020"
 
 from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
-from aida.negation_metric_score import NegationMetricScore
+from aida.negation_metric_v1_score import NegationMetricScoreV1
 from aida.utility import multisort
 
-
-
-import random
-
-
-class NegationMetricScorer(Scorer):
+class NegationMetricScorerV1(Scorer):
     """
     Class for negation metric scores.
     """
@@ -76,7 +71,7 @@ class NegationMetricScorer(Scorer):
                 recall = total_mention_negation_score / len(gold_mention_ids) if len(gold_mention_ids) else 0
                 f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
 
-                score = NegationMetricScore(logger=self.logger,
+                score = NegationMetricScoreV1(logger=self.logger,
                                           run_id=self.get('run_id'),
                                           document_id=document_id,
                                           language=language,
@@ -94,5 +89,5 @@ class NegationMetricScorer(Scorer):
                                         ('gold_cluster_id', False),
                                         ('system_cluster_id', False))):
             scores_printer.add(score)
-        self.aggregate_scores(scores_printer, NegationMetricScore)
+        self.aggregate_scores(scores_printer, NegationMetricScoreV1)
         self.scores = scores_printer
