@@ -28,7 +28,7 @@ class TypeSimilarities(Object):
     def get_type_similarity(self, document_id, system_cluster_id, gold_cluster_id):
         type_similarity = 0
         document_type_similarities = self.get('document_type_similarities', document_id)
-        if system_cluster_id in document_type_similarities:
+        if document_type_similarities and system_cluster_id in document_type_similarities:
             if gold_cluster_id in document_type_similarities.get(system_cluster_id):
                 type_similarity = document_type_similarities.get(system_cluster_id).get(gold_cluster_id)
         return type_similarity
