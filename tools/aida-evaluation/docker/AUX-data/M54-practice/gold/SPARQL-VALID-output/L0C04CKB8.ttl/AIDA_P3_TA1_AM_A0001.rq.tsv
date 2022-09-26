@@ -1,0 +1,13 @@
+?is_assertion_negated	?subject_metatype	?subject	?is_subject_negated	?predicate	?object_metatype	?object	?is_object_negated	?predicate_justification	?argument_assertion_confidence	?predicate_justification_confidence
+NotNegated	Relation	cluster-NILQR30263	NotNegated	A0	Entity	cluster-Q930729	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Relation	cluster-NILQR30263	NotNegated	A1	Entity	cluster-Q34	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Relation	cluster-NILQR30264	NotNegated	A0	Entity	cluster-NILQE30897	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Relation	cluster-NILQR30264	NotNegated	A1	Entity	cluster-Q34	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30382	Negated	A0_pag_agent_one_party	Entity	cluster-NILQE30898	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30382	Negated	AM_loc__location	Entity	cluster-Q34	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30383	NotNegated	A0_pag_agent_asker	Entity	cluster-Q930729	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30383	NotNegated	A1_ppt_topic_favor	Event	cluster-NILQV30382	Negated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30384	NotNegated	A0_pag_agent_one_party	Entity	cluster-NILQE30899	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30384	NotNegated	AM_loc__location	Entity	cluster-Q34	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30385	NotNegated	A0_pag_agent_agent	Entity	cluster-Q930729	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
+NotNegated	Event	cluster-NILQV30385	NotNegated	A1_ppt_theme_theme	Event	cluster-NILQV30384	NotNegated	L0C04CKB8:L0C04CVH3:(1,0)-(1369,0)	"1.0"	"1.0"
