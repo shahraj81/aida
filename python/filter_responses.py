@@ -182,8 +182,12 @@ class AlignClusters(Object):
         return 0
 
     def record_alignment(self, document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids, similarities, mappings):
+        i1, i2 = alignment_type.split('_to_')
+        inverted_alignment_type = '{}_to_{}'.format(i2, i1)
         if len(similarities):
             alignment = self.init_alignment(document_id, cluster_or_mention, alignment_type, cluster1_and_cluster2_ids)
+            if inverted_alignment_type != alignment_type:
+                alignment.setdefault(inverted_alignment_type, {})
             cost_matrix = get_cost_matrix(similarities, mappings, type_a='cluster1', type_b='cluster2')
             for item1_index, item2_index in Munkres().compute(cost_matrix):
                 item1_id = mappings['cluster1']['index_to_id'][item1_index]
@@ -194,10 +198,8 @@ class AlignClusters(Object):
                             'aligned_to': item2_id,
                             'aligned_similarity': similarity
                         }
-                    i1, i2 = alignment_type.split('_to_')
-                    inverted_alignment_type = '{}_to_{}'.format(i2, i1)
                     if inverted_alignment_type != alignment_type:
-                        alignment.setdefault(inverted_alignment_type, {})[item2_id] = {
+                        alignment.get(inverted_alignment_type)[item2_id] = {
                                 'aligned_to': item1_id,
                                 'aligned_similarity': similarity
                             }
