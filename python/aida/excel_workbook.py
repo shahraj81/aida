@@ -48,7 +48,7 @@ class Worksheet(Object):
                      }
             entry = WorksheetEntry(self.get('logger'), where)
             entry.set('header', self.get('header'))
-            for j, column in row.iteritems():
+            for j, column in row.items():
                 entry.set(j.strip(), column)
             self.get('entries').append(entry)
 
