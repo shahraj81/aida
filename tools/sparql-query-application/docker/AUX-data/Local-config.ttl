@@ -11,9 +11,9 @@
     rep:repositoryID "Local" ;
     rdfs:label "NIST local repository" ;
     rep:repositoryImpl [
-        rep:repositoryType "graphdb:FreeSailRepository" ;
+        rep:repositoryType "graphdb:SailRepository" ;
         sr:sailImpl [
-            sail:sailType "graphdb:FreeSail" ;
+            sail:sailType "graphdb:Sail" ;
             
             owlim:base-URL "http://example.org/owlim#" ;
             owlim:defaultNS "" ;
