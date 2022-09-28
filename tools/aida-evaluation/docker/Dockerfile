@@ -145,7 +145,7 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b skr-develop https://github.com/shahraj81/aida.git
+RUN git clone -b AIDAED-v2022.1.0 https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
