@@ -1,10 +1,26 @@
 FROM ubuntu:20.04
 MAINTAINER shahzad.rajput@nist.gov
 
+#-------------------------------------------------------------
 # Set timezone
+#-------------------------------------------------------------
+
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
 
+#-------------------------------------------------------------
+# Add user and group
+#-------------------------------------------------------------
+
+ARG userid
+ARG groupid
+
+RUN addgroup --gid ${groupid} aidagroup
+RUN adduser --no-create-home --disabled-password --gecos "" --uid ${userid} --gid ${groupid} aidauser
+
+#-------------------------------------------------------------
 # Install system packages
+#-------------------------------------------------------------
+
 RUN apt-get update && apt-get install -y \
     curl \
     git \
@@ -129,7 +145,7 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b AIDAED-v2022.1.0 https://github.com/shahraj81/aida.git
+RUN git clone -b skr-develop https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
@@ -157,6 +173,8 @@ RUN cp Local-config.* $SPARQL_EVAL_HOME/config/
 RUN cp rdf4j-function-* ${GRAPHDB_INSTALL_DIR}/lib/
 
 WORKDIR /scripts/
+
+RUN chown -R aidauser:aidagroup /scripts/aida /opt/graphdb
 
 #-------------------------------------------------------------
 #  Setup entrypoint
