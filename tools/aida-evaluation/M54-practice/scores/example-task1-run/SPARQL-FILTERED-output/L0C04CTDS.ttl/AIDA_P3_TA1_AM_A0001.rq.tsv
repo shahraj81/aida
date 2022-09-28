@@ -1,8 +1,4 @@
 ?is_assertion_negated	?subject_metatype	?subject	?is_subject_negated	?predicate	?object_metatype	?object	?is_object_negated	?predicate_justification	?argument_assertion_confidence	?predicate_justification_confidence
-NotNegated	Relation	cluster-NILQR30318	NotNegated	A0	Entity	cluster-Q3065012	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
-NotNegated	Relation	cluster-NILQR30318	NotNegated	A1	Entity	cluster-NILQE30928	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
-NotNegated	Relation	cluster-NILQR30319	NotNegated	A0	Entity	cluster-NILQE30927	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
-NotNegated	Relation	cluster-NILQR30319	NotNegated	A1	Entity	cluster-NILQE30928	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
 NotNegated	Event	cluster-NILQV30878	NotNegated	A0_pag_agent_trasmitter	Entity	cluster-NILQE30927	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
 NotNegated	Event	cluster-NILQV30878	NotNegated	A1_ppt_topic_message	Relation	cluster-NILQR30316	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
 NotNegated	Event	cluster-NILQV30878	NotNegated	A1_ppt_topic_message	Relation	cluster-NILQR30317	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
@@ -29,3 +25,7 @@ NotNegated	Event	cluster-NILQV30885	NotNegated	A3_mnr__instrument	Entity	cluster
 NotNegated	Event	cluster-NILQV30885	NotNegated	AM_loc__location	Entity	cluster-NILQE30936	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
 NotNegated	Event	cluster-NILQV30886	Negated	A0_pag_agent_agent	Event	cluster-NILQV30885	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
 NotNegated	Event	cluster-NILQV30886	Negated	A1_ppt_theme_theme	Event	cluster-NILQV30881	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
+NotNegated	Relation	cluster-NILQR30318	NotNegated	A0	Entity	cluster-Q3065012	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
+NotNegated	Relation	cluster-NILQR30318	NotNegated	A1	Entity	cluster-NILQE30928	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
+NotNegated	Relation	cluster-NILQR30319	NotNegated	A0	Entity	cluster-NILQE30927	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
+NotNegated	Relation	cluster-NILQR30319	NotNegated	A1	Entity	cluster-NILQE30928	NotNegated	L0C04CTDS:L0C04CVM8:(1,0)-(1404,0)	"1.0"	"1.0"
