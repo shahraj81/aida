@@ -8,8 +8,8 @@ RUNID=example-run
 HOST_INPUT_DIR=$(RUNS)/$(RUNID)
 HOST_OUTPUT_DIR=$(SCORES)/$(RUNID)
 HOST_DATA_DIR=$(ROOT)/docker/AUX-data/M54-$(RUNTYPE)/
-GRAPHDB_VERSION=9.10.3
-GRAPHDB_EDITION=free
+GRAPHDB_VERSION=10.0.2
+GRAPHDB_EDITION=
 
 ENG_TEXT_IOU_THRESHOLD=0.1
 SPA_TEXT_IOU_THRESHOLD=0.1
@@ -23,7 +23,6 @@ all:
 build:
 	docker build \
 	       --build-arg version=$(GRAPHDB_VERSION) \
-	       --build-arg edition=$(GRAPHDB_EDITION) \
 	       -t aida-evaluation .
 
 task1-example:
