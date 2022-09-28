@@ -19,7 +19,7 @@ This document describes how to run the AIDA Task1/2/3 evaluation pipeline as par
 
 # How to build the docker image?
 
-The docker has been tested with `graphdb-free-9.10.3-dist` but this section also describes how to configure it to work with a different version.
+The docker has been tested with `graphdb-10.0.2-dist.zip` but this section also describes how to configure it to work with a different version.
 
 Independent of which version of GraphDB is being used, first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed. The line to be updated is shown below for completeness:
 
@@ -31,7 +31,7 @@ Independent of which version of GraphDB is being used, first update the value of
 
 In order to build the docker image with the tested version of GraphDB:
 
-1. Download the installer `graphdb-free-9.10.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`
+1. Download the installer `graphdb-10.0.2-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`
 2. Place the installer inside `./docker/` and
 3. Run the following command:
 
@@ -40,17 +40,17 @@ In order to build the docker image with the tested version of GraphDB:
   make build
   ~~~
 
-## Using another version of GraphDB
+## Using another free version of GraphDB
 
-In order to build the docker image with a different version of GraphDB:
+In order to build the docker image with a different free version of GraphDB:
 
-1. Download the installer of the preferred GraphDB version (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`)
+1. Download the installer of the preferred GraphDB version (the name of which must be of the form`graphdb-[otherversion]-dist.zip`)
 2. place the installer inside `./docker/` and
 3. Run the following command:
 
 ~~~
 cd docker
-make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
+make build GRAPHDB_VERSION=otherversion
 ~~~
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
@@ -453,6 +453,9 @@ The `task3` logs directory contains the following log files:
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
 # Revision History
+
+## 09/28/2022:
+* Docker modified to make it work with the latest version of free graphdb v10.0.2.
 
 ## 09/26/2022:
 * Initial version of task1 scorer for Phase 3.
