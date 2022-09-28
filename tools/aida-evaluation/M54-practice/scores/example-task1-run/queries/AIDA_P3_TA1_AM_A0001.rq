@@ -94,4 +94,4 @@ WHERE {
     BIND( cfn:getSpan(str(?docid), str(?doceid), str(?_ejsid), str(?_ejkfid), str(?_ejso), str(?_ejeo), str(?_ejulx), str(?_ejuly), str(?_ejlrx), str(?_ejlry), str(?_ejst), str(?_ejet) ) AS ?predicate_justification ) .
 }
 
-ORDER BY ?metatype ?subject ?predicate ?object ?predicate_justification ?argument_assertion_confidence ?predicate_justification_confidence
+ORDER BY ?is_assertion_negated ?subject_metatype ?subject ?is_subject_negated ?predicate ?object_metatype ?object ?is_object_negated ?predicate_justification ?argument_assertion_confidence ?predicate_justification_confidence

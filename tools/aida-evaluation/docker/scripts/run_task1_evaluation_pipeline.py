@@ -577,7 +577,7 @@ def main(args):
         record_and_display_message(logger, 'Applying SPARQL queries.')
         graphdb_bin = '/opt/graphdb/dist/bin'
         graphdb = '{}/graphdb'.format(graphdb_bin)
-        loadrdf = '{}/loadrdf'.format(graphdb_bin)
+        loadrdf = '{}/importrdf load'.format(graphdb_bin)
         verdi = '/opt/sparql-evaluation'
         jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
         config = '{}/config/Local-config.ttl'.format(verdi)
