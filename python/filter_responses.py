@@ -30,6 +30,7 @@ import os
 import requests
 import statistics
 import sys
+import time
 
 from munkres import Munkres
 
@@ -387,36 +388,57 @@ class ResponseFilter(Object):
         return False
 
 class Similarity(Object):
-    def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, USE_ISI_SERVICE=False):
+    def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, SIMILARITY_TYPES=None, KGTK_SIMILARITY_SERVICE_API=None):
         super().__init__(logger)
         self.alpha = alpha
         self.combine = combine
         self.taggable_dwd_ontology = taggable_dwd_ontology
-        # self.SIMILARITY_TYPES = ['complex', 'transe', 'text', 'class', 'jc', 'topsim']
-        self.SIMILARITY_TYPES = ['class', 'jc']
-        self.USE_ISI_SERVICE = USE_ISI_SERVICE
+        self.SIMILARITY_TYPES = [t.strip() for t in SIMILARITY_TYPES.split(',')]
+        self.KGTK_SIMILARITY_SERVICE_API = KGTK_SIMILARITY_SERVICE_API
+        self.cached_similarity_scores = {}
+
+    def cache(self, q1, q2, similarity):
+        self.get('cached_similarity_scores').setdefault(q1, {})[q2] = similarity
+
+    def get_cached_similarity_score(self, q1, q2):
+        if q1 in self.get('cached_similarity_scores'):
+            if q2 in self.get('cached_similarity_scores').get(q1):
+                return self.get('cached_similarity_scores').get(q1).get(q2)
+        return None
 
     def similarity(self, q1, q2):
         if q1 == q2:
             return 1.0
         if self.get('taggable_dwd_ontology').get('is_synonym', q1, q2):
             return 1.0
-        if self.get('USE_ISI_SERVICE'):
-            return self.isi_similarity(q1, q2)
+        if self.get('KGTK_SIMILARITY_SERVICE_API') is not None:
+            cached_similarity_score = self.get('cached_similarity_score', q1, q2)
+            if cached_similarity_score is not None:
+                return cached_similarity_score
+            similarity = self.kgtk_similarity(q1, q2)
+            self.cache(q1, q2, similarity)
+            return similarity
         return 0.0
 
-    def isi_similarity(self, q1, q2):
-        url = 'https://kgtk.isi.edu/similarity_api'
+    def kgtk_similarity(self, q1, q2):
+        url = self.get('KGTK_SIMILARITY_SERVICE_API')
         similarity = []
         for similarity_type in self.get('SIMILARITY_TYPES'):
-            resp = requests.get(url,
-                                params={
-                                    'q1': q1,
-                                    'q2': q2,
-                                    'similarity_type': similarity_type})
+            while True:
+                try:
+                    resp = requests.get(url,
+                                        params={
+                                            'q1': q1,
+                                            'q2': q2,
+                                            'similarity_type': similarity_type})
+                    break
+                except ConnectionError as exception:
+                    print('Exception: {}'.format(exception))
+                    print('retrying ...')
+                    time.sleep(5)
             json_struct = json.loads(resp.text)
             if 'error' not in json_struct:
-                similarity.append(json_struct.get('similarity'))
+                similarity.append(1.0 if json_struct.get('similarity') > 1.0 else json_struct.get('similarity'))
         return self.get('combine')(similarity)
 
     def passes_filter(self, cluster_type):
@@ -509,7 +531,7 @@ def filter_responses(args):
     taggable_dwd_ontology = TaggableDWDOntology(logger, args.taggable_ldc_ontology, args.overlay)
     system_responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task1')
     gold_responses = ResponseSet(logger, document_mappings, document_boundaries, args.gold, 'gold', 'task1')
-    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha)
+    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api)
     alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses})
     response_filter = ResponseFilter(logger, alignment, similarity)
     response_filter.apply(system_responses)
@@ -542,6 +564,8 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('-a', '--alpha', default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
+    parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
+    parser.add_argument('-s', '--similarity_types', default='complex,transe,text,class,jc,topsim', help='Specify the comma-separated list of similarity types to be used by kgtk-similarity (default: %(default)s)')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
     parser.add_argument('core_documents', type=str, help='File containing list of core documents to be included in the pool')
