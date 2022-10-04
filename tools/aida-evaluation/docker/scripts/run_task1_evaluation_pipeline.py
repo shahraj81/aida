@@ -466,6 +466,7 @@ def main(args):
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
     annotation_tagset       = '/data/AUX-data/AIDA_TA1_Annotation_Tagset_Phase_3_External_V1.0.xlsx'
     dwd_overlay             = '/data/AUX-data/xpo_v5.1a.json'
+    cache                   = '/data/AUX-data/cache.txt'
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
@@ -696,6 +697,9 @@ def main(args):
     log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
             python3.9 filter_responses.py \
+	    --cache {cache} \
+	    --similarity_types {similarity_types} \
+	    --kgtk_api {kgtk_api} \
             --log {log_file} \
             {log_specifications} \
             {encoding_modality} \
@@ -714,6 +718,9 @@ def main(args):
             {alignment} \
             {sparql_filtered_output}'.format(python_scripts=python_scripts,
                                           log_file=log_file,
+                                          cache=cache,
+                                          similarity_types='class,jc',
+                                          kgtk_api=args.kgtk_api,
                                           log_specifications=log_specifications,
                                           encoding_modality=encoding_modality,
                                           coredocs=coredocs_xx,
@@ -781,6 +788,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
     parser.add_argument('-i', '--input', default='/evaluate', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
     parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
     parser.add_argument('-o', '--output', default='/score', help='Specify the input directory (default: %(default)s)')
     parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')

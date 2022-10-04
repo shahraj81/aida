@@ -16,6 +16,7 @@ ifeq ($(TASK), task1)
 	python3.9 run_task1_evaluation_pipeline.py \
 	  --run $(RUNID) \
 	  --runtype $(RUNTYPE) \
+	  --kgtk_api $(KGTK_API) \
 	  $(ENG_TEXT_IOU_THRESHOLD) \
 	  $(SPA_TEXT_IOU_THRESHOLD) \
 	  $(RUS_TEXT_IOU_THRESHOLD) \

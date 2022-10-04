@@ -19,6 +19,8 @@ VIDEO_IOU_THRESHOLD=0.1
 USERID=$$(id -u)
 GROUPID=$$(id -g)
 
+KGTK_API=https://kgtk.isi.edu/similarity_api
+
 all:
 	@echo "Usage: make [build|task1-example|task2-example|task3-example|task1|task2|task3]"
 
@@ -76,6 +78,7 @@ task1:
 	  --env RUS_TEXT_IOU_THRESHOLD=$(RUS_TEXT_IOU_THRESHOLD) \
 	  --env IMAGE_IOU_THRESHOLD=$(IMAGE_IOU_THRESHOLD) \
 	  --env VIDEO_IOU_THRESHOLD=$(VIDEO_IOU_THRESHOLD) \
+	  --env KGTK_API=$(KGTK_API) \
 	  -v $(HOST_INPUT_DIR):/evaluate:ro \
 	  -v $(HOST_OUTPUT_DIR):/score \
 	  -v $(HOST_DATA_DIR):/data \
