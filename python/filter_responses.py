@@ -17,6 +17,7 @@ from aida.encodings import Encodings
 from aida.core_documents import CoreDocuments
 from aida.document_mappings import DocumentMappings
 from aida.excel_workbook import ExcelWorkbook
+from aida.file_handler import FileHandler
 from aida.text_boundaries import TextBoundaries
 from aida.image_boundaries import ImageBoundaries
 from aida.keyframe_boundaries import KeyFrameBoundaries
@@ -27,6 +28,7 @@ from generate_aif import LDCTypeToDWDNodeMapping
 import argparse
 import json
 import os
+import pandas as pd
 import requests
 import statistics
 import sys
@@ -45,7 +47,11 @@ class AlignClusters(Object):
         self.similarity = similarity
         self.weighted = 'no'
         self.alignments = {}
+        if self.get('similarity').get('KGTK_SIMILARITY_SERVICE_API'):
+            self.get('similarity').build_cache(document_mappings, responses)
         self.align_clusters()
+        if self.get('similarity').get('KGTK_SIMILARITY_SERVICE_API') and self.get('similarity').get('CACHE'):
+            self.get('similarity').flush_cache()
 
     def get_cluster(self, gold_or_system, document_id, cluster_id):
         return self.get('responses').get(gold_or_system).get('document_clusters').get(document_id).get(cluster_id)
@@ -388,23 +394,117 @@ class ResponseFilter(Object):
         return False
 
 class Similarity(Object):
-    def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, SIMILARITY_TYPES=None, KGTK_SIMILARITY_SERVICE_API=None):
+    def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, SIMILARITY_TYPES=None, KGTK_SIMILARITY_SERVICE_API=None, CACHE=None):
         super().__init__(logger)
         self.alpha = alpha
         self.combine = combine
         self.taggable_dwd_ontology = taggable_dwd_ontology
+        self.CACHE = CACHE
         self.SIMILARITY_TYPES = [t.strip() for t in SIMILARITY_TYPES.split(',')]
         self.KGTK_SIMILARITY_SERVICE_API = KGTK_SIMILARITY_SERVICE_API
         self.cached_similarity_scores = {}
 
+    def build_cache(self, document_mappings, responses):
+        def call_kgtk_api(input_files, url):
+            for input_file in sorted(input_files, key=lambda f: int(f.split('.')[0].split('_')[2])):
+                file_name = os.path.basename(input_file)
+                files = {
+                    'file': (file_name, open(input_file, mode='rb'), 'application/octet-stream')
+                }
+                resp = requests.post(url, files=files, params={'similarity_types': ','.join(sorted(self.get('SIMILARITY_TYPES')))})
+                s = json.loads(resp.json())
+                output_file = '{}_output.txt'.format(input_file.split('.txt')[0])
+                pd.DataFrame(s).to_csv(output_file, index=False, sep='\t')
+
+        # read cached similarities passed as input
+        if self.get('CACHE') is not None and os.path.exists(self.get('CACHE')):
+            for entry in FileHandler(self.get('logger'), self.get('CACHE')):
+                self.cache(entry.get('q1'), entry.get('q2'), entry.get('similarity'))
+
+        qnode_pairs = set()
+        for document_id in document_mappings.get('core_documents'):
+            for system_or_gold1, system_or_gold2 in [('system', 'system'), ('system', 'gold'), ('gold', 'gold')]:
+                for cluster_id1 in responses.get(system_or_gold1).get('document_clusters').get(document_id) or []:
+                    cluster1_types = self.get('cluster_types', responses, system_or_gold1, document_id, cluster_id1)
+                    for cluster_id2 in responses.get(system_or_gold2).get('document_clusters').get(document_id) or []:
+                        cluster2_types = self.get('cluster_types', responses, system_or_gold2, document_id, cluster_id2)
+                        for cluster1_type in cluster1_types:
+                            for cluster2_type in cluster2_types:
+                                qnode_pairs.add((cluster1_type[1], cluster2_type[1]))
+
+            for cluster_id in responses.get('system').get('document_clusters').get(document_id) or []:
+                cluster_types = self.get('cluster_types', responses, 'system', document_id, cluster_id)
+                for cluster_type in cluster_types:
+                    taggable_dwd_ontology = self.get('taggable_dwd_ontology')
+                    if not taggable_dwd_ontology.passes_filter(cluster_type):
+                        for taggable_dwd_type in taggable_dwd_ontology.get('taggable_dwd_types'):
+                            qnode_pairs.add((cluster_type[1], taggable_dwd_type))
+
+        # generate input files to be used by kgtk similarity service batch api calls
+        max_entries = 25
+        count = 0
+        filenum = 0
+        input_files = set()
+        cached_output = None
+        for (q1, q2) in sorted(qnode_pairs):
+            if q1 == q2: continue
+            if self.get('cached_similarity_score', q1, q2) is not None: continue
+            if self.get('taggable_dwd_ontology').get('is_synonym', q1, q2): continue
+            if count == 0:
+                if cached_output is not None:
+                    cached_output.close()
+                    cached_output = None
+                filename = '/tmp/kgtk_cache_{}.txt'.format(filenum)
+                cached_output = open(filename, 'w')
+                cached_output.write('q1\tq2\n')
+                input_files.add(filename)
+                filenum += 1
+                count = max_entries
+            count -= 1
+            cached_output.write('{}\t{}\n'.format(q1, q2))
+
+        if cached_output is not None: cached_output.close()
+
+        call_kgtk_api(input_files, self.get('KGTK_SIMILARITY_SERVICE_API'))
+
+        # load the similarity output files
+        for input_file in input_files:
+            output_file = '{}_output.txt'.format(input_file.split('.txt')[0])
+            for entry in FileHandler(self.get('logger'), output_file):
+                q1 = entry.get('q1')
+                q2 = entry.get('q2')
+                similarity = []
+                for similarity_type in self.get('SIMILARITY_TYPES'):
+                    similarity_value = entry.get(similarity_type)
+                    similarity_value = 0.0 if similarity_value == '' else similarity_value
+                    similarity.append(float(similarity_value))
+                print(q1, q2, similarity)
+                score = self.get('combine')(similarity) if len(similarity) else 0
+                self.cache(q1, q2, score)
+
     def cache(self, q1, q2, similarity):
         self.get('cached_similarity_scores').setdefault(q1, {})[q2] = similarity
+
+    def flush_cache(self):
+        if self.get('CACHE'):
+            with open(self.get('CACHE'), 'w') as program_output:
+                program_output.write('q1\tq2\tsimilarity\n')
+                for q1 in sorted(self.get('cached_similarity_scores').keys()):
+                    for q2 in sorted(self.get('cached_similarity_scores').get(q1).keys()):
+                        similarity = self.get('cached_similarity_scores').get(q1).get(q2)
+                        program_output.write('{}\t{}\t{}\n'.format(q1, q2, similarity))
 
     def get_cached_similarity_score(self, q1, q2):
         if q1 in self.get('cached_similarity_scores'):
             if q2 in self.get('cached_similarity_scores').get(q1):
                 return self.get('cached_similarity_scores').get(q1).get(q2)
         return None
+
+    def get_cluster_types(self, responses, gold_or_system, document_id, cluster_id):
+        cluster_types = set()
+        for entry in responses.get(gold_or_system).get('document_clusters').get(document_id).get(cluster_id).get('entries').values():
+            cluster_types.add((trim_cv(entry.get('cluster_membership_confidence')) * trim_cv(entry.get('type_statement_confidence')), entry.get('cluster_type')))
+        return cluster_types
 
     def similarity(self, q1, q2):
         if q1 == q2:
@@ -531,7 +631,7 @@ def filter_responses(args):
     taggable_dwd_ontology = TaggableDWDOntology(logger, args.taggable_ldc_ontology, args.overlay)
     system_responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task1')
     gold_responses = ResponseSet(logger, document_mappings, document_boundaries, args.gold, 'gold', 'task1')
-    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api)
+    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api, CACHE=args.cache)
     alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses})
     response_filter = ResponseFilter(logger, alignment, similarity)
     response_filter.apply(system_responses)
@@ -564,6 +664,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('-a', '--alpha', default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
+    parser.add_argument('-c', '--cache', default=None, help='Specify the qnode type similarity cache (default: %(default)s)')
     parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
     parser.add_argument('-s', '--similarity_types', default='complex,transe,text,class,jc,topsim', help='Specify the comma-separated list of similarity types to be used by kgtk-similarity (default: %(default)s)')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
