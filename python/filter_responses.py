@@ -478,12 +478,11 @@ class Similarity(Object):
                     similarity_value = entry.get(similarity_type)
                     similarity_value = 0.0 if similarity_value == '' else similarity_value
                     similarity.append(float(similarity_value))
-                print(q1, q2, similarity)
                 score = self.get('combine')(similarity) if len(similarity) else 0
                 self.cache(q1, q2, score)
 
     def cache(self, q1, q2, similarity):
-        self.get('cached_similarity_scores').setdefault(q1, {})[q2] = similarity
+        self.get('cached_similarity_scores').setdefault(q1, {})[q2] = float(similarity)
 
     def flush_cache(self):
         if self.get('CACHE'):
