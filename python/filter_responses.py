@@ -538,7 +538,7 @@ class Similarity(Object):
             json_struct = json.loads(resp.text)
             if 'error' not in json_struct:
                 similarity.append(1.0 if json_struct.get('similarity') > 1.0 else json_struct.get('similarity'))
-        return self.get('combine')(similarity)
+        return self.get('combine')(similarity) if len(similarity) else 0.0
 
     def passes_filter(self, cluster_type):
         taggable_dwd_ontology = self.get('taggable_dwd_ontology')
