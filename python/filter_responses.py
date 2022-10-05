@@ -449,7 +449,7 @@ class Similarity(Object):
         for (q1, q2) in sorted(qnode_pairs):
             if q1 == q2: continue
             if self.get('cached_similarity_score', q1, q2) is not None: continue
-            if self.get('taggable_dwd_ontology').get('is_synonym', q1, q2): continue
+            if self.get('taggable_dwd_ontology').is_synonym(q1, q2): continue
             if count == 0:
                 if cached_output is not None:
                     cached_output.close()
@@ -509,7 +509,7 @@ class Similarity(Object):
     def similarity(self, q1, q2):
         if q1 == q2:
             return 1.0
-        if self.get('taggable_dwd_ontology').get('is_synonym', q1, q2):
+        if self.get('taggable_dwd_ontology').is_synonym(q1, q2):
             return 1.0
         if self.get('KGTK_SIMILARITY_SERVICE_API') is not None:
             cached_similarity_score = self.get('cached_similarity_score', q1, q2)
