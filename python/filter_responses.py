@@ -408,7 +408,7 @@ class Similarity(Object):
 
     def build_cache(self, document_mappings, responses):
         def call_kgtk_api(input_files, url):
-            for input_file in sorted(input_files, key=lambda f: int(f.split('.')[0].split('_')[2])):
+            for input_file in tqdm(sorted(input_files, key=lambda f: int(f.split('.')[0].split('_')[2])), desc='calling tqdm-similarity api'):
                 file_name = os.path.basename(input_file)
                 files = {
                     'file': (file_name, open(input_file, mode='rb'), 'application/octet-stream')
