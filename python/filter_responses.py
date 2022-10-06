@@ -153,9 +153,7 @@ class AlignClusters(Object):
             'system': 'cluster2'
             }
         for document_id in tqdm(self.get('document_mappings').get('core_documents'), desc='Aligning clusters'):
-            message = 'aligning clusters from document {}'.format(document_id)
-            print('--{}'.format(message))
-            self.record_event('DEFAULT_INFO', message)
+            self.record_event('DEFAULT_INFO', 'aligning clusters from document {}'.format(document_id))
             for filetype in ['gold', 'system']:
                 clusternum = filetype_to_clusternum_mapping[filetype]
                 mappings[clusternum] = {'id_to_index': {}, 'index_to_id': {}}
