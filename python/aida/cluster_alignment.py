@@ -9,7 +9,7 @@ __date__    = "17 August 2020"
 from aida.container import Container
 from aida.file_handler import FileHandler
 from aida.object import Object
-
+from tqdm import tqdm
 import os
 
 class ClusterAlignment(Object):
@@ -25,7 +25,7 @@ class ClusterAlignment(Object):
 
     def load(self):
         logger = self.get('logger')
-        for filename in sorted(os.listdir(self.get('directory')), key=str):
+        for filename in tqdm(sorted(os.listdir(self.get('directory')), key=str), desc='loading cluster alignment'):
             filename_including_path = '{}/{}'.format(self.get('directory'), filename)
             document_id = filename.replace('.tab', '')
             for entry in FileHandler(logger, filename_including_path):

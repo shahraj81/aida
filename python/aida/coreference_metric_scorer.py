@@ -10,6 +10,7 @@ from aida.scorer import Scorer
 from aida.coreference_metric_score import CoreferenceMetricScore
 from aida.score_printer import ScorePrinter
 from aida.utility import multisort
+from tqdm import tqdm
 
 class CoreferenceMetricScorer(Scorer):
     """
@@ -66,7 +67,7 @@ class CoreferenceMetricScorer(Scorer):
             'Event': ['Event']
             }
         scores = []
-        for document_id in self.get('core_documents'):
+        for document_id in tqdm(self.get('core_documents'), desc='scoring {}'.format(self.__class__.__name__)):
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
             if document is None:
                 self.record_event('DEFAULT_WARNING', 'No language information found for document {}'.format(document_id))

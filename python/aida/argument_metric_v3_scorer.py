@@ -16,6 +16,7 @@ from aida.scorer import Scorer
 from aida.argument_metric_score import ArgumentMetricScore
 from aida.utility import multisort, get_cost_matrix
 from munkres import Munkres
+from tqdm import tqdm
 
 class ArgumentMetricScorerV3(Scorer):
     """
@@ -202,7 +203,7 @@ class ArgumentMetricScorerV3(Scorer):
             'Relation': ['Relation']
             }
         scores = []
-        for document_id in self.get('core_documents'):
+        for document_id in tqdm(self.get('core_documents'), desc='scoring {}'.format(self.__class__.__name__)):
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
             # skip those core documents that do not have an entry in the parent-children table
             if document is None: continue

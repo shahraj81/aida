@@ -10,6 +10,7 @@ from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.type_metric_v4_score import TypeMetricScoreV4
 from aida.utility import multisort
+from tqdm import tqdm
 
 class TypeMetricScorerV4(Scorer):
     """
@@ -56,7 +57,7 @@ class TypeMetricScorerV4(Scorer):
 
     def score_responses(self):
         scores = []
-        for document_id in self.get('core_documents'):
+        for document_id in tqdm(self.get('core_documents'), desc='scoring {}'.format(self.__class__.__name__)):
             # add scores corresponding to all gold clusters
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
             # skip those core documents that do not have an entry in the parent-children table

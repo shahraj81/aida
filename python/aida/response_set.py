@@ -16,7 +16,7 @@ from aida.generator import Generator
 from aida.validator import Validator
 from aida.normalizer import Normalizer
 from aida.event_or_relation_frame import EventOrRelationFrame
-
+from tqdm import tqdm
 import os
 
 attributes = {
@@ -1015,7 +1015,7 @@ class ResponseSet(Container):
                 exit()
             return filename_order_map[filename]
         logger = self.get('logger')
-        for subdir in ['{}/{}'.format(self.get('path'), d) for d in os.listdir(self.get('path'))]:
+        for subdir in tqdm(['{}/{}'.format(self.get('path'), d) for d in os.listdir(self.get('path'))], desc='loading {}'.format(self.get('path'))):
             for filename in sorted(os.listdir(subdir), key=order):
                 filename_including_path = '{}/{}'.format(subdir, filename)
                 fh = FileHandler(logger, filename_including_path)

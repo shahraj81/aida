@@ -6,9 +6,6 @@ __status__  = "production"
 __version__ = "0.0.0.1"
 __date__    = "3 February 2020"
 
-from aida.object import Object
-from aida.container import Container
-
 from aida.across_documents_correference_metric_scorer_v2 import AcrossDocumentsCoreferenceMetricScorerV2
 from aida.argument_metric_v3a1_scorer import ArgumentMetricScorerV3A1
 from aida.argument_metric_v3a2_scorer import ArgumentMetricScorerV3A2
@@ -16,6 +13,7 @@ from aida.argument_metric_v3b1_scorer import ArgumentMetricScorerV3B1
 from aida.argument_metric_v3b2_scorer import ArgumentMetricScorerV3B2
 from aida.argument_metric_v3c1_scorer import ArgumentMetricScorerV3C1
 from aida.argument_metric_v3c2_scorer import ArgumentMetricScorerV3C2
+from aida.container import Container
 from aida.coreference_metric_scorer import CoreferenceMetricScorer
 from aida.f1_v1a_scorer import F1ScorerV1A
 from aida.f1_v2a_scorer import F1ScorerV2A
@@ -28,9 +26,10 @@ from aida.negation_metric_v1_scorer import NegationMetricScorerV1
 from aida.negation_metric_v2_scorer import NegationMetricScorerV2
 from aida.ndcg_v1_scorer import NDCGScorerV1
 from aida.ndcg_v2_scorer import NDCGScorerV2
+from aida.object import Object
 from aida.temporal_metric_scorer import TemporalMetricScorer
 from aida.type_metric_v4_scorer import TypeMetricScorerV4
-
+from tqdm import tqdm
 import os
 
 class ScoresManager(Object):
@@ -112,7 +111,7 @@ class ScoresManager(Object):
 
     def print_scores(self, output_directory):
         os.mkdir(output_directory)
-        for metric in self.get('scores'):
+        for metric in tqdm(self.get('scores'), desc='printing scores'):
             scores = self.get('scores').get(metric)
             output_file = '{}/{}-scores.txt'.format(output_directory, metric)
             scores.print_scores(output_file, 'pretty')

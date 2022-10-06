@@ -10,7 +10,7 @@ from aida.score_printer import ScorePrinter
 from aida.scorer import Scorer
 from aida.temporal_metric_score import TemporalMetricScore
 from aida.utility import multisort
-
+from tqdm import tqdm
 import datetime
 
 class TemporalMetricScorer(Scorer):
@@ -95,7 +95,7 @@ class TemporalMetricScorer(Scorer):
 
     def score_responses(self):
         scores = []
-        for document_id in self.get('core_documents'):
+        for document_id in tqdm(self.get('core_documents'), desc='scoring {}'.format(self.__class__.__name__)):
             # add scores corresponding to all gold clusters
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
             # skip those core documents that do not have an entry in the parent-children table
