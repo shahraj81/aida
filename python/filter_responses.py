@@ -35,6 +35,7 @@ import sys
 import time
 
 from munkres import Munkres
+from tqdm import tqdm
 
 ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
@@ -151,7 +152,10 @@ class AlignClusters(Object):
             'gold': 'cluster1',
             'system': 'cluster2'
             }
-        for document_id in self.get('document_mappings').get('core_documents'):
+        for document_id in tqdm(self.get('document_mappings').get('core_documents'), desc='Aligning clusters'):
+            message = 'aligning clusters from document {}'.format(document_id)
+            print('--{}'.format(message))
+            self.record_event('DEFAULT_INFO', message)
             for filetype in ['gold', 'system']:
                 clusternum = filetype_to_clusternum_mapping[filetype]
                 mappings[clusternum] = {'id_to_index': {}, 'index_to_id': {}}
@@ -221,7 +225,7 @@ class AlignClusters(Object):
                 values.append(value)
             return '{}\n'.format('\t'.join(values))
         os.mkdir(output_dir)
-        for document_id in self.get('alignments'):
+        for document_id in tqdm(self.get('alignments'), desc='Printing similarities'):
             cluster_ids = {
                 'system': list(sorted(self.get('alignments').get(document_id).get('cluster').get('system_to_gold').keys())),
                 'gold': list(sorted(self.get('alignments').get(document_id).get('cluster').get('gold_to_system').keys()))
@@ -263,7 +267,7 @@ class AlignClusters(Object):
         os.mkdir(cluster_alignment_output_dir)
         mention_alignment_output_dir = os.path.join(output_dir, 'mention')
         os.mkdir(mention_alignment_output_dir)
-        for document_id in self.get('alignments'):
+        for document_id in tqdm(self.get('alignments'), desc='Printing alignment'):
             document_cluster_alignment = self.get('alignments').get(document_id).get('cluster').get('gold_to_system')
             with open(os.path.join(cluster_alignment_output_dir, '{}.tab'.format(document_id)), 'w') as cluster_alignment_program_output:
                 with open(os.path.join(mention_alignment_output_dir, '{}.tab'.format(document_id)), 'w') as mention_alignment_program_output:
@@ -325,7 +329,7 @@ class ResponseFilter(Object):
 
     def apply(self, responses):
         for schema_name in ['AIDA_PHASE3_TASK1_CM_RESPONSE', 'AIDA_PHASE3_TASK1_AM_RESPONSE', 'AIDA_PHASE3_TASK1_TM_RESPONSE']:
-            for input_filename in responses:
+            for input_filename in tqdm(responses, desc='Applying filter ({})'.format(schema_name)):
                 for linenum in responses.get(input_filename):
                     entry = responses.get(input_filename).get(str(linenum))
                     if entry.get('schema').get('name') == schema_name:
