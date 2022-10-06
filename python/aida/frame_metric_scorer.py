@@ -234,6 +234,7 @@ class FrameMetricScorer(Scorer):
                 aligned_similarity = document_system_to_gold.get(system_cluster_id).get('aligned_similarity')
                 if system_cluster_id != 'None':
                     if gold_cluster_id == 'None':
+                        if self.get('cluster', 'system', document_id, system_cluster_id) is None: continue
                         metatype = self.get('cluster', 'system', document_id, system_cluster_id).get('metatype')
                         if metatype not in ['Event', 'Relation']: continue
                         score = FrameMetricScore(logger=self.logger,

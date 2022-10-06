@@ -47,8 +47,10 @@ class TypeMetricScorerV4(Scorer):
         for system_or_gold in cluster_ids:
             cluster_id = cluster_ids.get(system_or_gold)
             if cluster_id == 'None': continue
-            metatype = responses.get(system_or_gold).get('document_clusters').get(document_id).get(cluster_id).get('metatype')
-        if metatype not in ['Event', 'Relation', 'Entity']:
+            cluster = responses.get(system_or_gold).get('document_clusters').get(document_id).get(cluster_id)
+            if cluster is None: continue
+            metatype = cluster.get('metatype')
+        if metatype not in ['Event', 'Relation', 'Entity', None]:
             self.record_event('DEFAULT_CRITICAL_ERROR', 'Unknown metatype: {} for {}:{}'.format(metatype, system_or_gold.upper(), cluster_id), self.get('code_location'))
         return metatype
 
