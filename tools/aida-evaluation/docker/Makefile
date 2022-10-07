@@ -19,7 +19,14 @@ VIDEO_IOU_THRESHOLD=0.1
 USERID=$$(id -u)
 GROUPID=$$(id -g)
 
+ALPHA=0.9
+CACHE='/data/AUX-data/cache.txt'
+IOU_THRESHOLDS='eng:image:0.9,eng:text:0.9,eng:video:0.9,rus:image:0.9,rus:text:0.9,rus:video:0.9,spa:image:0.9,spa:text:0.9,spa:video:0.9,ukr:image:0.9,ukr:text:0.9,ukr:video:0.9'
 KGTK_API=https://kgtk.isi.edu/similarity_api
+LOCK='/data/AUX-data/kgtk.lock'
+NN_SIMILARITY_VALUE=0.9
+SIMILARITY_TYPES='class,jc'
+WAIT=10
 
 all:
 	@echo "Usage: make [build|task1-example|task2-example|task3-example|task1|task2|task3]"
@@ -36,6 +43,15 @@ build:
 	       -t aida-evaluation .
 
 rebuild: clean build
+
+score-all-task1-runs:
+	make score-a-task1-run RUNTYPE=practice RUNID=example-task1-run
+
+score-a-task1-run:
+	make task1 \
+	  RUNID=$(RUNID) \
+	  HOST_INPUT_DIR=$(ROOT)/M54-$(RUNTYPE)/runs/$(RUNID) \
+	  HOST_OUTPUT_DIR=$(ROOT)/M54-$(RUNTYPE)/scores/$(RUNID)
 
 task1-example:
 	make task1 \
@@ -73,12 +89,14 @@ task1:
 	  --env RUNID=$(RUNID) \
 	  --env RUNTYPE=$(RUNTYPE) \
 	  --env TASK=task1 \
-	  --env ENG_TEXT_IOU_THRESHOLD=$(ENG_TEXT_IOU_THRESHOLD) \
-	  --env SPA_TEXT_IOU_THRESHOLD=$(SPA_TEXT_IOU_THRESHOLD) \
-	  --env RUS_TEXT_IOU_THRESHOLD=$(RUS_TEXT_IOU_THRESHOLD) \
-	  --env IMAGE_IOU_THRESHOLD=$(IMAGE_IOU_THRESHOLD) \
-	  --env VIDEO_IOU_THRESHOLD=$(VIDEO_IOU_THRESHOLD) \
+	  --env ALPHA=$(ALPHA) \
+          --env CACHE=$(CACHE) \
+	  --env IOU_THRESHOLDS=$(IOU_THRESHOLDS) \
 	  --env KGTK_API=$(KGTK_API) \
+	  --env LOCK=$(LOCK) \
+	  --env NN_SIMILARITY_VALUE=$(NN_SIMILARITY_VALUE) \
+	  --env SIMILARIY_TYPES=$(SIMILARITY_TYPES) \
+	  --env WAIT=$(WAIT) \
 	  -v $(HOST_INPUT_DIR):/evaluate:ro \
 	  -v $(HOST_OUTPUT_DIR):/score \
 	  -v $(HOST_DATA_DIR):/data \

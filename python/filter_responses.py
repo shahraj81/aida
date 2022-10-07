@@ -41,9 +41,13 @@ ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
 class AlignClusters(Object):
-    def __init__(self, logger, document_mappings, similarity, responses):
+    def __init__(self, logger, document_mappings, similarity, responses, IOU_THRESHOLDS):
         super().__init__(logger)
         self.document_mappings = document_mappings
+        self.IOU_THRESHOLDS = {}
+        for key_and_value in IOU_THRESHOLDS.split(','):
+            language, modality, threshold = key_and_value.split(':')
+            self.IOU_THRESHOLDS[self.get('iou_threshold_key', language, modality)] = float(threshold)
         self.responses = responses
         self.similarity = similarity
         self.weighted = 'no'
@@ -104,7 +108,7 @@ class AlignClusters(Object):
                 if mention1.get('ID') not in similarities:
                     similarities[mention1.get('ID')] = {}
                 iou = get_intersection_over_union(mention1, mention2)
-                iou = 0 if iou < self.get('threshold', modality, language) else iou
+                iou = 0 if iou < self.get('iou_threshold', language, modality) else iou
                 similarities[mention1.get('ID')][mention2.get('ID')] = iou
 
         # record alignment
@@ -133,8 +137,16 @@ class AlignClusters(Object):
             return 1.0
         return 0.0
 
-    def get_threshold(self, modality, language):
-        return 0.1
+    def get_iou_threshold(self, language, modality):
+        key = self.get('iou_threshold_key', language, modality)
+        if key not in self.get('IOU_THRESHOLDS'):
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'missing IOU threshold for language={} modality={}'.format(language, modality))
+        return self.get('IOU_THRESHOLDS').get(key)
+
+    def get_iou_threshold_key(self, language, modality):
+        if modality and language:
+            return '{}:{}'.format(language, modality).lower()
+        self.record_event('DEFAULT_CRITICAL_ERROR', 'modality and language both need to be specified')
 
     def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2, combine=statistics.mean):
         cluster1_types = self.get('cluster_types', system_or_gold1, document_id, cluster_id1)
@@ -396,15 +408,36 @@ class ResponseFilter(Object):
         return False
 
 class Similarity(Object):
-    def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, SIMILARITY_TYPES=None, KGTK_SIMILARITY_SERVICE_API=None, CACHE=None):
+    def __init__(self, logger, taggable_dwd_ontology, alpha, combine=statistics.mean, LOCK=None, ACQUIRE_LOCK_WAIT=10, NN_SIMILARITY_SCORE=0.9, SIMILARITY_TYPES=None, KGTK_SIMILARITY_SERVICE_API=None, CACHE=None):
         super().__init__(logger)
         self.alpha = alpha
         self.combine = combine
         self.taggable_dwd_ontology = taggable_dwd_ontology
+        self.ACQUIRE_LOCK_WAIT = ACQUIRE_LOCK_WAIT
         self.CACHE = CACHE
+        self.LOCK = LOCK
+        self.NN_SIMILARITY_SCORE = NN_SIMILARITY_SCORE
         self.SIMILARITY_TYPES = [t.strip() for t in SIMILARITY_TYPES.split(',')]
         self.KGTK_SIMILARITY_SERVICE_API = KGTK_SIMILARITY_SERVICE_API
         self.cached_similarity_scores = {}
+
+    def acquire_lock(self):
+        lock = self.get('LOCK')
+        if lock is None:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'lock file needs to be specified')
+        waiting_on_lock = True
+        self.record_event('DEFAULT_INFO', 'waiting on lock in order to flush the cache to file')
+        print('--waiting on lock ({}) in order to flush the cache to file '.format(lock), end='', flush=True)
+        while(waiting_on_lock):
+            if not os.path.exists(lock):
+                with open(lock, 'w'):
+                    pass
+                if os.path.exists(lock):
+                    waiting_on_lock = False
+            else:
+                print('.', end='', flush=True)
+                time.sleep(self.get('ACQUIRE_LOCK_WAIT'))
+        print(' acquired')
 
     def build_cache(self, document_mappings, responses):
         def call_kgtk_api(input_files, url):
@@ -488,12 +521,18 @@ class Similarity(Object):
 
     def flush_cache(self):
         if self.get('CACHE'):
+            self.acquire_lock()
+            # reload cache
+            for entry in FileHandler(self.get('logger'), self.get('CACHE')):
+                self.cache(entry.get('q1'), entry.get('q2'), entry.get('similarity'))
+            # write the updated cache to file
             with open(self.get('CACHE'), 'w') as program_output:
                 program_output.write('q1\tq2\tsimilarity\n')
-                for q1 in sorted(self.get('cached_similarity_scores').keys()):
+                for q1 in tqdm(sorted(self.get('cached_similarity_scores').keys()), desc='writing cache to file'):
                     for q2 in sorted(self.get('cached_similarity_scores').get(q1).keys()):
                         similarity = self.get('cached_similarity_scores').get(q1).get(q2)
                         program_output.write('{}\t{}\t{}\n'.format(q1, q2, similarity))
+            self.release_lock()
 
     def get_cached_similarity_score(self, q1, q2):
         if q1 in self.get('cached_similarity_scores'):
@@ -507,21 +546,31 @@ class Similarity(Object):
             cluster_types.add((trim_cv(entry.get('cluster_membership_confidence')) * trim_cv(entry.get('type_statement_confidence')), entry.get('cluster_type')))
         return cluster_types
 
+    def release_lock(self):
+        os.remove(self.get('LOCK'))
+
     def similarity(self, q1, q2):
         if q1 == q2:
             return 1.0
         if self.get('taggable_dwd_ontology').is_synonym(q1, q2):
             return 1.0
+        similarity = 0.0
+        if self.get('taggable_dwd_ontology').is_near_neighbor(q1, q2):
+            similarity = self.get('NN_SIMILARITY_SCORE')
         if self.get('KGTK_SIMILARITY_SERVICE_API') is not None:
             cached_similarity_score = self.get('cached_similarity_score', q1, q2)
             if cached_similarity_score is not None:
+                if similarity > cached_similarity_score:
+                    cached_similarity_score = similarity
+                    self.cache(q1, q2, cached_similarity_score)
                 return cached_similarity_score
-            similarity = self.kgtk_similarity(q1, q2)
+            kgtk_similarity_value = self.get('kgtk_similarity_value', q1, q2)
+            if kgtk_similarity_value > similarity:
+                similarity = kgtk_similarity_value
             self.cache(q1, q2, similarity)
-            return similarity
-        return 0.0
+        return similarity
 
-    def kgtk_similarity(self, q1, q2):
+    def get_kgtk_similarity_value(self, q1, q2):
         url = self.get('KGTK_SIMILARITY_SERVICE_API')
         similarity = []
         for similarity_type in self.get('SIMILARITY_TYPES'):
@@ -557,7 +606,6 @@ class TaggableDWDOntology(Object):
         self.type_mappings = LDCTypeToDWDNodeMapping(logger, overlay_filename)
         self.taggable_ldc_ontology = ExcelWorkbook(logger, taggable_ldc_ontology_filename)
         self.taggable_dwd_types = {}
-        self.synonyms = {}
         for ere_type in ['events', 'entities', 'relations']:
             ere_type_data = self.taggable_ldc_ontology.get('worksheets').get(ere_type).get('entries')
             for entry in ere_type_data:
@@ -576,6 +624,14 @@ class TaggableDWDOntology(Object):
         for taggable_dwd_type in self.get('taggable_dwd_types'):
             if self.is_synonym(cluster_type, taggable_dwd_type):
                 return True
+        return False
+
+    def is_near_neighbor(self, q1, q2):
+        near_neighbors = self.get('type_mappings').get('near_neighbors')
+        for (t1, t2) in ((q1, q2), (q2, q1)):
+            if t1 in near_neighbors:
+                if t2 in near_neighbors.get(t1):
+                    return True
         return False
 
     def is_synonym(self, q1, q2):
@@ -632,8 +688,8 @@ def filter_responses(args):
     taggable_dwd_ontology = TaggableDWDOntology(logger, args.taggable_ldc_ontology, args.overlay)
     system_responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task1')
     gold_responses = ResponseSet(logger, document_mappings, document_boundaries, args.gold, 'gold', 'task1')
-    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api, CACHE=args.cache)
-    alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses})
+    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, LOCK=args.lock, ACQUIRE_LOCK_WAIT=args.wait, NN_SIMILARITY_SCORE=args.near_neighbor_similarity_value, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api, CACHE=args.cache)
+    alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses}, IOU_THRESHOLDS=args.iou_thresholds)
     response_filter = ResponseFilter(logger, alignment, similarity)
     response_filter.apply(system_responses)
     # write alignment and similarities
@@ -666,8 +722,14 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
     parser.add_argument('-a', '--alpha', default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
     parser.add_argument('-c', '--cache', default=None, help='Specify the qnode type similarity cache (default: %(default)s)')
+    parser.add_argument('-i', '--iou_thresholds',
+                        default='eng:image:0.9,eng:text:0.9,eng:video:0.9,rus:image:0.9,rus:text:0.9,rus:video:0.9,spa:image:0.9,spa:text:0.9,spa:video:0.9,ukr:image:0.9,ukr:text:0.9,ukr:video:0.9',
+                        help='Specify comma-separted list of document, modality, and the respective iou threshold separated by colon (default: %(default)s)')
     parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
+    parser.add_argument('-L', '--lock', default='/data/AUX-data/kgtk.lock', help='Specify the lock file (default: %(default)s)')
+    parser.add_argument('-n', '--near_neighbor_similarity_value', default=0.9, help='Specify the similarity score to be used when the qnodes were declared to be near-neighbors (default: %(default)s)')
     parser.add_argument('-s', '--similarity_types', default='complex,transe,text,class,jc,topsim', help='Specify the comma-separated list of similarity types to be used by kgtk-similarity (default: %(default)s)')
+    parser.add_argument('-w', '--wait', type=int, default=10, help='Specify the seconds to wait before checking if the lock can be acquired (default: %(default)s)')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
     parser.add_argument('encodings', type=str, help='File containing list of encoding to modality mappings')
     parser.add_argument('core_documents', type=str, help='File containing list of core documents to be included in the pool')

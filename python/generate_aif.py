@@ -167,6 +167,7 @@ class LDCTypeToDWDNodeMapping(AIFObject):
         self.input = path
         self.mapping = {}
         self.synonyms = {}
+        self.near_neighbors = {}
         self.load()
 
     def add_mapping(self, ldc_type, wd_node):
@@ -190,15 +191,19 @@ class LDCTypeToDWDNodeMapping(AIFObject):
                                 self.record_event('SPACE_IN_TYPE', wd_node_or_ldc_type, {'filename': self.get('input'), 'lineno': 'NOLINENUMBER'})
                         self.add_mapping(full_ldc_type, wd_node)
                 synonyms = set()
-                if ere_metatype in ['events', 'entities']:
-                    for similar_node in dwd_node.get('similar_nodes'):
+                near_neighbors = set()
+                if ere_metatype in ['events', 'entities', 'relations']:
+                    for similar_node in dwd_node.get('similar_nodes') or []:
                         if 'SS' in similar_node.get('similarity_type'):
                             synonyms.add(similar_node.get('wd_node'))
-                elif ere_metatype == 'relations':
+                        if 'NN' in similar_node.get('similarity_type'):
+                            near_neighbors.add(similar_node.get('wd_node'))
+                if ere_metatype == 'relations':
                     if dwd_node.get('related_qnodes') is not None:
                         for similar_node in dwd_node.get('related_qnodes'):
                             synonyms.add(similar_node.get('wd_node'))
                 self.get('synonyms').setdefault(wd_node, set()).update(synonyms)
+                self.get('near_neighbors').setdefault(wd_node, set()).update(near_neighbors)
 
 class AIFStatement(AIFObject):
     def __init__(self, logger, *args, **kwargs):

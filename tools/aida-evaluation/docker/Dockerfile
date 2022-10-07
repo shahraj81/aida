@@ -107,6 +107,12 @@ RUN pip3.9 install requests
 RUN pip3.9 install openpyxl
 
 #-------------------------------------------------------------
+#  Install tqdm
+#-------------------------------------------------------------
+
+RUN pip3.9 install tqdm
+
+#-------------------------------------------------------------
 #  Install GraphDB
 #  Taken from the Dockerfile for GraphDB docker available at:
 #  https://github.com/Ontotext-AD/graphdb-docker
@@ -145,7 +151,7 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b AIDAED-v2022.1.0 https://github.com/shahraj81/aida.git
+RUN git clone -b skr-develop https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 

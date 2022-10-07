@@ -106,6 +106,20 @@ cd docker
 make task1-example
 ~~~
 
+In order to run the docker with a local (or different version of) KGTK-Similarity service API, set the variable `KGTK_API` to the location of the desired to be used when calling `make` as shown below:
+
+~~~
+make task1-example KGTK_API=https://...
+~~~
+
+Similarly, if the preference is to not use the API, set the variable `KGTK_API` to None explicitly, as shown below:
+
+~~~
+make task1-example KGTK_API=None
+~~~
+
+In this case, the docker will compute similarity between qnodes based on identity, and synonyms and near-neighbor information provided in the DWD overlay.
+
 In order to run the docker on the `task2` example run, you may execute the following:
 
 ~~~
@@ -452,7 +466,50 @@ The `task3` logs directory contains the following log files:
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
+# Notes
+
+## Caching Task1 Qnode-Qnode similarity scores
+When the docker calls the filtering script, the cached similarity scores from the cache-file are loaded into memory, if the file is provided by the docker.
+
+When computing similarity scores between two Q-nodes:
+* first the Q-nodes are checked if they are identical, if so the similarity score of 1.0 is returned to the caller,
+* if not, the Q-nodes are checked for being synonyms to each other (as per version 5.1a of the DWD overlay), if so the similarity score of 1.0 is returned to the caller,
+* If not, the similarity score is looked up in the cache, and returned to the caller,
+* if not, the Q-nodes are checked for being near-neighbors of each other (as per version 5.1a of the DWD overlay), simultaneously, the KGTK-similarity score is determined using the KGTK-similarity service API specified when calling the docker. If the nodes were, near-neighbors, similarity score is set to the args.near_neighbor_similarity_value sent as parameter to the filtering script by the docker. If the similarity score computed off of the KGTK-similarity service exceeds the similarity scores, the similariy score is set to the one computed from the KGTK-similarity service. This value is stored in the cache, and returned to the called.
+
+Right after the filtering script is done querying kgtk-similarity service for similarity scores between all pairs of Q-nodes needed for filtering, the cache in memory is flushed to the file. A lock file (args.lock) is used to synchronize calls to flush the cache between multiple threads (if any). The avilability of lock is checked as frentrly as 10 seconds by default but this time can be changed if needed when calling the docker.
+
+## Thresholds
+
+### IOU threshold
+
+IOU threshold of 0.9 is used by default When computing the proportion of spans overlap (IOU), the IOU is set to zero if the IOU does not meet or exceed the IOU-threshold set to 0.9 by default. This threshold can be changed when calling the docker by setting the variable IOU_THRESHOLD to the desired value when calling `make`.
+
+### ALPHA
+
+When checking if a cluster type is similar enough to a taggable DWD ontology type, the similarity between the two types is compared against args.alpha. The types are considered to be similar enough if the similarity exceeds alpha. The value of ALPHA is set to 0.9 by default but can be changed to the desired value when calling `make`.
+
+## Near-neighbor similarity value
+
+When two Q-nodes are found to be near-neighbors, similarity between the two is set to 0.9 by default, but this value can be changed by setting the variable `NN_SIMILARITY_VALUE` to the desired value when calling `make`.
+
 # Revision History
+
+## 10/07/2022:
+* controlling ALPHA, CACHE, IOU thresholds, KGTK_API (location), LOCK (file), NN_SIMILARITY_VALUE, SIMILARIY_TYPES, and WAIT (seconds) from docker Makefile
+* IOU_THRESHOLDS split by language and modality to give finer control
+* using lock to synchronize writing cache updates in multiple instances to file
+* using near-neighbors information from dwd overlay
+* if needed, pick the highest of the near-neighbor score and the kgtk-similarity based score,
+* progress bar added to various steps
+
+## 10/05/2022:
+* Option added to specify location of the kgtk-similarity service when calling the docker allowing one to use local installations of the service for speedup in performance; by default https://kgtk.isi.edu/similarity_api is being used
+* Option added to specify similarity types used by kgtk-similarity service when calling filter_responses.py
+* Caching qnode-qnode similarity values to improve performance; a set of qnode-qnode cached similarity values comes with the docker by default
+* Handling ConnectionError, if encountered
+* Using batch querying when calling the kgtk similarity service API
+* bugfix: get('is_synonym', q1, q2) -> is_synonym(q1, q2)
 
 ## 09/28/2022:
 * Docker modified to make it work with the latest version of free graphdb v10.0.2.

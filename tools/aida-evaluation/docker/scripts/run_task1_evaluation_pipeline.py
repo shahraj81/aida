@@ -697,10 +697,15 @@ def main(args):
     log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
     cmd = 'cd {python_scripts} && \
             python3.9 filter_responses.py \
-	    --cache {cache} \
-	    --similarity_types {similarity_types} \
-	    --kgtk_api {kgtk_api} \
+            --alpha {alpha} \
+            --cache {cache} \
+            --iou_thresholds {iou_thresholds} \
+            --kgtk_api {kgtk_api} \
+            --lock {lock} \
             --log {log_file} \
+            --near_neighbor_similarity_value {near_neighbor_similarity_value} \
+            --similarity_types {similarity_types} \
+            --wait {wait} \
             {log_specifications} \
             {encoding_modality} \
             {coredocs} \
@@ -718,10 +723,15 @@ def main(args):
             {alignment} \
             {sparql_filtered_output}'.format(python_scripts=python_scripts,
                                           log_file=log_file,
+                                          alpha=args.alpha,
                                           cache=cache,
-                                          similarity_types='class,jc',
+                                          iou_thresholds=args.iou_thresholds,
                                           kgtk_api=args.kgtk_api,
+                                          lock=args.lock,
                                           log_specifications=log_specifications,
+                                          near_neighbor_similarity_value=args.near_neighbor_similarity_value,
+                                          similarity_types='class,jc',
+                                          wait=args.wait,
                                           encoding_modality=encoding_modality,
                                           coredocs=coredocs_xx,
                                           parent_children=parent_children,
@@ -787,19 +797,23 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
+    parser.add_argument('-a', '--alpha', default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
+    parser.add_argument('-c', '--cache', default=None, help='Specify the qnode type similarity cache (default: %(default)s)')
     parser.add_argument('-i', '--input', default='/evaluate', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-I', '--iou_thresholds',
+                        default='eng:image:0.9,eng:text:0.9,eng:video:0.9,rus:image:0.9,rus:text:0.9,rus:video:0.9,spa:image:0.9,spa:text:0.9,spa:video:0.9,ukr:image:0.9,ukr:text:0.9,ukr:video:0.9',
+                        help='Specify comma-separted list of document, modality, and the respective iou threshold separated by colon (default: %(default)s)')
     parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
+    parser.add_argument('-L', '--lock', default='/data/AUX-data/kgtk.lock', help='Specify the lock file (default: %(default)s)')
     parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
+    parser.add_argument('-n', '--near_neighbor_similarity_value', default=0.9, help='Specify the similarity score to be used when the qnodes were declared to be near-neighbors (default: %(default)s)')
     parser.add_argument('-o', '--output', default='/score', help='Specify the input directory (default: %(default)s)')
     parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')
     parser.add_argument('-R', '--runtype', default='practice', help='Specify the run type (default: %(default)s)')
+    parser.add_argument('-S', '--similarity_types', default='complex,transe,text,class,jc,topsim', help='Specify the comma-separated list of similarity types to be used by kgtk-similarity (default: %(default)s)')
     parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt', help='Specify the log specifications file (default: %(default)s)')
     parser.add_argument('-t', '--task', default='task1', help='Specify the task in order to apply relevant queries (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__,  help='Print version number and exit')
-    parser.add_argument('eng_iou_threshold', type=float, help='English text IOU threshold for alignment')
-    parser.add_argument('spa_iou_threshold', type=float, help='Spanish text IOU threshold for alignment')
-    parser.add_argument('rus_iou_threshold', type=float, help='Russian text IOU threshold for alignment')
-    parser.add_argument('image_iou_threshold', type=float, help='Image IOU threshold for alignment')
-    parser.add_argument('video_iou_threshold', type=float, help='Video IOU threshold for alignment')
+    parser.add_argument('-w', '--wait', type=int, default=10, help='Specify the seconds to wait before checking if the lock can be acquired (default: %(default)s)')
     args = parser.parse_args()
     main(args)
