@@ -720,14 +720,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Align system and gold clusters")
     parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
-    parser.add_argument('-a', '--alpha', default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
+    parser.add_argument('-a', '--alpha', type=float, default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
     parser.add_argument('-c', '--cache', default=None, help='Specify the qnode type similarity cache (default: %(default)s)')
     parser.add_argument('-i', '--iou_thresholds',
                         default='eng:image:0.9,eng:text:0.9,eng:video:0.9,rus:image:0.9,rus:text:0.9,rus:video:0.9,spa:image:0.9,spa:text:0.9,spa:video:0.9,ukr:image:0.9,ukr:text:0.9,ukr:video:0.9',
                         help='Specify comma-separted list of document, modality, and the respective iou threshold separated by colon (default: %(default)s)')
     parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
     parser.add_argument('-L', '--lock', default='/data/AUX-data/kgtk.lock', help='Specify the lock file (default: %(default)s)')
-    parser.add_argument('-n', '--near_neighbor_similarity_value', default=0.9, help='Specify the similarity score to be used when the qnodes were declared to be near-neighbors (default: %(default)s)')
+    parser.add_argument('-n', '--near_neighbor_similarity_value', type=float, default=0.9, help='Specify the similarity score to be used when the qnodes were declared to be near-neighbors (default: %(default)s)')
     parser.add_argument('-s', '--similarity_types', default='complex,transe,text,class,jc,topsim', help='Specify the comma-separated list of similarity types to be used by kgtk-similarity (default: %(default)s)')
     parser.add_argument('-w', '--wait', type=int, default=10, help='Specify the seconds to wait before checking if the lock can be acquired (default: %(default)s)')
     parser.add_argument('log_specifications', type=str, help='File containing error specifications')
