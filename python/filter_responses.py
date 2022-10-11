@@ -418,7 +418,7 @@ class Similarity(Object):
         self.LOCK = LOCK
         self.NN_SIMILARITY_SCORE = NN_SIMILARITY_SCORE
         self.SIMILARITY_TYPES = [t.strip() for t in SIMILARITY_TYPES.split(',')]
-        self.KGTK_SIMILARITY_SERVICE_API = KGTK_SIMILARITY_SERVICE_API
+        self.KGTK_SIMILARITY_SERVICE_API = None if KGTK_SIMILARITY_SERVICE_API=='None' else KGTK_SIMILARITY_SERVICE_API
         self.cached_similarity_scores = {}
 
     def acquire_lock(self):
