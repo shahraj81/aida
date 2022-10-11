@@ -23,7 +23,7 @@ ifeq ($(TASK), task1)
 	  --lock $(LOCK) \
 	  --near_neighbor_similarity_value $(NN_SIMILARITY_VALUE) \
 	  --similarity_types $(SIMILARITY_TYPES) \
-	  --wait $(WAIT) \
+	  --wait $(WAIT)
 else ifeq ($(TASK), task2)
 	python3.9 run_task2_evaluation_pipeline.py \
 	  --run $(RUNID) --runtype $(RUNTYPE) $(AWS_ACCESS_KEY_ID_ARG) $(AWS_SECRET_ACCESS_KEY_ARG)
