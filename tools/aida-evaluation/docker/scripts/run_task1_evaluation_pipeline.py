@@ -437,20 +437,6 @@ def main(args):
     ldc_package_id = runtypes[args.runtype]
     record_and_display_message(logger, 'Docker is using {} data for scoring'.format(args.runtype))
 
-    thresholds = {
-        'eng_iou_threshold': args.eng_iou_threshold,
-        'spa_iou_threshold': args.spa_iou_threshold,
-        'rus_iou_threshold': args.rus_iou_threshold,
-        'image_iou_threshold': args.image_iou_threshold,
-        'video_iou_threshold': args.video_iou_threshold,
-        }
-
-    for threshold_arg_name in thresholds:
-        threshold = thresholds[threshold_arg_name]
-        if not 0 <= threshold <= 1:
-            logger.record_event('UNEXCPECTED_THRESHOLD', threshold_arg_name, threshold)
-            generate_results_file_and_exit(logger, logs_directory)
-
     #############################################################################################
     # AUX-data
     #############################################################################################
