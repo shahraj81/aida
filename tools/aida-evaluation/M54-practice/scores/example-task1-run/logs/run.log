@@ -1,25 +1,25 @@
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task1_evaluation_pipeline.py, arguments:--run example-task1-run --runtype practice 0.1 0.1 0.1 0.1 0.1}
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Docker is using practice data for scoring
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Inspecting the input directory.
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - KB_STATS - Input directory contains 5 KBs in total. (valid 5, invalid 0)
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying valid input KBs, restricted to core documents, for applying SPARQL queries.
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying L0C04CTDS.ttl
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying L0C04CTVE.ttl
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying SPARQL queries.
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying SPARQL queries to be applied.
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying queries to L0C04CTDS.ttl ... 1 of 2.
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
-09/28/2022 04:50:42 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Loading L0C04CTDS.ttl into GraphDB.
-09/28/2022 04:50:46 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Starting GraphDB
-09/28/2022 04:50:52 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying queries
-09/28/2022 04:50:58 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
-09/28/2022 04:50:58 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Moving output out of the intermediate directory
-09/28/2022 04:50:58 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Removing the intermediate directory.
-09/28/2022 04:50:58 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Stopping GraphDB.
-09/28/2022 04:50:58 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying queries to L0C04CTVE.ttl ... 2 of 2.
-09/28/2022 04:50:58 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Loading L0C04CTVE.ttl into GraphDB.
-09/28/2022 04:51:14 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Cleaning SPARQL output.
-09/28/2022 04:51:14 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Validating SPARQL output.
-09/28/2022 04:51:16 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Aligning clusters and mentions, and filtering SPARQL output.
-09/28/2022 04:51:26 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Generating scores.
-09/28/2022 04:51:41 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Done.
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - Execution begins {current_dir:/scripts, script_name:run_task1_evaluation_pipeline.py, arguments:--run example-task1-run --runtype practice --alpha 0.9 --cache /data/AUX-data/cache.txt --iou_thresholds eng:image:0.9,eng:text:0.9,eng:video:0.9,rus:image:0.9,rus:text:0.9,rus:video:0.9,spa:image:0.9,spa:text:0.9,spa:video:0.9,ukr:image:0.9,ukr:text:0.9,ukr:video:0.9 --kgtk_api https://kgtk.isi.edu/similarity_api --lock /data/AUX-data/kgtk.lock --near_neighbor_similarity_value 0.9 --similarity_types class,jc --wait 10}
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Docker is using practice data for scoring
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Inspecting the input directory.
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - KB_STATS - Input directory contains 5 KBs in total. (valid 5, invalid 0)
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying valid input KBs, restricted to core documents, for applying SPARQL queries.
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying L0C04CTDS.ttl
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying L0C04CTVE.ttl
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying SPARQL queries.
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Copying SPARQL queries to be applied.
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying queries to L0C04CTDS.ttl ... 1 of 2.
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Creating /score/SPARQL-output/intermediate.
+10/11/2022 12:55:49 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Loading L0C04CTDS.ttl into GraphDB.
+10/11/2022 12:55:54 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Starting GraphDB
+10/11/2022 12:55:59 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying queries
+10/11/2022 12:56:05 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Creating SPARQL output directory corresponding to the KB
+10/11/2022 12:56:05 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Moving output out of the intermediate directory
+10/11/2022 12:56:05 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Removing the intermediate directory.
+10/11/2022 12:56:05 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Stopping GraphDB.
+10/11/2022 12:56:05 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Applying queries to L0C04CTVE.ttl ... 2 of 2.
+10/11/2022 12:56:05 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Loading L0C04CTVE.ttl into GraphDB.
+10/11/2022 12:56:22 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Cleaning SPARQL output.
+10/11/2022 12:56:22 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Validating SPARQL output.
+10/11/2022 12:56:24 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Aligning clusters and mentions, and filtering SPARQL output.
+10/11/2022 12:56:44 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Generating scores.
+10/11/2022 12:56:59 PM - run_task1_evaluation_pipeline.py - INFO - NO_CLASS_NAME - DEFAULT_INFO - Done.
