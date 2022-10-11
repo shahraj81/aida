@@ -99,11 +99,11 @@ class AlignClusters(Object):
                 index += 1
 
         # build the similarities table
+        language = self.get('document_mappings').get('language', document_id)
         similarities = {}
         for mention1 in mentions['cluster1']:
             document_element_id = mention1.get('document_element_id')
             modality = self.get('document_mappings').get('modality', document_element_id)
-            language = self.get('document_mappings').get('language', document_element_id)
             for mention2 in mentions['cluster2']:
                 if mention1.get('ID') not in similarities:
                     similarities[mention1.get('ID')] = {}
