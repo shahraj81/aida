@@ -95,7 +95,7 @@ task1:
 	  --env KGTK_API=$(KGTK_API) \
 	  --env LOCK=$(LOCK) \
 	  --env NN_SIMILARITY_VALUE=$(NN_SIMILARITY_VALUE) \
-	  --env SIMILARIY_TYPES=$(SIMILARITY_TYPES) \
+	  --env SIMILARITY_TYPES=$(SIMILARITY_TYPES) \
 	  --env WAIT=$(WAIT) \
 	  -v $(HOST_INPUT_DIR):/evaluate:ro \
 	  -v $(HOST_OUTPUT_DIR):/score \
