@@ -180,7 +180,7 @@ RUN cp rdf4j-function-* ${GRAPHDB_INSTALL_DIR}/lib/
 
 WORKDIR /scripts/
 
-RUN chown -R aidauser:aidagroup /scripts/aida /opt/graphdb
+RUN chown -R aidauser:aidagroup /scripts /opt/graphdb
 
 #-------------------------------------------------------------
 #  Setup entrypoint
