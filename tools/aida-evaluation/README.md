@@ -329,12 +329,15 @@ Alternatively, you may run the following command for `task1`:
 ~~~
 make task1 \
   RUNID=your_run_id \
-  RUNTYPE=evaluation
-  ENG_TEXT_IOU_THRESHOLD=your_threshold \
-  SPA_TEXT_IOU_THRESHOLD=your_threshold \
-  RUS_TEXT_IOU_THRESHOLD=your_threshold \
-  IMAGE_IOU_THRESHOLD=your_threshold \
-  VIDEO_IOU_THRESHOLD=your_threshold \
+  RUNTYPE=evaluation \
+  ALPHA=your_alpha_value \
+  CACHE=your_cache_file \
+  IOU_THRESHOLDS=your_iou_thresholds \
+  KGTK_API=path_to_kgtk_api_to_be_used \
+  LOCK=path_to_lock_file \
+  NN_SIMILARITY_VALUE=your_nn_similarity_value \
+  SIMILARITY_TYPES=similarity_types_to_be_used \
+  WAIT=wait_time \
   HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
   HOST_INPUT_DIR=/absolute/path/to/your/run \
   HOST_OUTPUT_DIR=/absolute/path/to/output
@@ -469,7 +472,7 @@ The `task3` logs directory contains the following log files:
 # Notes
 
 ## Caching Task1 Qnode-Qnode similarity scores
-When the docker calls the filtering script, the cached similarity scores from the cache-file are loaded into memory, if the file is provided by the docker.
+When the docker calls filtering script, cached similarity scores from the cache (if provided to the docker) are loaded into memory.
 
 When computing similarity scores between two Q-nodes:
 * first the Q-nodes are checked if they are identical, if so the similarity score of 1.0 is returned to the caller,

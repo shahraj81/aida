@@ -90,7 +90,7 @@ task1:
 	  --env RUNTYPE=$(RUNTYPE) \
 	  --env TASK=task1 \
 	  --env ALPHA=$(ALPHA) \
-          --env CACHE=$(CACHE) \
+	  --env CACHE=$(CACHE) \
 	  --env IOU_THRESHOLDS=$(IOU_THRESHOLDS) \
 	  --env KGTK_API=$(KGTK_API) \
 	  --env LOCK=$(LOCK) \
