@@ -421,13 +421,13 @@ class Similarity(Object):
         self.KGTK_SIMILARITY_SERVICE_API = None if KGTK_SIMILARITY_SERVICE_API=='None' else KGTK_SIMILARITY_SERVICE_API
         self.cached_similarity_scores = {}
 
-    def acquire_lock(self):
+    def acquire_lock(self, read_or_write='write'):
         lock = self.get('LOCK')
         if lock is None:
             self.record_event('DEFAULT_CRITICAL_ERROR', 'lock file needs to be specified')
         waiting_on_lock = True
-        self.record_event('DEFAULT_INFO', 'waiting on lock in order to flush the cache to file')
-        print('--waiting on lock ({}) in order to flush the cache to file '.format(lock), end='', flush=True)
+        self.record_event('DEFAULT_INFO', 'waiting on lock in order to {} the cache to file'.format(read_or_write))
+        print('--waiting on lock ({}) in order to {} the cache to file '.format(lock, read_or_write), end='', flush=True)
         while(waiting_on_lock):
             if not os.path.exists(lock):
                 with open(lock, 'w'):
@@ -453,8 +453,10 @@ class Similarity(Object):
 
         # read cached similarities passed as input
         if self.get('CACHE') is not None and os.path.exists(self.get('CACHE')):
+            self.acquire_lock(read_or_write='read')
             for entry in FileHandler(self.get('logger'), self.get('CACHE')):
                 self.cache(entry.get('q1'), entry.get('q2'), entry.get('similarity'))
+            self.release_lock()
 
         qnode_pairs = set()
         for document_id in document_mappings.get('core_documents'):
@@ -521,7 +523,7 @@ class Similarity(Object):
 
     def flush_cache(self):
         if self.get('CACHE'):
-            self.acquire_lock()
+            self.acquire_lock(read_or_write='write')
             # reload cache
             if os.path.exists(self.get('CACHE')):
                 for entry in FileHandler(self.get('logger'), self.get('CACHE')):
