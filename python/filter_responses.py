@@ -523,8 +523,9 @@ class Similarity(Object):
         if self.get('CACHE'):
             self.acquire_lock()
             # reload cache
-            for entry in FileHandler(self.get('logger'), self.get('CACHE')):
-                self.cache(entry.get('q1'), entry.get('q2'), entry.get('similarity'))
+            if os.path.exists(self.get('CACHE')):
+                for entry in FileHandler(self.get('logger'), self.get('CACHE')):
+                    self.cache(entry.get('q1'), entry.get('q2'), entry.get('similarity'))
             # write the updated cache to file
             with open(self.get('CACHE'), 'w') as program_output:
                 program_output.write('q1\tq2\tsimilarity\n')
