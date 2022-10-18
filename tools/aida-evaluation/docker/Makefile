@@ -10,18 +10,12 @@ HOST_OUTPUT_DIR=$(SCORES)/$(RUNID)
 HOST_DATA_DIR=$(ROOT)/docker/AUX-data/M54-$(RUNTYPE)/
 GRAPHDB_VERSION=10.0.2
 
-ENG_TEXT_IOU_THRESHOLD=0.1
-SPA_TEXT_IOU_THRESHOLD=0.1
-RUS_TEXT_IOU_THRESHOLD=0.1
-IMAGE_IOU_THRESHOLD=0.1
-VIDEO_IOU_THRESHOLD=0.1
-
 USERID=$$(id -u)
 GROUPID=$$(id -g)
 
 ALPHA=0.9
 CACHE='/data/AUX-data/cache.txt'
-IOU_THRESHOLDS='eng:image:0.9,eng:text:0.9,eng:video:0.9,rus:image:0.9,rus:text:0.9,rus:video:0.9,spa:image:0.9,spa:text:0.9,spa:video:0.9,ukr:image:0.9,ukr:text:0.9,ukr:video:0.9'
+IOU_THRESHOLDS='eng:image:0.1,eng:text:0.1,eng:video:0.1,rus:image:0.1,rus:text:0.1,rus:video:0.1,spa:image:0.1,spa:text:0.1,spa:video:0.1,ukr:image:0.1,ukr:text:0.1,ukr:video:0.1'
 KGTK_API=https://kgtk.isi.edu/similarity_api
 LOCK='/data/AUX-data/kgtk.lock'
 NN_SIMILARITY_VALUE=0.9
