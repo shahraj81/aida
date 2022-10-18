@@ -59,6 +59,15 @@ class Claim(Object):
     def get_claim_query_topic_or_claim_frame_id(self):
         return self.get('claim_uid').split(':')[1]
 
+    def get_condition(self):
+        return self.get('claim_condition')
+
+    def get_query_id(self):
+        return self.get('claim_query_topic_or_claim_frame_id')
+
+    def get_rank(self):
+        return self.get('claim_rank').get('rank')
+
     def update(self, entry):
         if entry.get('schema').get('name') == 'AIDA_PHASE3_TASK3_OC_RESPONSE':
             self.set('outer_claim', entry)

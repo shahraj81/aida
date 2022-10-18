@@ -1,7 +1,12 @@
 type      code                            message
-INFO      ALIGNMENT_INFO                  QUERY_ID:{} CLUSTER_ID:{} FQEC:{}
+INFO      ALIGNMENT_INFO                  DOCUMENT_ID:{} CLUSTER_OR_MENTION:{} GOLD_AND_SYSTEM_CLUSTER_ID:{} GOLD_ITEM_ID:{} SYSTEM_ITEM_ID:{} SIMILARITY:{}
 INFO      AP_RANKED_LIST                  QUERY_ID:{} NUM_GROUND_TRUTH:{} CLUSTER_ID:{} FQEC:{} RANK:{} MENTION:{} POST_POLICY_ASSESSMENT:{} WEIGHT:{} SUM_PRECISION:{}
 INFO      TYPE_METRIC_AP_RANKED_LIST      METRIC:{} DOCUMENT_ID:{} GOLD_CLUSTER:{} SYSTEM_CLUSTER:{} NUM_GROUND_TRUTH:{} RANK:{} TYPE:{} LABEL:{} WEIGHT:{} NUM_CORRECT:{} SUM_PRECISION:{}
+INFO      CLAIM_CORRECTNESS               CLAIM_ID:{} CORRECTNESS:{}
+INFO      CLAIM_FIELD_CORRECTNESS         CLAIM_ID:{}::FIELD_NAME:{}::FIELD_VALUE:{}::CORRECTNESS:{}
+INFO      CLUSTER_SIM_INFO                DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} CLUSTER_TYPE:{} CLUSTER_SIM={}
+INFO      CLAIM_STRING                    {}
+INFO      CLAIM_RELATION_CORRECTNESS      QUERY_ID:{} CLAIM_ID:{} CLAIM_RELATION:{} CORRECTNESS_SCALE:{}
 INFO      CLUSTER_INVALID_FOR_ALIGNMENT   '{}' is not valid for alignment
 INFO      CLUSTER_NOT_ANNOTATED           Response line skipped because all mentions of cluster '{}' were outside annotated regions
 ERROR     CONFLICTING_ASSESSMENTS         Conflicting assessment for '{}' in kits corresponding to queries {},{}
@@ -10,11 +15,16 @@ WARNING   DEFAULT_WARNING                 Warning: {}
 DEBUG     DEFAULT_DEBUG                   {}
 INFO      DEFAULT_INFO                    {}
 CRITICAL  DEFAULT_CRITICAL_ERROR          Critical error encountered: {}
+INFO      DOCUMENT_EDGE_INFO              DOCUMENT_ID:{} SYSTEM_OR_GOLD:{} EDGE_ID:{} SUBJECT_CLUSTER_ID:{} ROLE_NAMES:{} SUBJECT_TYPES:{} IS_ALIGNED:{} ALIGNED_TO:{} EDGE_SCORE:{}
+INFO      DOCUMENT_TRF_INFO               DOCUMENT_ID:{} SYSTEM_OR_GOLD:{} TRF_ID:{} METATYPE:{} ROLE_NAMES:{} IS_ALIGNED:{} ALIGNED_TO:{} TRF_SCORE:{}
 CRITICAL  DUPLICATE_VALUE                 {} appears more than once, expected no more than once
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
+INFO      EDGE_SCORE_INFO                 DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} EDGE_SCORE:{}
 ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
+INFO      SCORE_AT_CUTOFF                 QUERY_ID:{} CLAIM_RELATION:{} CUTOFF:{} PRECISION:{} RECALL:{} F1:{}
 WARNING   ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED '{}' met pooling criteria but was not assessed
 ERROR     EXPECTING_VALID_ENTRY           Code expected entry to be valid but it was not. This happens when either the code is not run on the output of the response validator or when the response validator did not remove an invalid entry.
+INFO      GAIN_VALUE                      RANKING_TYPE:{} RUN_ID:{} CONDITION:{} QUERY_ID:{} CLAIM_RELATION:{} RANK:{} RUN_CLAIM_ID:{} POOL_CLAIM_ID:{} GAIN:{}
 INFO      GROUND_TRUTH                    GROUND_TRUTH_INFO: {}
 WARNING   ID_WITH_EXTENSION               File extension included as part of {} '{}' (response corrected by removing extension)
 ERROR     ID_WITH_EXTENSION_ERROR         File extension included as part of {} '{}'
@@ -36,7 +46,9 @@ CRITICAL  KEY_IS_NONE                     key 'None' used
 INFO      MACRO_SCORES                    DOCID:{} MACRO_SCORE:{} INPUT:{}
 INFO      MENTION_NOT_ANNOTATED           Response skipped because mention '{}' is outside the annotated regions
 CRITICAL  METATYPE_MISMATCH               Metatype mismatched for node '{}' (expected '{}', provided '{}')
+CRITICAL  METHOD_NOT_FOUND                Method '{}' not found
 ERROR     MISSING_CLAIM_RANK              Ranking information not found for claim {}
+CRITICAL  MISSING_CHILD_DOCUMENT          Child document not found for parent {}
 ERROR     MISSING_AWS_CREDENTIALS         AWS credentials missing
 INFO      MISSING_DATE_FIELD              Missing {} {}; using '{}' as the {} date
 ERROR     MISSING_ENTRY_IN_LOOKUP_ERROR   Missing '{}' in '{}'
@@ -56,6 +68,7 @@ CRITICAL  MUTIPLE_JUSTIFICATIONS_FROM_A_DOCUMENT Multiple informative justificat
 CRITICAL  MULTIPLE_LANGUAGES_IN_A_DOCUMENT Multiple languages {} found in document {}
 CRITICAL  MULTIPLE_LEVELS                 Mention string '{}' has multiple levels '{}' and '{}'
 ERROR     MULTIPLE_METATYPES              Multiple metatypes '{}' and '{} for '{}'
+ERROR     MULTIPLE_VALUES                 Multiple values of {} found for edge '{}:{}' : {}, {}
 ERROR     NEGATIVE_NUMBER                 '{}' is negative, expecting non-negative
 CRITICAL  NO_SPECS                        No specifications available for '{}'
 INFO      NO_TEMPORAL_CONSTRAINT          Gold cluster {} in document {} has no temporal constraint
@@ -66,14 +79,26 @@ CRITICAL  OUTPUT_DIRECTORY_NOT_EMPTY      Output directory is not empty.
 CRITICAL  OVERWRITING_POSTPOLICY_CATEGORIZATION Attempting to overwrite post-policy categorization '{}' by '{}'
 INFO      PAIR_WISE_AP                    QUERY_ID: {} CLUSTER_ID: {} FQEC: {} AP: {}
 ERROR     PARENT_CHILD_RELATION_FAILURE   '{}' is not a child of '{}'
+INFO      PASSESS_FILTER                  DWD type {} {} filter{}
+INFO      RANKED_CLAIMS                   RANKING_TYPE:{} QUERY_ID:{} CLAIM_RELATION:{} RANK:{} CLAIM_ID:{}
 INFO      RESPONSE_CATEGORIZATION_INFO    QUERY_ID:{} CLUSTER_ID:{} MENTION:{} LINK_CONFIDENCE:{} CLUSTER_RANK:{} JUSTIFICATION_CONFIDENCE:{} WEIGHT:{} RESPONSE_RANK:{} PRE_POLICY:{} POST_POLICY:{}
+INFO      ROLE_SIM_INFO                   DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} ROLE_SIM:{}
+INFO      ROLES_PRECISION_INFO            DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} ROLES_PRECISION:{}
+INFO      SCORE_VALUE                     RUN_ID:{} CONDITION:{} QUERY_ID:{} CLAIM_RELATION:{} {}:{}
+INFO      SKIPPING_CLAIM_NOT_ASSESSED     RUN_ID:{} CONDITION:{} QUERY_ID:{} RANKED_LIST_CLAIM_RELATION:{} RANK:{} RUN_CLAIM_ID:{}
+INFO      SKIPPING_CLAIM_INCOMPATIBLE     RUN_ID:{} CONDITION:{} QUERY_ID:{} RANKED_LIST_CLAIM_RELATION:{} RANK:{} RUN_CLAIM_ID:{} RUN_CLAIM_RELATION:{}
 INFO      SKIPPING_FILE                   Skipping '{}'
 INFO      SKIPPING                        SKIPPING: {} '{}' {}
 INFO      SKIPPING_HASNAME_OR_TEXTVALUE   Skipping generating hasName or textValue for '{}'
+WARNING   SPACE_IN_TYPE                   Space found in "{}"
 WARNING   SPAN_OFF_BOUNDARY_CORRECTED     Correcting span '{}' to '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     SPAN_OFF_BOUNDARY_ERROR         Cannot correct therefore removing span '{}' because it is outside the boundary '{}' of document element '{}'
 ERROR     START_BIGGER_THAN_END           '{}' is bigger than '{}' in '{}'
+INFO      TRF_SCORE_INFO                  DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} TRF_SCORE:{}
 INFO      TYPE_METRIC_SCORE_INFO          {} {} DOCUMENT:{} GOLD_CLUSTER:{} TYPES:{} SYSTEM_CLUSTER:{} TYPES:{}
+WARNING   TYPE_NOT_IN_OVERLAY             Type '{}' not in overlay
+INFO      TYPE_SIM_DETAIL_INFO            DOCUMENT_ID:{} GOLD_EDGE:{} GOLD_CLUSTER:{} SYSTEM_EDGE:{} SYSTEM_CLUSTER:{} TYPE_SIM:{}
+INFO      TYPE_SIM_INFO                   DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} TYPE_SIM:{}
 INFO      ANNOTATED_TYPES_INFO            ANNOTATED_TYPES_INFO: DOCUMENT: {} TYPES_ANNOTATED: {}
 CRITICAL  UNDEFINED_METHOD                Method '{}' called, but definition not found
 ERROR     UNKNOWN_ITEM                    Unknown {} '{}' in response
@@ -95,6 +120,7 @@ ERROR     UNEXPECTED_DOCUMENT             Unexpected document (expected '{}', pr
 ERROR     UNEXPECTED_ENTITY_TYPE          Unexpected entity type (expected '{}', provided '{}')
 CRITICAL  UNEXPECTED_ENTRYPOINT_DESCRIPTOR Different values of entrypoint descriptors {}, {}, {} found for query {} in files {} and {}
 ERROR     UNEXPECTED_FILENAME             Unexpected filename (expected one from '{}', provided '{}')
+ERROR     UNEXPECTED_GENERIC_STATUS       Unexpected generic status for cluster {} (expected '{}', provided '{}')
 ERROR     UNEXPECTED_ITEM                 Unexpected {} '{}' found in {}
 ERROR     UNEXPECTED_JUSTIFICATION        Video mention span '{}' of {} '{}' asserted using {}
 CRITICAL  UNEXPECTED_NUM_COLUMNS          Unexpected number of columns (expected '{}', provided '{}')
@@ -124,6 +150,7 @@ ERROR     UNEXPECTED_PROTOTYPE_ID         Unexpected prototype ID (found: {}, ex
 ERROR     UNEXPECTED_CLUSTER_MEMBERS      Unexpected members of cluster '{}' (found: {}, expected: {})
 ERROR     UNEXPECTED_CLUSTER_GENERIC_STATUS Unexpected generic status on cluster '{}' (found: {}, expected: {})
 WARNING   UNEXPECTED_NUM_CLAIM_COMPONENT_QNODE_TYPES Unexpected number of claim component QNode types for {} (provided: {}, expected <= {}); removing extra types
+INFO      UNIQUE_VALUES                   RANKING_TYPE:{}::QUERY_ID:{}::CLAIM_RELATION:{}::CUTOFF:{}::VALUES:{}
 ERROR     MISSING_CLAIM_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' for claim {} not found in {}
 WARNING   MISSING_CLAIM_ARGUMENT_ASSERTION_WARNING Argument assertion '{}' for claim {} not found in {}
 ERROR     MISSING_ARGUMENT_ASSERTION_ERROR Argument assertion '{}' not found in {}

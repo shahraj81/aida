@@ -41,10 +41,22 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                       {'name': 'num_right',                 'header': 'Right',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_wrong',                 'header': 'Wrong',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
                       {'name': 'num_ignored',               'header': 'Ignrd',      'format': 'd',    'justify': 'R', 'mean_format': '0.2f'},
-                      {'name': 'average_precision',         'header': 'AvgPrec',    'format': '6.4f', 'justify': 'R'}]
+                      {'name': 'average_precision',         'header': 'MAP',        'format': '6.4f', 'justify': 'R'}]
 
     def __init__(self, logger, **kwargs):
         super().__init__(logger, **kwargs)
+
+    def aggregate_scores(self, scores, score_class):
+        aggregate = score_class(self.get('logger'),
+                                aggregate=True,
+                                run_id=self.get('run_id'),
+                                summary=True,
+                                entity_id='Summary',
+                                query_id='ALL-Macro',
+                                elements=Container(self.get('logger')))
+        for score in scores.values():
+            aggregate.get('elements').add(score)
+        scores.add(aggregate)
 
     def order(self, k):
         return k
@@ -96,9 +108,9 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if post_policy_assessment == 'RIGHT' and fqec == response_fqec:
                         num_right += response.get('weight')
                         sum_precision += num_right/num_responses
-                    logger.record_event('AP_RANKED_LIST', query_id, num_ground_truth, cluster_id, fqec, num_responses, response.get('mention_span_text'), post_policy_assessment, response.get('weight'), sum_precision, response.get('where'))
+                    self.record_event('AP_RANKED_LIST', query_id, num_ground_truth, cluster_id, fqec, num_responses, response.get('mention_span_text'), post_policy_assessment, response.get('weight'), sum_precision, response.get('where'))
             ap = sum_precision/num_ground_truth if num_ground_truth else 0
-            logger.record_event('PAIR_WISE_AP', query_id, cluster_id, fqec, ap)
+            self.record_event('PAIR_WISE_AP', query_id, cluster_id, fqec, ap)
             return ap
 
         def lookup_AP(APs, item_a, item_b):
@@ -164,7 +176,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                 else:
                     record_categorized_response(categorized_responses, 'PRE_POLICY', 'NOTASSESSED', response)
                     record_categorized_response(categorized_responses, 'POST_POLICY', 'IGNORED', response)
-                    logger.record_event('ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED', mention_span_text, response.get('where'))
+                    self.record_event('ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED', mention_span_text, response.get('where'))
                     continue
                 selected_justifications = selected_cluster_justifications[response.get('cluster_id')]
                 if mention_span_text in selected_justifications:
@@ -174,7 +186,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if post_policy_assessment == 'RIGHT':
                         ids['equivalence_classes'].add(response.get('assessment').get('fqec'))
             for response in responses.values():
-                logger.record_event('RESPONSE_CATEGORIZATION_INFO',
+                self.record_event('RESPONSE_CATEGORIZATION_INFO',
                                     query_id,
                                     response.get('cluster_id'),
                                     response.get('mention_span_text'),
@@ -193,7 +205,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
         assessments = self.get('entity_assessments', query_id)
 
         pooler = Task2Pool(logger, DONOT_VALIDATE_DESCRIPTOR=True)
-        num_clusters = int(self.get('queries_to_score').get(query_id).get('clusters'))
+        num_clusters = self.get('num_clusters', query_id)
         num_documents = int(self.get('queries_to_score').get(query_id).get('documents'))
         selected_clusters = pooler.get('top_C_clusters', responses, C=num_clusters) if responses else []
         for cluster_id in selected_clusters:
@@ -253,7 +265,7 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                             'aligned_to': cluster_id,
                             'AP': AP
                         }
-                    logger.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
+                    self.record_event('ALIGNMENT_INFO', query_id, cluster_id, fqec)
 
         sum_average_precision = 0
         denominator_for_mean = len(ids['equivalence_classes'])
@@ -282,6 +294,9 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                     if entry.get('assessment') in ['CORRECT', 'INEXACT']:
                         equivalence_classes.add(entry.get('fqec'))
         return equivalence_classes
+
+    def get_num_clusters(self, query_id):
+        return int(self.get('queries_to_score').get(query_id).get('clusters'))
 
     def get_num_rel_documents(self, the_query_id):
         relevant_documents = set()
@@ -389,19 +404,9 @@ class AcrossDocumentsCoreferenceMetricScorer(Scorer):
                                                           **counts)
             scores.append(score)
 
-        macro_counts = {'average_precision': sum_average_precision/len(self.get('queries_to_score'))}
-        for field_name in [s.get('name') for s in self.get('printing_specs') if s.get('name').startswith('num_')]:
-            macro_counts[field_name] = macro_counts[field_name] if field_name in macro_counts else ''
-        macro_average_score = AcrossDocumentsCoreferenceMetricScore(self.get('logger'),
-                                                                    run_id=self.get('run_id'),
-                                                                    query_id='ALL-Macro',
-                                                                    entity_id='Summary',
-                                                                    summary=True,
-                                                                    **macro_counts)
-
-        scores_printer = ScorePrinter(self.logger, self.printing_specs)
+        scores_printer = ScorePrinter(self.logger, self.printing_specs, aggregate_types=['ALL-Macro'])
         for score in multisort(scores, (('entity_id', False),
                                         ('query_id', False))):
             scores_printer.add(score)
-        scores_printer.add(macro_average_score)
+        self.aggregate_scores(scores_printer, AcrossDocumentsCoreferenceMetricScore)
         self.scores = scores_printer

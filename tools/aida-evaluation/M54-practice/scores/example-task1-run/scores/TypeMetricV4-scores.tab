@@ -1,0 +1,84 @@
+DocID	RunID	Language	Metatype	GoldClusterID	SystemClusterID	TypeSimilarity
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30927	cluster-NILQE30927	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30928	cluster-NILQE30928	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30929	cluster-NILQE30929	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30930	cluster-NILQE30930	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30931	cluster-NILQE30931	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30932	cluster-NILQE30932	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30933	cluster-NILQE30933	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30934	cluster-NILQE30934	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30935	cluster-NILQE30935	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-NILQE30936	cluster-NILQE30936	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-Q3065012	cluster-Q3065012	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-Q84426668	cluster-Q84426668	1.0000
+L0C04CTDS	example-task1-run	SPA	Entity	cluster-Q939416	cluster-Q939416	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30878	cluster-NILQV30878	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30879	cluster-NILQV30879	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30880	cluster-NILQV30880	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30881	cluster-NILQV30881	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30882	cluster-NILQV30882	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30883	cluster-NILQV30883	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30884	cluster-NILQV30884	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30885	cluster-NILQV30885	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30886	cluster-NILQV30886	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31237	cluster-NILQE31237	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31238	cluster-NILQE31238	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31239	cluster-NILQE31239	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31240	cluster-NILQE31240	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31241	cluster-NILQE31241	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31242	cluster-NILQE31242	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31243	cluster-NILQE31243	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31244	cluster-NILQE31244	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31245	cluster-NILQE31245	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31246	cluster-NILQE31246	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31247	cluster-NILQE31247	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31248	cluster-NILQE31248	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31249	cluster-NILQE31249	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31250	cluster-NILQE31250	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-NILQE31251	cluster-NILQE31251	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q1470970	cluster-Q1470970	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q390551	cluster-Q390551	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q62742160	cluster-Q62742160	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q6973027	cluster-Q6973027	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q712639	cluster-Q712639	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q773300	cluster-Q773300	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q7914455	cluster-Q7914455	1.0000
+L0C04CTVE	example-task1-run	ENG	Entity	cluster-Q97309777	cluster-Q97309777	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30479	cluster-NILQV30479	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30480	cluster-NILQV30480	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30481	cluster-NILQV30481	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30482	cluster-NILQV30482	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30483	cluster-NILQV30483	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30484	cluster-NILQV30484	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30485	cluster-NILQV30485	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30486	cluster-NILQV30486	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30487	cluster-NILQV30487	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30488	cluster-NILQV30488	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30489	cluster-NILQV30489	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30490	cluster-NILQV30490	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30491	cluster-NILQV30491	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30492	cluster-NILQV30492	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30493	cluster-NILQV30493	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30494	cluster-NILQV30494	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30495	cluster-NILQV30495	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30496	cluster-NILQV30496	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30497	cluster-NILQV30497	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30498	cluster-NILQV30498	1.0000
+ALL-Micro	example-task1-run	ENG	Entity			1.0000
+ALL-Micro	example-task1-run	ENG	Event			1.0000
+ALL-Micro	example-task1-run	ENG	ALL			1.0000
+ALL-Micro	example-task1-run	SPA	Entity			1.0000
+ALL-Micro	example-task1-run	SPA	Event			1.0000
+ALL-Micro	example-task1-run	SPA	ALL			1.0000
+ALL-Micro	example-task1-run	ALL	Entity			1.0000
+ALL-Micro	example-task1-run	ALL	Event			1.0000
+ALL-Micro	example-task1-run	ALL	ALL			1.0000
+ALL-Macro	example-task1-run	ENG	Entity			1.0000
+ALL-Macro	example-task1-run	ENG	Event			1.0000
+ALL-Macro	example-task1-run	ENG	ALL			1.0000
+ALL-Macro	example-task1-run	SPA	Entity			1.0000
+ALL-Macro	example-task1-run	SPA	Event			1.0000
+ALL-Macro	example-task1-run	SPA	ALL			1.0000
+ALL-Macro	example-task1-run	ALL	Entity			1.0000
+ALL-Macro	example-task1-run	ALL	Event			1.0000
+ALL-Macro	example-task1-run	ALL	ALL			1.0000

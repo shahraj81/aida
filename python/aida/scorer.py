@@ -9,6 +9,7 @@ __date__    = "3 February 2020"
 
 from aida.object import Object
 from aida.container import Container
+from tqdm import tqdm
 
 class Scorer(Object):
     """
@@ -60,7 +61,7 @@ class Scorer(Object):
 
     def aggregate_scores(self, scores, score_class):
         aggregates = {}
-        for score in scores.values():
+        for score in tqdm(scores.values(), desc='aggregating {} scores'.format(self.__class__.__name__)):
             languages = self.get('languages', score, scores)
             metatypes = self.get('metatypes', score, scores)
             for language in languages:
@@ -89,5 +90,5 @@ class Scorer(Object):
         scores = self.get('scores')
         scores.set('separator', separator)
         fh = open(filename, 'w')
-        fh.write(scores.__str__())
+        fh.write(scores.to_string())
         fh.close()

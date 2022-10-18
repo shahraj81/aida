@@ -24,6 +24,12 @@ class TA3QuerySet(Object):
         self.conditions = {}
         self.load()
 
+    def get_claim_template(self, condition, query_id):
+        return self.get('conditions').get(condition).get('topics').get(query_id)[0].get('claim_template')
+
+    def get_topic(self, condition, query_id):
+        return self.get('conditions').get(condition).get('topics').get(query_id)[0].get('topic')
+
     def parse_topics(self, condition, topics_file):
         logger = self.get('logger')
         header_columns = {
@@ -49,7 +55,9 @@ class TA3QuerySet(Object):
                         topic = ' '.join(elements[1:-1])
                     if elements[0] == 'aida:subtopic':
                         subtopic = ' '.join(elements[1:-1])
-            return [t.replace('"','') for t in [topic, subtopic]]
+                    if elements[0] == 'aida:naturalLanguageDescription':
+                        naturalLanguageDescription = ' '.join(elements[1:-1])
+            return [t.replace('"','') for t in [topic, subtopic, naturalLanguageDescription]]
         conditions = self.get('conditions')
         directory = self.get('directory')
         for item in os.listdir(directory):
@@ -74,10 +82,11 @@ class TA3QuerySet(Object):
                             subsubitem_path = os.path.join(subitem_path, subsubitem)
                             if os.path.isfile(subsubitem_path) and subsubitem.endswith('.ttl'):
                                 claim_id = subsubitem.replace('.ttl', '')
-                                topic, subtopic = parse_ttl(subsubitem_path)
+                                topic, subtopic, naturalLanguageDescription = parse_ttl(subsubitem_path)
                                 conditions.get(item).get('query_claim_frames')[claim_id] = {
                                     'topic': topic,
-                                    'subtopic': subtopic
+                                    'subtopic': subtopic,
+                                    'naturalLanguageDescription': naturalLanguageDescription
                                     }
             # add topic id to query claim frames
             topics = conditions.get(item).get('topics')

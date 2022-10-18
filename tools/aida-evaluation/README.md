@@ -19,7 +19,7 @@ This document describes how to run the AIDA Task1/2/3 evaluation pipeline as par
 
 # How to build the docker image?
 
-The docker has been tested with `graphdb-free-9.10.3-dist` but this section also describes how to configure it to work with a different version.
+The docker has been tested with `graphdb-10.0.2-dist.zip` but this section also describes how to configure it to work with a different version.
 
 Independent of which version of GraphDB is being used, first update the value of the variable named `ROOT` at the first line of `./docker/Makefile` to reflect your system specific location of the directory where the code form the [AIDA evaluation repository](https://github.com/shahraj81/aida) is placed. The line to be updated is shown below for completeness:
 
@@ -31,7 +31,7 @@ Independent of which version of GraphDB is being used, first update the value of
 
 In order to build the docker image with the tested version of GraphDB:
 
-1. Download the installer `graphdb-free-9.10.3-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`
+1. Download the installer `graphdb-10.0.2-dist.zip` from `https://www.ontotext.com/free-graphdb-download/`
 2. Place the installer inside `./docker/` and
 3. Run the following command:
 
@@ -40,17 +40,17 @@ In order to build the docker image with the tested version of GraphDB:
   make build
   ~~~
 
-## Using another version of GraphDB
+## Using another free version of GraphDB
 
-In order to build the docker image with a different version of GraphDB:
+In order to build the docker image with a different free version of GraphDB:
 
-1. Download the installer of the preferred GraphDB version (the name of which must be of the form`graphdb-[otheredition]-[otherversion]-dist.zip`)
+1. Download the installer of the preferred GraphDB version (the name of which must be of the form`graphdb-[otherversion]-dist.zip`)
 2. place the installer inside `./docker/` and
 3. Run the following command:
 
 ~~~
 cd docker
-make build GRAPHDB_EDITION=otheredition GRAPHDB_VERSION=otherversion
+make build GRAPHDB_VERSION=otherversion
 ~~~
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
@@ -79,7 +79,15 @@ In this step, cleaned SPARQL output from multiple variants of the a SPARQL query
 
 ## SPARQL-VALID-output (Task1/2/3)
 
-In this step responses from output of the previous step is validated.
+In this step, responses from output of the previous step is validated.
+
+## SPARQL-FILTERED-output (Task1)
+
+In this step, responses from the output of the previous step are used to align clusters and mentions to gold data, and generate filtered SPARQL output.
+
+## Scoring (Task1)
+
+In this step, responses from the output of the previous step are used to generate scores.
 
 ## ARF-output (Task3)
 
@@ -98,10 +106,19 @@ cd docker
 make task1-example
 ~~~
 
-Note that at this point:
-* the task1 docker (for Phase 3) only runs up to the validation step,
-* a dummy results file is being generated as a placeholder,
-* the scorer and the other related scripts for task1 will be added as soon as possible.
+In order to run the docker with a local (or different version of) KGTK-Similarity service API, set the variable `KGTK_API` to the location of the desired to be used when calling `make` as shown below:
+
+~~~
+make task1-example KGTK_API=https://...
+~~~
+
+Similarly, if the preference is to not use the API, set the variable `KGTK_API` to None explicitly, as shown below:
+
+~~~
+make task1-example KGTK_API=None
+~~~
+
+In this case, the docker will compute similarity between qnodes based on identity, and synonyms and near-neighbor information provided in the DWD overlay.
 
 In order to run the docker on the `task2` example run, you may execute the following:
 
@@ -312,12 +329,15 @@ Alternatively, you may run the following command for `task1`:
 ~~~
 make task1 \
   RUNID=your_run_id \
-  RUNTYPE=evaluation
-  ENG_TEXT_IOU_THRESHOLD=your_threshold \
-  SPA_TEXT_IOU_THRESHOLD=your_threshold \
-  RUS_TEXT_IOU_THRESHOLD=your_threshold \
-  IMAGE_IOU_THRESHOLD=your_threshold \
-  VIDEO_IOU_THRESHOLD=your_threshold \
+  RUNTYPE=evaluation \
+  ALPHA=your_alpha_value \
+  CACHE=your_cache_file \
+  IOU_THRESHOLDS=your_iou_thresholds \
+  KGTK_API=path_to_kgtk_api_to_be_used \
+  LOCK=path_to_lock_file \
+  NN_SIMILARITY_VALUE=your_nn_similarity_value \
+  SIMILARITY_TYPES=similarity_types_to_be_used \
+  WAIT=wait_time \
   HOST_DATA_DIR=/absolute/path/to/auxiliary_evaluation_data \
   HOST_INPUT_DIR=/absolute/path/to/your/run \
   HOST_OUTPUT_DIR=/absolute/path/to/output
@@ -371,12 +391,16 @@ The `task1` output directory contains the following:
 
 | Name                      |  Description                                          |
 | --------------------------|-------------------------------------------------------|
+| alignment                 | The directory containing information about mention and cluster alignment between system and gold. |
 | logs                      | The directory containing log files. (See the [section on logs](#what-does-the-logs-directory-contain) for more details). |
 | queries                   | The directory containing SPARQL queries applied to KBs. |
+| similarities              | The directory containing similarities between clusters. |
+| scores                    | The directory containing scores. |
 | SPARQL-CLEAN-output       | The directory containing cleaned SPARQL output. |
 | SPARQL-KB-input           | The directory containing KBs validated by AIF validator. SPARQL queries are applied to these KBs.|
 | SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
 | SPARQL-VALID-output       | The directory containing valid SPARQL output. |
+| SPARQL-FILTERED-output
 
 ## Task2
 
@@ -391,7 +415,6 @@ The `task2` output directory contains the following:
 | SPARQL-KB-input           | The directory containing KBs to which SPARQL queries were applied.|
 | SPARQL-output             | The directory containing output of SPARQL queries when applied to KBs in `SPARQL-KB-input`. |
 | SPARQL-VALID-output       | The directory containing valid SPARQL output. |
-
 
 ## Task3
 
@@ -418,7 +441,9 @@ The `task1` logs directory contains the following log files:
 
 | Name                            |  Description            |
 | --------------------------------|-------------------------|
+| filter-responses.log            | The log file generated as part of SPARQL-FILTERED-output. |
 | run.log                         | The main log file recording major events by the docker. |
+| score-responses.log             | The log file generated as part of scoring. |
 | validate-responses.log          | The log file generated by the validator. |
 
 ## Task2
@@ -444,15 +469,64 @@ The `task3` logs directory contains the following log files:
 
 [top](#how-to-run-the-aida-evaluation-pipeline)
 
+# Notes
+
+## Caching Task1 Qnode-Qnode similarity scores
+When the docker calls filtering script, cached similarity scores from the cache (if provided to the docker) are loaded into memory.
+
+When computing similarity scores between two Q-nodes:
+* first the Q-nodes are checked if they are identical, if so the similarity score of 1.0 is returned to the caller,
+* if not, the Q-nodes are checked for being synonyms to each other (as per version 5.1a of the DWD overlay), if so the similarity score of 1.0 is returned to the caller,
+* If not, the similarity score is looked up in the cache, and returned to the caller,
+* if not, the Q-nodes are checked for being near-neighbors of each other (as per version 5.1a of the DWD overlay), simultaneously, the KGTK-similarity score is determined using the KGTK-similarity service API specified when calling the docker. If the nodes were, near-neighbors, similarity score is set to the args.near_neighbor_similarity_value sent as parameter to the filtering script by the docker. If the similarity score computed off of the KGTK-similarity service exceeds the similarity scores, the similariy score is set to the one computed from the KGTK-similarity service. This value is stored in the cache, and returned to the called.
+
+Right after the filtering script is done querying kgtk-similarity service for similarity scores between all pairs of Q-nodes needed for filtering, the cache in memory is flushed to the file. A lock file (args.lock) is used to synchronize calls to flush the cache between multiple threads (if any). The avilability of lock is checked as frentrly as 10 seconds by default but this time can be changed if needed when calling the docker.
+
+## Thresholds
+
+### IOU threshold
+
+IOU threshold of 0.9 is used by default When computing the proportion of spans overlap (IOU), the IOU is set to zero if the IOU does not meet or exceed the IOU-threshold set to 0.9 by default. This threshold can be changed when calling the docker by setting the variable IOU_THRESHOLD to the desired value when calling `make`.
+
+### ALPHA
+
+When checking if a cluster type is similar enough to a taggable DWD ontology type, the similarity between the two types is compared against args.alpha. The types are considered to be similar enough if the similarity exceeds alpha. The value of ALPHA is set to 0.9 by default but can be changed to the desired value when calling `make`.
+
+## Near-neighbor similarity value
+
+When two Q-nodes are found to be near-neighbors, similarity between the two is set to 0.9 by default, but this value can be changed by setting the variable `NN_SIMILARITY_VALUE` to the desired value when calling `make`.
+
 # Revision History
 
-## 3/31/2022:
+## 10/07/2022:
+* controlling ALPHA, CACHE, IOU thresholds, KGTK_API (location), LOCK (file), NN_SIMILARITY_VALUE, SIMILARIY_TYPES, and WAIT (seconds) from docker Makefile
+* IOU_THRESHOLDS split by language and modality to give finer control
+* using lock to synchronize writing cache updates in multiple instances to file
+* using near-neighbors information from dwd overlay
+* if needed, pick the highest of the near-neighbor score and the kgtk-similarity based score,
+* progress bar added to various steps
+
+## 10/05/2022:
+* Option added to specify location of the kgtk-similarity service when calling the docker allowing one to use local installations of the service for speedup in performance; by default https://kgtk.isi.edu/similarity_api is being used
+* Option added to specify similarity types used by kgtk-similarity service when calling filter_responses.py
+* Caching qnode-qnode similarity values to improve performance; a set of qnode-qnode cached similarity values comes with the docker by default
+* Handling ConnectionError, if encountered
+* Using batch querying when calling the kgtk similarity service API
+* bugfix: get('is_synonym', q1, q2) -> is_synonym(q1, q2)
+
+## 09/28/2022:
+* Docker modified to make it work with the latest version of free graphdb v10.0.2.
+
+## 09/26/2022:
+* Initial version of task1 scorer for Phase 3.
+
+## 03/31/2022:
 * Replacing objectc_handle with text from source corpus if:
   * objectc_handle is missing, and
   * oinf_j_span is drawn from a text document, and
   * ltf_directory is made avaialble to the docker.
 
-## 3/28/2022:
+## 03/28/2022:
 * Removing task3 edges from SPARQL-VALID-output if the source document does not match that of the claim
 
 ## 03/25/2022:

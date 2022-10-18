@@ -1,0 +1,62 @@
+DocID	RunID	Language	Metatype	GoldClusterID	SystemClusterID	Similarity
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30878	cluster-NILQV30878	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30879	cluster-NILQV30879	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30880	cluster-NILQV30880	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30881	cluster-NILQV30881	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30882	cluster-NILQV30882	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30883	cluster-NILQV30883	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30884	cluster-NILQV30884	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30885	cluster-NILQV30885	1.0000
+L0C04CTDS	example-task1-run	SPA	Event	cluster-NILQV30886	cluster-NILQV30886	1.0000
+L0C04CTDS	example-task1-run	SPA	Relation	cluster-NILQR30313	cluster-NILQR30313	1.0000
+L0C04CTDS	example-task1-run	SPA	Relation	cluster-NILQR30314	cluster-NILQR30314	1.0000
+L0C04CTDS	example-task1-run	SPA	Relation	cluster-NILQR30315	cluster-NILQR30315	1.0000
+L0C04CTDS	example-task1-run	SPA	Relation	cluster-NILQR30316	cluster-NILQR30316	1.0000
+L0C04CTDS	example-task1-run	SPA	Relation	cluster-NILQR30317	cluster-NILQR30317	1.0000
+L0C04CTDS	example-task1-run	SPA	Relation	cluster-NILQR30318	cluster-NILQR30318	1.0000
+L0C04CTDS	example-task1-run	SPA	Relation	cluster-NILQR30319	cluster-NILQR30319	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30479	cluster-NILQV30479	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30480	cluster-NILQV30480	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30481	cluster-NILQV30481	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30482	cluster-NILQV30482	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30483	cluster-NILQV30483	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30484	cluster-NILQV30484	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30485	cluster-NILQV30485	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30486	cluster-NILQV30486	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30487	cluster-NILQV30487	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30488	cluster-NILQV30488	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30489	cluster-NILQV30489	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30490	cluster-NILQV30490	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30491	cluster-NILQV30491	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30492	cluster-NILQV30492	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30493	cluster-NILQV30493	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30494	cluster-NILQV30494	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30495	cluster-NILQV30495	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30496	cluster-NILQV30496	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30497	cluster-NILQV30497	1.0000
+L0C04CTVE	example-task1-run	ENG	Event	cluster-NILQV30498	cluster-NILQV30498	1.0000
+L0C04CTVE	example-task1-run	ENG	Relation	cluster-NILQR30346	cluster-NILQR30346	1.0000
+L0C04CTVE	example-task1-run	ENG	Relation	cluster-NILQR30347	cluster-NILQR30347	1.0000
+L0C04CTVE	example-task1-run	ENG	Relation	cluster-NILQR30348	cluster-NILQR30348	1.0000
+L0C04CTVE	example-task1-run	ENG	Relation	cluster-NILQR30349	cluster-NILQR30349	1.0000
+L0C04CTVE	example-task1-run	ENG	Relation	cluster-NILQR30350	cluster-NILQR30350	1.0000
+L0C04CTVE	example-task1-run	ENG	Relation	cluster-NILQR30351	cluster-NILQR30351	1.0000
+L0C04CTVE	example-task1-run	ENG	Relation	cluster-NILQR30352	cluster-NILQR30352	1.0000
+ALL-Micro	example-task1-run	ENG	Event			1.0000
+ALL-Micro	example-task1-run	ENG	Relation			1.0000
+ALL-Micro	example-task1-run	ENG	ALL			1.0000
+ALL-Micro	example-task1-run	SPA	Event			1.0000
+ALL-Micro	example-task1-run	SPA	Relation			1.0000
+ALL-Micro	example-task1-run	SPA	ALL			1.0000
+ALL-Micro	example-task1-run	ALL	Event			1.0000
+ALL-Micro	example-task1-run	ALL	Relation			1.0000
+ALL-Micro	example-task1-run	ALL	ALL			1.0000
+ALL-Macro	example-task1-run	ENG	Event			1.0000
+ALL-Macro	example-task1-run	ENG	Relation			1.0000
+ALL-Macro	example-task1-run	ENG	ALL			1.0000
+ALL-Macro	example-task1-run	SPA	Event			1.0000
+ALL-Macro	example-task1-run	SPA	Relation			1.0000
+ALL-Macro	example-task1-run	SPA	ALL			1.0000
+ALL-Macro	example-task1-run	ALL	Event			1.0000
+ALL-Macro	example-task1-run	ALL	Relation			1.0000
+ALL-Macro	example-task1-run	ALL	ALL			1.0000

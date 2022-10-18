@@ -18,7 +18,6 @@ class EventOrRelationFrame(Object):
         self.ID = ID
         self.metatype = None
         self.role_fillers = {}
-        self.types = {}
         self.where = where
 
     def get_number_of_fillers(self):
@@ -26,19 +25,6 @@ class EventOrRelationFrame(Object):
         for rolename in self.get('role_fillers'):
             number_of_fillers += len(self.get('role_fillers').get(rolename))
         return number_of_fillers
-
-    def get_top_level_types(self):
-        top_level_types = {}
-        num_levels_by_metatype = {'Event': 2, 'Relation': 2}
-        num_levels = num_levels_by_metatype[self.get('metatype')]
-        for cluster_type in self.get('types'):
-            elements = []
-            for element in cluster_type.split('.'):
-                if num_levels > 0:
-                    elements.append(element)
-                    num_levels -= 1
-            top_level_types['.'.join(elements)] = 1
-        return list(top_level_types.keys())
 
     def is_alignable_relation(self):
         """
@@ -55,12 +41,13 @@ class EventOrRelationFrame(Object):
     def update(self, entry):
         predicate = entry.get('predicate')
         if self.get('metatype') is None:
-            self.set('metatype', entry.get('?metatype'))
-        if self.get('metatype') != entry.get('?metatype'):
-            self.record_event('METATYPE_MISMATCH', self.get('ID'), self.get('metatype'), entry.get('?metatype'), entry.get('where'))
+            self.set('metatype', entry.get('subject_metatype'))
+        if self.get('metatype') != entry.get('subject_metatype'):
+            self.record_event('METATYPE_MISMATCH', self.get('ID'), self.get('metatype'), entry.get('subject_metatype'), entry.get('where'))
         filler = Object(self.get('logger'))
         filler_cluster_id = entry.get('?object')
         filler.set('predicate', entry.get('predicate'))
+        filler.set('is_assertion_negated', entry.get('is_assertion_negated'))
         filler.set('filler_cluster_id', filler_cluster_id)
         filler.set('predicate_justification', entry.get('?predicate_justification'))
         filler.set('argument_assertion_confidence', entry.get('?argument_assertion_confidence'))
@@ -71,3 +58,4 @@ class EventOrRelationFrame(Object):
         if filler_cluster_id not in self.get('role_fillers')[predicate]:
             self.get('role_fillers')[predicate][filler_cluster_id] = []
         self.get('role_fillers')[predicate][filler_cluster_id].append(filler)
+        self.set('types', self.get('cluster').get('types'))

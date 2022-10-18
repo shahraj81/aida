@@ -41,196 +41,246 @@ def get_problems(logs_directory):
 def get_metric_classes_specs():
 
     metric_classes_specs = """
-        # Filename                     Metric                              ColumnValuePairs               ScoreColumn
+        # Filename                       Metric                                      ColumnValuePairs               ScoreColumn
         #
         # ---
-        # ArgumentMetricV1
+        # ArgumentMetricV3A1
         #
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_F1                 Language:ALL,Metatype:ALL      F1
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_TRFscore                 Language:ALL,Metatype:ALL      TRFscore
 
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_Events_F1          Language:ALL,Metatype:Event    F1
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_Relations_F1       Language:ALL,Metatype:Relation F1
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_Events_TRFscore          Language:ALL,Metatype:Event    TRFscore
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_Relations_TRFscore       Language:ALL,Metatype:Relation TRFscore
 
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_ENG_F1             Language:ENG,Metatype:ALL      F1
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_ENG_Events_F1      Language:ENG,Metatype:Event    F1
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_ENG_Relations_F1   Language:ENG,Metatype:Relation F1
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_ENG_TRFscore             Language:ENG,Metatype:ALL      TRFscore
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_ENG_Events_TRFscore      Language:ENG,Metatype:Event    TRFscore
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_ENG_Relations_TRFscore   Language:ENG,Metatype:Relation TRFscore
 
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_RUS_F1             Language:RUS,Metatype:ALL      F1
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_RUS_Events_F1      Language:RUS,Metatype:Event    F1
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_RUS_Relations_F1   Language:RUS,Metatype:Relation F1
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_RUS_TRFscore             Language:RUS,Metatype:ALL      TRFscore
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_RUS_Events_TRFscore      Language:RUS,Metatype:Event    TRFscore
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_RUS_Relations_TRFscore   Language:RUS,Metatype:Relation TRFscore
 
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_SPA_F1             Language:SPA,Metatype:ALL      F1
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_SPA_Events_F1      Language:SPA,Metatype:Event    F1
-          ArgumentMetricV1-scores.txt  ArgumentMetricV1_SPA_Relations_F1   Language:SPA,Metatype:Relation F1
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_SPA_TRFscore             Language:SPA,Metatype:ALL      TRFscore
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_SPA_Events_TRFscore      Language:SPA,Metatype:Event    TRFscore
+          ArgumentMetricV3A1-scores.txt  ArgumentMetricV3A1_SPA_Relations_TRFscore   Language:SPA,Metatype:Relation TRFscore
 
         # ---
-        # ArgumentMetricV2
+        # ArgumentMetricV3B1
         #
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_F1                 Language:ALL,Metatype:ALL      F1
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_TRFscore                 Language:ALL,Metatype:ALL      TRFscore
 
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_Events_F1          Language:ALL,Metatype:Event    F1
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_Relations_F1       Language:ALL,Metatype:Relation F1
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_Events_TRFscore          Language:ALL,Metatype:Event    TRFscore
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_Relations_TRFscore       Language:ALL,Metatype:Relation TRFscore
 
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_ENG_F1             Language:ENG,Metatype:ALL      F1
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_ENG_Events_F1      Language:ENG,Metatype:Event    F1
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_ENG_Relations_F1   Language:ENG,Metatype:Relation F1
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_ENG_TRFscore             Language:ENG,Metatype:ALL      TRFscore
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_ENG_Events_TRFscore      Language:ENG,Metatype:Event    TRFscore
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_ENG_Relations_TRFscore   Language:ENG,Metatype:Relation TRFscore
 
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_RUS_F1             Language:RUS,Metatype:ALL      F1
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_RUS_Events_F1      Language:RUS,Metatype:Event    F1
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_RUS_Relations_F1   Language:RUS,Metatype:Relation F1
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_RUS_TRFscore             Language:RUS,Metatype:ALL      TRFscore
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_RUS_Events_TRFscore      Language:RUS,Metatype:Event    TRFscore
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_RUS_Relations_TRFscore   Language:RUS,Metatype:Relation TRFscore
 
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_SPA_F1             Language:SPA,Metatype:ALL      F1
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_SPA_Events_F1      Language:SPA,Metatype:Event    F1
-          ArgumentMetricV2-scores.txt  ArgumentMetricV2_SPA_Relations_F1   Language:SPA,Metatype:Relation F1
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_SPA_TRFscore             Language:SPA,Metatype:ALL      TRFscore
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_SPA_Events_TRFscore      Language:SPA,Metatype:Event    TRFscore
+          ArgumentMetricV3B1-scores.txt  ArgumentMetricV3B1_SPA_Relations_TRFscore   Language:SPA,Metatype:Relation TRFscore
+
+        # ---
+        # ArgumentMetricV3C1
+        #
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_TRFscore                 Language:ALL,Metatype:ALL      TRFscore
+
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_Events_TRFscore          Language:ALL,Metatype:Event    TRFscore
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_Relations_TRFscore       Language:ALL,Metatype:Relation TRFscore
+
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_ENG_TRFscore             Language:ENG,Metatype:ALL      TRFscore
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_ENG_Events_TRFscore      Language:ENG,Metatype:Event    TRFscore
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_ENG_Relations_TRFscore   Language:ENG,Metatype:Relation TRFscore
+
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_RUS_TRFscore             Language:RUS,Metatype:ALL      TRFscore
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_RUS_Events_TRFscore      Language:RUS,Metatype:Event    TRFscore
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_RUS_Relations_TRFscore   Language:RUS,Metatype:Relation TRFscore
+
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_SPA_TRFscore             Language:SPA,Metatype:ALL      TRFscore
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_SPA_Events_TRFscore      Language:SPA,Metatype:Event    TRFscore
+          ArgumentMetricV3C1-scores.txt  ArgumentMetricV3C1_SPA_Relations_TRFscore   Language:SPA,Metatype:Relation TRFscore
+
+        # ---
+        # ArgumentMetricV3A2
+        #
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_TRFscore                 Language:ALL,Metatype:ALL      TRFscore
+
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_Events_TRFscore          Language:ALL,Metatype:Event    TRFscore
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_Relations_TRFscore       Language:ALL,Metatype:Relation TRFscore
+
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_ENG_TRFscore             Language:ENG,Metatype:ALL      TRFscore
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_ENG_Events_TRFscore      Language:ENG,Metatype:Event    TRFscore
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_ENG_Relations_TRFscore   Language:ENG,Metatype:Relation TRFscore
+
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_RUS_TRFscore             Language:RUS,Metatype:ALL      TRFscore
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_RUS_Events_TRFscore      Language:RUS,Metatype:Event    TRFscore
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_RUS_Relations_TRFscore   Language:RUS,Metatype:Relation TRFscore
+
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_SPA_TRFscore             Language:SPA,Metatype:ALL      TRFscore
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_SPA_Events_TRFscore      Language:SPA,Metatype:Event    TRFscore
+          ArgumentMetricV3A2-scores.txt  ArgumentMetricV3A2_SPA_Relations_TRFscore   Language:SPA,Metatype:Relation TRFscore
+
+        # ---
+        # ArgumentMetricV3B2
+        #
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_TRFscore                 Language:ALL,Metatype:ALL      TRFscore
+
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_Events_TRFscore          Language:ALL,Metatype:Event    TRFscore
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_Relations_TRFscore       Language:ALL,Metatype:Relation TRFscore
+
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_ENG_TRFscore             Language:ENG,Metatype:ALL      TRFscore
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_ENG_Events_TRFscore      Language:ENG,Metatype:Event    TRFscore
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_ENG_Relations_TRFscore   Language:ENG,Metatype:Relation TRFscore
+
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_RUS_TRFscore             Language:RUS,Metatype:ALL      TRFscore
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_RUS_Events_TRFscore      Language:RUS,Metatype:Event    TRFscore
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_RUS_Relations_TRFscore   Language:RUS,Metatype:Relation TRFscore
+
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_SPA_TRFscore             Language:SPA,Metatype:ALL      TRFscore
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_SPA_Events_TRFscore      Language:SPA,Metatype:Event    TRFscore
+          ArgumentMetricV3B2-scores.txt  ArgumentMetricV3B2_SPA_Relations_TRFscore   Language:SPA,Metatype:Relation TRFscore
+
+        # ---
+        # ArgumentMetricV3C2
+        #
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_TRFscore                 Language:ALL,Metatype:ALL      TRFscore
+
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_Events_TRFscore          Language:ALL,Metatype:Event    TRFscore
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_Relations_TRFscore       Language:ALL,Metatype:Relation TRFscore
+
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_ENG_TRFscore             Language:ENG,Metatype:ALL      TRFscore
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_ENG_Events_TRFscore      Language:ENG,Metatype:Event    TRFscore
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_ENG_Relations_TRFscore   Language:ENG,Metatype:Relation TRFscore
+
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_RUS_TRFscore             Language:RUS,Metatype:ALL      TRFscore
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_RUS_Events_TRFscore      Language:RUS,Metatype:Event    TRFscore
+          ArgumentMetricV3C2-scores.txt  ArgumentMetricV3C2_RUS_Relations_TRFscore   Language:RUS,Metatype:Relation TRFscore
 
         # ---
         # CoreferenceMetric
         #
-          CoreferenceMetric-scores.txt CoreferenceMetric_F1                Language:ALL,Metatype:ALL      F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_F1                          Language:ALL,Metatype:ALL      F1
 
-          CoreferenceMetric-scores.txt CoreferenceMetric_Events_F1         Language:ALL,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_Entities_F1       Language:ALL,Metatype:Entity   F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_Events_F1                   Language:ALL,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_Entities_F1                 Language:ALL,Metatype:Entity   F1
 
-          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_F1            Language:ENG,Metatype:ALL      F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Events_F1     Language:ENG,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Entities_F1   Language:ENG,Metatype:Entity   F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_F1                      Language:ENG,Metatype:ALL      F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Events_F1               Language:ENG,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_ENG_Entities_F1             Language:ENG,Metatype:Entity   F1
 
-          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_F1            Language:RUS,Metatype:ALL      F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Events_F1     Language:RUS,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Entities_F1   Language:RUS,Metatype:Entity   F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_F1                      Language:RUS,Metatype:ALL      F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Events_F1               Language:RUS,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_RUS_Entities_F1             Language:RUS,Metatype:Entity   F1
 
-          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_F1            Language:SPA,Metatype:ALL      F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Events_F1     Language:SPA,Metatype:Event    F1
-          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Entities_F1   Language:SPA,Metatype:Entity   F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_F1                      Language:SPA,Metatype:ALL      F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Events_F1               Language:SPA,Metatype:Event    F1
+          CoreferenceMetric-scores.txt CoreferenceMetric_SPA_Entities_F1             Language:SPA,Metatype:Entity   F1
 
         # ---
         # TemporalMetric
         #
-          TemporalMetric-scores.txt    TemporalMetric_S                    Language:ALL,Metatype:ALL      Similarity
+          TemporalMetric-scores.txt    TemporalMetric_S                              Language:ALL,Metatype:ALL      Similarity
 
-          TemporalMetric-scores.txt    TemporalMetric_Events_S             Language:ALL,Metatype:Event    Similarity
-          TemporalMetric-scores.txt    TemporalMetric_Relations_S          Language:ALL,Metatype:Relation Similarity
+          TemporalMetric-scores.txt    TemporalMetric_Events_S                       Language:ALL,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_Relations_S                    Language:ALL,Metatype:Relation Similarity
 
-          TemporalMetric-scores.txt    TemporalMetric_ENG_S                Language:ENG,Metatype:ALL      Similarity
-          TemporalMetric-scores.txt    TemporalMetric_ENG_Events_S         Language:ENG,Metatype:Event    Similarity
-          TemporalMetric-scores.txt    TemporalMetric_ENG_Relations_S      Language:ENG,Metatype:Relation Similarity
+          TemporalMetric-scores.txt    TemporalMetric_ENG_S                          Language:ENG,Metatype:ALL      Similarity
+          TemporalMetric-scores.txt    TemporalMetric_ENG_Events_S                   Language:ENG,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_ENG_Relations_S                Language:ENG,Metatype:Relation Similarity
 
-          TemporalMetric-scores.txt    TemporalMetric_RUS_S                Language:RUS,Metatype:ALL      Similarity
-          TemporalMetric-scores.txt    TemporalMetric_RUS_Events_S         Language:RUS,Metatype:Event    Similarity
-          TemporalMetric-scores.txt    TemporalMetric_RUS_Relations_S      Language:RUS,Metatype:Relation Similarity
+          TemporalMetric-scores.txt    TemporalMetric_RUS_S                          Language:RUS,Metatype:ALL      Similarity
+          TemporalMetric-scores.txt    TemporalMetric_RUS_Events_S                   Language:RUS,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_RUS_Relations_S                Language:RUS,Metatype:Relation Similarity
 
-          TemporalMetric-scores.txt    TemporalMetric_SPA_S                Language:SPA,Metatype:ALL      Similarity
-          TemporalMetric-scores.txt    TemporalMetric_SPA_Events_S         Language:SPA,Metatype:Event    Similarity
-          TemporalMetric-scores.txt    TemporalMetric_SPA_Relations_S      Language:SPA,Metatype:Relation Similarity
-
-        # ---
-        # TypeMetricV1
-        #
-          TypeMetricV1-scores.txt        TypeMetricV1_F1                       Language:ALL,Metatype:ALL      F1
-
-          TypeMetricV1-scores.txt        TypeMetricV1_Events_F1                Language:ALL,Metatype:Event    F1
-          TypeMetricV1-scores.txt        TypeMetricV1_Entities_F1              Language:ALL,Metatype:Entity   F1
-
-          TypeMetricV1-scores.txt        TypeMetricV1_ENG_F1                   Language:ENG,Metatype:ALL      F1
-          TypeMetricV1-scores.txt        TypeMetricV1_ENG_Events_F1            Language:ENG,Metatype:Event    F1
-          TypeMetricV1-scores.txt        TypeMetricV1_ENG_Entities_F1          Language:ENG,Metatype:Entity   F1
-
-          TypeMetricV1-scores.txt        TypeMetricV1_RUS_F1                   Language:RUS,Metatype:ALL      F1
-          TypeMetricV1-scores.txt        TypeMetricV1_RUS_Events_F1            Language:RUS,Metatype:Event    F1
-          TypeMetricV1-scores.txt        TypeMetricV1_RUS_Entities_F1          Language:RUS,Metatype:Entity   F1
-
-          TypeMetricV1-scores.txt        TypeMetricV1_SPA_F1                   Language:SPA,Metatype:ALL      F1
-          TypeMetricV1-scores.txt        TypeMetricV1_SPA_Events_F1            Language:SPA,Metatype:Event    F1
-          TypeMetricV1-scores.txt        TypeMetricV1_SPA_Entities_F1          Language:SPA,Metatype:Entity   F1
+          TemporalMetric-scores.txt    TemporalMetric_SPA_S                          Language:SPA,Metatype:ALL      Similarity
+          TemporalMetric-scores.txt    TemporalMetric_SPA_Events_S                   Language:SPA,Metatype:Event    Similarity
+          TemporalMetric-scores.txt    TemporalMetric_SPA_Relations_S                Language:SPA,Metatype:Relation Similarity
 
         # ---
-        # TypeMetricV2
+        # TypeMetricV4
         #
-          TypeMetricV2-scores.txt        TypeMetricV2_MAP                       Language:ALL,Metatype:ALL      AvgPrec
+          TypeMetricV4-scores.txt        TypeMetricV4_S                              Language:ALL,Metatype:ALL      TypeSimilarity
 
-          TypeMetricV2-scores.txt        TypeMetricV2_Events_MAP                Language:ALL,Metatype:Event    AvgPrec
-          TypeMetricV2-scores.txt        TypeMetricV2_Entities_MAP              Language:ALL,Metatype:Entity   AvgPrec
+          TypeMetricV4-scores.txt        TypeMetricV4_Events_S                       Language:ALL,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_Entities_S                     Language:ALL,Metatype:Entity   TypeSimilarity
 
-          TypeMetricV2-scores.txt        TypeMetricV2_ENG_MAP                   Language:ENG,Metatype:ALL      AvgPrec
-          TypeMetricV2-scores.txt        TypeMetricV2_ENG_Events_MAP            Language:ENG,Metatype:Event    AvgPrec
-          TypeMetricV2-scores.txt        TypeMetricV2_ENG_Entities_MAP          Language:ENG,Metatype:Entity   AvgPrec
+          TypeMetricV4-scores.txt        TypeMetricV4_ENG_S                          Language:ENG,Metatype:ALL      TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_ENG_Events_S                   Language:ENG,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_ENG_Entities_S                 Language:ENG,Metatype:Entity   TypeSimilarity
 
-          TypeMetricV2-scores.txt        TypeMetricV2_RUS_MAP                   Language:RUS,Metatype:ALL      AvgPrec
-          TypeMetricV2-scores.txt        TypeMetricV2_RUS_Events_MAP            Language:RUS,Metatype:Event    AvgPrec
-          TypeMetricV2-scores.txt        TypeMetricV2_RUS_Entities_MAP          Language:RUS,Metatype:Entity   AvgPrec
+          TypeMetricV4-scores.txt        TypeMetricV4_RUS_S                          Language:RUS,Metatype:ALL      TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_RUS_Events_S                   Language:RUS,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_RUS_Entities_S                 Language:RUS,Metatype:Entity   TypeSimilarity
 
-          TypeMetricV2-scores.txt        TypeMetricV2_SPA_MAP                   Language:SPA,Metatype:ALL      AvgPrec
-          TypeMetricV2-scores.txt        TypeMetricV2_SPA_Events_MAP            Language:SPA,Metatype:Event    AvgPrec
-          TypeMetricV2-scores.txt        TypeMetricV2_SPA_Entities_MAP          Language:SPA,Metatype:Entity   AvgPrec
-
-        # ---
-        # TypeMetricV3
-        #
-          TypeMetricV3-scores.txt        TypeMetricV3_MAP                       Language:ALL,Metatype:ALL      AvgPrec
-
-          TypeMetricV3-scores.txt        TypeMetricV3_Events_MAP                Language:ALL,Metatype:Event    AvgPrec
-          TypeMetricV3-scores.txt        TypeMetricV3_Entities_MAP              Language:ALL,Metatype:Entity   AvgPrec
-
-          TypeMetricV3-scores.txt        TypeMetricV3_ENG_MAP                   Language:ENG,Metatype:ALL      AvgPrec
-          TypeMetricV3-scores.txt        TypeMetricV3_ENG_Events_MAP            Language:ENG,Metatype:Event    AvgPrec
-          TypeMetricV3-scores.txt        TypeMetricV3_ENG_Entities_MAP          Language:ENG,Metatype:Entity   AvgPrec
-
-          TypeMetricV3-scores.txt        TypeMetricV3_RUS_MAP                   Language:RUS,Metatype:ALL      AvgPrec
-          TypeMetricV3-scores.txt        TypeMetricV3_RUS_Events_MAP            Language:RUS,Metatype:Event    AvgPrec
-          TypeMetricV3-scores.txt        TypeMetricV3_RUS_Entities_MAP          Language:RUS,Metatype:Entity   AvgPrec
-
-          TypeMetricV3-scores.txt        TypeMetricV3_SPA_MAP                   Language:SPA,Metatype:ALL      AvgPrec
-          TypeMetricV3-scores.txt        TypeMetricV3_SPA_Events_MAP            Language:SPA,Metatype:Event    AvgPrec
-          TypeMetricV3-scores.txt        TypeMetricV3_SPA_Entities_MAP          Language:SPA,Metatype:Entity   AvgPrec
+          TypeMetricV4-scores.txt        TypeMetricV4_SPA_S                          Language:SPA,Metatype:ALL      TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_SPA_Events_S                   Language:SPA,Metatype:Event    TypeSimilarity
+          TypeMetricV4-scores.txt        TypeMetricV4_SPA_Entities_S                 Language:SPA,Metatype:Entity   TypeSimilarity
 
         # ---
         # FrameMetric
         #
-          FrameMetric-scores.txt       FrameMetric_F1                      Language:ALL,Metatype:ALL      F1
+          FrameMetric-scores.txt         FrameMetric_S                               Language:ALL,Metatype:ALL      AvgEdgeScore
 
-          FrameMetric-scores.txt       FrameMetric_Events_F1               Language:ALL,Metatype:Event    F1
-          FrameMetric-scores.txt       FrameMetric_Relations_F1            Language:ALL,Metatype:Relation F1
+          FrameMetric-scores.txt         FrameMetric_Events_S                        Language:ALL,Metatype:Event    AvgEdgeScore
+          FrameMetric-scores.txt         FrameMetric_Relations_S                     Language:ALL,Metatype:Relation AvgEdgeScore
 
-          FrameMetric-scores.txt       FrameMetric_ENG_F1                  Language:ENG,Metatype:ALL      F1
-          FrameMetric-scores.txt       FrameMetric_ENG_Events_F1           Language:ENG,Metatype:Event    F1
-          FrameMetric-scores.txt       FrameMetric_ENG_Relations_F1        Language:ENG,Metatype:Relation F1
+          FrameMetric-scores.txt         FrameMetric_ENG_S                           Language:ENG,Metatype:ALL      AvgEdgeScore
+          FrameMetric-scores.txt         FrameMetric_ENG_Events_S                    Language:ENG,Metatype:Event    AvgEdgeScore
+          FrameMetric-scores.txt         FrameMetric_ENG_Relations_S                 Language:ENG,Metatype:Relation AvgEdgeScore
 
-          FrameMetric-scores.txt       FrameMetric_RUS_F1                  Language:RUS,Metatype:ALL      F1
-          FrameMetric-scores.txt       FrameMetric_RUS_Events_F1           Language:RUS,Metatype:Event    F1
-          FrameMetric-scores.txt       FrameMetric_RUS_Relations_F1        Language:RUS,Metatype:Relation F1
+          FrameMetric-scores.txt         FrameMetric_RUS_S                           Language:RUS,Metatype:ALL      AvgEdgeScore
+          FrameMetric-scores.txt         FrameMetric_RUS_Events_S                    Language:RUS,Metatype:Event    AvgEdgeScore
+          FrameMetric-scores.txt         FrameMetric_RUS_Relations_S                 Language:RUS,Metatype:Relation AvgEdgeScore
 
-          FrameMetric-scores.txt       FrameMetric_SPA_F1                  Language:SPA,Metatype:ALL      F1
-          FrameMetric-scores.txt       FrameMetric_SPA_Events_F1           Language:SPA,Metatype:Event    F1
-          FrameMetric-scores.txt       FrameMetric_SPA_Relations_F1        Language:SPA,Metatype:Relation F1
+          FrameMetric-scores.txt         FrameMetric_SPA_S                           Language:SPA,Metatype:ALL      AvgEdgeScore
+          FrameMetric-scores.txt         FrameMetric_SPA_Events_S                    Language:SPA,Metatype:Event    AvgEdgeScore
+          FrameMetric-scores.txt         FrameMetric_SPA_Relations_S                 Language:SPA,Metatype:Relation AvgEdgeScore
+
+        # ---
+        # NegationMetricV1
+        #
+          NegationMetricV1-scores.txt    NegationMetricV1_F1                         Language:ALL,Metatype:ALL      F1
+
+          NegationMetricV1-scores.txt    NegationMetricV1_Events_F1                  Language:ALL,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_Relations_F1               Language:ALL,Metatype:Relation F1
+
+          NegationMetricV1-scores.txt    NegationMetricV1_ENG_F1                     Language:ENG,Metatype:ALL      F1
+          NegationMetricV1-scores.txt    NegationMetricV1_ENG_Events_F1              Language:ENG,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_ENG_Relations_F1           Language:ENG,Metatype:Relation F1
+
+          NegationMetricV1-scores.txt    NegationMetricV1_RUS_F1                     Language:RUS,Metatype:ALL      F1
+          NegationMetricV1-scores.txt    NegationMetricV1_RUS_Events_F1              Language:RUS,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_RUS_Relations_F1           Language:RUS,Metatype:Relation F1
+
+          NegationMetricV1-scores.txt    NegationMetricV1_SPA_F1                     Language:SPA,Metatype:ALL      F1
+          NegationMetricV1-scores.txt    NegationMetricV1_SPA_Events_F1              Language:SPA,Metatype:Event    F1
+          NegationMetricV1-scores.txt    NegationMetricV1_SPA_Relations_F1           Language:SPA,Metatype:Relation F1
+
+        # ---
+        # NegationMetricV2
+        #
+          NegationMetricV2-scores.txt    NegationMetricV2_F1                         Language:ALL,Metatype:ALL      F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_Events_F1                  Language:ALL,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_Relations_F1               Language:ALL,Metatype:Relation F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_ENG_F1                     Language:ENG,Metatype:ALL      F1
+          NegationMetricV2-scores.txt    NegationMetricV2_ENG_Events_F1              Language:ENG,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_ENG_Relations_F1           Language:ENG,Metatype:Relation F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_RUS_F1                     Language:RUS,Metatype:ALL      F1
+          NegationMetricV2-scores.txt    NegationMetricV2_RUS_Events_F1              Language:RUS,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_RUS_Relations_F1           Language:RUS,Metatype:Relation F1
+
+          NegationMetricV2-scores.txt    NegationMetricV2_SPA_F1                     Language:SPA,Metatype:ALL      F1
+          NegationMetricV2-scores.txt    NegationMetricV2_SPA_Events_F1              Language:SPA,Metatype:Event    F1
+          NegationMetricV2-scores.txt    NegationMetricV2_SPA_Relations_F1           Language:SPA,Metatype:Relation F1
 
     """
     return metric_classes_specs
-
-def generate_dummy_results(logger, logs_directory):
-    record_and_display_message(logger, 'Generating dummy results file.')
-    metric_classes_specs = get_metric_classes_specs()
-    num_problems, problem_stats = get_problems(logs_directory)
-    scores = {}
-    for line in metric_classes_specs.split('\n'):
-        line = line.strip()
-        if line == '': continue
-        if line.startswith('#'): continue
-        scores[line.split()[1]] = 0.0
-
-    scores['RunID'] = args.run
-    scores['Total'] = scores['FrameMetric_F1']
-    scores['Errors'] = num_problems
-    scores['ErrorStats'] = problem_stats
-    scores['FatalError'] = 'No'
-
-    output = {'scores' : [
-                            scores
-                         ]
-            }
-
-    outputdir = "/score/"
-    with open(outputdir + 'results.json', 'w') as fp:
-        json.dump(output, fp, indent=4, sort_keys=True)
 
 def generate_results_file_and_exit(logger, logs_directory):
     metric_classes_specs = get_metric_classes_specs()
@@ -276,7 +326,7 @@ def generate_results_file_and_exit(logger, logs_directory):
             file_handle = open(filename, "r")
             lines = file_handle.readlines()
             columns = lines[0].strip().split()
-            for line in [l for l in lines if 'Summary' in l]:
+            for line in [l for l in lines if 'ALL-Macro' in l]:
                 line.strip()
                 values = line.split()
                 for i in range(len(columns) - len(values)):
@@ -307,7 +357,7 @@ def generate_results_file_and_exit(logger, logs_directory):
     fatal_error = 'Yes' if exit_code == ERROR_EXIT_CODE else 'No'
 
     scores['RunID'] = args.run
-    scores['Total'] = scores['FrameMetric_F1']
+    scores['Total'] = scores['FrameMetric_S']
     scores['Errors'] = num_problems
     scores['ErrorStats'] = problem_stats
     scores['FatalError'] = fatal_error
@@ -387,20 +437,6 @@ def main(args):
     ldc_package_id = runtypes[args.runtype]
     record_and_display_message(logger, 'Docker is using {} data for scoring'.format(args.runtype))
 
-    thresholds = {
-        'eng_iou_threshold': args.eng_iou_threshold,
-        'spa_iou_threshold': args.spa_iou_threshold,
-        'rus_iou_threshold': args.rus_iou_threshold,
-        'image_iou_threshold': args.image_iou_threshold,
-        'video_iou_threshold': args.video_iou_threshold,
-        }
-
-    for threshold_arg_name in thresholds:
-        threshold = thresholds[threshold_arg_name]
-        if not 0 <= threshold <= 1:
-            logger.record_event('UNEXCPECTED_THRESHOLD', threshold_arg_name, threshold)
-            generate_results_file_and_exit(logger, logs_directory)
-
     #############################################################################################
     # AUX-data
     #############################################################################################
@@ -414,7 +450,9 @@ def main(args):
     image_boundaries        = '/data/AUX-data/{}.image_boundaries.txt'.format(ldc_package_id)
     keyframe_boundaries     = '/data/AUX-data/{}.keyframe_boundaries.txt'.format(ldc_package_id)
     video_boundaries        = '/data/AUX-data/{}.video_boundaries.txt'.format(ldc_package_id)
-    annotated_regions       = '/data/AUX-data/{}.annotated_regions.txt'.format(ldc_package_id)
+    annotation_tagset       = '/data/AUX-data/AIDA_TA1_Annotation_Tagset_Phase_3_External_V1.0.xlsx'
+    dwd_overlay             = '/data/AUX-data/xpo_v5.1a.json'
+    cache                   = '/data/AUX-data/cache.txt'
     sparql_kb_input         = '{output}/SPARQL-KB-input'.format(output=args.output)
     sparql_output           = '{output}/SPARQL-output'.format(output=args.output)
     sparql_clean_output     = '{output}/SPARQL-CLEAN-output'.format(output=args.output)
@@ -424,7 +462,7 @@ def main(args):
     similarities            = '{output}/similarities'.format(output=args.output)
     scores                  = '{output}/scores'.format(output=args.output)
 
-    gold_filtered_responses = '/data/gold/SPARQL-FILTERED-output'
+    gold_valid_responses = '/data/gold/SPARQL-VALID-output'
 
     #############################################################################################
     # pull latest copy of code from git
@@ -526,7 +564,7 @@ def main(args):
         record_and_display_message(logger, 'Applying SPARQL queries.')
         graphdb_bin = '/opt/graphdb/dist/bin'
         graphdb = '{}/graphdb'.format(graphdb_bin)
-        loadrdf = '{}/loadrdf'.format(graphdb_bin)
+        loadrdf = '{}/importrdf load'.format(graphdb_bin)
         verdi = '/opt/sparql-evaluation'
         jar = '{}/sparql-evaluation-1.0.0-SNAPSHOT-all.jar'.format(verdi)
         config = '{}/config/Local-config.ttl'.format(verdi)
@@ -636,24 +674,132 @@ def main(args):
                                           sparql_valid_output=sparql_valid_output)
     call_system(cmd)
 
-    generate_dummy_results(logger, logs_directory)
+    #############################################################################################
+    # Align clusters and mentions, and filter SPARQL output
+    #############################################################################################
+
+    record_and_display_message(logger, 'Aligning clusters and mentions, and filtering SPARQL output.')
+
+    log_file = '{logs_directory}/filter-responses.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 filter_responses.py \
+            --alpha {alpha} \
+            --cache {cache} \
+            --iou_thresholds {iou_thresholds} \
+            --kgtk_api {kgtk_api} \
+            --lock {lock} \
+            --log {log_file} \
+            --near_neighbor_similarity_value {near_neighbor_similarity_value} \
+            --similarity_types {similarity_types} \
+            --wait {wait} \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {annotation_tagset} \
+            {dwd_overlay} \
+            {gold_valid_responses} \
+            {run_id} \
+            {sparql_valid_output} \
+            {similarities} \
+            {alignment} \
+            {sparql_filtered_output}'.format(python_scripts=python_scripts,
+                                          log_file=log_file,
+                                          alpha=args.alpha,
+                                          cache=cache,
+                                          iou_thresholds=args.iou_thresholds,
+                                          kgtk_api=args.kgtk_api,
+                                          lock=args.lock,
+                                          log_specifications=log_specifications,
+                                          near_neighbor_similarity_value=args.near_neighbor_similarity_value,
+                                          similarity_types='class,jc',
+                                          wait=args.wait,
+                                          encoding_modality=encoding_modality,
+                                          coredocs=coredocs_xx,
+                                          parent_children=parent_children,
+                                          sentence_boundaries=sentence_boundaries,
+                                          image_boundaries=image_boundaries,
+                                          keyframe_boundaries=keyframe_boundaries,
+                                          video_boundaries=video_boundaries,
+                                          annotation_tagset=annotation_tagset,
+                                          dwd_overlay=dwd_overlay,
+                                          gold_valid_responses=gold_valid_responses,
+                                          run_id=args.run,
+                                          sparql_valid_output=sparql_valid_output,
+                                          similarities=similarities,
+                                          alignment=alignment,
+                                          sparql_filtered_output=sparql_filtered_output)
+    call_system(cmd)
+
+    #############################################################################################
+    # Generate scores
+    #############################################################################################
+
+    record_and_display_message(logger, 'Generating scores.')
+
+    log_file = '{logs_directory}/score-responses.log'.format(logs_directory=logs_directory)
+    cmd = 'cd {python_scripts} && \
+            python3.9 score_submission.py \
+            task1 \
+            --log {log_file} \
+            {log_specifications} \
+            {encoding_modality} \
+            {coredocs} \
+            {parent_children} \
+            {sentence_boundaries} \
+            {image_boundaries} \
+            {keyframe_boundaries} \
+            {video_boundaries} \
+            {gold_valid_responses} \
+            {sparql_filtered_output} \
+            {alignment} \
+            {similarities} \
+            {run_id} \
+            {scores}'.format(python_scripts=python_scripts,
+                                          log_file=log_file,
+                                          log_specifications=log_specifications,
+                                          encoding_modality=encoding_modality,
+                                          coredocs=coredocs_xx,
+                                          parent_children=parent_children,
+                                          sentence_boundaries=sentence_boundaries,
+                                          image_boundaries=image_boundaries,
+                                          keyframe_boundaries=keyframe_boundaries,
+                                          video_boundaries=video_boundaries,
+                                          gold_valid_responses=gold_valid_responses,
+                                          run_id=args.run,
+                                          sparql_filtered_output=sparql_filtered_output,
+                                          similarities=similarities,
+                                          alignment=alignment,
+                                          scores=scores)
+    call_system(cmd)
+
+    generate_results_file_and_exit(logger, logs_directory)
 
     record_and_display_message(logger, 'Done.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Apply SPARQL queries, validate responses, generate aggregate confidences, and scores.")
+    parser.add_argument('-a', '--alpha', default=0.9, help='Specify the type similarity threshold (default: %(default)s)')
+    parser.add_argument('-c', '--cache', default=None, help='Specify the qnode type similarity cache (default: %(default)s)')
     parser.add_argument('-i', '--input', default='/evaluate', help='Specify the input directory (default: %(default)s)')
+    parser.add_argument('-I', '--iou_thresholds',
+                        default='eng:image:0.9,eng:text:0.9,eng:video:0.9,rus:image:0.9,rus:text:0.9,rus:video:0.9,spa:image:0.9,spa:text:0.9,spa:video:0.9,ukr:image:0.9,ukr:text:0.9,ukr:video:0.9',
+                        help='Specify comma-separted list of document, modality, and the respective iou threshold separated by colon (default: %(default)s)')
+    parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
+    parser.add_argument('-L', '--lock', default='/data/AUX-data/kgtk.lock', help='Specify the lock file (default: %(default)s)')
     parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
+    parser.add_argument('-n', '--near_neighbor_similarity_value', default=0.9, help='Specify the similarity score to be used when the qnodes were declared to be near-neighbors (default: %(default)s)')
     parser.add_argument('-o', '--output', default='/score', help='Specify the input directory (default: %(default)s)')
     parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')
     parser.add_argument('-R', '--runtype', default='practice', help='Specify the run type (default: %(default)s)')
+    parser.add_argument('-S', '--similarity_types', default='complex,transe,text,class,jc,topsim', help='Specify the comma-separated list of similarity types to be used by kgtk-similarity (default: %(default)s)')
     parser.add_argument('-s', '--spec', default='/scripts/log_specifications.txt', help='Specify the log specifications file (default: %(default)s)')
     parser.add_argument('-t', '--task', default='task1', help='Specify the task in order to apply relevant queries (default: %(default)s)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__,  help='Print version number and exit')
-    parser.add_argument('eng_iou_threshold', type=float, help='English text IOU threshold for alignment')
-    parser.add_argument('spa_iou_threshold', type=float, help='Spanish text IOU threshold for alignment')
-    parser.add_argument('rus_iou_threshold', type=float, help='Russian text IOU threshold for alignment')
-    parser.add_argument('image_iou_threshold', type=float, help='Image IOU threshold for alignment')
-    parser.add_argument('video_iou_threshold', type=float, help='Video IOU threshold for alignment')
+    parser.add_argument('-w', '--wait', type=int, default=10, help='Specify the seconds to wait before checking if the lock can be acquired (default: %(default)s)')
     args = parser.parse_args()
     main(args)

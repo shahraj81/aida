@@ -10,6 +10,7 @@ from aida.scorer import Scorer
 from aida.coreference_metric_score import CoreferenceMetricScore
 from aida.score_printer import ScorePrinter
 from aida.utility import multisort
+from tqdm import tqdm
 
 class CoreferenceMetricScorer(Scorer):
     """
@@ -29,16 +30,20 @@ class CoreferenceMetricScorer(Scorer):
 
     def get_max_total_similarity(self, document_id, metatypes):
         max_total_similarity = 0
-        for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):
-            if cluster_id == 'None': continue
-            metatype = self.get('metatype', 'gold', cluster_id)
-            if metatype not in metatypes: continue
-            if metatype != 'Relation':
+        if document_id in self.get('cluster_alignment').get('gold_to_system'):
+            for cluster_id in self.get('cluster_alignment').get('gold_to_system').get(document_id):
+                if cluster_id == 'None': continue
+                metatype = self.get('metatype', document_id, 'gold', cluster_id)
+                if metatype not in metatypes: continue
                 max_total_similarity += float(self.get('cluster_alignment').get('gold_to_system').get(document_id).get(cluster_id).get('aligned_similarity'))
         return max_total_similarity
 
-    def get_metatype(self, system_or_gold, cluster_id):
-        metatype = self.get('cluster_self_similarities').get('cluster_to_metatype').get('{}:{}'.format(system_or_gold.upper(), cluster_id))
+    def get_metatype(self, document_id, system_or_gold, cluster_id):
+        responses = {
+            'gold': self.get('gold_responses'),
+            'system': self.get('system_responses')
+            }
+        metatype = responses.get(system_or_gold).get('document_clusters').get(document_id).get(cluster_id).get('metatype')
         if metatype not in ['Event', 'Relation', 'Entity']:
             self.record_event('DEFAULT_CRITICAL_ERROR', 'Unknown metatype: {} for {}:{}'.format(metatype, system_or_gold.upper(), cluster_id), self.get('code_location'))
         return metatype
@@ -47,11 +52,11 @@ class CoreferenceMetricScorer(Scorer):
         total_self_similarity = 0
         if system_or_gold == 'system' and document_id not in self.get('cluster_self_similarities').get(system_or_gold):
             return total_self_similarity
-        for cluster_id in self.get('cluster_self_similarities').get(system_or_gold).get(document_id):
-            metatype = self.get('metatype', system_or_gold, cluster_id)
-            if metatype not in metatypes: continue
-            self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
-            if metatype != 'Relation':
+        if document_id in self.get('cluster_self_similarities').get(system_or_gold):
+            for cluster_id in self.get('cluster_self_similarities').get(system_or_gold).get(document_id):
+                metatype = self.get('metatype', document_id, system_or_gold, cluster_id)
+                if metatype not in metatypes: continue
+                self_similarity = self.get('cluster_self_similarities').get(system_or_gold).get(document_id).get(cluster_id)
                 total_self_similarity += float(self_similarity)
         return total_self_similarity
 
@@ -62,8 +67,11 @@ class CoreferenceMetricScorer(Scorer):
             'Event': ['Event']
             }
         scores = []
-        for document_id in self.get('core_documents'):
+        for document_id in tqdm(self.get('core_documents'), desc='scoring {}'.format(self.__class__.__name__)):
             document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
+            if document is None:
+                self.record_event('DEFAULT_WARNING', 'No language information found for document {}'.format(document_id))
+                continue
             language = document.get('language')
             for metatype_key in metatypes:
                 max_total_similarity = self.get('max_total_similarity', document_id, metatypes[metatype_key])
@@ -71,7 +79,7 @@ class CoreferenceMetricScorer(Scorer):
                 total_self_similarity_system = self.get('total_self_similarity', 'system', document_id, metatypes[metatype_key])
 
                 precision = max_total_similarity / total_self_similarity_system if total_self_similarity_system else 0
-                recall = max_total_similarity / total_self_similarity_gold
+                recall = max_total_similarity / total_self_similarity_gold if total_self_similarity_gold else 0
                 f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
                 score = CoreferenceMetricScore(logger=self.logger,
                                                run_id=self.get('run_id'),

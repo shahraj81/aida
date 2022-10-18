@@ -6,6 +6,8 @@ __status__  = "production"
 __version__ = "1.0.0.1"
 __date__    = "14 February 2022"
 
+from aida.container import Container
+from aida.file_handler import FileHandler
 from aida.logger import Logger
 from aida.object import Object
 from aida.ta3_queryset import TA3QuerySet
@@ -13,6 +15,7 @@ from aida.ta3_queryset import TA3QuerySet
 import argparse
 import os
 import re
+import subprocess
 import sys
 import textwrap
 import traceback
@@ -39,6 +42,92 @@ def check_for_paths_non_existance(paths):
         if os.path.exists(path):
             print('Error: Path {} exists'.format(path))
             exit(ERROR_EXIT_CODE)
+
+class Task1(Object):
+    """
+    Class for verifying the directory structure for Task1 output.
+    """
+    def __init__(self, log, log_specifications, document_ids, output):
+        check_for_paths_existance([
+                 log_specifications,
+                 output
+                 ])
+        check_for_paths_non_existance([])
+        self.log_filename = log
+        self.log_specifications = log_specifications
+        self.logger = Logger(self.get('log_filename'),
+                        self.get('log_specifications'),
+                        sys.argv)
+        self.document_ids = Container(self.get('logger'))
+        self.document_ids_filename = document_ids
+        self.output = output
+        self.load()
+
+    def load(self):
+        document_ids = self.get('document_ids')
+        for entry in FileHandler(self.get('logger'), self.get('document_ids_filename')):
+            document_ids.add('member', entry.get('root_id'))
+
+    def verify(self, output):
+        if not (os.path.isfile(output) and output.endswith('.zip')):
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'not a zip file {}'.format(output))
+            return ERROR_EXIT_CODE
+        result = subprocess.run(['zipinfo', '-1', output], stdout=subprocess.PIPE)
+        zipinfo = result.stdout.decode('utf-8').strip()
+        ttl_found = False
+        run_id = None
+        for line in zipinfo.split('\n'):
+            line = line.strip('/')
+            print('inspecting line: {}'.format(line))
+            elements = line.split('/')
+            if len(elements) > 0:
+                if elements[0] != 'output':
+                    self.record_event('DEFAULT_CRITICAL_ERROR', 'improper directory structure encountered when reading line: {line} (expected: output/{run_id}/NIST/*.ttl)'.format(line=line, run_id='{run_id}'))
+                    return ERROR_EXIT_CODE
+                if len(elements) > 1:
+                    if run_id is None:
+                        run_id = elements[1]
+                        self.record_event('DEFAULT_INFO', 'run_id found to be "{}"'.format(run_id))
+                    if run_id != elements[1]:
+                        self.record_event('DEFAULT_CRITICAL_ERROR', 'multiple run_ids (found: {}, {})'.format(elements[1], run_id))
+                        return ERROR_EXIT_CODE
+                    if len(elements) > 2:
+                        if elements[2] == 'NIST':
+                            if len(elements) > 3:
+                                ttl_filename = elements[3]
+                                if not ttl_filename.endswith('.ttl'):
+                                    self.record_event('DEFAULT_CRITICAL_ERROR', 'improper directory structure encountered when reading line: {line} (expected: output/{run_id}/NIST/*.ttl)'.format(line=line, run_id='{run_id}'))
+                                    return ERROR_EXIT_CODE
+                                else:
+                                    document_id = ttl_filename.replace('.ttl', '')
+                                    if not self.get('document_ids').exists(document_id):
+                                        self.record_event('DEFAULT_CRITICAL_ERROR', 'unknown document {}'.format(document_id))
+                                        return ERROR_EXIT_CODE
+                                    ttl_found = True
+                            if len(elements) > 4:
+                                self.record_event('DEFAULT_CRITICAL_ERROR', 'improper directory structure encountered when reading line: {line} (expected: output/{run_id}/NIST/*.ttl)'.format(line=line, run_id='{run_id}'))
+                                return ERROR_EXIT_CODE
+        if not ttl_found:
+            self.record_event('DEFAULT_CRITICAL_ERROR', 'No ttl file found inside NIST directory (expected: output/{run_id}/NIST/*.ttl)'.format(line=line, run_id='{run_id}'))
+            return ERROR_EXIT_CODE
+        self.record_event('DEFAULT_INFO', 'No errors encountered.')
+        return ALLOK_EXIT_CODE
+
+    def __call__(self):
+        retVal = self.verify(self.get('output'))
+        message = 'No errors encountered.' if retVal == ALLOK_EXIT_CODE else 'Error(s) encountered.'
+        print(message)
+        exit(retVal)
+
+    @classmethod
+    def add_arguments(myclass, parser):
+        parser.add_argument('-l', '--log', default='log.txt', help='Specify a file to which log output should be redirected (default: %(default)s)')
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Print version number and exit')
+        parser.add_argument('log_specifications', type=str, help='File containing error specifications')
+        parser.add_argument('document_ids', type=str, help='File containing list of (parent) document ids in the corpus')
+        parser.add_argument('output', type=str, help='Specify the compressed (zip file) TA1 run directory')
+        parser.set_defaults(myclass=myclass)
+        return parser
 
 class Task3(Object):
     """
@@ -98,6 +187,7 @@ class Task3(Object):
         return parser
 
 myclasses = [
+    Task1,
     Task3
     ]
 

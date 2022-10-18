@@ -215,10 +215,12 @@ class ClaimKEs(Object):
             'EvtRelType',
             'EvtRelClusterID',
             'IsEvtRelNegated',
+            'IsEvtRelInClaimSemantics',
             'ObjMetatype',
             'ObjectType',
             'ObjClusterID',
             'IsObjNegated',
+            'IsObjInClaimSemantics',
             'ObjectHandle',
             'DocID',
             'SubjectJustification',
@@ -266,10 +268,12 @@ class ClaimNonTemporalKEs(ClaimKEs):
             'EvtRelType': 'subject_type',
             'EvtRelClusterID': 'subject_cluster_id',
             'IsEvtRelNegated': 'is_subject_cluster_member_negated',
+            'IsEvtRelInClaimSemantics': 'is_subject_in_claim_semantics',
             'ObjMetatype': 'object_cluster_member_metatype',
             'ObjectType': 'object_type',
             'ObjClusterID': 'object_cluster_id',
             'IsObjNegated': 'is_object_cluster_member_negated',
+            'IsObjInClaimSemantics': 'is_object_in_claim_semantics',
             'ObjectHandle': 'object_cluster_handle',
             'DocID': 'document_id',
             'SubjectJustification': 'subject_informative_justification_span_text',
@@ -317,6 +321,9 @@ class ClaimTemporalKEs(ClaimKEs):
     def get_IsEvtRelNegated(self, entry):
         return 'NotNegated'
 
+    def get_IsEvtRelInClaimSemantics(self, entry):
+        return entry.get('is_subject_in_claim_semantics')
+
     def get_ObjMetatype(self, entry):
         return 'Time'
 
@@ -328,6 +335,9 @@ class ClaimTemporalKEs(ClaimKEs):
 
     def get_IsObjNegated(self, entry):
         return 'NotNegated'
+
+    def get_IsObjInClaimSemantics(self, entry):
+        return entry.get('is_object_in_claim_semantics')
 
     def get_ObjectHandle(self, entry):
         time_assertion_entry = self.get('corresponding_time_assertion', entry)
@@ -370,10 +380,12 @@ class ClaimTemporalKEs(ClaimKEs):
             'EvtRelType': 'subject_type',
             'EvtRelClusterID': 'subject_cluster_id',
             'IsEvtRelNegated': None,
+            'IsEvtRelInClaimSemantics': None,
             'ObjMetatype': None,
             'ObjectType': None,
             'ObjClusterID': None,
             'IsObjNegated': None,
+            'IsObjInClaimSemantics': None,
             'ObjectHandle': None,
             'DocID': 'document_id',
             'SubjectJustification': None,

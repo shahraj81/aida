@@ -1,0 +1,10 @@
+?cluster	?metatype	?type	?mention_span	?is_negated	?type_statement_confidence	?cluster_membership_confidence	?mention_type_justification_confidence
+cluster-NILQV30826	Event	Q57699905	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	Negated	"1.0"	"1.0"	"1.0"
+cluster-NILQV30827	Event	Q57699905	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	Negated	"1.0"	"1.0"	"1.0"
+cluster-NILQV30828	Event	Q57699905	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	Negated	"1.0"	"1.0"	"1.0"
+cluster-NILQV30829	Event	Q22445448	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	Negated	"1.0"	"1.0"	"1.0"
+cluster-NILQV30830	Event	Q22445448	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	NotNegated	"1.0"	"1.0"	"1.0"
+cluster-Q1194749	Entity	Q327333	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	NotNegated	"1.0"	"1.0"	"1.0"
+cluster-Q3995	Entity	Q56061	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	NotNegated	"1.0"	"1.0"	"1.0"
+cluster-Q5727	Entity	Q56061	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	NotNegated	"1.0"	"1.0"	"1.0"
+cluster-Q5756	Entity	Q56061	L0C04C8B3:L0C04CAFL:(1,0)-(1438,0)	NotNegated	"1.0"	"1.0"	"1.0"

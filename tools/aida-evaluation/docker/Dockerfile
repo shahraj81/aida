@@ -1,10 +1,26 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 MAINTAINER shahzad.rajput@nist.gov
 
+#-------------------------------------------------------------
 # Set timezone
+#-------------------------------------------------------------
+
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
 
+#-------------------------------------------------------------
+# Add user and group
+#-------------------------------------------------------------
+
+ARG userid
+ARG groupid
+
+RUN addgroup --gid ${groupid} aidagroup
+RUN adduser --no-create-home --disabled-password --gecos "" --uid ${userid} --gid ${groupid} aidauser
+
+#-------------------------------------------------------------
 # Install system packages
+#-------------------------------------------------------------
+
 RUN apt-get update && apt-get install -y \
     curl \
     git \
@@ -15,13 +31,13 @@ RUN apt-get update && apt-get install -y \
     vim
 
 #-------------------------------------------------------------
-#  Install Java OpenJDK 8
+#  Install Java OpenJDK 11
 #-------------------------------------------------------------
 RUN \
-  apt-get install -y --fix-missing openjdk-8-jdk
+  apt-get install -y --fix-missing openjdk-11-jdk-headless
 
 # Define JAVA_HOME variable
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
+ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64
 
 # Reconfigure tzdata
 RUN dpkg-reconfigure -f noninteractive tzdata
@@ -73,14 +89,37 @@ RUN pip3.9 install arch
 RUN pip3.9 install numpy
 
 #-------------------------------------------------------------
+#  Install rdflib
+#-------------------------------------------------------------
+
+RUN pip3.9 install rdflib
+
+#-------------------------------------------------------------
+#  Install requests
+#-------------------------------------------------------------
+
+RUN pip3.9 install requests
+
+#-------------------------------------------------------------
+#  Install openpyxl
+#-------------------------------------------------------------
+
+RUN pip3.9 install openpyxl
+
+#-------------------------------------------------------------
+#  Install tqdm
+#-------------------------------------------------------------
+
+RUN pip3.9 install tqdm
+
+#-------------------------------------------------------------
 #  Install GraphDB
 #  Taken from the Dockerfile for GraphDB docker available at:
 #  https://github.com/Ontotext-AD/graphdb-docker
 #-------------------------------------------------------------
 # Define arguments need for installation of GraphDB
 
-ARG version=9.10.3
-ARG edition=free
+ARG version=10.0.2
 
 ENV GRAPHDB_PARENT_DIR=/opt/graphdb
 ENV GRAPHDB_HOME=${GRAPHDB_PARENT_DIR}/home
@@ -90,15 +129,15 @@ ENV PATH=${GRAPHDB_INSTALL_DIR}/bin:$PATH
 
 RUN mkdir scripts
 
-COPY ./graphdb-${edition}-${version}-dist.zip /tmp/
+COPY ./graphdb-${version}-dist.zip /tmp/
 
 WORKDIR /tmp
 
 RUN mkdir -p ${GRAPHDB_PARENT_DIR} && \
     cd ${GRAPHDB_PARENT_DIR} && \
-    unzip -q /tmp/graphdb-${edition}-${version}-dist.zip && \
-    rm /tmp/graphdb-${edition}-${version}-dist.zip && \
-    mv graphdb-${edition}-${version} dist && \
+    unzip -q /tmp/graphdb-${version}-dist.zip && \
+    rm /tmp/graphdb-${version}-dist.zip && \
+    mv graphdb-${version} dist && \
     mkdir -p ${GRAPHDB_HOME}
 
 RUN mkdir $SPARQL_EVAL_HOME
@@ -112,7 +151,7 @@ RUN $PERLBREW_PATH/cpanm install JSON
 # Setup the AIDA repository
 WORKDIR /scripts
 
-RUN git clone -b AIDAED-v2022.0.5 https://github.com/shahraj81/aida.git
+RUN git clone -b AIDAED-v2022.1.1 https://github.com/shahraj81/aida.git
 
 WORKDIR /scripts/aida
 
@@ -140,6 +179,8 @@ RUN cp Local-config.* $SPARQL_EVAL_HOME/config/
 RUN cp rdf4j-function-* ${GRAPHDB_INSTALL_DIR}/lib/
 
 WORKDIR /scripts/
+
+RUN chown -R aidauser:aidagroup /scripts /opt/graphdb
 
 #-------------------------------------------------------------
 #  Setup entrypoint

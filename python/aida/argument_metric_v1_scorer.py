@@ -65,9 +65,9 @@ class ArgumentMetricScorerV1(Scorer):
             return True
         return False
 
-    def get_document_type_role_fillers(self, system_or_gold, document_id):
+    def get_document_types_role_fillers(self, system_or_gold, document_id):
         logger = self.get('logger')
-        type_role_fillers = Container(logger)
+        types_role_fillers = Container(logger)
         responses = self.get('{}_responses'.format(system_or_gold))
         if document_id in responses.get('document_frames'):
             for frame in responses.get('document_frames').get(document_id).values():
@@ -76,19 +76,19 @@ class ArgumentMetricScorerV1(Scorer):
                 for role_name in role_fillers:
                     for filler_cluster_id in role_fillers.get(role_name):
                         for predicate_justification in role_fillers.get(role_name).get(filler_cluster_id):
-                            type_invoked = self.get('type_invoked', predicate_justification, role_name)
-                            type_role_filler_string = '{type_invoked}_{role_name}:{filler_cluster_id}'.format(type_invoked=type_invoked,
-                                                                                                              role_name=role_name,
-                                                                                                              filler_cluster_id=filler_cluster_id)
-                            type_role_filler = type_role_fillers.get(type_role_filler_string, default=Object(logger))
-                            type_role_filler.set('metatype', metatype)
-                            type_role_filler.set('type', type_invoked)
-                            type_role_filler.set('role_name', role_name)
-                            type_role_filler.set('filler_cluster_id', filler_cluster_id)
-                            if type_role_filler.get('predicate_justifications') is None:
-                                type_role_filler.set('predicate_justifications', Container(logger))
-                            type_role_filler.get('predicate_justifications').add(predicate_justification)
-        return type_role_fillers
+                            types = self.get('types', frame)
+                            types_role_filler_string = '{types}_{role_name}:{filler_cluster_id}'.format(types=types,
+                                                                                                       role_name=role_name,
+                                                                                                       filler_cluster_id=filler_cluster_id)
+                            types_role_filler = types_role_fillers.get(types_role_filler_string, default=Object(logger))
+                            types_role_filler.set('metatype', metatype)
+                            types_role_filler.set('types', types)
+                            types_role_filler.set('role_name', role_name)
+                            types_role_filler.set('filler_cluster_id', filler_cluster_id)
+                            if types_role_filler.get('predicate_justifications') is None:
+                                types_role_filler.set('predicate_justifications', Container(logger))
+                            types_role_filler.get('predicate_justifications').add(predicate_justification)
+        return types_role_fillers
 
     def get_score(self, gold_trfs, system_trfs, metatypes):
         num_true_positive = 0
@@ -113,17 +113,8 @@ class ArgumentMetricScorerV1(Scorer):
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
         return num_gold_trf, num_system_trf, precision, recall, f1
 
-    def get_type_invoked(self, predicate_justification, role_name):
-        type_invoked = predicate_justification.get('predicate').split('_')[0]
-        type_invoked_elements = type_invoked.split('.')
-        if len(type_invoked_elements) == 3:
-            type_invoked_elements.pop()
-            parent_type_invoked = '.'.join(type_invoked_elements)
-            parent_predicate = '{parent_type_invoked}_{role_name}'.format(parent_type_invoked=parent_type_invoked,
-                                                                          role_name=role_name)
-            if self.is_valid_slot(parent_predicate):
-                    type_invoked = parent_type_invoked
-        return type_invoked
+    def get_types(self, frame):
+        return '{}{}{}'.format('{', ','.join(sorted(frame.get('types'))), '}')
 
     def score_responses(self):
         metatypes = {
@@ -133,9 +124,12 @@ class ArgumentMetricScorerV1(Scorer):
             }
         scores = []
         for document_id in self.get('core_documents'):
-            language = self.get('gold_responses').get('document_mappings').get('documents').get(document_id).get('language')
-            gold_trfs = self.get('document_type_role_fillers', 'gold', document_id)
-            system_trfs = self.get('document_type_role_fillers', 'system', document_id)
+            document = self.get('gold_responses').get('document_mappings').get('documents').get(document_id)
+            # skip those core documents that do not have an entry in the parent-children table
+            if document is None: continue
+            language = document.get('language')
+            gold_trfs = self.get('document_types_role_fillers', 'gold', document_id)
+            system_trfs = self.get('document_types_role_fillers', 'system', document_id)
             self.align_trfs(document_id, gold_trfs, system_trfs)
             for metatype_key in metatypes:
                 num_gold_trf, num_system_trf, precision, recall, f1 = self.get('score', gold_trfs, system_trfs, metatypes[metatype_key])
