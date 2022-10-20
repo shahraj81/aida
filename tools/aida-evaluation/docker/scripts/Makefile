@@ -21,6 +21,7 @@ ifeq ($(TASK), task1)
 	  --iou_thresholds $(IOU_THRESHOLDS) \
 	  --kgtk_api $(KGTK_API) \
 	  --lock $(LOCK) \
+	  --min_type_similarity $(MIN_TYPE_SIMILARITY) \
 	  --near_neighbor_similarity_value $(NN_SIMILARITY_VALUE) \
 	  --similarity_types $(SIMILARITY_TYPES) \
 	  --wait $(WAIT)

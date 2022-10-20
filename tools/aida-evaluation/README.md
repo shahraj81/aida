@@ -482,7 +482,7 @@ When computing similarity scores between two Q-nodes:
 
 Right after the filtering script is done querying kgtk-similarity service for similarity scores between all pairs of Q-nodes needed for filtering, the cache in memory is flushed to the file. A lock file (args.lock) is used to synchronize calls to flush the cache between multiple threads (if any). The avilability of lock is checked as frentrly as 10 seconds by default but this time can be changed if needed when calling the docker.
 
-## Thresholds
+## Task1 Thresholds
 
 ### IOU threshold
 
@@ -492,11 +492,18 @@ IOU threshold of 0.9 is used by default When computing the proportion of spans o
 
 When checking if a cluster type is similar enough to a taggable DWD ontology type, the similarity between the two types is compared against args.alpha. The types are considered to be similar enough if the similarity exceeds alpha. The value of ALPHA is set to 0.9 by default but can be changed to the desired value when calling `make`.
 
+## Minimum type similarity
+
+In order for a cluster to pass filter through alignment it must have a type whose similarity to a taggable dwd type exceed the `MIN_TYPE_SIMILARITY`. The default value of this variable is 0.2 but can be changed when calling `make`.
+
 ## Near-neighbor similarity value
 
 When two Q-nodes are found to be near-neighbors, similarity between the two is set to 0.9 by default, but this value can be changed by setting the variable `NN_SIMILARITY_VALUE` to the desired value when calling `make`.
 
 # Revision History
+
+## 10/20/2022:
+* min_type_similarity added to the filter; controlled through the docker
 
 ## 10/07/2022:
 * controlling ALPHA, CACHE, IOU thresholds, KGTK_API (location), LOCK (file), NN_SIMILARITY_VALUE, SIMILARIY_TYPES, and WAIT (seconds) from docker Makefile

@@ -689,6 +689,7 @@ def main(args):
             --kgtk_api {kgtk_api} \
             --lock {lock} \
             --log {log_file} \
+            --min_type_similarity {min_type_similarity} \
             --near_neighbor_similarity_value {near_neighbor_similarity_value} \
             --similarity_types {similarity_types} \
             --wait {wait} \
@@ -715,6 +716,7 @@ def main(args):
                                           kgtk_api=args.kgtk_api,
                                           lock=args.lock,
                                           log_specifications=log_specifications,
+                                          min_type_similarity=args.min_type_similarity,
                                           near_neighbor_similarity_value=args.near_neighbor_similarity_value,
                                           similarity_types='class,jc',
                                           wait=args.wait,
@@ -792,6 +794,7 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
     parser.add_argument('-L', '--lock', default='/data/AUX-data/kgtk.lock', help='Specify the lock file (default: %(default)s)')
     parser.add_argument('-l', '--logs', default='logs', help='Specify the name of the logs directory to which different log files should be written (default: %(default)s)')
+    parser.add_argument('-m', '--min_type_similarity', type=float, default=0.2, help='Specify the minimum type similarity required (default: %(default)s)')
     parser.add_argument('-n', '--near_neighbor_similarity_value', default=0.9, help='Specify the similarity score to be used when the qnodes were declared to be near-neighbors (default: %(default)s)')
     parser.add_argument('-o', '--output', default='/score', help='Specify the input directory (default: %(default)s)')
     parser.add_argument('-r', '--run', default='system', help='Specify the run name (default: %(default)s)')

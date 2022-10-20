@@ -41,10 +41,11 @@ ALLOK_EXIT_CODE = 0
 ERROR_EXIT_CODE = 255
 
 class AlignClusters(Object):
-    def __init__(self, logger, document_mappings, similarity, responses, IOU_THRESHOLDS):
+    def __init__(self, logger, document_mappings, similarity, responses, IOU_THRESHOLDS, MIN_TYPE_SIMILARITY):
         super().__init__(logger)
         self.document_mappings = document_mappings
         self.IOU_THRESHOLDS = {}
+        self.MIN_TYPE_SIMILARITY = MIN_TYPE_SIMILARITY
         for key_and_value in IOU_THRESHOLDS.split(','):
             language, modality, threshold = key_and_value.split(':')
             self.IOU_THRESHOLDS[self.get('iou_threshold_key', language, modality)] = float(threshold)
@@ -73,7 +74,9 @@ class AlignClusters(Object):
             for system_cluster_id in sorted(self.get('responses').get('system').get('document_clusters').get(document_id) or []):
                 similarity = self.get('metatype_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
                 if similarity > 0:
-                    similarity *= self.get('type_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
+                    type_similarity = self.get('type_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
+                    type_similarity = 0 if type_similarity < self.get('MIN_TYPE_SIMILARITY') else type_similarity
+                    similarity *= type_similarity
                     similarity *= self.get('mention_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
                 similarities.setdefault(gold_cluster_id, {})[system_cluster_id] = similarity
         return similarities
@@ -692,7 +695,7 @@ def filter_responses(args):
     system_responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task1')
     gold_responses = ResponseSet(logger, document_mappings, document_boundaries, args.gold, 'gold', 'task1')
     similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, LOCK=args.lock, ACQUIRE_LOCK_WAIT=args.wait, NN_SIMILARITY_SCORE=args.near_neighbor_similarity_value, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api, CACHE=args.cache)
-    alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses}, IOU_THRESHOLDS=args.iou_thresholds)
+    alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses}, IOU_THRESHOLDS=args.iou_thresholds, MIN_TYPE_SIMILARITY=args.min_type_similarity)
     response_filter = ResponseFilter(logger, alignment, similarity)
     response_filter.apply(system_responses)
     # write alignment and similarities
@@ -730,6 +733,7 @@ if __name__ == '__main__':
                         help='Specify comma-separted list of document, modality, and the respective iou threshold separated by colon (default: %(default)s)')
     parser.add_argument('-k', '--kgtk_api', default=None, help='Specify the URL of kgtk-similarity or leave it None (default: %(default)s)')
     parser.add_argument('-L', '--lock', default='/data/AUX-data/kgtk.lock', help='Specify the lock file (default: %(default)s)')
+    parser.add_argument('-m', '--min_type_similarity', type=float, default=0.2, help='Specify the minimum type similarity required (default: %(default)s)')
     parser.add_argument('-n', '--near_neighbor_similarity_value', type=float, default=0.9, help='Specify the similarity score to be used when the qnodes were declared to be near-neighbors (default: %(default)s)')
     parser.add_argument('-s', '--similarity_types', default='complex,transe,text,class,jc,topsim', help='Specify the comma-separated list of similarity types to be used by kgtk-similarity (default: %(default)s)')
     parser.add_argument('-w', '--wait', type=int, default=10, help='Specify the seconds to wait before checking if the lock can be acquired (default: %(default)s)')
