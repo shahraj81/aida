@@ -18,6 +18,7 @@ CACHE='/data/AUX-data/cache.txt'
 IOU_THRESHOLDS='eng:image:0.1,eng:text:0.1,eng:video:0.1,rus:image:0.1,rus:text:0.1,rus:video:0.1,spa:image:0.1,spa:text:0.1,spa:video:0.1,ukr:image:0.1,ukr:text:0.1,ukr:video:0.1'
 KGTK_API=https://kgtk.isi.edu/similarity_api
 LOCK='/data/AUX-data/kgtk.lock'
+MIN_TYPE_SIMILARITY=0.3
 NN_SIMILARITY_VALUE=0.9
 SIMILARITY_TYPES='class,jc'
 WAIT=10
@@ -88,6 +89,7 @@ task1:
 	  --env IOU_THRESHOLDS=$(IOU_THRESHOLDS) \
 	  --env KGTK_API=$(KGTK_API) \
 	  --env LOCK=$(LOCK) \
+	  --env MIN_TYPE_SIMILARITY=$(MIN_TYPE_SIMILARITY) \
 	  --env NN_SIMILARITY_VALUE=$(NN_SIMILARITY_VALUE) \
 	  --env SIMILARITY_TYPES=$(SIMILARITY_TYPES) \
 	  --env WAIT=$(WAIT) \
