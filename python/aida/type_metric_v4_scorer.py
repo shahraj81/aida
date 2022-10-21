@@ -36,10 +36,10 @@ class TypeMetricScorerV4(Scorer):
         type_similarity = 0
         document_type_similarities = self.get('type_similarities').get('document_type_similarities', document_id)
         if system_cluster_id in document_type_similarities and gold_cluster_id in document_type_similarities.get(system_cluster_id):
-            type_similarity = document_type_similarities.get(system_cluster_id).get(gold_cluster_id)
-            self_gold_type_similarity = document_type_similarities.get(gold_cluster_id).get(gold_cluster_id)
+            type_similarity = float(document_type_similarities.get(system_cluster_id).get(gold_cluster_id))
+            self_gold_type_similarity = float(document_type_similarities.get(gold_cluster_id).get(gold_cluster_id))
             type_similarity = type_similarity / self_gold_type_similarity
-        return float(type_similarity)
+        return type_similarity
 
     def get_metatype(self, document_id, cluster_ids):
         responses = {
