@@ -76,8 +76,6 @@ class AlignClusters(Object):
                 if similarity > 0:
                     type_similarity = self.get('type_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
                     type_similarity = 0 if type_similarity < self.get('MIN_TYPE_SIMILARITY') else type_similarity
-                    self_gold_type_similarity = self.get('type_similarity', document_id, 'gold', gold_cluster_id, 'gold', gold_cluster_id)
-                    type_similarity = type_similarity / self_gold_type_similarity
                     similarity *= type_similarity
                     similarity *= self.get('mention_similarity', document_id, 'gold', gold_cluster_id, 'system', system_cluster_id)
                 similarities.setdefault(gold_cluster_id, {})[system_cluster_id] = similarity

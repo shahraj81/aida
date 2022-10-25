@@ -179,8 +179,6 @@ class ArgumentMetricScorerV3(Scorer):
 
     def get_type_similarity(self, document_id, system_cluster_id, gold_cluster_id):
         type_similarity = float(self.get('type_similarities').get('type_similarity', document_id, system_cluster_id, gold_cluster_id))
-        self_gold_similarity = float(self.get('type_similarities').get('type_similarity', document_id, gold_cluster_id, gold_cluster_id))
-        type_similarity = type_similarity / self_gold_similarity
         return type_similarity
 
     def get_TypeSim(self, document_id, gold_trf, system_trf):
