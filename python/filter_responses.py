@@ -153,7 +153,7 @@ class AlignClusters(Object):
             return '{}:{}'.format(language, modality).lower()
         self.record_event('DEFAULT_CRITICAL_ERROR', 'modality and language both need to be specified')
 
-    def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2, combine=statistics.mean):
+    def get_type_similarity(self, document_id, system_or_gold1, cluster_id1, system_or_gold2, cluster_id2, combine=max):
         cluster1_types = self.get('cluster_types', system_or_gold1, document_id, cluster_id1)
         cluster2_types = self.get('cluster_types', system_or_gold2, document_id, cluster_id2)
         similarities = []
