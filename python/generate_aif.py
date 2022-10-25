@@ -717,7 +717,7 @@ class EREMention(AIFObject):
         else:
             childDocument = self.get('document_mappings').get('document_elements').get(childDocument)
         if childDocument is None:
-            self.record_event('MISSING_CHILD_DOCUMENT', parentDocument)
+            self.record_event('MISSING_CHILD_DOCUMENT', parentDocument, self.get('entry').get('where'))
         modality = childDocument.get('modality')
         if modality == 'text':
             startOffset = self.get('textoffset_startchar')
