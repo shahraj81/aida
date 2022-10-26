@@ -502,6 +502,14 @@ When two Q-nodes are found to be near-neighbors, similarity between the two is s
 
 # Revision History
 
+## 10/26/2022:
+* correcting practice coredocs and gold data
+  * gold data is generated from LDC2022R09 (aka LDC2021E15 V5.0)
+    * L0C0492UF and L0C049COZ removed from coredocs and annotation from these documents were removed from gold accordingly
+* using max when combining type similarity
+* output of applying the docker to example-task1-run updated
+* cache synchronized with new gold and example run
+
 ## 10/20/2022:
 * min_type_similarity added to the filter; controlled through the docker
 
