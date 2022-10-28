@@ -35,7 +35,7 @@ build:
 	       --build-arg userid=$(USERID) \
 	       --build-arg groupid=$(GROUPID) \
 	       --build-arg version=$(GRAPHDB_VERSION) \
-	       -t aida-evaluation .
+	       -t aida-evaluation:FEATURE-b50010 .
 
 rebuild: clean build
 
