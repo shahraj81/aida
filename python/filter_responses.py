@@ -64,9 +64,19 @@ class AlignClusters(Object):
 
     def get_cluster_types(self, gold_or_system, document_id, cluster_id):
         cluster_types = set()
+        max_confidence = None
         for entry in self.get('responses').get(gold_or_system).get('document_clusters').get(document_id).get(cluster_id).get('entries').values():
-            cluster_types.add((trim_cv(entry.get('cluster_membership_confidence')) * trim_cv(entry.get('type_statement_confidence')), entry.get('cluster_type')))
-        return cluster_types
+            confidence = trim_cv(entry.get('cluster_membership_confidence')) * trim_cv(entry.get('type_statement_confidence'))
+            if max_confidence is None:
+                max_confidence = confidence
+            if max_confidence < confidence:
+                max_confidence = confidence
+            cluster_types.add((confidence, entry.get('cluster_type')))
+        scaled_cluster_types = set()
+        for confidence, cluster_type in cluster_types:
+            scaled_confidence = confidence / max_confidence
+            scaled_cluster_types.add((scaled_confidence, cluster_type))
+        return scaled_cluster_types
 
     def get_document_cluster_similarities(self, document_id):
         similarities = {}
