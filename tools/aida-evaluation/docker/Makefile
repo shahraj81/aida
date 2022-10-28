@@ -97,7 +97,7 @@ task1:
 	  -v $(HOST_OUTPUT_DIR):/score \
 	  -v $(HOST_DATA_DIR):/data \
 	  -u $(USERID):$(GROUPID) \
-	-it aida-evaluation
+	-it aida-evaluation:FEATURE-b50010
 
 task2:
 	docker run \
