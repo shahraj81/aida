@@ -704,7 +704,7 @@ def filter_responses(args):
     taggable_dwd_ontology = TaggableDWDOntology(logger, args.taggable_ldc_ontology, args.overlay)
     system_responses = ResponseSet(logger, document_mappings, document_boundaries, args.input, args.runid, 'task1')
     gold_responses = ResponseSet(logger, document_mappings, document_boundaries, args.gold, 'gold', 'task1')
-    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, LOCK=args.lock, ACQUIRE_LOCK_WAIT=args.wait, NN_SIMILARITY_SCORE=args.near_neighbor_similarity_value, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api, CACHE=args.cache)
+    similarity = Similarity(logger, taggable_dwd_ontology, args.alpha, LOCK=args.lock, ACQUIRE_LOCK_WAIT=args.wait, NN_SIMILARITY_SCORE=args.near_neighbor_similarity_value, SIMILARITY_TYPES=args.similarity_types, KGTK_SIMILARITY_SERVICE_API=args.kgtk_api, CACHE=args.cache, combine=max)
     alignment = AlignClusters(logger, document_mappings, similarity, {'gold': gold_responses, 'system': system_responses}, IOU_THRESHOLDS=args.iou_thresholds, MIN_TYPE_SIMILARITY=args.min_type_similarity)
     response_filter = ResponseFilter(logger, alignment, similarity)
     response_filter.apply(system_responses)
