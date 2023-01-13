@@ -1622,7 +1622,12 @@ class LDCTime(AIFObject):
         return int(self.get('day').get('field_value'))
 
     def get_date_object(self):
-        return datetime.date(self.get('int_year'), self.get('int_month'), self.get('int_day'))
+        date_object = None
+        try:
+            date_object = datetime.date(self.get('int_year'), self.get('int_month'), self.get('int_day'))
+        except ValueError as e:
+            self.record_event('EXCEPTION', e, self.get('where'))
+        return date_object
 
     def get_time_type(self):
         return '{}{}'.format(self.get('start_or_end').lower(), self.get('before_or_after').lower())

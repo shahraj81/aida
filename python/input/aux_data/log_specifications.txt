@@ -21,6 +21,7 @@ CRITICAL  DUPLICATE_VALUE                 {} appears more than once, expected no
 CRITICAL  DUPLICATE_VALUE_IN_COLUMN       '{}' appears more than once in column '{}'
 INFO      EDGE_SCORE_INFO                 DOCUMENT_ID:{} GOLD_EDGE:{} SYSTEM_EDGE:{} EDGE_SCORE:{}
 ERROR     EMPTY_FILE_WITHOUT_HEADER       '{}' has no header; expected header: '{}'
+CRITICAL  EXCEPTION                       Exception occurred: '{}'
 INFO      SCORE_AT_CUTOFF                 QUERY_ID:{} CLAIM_RELATION:{} CUTOFF:{} PRECISION:{} RECALL:{} F1:{}
 WARNING   ITEM_MET_POOLING_CRITERIA_BUT_NOT_ASSESSED '{}' met pooling criteria but was not assessed
 ERROR     EXPECTING_VALID_ENTRY           Code expected entry to be valid but it was not. This happens when either the code is not run on the output of the response validator or when the response validator did not remove an invalid entry.
